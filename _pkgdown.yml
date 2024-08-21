@@ -1,0 +1,13 @@
+url: https://primarycensoreddist.epinowcast.org/
+template:
+  package: enwtheme
+  twitter:
+    creator: "@seabbs"
+    card: summary_large_image
+  opengraph:
+    twitter:
+      creator: "@seabbs"
+      card: summary_large_image
+
+development:
+  mode: auto

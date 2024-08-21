@@ -1,0 +1,33 @@
+Package: primarycensoreddist
+Title: Censored Distributions in R and Stan
+Version: 0.0.0.1000
+Authors@R:
+    person("Sam Abbott", , , "contact@samabbott.co.uk", role = c("aut", "cre"),
+           comment = c(ORCID = "0000-0001-8057-8037"))
+Description: Censored distributions in R and Stan.
+License: MIT + file LICENSE
+URL: https://primarycensoreddist.epinowcast.org,
+    https://github.com/epinowcast/primarycensoreddist/
+BugReports: https://github.com/epinowcast/primarycensoreddist/issues/
+Depends:
+    R (>= 4.0.0)
+Suggests:
+    knitr
+    spelling,
+    testthat (>= 3.1.9),
+    usethis,
+    vdiffr,
+    withr
+VignetteBuilder:
+    knitr
+Config/Needs/hexsticker: hexSticker, sysfonts
+Config/Needs/website: r-lib/pkgdown, epinowcast/enwtheme
+Config/Needs/cmdstanr: stan-dev/cmdstanr
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-GB
+LazyData: true
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports:
+    spelling (>= 2.3.0)
