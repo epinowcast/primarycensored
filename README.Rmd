@@ -27,11 +27,7 @@ license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/
 
 ## Summary
 
-```{r, results = "asis", echo=FALSE}
-cat(gsub("\n[ ]+", " ", packageDescription("primarycensoreddist")$Description))
-```
-
-This package provides both R functions for working with censored distributions and Stan implementations for use in Bayesian modeling. It offers a flexible framework for handling various types of censoring in both R and Stan environments.
+This package provides both R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields.
 
 ## Installation
 
@@ -104,7 +100,7 @@ Please briefly describe your problem and what output you expect in an [issue](ht
 
 ### Code of Conduct
 
-Please note that the `epinowcast` project is released with a [Contributor Code of Conduct](https://github.com/epinowcast/.github/blob/main/CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
+Please note that the `primarycensoreddist` project is released with a [Contributor Code of Conduct](https://github.com/epinowcast/.github/blob/main/CODE_OF_CONDUCT.md). By contributing to this project, you agree to abide by its terms.
 
 ## Citation
 
