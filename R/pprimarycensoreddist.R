@@ -9,18 +9,18 @@
 #' @param D Maximum delay (truncation point). If finite, the distribution is
 #' truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.
 #'
-#' @param primary_dist Function to generate the probability density function
+#' @param dprimary Function to generate the probability density function
 #' (PDF) of primary event times. This function should take a value `x` and a
 #' `pwindow` parameter, and return a probability density. It should be
 #' normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 #' distribution over [0, pwindow]. Users can provide custom functions or use
-#' helper functions like `exp_primary_dist` for an exponential distribution.
-#' These functions typically implement the inverse transform sampling method
-#' for efficient random number generation. See `primary_dists.R` for examples.
+#' helper functions like `dexpgrowth` for an exponential growth distribution.
+#' See `primary_dists.R` for examples.
 #'
-#' @param primary_args List of additional arguments to be passed to
-#' primary_dist. For example, when using `exp_primary_dist`, you would
-#' pass `list(rate = 0.2)` to set the rate parameter.
+#' @param dprimary_args List of additional arguments to be passed to
+#' dprimary. For example, when using `dexpgrowth`, you would
+#' pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
+#' and rate parameters.
 #'
 #' @param ... Additional arguments to be passed to dist_func
 #'
@@ -30,22 +30,18 @@
 #' @aliases ppcens
 #'
 #' @examples
-#' # Example: Lognormal distribution with truncation and uniform primary events
-#' q <- c(1.0, 2.0, 3.0)
-#' pwindow <- 7.0
-#' D <- 10.0 # truncation point
-#' cdf <- pprimarycensoreddist(q, plnorm, pwindow, D, meanlog = 0, sdlog = 1)
+#' # Example: Lognormal distribution with uniform primary events
+#' pprimarycensoreddist(c(0.1, 0.5, 1), plnorm, meanlog = 0, sdlog = 1)
 #'
-#' # Example: Lognormal distribution with exponential primary events
-#' cdf_exp <- pprimarycensoreddist(q, plnorm, pwindow, D,
-#'   primary_dist = exp_primary_dist,
-#'   primary_args = list(rate = 0.2),
-#'   meanlog = 0, sdlog = 1
+#' # Example: Lognormal distribution with exponential growth primary events
+#' pprimarycensoreddist(
+#'   c(0.1, 0.5, 1), plnorm,
+#'   dprimary = dexpgrowth,
+#'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
 pprimarycensoreddist <- function(
-    q, dist_func, pwindow = 1, D = Inf,
-    primary_dist = primarycensoreddist::unif_primary_dist,
-    primary_args = list(), ...) {
+    q, dist_func, pwindow = 1, D = Inf, dprimary = dunif,
+    dprimary_args = list(), ...) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
       return(0) # Return 0 for non-positive delays
@@ -55,7 +51,7 @@ pprimarycensoreddist <- function(
           d_adj <- d - p
           dist_func(d_adj, ...) *
             do.call(
-              primary_dist, c(list(x = p, pwindow = pwindow), primary_args)
+              dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
             )
         }
       } else {
@@ -64,11 +60,10 @@ pprimarycensoreddist <- function(
           D_adj <- D - p
           dist_func(d_adj, ...) / dist_func(D_adj, ...) *
             do.call(
-              primary_dist, c(list(x = p, pwindow = pwindow), primary_args)
+              dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
             )
         }
       }
-
       stats::integrate(integrand, lower = 0, upper = pwindow)$value
     }
   }, numeric(1))

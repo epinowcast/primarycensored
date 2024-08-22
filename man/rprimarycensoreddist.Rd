@@ -11,8 +11,8 @@ rprimarycensoreddist(
   pwindow = 1,
   swindow = 1,
   D = Inf,
-  primary_dist = stats::runif,
-  primary_args = list(),
+  rprimary = stats::runif,
+  rprimary_args = list(),
   ...
 )
 
@@ -22,8 +22,8 @@ rpcens(
   pwindow = 1,
   swindow = 1,
   D = Inf,
-  primary_dist = stats::runif,
-  primary_args = list(),
+  rprimary = stats::runif,
+  rprimary_args = list(),
   ...
 )
 }
@@ -34,15 +34,13 @@ rpcens(
 
 \item{pwindow}{Primary event window}
 
-\item{swindow}{Secondary event window (default: 1)}
-
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
 truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
-\item{primary_dist}{Primary distribution function (default is \code{runif})}
+\item{rprimary}{Function to generate random samples from the primary
+distribution (default is \code{runif})}
 
-\item{primary_args}{List of additional arguments to be passed to the primary
-distribution function}
+\item{rprimary_args}{List of additional arguments to be passed to rprimary}
 
 \item{...}{Additional arguments to be passed to the distribution function}
 }
@@ -53,8 +51,12 @@ Vector of random samples from the primary event censored distribution
 Generate random samples from a primary event censored distribution
 }
 \examples{
-# Example: Lognormal distribution with truncation
-n <- 1000
-D <- 10.0 # truncation point
-samples <- rprimarycensoreddist(n, rlnorm, D = 10, meanlog = 0, sdlog = 1)
+# Example: Lognormal distribution with uniform primary events
+rprimarycensoreddist(10, rlnorm, meanlog = 0, sdlog = 1)
+
+# Example: Lognormal distribution with exponential growth primary events
+rprimarycensoreddist(
+ 10, rlnorm, rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
+ meanlog = 0, sdlog = 1
+)
 }

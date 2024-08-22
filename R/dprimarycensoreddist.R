@@ -16,24 +16,28 @@
 #' @aliases dpcens
 #'
 #' @examples
-#' # Example: Weibull distribution without truncation
-#' x <- c(1.0, 2.0, 3.0)
-#' pwindow <- 6.0
-#' swindow <- 0.5
-#' pmf <- dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0)
+#' # Example: Weibull distribution with uniform primary events
+#' dprimarycensoreddist(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
+#'
+#' # Example: Weibull distribution with exponential growth primary events
+#' dprimarycensoreddist(
+#'   c(0.1, 0.5, 1), pweibull,
+#'   dprimary = dexpgrowth,
+#'   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
+#' )
 dprimarycensoreddist <- function(
     x, dist_func, pwindow = 1, swindow = 1,
-    D = Inf, primary_dist = primarycensoreddist::unif_primary_dist,
-    primary_args = list(), log = FALSE, ...) {
+    D = Inf, dprimary = dunif,
+    dprimary_args = list(), log = FALSE, ...) {
   result <- vapply(x, function(d) {
     if (d <= 0) {
       return(-Inf) # Return log(0) for non-positive delays
     } else {
       pprimarycensoreddist(
-        d + swindow, dist_func, pwindow, D, primary_dist, primary_args, ...
+        d + swindow, dist_func, pwindow, D, dprimary, dprimary_args, ...
       ) -
         pprimarycensoreddist(
-          d, dist_func, pwindow, D, primary_dist, primary_args, ...
+          d, dist_func, pwindow, D, dprimary, dprimary_args, ...
         )
     }
   }, numeric(1))

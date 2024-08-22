@@ -11,8 +11,8 @@ dprimarycensoreddist(
   pwindow = 1,
   swindow = 1,
   D = Inf,
-  primary_dist = primarycensoreddist::unif_primary_dist,
-  primary_args = list(),
+  dprimary = dunif,
+  dprimary_args = list(),
   log = FALSE,
   ...
 )
@@ -23,8 +23,8 @@ dpcens(
   pwindow = 1,
   swindow = 1,
   D = Inf,
-  primary_dist = primarycensoreddist::unif_primary_dist,
-  primary_args = list(),
+  dprimary = dunif,
+  dprimary_args = list(),
   log = FALSE,
   ...
 )
@@ -41,18 +41,18 @@ dpcens(
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
 truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
-\item{primary_dist}{Function to generate the probability density function
+\item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
 \code{pwindow} parameter, and return a probability density. It should be
 normalized to integrate to 1 over \link{0, pwindow}. Defaults to a uniform
 distribution over \link{0, pwindow}. Users can provide custom functions or use
-helper functions like \code{exp_primary_dist} for an exponential distribution.
-These functions typically implement the inverse transform sampling method
-for efficient random number generation. See \code{primary_dists.R} for examples.}
+helper functions like \code{dexpgrowth} for an exponential growth distribution.
+See \code{primary_dists.R} for examples.}
 
-\item{primary_args}{List of additional arguments to be passed to
-primary_dist. For example, when using \code{exp_primary_dist}, you would
-pass \code{list(rate = 0.2)} to set the rate parameter.}
+\item{dprimary_args}{List of additional arguments to be passed to
+dprimary. For example, when using \code{dexpgrowth}, you would
+pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
+and rate parameters.}
 
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
 
@@ -66,9 +66,12 @@ Vector of primary event censored PMFs, normalized by D if finite
 Compute the primary event censored PMF for delays
 }
 \examples{
-# Example: Weibull distribution without truncation
-x <- c(1.0, 2.0, 3.0)
-pwindow <- 6.0
-swindow <- 0.5
-pmf <- dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0)
+# Example: Weibull distribution with uniform primary events
+dprimarycensoreddist(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
+
+# Example: Weibull distribution with exponential growth primary events
+dprimarycensoreddist(
+  c(0.1, 0.5, 1), pweibull, dprimary = dexpgrowth,
+  dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
+)
 }

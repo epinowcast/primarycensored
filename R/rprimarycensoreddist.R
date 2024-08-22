@@ -2,11 +2,9 @@
 #'
 #' @inheritParams pprimarycensoreddist
 #' @param n Number of random samples to generate
-#' @inheritParams pprimarycensoreddist
-#' @inheritParams dprimarycensoreddist
-#' @param primary_dist Primary distribution function (default is \code{runif})
-#' @param primary_args List of additional arguments to be passed to the primary
-#'   distribution function
+#' @param rprimary Function to generate random samples from the primary
+#'   distribution (default is \code{runif})
+#' @param rprimary_args List of additional arguments to be passed to rprimary
 #' @param ... Additional arguments to be passed to the distribution function
 #'
 #' @return Vector of random samples from the primary event censored distribution
@@ -14,22 +12,26 @@
 #' @aliases rpcens
 #'
 #' @examples
-#' # Example: Lognormal distribution with truncation
-#' n <- 1000
-#' D <- 10.0 # truncation point
-#' samples <- rprimarycensoreddist(n, rlnorm, D = 10, meanlog = 0, sdlog = 1)
+#' # Example: Lognormal distribution with uniform primary events
+#' rprimarycensoreddist(10, rlnorm, meanlog = 0, sdlog = 1)
+#'
+#' # Example: Lognormal distribution with exponential growth primary events
+#' rprimarycensoreddist(
+#'   10, rlnorm,
+#'   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
+#'   meanlog = 0, sdlog = 1
+#' )
 rprimarycensoreddist <- function(n, dist_func, pwindow = 1, swindow = 1,
-                                 D = Inf, primary_dist = stats::runif,
-                                 primary_args = list(), ...) {
+                                 D = Inf, rprimary = stats::runif,
+                                 rprimary_args = list(), ...) {
   samples <- numeric(n)
   i <- 1
 
   while (i <= n) {
     # Generate primary event time
-    p <- do.call(primary_dist, c(
-      list(1), primary_args,
-      list(min = 0, max = pwindow)
-    ))
+    p <- do.call(
+      rprimary, c(list(1), rprimary_args, list(min = 0, max = pwindow))
+    )
 
     # Generate delay from the specified distribution
     delay <- dist_func(1, ...)
