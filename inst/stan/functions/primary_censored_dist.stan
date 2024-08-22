@@ -297,3 +297,85 @@ real primary_censored_dist_pmf(real d, int dist_id, array[] real params,
                                int primary_dist_id, array[] real primary_params) {
   return exp(primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params));
 }
+
+/**
+  * Compute the primary event censored log PMF for integer delays up to D
+  *
+  * @param D Maximum delay (truncation point)
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param primary_dist_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return Vector of primary event censored log PMFs for integer delays 0 to D-1
+  *
+  * This function differs from primary_censored_dist_lpmf in that it:
+  * 1. Computes PMFs for all integer delays from 0 to D-1 in one call
+  * 2. Assumes integer delays (swindow = 1)
+  * 3. Is more computationally efficient for multiple delay calculations
+  *
+  * @code
+  * // Example: Normal delay distribution with uniform primary distribution
+  * int D = 10;
+  * int dist_id = 3; // Normal
+  * array[2] real params = {0.0, 1.0}; // mean and standard deviation
+  * real pwindow = 7.0;
+  * int primary_dist_id = 1; // Uniform
+  * array[0] real primary_params = {};
+  * vector[D] log_pmf = primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params);
+  */
+vector primary_censored_sint_lpmf(int D, int dist_id, array[] real params,
+                                  real pwindow, int primary_dist_id, array[] real primary_params) {
+  vector[D] log_cdfs;
+  vector[D] log_pmfs;
+  real log_normalizer;
+
+  // Compute log CDFs
+  for (d in 1:D) {
+    log_cdfs[d] = primary_censored_dist_lcdf(d, dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params);
+  }
+
+  // Compute log normalizer
+  log_normalizer = log_cdfs[D];
+
+  // Compute log PMFs
+  log_pmfs[1] = log_cdfs[1] - log_normalizer;
+  for (d in 2:D) {
+    log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
+  }
+
+  return log_pmfs;
+}
+
+/**
+* Compute the primary event censored PMF for integer delays up to D
+*
+* @param D Maximum delay (truncation point)
+* @param dist_id Distribution identifier
+* @param params Array of distribution parameters
+* @param pwindow Primary event window
+* @param primary_dist_id Primary distribution identifier
+* @param primary_params Primary distribution parameters
+*
+* @return Vector of primary event censored PMFs for integer delays 0 to D-1
+*
+* This function differs from primary_censored_dist_pmf in that it:
+* 1. Computes PMFs for all integer delays from 0 to D-1 in one call
+* 2. Assumes integer delays (swindow = 1)
+* 3. Is more computationally efficient for multiple delay calculations
+*
+* @code
+* // Example: Gamma delay distribution with exponential growth primary distribution
+* int D = 10;
+* int dist_id = 2; // Gamma
+* array[2] real params = {2.0, 1.0}; // shape and rate
+* real pwindow = 7.0;
+* int primary_dist_id = 2; // Exponential growth
+* array[1] real primary_params = {0.5}; // growth rate
+* vector[D] pmf = primary_censored_sint_pmf(D, dist_id, params, pwindow, primary_dist_id, primary_params);
+*/
+vector primary_censored_sint_pmf(int D, int dist_id, array[] real params,
+                                 real pwindow, int primary_dist_id, array[] real primary_params) {
+  return exp(primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params));
+}
