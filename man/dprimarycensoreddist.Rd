@@ -10,12 +10,24 @@ dprimarycensoreddist(
   dist_func,
   pwindow = 1,
   swindow = 1,
-  D,
+  D = Inf,
+  primary_dist = primarycensoreddist::unif_primary_dist,
+  primary_args = list(),
   log = FALSE,
   ...
 )
 
-dpcens(x, dist_func, pwindow = 1, swindow = 1, D, log = FALSE, ...)
+dpcens(
+  x,
+  dist_func,
+  pwindow = 1,
+  swindow = 1,
+  D = Inf,
+  primary_dist = primarycensoreddist::unif_primary_dist,
+  primary_args = list(),
+  log = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{Vector of quantiles}
@@ -27,7 +39,20 @@ dpcens(x, dist_func, pwindow = 1, swindow = 1, D, log = FALSE, ...)
 \item{swindow}{Secondary event window (default: 1)}
 
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied.}
+truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+
+\item{primary_dist}{Function to generate the probability density function
+(PDF) of primary event times. This function should take a value \code{x} and a
+\code{pwindow} parameter, and return a probability density. It should be
+normalized to integrate to 1 over \link{0, pwindow}. Defaults to a uniform
+distribution over \link{0, pwindow}. Users can provide custom functions or use
+helper functions like \code{exp_primary_dist} for an exponential distribution.
+These functions typically implement the inverse transform sampling method
+for efficient random number generation. See \code{primary_dists.R} for examples.}
+
+\item{primary_args}{List of additional arguments to be passed to
+primary_dist. For example, when using \code{exp_primary_dist}, you would
+pass \code{list(rate = 0.2)} to set the rate parameter.}
 
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
 

@@ -5,9 +5,25 @@
 \alias{ppcens}
 \title{Compute the primary event censored CDF for delays}
 \usage{
-pprimarycensoreddist(q, dist_func, pwindow = 1, D, ...)
+pprimarycensoreddist(
+  q,
+  dist_func,
+  pwindow = 1,
+  D = Inf,
+  primary_dist = primarycensoreddist::unif_primary_dist,
+  primary_args = list(),
+  ...
+)
 
-ppcens(q, dist_func, pwindow = 1, D, ...)
+ppcens(
+  q,
+  dist_func,
+  pwindow = 1,
+  D = Inf,
+  primary_dist = primarycensoreddist::unif_primary_dist,
+  primary_args = list(),
+  ...
+)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -17,7 +33,20 @@ ppcens(q, dist_func, pwindow = 1, D, ...)
 \item{pwindow}{Primary event window}
 
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied.}
+truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+
+\item{primary_dist}{Function to generate the probability density function
+(PDF) of primary event times. This function should take a value \code{x} and a
+\code{pwindow} parameter, and return a probability density. It should be
+normalized to integrate to 1 over \link{0, pwindow}. Defaults to a uniform
+distribution over \link{0, pwindow}. Users can provide custom functions or use
+helper functions like \code{exp_primary_dist} for an exponential distribution.
+These functions typically implement the inverse transform sampling method
+for efficient random number generation. See \code{primary_dists.R} for examples.}
+
+\item{primary_args}{List of additional arguments to be passed to
+primary_dist. For example, when using \code{exp_primary_dist}, you would
+pass \code{list(rate = 0.2)} to set the rate parameter.}
 
 \item{...}{Additional arguments to be passed to dist_func}
 }
@@ -29,9 +58,16 @@ Vector of primary event censored CDFs, normalized by D if finite
 Compute the primary event censored CDF for delays
 }
 \examples{
-# Example: Lognormal distribution with truncation
+# Example: Lognormal distribution with truncation and uniform primary events
 q <- c(1.0, 2.0, 3.0)
 pwindow <- 7.0
 D <- 10.0 # truncation point
 cdf <- pprimarycensoreddist(q, plnorm, pwindow, D, meanlog = 0, sdlog = 1)
+
+# Example: Lognormal distribution with exponential primary events
+cdf_exp <- pprimarycensoreddist(q, plnorm, pwindow, D,
+  primary_dist = exp_primary_dist,
+  primary_args = list(rate = 0.2),
+  meanlog = 0, sdlog = 1
+)
 }

@@ -70,13 +70,14 @@
     * real cdf = primary_censored_dist_cdf(d, params, dist_id, pwindow, D);
     */
   real primary_censored_dist_cdf(real d, array[] real params, int dist_id, real pwindow, real D) {
+    real log_pwindow = log(pwindow);
     if (D == positive_infinity()) {
       return integrate_1d(
         function(real p, real xc, array[] real theta, array[] real x_r, array[] int x_i) {
           real d_adj = xc - p;
-          return exp(dist_lcdf(d_adj, theta, x_i[1]));
+          return exp(dist_lcdf(d_adj, theta, x_i[1]) - x_r[1]);
         },
-        0, pwindow, d, params, {}, {dist_id}
+        0, pwindow, d, params, {log_pwindow}, {dist_id}
       );
     } else {
       return integrate_1d(
@@ -84,10 +85,10 @@
           real d_adj = xc - p;
           real D_adj = x_r[1] - p;
           return exp(
-            dist_lcdf(d_adj, theta, x_i[1]) - dist_lcdf(D_adj, theta, x_i[1])
+            dist_lcdf(d_adj, theta, x_i[1]) - dist_lcdf(D_adj, theta, x_i[1]) - x_r[2]
           );
         },
-        0, pwindow, d, params, {D}, {dist_id}
+        0, pwindow, d, params, {D, log_pwindow}, {dist_id}
       );
     }
   }

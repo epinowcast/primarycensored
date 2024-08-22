@@ -42,10 +42,10 @@
 #'   primary_args = list(rate = 0.2),
 #'   meanlog = 0, sdlog = 1
 #' )
-pprimarycensoreddist <- function(q, dist_func, pwindow = 1, D = Inf,
-  primary_dist = primarycensoreddist::unif_primary_dist,
-  primary_args = list(), ...) {
-
+pprimarycensoreddist <- function(
+    q, dist_func, pwindow = 1, D = Inf,
+    primary_dist = primarycensoreddist::unif_primary_dist,
+    primary_args = list(), ...) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
       return(0) # Return 0 for non-positive delays

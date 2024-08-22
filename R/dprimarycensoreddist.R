@@ -21,10 +21,10 @@
 #' pwindow <- 6.0
 #' swindow <- 0.5
 #' pmf <- dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0)
-dprimarycensoreddist <- function(x, dist_func, pwindow = 1, swindow = 1,
-  D = Inf, primary_dist = primarycensoreddist::unif_primary_dist,
-  primary_args = list(), log = FALSE, ...) {
-
+dprimarycensoreddist <- function(
+    x, dist_func, pwindow = 1, swindow = 1,
+    D = Inf, primary_dist = primarycensoreddist::unif_primary_dist,
+    primary_args = list(), log = FALSE, ...) {
   result <- vapply(x, function(d) {
     if (d <= 0) {
       return(-Inf) # Return log(0) for non-positive delays

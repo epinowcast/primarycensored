@@ -37,7 +37,7 @@ rpcens(
 \item{swindow}{Secondary event window (default: 1)}
 
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied.}
+truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
 \item{primary_dist}{Primary distribution function (default is \code{runif})}
 
