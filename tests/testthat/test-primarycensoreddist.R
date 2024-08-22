@@ -57,7 +57,9 @@ test_that("rprimarycensoreddist mean approximates theoretical mean", {
 
   theoretical_mean <- integrate(
     function(x) {
-      x * dprimarycensoreddist(x, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1)
+      x * dprimarycensoreddist(
+        x, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1
+      )
     },
     0, D
   )$value
@@ -219,7 +221,9 @@ test_that(
 
     # Compare empirical distribution to analytical solution
     empirical_pmf <- table(samples) / n
-    analytical_values <- sapply(as.numeric(names(empirical_pmf)), analytical_pmf)
+    analytical_values <- sapply(
+      as.numeric(names(empirical_pmf)), analytical_pmf
+    )
 
     expect_equal(as.numeric(empirical_pmf), analytical_values, tolerance = 0.01)
   }
