@@ -219,6 +219,34 @@ $(document).ready(function(){initNavTree('primary__censored__dist_8stan_source.h
 <div class="line"><a id="l00297" name="l00297"></a><span class="lineno">  297</span>                               <span class="keywordtype">int</span> primary_dist_id, array[] real primary_params) {</div>
 <div class="line"><a id="l00298" name="l00298"></a><span class="lineno">  298</span>  <span class="keywordflow">return</span> exp(primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params));</div>
 <div class="line"><a id="l00299" name="l00299"></a><span class="lineno">  299</span>}</div>
+<div class="line"><a id="l00300" name="l00300"></a><span class="lineno">  300</span> </div>
+<div class="line"><a id="l00328" name="l00328"></a><span class="lineno">  328</span>vector primary_censored_sint_lpmf(<span class="keywordtype">int</span> D, <span class="keywordtype">int</span> dist_id, array[] real params,</div>
+<div class="line"><a id="l00329" name="l00329"></a><span class="lineno">  329</span>                                  real pwindow, <span class="keywordtype">int</span> primary_dist_id, array[] real primary_params) {</div>
+<div class="line"><a id="l00330" name="l00330"></a><span class="lineno">  330</span>  vector[D] log_cdfs;</div>
+<div class="line"><a id="l00331" name="l00331"></a><span class="lineno">  331</span>  vector[D] log_pmfs;</div>
+<div class="line"><a id="l00332" name="l00332"></a><span class="lineno">  332</span>  real log_normalizer;</div>
+<div class="line"><a id="l00333" name="l00333"></a><span class="lineno">  333</span> </div>
+<div class="line"><a id="l00334" name="l00334"></a><span class="lineno">  334</span>  <span class="comment">// Compute log CDFs</span></div>
+<div class="line"><a id="l00335" name="l00335"></a><span class="lineno">  335</span>  <span class="keywordflow">for</span> (d in 1:D) {</div>
+<div class="line"><a id="l00336" name="l00336"></a><span class="lineno">  336</span>    log_cdfs[d] = primary_censored_dist_lcdf(d, dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params);</div>
+<div class="line"><a id="l00337" name="l00337"></a><span class="lineno">  337</span>  }</div>
+<div class="line"><a id="l00338" name="l00338"></a><span class="lineno">  338</span> </div>
+<div class="line"><a id="l00339" name="l00339"></a><span class="lineno">  339</span>  <span class="comment">// Compute log normalizer</span></div>
+<div class="line"><a id="l00340" name="l00340"></a><span class="lineno">  340</span>  log_normalizer = log_cdfs[D];</div>
+<div class="line"><a id="l00341" name="l00341"></a><span class="lineno">  341</span> </div>
+<div class="line"><a id="l00342" name="l00342"></a><span class="lineno">  342</span>  <span class="comment">// Compute log PMFs</span></div>
+<div class="line"><a id="l00343" name="l00343"></a><span class="lineno">  343</span>  log_pmfs[1] = log_cdfs[1] - log_normalizer;</div>
+<div class="line"><a id="l00344" name="l00344"></a><span class="lineno">  344</span>  <span class="keywordflow">for</span> (d in 2:D) {</div>
+<div class="line"><a id="l00345" name="l00345"></a><span class="lineno">  345</span>    log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;</div>
+<div class="line"><a id="l00346" name="l00346"></a><span class="lineno">  346</span>  }</div>
+<div class="line"><a id="l00347" name="l00347"></a><span class="lineno">  347</span> </div>
+<div class="line"><a id="l00348" name="l00348"></a><span class="lineno">  348</span>  <span class="keywordflow">return</span> log_pmfs;</div>
+<div class="line"><a id="l00349" name="l00349"></a><span class="lineno">  349</span>}</div>
+<div class="line"><a id="l00350" name="l00350"></a><span class="lineno">  350</span> </div>
+<div class="line"><a id="l00378" name="l00378"></a><span class="lineno">  378</span>vector primary_censored_sint_pmf(<span class="keywordtype">int</span> D, <span class="keywordtype">int</span> dist_id, array[] real params,</div>
+<div class="line"><a id="l00379" name="l00379"></a><span class="lineno">  379</span>                                 real pwindow, <span class="keywordtype">int</span> primary_dist_id, array[] real primary_params) {</div>
+<div class="line"><a id="l00380" name="l00380"></a><span class="lineno">  380</span>  <span class="keywordflow">return</span> exp(primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params));</div>
+<div class="line"><a id="l00381" name="l00381"></a><span class="lineno">  381</span>}</div>
 <div class="ttc" id="aexpgrowth_8stan_html_a41c0839ec1d92f74ae46bcf2a4fdeb13"><div class="ttname"><a href="expgrowth_8stan.html#a41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a></div><div class="ttdeci">real expgrowth_lpdf(real x, real min, real max, real r)</div><div class="ttdef"><b>Definition</b> <a href="expgrowth_8stan_source.html#l00029">expgrowth.stan:29</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
