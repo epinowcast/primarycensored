@@ -2,6 +2,9 @@
 
 export(dexpgrowth)
 export(dpcens)
+export(pcd_load_stan_functions)
+export(pcd_stan_functions)
+export(pcd_stan_path)
 export(pexpgrowth)
 export(ppcens)
 export(rexpgrowth)

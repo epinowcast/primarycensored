@@ -63,7 +63,8 @@ pprimarycensoreddist(c(0.1, 0.5, 1), plnorm, meanlog = 0, sdlog = 1)
 
 # Example: Lognormal distribution with exponential growth primary events
 pprimarycensoreddist(
- c(0.1, 0.5, 1), plnorm, dprimary = dexpgrowth,
- dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+  c(0.1, 0.5, 1), plnorm,
+  dprimary = dexpgrowth,
+  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 )
 }

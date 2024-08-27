@@ -56,7 +56,8 @@ rprimarycensoreddist(10, rlnorm, meanlog = 0, sdlog = 1)
 
 # Example: Lognormal distribution with exponential growth primary events
 rprimarycensoreddist(
- 10, rlnorm, rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
- meanlog = 0, sdlog = 1
+  10, rlnorm,
+  rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
+  meanlog = 0, sdlog = 1
 )
 }

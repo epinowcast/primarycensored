@@ -7,7 +7,7 @@
   * @param r Rate parameter for exponential growth
   * @return The PDF evaluated at x
   */
-  real expgrowth_pdf(real x, real min, real max, real r) {
+real expgrowth_pdf(real x, real min, real max, real r) {
   if (x < min || x > max) {
     return 0;
   }
