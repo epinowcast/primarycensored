@@ -11,7 +11,7 @@ dprimarycensoreddist(
   pwindow = 1,
   swindow = 1,
   D = Inf,
-  dprimary = dunif,
+  dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
   ...
@@ -23,7 +23,7 @@ dpcens(
   pwindow = 1,
   swindow = 1,
   D = Inf,
-  dprimary = dunif,
+  dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
   ...
@@ -44,8 +44,8 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
 \code{pwindow} parameter, and return a probability density. It should be
-normalized to integrate to 1 over \link{0, pwindow}. Defaults to a uniform
-distribution over \link{0, pwindow}. Users can provide custom functions or use
+normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
+distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
 See \code{primary_dists.R} for examples.}
 

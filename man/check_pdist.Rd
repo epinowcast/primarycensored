@@ -4,7 +4,7 @@
 \alias{check_pdist}
 \title{Check if a function is a valid cumulative distribution function (CDF)}
 \usage{
-check_pdist(pdist, D, swindow, ...)
+check_pdist(pdist, D, ...)
 }
 \arguments{
 \item{pdist}{Distribution function (CDF)}
@@ -23,5 +23,5 @@ This function tests whether a given function behaves like a valid CDF by
 checking if it's monotonically increasing and bounded between 0 and 1.
 }
 \examples{
-check_pdist(pnorm, D = 10, swindow = 1)
+check_pdist(pnorm, D = 10)
 }

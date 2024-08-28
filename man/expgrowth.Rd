@@ -24,8 +24,8 @@ rexpgrowth(n, min = 0, max = 1, r)
 
 \item{log, log.p}{Logical; if TRUE, probabilities p are given as log(p).}
 
-\item{lower.tail}{Logical; if TRUE (default), probabilities are P\link{X ≤ x},
-otherwise, P\link{X > x}.}
+\item{lower.tail}{Logical; if TRUE (default), probabilities are P[X ≤ x],
+otherwise, P[X > x].}
 
 \item{n}{Number of observations. If \code{length(n) > 1}, the length is taken to
 be the number required.}

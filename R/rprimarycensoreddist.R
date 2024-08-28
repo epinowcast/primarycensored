@@ -1,6 +1,6 @@
 #' Generate random samples from a primary event censored distribution
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams dprimarycensoreddist
 #'
 #' @param rdist Function to generate random samples from the delay distribution
 #' for example \code{rlnorm} for lognormal distribution.
@@ -22,6 +22,10 @@
 #'
 #' @aliases rpcens
 #'
+#' @importFrom stats runif
+#'
+#' @export
+#'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events
 #' rprimarycensoreddist(10, rlnorm, meanlog = 0, sdlog = 1)
@@ -36,7 +40,6 @@ rprimarycensoreddist <- function(n, rdist, pwindow = 1, swindow = 1,
                                  D = Inf, rprimary = stats::runif,
                                  rprimary_args = list(),
                                  oversampling_factor = 1.2, ...) {
-
   # Generate more samples than needed to account for truncation
   n_generate <- ceiling(n * oversampling_factor)
 

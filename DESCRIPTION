@@ -15,12 +15,10 @@ BugReports: https://github.com/epinowcast/primarycensoreddist/issues/
 Depends:
     R (>= 4.0.0)
 Suggests:
-    knitr
+    knitr,
     spelling,
     testthat (>= 3.1.9),
-    usethis,
-    vdiffr,
-    withr
+    usethis
 VignetteBuilder:
     knitr
 Config/Needs/hexsticker: hexSticker, sysfonts
@@ -32,5 +30,3 @@ Language: en-GB
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports:
-    spelling (>= 2.3.0)

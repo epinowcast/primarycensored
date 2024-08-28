@@ -2,88 +2,94 @@
 # and the random number generators for primary events
 
 test_that(
-  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist", { # nolint
-  n <- 10000
-  pwindow <- 4
-  D <- 10
-  samples <- rpcens(
-    n, rlnorm, pwindow,
-    D = D, meanlog = 0, sdlog = 1
-  )
+  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist",
+  { # nolint
+    n <- 10000
+    pwindow <- 4
+    D <- 10
+    samples <- rpcens(
+      n, rlnorm, pwindow,
+      D = D, meanlog = 0, sdlog = 1
+    )
 
-  # Check empirical mean and pmf
-  empirical_pmf <- as.vector(table(samples) / n)
-  empirical_mean <- mean(samples)
-  expect_equal(empirical_mean, 2.9, tolerance = 0.05)
-  empirical_sd <- sd(samples)
-  expect_equal(empirical_sd, 1.8, tolerance = 0.05)
+    # Check empirical mean and pmf
+    empirical_pmf <- as.vector(table(samples) / n)
+    empirical_mean <- mean(samples)
+    expect_equal(empirical_mean, 2.9, tolerance = 0.05)
+    empirical_sd <- sd(samples)
+    expect_equal(empirical_sd, 1.8, tolerance = 0.05)
 
-  # Check empirical cdf against theoretical cdf
-  x_values <- 0:(D - 1)
-  pmf <- dpcens(x_values, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1)
-  theoretical_mean <- sum(x_values * pmf)
+    # Check empirical cdf against theoretical cdf
+    x_values <- 0:(D - 1)
+    pmf <- dpcens(x_values, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1)
+    theoretical_mean <- sum(x_values * pmf)
 
-  expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
-  expect_equal(empirical_pmf, pmf, tolerance = 0.05)
+    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
+    expect_equal(empirical_pmf, pmf, tolerance = 0.05)
 
-  # Check empirical cdf against theoretical cdf
-  empirical_cdf <- ecdf(samples)(x_values)
-  theoretical_cdf <- ppcens(
-    c(x_values[-1], D), plnorm, pwindow, D,
-    meanlog = 0, sdlog = 1
-  )
-  expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
-})
+    # Check empirical cdf against theoretical cdf
+    empirical_cdf <- ecdf(samples)(x_values)
+    theoretical_cdf <- ppcens(
+      c(x_values[-1], D), plnorm, pwindow, D,
+      meanlog = 0, sdlog = 1
+    )
+    expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
+  }
+)
 
-
-test_that(
-  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist for exponential growth primary distribution", { # nolint
-  n <- 10000
-  pwindow <- 3
-  D <- 10
-  r <- 0.5
-  samples <- rpcens(
-    n, rlnorm, pwindow,
-    D = D,
-    rprimary = rexpgrowth,
-    rprimary_args = list(r = r),
-    meanlog = 1, sdlog = 0.5
-  )
-
-  # Check empirical mean and pmf
-  empirical_pmf <- as.vector(table(samples) / n)
-  empirical_mean <- mean(samples)
-  empirical_sd <- sd(samples)
-
-  expect_equal(empirical_mean, 4.3, tolerance = 0.05)
-  expect_equal(empirical_sd, 1.6, tolerance = 0.05)
-
-  # Check empirical cdf against theoretical cdf
-  x_values <- 0:(D - 1)
-  pmf <- dpcens(
-    x_values, plnorm, pwindow, D = D,
-    dprimary = dexpgrowth,
-    dprimary_args = list(r = r),
-    meanlog = 1, sdlog = 0.5
-  )
-  theoretical_mean <- sum(x_values * pmf)
-
-  expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
-  expect_equal(empirical_pmf, pmf, tolerance = 0.05)
-
-  # Check empirical cdf against theoretical cdf
-  empirical_cdf <- ecdf(samples)(x_values)
-  theoretical_cdf <- ppcens(
-    c(x_values[-1], D), plnorm, pwindow, D,
-    dprimary = dexpgrowth,
-    dprimary_args = list(r = r),
-    meanlog = 1, sdlog = 0.5
-  )
-  expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
-})
 
 test_that(
-  "Exponential distribution with daily censoring matches analytical solution", {
+  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist for exponential growth primary distribution",
+  { # nolint
+    n <- 10000
+    pwindow <- 3
+    D <- 10
+    r <- 0.5
+    samples <- rpcens(
+      n, rlnorm, pwindow,
+      D = D,
+      rprimary = rexpgrowth,
+      rprimary_args = list(r = r),
+      meanlog = 1, sdlog = 0.5
+    )
+
+    # Check empirical mean and pmf
+    empirical_pmf <- as.vector(table(samples) / n)
+    empirical_mean <- mean(samples)
+    empirical_sd <- sd(samples)
+
+    expect_equal(empirical_mean, 4.3, tolerance = 0.05)
+    expect_equal(empirical_sd, 1.6, tolerance = 0.05)
+
+    # Check empirical cdf against theoretical cdf
+    x_values <- 0:(D - 1)
+    pmf <- dpcens(
+      x_values, plnorm, pwindow,
+      D = D,
+      dprimary = dexpgrowth,
+      dprimary_args = list(r = r),
+      meanlog = 1, sdlog = 0.5
+    )
+    theoretical_mean <- sum(x_values * pmf)
+
+    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
+    expect_equal(empirical_pmf, pmf, tolerance = 0.05)
+
+    # Check empirical cdf against theoretical cdf
+    empirical_cdf <- ecdf(samples)(x_values)
+    theoretical_cdf <- ppcens(
+      c(x_values[-1], D), plnorm, pwindow, D,
+      dprimary = dexpgrowth,
+      dprimary_args = list(r = r),
+      meanlog = 1, sdlog = 0.5
+    )
+    expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
+  }
+)
+
+test_that(
+  "Exponential distribution with daily censoring matches analytical solution",
+  {
     # Parameters
     rate <- 1 # Exponential rate parameter
     pwindow <- 1 # Primary event window (1 day)
@@ -126,11 +132,12 @@ test_that(
 
     # Compare random number generator to analytical solution
     samples <- rpcens(
-      10000, rexp, pwindow, swindow, D, rate = rate
+      10000, rexp, pwindow, swindow, D,
+      rate = rate
     )
     empirical_pmf <- as.vector(table(samples) / 10000)
     expect_equal(
-      empirical_pmf, analytical_values[1:length(empirical_pmf)],
+      empirical_pmf, analytical_values[seq_along(empirical_pmf)],
       tolerance = 0.05
     )
   }

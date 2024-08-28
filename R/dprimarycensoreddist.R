@@ -15,6 +15,10 @@
 #'
 #' @aliases dpcens
 #'
+#' @importFrom stats dunif
+#'
+#' @export
+#'
 #' @examples
 #' # Example: Weibull distribution with uniform primary events
 #' dprimarycensoreddist(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
@@ -27,9 +31,9 @@
 #' )
 dprimarycensoreddist <- function(
     x, pdist, pwindow = 1, swindow = 1,
-    D = Inf, dprimary = dunif,
+    D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), log = FALSE, ...) {
-  check_pdist(pdist, D, swindow, ...)
+  check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   result <- vapply(x, function(d) {

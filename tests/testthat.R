@@ -1,6 +1,4 @@
 library(testthat)
-library(vdiffr)
-library(withr)
 library(primarycensoreddist)
 
 test_results <- test_check("primarycensoreddist")

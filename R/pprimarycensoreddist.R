@@ -12,8 +12,8 @@
 #' @param dprimary Function to generate the probability density function
 #' (PDF) of primary event times. This function should take a value `x` and a
 #' `pwindow` parameter, and return a probability density. It should be
-#' normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
-#' distribution over [0, pwindow]. Users can provide custom functions or use
+#' normalized to integrate to 1 over \[0, pwindow\]. Defaults to a uniform
+#' distribution over \[0, pwindow\]. Users can provide custom functions or use
 #' helper functions like `dexpgrowth` for an exponential growth distribution.
 #' See `primary_dists.R` for examples.
 #'
@@ -29,6 +29,10 @@
 #'
 #' @aliases ppcens
 #'
+#' @importFrom stats dunif
+#'
+#' @export
+#'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events
 #' pprimarycensoreddist(c(0.1, 0.5, 1), plnorm, meanlog = 0, sdlog = 1)
@@ -40,9 +44,9 @@
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
 pprimarycensoreddist <- function(
-    q, pdist, pwindow = 1, D = Inf, dprimary = dunif,
+    q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), ...) {
-  check_pdist(pdist, D, swindow, ...)
+  check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   result <- vapply(q, function(d) {

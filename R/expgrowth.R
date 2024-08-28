@@ -10,8 +10,8 @@
 #' @param max Maximum value of the distribution range. Default is 1.
 #' @param r Rate parameter for the exponential growth.
 #' @param log,log.p Logical; if TRUE, probabilities p are given as log(p).
-#' @param lower.tail Logical; if TRUE (default), probabilities are P[X ≤ x],
-#' otherwise, P[X > x].
+#' @param lower.tail Logical; if TRUE (default), probabilities are P\[X ≤ x\],
+#' otherwise, P\[X > x\].
 #'
 #' @return `dexpgrowth` gives the density, `pexpgrowth` gives the distribution
 #' function, and `rexpgrowth` generates random deviates.
@@ -68,7 +68,11 @@ dexpgrowth <- function(x, min = 0, max = 1, r, log = FALSE) {
     pdf <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
   }
   pdf[x < min | x > max] <- 0
-  if (log) log(pdf) else pdf
+  if (log) {
+    return(log(pdf))
+  } else {
+    return(pdf)
+  }
 }
 
 #' @rdname expgrowth
@@ -89,10 +93,15 @@ pexpgrowth <- function(q, min = 0, max = 1, r, lower.tail = TRUE,
   cdf[q < min] <- 0
 
   if (!lower.tail) cdf <- 1 - cdf
-  if (log.p) log(cdf) else cdf
+  if (log.p) {
+    return(log(cdf))
+  } else {
+    return(cdf)
+  }
 }
 
 #' @rdname expgrowth
+#' @importFrom stats runif
 #' @export
 rexpgrowth <- function(n, min = 0, max = 1, r) {
   u <- runif(n)
@@ -101,5 +110,5 @@ rexpgrowth <- function(n, min = 0, max = 1, r) {
   } else {
     samples <- log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r
   }
-  samples
+  return(samples)
 }

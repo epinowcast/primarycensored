@@ -37,6 +37,8 @@ for example \code{rlnorm} for lognormal distribution.}
 
 \item{pwindow}{Primary event window}
 
+\item{swindow}{Secondary event window (default: 1)}
+
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
 truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 

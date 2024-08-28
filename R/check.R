@@ -6,13 +6,14 @@
 #' @inheritParams pprimarycensoreddist
 #' @return NULL. The function will stop execution with an error message if
 #'         pdist is not a valid CDF.
+#' @export
 #' @examples
-#' check_pdist(pnorm, D = 10, swindow = 1)
-check_pdist <- function(pdist, D, swindow, ...) {
+#' check_pdist(pnorm, D = 10)
+check_pdist <- function(pdist, D, ...) {
   if (is.infinite(D)) {
     D <- 1000
   }
-  test_values <- sort(sample(seq(0, D, by = swindow), 3))
+  test_values <- sort(sample(seq(0, D, by = 1), 4))
   test_results <- pdist(test_values, ...)
 
   if (!all(diff(test_results) >= 0) ||
@@ -40,11 +41,10 @@ check_pdist <- function(pdist, D, swindow, ...) {
 #'
 #' @return NULL. The function will stop execution with an error message if
 #'         dprimary is not a valid PDF.
+#' @export
+#'
 #' @examples
-#' dprimary <- function(x, min = 0, max = 1) {
-#'   ifelse(x >= min & x <= max, 1, 0)
-#' }
-#' check_dprimary(dprimary, pwindow = 1)
+#' check_dprimary(dunif, pwindow = 1)
 check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
                            tolerance = 1e-3) {
   integrand <- function(x) {
