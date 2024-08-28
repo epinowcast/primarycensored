@@ -59,7 +59,7 @@ pcd_load_stan_functions <- function(
     wrap_in_block = FALSE, write_to_file = FALSE,
     output_file = "pcd_stan_functions.stan") {
   stan_files <- list.files(
-    stan_paths,
+    stan_path,
     pattern = "\\.stan$", full.names = TRUE,
     recursive = TRUE
   )

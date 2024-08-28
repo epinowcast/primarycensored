@@ -11,7 +11,7 @@ real expgrowth_pdf(real x, real min, real max, real r) {
   if (x < min || x > max) {
     return 0;
   }
-  if (fabs(r) < 1e-10) {
+  if (abs(r) < 1e-10) {
     return 1 / (max - min);
   }
   return r * exp(r * (x - min)) / (exp(r * max) - exp(r * min));
@@ -30,7 +30,7 @@ real expgrowth_lpdf(real x, real min, real max, real r) {
   if (x < min || x > max) {
     return negative_infinity();
   }
-  if (fabs(r) < 1e-10) {
+  if (abs(r) < 1e-10) {
     return -log(max - min);
   }
   return log(r) + r * (x - min) - log(exp(r * max) - exp(r * min));
@@ -52,7 +52,7 @@ real expgrowth_cdf(real x, real min, real max, real r) {
   if (x > max) {
     return 1;
   }
-  if (fabs(r) < 1e-10) {
+  if (abs(r) < 1e-10) {
     return (x - min) / (max - min);
   }
   return (exp(r * (x - min)) - exp(r * min)) / (exp(r * max) - exp(r * min));
@@ -74,7 +74,7 @@ real expgrowth_lcdf(real x, real min, real max, real r) {
   if (x > max) {
     return 0;
   }
-  return log(expgrowth_cdf(x, min, max, r));
+  return log(expgrowth_cdf(x | min, max, r));
 }
 
 /**
@@ -87,7 +87,7 @@ real expgrowth_lcdf(real x, real min, real max, real r) {
   */
 real expgrowth_rng(real min, real max, real r) {
   real u = uniform_rng(0, 1);
-  if (fabs(r) < 1e-10) {
+  if (abs(r) < 1e-10) {
     return min + u * (max - min);
   }
   return min + log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r;

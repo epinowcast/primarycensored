@@ -95,17 +95,17 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   * array[2] int x_i = {1, 1}; // dist_id = 1 (Lognormal), primary_dist_id = 1 (Uniform)
   * real integrand_value = primary_censored_integrand(p, xc, theta, x_r, x_i);
   */
-real primary_censored_integrand(real p, real xc, array[] real theta, array[] real x_r,
-                                array[] int x_i) {
+real primary_censored_integrand(real p, real xc, array[] real theta,
+                                data array[] real x_r, data array[] int x_i) {
   real d = xc;
   real pwindow = x_r[1];
   int dist_id = x_i[1];
   int primary_dist_id = x_i[2];
   real d_adj = d - p;
 
-  real log_cdf = dist_lcdf(d_adj, theta, dist_id);
+  real log_cdf = dist_lcdf(d_adj | theta, dist_id);
   real log_primary_pdf = primary_dist_lpdf(
-    p, primary_dist_id, theta, 0, pwindow
+    p | primary_dist_id, theta, 0, pwindow
   );
 
   return exp(log_cdf + log_primary_pdf);
@@ -132,7 +132,7 @@ real primary_censored_integrand(real p, real xc, array[] real theta, array[] rea
   * real integrand_value = primary_censored_integrand_truncated(p, xc, theta, x_r, x_i);
   */
 real primary_censored_integrand_truncated(real p, real xc, array[] real theta,
-                                          array[] real x_r, array[] int x_i) {
+                                          data array[] real x_r, data array[] int x_i) {
   real d = xc;
   real pwindow = x_r[1];
   int dist_id = x_i[1];
@@ -141,10 +141,10 @@ real primary_censored_integrand_truncated(real p, real xc, array[] real theta,
   real D = theta[size(theta)];
   real D_adj = D - p;
 
-  real log_cdf = dist_lcdf(d_adj, theta[1:(size(theta)-1)], dist_id);
-  real log_cdf_D = dist_lcdf(D_adj, theta[1:(size(theta)-1)], dist_id);
+  real log_cdf = dist_lcdf(d_adj | theta[1:(size(theta)-1)], dist_id);
+  real log_cdf_D = dist_lcdf(D_adj | theta[1:(size(theta)-1)], dist_id);
   real log_primary_pdf = primary_dist_lpdf(
-    p, primary_dist_id, theta[1:(size(theta)-1)], 0, pwindow
+    p | primary_dist_id, theta[1:(size(theta)-1)], 0, pwindow
   );
 
   return exp(log_cdf - log_cdf_D + log_primary_pdf);
