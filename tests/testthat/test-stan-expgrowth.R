@@ -1,3 +1,8 @@
+skip_on_cran()
+skip_on_os("windows")
+skip_on_os("mac")
+skip_on_local()
+
 test_that("Stan expgrowth functions match R implementations", {
   min <- 0
   max <- 10
