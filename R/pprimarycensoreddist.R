@@ -42,6 +42,8 @@
 pprimarycensoreddist <- function(
     q, dist_func, pwindow = 1, D = Inf, dprimary = dunif,
     dprimary_args = list(), ...) {
+  check_dist_func(dist_func, D, swindow, ...)
+
   result <- vapply(q, function(d) {
     if (d <= 0) {
       return(0) # Return 0 for non-positive delays

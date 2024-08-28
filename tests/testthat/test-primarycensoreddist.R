@@ -1,160 +1,89 @@
-test_that("pprimarycensoreddist integrates to 1", {
-  pwindow <- 5
-  D <- 10
-  integral <- integrate(
-    function(x) {
-      dprimarycensoreddist(x, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1)
-    },
-    0, D
-  )$value
-  expect_equal(integral, 1, tolerance = 1e-6)
-})
+# Test the interactions between dprimarycensoreddist, pprimarycensoreddist,
+# and the random number generators for primary events
 
-test_that("dprimarycensoreddist matches difference of pprimarycensoreddist", {
-  x <- c(1, 2, 3)
-  pwindow <- 5
-  swindow <- 0.5
+test_that(
+  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist", { # nolint
+  n <- 10000
+  pwindow <- 4
   D <- 10
+  samples <- rpcens(
+    n, rlnorm, pwindow,
+    D = D, meanlog = 0, sdlog = 1
+  )
 
-  pmf <- dprimarycensoreddist(
-    x, plnorm, pwindow, swindow, D,
+  # Check empirical mean and pmf
+  empirical_pmf <- as.vector(table(samples) / n)
+  empirical_mean <- mean(samples)
+  expect_equal(empirical_mean, 2.9, tolerance = 0.05)
+  empirical_sd <- sd(samples)
+  expect_equal(empirical_sd, 1.7, tolerance = 0.05)
+
+  # Check empirical cdf against theoretical cdf
+  x_values <- 0:(D - 1)
+  pmf <- dpcens(x_values, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1)
+  theoretical_mean <- sum(x_values * pmf)
+
+  expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
+  expect_equal(empirical_pmf, pmf, tolerance = 0.05)
+
+  # Check empirical cdf against theoretical cdf
+  empirical_cdf <- ecdf(samples)(x_values)
+  theoretical_cdf <- ppcens(
+    c(x_values[-1], D), plnorm, pwindow, D,
     meanlog = 0, sdlog = 1
   )
-  cdf_diff <- sapply(x, function(xi) {
-    pprimarycensoreddist(
-      xi + swindow, plnorm, pwindow, D,
-      meanlog = 0, sdlog = 1
-    ) -
-      pprimarycensoreddist(
-        xi, plnorm, pwindow, D,
-        meanlog = 0, sdlog = 1
-      )
-  })
-
-  expect_equal(pmf, cdf_diff, tolerance = 1e-6)
+  expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
 })
 
-test_that("rprimarycensoreddist generates samples within the correct range", {
-  n <- 1000
-  pwindow <- 5
+
+test_that(
+  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist for exponential growth primary distribution", { # nolint
+  n <- 10000
+  pwindow <- 3
   D <- 10
-  samples <- rprimarycensoreddist(
+  r <- 0.5
+  samples <- rpcens(
     n, rlnorm, pwindow,
-    D = D, meanlog = 0, sdlog = 1
+    D = D,
+    rprimary = rexpgrowth,
+    rprimary_args = list(r = r),
+    meanlog = 1, sdlog = 0.5
   )
 
-  expect_true(all(samples > 0 & samples <= D))
-})
+  # Check empirical mean and pmf
+  empirical_pmf <- as.vector(table(samples) / n)
+  empirical_mean <- mean(samples)
+  empirical_sd <- sd(samples)
 
-test_that("rprimarycensoreddist mean approximates theoretical mean", {
-  n <- 100000
-  pwindow <- 5
-  D <- 10
-  samples <- rprimarycensoreddist(
-    n, rlnorm, pwindow,
-    D = D, meanlog = 0, sdlog = 1
+  expect_equal(empirical_mean, 4.3, tolerance = 0.05)
+  expect_equal(empirical_sd, 1.6, tolerance = 0.05)
+
+  # Check empirical cdf against theoretical cdf
+  x_values <- 0:(D - 1)
+  pmf <- dpcens(
+    x_values, plnorm, pwindow, D = D,
+    dprimary = dexpgrowth,
+    dprimary_args = list(r = r),
+    meanlog = 1, sdlog = 0.5
   )
+  theoretical_mean <- sum(x_values * pmf)
 
-  theoretical_mean <- integrate(
-    function(x) {
-      x * dprimarycensoreddist(
-        x, plnorm, pwindow, D = D, meanlog = 0, sdlog = 1
-      )
-    },
-    0, D
-  )$value
-  sample_mean <- mean(samples)
+  expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
+  expect_equal(empirical_pmf, pmf, tolerance = 0.05)
 
-  expect_equal(sample_mean, theoretical_mean, tolerance = 0.05)
+  # Check empirical cdf against theoretical cdf
+  empirical_cdf <- ecdf(samples)(x_values)
+  theoretical_cdf <- ppcens(
+    c(x_values[-1], D), plnorm, pwindow, D,
+    dprimary = dexpgrowth,
+    dprimary_args = list(r = r),
+    meanlog = 1, sdlog = 0.5
+  )
+  expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
 })
 
 test_that(
-  "pprimarycensoreddist, dprimarycensoreddist, and rprimarycensoreddist are
-   consistent",
-  {
-    n <- 10000
-    pwindow <- 5
-    D <- 10
-    samples <- rprimarycensoreddist(
-      n, rlnorm, pwindow,
-      D = D, meanlog = 0, sdlog = 1
-    )
-
-    # Compare empirical CDF with theoretical CDF
-    empirical_cdf <- ecdf(samples)
-    x_values <- seq(0, D, length.out = 100)
-    theoretical_cdf <- pprimarycensoreddist(
-      x_values, plnorm, pwindow, D,
-      meanlog = 0, sdlog = 1
-    )
-
-    expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.05)
-
-    # Compare empirical PDF with theoretical PDF using histogram
-    hist_data <- hist(samples, breaks = 50, plot = FALSE)
-    midpoints <- (
-      hist_data$breaks[-1] + hist_data$breaks[-length(hist_data$breaks)]
-    ) / 2
-    empirical_pdf <- hist_data$density
-    theoretical_pdf <- dprimarycensoreddist(
-      midpoints, plnorm, pwindow,
-      D = D, meanlog = 0, sdlog = 1
-    )
-
-    expect_equal(empirical_pdf, theoretical_pdf, tolerance = 0.1)
-  }
-)
-
-test_that(
-  "primarycensoreddist functions work with exponential growth primary
-   distribution",
-  {
-    n <- 10000
-    pwindow <- 5
-    D <- 10
-    r <- 0.5
-
-    samples <- rprimarycensoreddist(
-      n, rlnorm, pwindow,
-      D = D,
-      rprimary = rexpgrowth,
-      rprimary_args = list(min = 0, max = pwindow, r = r),
-      meanlog = 0, sdlog = 1
-    )
-
-    # Check CDF
-    empirical_cdf <- ecdf(samples)
-    x_values <- seq(0, D, length.out = 100)
-    theoretical_cdf <- pprimarycensoreddist(
-      x_values, plnorm, pwindow, D,
-      dprimary = dexpgrowth,
-      dprimary_args = list(min = 0, max = pwindow, r = r),
-      meanlog = 0, sdlog = 1
-    )
-
-    expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.05)
-
-    # Check PDF
-    hist_data <- hist(samples, breaks = 50, plot = FALSE)
-    midpoints <- (
-      hist_data$breaks[-1] + hist_data$breaks[-length(hist_data$breaks)]
-    ) / 2
-    empirical_pdf <- hist_data$density
-    theoretical_pdf <- dprimarycensoreddist(
-      midpoints, plnorm, pwindow,
-      D = D,
-      dprimary = dexpgrowth,
-      dprimary_args = list(min = 0, max = pwindow, r = r),
-      meanlog = 0, sdlog = 1
-    )
-
-    expect_equal(empirical_pdf, theoretical_pdf, tolerance = 0.1)
-  }
-)
-
-test_that(
-  "Exponential distribution with daily censoring matches analytical solution",
-  {
+  "Exponential distribution with daily censoring matches analytical solution", {
     # Parameters
     rate <- 1 # Exponential rate parameter
     pwindow <- 1 # Primary event window (1 day)
@@ -163,25 +92,31 @@ test_that(
 
     # Analytical solution
     analytical_pmf <- function(s) {
-      if (s == 0) {
-        exp(-1)
-      } else {
-        (1 - exp(-1)) * (exp(1) - 1) * exp(-s)
-      }
+      (1 - exp(-1)) * (exp(1) - 1) * exp(-s)
+    }
+    analytical_pmf <- function(t, D) {
+      (exp(-(t - 1)) - exp(-t)) / (1 - exp(-D))
     }
 
+            expected_pmf = [(exp(-(t - 1)) - exp(-t)) / (1 - exp(-5)) for t in 1:5]
+        pmf = censored_pmf(dist,
+            Val(:single_censored);
+            primary_approximation_point = 0.0,
+            Δd = 1.0,
+            D = 5.0)
+
     # Numerical solution using our functions
-    numerical_pmf <- dprimarycensoreddist(
-      0:D, dexp, pwindow, swindow, D,
+    numerical_pmf <- dpcens(
+      0:(D - 1), dexp, pwindow, swindow, 20,
       rate = rate
     )
-    numerical_cdf <- pprimarycensoreddist(
-      0:D, dexp, pwindow, D,
+    numerical_cdf <- ppcens(
+      0:(D - 1), dexp, pwindow, 20,
       rate = rate
     )
 
     # Compare PMF
-    analytical_values <- sapply(0:D, analytical_pmf)
+    analytical_values <- sapply(0:(D - 1), analytical_pmf, D = D)
     expect_equal(numerical_pmf, analytical_values, tolerance = 1e-6)
 
     # Compare CDF
@@ -208,7 +143,7 @@ test_that(
     D <- 20 # Maximum delay to consider
 
     # Generate samples
-    samples <- rprimarycensoreddist(n, rexp, pwindow, swindow, D, rate = rate)
+    samples <- rpcens(n, rexp, pwindow, swindow, D, rate = rate)
 
     # Analytical solution
     analytical_pmf <- function(s) {

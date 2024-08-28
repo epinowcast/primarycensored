@@ -29,9 +29,10 @@ dprimarycensoreddist <- function(
     x, dist_func, pwindow = 1, swindow = 1,
     D = Inf, dprimary = dunif,
     dprimary_args = list(), log = FALSE, ...) {
+  check_dist_func(dist_func, D, swindow, ...)
   result <- vapply(x, function(d) {
-    if (d <= 0) {
-      return(-Inf) # Return log(0) for non-positive delays
+    if (d < 0) {
+      return(0) # Return log(0) for non-positive delays
     } else {
       pprimarycensoreddist(
         d + swindow, dist_func, pwindow, D, dprimary, dprimary_args, ...
@@ -43,9 +44,9 @@ dprimarycensoreddist <- function(
   }, numeric(1))
 
   if (log) {
-    return(result)
+    return(log(result))
   } else {
-    return(exp(result))
+    return(result)
   }
 }
 

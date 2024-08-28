@@ -40,10 +40,10 @@ rprimarycensoreddist <- function(n, dist_func, pwindow = 1, swindow = 1,
     total_delay <- p + delay
 
     # Round to the nearest swindow
-    rounded_delay <- ceiling(total_delay / swindow) * swindow
+    rounded_delay <- floor(total_delay / swindow) * swindow
 
     # Accept the sample if it's within the valid range (apply truncation)
-    if (rounded_delay > 0 && rounded_delay <= D) {
+    if (rounded_delay >= 0 && rounded_delay < D) {
       samples[i] <- rounded_delay
       i <- i + 1
     }
