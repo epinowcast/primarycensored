@@ -27,26 +27,29 @@ delayed reporting scenarios in epidemiology and other fields.
 ## Installation
 
 <details>
-
-<summary>Installing the package</summary>
+<summary>
+Installing the package
+</summary>
 
 You can install the latest released version using the normal `R`
 function, though you need to point to `r-universe` instead of CRAN:
 
 ``` r
 install.packages(
-  "primarycensoreddist", repos = "https://epinowcast.r-universe.dev"
+  "primarycensoreddist",
+  repos = "https://epinowcast.r-universe.dev"
 )
 ```
 
 Alternatively, you can use the [`remotes`
 package](https://remotes.r-lib.org/) to install the development version
-from Github (warning\! this version may contain breaking changes and/or
+from Github (warning! this version may contain breaking changes and/or
 bugs):
 
 ``` r
 remotes::install_github(
-  "epinowcast/primarycensoreddist", dependencies = TRUE
+  "epinowcast/primarycensoreddist",
+  dependencies = TRUE
 )
 ```
 
@@ -56,7 +59,8 @@ tag (e.g. this installs
 
 ``` r
 remotes::install_github(
-  "epinowcast/primarycensoreddist", dependencies = TRUE, ref = "v0.2.0"
+  "epinowcast/primarycensoreddist",
+  dependencies = TRUE, ref = "v0.2.0"
 )
 ```
 
@@ -65,10 +69,10 @@ if needed, e.g. if you want to try out a specific unreleased feature,
 but not the absolute latest developmental version.*
 
 </details>
-
 <details>
-
-<summary>Installing CmdStan (optional for Stan functionality)</summary>
+<summary>
+Installing CmdStan (optional for Stan functionality)
+</summary>
 
 If you wish to use the Stan functions, you will need to install
 [CmdStan](https://mc-stan.org/users/interfaces/cmdstan), which also
@@ -103,11 +107,12 @@ need to install a past version of CmdStan, which you can do with the
 ## Resources
 
 We provide a range of other documentation, case studies, and community
-spaces to ask (and answer\!) questions:
+spaces to ask (and answer!) questions:
 
 <details>
-
-<summary>Package Website</summary>
+<summary>
+Package Website
+</summary>
 
 The [`primarycensoreddist`
 website](https://primarycensoreddist.epinowcast.org/) includes a
@@ -117,10 +122,10 @@ documentation for [the latest development
 version](https://primarycensoreddist.epinowcast.org/dev/).
 
 </details>
-
 <details>
-
-<summary>Vignettes</summary>
+<summary>
+Vignettes
+</summary>
 
 We have created [package
 vignettes](https://primarycensoreddist.epinowcast.org/articles) to help
@@ -128,10 +133,10 @@ you get started with primarycensoreddist and to highlight other features
 with case studies.
 
 </details>
-
 <details>
-
-<summary>Organisation Website</summary>
+<summary>
+Organisation Website
+</summary>
 
 Our [organisation website](https://www.epinowcast.org/) includes links
 to other resources, [guest posts](https://www.epinowcast.org/blog.html),
@@ -139,10 +144,10 @@ and [seminar schedule](https://www.epinowcast.org/seminars.html) for
 both upcoming and past recordings.
 
 </details>
-
 <details>
-
-<summary>Community Forum</summary>
+<summary>
+Community Forum
+</summary>
 
 Our [community forum](https://community.epinowcast.org/) has areas for
 [question and answer](https://community.epinowcast.org/c/interface/15)
@@ -156,7 +161,7 @@ disease, you may find this useful even if do not use
 
 ## Contributing
 
-We welcome contributions and new contributors\! We particularly
+We welcome contributions and new contributors! We particularly
 appreciate help on [identifying and identified
 issues](https://github.com/epinowcast/primarycensoreddist/issues).
 Please check and add to the issues, and/or add a [pull
@@ -202,25 +207,23 @@ outline](https://package.epinowcast.org/articles/model.html). If you use
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-
 <!-- prettier-ignore-start -->
-
 <!-- markdownlint-disable -->
 
 All contributions to this project are gratefully acknowledged using the
 [`allcontributors`
 package](https://github.com/ropenscilabs/allcontributors) following the
 [all-contributors](https://allcontributors.org) specification.
-Contributions of any kind are welcome\!
+Contributions of any kind are welcome!
 
 ### Code
 
-### Issue Authors
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>
 
-### Issue Contributors
+### Issues
+
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>
 
 <!-- markdownlint-enable -->
-
 <!-- prettier-ignore-end -->
-
 <!-- ALL-CONTRIBUTORS-LIST:END -->
