@@ -6,6 +6,7 @@
 \usage{
 pcd_load_stan_functions(
   functions = NULL,
+  stan_path = primarycensoreddist::pcd_stan_path(),
   wrap_in_block = FALSE,
   write_to_file = FALSE,
   output_file = "pcd_stan_functions.stan"
@@ -14,6 +15,9 @@ pcd_load_stan_functions(
 \arguments{
 \item{functions}{Character vector of function names to load. Defaults to all
 functions.}
+
+\item{stan_path}{Character string, the path to the Stan code. Defaults to the
+path to the Stan code in the primarycensoreddist package.}
 
 \item{wrap_in_block}{Logical, whether to wrap the functions in a
 \verb{functions\{\}} block. Default is FALSE.}

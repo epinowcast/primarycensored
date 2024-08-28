@@ -9,12 +9,14 @@ pcd_stan_path <- function() {
 
 #' List available Stan functions
 #'
+#' @inheritParams pcd_load_stan_functions
 #' @return A character vector of available Stan function names
 #' @export
 #' @aliases pcd_stan_functions
-pcd_stan_functions <- function() {
+pcd_stan_functions <- function(
+    stan_path = primarycensoreddist::pcd_stan_path()) {
   stan_files <- list.files(
-    pcd_stan_path(),
+    stan_path,
     pattern = "\\.stan$", full.names = TRUE,
     recursive = TRUE
   )
@@ -37,6 +39,9 @@ pcd_stan_functions <- function() {
 #' @param functions Character vector of function names to load. Defaults to all
 #' functions.
 #'
+#' @param stan_path Character string, the path to the Stan code. Defaults to the
+#' path to the Stan code in the primarycensoreddist package.
+#'
 #' @param wrap_in_block Logical, whether to wrap the functions in a
 #' `functions{}` block. Default is FALSE.
 #'
@@ -50,10 +55,11 @@ pcd_stan_functions <- function() {
 #' @export
 #' @aliases pcd_load_stan_functions
 pcd_load_stan_functions <- function(
-    functions = NULL, wrap_in_block = FALSE, write_to_file = FALSE,
+    functions = NULL, stan_path = primarycensoreddist::pcd_stan_path(),
+    wrap_in_block = FALSE, write_to_file = FALSE,
     output_file = "pcd_stan_functions.stan") {
   stan_files <- list.files(
-    pcd_stan_path(),
+    stan_paths,
     pattern = "\\.stan$", full.names = TRUE,
     recursive = TRUE
   )

@@ -4,7 +4,11 @@
 \alias{pcd_stan_functions}
 \title{List available Stan functions}
 \usage{
-pcd_stan_functions()
+pcd_stan_functions(stan_path = primarycensoreddist::pcd_stan_path())
+}
+\arguments{
+\item{stan_path}{Character string, the path to the Stan code. Defaults to the
+path to the Stan code in the primarycensoreddist package.}
 }
 \value{
 A character vector of available Stan function names
