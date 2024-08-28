@@ -112,6 +112,7 @@ If making use of our methodology or the methodology on which ours is based, plea
 
 
 
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -120,10 +121,18 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 
 ### Code
 
-### Issue Authors
 
-### Issue Contributors
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>
+
+
+
+### Issues
+
+
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>
+
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
