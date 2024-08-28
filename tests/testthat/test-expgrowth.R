@@ -28,7 +28,7 @@ test_that("rexpgrowth generates samples within the correct range", {
   n <- 1000
   samples <- rexpgrowth(n, min, max, r)
 
-  expect_true(all(samples >= min & samples <= max))
+  expect_true(all(samples >= min & samples < max))
 })
 
 test_that("rexpgrowth mean approximates theoretical mean", {

@@ -1,13 +1,24 @@
 #' Generate random samples from a primary event censored distribution
 #'
 #' @inheritParams pprimarycensoreddist
-#' @param n Number of random samples to generate
-#' @param rprimary Function to generate random samples from the primary
-#'   distribution (default is \code{runif})
-#' @param rprimary_args List of additional arguments to be passed to rprimary
-#' @param ... Additional arguments to be passed to the distribution function
 #'
-#' @return Vector of random samples from the primary event censored distribution
+#' @param rdist Function to generate random samples from the delay distribution
+#' for example \code{rlnorm} for lognormal distribution.
+#'
+#' @param n Number of random samples to generate.
+#'
+#' @param rprimary Function to generate random samples from the primary
+#' distribution (default is \code{runif}).
+#'
+#' @param rprimary_args List of additional arguments to be passed to rprimary.
+#'
+#' @param oversampling_factor Factor by which to oversample the number of
+#' samples to account for truncation (default is 1.2).
+#'
+#' @param ... Additional arguments to be passed to the distribution function.
+#'
+#' @return Vector of random samples from the primary event censored
+#' distribution
 #'
 #' @aliases rpcens
 #'
@@ -21,36 +32,42 @@
 #'   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
 #'   meanlog = 0, sdlog = 1
 #' )
-rprimarycensoreddist <- function(n, pdist, pwindow = 1, swindow = 1,
+rprimarycensoreddist <- function(n, rdist, pwindow = 1, swindow = 1,
                                  D = Inf, rprimary = stats::runif,
-                                 rprimary_args = list(), ...) {
-  check_pdist(pdist, D, swindow, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+                                 rprimary_args = list(),
+                                 oversampling_factor = 1.2, ...) {
 
-  samples <- numeric(n)
-  i <- 1
+  # Generate more samples than needed to account for truncation
+  n_generate <- ceiling(n * oversampling_factor)
 
-  while (i <= n) {
-    # Generate primary event time
-    p <- do.call(
-      rprimary, c(list(1), rprimary_args, list(min = 0, max = pwindow))
+  # Generate primary event times
+  p <- do.call(
+    rprimary, c(list(n_generate), rprimary_args, list(min = 0, max = pwindow))
+  )
+
+  # Generate delays from the specified distribution
+  delay <- rdist(n_generate, ...)
+
+  # Calculate total delays
+  total_delay <- p + delay
+
+  # Round to the nearest swindow
+  rounded_delay <- floor(total_delay / swindow) * swindow
+
+  # Apply truncation and select valid samples
+  valid_samples <- rounded_delay[rounded_delay >= 0 & rounded_delay < D]
+
+  # If we don't have enough samples, generate more
+  while (length(valid_samples) < n) {
+    additional_samples <- rprimarycensoreddist(
+      n - length(valid_samples), rdist, pwindow, swindow, D, rprimary,
+      rprimary_args, ...
     )
-
-    # Generate delay from the specified distribution
-    delay <- pdist(1, ...)
-
-    # Calculate total delay
-    total_delay <- p + delay
-
-    # Round to the nearest swindow
-    rounded_delay <- floor(total_delay / swindow) * swindow
-
-    # Accept the sample if it's within the valid range (apply truncation)
-    if (rounded_delay >= 0 && rounded_delay < D) {
-      samples[i] <- rounded_delay
-      i <- i + 1
-    }
+    valid_samples <- c(valid_samples, additional_samples)
   }
+
+  # Return exactly n samples
+  samples <- valid_samples[1:n]
 
   return(samples)
 }

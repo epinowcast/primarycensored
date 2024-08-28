@@ -7,30 +7,33 @@
 \usage{
 rprimarycensoreddist(
   n,
-  pdist,
+  rdist,
   pwindow = 1,
   swindow = 1,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
+  oversampling_factor = 1.2,
   ...
 )
 
 rpcens(
   n,
-  pdist,
+  rdist,
   pwindow = 1,
   swindow = 1,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
+  oversampling_factor = 1.2,
   ...
 )
 }
 \arguments{
-\item{n}{Number of random samples to generate}
+\item{n}{Number of random samples to generate.}
 
-\item{pdist}{Distribution function (CDF)}
+\item{rdist}{Function to generate random samples from the delay distribution
+for example \code{rlnorm} for lognormal distribution.}
 
 \item{pwindow}{Primary event window}
 
@@ -38,14 +41,18 @@ rpcens(
 truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
 \item{rprimary}{Function to generate random samples from the primary
-distribution (default is \code{runif})}
+distribution (default is \code{runif}).}
 
-\item{rprimary_args}{List of additional arguments to be passed to rprimary}
+\item{rprimary_args}{List of additional arguments to be passed to rprimary.}
 
-\item{...}{Additional arguments to be passed to the distribution function}
+\item{oversampling_factor}{Factor by which to oversample the number of
+samples to account for truncation (default is 1.2).}
+
+\item{...}{Additional arguments to be passed to the distribution function.}
 }
 \value{
-Vector of random samples from the primary event censored distribution
+Vector of random samples from the primary event censored
+distribution
 }
 \description{
 Generate random samples from a primary event censored distribution

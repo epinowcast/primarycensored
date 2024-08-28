@@ -9,7 +9,10 @@
 #' @examples
 #' check_pdist(pnorm, D = 10, swindow = 1)
 check_pdist <- function(pdist, D, swindow, ...) {
-  test_values <- sample(seq(0, D, by = swindow), 3)
+  if (is.infinite(D)) {
+    D <- 1000
+  }
+  test_values <- sort(sample(seq(0, D, by = swindow), 3))
   test_results <- pdist(test_values, ...)
 
   if (!all(diff(test_results) >= 0) ||
@@ -18,6 +21,8 @@ check_pdist <- function(pdist, D, swindow, ...) {
       "pdist is not a valid cumulative distribution function (CDF). ",
       "Please ensure you're using a p-function (e.g., pnorm, punif) and not ",
       "a d-function (e.g., dnorm, dbinom).",
+      "For values ", toString(test_values),
+      " the results were ", toString(round(test_results, 3)), ". ",
       "You can use the `check_pdist` function to check if your p-function ",
       "is correct."
     )

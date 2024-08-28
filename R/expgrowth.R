@@ -99,7 +99,7 @@ rexpgrowth <- function(n, min = 0, max = 1, r) {
   if (abs(r) < 1e-10) {
     samples <- min + u * (max - min)
   } else {
-    samples <- min + log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r
+    samples <- log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r
   }
   samples
 }

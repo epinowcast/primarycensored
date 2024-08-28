@@ -7,5 +7,5 @@ test_that("rprimarycensoreddist generates samples within the correct range", {
     D = D, meanlog = 0, sdlog = 1
   )
 
-  expect_true(all(samples > 0 & samples <= D))
+  expect_true(all(samples >= 0 & samples < D))
 })
