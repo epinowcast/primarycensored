@@ -7,7 +7,7 @@
 \usage{
 dprimarycensoreddist(
   x,
-  dist_func,
+  pdist,
   pwindow = 1,
   swindow = 1,
   D = Inf,
@@ -19,7 +19,7 @@ dprimarycensoreddist(
 
 dpcens(
   x,
-  dist_func,
+  pdist,
   pwindow = 1,
   swindow = 1,
   D = Inf,
@@ -32,7 +32,7 @@ dpcens(
 \arguments{
 \item{x}{Vector of quantiles}
 
-\item{dist_func}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF)}
 
 \item{pwindow}{Primary event window}
 

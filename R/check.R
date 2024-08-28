@@ -3,26 +3,57 @@
 #' This function tests whether a given function behaves like a valid CDF by
 #' checking if it's monotonically increasing and bounded between 0 and 1.
 #'
-#' @param dist_func The distribution function to be checked
-#'
-#' @param D The maximum delay (truncation point)
-#'
-#' @param swindow The secondary event window
-#'
-#' @param ... Additional arguments to be passed to dist_func
-#'
+#' @inheritParams pprimarycensoreddist
 #' @return NULL. The function will stop execution with an error message if
-#'         dist_func is not a valid CDF.
-check_dist_func <- function(dist_func, D, swindow, ...) {
+#'         pdist is not a valid CDF.
+#' @examples
+#' check_pdist(pnorm, D = 10, swindow = 1)
+check_pdist <- function(pdist, D, swindow, ...) {
   test_values <- sample(seq(0, D, by = swindow), 3)
-  test_results <- dist_func(test_values, ...)
+  test_results <- pdist(test_values, ...)
 
   if (!all(diff(test_results) >= 0) ||
     !all(test_results >= 0 & test_results <= 1)) {
     stop(
-      "dist_func is not a valid cumulative distribution function (CDF). ",
+      "pdist is not a valid cumulative distribution function (CDF). ",
       "Please ensure you're using a p-function (e.g., pnorm, punif) and not ",
-      "a d-function (e.g., dnorm, dbinom)."
+      "a d-function (e.g., dnorm, dbinom).",
+      "You can use the `check_pdist` function to check if your p-function ",
+      "is correct."
+    )
+  }
+  return(invisible(NULL))
+}
+
+#' Check if a function is a valid probability density function (PDF)
+#'
+#' This function tests whether a given function behaves like a valid PDF by
+#' checking if it integrates to approximately 1 over the specified range.
+#'
+#' @inheritParams pprimarycensoreddist
+#' @param tolerance The tolerance for the integral to be considered close to 1
+#'
+#' @return NULL. The function will stop execution with an error message if
+#'         dprimary is not a valid PDF.
+#' @examples
+#' dprimary <- function(x, min = 0, max = 1) {
+#'   ifelse(x >= min & x <= max, 1, 0)
+#' }
+#' check_dprimary(dprimary, pwindow = 1)
+check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
+                           tolerance = 1e-3) {
+  integrand <- function(x) {
+    do.call(dprimary, c(list(x = x, min = 0, max = pwindow), dprimary_args))
+  }
+  integral <- stats::integrate(integrand, lower = 0, upper = pwindow)$value
+
+  if (abs(integral - 1) > tolerance) {
+    stop(
+      "dprimary is not a valid probability density function (PDF). ",
+      "It should integrate to approximately 1 over the range [0, pwindow]. ",
+      "Calculated integral: ", round(integral, 4),
+      "You can use the `check_dprimary` function to check if your d-function ",
+      "is correct."
     )
   }
   return(invisible(NULL))

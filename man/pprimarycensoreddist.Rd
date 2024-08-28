@@ -7,7 +7,7 @@
 \usage{
 pprimarycensoreddist(
   q,
-  dist_func,
+  pdist,
   pwindow = 1,
   D = Inf,
   dprimary = dunif,
@@ -17,7 +17,7 @@ pprimarycensoreddist(
 
 ppcens(
   q,
-  dist_func,
+  pdist,
   pwindow = 1,
   D = Inf,
   dprimary = dunif,
@@ -28,7 +28,7 @@ ppcens(
 \arguments{
 \item{q}{Vector of quantiles}
 
-\item{dist_func}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF)}
 
 \item{pwindow}{Primary event window}
 
@@ -48,7 +48,7 @@ dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters.}
 
-\item{...}{Additional arguments to be passed to dist_func}
+\item{...}{Additional arguments to be passed to pdist}
 }
 \value{
 Vector of primary event censored CDFs, normalized by D if finite

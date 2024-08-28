@@ -7,7 +7,7 @@
 \usage{
 rprimarycensoreddist(
   n,
-  dist_func,
+  pdist,
   pwindow = 1,
   swindow = 1,
   D = Inf,
@@ -18,7 +18,7 @@ rprimarycensoreddist(
 
 rpcens(
   n,
-  dist_func,
+  pdist,
   pwindow = 1,
   swindow = 1,
   D = Inf,
@@ -30,7 +30,7 @@ rpcens(
 \arguments{
 \item{n}{Number of random samples to generate}
 
-\item{dist_func}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF)}
 
 \item{pwindow}{Primary event window}
 

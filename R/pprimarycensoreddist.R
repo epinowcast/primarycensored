@@ -2,7 +2,7 @@
 #'
 #' @param q Vector of quantiles
 #'
-#' @param dist_func Distribution function (CDF)
+#' @param pdist Distribution function (CDF)
 #'
 #' @param pwindow Primary event window
 #'
@@ -22,7 +22,7 @@
 #' pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
 #' and rate parameters.
 #'
-#' @param ... Additional arguments to be passed to dist_func
+#' @param ... Additional arguments to be passed to pdist
 #'
 #' @return Vector of primary event censored CDFs, normalized by D if finite
 #' (truncation adjustment)
@@ -40,9 +40,10 @@
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
 pprimarycensoreddist <- function(
-    q, dist_func, pwindow = 1, D = Inf, dprimary = dunif,
+    q, pdist, pwindow = 1, D = Inf, dprimary = dunif,
     dprimary_args = list(), ...) {
-  check_dist_func(dist_func, D, swindow, ...)
+  check_pdist(pdist, D, swindow, ...)
+  check_dprimary(dprimary, pwindow, dprimary_args)
 
   result <- vapply(q, function(d) {
     if (d <= 0) {
@@ -51,7 +52,7 @@ pprimarycensoreddist <- function(
       if (is.infinite(D)) {
         integrand <- function(p) {
           d_adj <- d - p
-          dist_func(d_adj, ...) *
+          pdist(d_adj, ...) *
             do.call(
               dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
             )
@@ -60,7 +61,7 @@ pprimarycensoreddist <- function(
         integrand <- function(p) {
           d_adj <- d - p
           D_adj <- D - p
-          dist_func(d_adj, ...) / dist_func(D_adj, ...) *
+          pdist(d_adj, ...) / pdist(D_adj, ...) *
             do.call(
               dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
             )

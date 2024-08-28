@@ -21,9 +21,12 @@
 #'   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
 #'   meanlog = 0, sdlog = 1
 #' )
-rprimarycensoreddist <- function(n, dist_func, pwindow = 1, swindow = 1,
+rprimarycensoreddist <- function(n, pdist, pwindow = 1, swindow = 1,
                                  D = Inf, rprimary = stats::runif,
                                  rprimary_args = list(), ...) {
+  check_pdist(pdist, D, swindow, ...)
+  check_dprimary(dprimary, pwindow, dprimary_args)
+
   samples <- numeric(n)
   i <- 1
 
@@ -34,7 +37,7 @@ rprimarycensoreddist <- function(n, dist_func, pwindow = 1, swindow = 1,
     )
 
     # Generate delay from the specified distribution
-    delay <- dist_func(1, ...)
+    delay <- pdist(1, ...)
 
     # Calculate total delay
     total_delay <- p + delay

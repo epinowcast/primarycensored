@@ -26,19 +26,21 @@
 #'   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 #' )
 dprimarycensoreddist <- function(
-    x, dist_func, pwindow = 1, swindow = 1,
+    x, pdist, pwindow = 1, swindow = 1,
     D = Inf, dprimary = dunif,
     dprimary_args = list(), log = FALSE, ...) {
-  check_dist_func(dist_func, D, swindow, ...)
+  check_pdist(pdist, D, swindow, ...)
+  check_dprimary(dprimary, pwindow, dprimary_args)
+
   result <- vapply(x, function(d) {
     if (d < 0) {
       return(0) # Return log(0) for non-positive delays
     } else {
       pprimarycensoreddist(
-        d + swindow, dist_func, pwindow, D, dprimary, dprimary_args, ...
+        d + swindow, pdist, pwindow, D, dprimary, dprimary_args, ...
       ) -
         pprimarycensoreddist(
-          d, dist_func, pwindow, D, dprimary, dprimary_args, ...
+          d, pdist, pwindow, D, dprimary, dprimary_args, ...
         )
     }
   }, numeric(1))
