@@ -4,15 +4,11 @@ on:
   push:
     branches:
       - main
-      - master
-      - develop
   schedule:
     - cron: '5 4 * * 1'
   pull_request:
     branches:
       - main
-      - master
-      - develop
   merge_group:
   workflow_dispatch:
 
@@ -31,7 +27,8 @@ jobs:
         config:
           - {os: ubuntu-latest,   r: 'release', rtools: ''}
           - {os: ubuntu-latest,   r: 'oldrel-1', rtools: ''}
-          - {os: ubuntu-latest,   r: '4.0', rtools: ''}
+          - {os: macOS-latest,   r: 'release', rtools: ''}
+          - {os: windows-latest, r: 'release', rtools: ''}
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
