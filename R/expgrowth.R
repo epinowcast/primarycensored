@@ -1,7 +1,7 @@
 #' Exponential growth distribution functions
 #'
 #' Density, distribution function, and random generation for the exponential
-#' growth distribution with parameters `min`, `max`, and `r`.
+#' growth distribution.
 #'
 #' @param x,q Vector of quantiles.
 #' @param n Number of observations. If `length(n) > 1`, the length is taken to

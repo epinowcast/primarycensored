@@ -39,7 +39,7 @@ maximum of the lengths of the numerical arguments for the other functions.
 }
 \description{
 Density, distribution function, and random generation for the exponential
-growth distribution with parameters \code{min}, \code{max}, and \code{r}.
+growth distribution.
 }
 \details{
 The exponential growth distribution is defined on the interval \link{min, max}
