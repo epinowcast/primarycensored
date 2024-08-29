@@ -96,7 +96,7 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   * real integrand_value = primary_censored_integrand(p, xc, theta, x_r, x_i);
   */
 real primary_censored_integrand(real p, real xc, array[] real theta,
-                                data array[] real x_r, data array[] int x_i) {
+                                array[] real x_r, array[] int x_i) {
   real d = xc;
   real pwindow = x_r[1];
   int dist_id = x_i[1];
@@ -132,7 +132,7 @@ real primary_censored_integrand(real p, real xc, array[] real theta,
   * real integrand_value = primary_censored_integrand_truncated(p, xc, theta, x_r, x_i);
   */
 real primary_censored_integrand_truncated(real p, real xc, array[] real theta,
-                                          data array[] real x_r, data array[] int x_i) {
+                                          array[] real x_r, array[] int x_i) {
   real d = xc;
   real pwindow = x_r[1];
   int dist_id = x_i[1];
@@ -174,8 +174,10 @@ real primary_censored_integrand_truncated(real p, real xc, array[] real theta,
   * array[0] real primary_params = {};
   * real cdf = primary_censored_dist_cdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
-                               real pwindow, real D, int primary_dist_id,
+real primary_censored_dist_cdf(data real d, data int dist_id,
+                               array[] real params,
+                               data real pwindow, data real D,
+                               data int primary_dist_id,
                                array[] real primary_params) {
   real result;
   if (d <= 0 || d >= D) {
@@ -185,12 +187,14 @@ real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
   if (is_inf(D)) {
     result = integrate_1d(
       primary_censored_integrand,
-      0, pwindow, {d}, params, {pwindow}, {dist_id, primary_dist_id}
+      0.0, pwindow, {d}, {params, primary_params}, {pwindow},
+      {dist_id, primary_dist_id}
     );
   } else {
     result = integrate_1d(
       primary_censored_integrand_truncated,
-      0, pwindow, {d}, append_array(params, {D}), {pwindow}, {dist_id, primary_dist_id}
+      0.0, pwindow, {d}, {params, primary_params}, {pwindow, D},
+      {dist_id, primary_dist_id}
     );
   }
 
@@ -221,8 +225,10 @@ real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
   * array[0] real primary_params = {};
   * real log_cdf = primary_censored_dist_lcdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
-                                real pwindow, real D, int primary_dist_id,
+real primary_censored_dist_lcdf(data real d, data int dist_id,
+       array[] real params,
+                                data real pwindow, data real D,
+                                data int primary_dist_id,
                                 array[] real primary_params) {
   if (d <= 0 || d >= D) {
     return negative_infinity();
@@ -256,9 +262,11 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
   * array[0] real primary_params = {};
   * real log_pmf = primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_lpmf(real d, int dist_id, array[] real params,
-                                real pwindow, real swindow, real D,
-                                int primary_dist_id, array[] real primary_params) {
+real primary_censored_dist_lpmf(data real d, data int dist_id,
+                                array[] real params,
+                                data real pwindow, data real swindow,
+                                data real D, data int primary_dist_id,
+                                array[] real primary_params) {
   real log_cdf_upper = primary_censored_dist_lcdf(d + swindow, dist_id, params,
                         pwindow, D, primary_dist_id, primary_params);
   real log_cdf_lower = primary_censored_dist_lcdf(d, dist_id, params,
@@ -292,9 +300,11 @@ real primary_censored_dist_lpmf(real d, int dist_id, array[] real params,
   * array[1] real primary_params = {0.5}; // growth rate
   * real pmf = primary_censored_dist_pmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_pmf(real d, int dist_id, array[] real params,
-                               real pwindow, real swindow, real D,
-                               int primary_dist_id, array[] real primary_params) {
+real primary_censored_dist_pmf(data real d, data int dist_id,
+                                array[] real params,
+                                data real pwindow, data real swindow,
+                                data real D, data int primary_dist_id,
+                                array[] real primary_params) {
   return exp(primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params));
 }
 
@@ -325,8 +335,10 @@ real primary_censored_dist_pmf(real d, int dist_id, array[] real params,
   * array[0] real primary_params = {};
   * vector[D] log_pmf = primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params);
   */
-vector primary_censored_sint_lpmf(int D, int dist_id, array[] real params,
-                                  real pwindow, int primary_dist_id, array[] real primary_params) {
+vector primary_censored_sint_lpmf(data int D, data int dist_id,
+                array[] real params,
+                                  data real pwindow, data int primary_dist_id,
+                                  array[] real primary_params) {
   vector[D] log_cdfs;
   vector[D] log_pmfs;
   real log_normalizer;
@@ -375,7 +387,9 @@ vector primary_censored_sint_lpmf(int D, int dist_id, array[] real params,
 * array[1] real primary_params = {0.5}; // growth rate
 * vector[D] pmf = primary_censored_sint_pmf(D, dist_id, params, pwindow, primary_dist_id, primary_params);
 */
-vector primary_censored_sint_pmf(int D, int dist_id, array[] real params,
-                                 real pwindow, int primary_dist_id, array[] real primary_params) {
+vector primary_censored_sint_pmf(data int D, data int dist_id,
+                                array[] real params,
+                                data real pwindow, data int primary_dist_id,
+                                array[] real primary_params) {
   return exp(primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params));
 }
