@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Censored Distributions in R and Stan <a href="https://primarycensoreddist.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensoreddist website" /></a>
+# Primary Event Censored Distributions in R and Stan <a href="https://primarycensoreddist.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensoreddist website" /></a>
 
 <!-- badges: start -->
 

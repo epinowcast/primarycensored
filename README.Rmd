@@ -13,7 +13,7 @@ knitr::opts_chunk$set(
   message = FALSE, warning = FALSE
 )
 ```
-# Censored Distributions in R and Stan <a href="https://primarycensoreddist.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensoreddist website" /></a>
+# Primary Event Censored Distributions in R and Stan <a href="https://primarycensoreddist.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensoreddist website" /></a>
 
 <!-- badges: start -->
 [![Lifecycle:
@@ -135,4 +135,3 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
-
