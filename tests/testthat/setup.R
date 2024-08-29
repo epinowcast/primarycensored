@@ -5,7 +5,6 @@ options(datatable.print.keys = FALSE)
 if (on_ci() && Sys.info()["sysname"] == "Linux" && not_on_cran()) {
   library(cmdstanr)
   stan_functions <- pcd_load_stan_functions(
-    stan_path = file.path("inst", "stan"),
     wrap_in_block = TRUE,
     write_to_file = TRUE,
     output_file = file.path(tempdir(), "pcd_stan_functions.stan")

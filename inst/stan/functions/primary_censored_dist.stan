@@ -219,7 +219,7 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
   }
   return log(
     primary_censored_dist_cdf(
-      d, dist_id, params, pwindow, D, primary_dist_id, primary_params
+      d | dist_id, params, pwindow, D, primary_dist_id, primary_params
     )
   );
 }
@@ -227,7 +227,7 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
 /**
   * Compute the primary event censored log PMF for a single delay
   *
-  * @param d Delay
+  * @param d Delay (integer)
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -250,14 +250,14 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
   * array[0] real primary_params = {};
   * real log_pmf = primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_lpmf(real d, int dist_id, array[] real params,
+real primary_censored_dist_lpmf(int d, int dist_id, array[] real params,
                                 data real pwindow, real swindow, data real D,
                                 int primary_dist_id, array[] real primary_params) {
   real log_cdf_upper = primary_censored_dist_lcdf(
-    d + swindow, dist_id, params, pwindow, D, primary_dist_id, primary_params
+    d + swindow | dist_id, params, pwindow, D, primary_dist_id, primary_params
   );
   real log_cdf_lower = primary_censored_dist_lcdf(
-    d, dist_id, params, pwindow, D, primary_dist_id, primary_params
+    d | dist_id, params, pwindow, D, primary_dist_id, primary_params
   );
   return log_diff_exp(log_cdf_upper, log_cdf_lower);
 }
@@ -265,7 +265,7 @@ real primary_censored_dist_lpmf(real d, int dist_id, array[] real params,
 /**
   * Compute the primary event censored PMF for a single delay
   *
-  * @param d Delay
+  * @param d Delay (integer)
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -288,12 +288,12 @@ real primary_censored_dist_lpmf(real d, int dist_id, array[] real params,
   * array[0] real primary_params = {};
   * real pmf = primary_censored_dist_pmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_pmf(real d, int dist_id, array[] real params,
+real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
                                data real pwindow, real swindow, data real D,
                                int primary_dist_id, array[] real primary_params) {
   return exp(
     primary_censored_dist_lpmf(
-      d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
+      d | dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
     )
   );
 }
@@ -330,13 +330,15 @@ real primary_censored_dist_pmf(real d, int dist_id, array[] real params,
   * array[0] real primary_params = {};
   * vector[max_delay] log_pmf = primary_censored_sint_lpmf(max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params);
   */
-vector primary_censored_sint_lpmf(int max_delay, data real D, int dist_id,
-                                  array[] real params, data real pwindow,
-                                  int primary_dist_id, array[] real primary_params) {
+vector primary_censored_sint_lpmf_vectorized(
+  int max_delay, data real D, int dist_id,
+  array[] real params, data real pwindow,
+  int primary_dist_id, array[] real primary_params
+) {
 
   vector[max_delay] log_pmfs;
   real log_normalizer;
-  real upper_interval = max_delay + 1.0;
+  int upper_interval = max_delay + 1;
   vector[max_delay] log_cdfs;
 
   // Check if D is at least max_delay + 1
@@ -346,12 +348,16 @@ vector primary_censored_sint_lpmf(int max_delay, data real D, int dist_id,
 
   // Compute log CDFs
   for (d in 1:upper_interval) {
-    log_cdfs[d] = primary_censored_dist_lcdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
+    log_cdfs[d] = primary_censored_dist_lcdf(
+      d | dist_id, params, pwindow, D, primary_dist_id, primary_params
+    );
   }
 
   // Compute log normalizer using upper_interval
   if (D > upper_interval) {
-    log_normalizer = primary_censored_dist_lcdf(upper_interval, dist_id, params, pwindow, D, primary_dist_id, primary_params);
+    log_normalizer = primary_censored_dist_lcdf(
+      upper_interval | dist_id, params, pwindow, D, primary_dist_id, primary_params
+    );
   } else {
     log_normalizer = log_cdfs[upper_interval];
   }
@@ -395,11 +401,14 @@ vector primary_censored_sint_lpmf(int max_delay, data real D, int dist_id,
   * array[0] real primary_params = {};
   * vector[max_delay] pmf = primary_censored_sint_pmf(max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params);
   */
-vector primary_censored_sint_pmf(int max_delay, real D, int dist_id,
-                                  array[] real params, real pwindow,
-                                  int primary_dist_id, array[] real primary_params) {
+vector primary_censored_sint_pmf_vectorized(
+  int max_delay, data real D, int dist_id,
+  array[] real params, data real pwindow,
+  int primary_dist_id,
+  array[] real primary_params
+) {
   return exp(
-    primary_censored_sint_lpmf(
+    primary_censored_sint_lpmf_vectorized(
       max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
   );
