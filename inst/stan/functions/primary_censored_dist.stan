@@ -174,7 +174,7 @@ real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
                                array[] real primary_params) {
   real result;
   if (d <= 0 || d >= D) {
-  return 0;
+    return 0;
   }
 
   array[size(params) + size(primary_params) + 1] real theta =
