@@ -52,13 +52,18 @@ jobs:
 
       - name: Compile model and check syntax
         run: |
-          model <- epinowcast::enw_model()
+          model <- primarycensoreddist::pcd_load_stan_functions(
+            wrap_in_block = TRUE,
+            write_to_file = TRUE,
+            output_file = file.path(tempdir(), "pcd_stan_functions.stan")
+          )
+          model <- cmdstanr::cmdstan_model(model)
           # If the model is not syntactically correct above will fail
           # however it may be correct enougth to compile but still contain
           # soft depreciated syntax and so we check the syntax again below
           # and test the output.
           message <- capture.output(
-            model$check_syntax(pedantic = FALSE),
+            model$check_syntax(pedantic = TRUE),
             type = "message"
           )
           # We can't use TRUE here as pendatic check return lots of false
