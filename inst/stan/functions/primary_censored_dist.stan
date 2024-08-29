@@ -95,7 +95,9 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   * // standard deviation on log scale
   * array[1] real x_r = {1.0}; // pwindow
   * array[2] int x_i = {1, 1}; // dist_id = 1 (Lognormal), primary_dist_id = 1 (Uniform)
-  * real integrand_value = primary_censored_integrand(p, xc, theta, x_r, x_i);
+  * real integrand_value = primary_censored_integrand(
+  *   p, xc, theta, x_r, x_i
+  * );
   */
   real primary_censored_integrand(real x, real xc, array[] real theta,
                                   array[] real x_r, array[] int x_i) {
@@ -162,7 +164,9 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   * real D = positive_infinity();
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * real cdf = primary_censored_dist_cdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
+  * real cdf = primary_censored_dist_cdf(
+  *   d, dist_id, params, pwindow, D, primary_dist_id, primary_params
+  * );
   */
 real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
                                data real pwindow, data real D,
@@ -208,7 +212,9 @@ real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
   * real D = positive_infinity();
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * real log_cdf = primary_censored_dist_lcdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
+  * real log_cdf = primary_censored_dist_lcdf(
+  *   d, dist_id, params, pwindow, D, primary_dist_id, primary_params
+  * );
   */
 real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
                                 data real pwindow, data real D,
@@ -248,7 +254,9 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
   * real D = positive_infinity();
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * real log_pmf = primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
+  * real log_pmf = primary_censored_dist_lpmf(
+  *   d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
+  * );
   */
 real primary_censored_dist_lpmf(int d, int dist_id, array[] real params,
                                 data real pwindow, real swindow, data real D,
