@@ -328,9 +328,12 @@ real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
   * real pwindow = 7.0;
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * vector[max_delay] log_pmf = primary_censored_sint_lpmf(max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params);
+  * vector[max_delay] log_pmf =
+  *   primary_censored_sone_lpmf_vectorized(
+  *      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
+  *   );
   */
-vector primary_censored_sint_lpmf_vectorized(
+vector primary_censored_sone_lpmf_vectorized(
   int max_delay, data real D, int dist_id,
   array[] real params, data real pwindow,
   int primary_dist_id, array[] real primary_params
@@ -399,16 +402,19 @@ vector primary_censored_sint_lpmf_vectorized(
   * real pwindow = 7.0;
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * vector[max_delay] pmf = primary_censored_sint_pmf(max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params);
+  * vector[max_delay] pmf =
+  *   primary_censored_sone_pmf_vectorized(
+  *      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
+  *   );
   */
-vector primary_censored_sint_pmf_vectorized(
+vector primary_censored_sone_pmf_vectorized(
   int max_delay, data real D, int dist_id,
   array[] real params, data real pwindow,
   int primary_dist_id,
   array[] real primary_params
 ) {
   return exp(
-    primary_censored_sint_lpmf_vectorized(
+    primary_censored_sone_lpmf_vectorized(
       max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
   );
