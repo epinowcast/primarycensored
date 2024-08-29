@@ -1,6 +1,6 @@
 /**
- * Primary event censored distribution functions
- */
+  * Primary event censored distribution functions
+  */
 
 /**
   * Compute the log CDF of the delay distribution
@@ -78,8 +78,9 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
 /**
   * Compute the integrand for the primary censored distribution
   *
-  * @param p Integration variable
-  * @param xc Delay
+  * @param x Integration variable
+  * @param xc A high precision version of the distance from x to the nearest
+  * endpoint in a definite integral
   * @param theta Distribution parameters
   * @param x_r Real data (contains pwindow)
   * @param x_i Integer data (contains dist_id and primary_dist_id)
@@ -88,69 +89,58 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   *
   * @code
   * // Example: Lognormal delay distribution with uniform primary distribution
-  * real p = 0.5;
-  * real xc = 2.0;
-  * array[2] real theta = {0.0, 1.0}; // mean and standard deviation on log scale
+  * real x = 0.5;
+  * real xc = 1.5;
+  * array[2] real theta = {2.0, 0.0, 1.0}; // truncation point, mean and
+  * // standard deviation on log scale
   * array[1] real x_r = {1.0}; // pwindow
   * array[2] int x_i = {1, 1}; // dist_id = 1 (Lognormal), primary_dist_id = 1 (Uniform)
   * real integrand_value = primary_censored_integrand(p, xc, theta, x_r, x_i);
   */
-real primary_censored_integrand(real p, real xc, array[] real theta,
-                                array[] real x_r, array[] int x_i) {
-  real d = xc;
-  real pwindow = x_r[1];
-  int dist_id = x_i[1];
-  int primary_dist_id = x_i[2];
-  real d_adj = d - p;
+  real primary_censored_integrand(real x, real xc, array[] real theta,
+                                  array[] real x_r, array[] int x_i) {
+    // Unpack parameters
+    real d = theta[1];
+    int dist_id = x_i[1];
+    int primary_dist_id = x_i[2];
+    real pwindow = x_r[1];
+    real D = x_r[2];
+    int dist_params_len = x_i[3];
+    int primary_params_len = x_i[4];
 
-  real log_cdf = dist_lcdf(d_adj | theta, dist_id);
-  real log_primary_pdf = primary_dist_lpdf(
-    p | primary_dist_id, theta, 0, pwindow
-  );
+    // Extract distribution parameters
+    int n_params = size(theta) - 1;
+    array[dist_params_len] real params;
+    if (dist_params_len) {
+      params = theta[3:(2 + dist_params_len)];
+    }
+    array[primary_params_len] real primary_params;
+    if (primary_params_len) {
+      int theta_len = size(theta);
+      primary_params = theta[(theta_len - dist_params_len + 1):theta_len];
+    }
 
-  return exp(log_cdf + log_primary_pdf);
-}
+    // Compute adjusted delay
+    real d_adj = d - x;
 
-/**
-  * Compute the integrand for the truncated primary censored distribution
-  *
-  * @param p Integration variable
-  * @param xc Delay
-  * @param theta Distribution parameters (including D)
-  * @param x_r Real data (contains pwindow)
-  * @param x_i Integer data (contains dist_id and primary_dist_id)
-  *
-  * @return Value of the integrand
-  *
-  * @code
-  * // Example: Truncated Gamma delay distribution with uniform primary distribution
-  * real p = 0.5;
-  * real xc = 2.0;
-  * array[3] real theta = {2.0, 1.0, 5.0}; // shape, scale, and D (truncation point)
-  * array[1] real x_r = {1.0}; // pwindow
-  * array[2] int x_i = {2, 1}; // dist_id = 2 (Gamma), primary_dist_id = 1 (Uniform)
-  * real integrand_value = primary_censored_integrand_truncated(p, xc, theta, x_r, x_i);
-  */
-real primary_censored_integrand_truncated(real p, real xc, array[] real theta,
-                                          array[] real x_r, array[] int x_i) {
-  real d = xc;
-  real pwindow = x_r[1];
-  int dist_id = x_i[1];
-  int primary_dist_id = x_i[2];
-  real d_adj = d - p;
-  real D = theta[size(theta)];
-  real D_adj = D - p;
+    // Compute log probabilities
+    real log_cdf = dist_lcdf(d_adj | params, dist_id);
+    real log_primary_pdf = primary_dist_lpdf(
+      x | primary_dist_id, primary_params, 0, pwindow
+    );
 
-  real log_cdf = dist_lcdf(d_adj | theta[1:(size(theta)-1)], dist_id);
-  real log_cdf_D = dist_lcdf(D_adj | theta[1:(size(theta)-1)], dist_id);
-  real log_primary_pdf = primary_dist_lpdf(
-    p | primary_dist_id, theta[1:(size(theta)-1)], 0, pwindow
-  );
+    if (is_inf(D)) {
+      // No truncation
+      return exp(log_cdf + log_primary_pdf);
+    }else{
+      // Truncate at D
+      real D_adj = D - x;
+      real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
+      return exp(log_cdf - log_cdf_D + log_primary_pdf);
+    }
+  }
 
-  return exp(log_cdf - log_cdf_D + log_primary_pdf);
-}
-
-/**
+  /**
   * Compute the primary event censored CDF for a single delay
   *
   * @param d Delay
@@ -174,29 +164,24 @@ real primary_censored_integrand_truncated(real p, real xc, array[] real theta,
   * array[0] real primary_params = {};
   * real cdf = primary_censored_dist_cdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_cdf(data real d, data int dist_id,
-                               array[] real params,
+real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
                                data real pwindow, data real D,
-                               data int primary_dist_id,
+                               int primary_dist_id,
                                array[] real primary_params) {
   real result;
   if (d <= 0 || d >= D) {
-    return 0;
+  return 0;
   }
 
-  if (is_inf(D)) {
-    result = integrate_1d(
-      primary_censored_integrand,
-      0.0, pwindow, {d}, {params, primary_params}, {pwindow},
-      {dist_id, primary_dist_id}
-    );
-  } else {
-    result = integrate_1d(
-      primary_censored_integrand_truncated,
-      0.0, pwindow, {d}, {params, primary_params}, {pwindow, D},
-      {dist_id, primary_dist_id}
-    );
-  }
+  array[size(params) + size(primary_params) + 1] real theta =
+    append_array({d}, append_array(params, primary_params));
+  array[4] int ids = {
+    dist_id, primary_dist_id, size(params), size(primary_params)
+  };
+
+  result = integrate_1d(
+    primary_censored_integrand, 0.0, pwindow, theta, {pwindow, D}, ids
+  );
 
   return result;
 }
@@ -215,25 +200,28 @@ real primary_censored_dist_cdf(data real d, data int dist_id,
   * @return Primary event censored log CDF, normalized by D if finite (truncation adjustment)
   *
   * @code
-  * // Example: Exponential delay distribution with uniform primary distribution
-  * real d = 2.0;
-  * int dist_id = 4; // Exponential
-  * array[1] real params = {0.5}; // rate
+  * // Example: Weibull delay distribution with uniform primary distribution
+  * real d = 3.0;
+  * int dist_id = 5; // Weibull
+  * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
-  * real D = 10.0;
+  * real D = positive_infinity();
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
   * real log_cdf = primary_censored_dist_lcdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_lcdf(data real d, data int dist_id,
-       array[] real params,
+real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
                                 data real pwindow, data real D,
-                                data int primary_dist_id,
+                                int primary_dist_id,
                                 array[] real primary_params) {
   if (d <= 0 || d >= D) {
     return negative_infinity();
   }
-  return log(primary_censored_dist_cdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params));
+  return log(
+    primary_censored_dist_cdf(
+      d, dist_id, params, pwindow, D, primary_dist_id, primary_params
+    )
+  );
 }
 
 /**
@@ -251,10 +239,10 @@ real primary_censored_dist_lcdf(data real d, data int dist_id,
   * @return Primary event censored log PMF, normalized by D if finite (truncation adjustment)
   *
   * @code
-  * // Example: Normal delay distribution with uniform primary distribution
-  * real d = 1.5;
-  * int dist_id = 3; // Normal
-  * array[2] real params = {0.0, 1.0}; // mean and standard deviation
+  * // Example: Weibull delay distribution with uniform primary distribution
+  * real d = 3.0;
+  * int dist_id = 5; // Weibull
+  * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real swindow = 0.1;
   * real D = positive_infinity();
@@ -262,15 +250,15 @@ real primary_censored_dist_lcdf(data real d, data int dist_id,
   * array[0] real primary_params = {};
   * real log_pmf = primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_lpmf(data real d, data int dist_id,
-                                array[] real params,
-                                data real pwindow, data real swindow,
-                                data real D, data int primary_dist_id,
-                                array[] real primary_params) {
-  real log_cdf_upper = primary_censored_dist_lcdf(d + swindow, dist_id, params,
-                        pwindow, D, primary_dist_id, primary_params);
-  real log_cdf_lower = primary_censored_dist_lcdf(d, dist_id, params,
-                        pwindow, D, primary_dist_id, primary_params);
+real primary_censored_dist_lpmf(real d, int dist_id, array[] real params,
+                                data real pwindow, real swindow, data real D,
+                                int primary_dist_id, array[] real primary_params) {
+  real log_cdf_upper = primary_censored_dist_lcdf(
+    d + swindow, dist_id, params, pwindow, D, primary_dist_id, primary_params
+  );
+  real log_cdf_lower = primary_censored_dist_lcdf(
+    d, dist_id, params, pwindow, D, primary_dist_id, primary_params
+  );
   return log_diff_exp(log_cdf_upper, log_cdf_lower);
 }
 
@@ -289,107 +277,130 @@ real primary_censored_dist_lpmf(data real d, data int dist_id,
   * @return Primary event censored PMF, normalized by D if finite (truncation adjustment)
   *
   * @code
-  * // Example: Gamma delay distribution with exponential growth primary distribution
-  * real d = 2.5;
-  * int dist_id = 2; // Gamma
-  * array[2] real params = {2.0, 1.0}; // shape and rate
+  * // Example: Weibull delay distribution with uniform primary distribution
+  * real d = 3.0;
+  * int dist_id = 5; // Weibull
+  * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real swindow = 0.1;
-  * real D = 10.0;
-  * int primary_dist_id = 2; // Exponential growth
-  * array[1] real primary_params = {0.5}; // growth rate
+  * real D = positive_infinity();
+  * int primary_dist_id = 1; // Uniform
+  * array[0] real primary_params = {};
   * real pmf = primary_censored_dist_pmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
   */
-real primary_censored_dist_pmf(data real d, data int dist_id,
-                                array[] real params,
-                                data real pwindow, data real swindow,
-                                data real D, data int primary_dist_id,
-                                array[] real primary_params) {
-  return exp(primary_censored_dist_lpmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params));
+real primary_censored_dist_pmf(real d, int dist_id, array[] real params,
+                               data real pwindow, real swindow, data real D,
+                               int primary_dist_id, array[] real primary_params) {
+  return exp(
+    primary_censored_dist_lpmf(
+      d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
+    )
+  );
 }
 
 /**
-  * Compute the primary event censored log PMF for integer delays up to D
+  * Compute the primary event censored log PMF for integer delays up to max_delay
   *
-  * @param D Maximum delay (truncation point)
+  * @param max_delay Maximum delay to compute PMF for
+  * @param D Maximum delay (truncation point), must be at least max_delay + 1
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param primary_dist_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
-  * @return Vector of primary event censored log PMFs for integer delays 0 to D-1
+  * @return Vector of primary event censored log PMFs for delays \[0, 1\] to
+  * \[max_delay, max_delay + 1\].
   *
   * This function differs from primary_censored_dist_lpmf in that it:
-  * 1. Computes PMFs for all integer delays from 0 to D-1 in one call
+  * 1. Computes PMFs for all integer delays from \[0, 1\] to \[max_delay,
+  *    max_delay + 1\] in one call.
   * 2. Assumes integer delays (swindow = 1)
-  * 3. Is more computationally efficient for multiple delay calculations
+  * 3. Is more computationally efficient for multiple delay calculation as it
+  *    reduces the number of integration calls.
   *
   * @code
-  * // Example: Normal delay distribution with uniform primary distribution
-  * int D = 10;
-  * int dist_id = 3; // Normal
-  * array[2] real params = {0.0, 1.0}; // mean and standard deviation
+  * // Example: Weibull delay distribution with uniform primary distribution
+  * int max_delay = 10;
+  * real D = 15.0;
+  * int dist_id = 5; // Weibull
+  * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 7.0;
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * vector[D] log_pmf = primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params);
+  * vector[max_delay] log_pmf = primary_censored_sint_lpmf(max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params);
   */
-vector primary_censored_sint_lpmf(data int D, data int dist_id,
-                array[] real params,
-                                  data real pwindow, data int primary_dist_id,
-                                  array[] real primary_params) {
-  vector[D] log_cdfs;
-  vector[D] log_pmfs;
-  real log_normalizer;
+vector primary_censored_sint_lpmf(int max_delay, data real D, int dist_id,
+                                  array[] real params, data real pwindow,
+                                  int primary_dist_id, array[] real primary_params) {
 
-  // Compute log CDFs
-  for (d in 1:D) {
-    log_cdfs[d] = primary_censored_dist_lcdf(d, dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params);
+  vector[max_delay] log_pmfs;
+  real log_normalizer;
+  real upper_interval = max_delay + 1.0;
+  vector[max_delay] log_cdfs;
+
+  // Check if D is at least max_delay + 1
+  if (D < upper_interval) {
+    reject("D must be at least max_delay + 1");
   }
 
-  // Compute log normalizer
-  log_normalizer = log_cdfs[D];
+  // Compute log CDFs
+  for (d in 1:upper_interval) {
+    log_cdfs[d] = primary_censored_dist_lcdf(d, dist_id, params, pwindow, D, primary_dist_id, primary_params);
+  }
+
+  // Compute log normalizer using upper_interval
+  if (D > upper_interval) {
+    log_normalizer = primary_censored_dist_lcdf(upper_interval, dist_id, params, pwindow, D, primary_dist_id, primary_params);
+  } else {
+    log_normalizer = log_cdfs[upper_interval];
+  }
 
   // Compute log PMFs
   log_pmfs[1] = log_cdfs[1] - log_normalizer;
-  for (d in 2:D) {
-    log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
+  for (d in 1:max_delay) {
+    log_pmfs[d] = log_diff_exp(log_cdfs[d+1], log_cdfs[d]) - log_normalizer;
   }
 
   return log_pmfs;
 }
 
 /**
-* Compute the primary event censored PMF for integer delays up to D
-*
-* @param D Maximum delay (truncation point)
-* @param dist_id Distribution identifier
-* @param params Array of distribution parameters
-* @param pwindow Primary event window
-* @param primary_dist_id Primary distribution identifier
-* @param primary_params Primary distribution parameters
-*
-* @return Vector of primary event censored PMFs for integer delays 0 to D-1
-*
-* This function differs from primary_censored_dist_pmf in that it:
-* 1. Computes PMFs for all integer delays from 0 to D-1 in one call
-* 2. Assumes integer delays (swindow = 1)
-* 3. Is more computationally efficient for multiple delay calculations
-*
-* @code
-* // Example: Gamma delay distribution with exponential growth primary distribution
-* int D = 10;
-* int dist_id = 2; // Gamma
-* array[2] real params = {2.0, 1.0}; // shape and rate
-* real pwindow = 7.0;
-* int primary_dist_id = 2; // Exponential growth
-* array[1] real primary_params = {0.5}; // growth rate
-* vector[D] pmf = primary_censored_sint_pmf(D, dist_id, params, pwindow, primary_dist_id, primary_params);
-*/
-vector primary_censored_sint_pmf(data int D, data int dist_id,
-                                array[] real params,
-                                data real pwindow, data int primary_dist_id,
-                                array[] real primary_params) {
-  return exp(primary_censored_sint_lpmf(D, dist_id, params, pwindow, primary_dist_id, primary_params));
+  * Compute the primary event censored PMF for integer delays up to max_delay
+  *
+  * @param max_delay Maximum delay to compute PMF for
+  * @param D Maximum delay (truncation point), must be at least max_delay + 1
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param primary_dist_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return Vector of primary event censored PMFs for integer delays 1 to max_delay
+  *
+  * This function differs from primary_censored_dist_pmf in that it:
+  * 1. Computes PMFs for all integer delays from \[0, 1\] to \[max_delay,
+  *    max_delay + 1\] in one call.
+  * 2. Assumes integer delays (swindow = 1)
+  * 3. Is more computationally efficient for multiple delay calculations
+  *
+  * @code
+  * // Example: Weibull delay distribution with uniform primary distribution
+  * int max_delay = 10;
+  * real D = 15.0;
+  * int dist_id = 5; // Weibull
+  * array[2] real params = {2.0, 1.5}; // shape and scale
+  * real pwindow = 7.0;
+  * int primary_dist_id = 1; // Uniform
+  * array[0] real primary_params = {};
+  * vector[max_delay] pmf = primary_censored_sint_pmf(max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params);
+  */
+vector primary_censored_sint_pmf(int max_delay, real D, int dist_id,
+                                  array[] real params, real pwindow,
+                                  int primary_dist_id, array[] real primary_params) {
+  return exp(
+    primary_censored_sint_lpmf(
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
+    )
+  );
 }
