@@ -2,17 +2,61 @@
 #'
 #' @return A character string with the path to the Stan code
 #' @export
-#' @aliases pcd_stan_path
 pcd_stan_path <- function() {
   system.file("stan", package = "primarycensoreddist")
 }
 
-#' List available Stan functions
+#' Extract function names or content from Stan code
 #'
-#' @inheritParams pcd_load_stan_functions
-#' @return A character vector of available Stan function names
+#' @param content Character vector containing Stan code
+#'
+#' @param extract_names Logical, if TRUE extract function names, otherwise
+#' extract function content
+#'
+#' @param func_name Optional, function name to extract content for
+#'
+#' @return Character vector of function names or content
+#' @keywords internal
+.extract_stan_functions <- function(
+    content, extract_names = TRUE, func_name = NULL) {
+  func_pattern <- paste0(
+    "^(real|vector|matrix|void|int)\\s+",
+    "(\\w+)\\s*\\("
+  )
+  if (extract_names) {
+    func_lines <- grep(func_pattern, content, value = TRUE)
+    return(gsub(func_pattern, "\\2", func_lines))
+  } else {
+    start_line <- grep(paste0(func_pattern, ".*", func_name), content)
+    if (length(start_line) > 0) {
+      end_line <- which(
+        cumsum(grepl("^\\s*\\{", content[start_line:length(content)])) ==
+          cumsum(grepl("^\\s*\\}", content[start_line:length(content)]))
+      )[1] + start_line - 1
+      return(content[start_line:end_line])
+    }
+    return(character(0))
+  }
+}
+
+#' Get Stan function names from Stan files
+#'
+#' This function reads all Stan files in the specified directory and extracts
+#' the names of all functions defined in those files.
+#'
+#' @param stan_path Character string specifying the path to the directory
+#' containing Stan files. Defaults to the Stan path of the primarycensoreddist
+#' package.
+#'
+#' @return A character vector containing unique names of all functions found in
+#' the Stan files.
+#'
 #' @export
-#' @aliases pcd_stan_functions
+#' @examples
+#' \dontrun{
+#' stan_functions <- pcd_stan_functions()
+#' print(stan_functions)
+#' }
 pcd_stan_functions <- function(
     stan_path = primarycensoreddist::pcd_stan_path()) {
   stan_files <- list.files(
@@ -23,13 +67,7 @@ pcd_stan_functions <- function(
   functions <- character(0)
   for (file in stan_files) {
     content <- readLines(file)
-    func_lines <- grep(
-      "^(real|vector|matrix|void)\\s+\\w+\\s*\\(", content,
-      value = TRUE
-    )
-    functions <- c(
-      functions, gsub("^.*?\\s+(\\w+)\\s*\\(.*$", "\\1", func_lines)
-    )
+    functions <- c(functions, .extract_stan_functions(content))
   }
   unique(functions)
 }
@@ -53,7 +91,6 @@ pcd_stan_functions <- function(
 #'
 #' @return A character string containing the requested Stan functions
 #' @export
-#' @aliases pcd_load_stan_functions
 pcd_load_stan_functions <- function(
     functions = NULL, stan_path = primarycensoreddist::pcd_stan_path(),
     wrap_in_block = FALSE, write_to_file = FALSE,
@@ -71,20 +108,11 @@ pcd_load_stan_functions <- function(
       all_content <- c(all_content, content)
     } else {
       for (func in functions) {
-        start_line <- grep(
-          paste0("^(real|vector|matrix|void)\\s+", func, "\\s*\\("), content
+        func_content <- .extract_stan_functions(
+          content,
+          extract_names = FALSE, func_name = func
         )
-        if (length(start_line) > 0) {
-          end_line <- which(
-            cumsum(
-              grepl("^\\s*\\{", content[start_line:length(content)])
-            ) ==
-              cumsum(
-                grepl("^\\s*\\}", content[start_line:length(content)])
-              )
-          )[1] + start_line - 1
-          all_content <- c(all_content, content[start_line:end_line])
-        }
+        all_content <- c(all_content, func_content)
       }
     }
   }
@@ -104,7 +132,7 @@ pcd_load_stan_functions <- function(
 
   if (write_to_file) {
     writeLines(result, output_file)
-    message("Stan functions written to:", output_file, "\n")
+    message("Stan functions written to: ", output_file, "\n")
   }
 
   return(result)

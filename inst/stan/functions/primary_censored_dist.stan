@@ -111,10 +111,9 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
     int primary_params_len = x_i[4];
 
     // Extract distribution parameters
-    int n_params = size(theta) - 1;
     array[dist_params_len] real params;
     if (dist_params_len) {
-      params = theta[3:(2 + dist_params_len)];
+      params = theta[2:(1 + dist_params_len)];
     }
     array[primary_params_len] real primary_params;
     if (primary_params_len) {
@@ -316,6 +315,8 @@ real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
   * @param pwindow Primary event window
   * @param primary_dist_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
+  * @param approx_truncation Binary; if 1, use approximate truncation method
+  * and if 0, use exact truncation method.
   *
   * @return Vector of primary event censored log PMFs for delays \[0, 1\] to
   * \[max_delay, max_delay + 1\].
@@ -326,6 +327,7 @@ real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
   * 2. Assumes integer delays (swindow = 1)
   * 3. Is more computationally efficient for multiple delay calculation as it
   *    reduces the number of integration calls.
+  * 4. Allows for approximate or exact truncation handling
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
@@ -336,21 +338,24 @@ real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
   * real pwindow = 7.0;
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
+  * int approx_truncation = 1; // Use approximate truncation
   * vector[max_delay] log_pmf =
   *   primary_censored_sone_lpmf_vectorized(
-  *      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
+  *      max_delay, D, dist_id, params, pwindow, primary_dist_id,
+  *      primary_params, approx_truncation
   *   );
   */
 vector primary_censored_sone_lpmf_vectorized(
   int max_delay, data real D, int dist_id,
   array[] real params, data real pwindow,
-  int primary_dist_id, array[] real primary_params
+  int primary_dist_id, array[] real primary_params,
+  int approx_truncation
 ) {
 
-  vector[max_delay] log_pmfs;
-  real log_normalizer;
   int upper_interval = max_delay + 1;
-  vector[max_delay] log_cdfs;
+  vector[upper_interval] log_pmfs;
+  vector[upper_interval] log_cdfs;
+  real log_normalizer;
 
   // Check if D is at least max_delay + 1
   if (D < upper_interval) {
@@ -358,25 +363,43 @@ vector primary_censored_sone_lpmf_vectorized(
   }
 
   // Compute log CDFs
-  for (d in 1:upper_interval) {
-    log_cdfs[d] = primary_censored_dist_lcdf(
-      d | dist_id, params, pwindow, D, primary_dist_id, primary_params
-    );
+  if (approx_truncation) {
+    for (d in 1:upper_interval) {
+      log_cdfs[d] = primary_censored_dist_lcdf(
+        d | dist_id, params, pwindow, positive_infinity(), primary_dist_id,
+        primary_params
+      );
+    }
+  } else {
+    for (d in 1:upper_interval) {
+      log_cdfs[d] = primary_censored_dist_lcdf(
+        d | dist_id, params, pwindow, D, primary_dist_id, primary_params
+      );
+    }
   }
 
   // Compute log normalizer using upper_interval
-  if (D > upper_interval) {
-    log_normalizer = primary_censored_dist_lcdf(
-      upper_interval | dist_id, params, pwindow, D, primary_dist_id, primary_params
-    );
+  if (approx_truncation) {
+    if (D > upper_interval) {
+      if (is_inf(D)) {
+        log_normalizer = 0; // No normalization needed for infinite D
+      } else {
+        log_normalizer = primary_censored_dist_lcdf(
+          upper_interval | dist_id, params, pwindow, positive_infinity(),
+          primary_dist_id, primary_params
+        );
+      }
+    } else {
+      log_normalizer = log_cdfs[upper_interval];
+    }
   } else {
-    log_normalizer = log_cdfs[upper_interval];
+    log_normalizer = 0; // No external normalization for exact truncation
   }
 
   // Compute log PMFs
   log_pmfs[1] = log_cdfs[1] - log_normalizer;
-  for (d in 1:max_delay) {
-    log_pmfs[d] = log_diff_exp(log_cdfs[d+1], log_cdfs[d]) - log_normalizer;
+  for (d in 2:upper_interval) {
+    log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
   }
 
   return log_pmfs;
@@ -392,6 +415,7 @@ vector primary_censored_sone_lpmf_vectorized(
   * @param pwindow Primary event window
   * @param primary_dist_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
+  * @param approx_truncation Logical; if TRUE, use approximate truncation method
   *
   * @return Vector of primary event censored PMFs for integer delays 1 to max_delay
   *
@@ -400,6 +424,7 @@ vector primary_censored_sone_lpmf_vectorized(
   *    max_delay + 1\] in one call.
   * 2. Assumes integer delays (swindow = 1)
   * 3. Is more computationally efficient for multiple delay calculations
+  * 4. Allows for approximate or exact truncation handling
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
@@ -410,20 +435,22 @@ vector primary_censored_sone_lpmf_vectorized(
   * real pwindow = 7.0;
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
+  * int approx_truncation = 1; // Use approximate truncation
   * vector[max_delay] pmf =
   *   primary_censored_sone_pmf_vectorized(
-  *      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
+  *      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, approx_truncation
   *   );
   */
 vector primary_censored_sone_pmf_vectorized(
   int max_delay, data real D, int dist_id,
   array[] real params, data real pwindow,
   int primary_dist_id,
-  array[] real primary_params
+  array[] real primary_params,
+  int approx_truncation
 ) {
   return exp(
     primary_censored_sone_lpmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, approx_truncation
     )
   );
 }
