@@ -13,6 +13,10 @@ on:
       - inst/CITATION
       - .github/workflows/update-citation-cff.yaml
   workflow_dispatch:
+  
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
 
 name: Update CITATION.cff
 
