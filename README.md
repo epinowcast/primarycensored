@@ -222,7 +222,8 @@ Contributions of any kind are welcome!
 
 ### Issues
 
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3ASamuelBrand1">SamuelBrand1</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
