@@ -1,5 +1,5 @@
 ---
-title: "Using Stan with primarycensoreddist"
+title: "Fitting distributions using primarycensorseddist and cmdstan"
 description: "A guide on how to use primarycensoreddist with Stan for Bayesian inference."
 author: Sam Abbott
 output:
@@ -12,7 +12,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Using Stan with primarycensoreddist}
+  %\VignetteIndexEntry{Fitting distributions using primarycensorseddist and cmdstan}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
