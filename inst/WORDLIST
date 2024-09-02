@@ -7,11 +7,13 @@ Lifecycle
 PMF
 PMFs
 SamuelBrand
-cens
+cmdstan
 dprimary
+fitdistr
 modeling
 pcd
 pdist
+primarycensorseddist
 primaryeventdistributions
 pwindow
 rprimary
