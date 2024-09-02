@@ -17,8 +17,7 @@ pcd_stan_path <- function() {
 #' extract function content.
 #'
 #' @param functions Optional, character vector of function names to extract
-#' content for. This uses partial matching.
-#'
+#' content for.
 #' @return Character vector of function names or content
 #' @keywords internal
 .extract_stan_functions <- function(
@@ -32,8 +31,8 @@ pcd_stan_path <- function() {
   func_lines <- sub(def_pattern, "", func_lines)
   # get the next complete word after the pattern until the first (
   func_names <- sub("\\s*\\(.*$", "", func_lines)
-  if (!is.null(func_name)) {
-    func_names <- func_names[func_names %in% func_name]
+  if (!is.null(functions)) {
+    func_names <- intersect(func_names, functions)
   }
   if (names_only) {
     return(func_names)
@@ -103,7 +102,9 @@ pcd_stan_functions <- function(
   functions <- character(0)
   for (file in stan_files) {
     content <- readLines(file)
-    functions <- c(functions, .extract_stan_functions(content))
+    functions <- c(
+      functions, .extract_stan_functions(content, names_only = TRUE)
+    )
   }
   unique(functions)
 }
@@ -149,7 +150,8 @@ pcd_load_stan_functions <- function(
       for (func in functions) {
         func_content <- .extract_stan_functions(
           content,
-          extract_names = FALSE, func_name = func
+          names_only = FALSE,
+          functions = func
         )
         all_content <- c(all_content, func_content)
       }
