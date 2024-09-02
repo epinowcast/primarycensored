@@ -51,6 +51,55 @@ test_that(
   }
 )
 
+test_that(
+  "Stan primary_censored_dist_lpmf throws an error for invalid upper truncation
+   point",
+  {
+    d <- 10
+    dist_id <- 1 # Lognormal
+    params <- c(0, 1) # meanlog, sdlog
+    pwindow <- 1
+    swindow <- 1
+    D <- 10
+    primary_dist_id <- 1 # Uniform
+    primary_params <- numeric(0)
+
+    expect_error(
+      primary_censored_dist_lpmf(
+        d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
+      ),
+      "Upper truncation point is greater than D"
+    )
+  }
+)
+
+
+
+test_that(
+  "Stan primary_censored_dist matches R primarycensoreddist when d is the same
+   as D - 1",
+  {
+    d <- 10
+    dist_id <- 1 # Lognormal
+    params <- c(0, 1) # meanlog, sdlog
+    pwindow <- 1
+    primary_dist_id <- 1 # Uniform
+    primary_params <- numeric(0)
+
+    stan_pmf <- primary_censored_dist_pmf(
+      d, dist_id, params, pwindow, 1, d + 1, primary_dist_id, primary_params
+    )
+    r_pmf <- dprimarycensoreddist(
+      d, plnorm,
+      pwindow = pwindow, swindow = 1, D = d + 1,
+      meanlog = params[1], sdlog = params[2]
+    )
+
+    expect_equal(stan_pmf, r_pmf, tolerance = 1e-6)
+  }
+)
+
+
 test_that("Stan primary_censored_dist_pmf matches R dprimarycensoreddist", {
   d <- 0:10
   dist_id <- 1 # Lognormal
@@ -217,6 +266,8 @@ test_that(
 
     expect_equal(stan_lpmf_approx, r_lpmf, tolerance = 1e-6)
     expect_equal(stan_lpmf_exact, r_lpmf, tolerance = 1e-8)
-    expect_true(all(abs(stan_lpmf_exact - r_lpmf) < abs(stan_lpmf_approx - r_lpmf)))
+    expect_true(
+      all(abs(stan_lpmf_exact - r_lpmf) <= abs(stan_lpmf_approx - r_lpmf))
+    )
   }
 )

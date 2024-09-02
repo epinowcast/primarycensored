@@ -99,47 +99,47 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   *   p, xc, theta, x_r, x_i
   * );
   */
-  real primary_censored_integrand(real x, real xc, array[] real theta,
-                                  array[] real x_r, array[] int x_i) {
-    // Unpack parameters
-    real d = theta[1];
-    int dist_id = x_i[1];
-    int primary_dist_id = x_i[2];
-    real pwindow = x_r[1];
-    real D = x_r[2];
-    int dist_params_len = x_i[3];
-    int primary_params_len = x_i[4];
+real primary_censored_integrand(real x, real xc, array[] real theta,
+                                array[] real x_r, array[] int x_i) {
+  // Unpack parameters
+  real d = theta[1];
+  int dist_id = x_i[1];
+  int primary_dist_id = x_i[2];
+  real pwindow = x_r[1];
+  real D = x_r[2];
+  int dist_params_len = x_i[3];
+  int primary_params_len = x_i[4];
 
-    // Extract distribution parameters
-    array[dist_params_len] real params;
-    if (dist_params_len) {
-      params = theta[2:(1 + dist_params_len)];
-    }
-    array[primary_params_len] real primary_params;
-    if (primary_params_len) {
-      int theta_len = size(theta);
-      primary_params = theta[(theta_len - dist_params_len + 1):theta_len];
-    }
-
-    // Compute adjusted delay
-    real d_adj = d - x;
-
-    // Compute log probabilities
-    real log_cdf = dist_lcdf(d_adj | params, dist_id);
-    real log_primary_pdf = primary_dist_lpdf(
-      x | primary_dist_id, primary_params, 0, pwindow
-    );
-
-    if (is_inf(D)) {
-      // No truncation
-      return exp(log_cdf + log_primary_pdf);
-    }else{
-      // Truncate at D
-      real D_adj = D - x;
-      real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
-      return exp(log_cdf - log_cdf_D + log_primary_pdf);
-    }
+  // Extract distribution parameters
+  array[dist_params_len] real params;
+  if (dist_params_len) {
+    params = theta[2:(1 + dist_params_len)];
   }
+  array[primary_params_len] real primary_params;
+  if (primary_params_len) {
+    int theta_len = size(theta);
+    primary_params = theta[(theta_len - dist_params_len + 1):theta_len];
+  }
+
+  // Compute adjusted delay
+  real d_adj = d - x;
+
+  // Compute log probabilities
+  real log_cdf = dist_lcdf(d_adj | params, dist_id);
+  real log_primary_pdf = primary_dist_lpdf(
+    x | primary_dist_id, primary_params, 0, pwindow
+  );
+
+  if (is_inf(D)) {
+    // No truncation
+    return exp(log_cdf + log_primary_pdf);
+  } else {
+    // Truncate at D
+    real D_adj = D - x;
+    real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
+    return exp(log_cdf - log_cdf_D + log_primary_pdf);
+  }
+}
 
   /**
   * Compute the primary event censored CDF for a single delay
@@ -172,7 +172,7 @@ real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
                                int primary_dist_id,
                                array[] real primary_params) {
   real result;
-  if (d <= 0 || d >= D) {
+  if (d <= 0 || d > D) {
     return 0;
   }
 
@@ -219,7 +219,7 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
                                 data real pwindow, data real D,
                                 int primary_dist_id,
                                 array[] real primary_params) {
-  if (d <= 0 || d >= D) {
+  if (d <= 0 || d > D) {
     return negative_infinity();
   }
   return log(
@@ -260,8 +260,14 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
 real primary_censored_dist_lpmf(int d, int dist_id, array[] real params,
                                 data real pwindow, real swindow, data real D,
                                 int primary_dist_id, array[] real primary_params) {
+
+  real d_upper = d + swindow;
+  if (d_upper > D) {
+    reject("Upper truncation point is greater than D. It is ", d_upper,
+           " and D is ", D, ". Resolve this by increasing D to be greater or equal to d + swindow.");
+  }
   real log_cdf_upper = primary_censored_dist_lcdf(
-    d + swindow | dist_id, params, pwindow, D, primary_dist_id, primary_params
+    d_upper | dist_id, params, pwindow, D, primary_dist_id, primary_params
   );
   real log_cdf_lower = primary_censored_dist_lcdf(
     d | dist_id, params, pwindow, D, primary_dist_id, primary_params

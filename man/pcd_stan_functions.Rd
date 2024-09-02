@@ -2,17 +2,26 @@
 % Please edit documentation in R/pcd-stan-tools.R
 \name{pcd_stan_functions}
 \alias{pcd_stan_functions}
-\title{List available Stan functions}
+\title{Get Stan function names from Stan files}
 \usage{
 pcd_stan_functions(stan_path = primarycensoreddist::pcd_stan_path())
 }
 \arguments{
-\item{stan_path}{Character string, the path to the Stan code. Defaults to the
-path to the Stan code in the primarycensoreddist package.}
+\item{stan_path}{Character string specifying the path to the directory
+containing Stan files. Defaults to the Stan path of the primarycensoreddist
+package.}
 }
 \value{
-A character vector of available Stan function names
+A character vector containing unique names of all functions found in
+the Stan files.
 }
 \description{
-List available Stan functions
+This function reads all Stan files in the specified directory and extracts
+the names of all functions defined in those files.
+}
+\examples{
+\dontrun{
+stan_functions <- pcd_stan_functions()
+print(stan_functions)
+}
 }

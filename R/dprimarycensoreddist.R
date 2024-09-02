@@ -36,6 +36,14 @@ dprimarycensoreddist <- function(
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
+  if (max(x + swindow) > D) {
+    stop(
+      "Upper truncation point is greater than D. It is ", max(x + swindow),
+      " and D is ", D, ". Resolve this by increasing D to be the maximum",
+      " of x + swindow."
+    )
+  }
+
   result <- vapply(x, function(d) {
     if (d < 0) {
       return(0) # Return log(0) for non-positive delays
