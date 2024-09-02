@@ -4,15 +4,16 @@
 \alias{.extract_stan_functions}
 \title{Extract function names or content from Stan code}
 \usage{
-.extract_stan_functions(content, extract_names = TRUE, func_name = NULL)
+.extract_stan_functions(content, names_only = FALSE, functions = NULL)
 }
 \arguments{
 \item{content}{Character vector containing Stan code}
 
-\item{extract_names}{Logical, if TRUE extract function names, otherwise
-extract function content}
+\item{names_only}{Logical, if TRUE extract function names, otherwise
+extract function content.}
 
-\item{func_name}{Optional, function name to extract content for}
+\item{functions}{Optional, character vector of function names to extract
+content for.}
 }
 \value{
 Character vector of function names or content

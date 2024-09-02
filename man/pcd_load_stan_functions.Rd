@@ -9,7 +9,7 @@ pcd_load_stan_functions(
   stan_path = primarycensoreddist::pcd_stan_path(),
   wrap_in_block = FALSE,
   write_to_file = FALSE,
-  output_file = "pcd_stan_functions.stan"
+  output_file = "pcd_functions.stan"
 )
 }
 \arguments{
@@ -26,7 +26,7 @@ path to the Stan code in the primarycensoreddist package.}
 is FALSE.}
 
 \item{output_file}{Character string, the path to write the output file if
-write_to_file is TRUE. Defaults to "pcd_stan_functions.stan".}
+write_to_file is TRUE. Defaults to "pcd_functions.stan".}
 }
 \value{
 A character string containing the requested Stan functions

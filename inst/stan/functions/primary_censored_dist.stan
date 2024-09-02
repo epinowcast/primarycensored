@@ -23,29 +23,29 @@
   * int dist_id = 1; // Lognormal
   * real log_cdf = dist_lcdf(delay, params, dist_id);
   */
-  real dist_lcdf(real delay, array[] real params, int dist_id) {
-    if (delay <= 0) return negative_infinity();
+real dist_lcdf(real delay, array[] real params, int dist_id) {
+  if (delay <= 0) return negative_infinity();
 
-    // Use if-else statements to handle different distribution types
-    if (dist_id == 1) return lognormal_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 3) return normal_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
-    else if (dist_id == 5) return weibull_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 6) return beta_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 7) return cauchy_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 8) return chi_square_lcdf(delay | params[1]);
-    else if (dist_id == 9) return inv_chi_square_lcdf(delay | params[1]);
-    else if (dist_id == 10) return double_exponential_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 11) return inv_gamma_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 12) return logistic_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 13) return pareto_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 14) return scaled_inv_chi_square_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 15) return student_t_lcdf(delay | params[1], params[2], params[3]);
-    else if (dist_id == 16) return uniform_lcdf(delay | params[1], params[2]);
-    else if (dist_id == 17) return von_mises_lcdf(delay | params[1], params[2]);
-    else reject("Invalid distribution identifier");
-  }
+  // Use if-else statements to handle different distribution types
+  if (dist_id == 1) return lognormal_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 3) return normal_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
+  else if (dist_id == 5) return weibull_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 6) return beta_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 7) return cauchy_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 8) return chi_square_lcdf(delay | params[1]);
+  else if (dist_id == 9) return inv_chi_square_lcdf(delay | params[1]);
+  else if (dist_id == 10) return double_exponential_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 11) return inv_gamma_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 12) return logistic_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 13) return pareto_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 14) return scaled_inv_chi_square_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 15) return student_t_lcdf(delay | params[1], params[2], params[3]);
+  else if (dist_id == 16) return uniform_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 17) return von_mises_lcdf(delay | params[1], params[2]);
+  else reject("Invalid distribution identifier");
+}
 
 /**
   * Compute the log PDF of the primary distribution

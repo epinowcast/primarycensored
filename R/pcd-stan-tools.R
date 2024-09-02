@@ -9,6 +9,19 @@ pcd_stan_path <- function() {
   system.file("stan", package = "primarycensoreddist")
 }
 
+#' Count the number of unmatched braces in a line
+#' @noRd
+.unmatched_braces <- function(line) {
+  ifelse(
+    grepl("{", line, fixed = TRUE),
+    length(gregexpr("{", line, fixed = TRUE)), 0
+  ) -
+    ifelse(
+      grepl("}", line, fixed = TRUE),
+      length(gregexpr("}", line, fixed = TRUE)), 0
+    )
+}
+
 #' Extract function names or content from Stan code
 #'
 #' @param content Character vector containing Stan code
@@ -46,20 +59,14 @@ pcd_stan_path <- function() {
       # Ensure we find the first opening brace
       repeat {
         line <- content[end_line]
-        print(line)
-        print(brace_count)
-        brace_count <- brace_count + length(gregexpr("\\{", line)[[1]]) -
-          length(gregexpr("\\}", line)[[1]])
+        brace_count <- brace_count + .unmatched_braces(line)
         end_line <- end_line + 1
         if (brace_count > 0) break
       }
       # Continue until all braces are closed
       repeat {
         line <- content[end_line]
-        print(line)
-        print(brace_count)
-        brace_count <- brace_count + length(gregexpr("\\{", line)[[1]]) -
-          length(gregexpr("\\}", line)[[1]])
+        brace_count <- brace_count + .unmatched_braces(line)
         if (brace_count == 0) break
         end_line <- end_line + 1
       }
@@ -124,7 +131,7 @@ pcd_stan_functions <- function(
 #' is FALSE.
 #'
 #' @param output_file Character string, the path to write the output file if
-#' write_to_file is TRUE. Defaults to "pcd_stan_functions.stan".
+#' write_to_file is TRUE. Defaults to "pcd_functions.stan".
 #'
 #' @return A character string containing the requested Stan functions
 #'
@@ -134,7 +141,7 @@ pcd_stan_functions <- function(
 pcd_load_stan_functions <- function(
     functions = NULL, stan_path = primarycensoreddist::pcd_stan_path(),
     wrap_in_block = FALSE, write_to_file = FALSE,
-    output_file = "pcd_stan_functions.stan") {
+    output_file = "pcd_functions.stan") {
   stan_files <- list.files(
     stan_path,
     pattern = "\\.stan$", full.names = TRUE,

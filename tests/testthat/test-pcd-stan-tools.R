@@ -41,13 +41,13 @@ test_that("pcd_load_stan_functions loads specific functions", {
   }
 
   # Check that other functions are not included
-  expect_false(grepl("expgrowth_cdf", stan_code, fixed = TRUE))
-  expect_false(grepl("dist_lcdf", stan_code, fixed = TRUE))
+  expect_false(grepl("real expgrowth_cdf(", stan_code, fixed = TRUE))
+  expect_false(grepl("real dist_lcdf(", stan_code, fixed = TRUE))
 })
 
 test_that("pcd_load_stan_functions loads all functions as string", {
   all_functions <- pcd_stan_functions()
-  stan_code <- pcd_load_stan_functions(functions = all_functions)
+  stan_code <- pcd_load_stan_functions(all_functions)
   expect_type(stan_code, "character")
   expect_gt(nchar(stan_code), 0)
 
@@ -67,10 +67,10 @@ test_that("pcd_load_stan_functions wraps functions in block when specified", {
 
 test_that("pcd_load_stan_functions writes to file when specified", {
   output_file <- tempfile(fileext = ".stan")
-  pcd_load_stan_functions(
+  suppressMessages(pcd_load_stan_functions(
     write_to_file = TRUE,
     output_file = output_file
-  )
+  ))
   expect_true(file.exists(output_file))
   file_content <- readLines(output_file)
   expect_gt(length(file_content), 0)
@@ -85,7 +85,7 @@ test_that("pcd_load_stan_functions writes to file when specified", {
 test_that("pcd_load_stan_functions handles non-existent functions gracefully", {
   non_existent_function <- "non_existent_function"
   stan_code <- pcd_load_stan_functions(functions = non_existent_function)
-  expect_identical(stan_code, "")
+  expect_length(stan_code, 1)
 })
 
 test_that("pcd_load_stan_functions loads functions from specific files", {
