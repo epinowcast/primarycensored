@@ -23,3 +23,16 @@ test_that("rprimarycensoreddist handles different primary distributions", {
 
   expect_true(all(samples >= 0 & samples < D))
 })
+
+test_that("rprimarycensoreddist handles very truncated distributions", {
+  n <- 1000
+  pwindow <- 0.1
+  D <- 1
+
+  samples <- rpcens(
+    n, rnorm, pwindow,
+    D = D, mean = 0.5, sd = 1
+  )
+
+  expect_true(all(samples >= 0 & samples < D))
+})
