@@ -22,8 +22,10 @@ data$observed <- sample(
 )
 
 # Generate random error bar widths for each event
-data$primary_error <- runif(n_events, 0.2, 0.8)
-data$secondary_error <- runif(n_events, 0.2, 0.8)
+data$primary_error_left <- runif(n_events, 0.2, 0.8)
+data$primary_error_right <- runif(n_events, 0.2, 0.8)
+data$secondary_error_left <- runif(n_events, 0.2, 0.8)
+data$secondary_error_right <- runif(n_events, 0.2, 0.8)
 
 # Determine which events cross the observation line
 observation_time <- 10
@@ -41,11 +43,11 @@ plot <- ggplot(data, aes(y = id)) +
   geom_point(aes(x = primary), color = "#4682B4", size = 1) +
   # Add secondary events
   geom_point(aes(x = secondary), color = "#20B2AA", size = 1) +
-  # Add uncertainty brackets with varying widths
-  geom_errorbarh(aes(xmin = primary - primary_error, xmax = primary + primary_error), height = 0.6, color = "#4682B4", size = 0.9) +
-  geom_errorbarh(aes(xmin = secondary - secondary_error, xmax = secondary + secondary_error), height = 0.6, color = "#20B2AA", size = 0.9) +
+  # Add uncertainty brackets with non-symmetric widths
+  geom_errorbarh(aes(xmin = primary - primary_error_left, xmax = primary + primary_error_right), height = 0.6, color = "#4682B4", size = 0.9) +
+  geom_errorbarh(aes(xmin = secondary - secondary_error_left, xmax = secondary + secondary_error_right), height = 0.6, color = "#20B2AA", size = 0.9) +
   # Add observation time line
-  geom_vline(xintercept = observation_time, linetype = "dashed", color = "#999999", size = 0.3) +
+  geom_vline(xintercept = observation_time, linetype = "dashed", color = "#999999", linewidth = 0.3) +
   # Customize the plot
   scale_x_continuous(limits = c(0, 15)) +
   scale_y_continuous(limits = c(0.5, n_events - 0.5)) + # Adjusted for removed event
