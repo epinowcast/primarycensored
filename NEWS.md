@@ -1,5 +1,3 @@
-# primarycensoreddist 0.1.0.1000
-
 # primarycensoreddist 0.1.0
 
 * Added package skeleton.

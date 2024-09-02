@@ -24,3 +24,5 @@ remotes::install_github(
   dependencies = TRUE, ref = "v0.2.0"
 )
 ```
+
+*Note: You can also use that last approach to install a specific commit if needed, e.g. if you want to try out a specific unreleased feature, but not the absolute latest developmental version.*
