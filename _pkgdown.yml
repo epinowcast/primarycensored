@@ -1,6 +1,7 @@
 url: https://primarycensoreddist.epinowcast.org/
 template:
   package: enwtheme
+  math-rendering: mathjax
 
 development:
   mode: auto
