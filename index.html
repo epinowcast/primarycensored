@@ -65,7 +65,7 @@
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h2>
-<p>This package provides both R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields.</p>
+<p>This package provides both R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for.</p>
 </div>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
@@ -99,7 +99,7 @@ Installing CmdStan (optional for Stan functionality)
 <span><span class="co"># `Suggests` dependencies</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
 <span>  <span class="st">"cmdstanr"</span>,</span>
-<span>  repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://mc-stan.org/r-packages/"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span></span>
+<span>  repos <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"https://stan-dev.r-universe.dev"</span>, <span class="fu"><a href="https://rdrr.io/r/base/options.html" class="external-link">getOption</a></span><span class="op">(</span><span class="st">"repos"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co"># once `cmdstanr` is installed:</span></span>
 <span><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/install_cmdstan.html" class="external-link">install_cmdstan</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
@@ -121,7 +121,7 @@ Organisation Website
 </summary><p>Our <a href="https://www.epinowcast.org/" class="external-link">organisation website</a> includes links to other resources, <a href="https://www.epinowcast.org/blog.html" class="external-link">guest posts</a>, and <a href="https://www.epinowcast.org/seminars.html" class="external-link">seminar schedule</a> for both upcoming and past recordings.</p>
 </details><details><summary>
 Community Forum
-</summary><p>Our <a href="https://community.epinowcast.org/" class="external-link">community forum</a> has areas for <a href="https://community.epinowcast.org/c/interface/15" class="external-link">question and answer</a> and <a href="https://community.epinowcast.org/c/projects/11" class="external-link">considering new methods and tools</a>, among others. If you are generally interested in real-time analysis of infectious disease, you may find this useful even if do not use <code>primarycensoreddist</code>.</p>
+</summary><p>Our <a href="https://community.epinowcast.org/" class="external-link">community forum</a> has areas for <a href="https://community.epinowcast.org/c/interface/15" class="external-link">question and answer</a> and <a href="https://community.epinowcast.org/c/projects/11" class="external-link">considering new methods and tools</a>, among others. If you are generally interested in real-time analysis of infectious disease, you may find this useful even if you do not use <code>primarycensoreddist</code>.</p>
 </details>
 </div>
 <div class="section level2">
@@ -143,7 +143,7 @@ Community Forum
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<p>If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our <a href="https://package.epinowcast.org/articles/model.html" class="external-link">model outline</a>. If you use <code>primarycensoreddist</code> in your work, please consider citing it with <code>citation("primarycensoreddist")</code>.</p>
+<p>If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our <a href="https://primarycensoreddist.epinowcast.org/articles/methods.html">methods outline</a>. If you use <code>primarycensoreddist</code> in your work, please consider citing it with <code>citation("primarycensoreddist")</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="contributors">Contributors<a class="anchor" aria-label="anchor" href="#contributors"></a>
