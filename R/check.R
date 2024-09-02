@@ -7,6 +7,9 @@
 #' @return NULL. The function will stop execution with an error message if
 #'         pdist is not a valid CDF.
 #' @export
+#'
+#' @family check
+#'
 #' @examples
 #' check_pdist(pnorm, D = 10)
 check_pdist <- function(pdist, D, ...) {
@@ -42,6 +45,8 @@ check_pdist <- function(pdist, D, ...) {
 #' @return NULL. The function will stop execution with an error message if
 #'         dprimary is not a valid PDF.
 #' @export
+#'
+#' @family check
 #'
 #' @examples
 #' check_dprimary(dunif, pwindow = 1)

@@ -12,3 +12,9 @@ A character string with the path to the Stan code
 \description{
 Get the path to the Stan code
 }
+\seealso{
+Tools for working with package Stan functions
+\code{\link{pcd_load_stan_functions}()},
+\code{\link{pcd_stan_functions}()}
+}
+\concept{stantools}

@@ -25,3 +25,8 @@ checking if it's monotonically increasing and bounded between 0 and 1.
 \examples{
 check_pdist(pnorm, D = 10)
 }
+\seealso{
+Distribution checking functions
+\code{\link{check_dprimary}()}
+}
+\concept{check}

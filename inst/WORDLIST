@@ -7,13 +7,16 @@ Lifecycle
 PMF
 PMFs
 SamuelBrand
+cens
 dprimary
 modeling
 pcd
 pdist
+primaryeventdistributions
 pwindow
 rprimary
 seabbs
 stan
-u
+stantools
+swindow
 zsusswein

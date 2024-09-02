@@ -1,6 +1,9 @@
 #' Get the path to the Stan code
 #'
 #' @return A character string with the path to the Stan code
+#'
+#' @family stantools
+#'
 #' @export
 pcd_stan_path <- function() {
   system.file("stan", package = "primarycensoreddist")
@@ -52,6 +55,9 @@ pcd_stan_path <- function() {
 #' the Stan files.
 #'
 #' @export
+#'
+#' @family stantools
+#'
 #' @examples
 #' \dontrun{
 #' stan_functions <- pcd_stan_functions()
@@ -90,6 +96,9 @@ pcd_stan_functions <- function(
 #' write_to_file is TRUE. Defaults to "pcd_stan_functions.stan".
 #'
 #' @return A character string containing the requested Stan functions
+#'
+#' @family stantools
+#'
 #' @export
 pcd_load_stan_functions <- function(
     functions = NULL, stan_path = primarycensoreddist::pcd_stan_path(),

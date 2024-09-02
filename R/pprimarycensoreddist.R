@@ -1,5 +1,11 @@
 #' Compute the primary event censored CDF for delays
 #'
+#' This function computes the primary event censored cumulative distribution
+#' function (CDF) for a given set of quantiles. It adjusts the CDF of the
+#' primary event distribution by accounting for the delay distribution and
+#' potential truncation at a maximum delay (D). The function allows for
+#' custom primary event distributions and delay distributions.
+#'
 #' @param q Vector of quantiles
 #'
 #' @param pdist Distribution function (CDF)
@@ -32,6 +38,29 @@
 #' @importFrom stats dunif
 #'
 #' @export
+#'
+#' @details
+#' The primary event censored CDF is computed by integrating the product of
+#' the primary event distribution function (CDF) and the delay distribution
+#' function (PDF) over the primary event window. The integration is adjusted
+#' for truncation if a finite maximum delay (D) is specified.
+#'
+#' The primary event censored CDF, \eqn{F_{\text{cens}}(q)}, is given by:
+#' \deqn{
+#' F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p)
+#' \, dp
+#' }
+#' where \eqn{F} is the CDF of the primary event distribution,
+#' \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
+#' \eqn{pwindow} is the primary event window.
+#'
+#' If the maximum delay \eqn{D} is finite, the CDF is normalized by \eqn{F(D)}:
+#' \deqn{
+#' F_{\text{cens}}(q) = \int_{0}^{pwindow} \frac{F(q - p)}{F(D - p)} \cdot
+#' f_{\text{primary}}(p) \, dp
+#' }
+#'
+#' @family primarycensoreddist
 #'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events

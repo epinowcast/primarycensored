@@ -25,3 +25,9 @@ stan_functions <- pcd_stan_functions()
 print(stan_functions)
 }
 }
+\seealso{
+Tools for working with package Stan functions
+\code{\link{pcd_load_stan_functions}()},
+\code{\link{pcd_stan_path}()}
+}
+\concept{stantools}

@@ -35,3 +35,8 @@ checking if it integrates to approximately 1 over the specified range.
 \examples{
 check_dprimary(dunif, pwindow = 1)
 }
+\seealso{
+Distribution checking functions
+\code{\link{check_pdist}()}
+}
+\concept{check}

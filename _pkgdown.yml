@@ -1,13 +1,40 @@
 url: https://primarycensoreddist.epinowcast.org/
 template:
   package: enwtheme
-  twitter:
-    creator: "@seabbs"
-    card: summary_large_image
-  opengraph:
-    twitter:
-      creator: "@seabbs"
-      card: summary_large_image
 
 development:
   mode: auto
+
+navbar:
+  structure:
+    left: [intro, reference, stanreference, articles]
+    right: [search, github, lightswitch]
+  components:
+    stanreference:
+      text: Stan reference
+      href: https://primarycensoreddist.epinowcast.org/stan/
+    articles:
+      text: Articles
+      menu:
+
+authors:
+  Sam Abbott:
+    href: "https://www.samabbott.co.uk/"
+
+reference:
+- title: Primary event censored distribution functions
+  desc: Primary event censored distribution functions
+  contents:
+  - has_concept("primarycensoreddist")
+- title: Primary event distributions
+  desc: Primary event distributions
+  contents:
+  - has_concept("primaryeventdistributions")
+- title: Distribution checking functions
+  desc: Distribution checking functions
+  contents:
+  - has_concept("check")
+- title: Tools for working with package Stan functions
+  desc: Tools for working with package Stan functions
+  contents:
+  - has_concept("stantools")

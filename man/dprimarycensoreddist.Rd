@@ -63,7 +63,23 @@ Vector of primary event censored PMFs, normalized by D if finite
 (truncation adjustment)
 }
 \description{
-Compute the primary event censored PMF for delays
+This function computes the primary event censored probability mass function
+(PMF) for a given set of quantiles. It adjusts the PMF of the primary event
+distribution by accounting for the delay distribution and potential
+truncation at a maximum delay (D). The function allows for custom primary
+event distributions and delay distributions.
+}
+\details{
+The primary event censored PMF is computed by taking the difference of the
+primary event censored cumulative distribution function (CDF) at two points,
+\eqn{d + \text{swindow}} and \eqn{d}. The primary event censored PMF,
+\eqn{f_{\text{cens}}(d)}, is given by:
+\deqn{
+f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
+}
+where \eqn{F_{\text{cens}}} is the primary event censored CDF. For the
+explanation and mathematical details of the CDF, refer to the documentation
+of \code{\link[=pprimarycensoreddist]{pprimarycensoreddist()}}.
 }
 \examples{
 # Example: Weibull distribution with uniform primary events
@@ -76,3 +92,9 @@ dprimarycensoreddist(
   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 )
 }
+\seealso{
+Primary event censored distribution functions
+\code{\link{pprimarycensoreddist}()},
+\code{\link{rprimarycensoreddist}()}
+}
+\concept{primarycensoreddist}

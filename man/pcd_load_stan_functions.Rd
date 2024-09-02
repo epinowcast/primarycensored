@@ -34,3 +34,9 @@ A character string containing the requested Stan functions
 \description{
 Load Stan functions as a string
 }
+\seealso{
+Tools for working with package Stan functions
+\code{\link{pcd_stan_functions}()},
+\code{\link{pcd_stan_path}()}
+}
+\concept{stantools}
