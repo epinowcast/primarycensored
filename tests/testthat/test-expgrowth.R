@@ -71,3 +71,32 @@ test_that("dexpgrowth, pexpgrowth, and rexpgrowth are consistent", {
 
   expect_equal(empirical_pdf, theoretical_pdf, tolerance = 0.1)
 })
+
+test_that("expgrowth functions handle very small r correctly", {
+  min <- 0
+  max <- 1
+  r <- 1e-11
+  n <- 100000
+
+  # Test rexpgrowth
+  samples <- rexpgrowth(n, min, max, r)
+  expect_true(all(samples >= min & samples < max))
+
+  # For very small r, the distribution should be close to uniform
+  expect_equal(mean(samples), 0.5, tolerance = 0.01)
+  expect_equal(var(samples), 1 / 12, tolerance = 0.01)
+
+  # Test dexpgrowth
+  x_values <- seq(min, max, length.out = 100)
+  densities <- dexpgrowth(x_values, min, max, r)
+  expect_true(all(densities >= 0.99 & densities <= 1.01))
+
+  # Test pexpgrowth
+  cdfs <- pexpgrowth(x_values, min, max, r)
+  expect_equal(cdfs, x_values, tolerance = 0.01)
+
+  # Consistency check
+  empirical_cdf <- ecdf(samples)
+  theoretical_cdf <- pexpgrowth(x_values, min, max, r)
+  expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.01)
+})
