@@ -16,7 +16,7 @@ check_pdist <- function(pdist, D, ...) {
   if (is.infinite(D)) {
     D <- 1000
   }
-  test_values <- sort(sample(seq(0, D, by = 1), 4))
+  test_values <- sort(runif(4, 0, D))
   test_results <- pdist(test_values, ...)
 
   if (!all(diff(test_results) >= 0) ||
@@ -34,10 +34,11 @@ check_pdist <- function(pdist, D, ...) {
   return(invisible(NULL))
 }
 
-#' Check if a function is a valid probability density function (PDF)
+#' Check if a function is a valid bounded probability density function (PDF)
 #'
 #' This function tests whether a given function behaves like a valid PDF by
-#' checking if it integrates to approximately 1 over the specified range.
+#' checking if it integrates to approximately 1 over the specified range
+#' and if it takes the arguments min and max.
 #'
 #' @inheritParams pprimarycensoreddist
 #' @param tolerance The tolerance for the integral to be considered close to 1
@@ -52,6 +53,11 @@ check_pdist <- function(pdist, D, ...) {
 #' check_dprimary(dunif, pwindow = 1)
 check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
                            tolerance = 1e-3) {
+  # check if dprimary takes min and max as arguments
+  if (!all(c("min", "max") %in% names(formals(dprimary)))) {
+    stop("dprimary must take min and max as arguments")
+  }
+
   integrand <- function(x) {
     do.call(dprimary, c(list(x = x, min = 0, max = pwindow), dprimary_args))
   }
