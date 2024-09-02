@@ -22,6 +22,7 @@
   * array[2] real params = {0.0, 1.0}; // mean and standard deviation on log scale
   * int dist_id = 1; // Lognormal
   * real log_cdf = dist_lcdf(delay, params, dist_id);
+  * @endcode
   */
 real dist_lcdf(real delay, array[] real params, int dist_id) {
   if (delay <= 0) return negative_infinity();
@@ -66,6 +67,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * real min = 0;
   * real max = 1;
   * real log_pdf = primary_dist_lpdf(x, primary_dist_id, params, min, max);
+  * @endcode
   */
 real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real min, real max) {
   // Implement switch for different primary distributions
@@ -98,6 +100,7 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   * real integrand_value = primary_censored_integrand(
   *   p, xc, theta, x_r, x_i
   * );
+  * @endcode
   */
 real primary_censored_integrand(real x, real xc, array[] real theta,
                                 array[] real x_r, array[] int x_i) {
@@ -166,6 +169,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   * real cdf = primary_censored_dist_cdf(
   *   d, dist_id, params, pwindow, D, primary_dist_id, primary_params
   * );
+  * @endcode
   */
 real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
                                data real pwindow, data real D,
@@ -214,6 +218,7 @@ real primary_censored_dist_cdf(real d, int dist_id, array[] real params,
   * real log_cdf = primary_censored_dist_lcdf(
   *   d, dist_id, params, pwindow, D, primary_dist_id, primary_params
   * );
+  * @endcode
   */
 real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
                                 data real pwindow, data real D,
@@ -256,6 +261,7 @@ real primary_censored_dist_lcdf(real d, int dist_id, array[] real params,
   * real log_pmf = primary_censored_dist_lpmf(
   *   d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
   * );
+  * @endcode
   */
 real primary_censored_dist_lpmf(int d, int dist_id, array[] real params,
                                 data real pwindow, real swindow, data real D,
@@ -300,6 +306,7 @@ real primary_censored_dist_lpmf(int d, int dist_id, array[] real params,
   * int primary_dist_id = 1; // Uniform
   * array[0] real primary_params = {};
   * real pmf = primary_censored_dist_pmf(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);
+  * @endcode
   */
 real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
                                data real pwindow, real swindow, data real D,
@@ -350,6 +357,7 @@ real primary_censored_dist_pmf(int d, int dist_id, array[] real params,
   *      max_delay, D, dist_id, params, pwindow, primary_dist_id,
   *      primary_params, approx_truncation
   *   );
+  * @endcode
   */
 vector primary_censored_sone_lpmf_vectorized(
   int max_delay, data real D, int dist_id,
@@ -446,6 +454,7 @@ vector primary_censored_sone_lpmf_vectorized(
   *   primary_censored_sone_pmf_vectorized(
   *      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, approx_truncation
   *   );
+  * @endcode
   */
 vector primary_censored_sone_pmf_vectorized(
   int max_delay, data real D, int dist_id,
