@@ -13,32 +13,62 @@ pcd_stan_path <- function() {
 #'
 #' @param content Character vector containing Stan code
 #'
-#' @param extract_names Logical, if TRUE extract function names, otherwise
-#' extract function content
+#' @param names_only Logical, if TRUE extract function names, otherwise
+#' extract function content.
 #'
-#' @param func_name Optional, function name to extract content for
+#' @param functions Optional, character vector of function names to extract
+#' content for. This uses partial matching.
 #'
 #' @return Character vector of function names or content
 #' @keywords internal
 .extract_stan_functions <- function(
-    content, extract_names = TRUE, func_name = NULL) {
+    content, names_only = FALSE, functions = NULL) {
+  def_pattern <- "^(real|vector|matrix|void|int|array\\s*<\\s*(real|vector|matrix|int)\\s*>|tuple\\s*<\\s*.*\\s*>)\\s+" # nolint
   func_pattern <- paste0(
-    "^(real|vector|matrix|void|int)\\s+",
-    "(\\w+)\\s*\\("
+    def_pattern, "(\\w+)\\s*\\("
   )
-  if (extract_names) {
-    func_lines <- grep(func_pattern, content, value = TRUE)
-    return(gsub(func_pattern, "\\2", func_lines))
+  func_lines <- grep(func_pattern, content, value = TRUE)
+  # remove the func_pattern
+  func_lines <- sub(def_pattern, "", func_lines)
+  # get the next complete word after the pattern until the first (
+  func_names <- sub("\\s*\\(.*$", "", func_lines)
+  if (!is.null(func_name)) {
+    func_names <- func_names[func_names %in% func_name]
+  }
+  if (names_only) {
+    return(func_names)
   } else {
-    start_line <- grep(paste0(func_pattern, ".*", func_name), content)
-    if (length(start_line) > 0) {
-      end_line <- which(
-        cumsum(grepl("^\\s*\\{", content[start_line:length(content)])) ==
-          cumsum(grepl("^\\s*\\}", content[start_line:length(content)]))
-      )[1] + start_line - 1
-      return(content[start_line:end_line])
+    func_content <- character(0)
+    for (func_name in func_names) {
+      start_line <- grep(paste0(def_pattern, func_name, "\\("), content)
+      if (length(start_line) == 0) next
+      end_line <- start_line
+      brace_count <- 0
+      # Ensure we find the first opening brace
+      repeat {
+        line <- content[end_line]
+        print(line)
+        print(brace_count)
+        brace_count <- brace_count + length(gregexpr("\\{", line)[[1]]) -
+          length(gregexpr("\\}", line)[[1]])
+        end_line <- end_line + 1
+        if (brace_count > 0) break
+      }
+      # Continue until all braces are closed
+      repeat {
+        line <- content[end_line]
+        print(line)
+        print(brace_count)
+        brace_count <- brace_count + length(gregexpr("\\{", line)[[1]]) -
+          length(gregexpr("\\}", line)[[1]])
+        if (brace_count == 0) break
+        end_line <- end_line + 1
+      }
+      func_content <- c(
+        func_content, paste(content[start_line:end_line], collapse = "\n")
+      )
     }
-    return(character(0))
+    return(func_content)
   }
 }
 
