@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Unreleased version">0.0.0.1000</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.1.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,9 +38,21 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
-<li class="nav-item"><a class="nav-link" href="https://primarycensoreddist.epinowcast.org/stan/">Stan reference</a></li>
-<li class="nav-item"><h6 class="dropdown-header" data-toc-skip>Articles</h6></li>
+<li class="nav-item"><a class="nav-link" href="articles/primarycensoreddist.html">Get started</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-reference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Reference</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-reference">
+<li><a class="dropdown-item" href="reference/index.html">R reference</a></li>
+    <li><a class="dropdown-item" href="https://primarycensoreddist.epinowcast.org/stan/">Stan reference</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
+    <li><a class="dropdown-item" href="articles/fitdistr.html">Fitting distributions using primarycensorseddist and fitdistr</a></li>
+  </ul>
+</li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
@@ -209,17 +221,7 @@ Community Forum
 </ul>
 </div>
 
-<div class="dev-status">
-<h2 data-toc-skip>Dev status</h2>
-<ul class="list-unstyled">
-<li><a href="https://www.tidyverse.org/lifecycle/#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
-<li><a href="https://github.com/epinowcast/primarycensoreddist/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/epinowcast/primarycensoreddist/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://app.codecov.io/gh/epinowcast/primarycensoreddist" class="external-link"><img src="https://codecov.io/gh/epinowcast/primarycensoreddist/branch/main/graph/badge.svg" alt="Codecov test coverage"></a></li>
-<li><a href="https://epinowcast.r-universe.dev/primarycensoreddist" class="external-link"><img src="https://epinowcast.r-universe.dev/badges/primarycensoreddist" alt="Universe"></a></li>
-<li><a href="https://github.com/epinowcast/primarycensoreddist/blob/master/LICENSE.md/" class="external-link"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license"></a></li>
-<li><a href="https://github.com/epinowcast/primarycensoreddist/graphs/contributors" class="external-link"><img src="https://img.shields.io/github/contributors/epinowcast/primarycensoreddist" alt="GitHub contributors"></a></li>
-</ul>
-</div>
+
 
   </aside>
 </div>
