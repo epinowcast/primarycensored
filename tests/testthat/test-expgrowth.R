@@ -100,3 +100,33 @@ test_that("expgrowth functions handle very small r correctly", {
   theoretical_cdf <- pexpgrowth(x_values, min, max, r)
   expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.01)
 })
+
+test_that("pexpgrowth handles lower.tail argument correctly", {
+  min <- 0
+  max <- 10
+  r <- 0.5
+  x_values <- seq(min, max, length.out = 100)
+
+  # Calculate CDFs with lower.tail = TRUE and FALSE
+  cdf_lower <- pexpgrowth(x_values, min, max, r, lower.tail = TRUE)
+  cdf_upper <- pexpgrowth(x_values, min, max, r, lower.tail = FALSE)
+
+  # Check that the sum of lower and upper tail probabilities is 1
+  expect_equal(
+    cdf_lower + cdf_upper, rep(1, length(x_values)),
+    tolerance = 1e-10
+  )
+
+  # Check specific points
+  expect_identical(pexpgrowth(min, min, max, r, lower.tail = TRUE), 0)
+  expect_identical(pexpgrowth(min, min, max, r, lower.tail = FALSE), 1)
+  expect_identical(pexpgrowth(max, min, max, r, lower.tail = TRUE), 1)
+  expect_identical(pexpgrowth(max, min, max, r, lower.tail = FALSE), 0)
+
+  # Check that lower.tail = FALSE gives correct upper tail probabilities
+  expect_equal(
+    pexpgrowth(x_values, min, max, r, lower.tail = FALSE),
+    1 - pexpgrowth(x_values, min, max, r, lower.tail = TRUE),
+    tolerance = 1e-10
+  )
+})

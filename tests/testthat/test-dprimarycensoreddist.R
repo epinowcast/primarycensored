@@ -57,17 +57,34 @@ test_that("dprimarycensoreddist matches difference of pprimarycensoreddist", {
   expect_equal(pmf, cdf_diff, tolerance = 1e-6)
 })
 
-test_that("dprimarycensoreddist throws an error for invalid upper truncation point", {
-  d <- 10
+test_that(
+  "dprimarycensoreddist throws an error for invalid upper truncation point",
+  {
+    d <- 10
+    pwindow <- 1
+    swindow <- 1
+    D <- 10
+
+    expect_error(
+      dpcens(
+        d, plnorm, pwindow, swindow, D,
+        meanlog = 0, sdlog = 1
+      ),
+      "Upper truncation point is greater than D"
+    )
+  }
+)
+
+test_that("dprimarycensoreddist throws an error for negative d", {
+  d <- -1
   pwindow <- 1
-  swindow <- 1
+  swindow <- 0.5
   D <- 10
 
-  expect_error(
+  expect_identical(
     dpcens(
       d, plnorm, pwindow, swindow, D,
       meanlog = 0, sdlog = 1
-    ),
-    "Upper truncation point is greater than D"
+    ), 0
   )
 })
