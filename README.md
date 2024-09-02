@@ -22,7 +22,10 @@ contributors](https://img.shields.io/github/contributors/epinowcast/primarycenso
 This package provides both R functions for working with primary event
 censored distributions and Stan implementations for use in Bayesian
 modeling. Primary event censored distributions are useful for modeling
-delayed reporting scenarios in epidemiology and other fields.
+delayed reporting scenarios in epidemiology and other fields. It
+provides support for arbitrary delay distributions, a range of common
+primary distributions, and allows for truncation and secondary event
+censoring to be accounted for.
 
 ## Installation
 
@@ -91,7 +94,7 @@ but the brief version is:
 # `Suggests` dependencies
 install.packages(
   "cmdstanr",
-  repos = c("https://mc-stan.org/r-packages/", getOption("repos"))
+  repos = c("https://stan-dev.r-universe.dev", getOption("repos"))
 )
 # once `cmdstanr` is installed:
 cmdstanr::install_cmdstan()
@@ -154,7 +157,7 @@ Our [community forum](https://community.epinowcast.org/) has areas for
 and [considering new methods and
 tools](https://community.epinowcast.org/c/projects/11), among others. If
 you are generally interested in real-time analysis of infectious
-disease, you may find this useful even if do not use
+disease, you may find this useful even if you do not use
 `primarycensoreddist`.
 
 </details>
@@ -199,10 +202,10 @@ By contributing to this project, you agree to abide by its terms.
 ## Citation
 
 If making use of our methodology or the methodology on which ours is
-based, please cite the relevant papers from our [model
-outline](https://package.epinowcast.org/articles/model.html). If you use
-`primarycensoreddist` in your work, please consider citing it with
-`citation("primarycensoreddist")`.
+based, please cite the relevant papers from our [methods
+outline](https://primarycensoreddist.epinowcast.org/articles/methods.html).
+If you use `primarycensoreddist` in your work, please consider citing it
+with `citation("primarycensoreddist")`.
 
 ## Contributors
 
