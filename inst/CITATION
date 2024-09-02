@@ -12,6 +12,6 @@ bibentry(
   bibtype = "Manual",
   title   = paste0(meta$Package, ": ", gsub("[[:space:]]+", " ", meta$Title)),
   author  = author,
-  year    = format(meta$Date, "%Y"),
+  year    = format(Sys.Date(), "%Y"),
   doi     = "10.5281/zenodo.13632839"
 )
