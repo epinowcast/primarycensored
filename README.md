@@ -203,7 +203,7 @@ By contributing to this project, you agree to abide by its terms.
 
 If making use of our methodology or the methodology on which ours is
 based, please cite the relevant papers from our [methods
-outline](https://primarycensoreddist.epinowcast.org/articles/methods.html).
+outline](https://primarycensoreddist.epinowcast.org/articles/primarycensoreddist.html).
 If you use `primarycensoreddist` in your work, please consider citing it
 with `citation("primarycensoreddist")`.
 
