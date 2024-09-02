@@ -1,0 +1,18 @@
+---
+title: "Fitting Distributions with primarycensoreddist"
+description: "A guide on how to fit distributions using primarycensoreddist."
+author: Sam Abbott
+output:
+  bookdown::html_vignette2:
+    fig_caption: yes
+    code_folding: show
+pkgdown:
+  as_is: true
+bibliography: library.bib
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{Fitting Distributions with primarycensoreddist}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---

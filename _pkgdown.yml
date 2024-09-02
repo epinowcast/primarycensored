@@ -8,15 +8,23 @@ development:
 
 navbar:
   structure:
-    left: [intro, reference, stanreference, articles]
+    left: [intro, metareference, articles]
     right: [search, github, lightswitch]
   components:
-    stanreference:
-      text: Stan reference
-      href: https://primarycensoreddist.epinowcast.org/stan/
+    metareference:
+      text: Reference
+      menu:
+      - text: R reference
+        href: reference/index.html
+      - text: Stan reference
+        href: https://primarycensoreddist.epinowcast.org/stan/
     articles:
       text: Articles
       menu:
+      - text: Fitting distributions using primarycensorseddist and cmdstan
+        href: articles/stan.html
+      - text: Fitting distributions using primarycensorseddist and fitdistr
+        href: articles/fitdistr.html
 
 authors:
   Sam Abbott:

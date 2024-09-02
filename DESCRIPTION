@@ -1,6 +1,6 @@
 Package: primarycensoreddist
 Title: Primary Event Censored Distributions in R and Stan
-Version: 0.0.0.1000
+Version: 0.1.0
 Authors@R:
     person("Sam Abbott", , , "contact@samabbott.co.uk", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8057-8037"))
@@ -18,8 +18,10 @@ BugReports: https://github.com/epinowcast/primarycensoreddist/issues/
 Depends:
     R (>= 4.0.0)
 Suggests:
+    bookdown,
     cmdstanr,
     knitr,
+    rmarkdown,
     spelling,
     testthat (>= 3.1.9),
     usethis
@@ -33,3 +35,4 @@ Language: en-GB
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
+VignetteBuilder: knitr
