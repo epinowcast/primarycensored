@@ -1,0 +1,198 @@
+# --------------------------------------------
+# CITATION file created with {cffr} R package
+# See also: https://docs.ropensci.org/cffr/
+# --------------------------------------------
+ 
+cff-version: 1.2.0
+message: 'To cite package "primarycensoreddist" in publications use:'
+type: software
+license: MIT
+title: 'primarycensoreddist: Primary Event Censored Distributions in R and Stan'
+version: 0.1.0.1000
+doi: 10.5281/zenodo.13632839
+identifiers:
+- type: url
+  value: https://github.com/epinowcast/primarycensoreddist/
+abstract: This package provides both R functions for working with primary event censored
+  distributions and Stan implementations for use in Bayesian modeling. Primary event
+  censored distributions are useful for modeling delayed reporting scenarios in epidemiology
+  and other fields. It provides support for arbitrary delay distributions, a range
+  of common primary distributions, and allows for truncation and secondary event censoring
+  to be accounted for.
+authors:
+- name: Sam Abbott
+  email: contact@samabbott.co.uk
+  orcid: https://orcid.org/0000-0001-8057-8037
+preferred-citation:
+  type: manual
+  title: 'primarycensoreddist: Primary Event Censored Distributions in R and Stan'
+  authors:
+  - name: Sam Abbott
+    email: contact@samabbott.co.uk
+    orcid: https://orcid.org/0000-0001-8057-8037
+  year: '2024'
+  doi: 10.5281/zenodo.13632839
+repository-code: https://github.com/epinowcast/primarycensoreddist/issues/
+url: https://primarycensoreddist.epinowcast.org
+contact:
+- name: Sam Abbott
+  email: contact@samabbott.co.uk
+  orcid: https://orcid.org/0000-0001-8057-8037
+references:
+- type: software
+  title: 'R: A Language and Environment for Statistical Computing'
+  notes: Depends
+  url: https://www.R-project.org/
+  authors:
+  - name: R Core Team
+  institution:
+    name: R Foundation for Statistical Computing
+    address: Vienna, Austria
+  year: '2024'
+  version: '>= 4.0.0'
+- type: software
+  title: bookdown
+  abstract: 'bookdown: Authoring Books and Technical Documents with R Markdown'
+  notes: Suggests
+  url: https://pkgs.rstudio.com/bookdown/
+  repository: https://CRAN.R-project.org/package=bookdown
+  authors:
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  year: '2024'
+  doi: 10.32614/CRAN.package.bookdown
+- type: software
+  title: cmdstanr
+  abstract: 'cmdstanr: R Interface to ''CmdStan'''
+  notes: Suggests
+  url: https://mc-stan.org/cmdstanr/
+  repository: https://stan-dev.r-universe.dev
+  authors:
+  - family-names: Gabry
+    given-names: Jonah
+    email: jsg2201@columbia.edu
+  - family-names: Češnovar
+    given-names: Rok
+    email: rok.cesnovar@fri.uni-lj.si
+  - family-names: Johnson
+    given-names: Andrew
+    email: andrew.johnson@arjohnsonau.com
+    orcid: https://orcid.org/0000-0001-7000-8065
+  - family-names: Bronder
+    given-names: Steve
+  year: '2024'
+  doi: 10.32614/CRAN.package.cmdstanr
+- type: software
+  title: knitr
+  abstract: 'knitr: A General-Purpose Package for Dynamic Report Generation in R'
+  notes: Suggests
+  url: https://yihui.org/knitr/
+  repository: https://CRAN.R-project.org/package=knitr
+  authors:
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  year: '2024'
+  doi: 10.32614/CRAN.package.knitr
+- type: software
+  title: rmarkdown
+  abstract: 'rmarkdown: Dynamic Documents for R'
+  notes: Suggests
+  url: https://pkgs.rstudio.com/rmarkdown/
+  repository: https://CRAN.R-project.org/package=rmarkdown
+  authors:
+  - family-names: Allaire
+    given-names: JJ
+    email: jj@posit.co
+  - family-names: Xie
+    given-names: Yihui
+    email: xie@yihui.name
+    orcid: https://orcid.org/0000-0003-0645-5666
+  - family-names: Dervieux
+    given-names: Christophe
+    email: cderv@posit.co
+    orcid: https://orcid.org/0000-0003-4474-2498
+  - family-names: McPherson
+    given-names: Jonathan
+    email: jonathan@posit.co
+  - family-names: Luraschi
+    given-names: Javier
+  - family-names: Ushey
+    given-names: Kevin
+    email: kevin@posit.co
+  - family-names: Atkins
+    given-names: Aron
+    email: aron@posit.co
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+  - family-names: Cheng
+    given-names: Joe
+    email: joe@posit.co
+  - family-names: Chang
+    given-names: Winston
+    email: winston@posit.co
+  - family-names: Iannone
+    given-names: Richard
+    email: rich@posit.co
+    orcid: https://orcid.org/0000-0003-3925-190X
+  year: '2024'
+  doi: 10.32614/CRAN.package.rmarkdown
+- type: software
+  title: spelling
+  abstract: 'spelling: Tools for Spell Checking in R'
+  notes: Suggests
+  url: https://ropensci.r-universe.dev/spelling
+  repository: https://CRAN.R-project.org/package=spelling
+  authors:
+  - family-names: Ooms
+    given-names: Jeroen
+    email: jeroen@berkeley.edu
+    orcid: https://orcid.org/0000-0002-4035-0289
+  - family-names: Hester
+    given-names: Jim
+    email: james.hester@rstudio.com
+  year: '2024'
+  doi: 10.32614/CRAN.package.spelling
+- type: software
+  title: testthat
+  abstract: 'testthat: Unit Testing for R'
+  notes: Suggests
+  url: https://testthat.r-lib.org
+  repository: https://CRAN.R-project.org/package=testthat
+  authors:
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+  year: '2024'
+  doi: 10.32614/CRAN.package.testthat
+  version: '>= 3.1.9'
+- type: software
+  title: usethis
+  abstract: 'usethis: Automate Package and Project Setup'
+  notes: Suggests
+  url: https://usethis.r-lib.org
+  repository: https://CRAN.R-project.org/package=usethis
+  authors:
+  - family-names: Wickham
+    given-names: Hadley
+    email: hadley@posit.co
+    orcid: https://orcid.org/0000-0003-4757-117X
+  - family-names: Bryan
+    given-names: Jennifer
+    email: jenny@posit.co
+    orcid: https://orcid.org/0000-0002-6983-2759
+  - family-names: Barrett
+    given-names: Malcolm
+    email: malcolmbarrett@gmail.com
+    orcid: https://orcid.org/0000-0003-0299-5825
+  - family-names: Teucher
+    given-names: Andy
+    email: andy.teucher@posit.co
+    orcid: https://orcid.org/0000-0002-7840-692X
+  year: '2024'
+  doi: 10.32614/CRAN.package.usethis
+
