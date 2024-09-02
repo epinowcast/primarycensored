@@ -13,7 +13,7 @@ on:
       - inst/CITATION
       - .github/workflows/update-citation-cff.yaml
   workflow_dispatch:
-  
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
@@ -47,11 +47,16 @@ jobs:
           cff_write(keys = mykeys)
         shell: Rscript {0}
 
-      - name: Commit results
-        run: |
-          git config --local user.name "github-actions[bot]"
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CITATION.cff
-          git commit -m 'Update CITATION.cff' || echo "No changes to commit"
-          git pull --rebase origin ${{ github.ref.name }}
-          git push origin || echo "No changes to commit"
+      - name: Create Pull Request
+        if: github.ref == 'refs/heads/main'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "Update CITATION.cff"
+          title: "Update CITATION.cff"
+          body: "This is an automated pull request to update the CITATION.cff file."
+          branch: "update-citation-cff-${{ github.run_number }}"
+          labels: "documentation"
+          reviewers: seabbs
+          add-paths: |
+            CITATION.cff
+          token: ${{ secrets.GITHUB_TOKEN }}
