@@ -14,6 +14,10 @@ on:
 
 name: R-CMD-check
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref }}
+  cancel-in-progress: true
+
 jobs:
   R-CMD-check:
     if: "! contains(github.event.head_commit.message, '[ci skip]')"
@@ -29,10 +33,6 @@ jobs:
           - {os: ubuntu-latest,   r: 'oldrel-1', rtools: ''}
           - {os: macOS-latest,   r: 'release', rtools: ''}
           - {os: windows-latest, r: 'release', rtools: ''}
-
-    concurrency:
-      group: ${{ github.workflow }}-${{ github.head_ref }}
-      cancel-in-progress: true
 
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
