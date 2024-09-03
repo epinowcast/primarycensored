@@ -5,7 +5,7 @@ articles:
   fitdistr: fitdistr.html
   primarycensoreddist: primarycensoreddist.html
   stan: stan.html
-last_built: 2024-09-03T20:17Z
+last_built: 2024-09-03T21:10Z
 urls:
   reference: https://primarycensoreddist.epinowcast.org/reference
   article: https://primarycensoreddist.epinowcast.org/articles
