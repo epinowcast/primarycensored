@@ -284,5 +284,5 @@ In addition to these main functions, the package also includes:
 # Learning more
 
 - For more on `primarycensoreddist` see the other package vignettes and the function documentation.
-- For more methodoloical background on delay distributions see [@Park2024].
+- For more methodological background on delay distributions see [@Park2024].
 - For advice on best practices when estimating or handling delay distributions see [@Charniga2024].
