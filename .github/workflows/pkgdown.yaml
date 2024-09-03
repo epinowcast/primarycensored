@@ -44,6 +44,13 @@ jobs:
         run: pkgdown::build_site_github_pages(new_process = FALSE, install = FALSE)
         shell: Rscript {0}
 
+      - name: Upload website
+        uses: actions/upload-artifact@v4
+        with:
+          name: website
+          retention-days: 5
+          path: docs
+
       - name: Deploy to GitHub pages 🚀
         if: github.event_name != 'pull_request'
         uses: JamesIves/github-pages-deploy-action@v4.6.3
