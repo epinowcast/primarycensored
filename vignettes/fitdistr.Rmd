@@ -3,7 +3,7 @@ title: "Fitting distributions using primarycensorseddist and fitdistr"
 description: "A guide on how to fit distributions using primarycensoreddist."
 author: Sam Abbott
 output:
-  bookdown::html_vignette2:
+  bookdown::html_document2:
     fig_caption: yes
     code_folding: show
 pkgdown:

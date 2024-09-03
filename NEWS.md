@@ -1,9 +1,13 @@
 # primarycensoreddist 0.1.0.1000
 
-
 ## Package
 
 * Added support for `swindow = 0` to `rprimarycensoreddist` to allow for non-secondary event censored distributions.
+
+## Documentation
+
+* Added a getting started vignette.
+
 # primarycensoreddist 0.1.0
 
 This is the initial `primarycensoreddist` release and includes R and stan tools for dealing with potentially truncated primary event censored delay distributions. We expect all current features to work but the UI may change as the package matures over the next few versions.
