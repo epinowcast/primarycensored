@@ -11,6 +11,9 @@
 #' @param rdist Function to generate random samples from the delay distribution
 #' for example [stats::rlnorm()] for lognormal distribution.
 #'
+#' @param swindow Integer specifying the window size for rounding the delay
+#' (default is 1). If `swindow = 0` then no rounding is applied.
+#'
 #' @param n Number of random samples to generate.
 #'
 #' @param rprimary Function to generate random samples from the primary
@@ -24,7 +27,7 @@
 #' @param ... Additional arguments to be passed to the distribution function.
 #'
 #' @return Vector of random samples from the primary event censored
-#' distribution
+#' distribution censored by the secondary event window.
 #'
 #' @aliases rpcens
 #'
@@ -75,7 +78,11 @@ rprimarycensoreddist <- function(n, rdist, pwindow = 1, swindow = 1,
   total_delay <- p + delay
 
   # Round to the nearest swindow
-  rounded_delay <- floor(total_delay / swindow) * swindow
+  if (swindow > 0) {
+    rounded_delay <- floor(total_delay / swindow) * swindow
+  } else {
+    rounded_delay <- total_delay
+  }
 
   # Apply truncation and select valid samples
   valid_samples <- rounded_delay[rounded_delay >= 0 & rounded_delay < D]
