@@ -159,7 +159,7 @@ ggplot() +
 
 Here we see that without secondary censoring we get a distribution that is slightly right skewed. This is due to the primary event censoring. We also see that with secondary censoring we get a distribution that more closely matches the true log-normal distribution due to the censoring interacting. However, neither distribution matches the true distribution due to the truncation at `D` which biases both observed distributions towards shorter delays.
 
-# Compute the primary event censored CDF for delays with `pprimarycensoreddist()`
+# Compute the primary event censored cumulative distribution function (CDF) for delays with `pprimarycensoreddist()`
 
 The primary event censored CDF, \(F_{\text{cens}}(q)\), is given by:
 
@@ -181,9 +181,8 @@ Let's compare the empirical CDF of our samples without secondary censoring to th
 empirical_cdf <- ecdf(samples)
 theoretical_cdf <- pprimarycensoreddist(
   seq(0, obs_time, length.out = 100),
-  plnorm,
-  meanlog = meanlog, sdlog = sdlog,
-  pwindow = pwindow, swindow = 0, D = obs_time
+  plnorm, meanlog = meanlog, sdlog = sdlog,
+  pwindow = pwindow, D = obs_time
 )
 
 # Create a data frame for plotting
@@ -195,15 +194,15 @@ cdf_data <- data.frame(
 
 # Plot the empirical and theoretical CDFs
 ggplot(cdf_data, aes(x = x)) +
-  stat_ecdf(aes(y = Empirical), geom = "step", color = "blue", size = 1) +
-  geom_line(aes(y = Theoretical), color = "red", size = 1) +
+  geom_step(aes(y = Theoretical), color = "black", linewidth = 1) +
+  geom_step(aes(y = Empirical), color = "#4292C6", linewidth = 1) +
   labs(
     title = "Comparison of Empirical and Theoretical CDFs",
     x = "Delay",
     y = "Cumulative Probability",
     caption = paste0(
       "Blue line: Empirical CDF from samples without secondary censoring\n",
-      "Red line: Theoretical CDF computed using pprimarycensoreddist()"
+      "Black line: Theoretical CDF computed using pprimarycensoreddist()"
     )
   ) +
   scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
@@ -212,11 +211,80 @@ ggplot(cdf_data, aes(x = x)) +
     panel.grid.minor = element_blank(),
     plot.title = element_text(hjust = 0.5)
   )
-
-
-# Plot the empirical CDF
 ```
 
+The theoretical CDF matches the empirical CDF very well, confirming that `pprimarycensoreddist()` is working as expected.
+
+
+# Compute the primary event censored probability mass function (PMF)with `dprimarycensoreddist()`
+
+The primary event censored PMF, ($f_{\text{cens}}(d)$), is given by:
+
+\[
+f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
+\]
+
+where \(F_{\text{cens}}\) is the primary event censored CDF and \(\text{swindow}\) is the secondary event window.
+
+Let's compare the empirical PMF of our samples with secondary censoring to the theoretical PMF computed using `dprimarycensoreddist()`:
+
+```{r pmf-lognormal}
+# Calculate the theoretical PMF using dprimarycensoreddist
+theoretical_pmf <- dprimarycensoreddist(
+  0:(obs_time - 1),
+  plnorm, meanlog = meanlog, sdlog = sdlog,
+  pwindow = pwindow, swindow = 1, D = obs_time
+)
+
+# Create a data frame for plotting
+pmf_data <- data.frame(
+  x = seq(0, obs_time, length.out = 100),
+  Theoretical = theoretical_pmf,
+  Empirical = empirical_pmf(seq(0, obs_time, length.out = 100))
+)
+
+# Plot the empirical and theoretical PMFs
+ggplot() +
+  geom_density(
+    data = data.frame(samples = samples),
+    aes(x = samples),
+    fill = "#4292C6",
+    col = "#252525",
+    alpha = 0.5
+  ) +
+  geom_col(
+    data = samples_sc_pmf,
+    aes(
+      x = as.numeric(as.character(pmf.samples_sc)),
+      y = pmf.Freq
+    ),
+    fill = "#20b986",
+    col = "#252525",
+    alpha = 0.5,
+    width = 0.9
+  ) +
+  geom_function(
+    fun = dlnorm,
+    args = list(meanlog = meanlog, sdlog = sdlog),
+    color = "#252525",
+    linewidth = 1
+  ) +
+  labs(
+    title = "Comparison of Samples from Log-Normal Distribution",
+    x = "Samples",
+    y = "Density",
+    caption = paste0(
+      "Green bars: Empirical PMF from samples with secondary censoring\n",
+      "Black line: Theoretical PMF computed using dprimarycensoreddist()"
+    )
+  ) +
+  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(hjust = 0.5)
+  )
+```
 
 ## Plan
 
