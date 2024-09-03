@@ -3,7 +3,7 @@ title: "Fitting distributions using primarycensorseddist and cmdstan"
 description: "A guide on how to use primarycensoreddist with Stan for Bayesian inference."
 author: Sam Abbott
 output:
-  bookdown::html_vignette2:
+  bookdown::html_document2:
     fig_caption: yes
     code_folding: show
 pkgdown:
