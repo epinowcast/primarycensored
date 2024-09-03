@@ -16,3 +16,137 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+
+## Plan
+
+A getting started vignette giving a quick introduction to the package R functions (and pointing at the stan functions). The idea here is to communicate the main ideas and functionality of the package without drowning the user in details. That being said we do want cover the main ideas, give clear equations of what is happening and show it works as we expect.
+
+We might want to give a brief high level overview of what the problem we are dealing with here is. We could do this using the schematic from the hex logo and mentioning a few key things:
+
+- Delay distributions are important in epidemiology for infectious disease because they are key to understanding transmission and controlling outbreaks.
+- Primary events (i.e the first event in a delay) are often observed with some amount of interval censoring (commonly a day). This means that any distribution based on these events is a combination of the underlying distribution and the censoring distribution.
+- These primary censored delay distributions are also often observed with some interval censoring for the secondary event (again commonly a day).
+- Finally as observation is commonly conditioned on the secondary event these delay distributions are often truncated. This means that the observed distribution is a combination of the underlying distribution, the censoring distribution, and the observation time.
+
+
+I think it makes sense to replicate the maths we use in the help files here along with a small simulation comparison (i.e simulate from R function) with an without secondary censoring, show that without secondary censoring we get the cdf we get via integration, similarly show that for censoring we recover the same pmf.
+
+If we think its useful we can use ggplot2 here but the built in plotting for ecdf (and friends) might be all we need
+
+We should make sure to link out to our recent work on best practices and approaches to estimate delay distributions. If we use any of the content from the paper below we should make sure to reference it and we shouldn't use anything verbatim. this is a bookdown vignette so we can do citation as [@CITE-KEY].
+
+- [arxiv.org/abs/2405.08841](https://arxiv.org/abs/2405.08841)
+
+Epidemiological delays, such as incubation periods, serial intervals, and hospital lengths of stay, are among key quantities in infectious disease epidemiology that inform public health policy and clinical practice. This information is used to inform mathematical and statistical models, which in turn can inform control strategies. There are three main challenges that make delay distributions difficult to estimate. First, the data are commonly censored (e.g., symptom onset may only be reported by date instead of the exact time of day). Second, delays are often right truncated when being estimated in real time (not all events that have occurred have been observed yet). Third, during a rapidly growing or declining outbreak, overrepresentation or underrepresentation, respectively, of recently infected cases in the data can lead to bias in estimates. Studies that estimate delays rarely address all these factors and sometimes report several estimates using different combinations of adjustments, which can lead to conflicting answers and confusion about which estimates are most accurate. In this work, we formulate a checklist of best practices for estimating and reporting epidemiological delays with a focus on the incubation period and serial interval. We also propose strategies for handling common biases and identify areas where more work is needed. Our recommendations can help improve the robustness and utility of reported estimates and provide guidance for the evaluation of estimates for downstream use in transmission models or other analyses.
+
+Three main biases can affect the estimation of epidemiological delay distributions, 1.
+censoring, 2. right truncation bias, and 3. dynamical (or epidemic-phase) bias (Table 1).
+Censoring is knowing that an event occurred but not precisely when. Data can be right
+censored (the event is known to have occurred after a certain time), left censored (the event is
+known to have occurred before a certain time), or interval censored (the event is known to have
+occurred within a certain time interval). In epidemiological delay data, censoring can affect
+either primary or secondary events (single interval censoring) or both (double interval censoring)
+[35]. Epidemiological data are almost always doubly interval-censored due to the time scales of
+reporting. For example, when reporting occurs daily with a cutoff at midnight, a patient could
+experience the event of interest (e.g., symptom onset) at any time between 12:00 am and 11:59
+pm on a particular day. Moreover, some events are prone to longer censoring intervals than
+others (e.g., exposure intervals may be longer than one day for cases with multiple possible
+exposures). Not or incorrectly accounting for censoring of event intervals can lead to biased
+estimates of a delay [23].
+Right truncation is defined as the inability to observe intervals (e.g. incubation periods)
+greater than some threshold (e.g. greater than the number of days elapsed since infection). It
+typically applies to real-time settings, when recently occurred events with longer intervals may
+not have been observed yet, leading to an overrepresentation of shorter intervals when
+estimating the incubation period or serial interval distribution. However, right truncation should
+not be confused with right censoring. The latter occurs when we observe the primary event of a
+case or future case but cannot observe it long enough to witness its secondary event [36], which
+could be due to, for instance, a study ending prematurely. As a result, we only know that the
+secondary event did not occur during the observation period and therefore have a rightcensored interval for a data point. In contrast, right truncation means that certain intervals are
+5
+completely missing from our data as observing primary events depends on identifying
+secondary events first. Right truncation is common in data where case ascertainment depends
+on the secondary event, e.g. we rarely observe an individual’s incubation period until after
+symptoms develop. Not accounting for right truncation can lead to underestimating the mean
+delay [23]. Although right truncation is mainly a problem for real-time analyses, retrospective
+data can be right-truncated if surveillance ended prematurely.
+Dynamical bias is another type of common sampling bias which is related to right
+truncation. During the increasing phase of an epidemic, patients who were infected recently are
+overrepresented in the recent data, leading to underestimation of delay intervals. Conversely,
+when the epidemic is decreasing, patients with short delays are underrepresented in the recent
+data, leading to the overestimation of delay intervals. Dynamical bias is especially problematic
+during periods of exponential growth and decay of cases when cases are exponentially more
+and less likely, respectively, to be infected recently rather than further back in time.
+
+- [medrxiv.org/content/10.1101/2024.01.12.24301247v1](https://medrxiv.org/content/10.1101/2024.01.12.24301247v1)
+
+Abstract:
+
+Abstract
+Understanding and accurately estimating epidemiological delay distributions is important for public health policy. These estimates directly influence epidemic situational awareness, control strategies, and resource allocation. In this study, we explore challenges in estimating these distributions, including truncation, interval censoring, and dynamical biases. Despite their importance, these issues are frequently overlooked in the current literature, often resulting in biased conclusions. This study aims to shed light on these challenges, providing valuable insights for epidemiologists and infectious disease modellers.
+
+Our work motivates comprehensive approaches for accounting for these issues based on the underlying theoretical concepts. We also discuss simpler methods that are widely used, which do not fully account for known biases. We evaluate the statistical performance of these methods using simulated exponential growth and epidemic scenarios informed by data from the 2014-2016 Sierra Leone Ebola virus disease epidemic.
+
+Our findings highlight that using simpler methods can lead to biased estimates of vital epidemiological parameters. An approximate-latent-variable method emerges as the best overall performer, while an efficient, widely implemented interval-reduced-censoring-and-truncation method was only slightly worse. Other methods, such as a joint-primary-incidence-and-delay method and a dynamic-correction method, demonstrated good performance under certain conditions, although they have inherent limitations and may not be the best choice for more complex problems.
+
+Despite presenting a range of methods that performed well in the contexts we evaluated, residual biases persisted, predominantly due to the simplifying assumption that the distribution of event time within the censoring interval follows a uniform distribution; instead, this distribution should depend on epidemic dynamics. However, in realistic scenarios with daily censoring, these biases appeared minimal. This study underscores the need for caution when estimating epidemiological delay distributions in real-time, provides an overview of the theory that practitioners need to keep in mind when doing so with useful tools to avoid common methodological errors, and points towards areas for future research.
+
+What was known prior to this paper
+
+Importance of accurate estimates: Estimating epidemiological delay distributions accurately is critical for model development, epidemic forecasts, and analytic decision support.
+
+Right truncation: Right truncation describes the incomplete observation of delays, for which the primary event already occurred but the secondary event has not been observed (e.g. infections that have not yet become symptomatic and therefore not been observed). Failing to account for the right truncation can lead to underestimation of the mean delay during real-time data analysis.
+
+Interval censoring: Interval censoring arises when epidemiological events occurring in continuous time are binned into time intervals (e.g., days or weeks). Double censoring of both primary and secondary events needs to be considered when estimating delay distributions from epidemiological data. Accounting for censoring in only one event can lead to additional biases.
+
+Dynamical bias: Dynamical biases describe the effects of an epidemic’s current growth or decay rate on the observed delay distributions. Consider an analogy from demography: a growing population will contain an excess of young people, while a shrinking population will contain an excess of older people, compared to what would be expected from mortality profiles alone. Dynamical biases have been identified as significant issues in real-time epidemiological studies.
+
+Existing methods: Methods and software to adjust for censoring, truncation, and dynamic biases exist. However, many of these methods have not been systematically compared, validated, or tested outside the context in which they were originally developed. Furthermore, some of these methods do not adjust for the full range of biases.
+
+What this paper adds
+
+Theory overview: An overview of the theory required to estimate distributions is provided, helping practitioners understand the underlying principles of the methods and the connections between right truncation, dynamical bias, and interval censoring.
+
+Review of methods: This paper presents a review of methods accounting for truncation, interval censoring, and dynamical biases in estimating epidemiological delay distributions in the context of the underlying theory.
+
+Evaluation of methods: Methods were evaluated using simulations as well as data from the 2014-2016 Sierra Leone Ebola virus disease epidemic.
+
+Cautionary guidance: This work underscores the need for caution when estimating epidemiological delay distributions, provides clear signposting for which methods to use when, and points out areas for future research.
+
+Practical guidance: Guidance is also provided for those making use of delay distributions in routine practice.
+
+Key findings
+
+Impact of neglecting biases: Neglecting truncation and censoring biases can lead to flawed estimates of important epidemiological parameters, especially in real-time epidemic settings.
+
+Equivalence of dynamical bias and right truncation: In the context of a growing epidemic, right truncation has an essentially equivalent effect as dynamical bias. Typically, we recommend correcting for one or the other, but not both.
+
+Bias in common censoring adjustment: Taking the common approach to censoring adjustment of naively discretising observed delay into daily intervals and fitting continuous-time distributions can result in biased estimates.
+
+Performance of methods: We identified an approximate-latent-variable method as the best overall performer, while an interval-reduced-censoring-andtruncation method was resource-efficient, widely implemented, and performed only slightly worse.
+
+Inherent limitations of some methods: Other methods, such as jointly estimating primary incidence and the forward delay, and dynamic bias correction, demonstrated good performance under certain conditions, but they also had inherent limitations depending on the setting.
+
+Persistence of residual biases: Residual biases persisted across all methods we investigated, largely due to the simplifying assumption that the distribution of event time within the primary censoring interval follows a uniform distribution rather than one influenced by the growth rate. These are minimal if the censoring interval is small compared to other relevant time scales, as is the case for daily censoring with most human diseases.
+
+Key limitations
+
+Differences between right censoring and truncation: We primarily focus on right truncation, which is most relevant when the secondary events are easier to observe than primary events (e.g., symptom onset vs. infection)—in this case, we can’t observe the delay until the secondary event has occurred. In other cases, we can directly observe the primary event and wait for the secondary event to occur (e.g., eventual recovery or death of a hospitalized individual)—in this case, it would be more appropriate to use right censoring to model the unresolved delays. For simplicity, we did not cover the right censoring in this paper.
+
+Daily censoring process: Our work considered only a daily interval censoring process for primary and secondary events. To mitigate this, we investigated scenarios with short delays and high growth rates, mimicking longer censoring intervals with extended delays and slower growth rates.
+
+Deviation from uniform distribution assumption: We show that the empirical distribution of event times within the primary censoring interval deviated from the common assumption of a uniform distribution due to epidemic dynamics. This discrepancy introduced a small absolute bias based on the length of the primary censoring window to all methods and was a particular issue when delay distributions were short relative to the censoring window’s length. In practice, other biological factors, such as circadian rhythms, are likely to have a stronger effect than the growth rate at a daily resolution. Nonetheless, our work lays out a theoretical ground for linking epidemic dynamics to a censoring process. Further work is needed to develop robust methods for wider censoring intervals.
+
+Temporal changes in delay distributions: The Ebola case study showcased considerable variation in reporting delays across the epidemic timeline, far greater than any bias due to censoring or truncation. Further work is needed to extend our methods to address such issues.
+
+Lack of other bias consideration: The idealized simulated scenarios we used did not account for observation error for either primary or secondary events, possibly favouring methods that do not account for real-world sources of biases.
+
+Limited distributions and methods considered: We only considered lognormal distributions in this study, though our findings are generalizable to other distributions. Mixture distributions and non-parametric or hazard-based methods were not included in our assessment.
+
+Exclusion of fitting discrete-time distributions: We focused on fitting continuous-time distributions throughout the paper. However, fitting discretetime distributions can be a viable option in practice, especially at a daily resolution. More work is needed to compare inferences based on discrete-time distributions vs continuous-time distributions with daily censoring.
+
+Exclusion of transmission interval distributions: Our work primarily focused on inferring distributions of non-transmission intervals, leaving out potential complications related to dependent events. Additional considerations such as shared source cases, identifying intermediate hosts, and the possibility of multiple source cases for a single infectee were not factored into our analysis.
+
+
+
+At the end we should provide guidance on  where to learn more. I think this should the stan and fitdistr vignettes as well as the R and stan documentation. (if we wanted to we could use a child document as we do the installation for hte resources we give in the readme - we could also just point at the README if we felt that was enough).
