@@ -21,6 +21,7 @@ Suggests:
     bookdown,
     cmdstanr,
     knitr,
+    ggplot2,
     rmarkdown,
     spelling,
     testthat (>= 3.1.9),
