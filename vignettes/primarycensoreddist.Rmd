@@ -17,6 +17,23 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
+# Introduction
+
+Delay distributions play a crucial role in various fields, including epidemiology, reliability analysis, and survival analysis. These distributions describe the time between two events of interest, such as the incubation period of a disease or the time to failure of a component. Accurately estimating these distributions is essential for understanding the underlying processes and making informed decisions. However, estimating these distributions can be challenging due to various factors, including censoring and truncation of the observed data.
+
+The estimation of delay distributions often faces the following challenges:
+
+- **Primary event censoring**: The primary event (e.g., exposure to a pathogen or the start of a process) is often observed with some degree of interval censoring. This means that the exact time of the event is not known, but rather, it is known to have occurred within a certain time interval, commonly a day. As a result, any distribution based on these primary events is a combination of the underlying true distribution and the censoring distribution.
+
+- **Truncation**: The observation of delay distributions is often conditioned on the occurrence of the secondary event. This leads to a truncation of the observed distribution, as delays longer than the observation time are not captured in the data. Consequently, the observed distribution is a combination of the underlying true distribution, the censoring distribution, and the observation time.
+
+- **Secondary event censoring**: The secondary event (e.g., symptom onset or the end of a process) is also frequently observed with interval censoring. This additional layer of censoring further complicates the estimation of the delay distribution.
+
+The `primarycensoreddist` package aims to address these challenges by providing tools to manipulate primary censored delay distributions. By accounting for the censoring and truncation present in the data, the package enables more accurate estimation and use of the underlying true distribution.
+
+In this vignette, we will provide a quick introduction to the main functions and concepts in the `primarycensoreddist` package. We will cover the mathematical formulation of the problem, demonstrate the usage of the key functions, and provide signposting on how to learn more.
+
+
 
 ## Plan
 
