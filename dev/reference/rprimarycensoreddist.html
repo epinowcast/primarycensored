@@ -102,7 +102,8 @@ for example <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="extern
 
 
 <dt id="arg-swindow">swindow<a class="anchor" aria-label="anchor" href="#arg-swindow"></a></dt>
-<dd><p>Secondary event window (default: 1)</p></dd>
+<dd><p>Integer specifying the window size for rounding the delay
+(default is 1). If <code>swindow = 0</code> then no rounding is applied.</p></dd>
 
 
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
@@ -131,7 +132,7 @@ samples to account for truncation (default is 1.2).</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Vector of random samples from the primary event censored
-distribution</p>
+distribution censored by the secondary event window.</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
