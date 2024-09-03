@@ -19,12 +19,6 @@ the Stan files.
 This function reads all Stan files in the specified directory and extracts
 the names of all functions defined in those files.
 }
-\examples{
-\dontrun{
-stan_functions <- pcd_stan_functions()
-print(stan_functions)
-}
-}
 \seealso{
 Tools for working with package Stan functions
 \code{\link{pcd_load_stan_functions}()},

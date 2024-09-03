@@ -93,12 +93,6 @@ pcd_stan_path <- function() {
 #' @export
 #'
 #' @family stantools
-#'
-#' @examples
-#' \dontrun{
-#' stan_functions <- pcd_stan_functions()
-#' print(stan_functions)
-#' }
 pcd_stan_functions <- function(
     stan_path = primarycensoreddist::pcd_stan_path()) {
   stan_files <- list.files(
