@@ -37,7 +37,8 @@ for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distrib
 
 \item{pwindow}{Primary event window}
 
-\item{swindow}{Secondary event window (default: 1)}
+\item{swindow}{Integer specifying the window size for rounding the delay
+(default is 1). If \code{swindow = 0} then no rounding is applied.}
 
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
 truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
@@ -54,7 +55,7 @@ samples to account for truncation (default is 1.2).}
 }
 \value{
 Vector of random samples from the primary event censored
-distribution
+distribution censored by the secondary event window.
 }
 \description{
 This function generates random samples from a primary event censored
