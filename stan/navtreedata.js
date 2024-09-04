@@ -24,12 +24,20 @@
 */
 var NAVTREE =
 [
-  [ "epinowcast", "index.html", ]
+  [ "epinowcast", "index.html", [
+    [ "Files", "files.html", [
+      [ "File List", "files.html", "files_dup" ],
+      [ "File Members", "globals.html", [
+        [ "All", "globals.html", null ],
+        [ "Functions", "globals_func.html", null ]
+      ] ]
+    ] ]
+  ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"index.html"
+"expgrowth_8stan.html"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
