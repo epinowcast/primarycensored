@@ -51,6 +51,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "dplyr",
+      "name": "dplyr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=dplyr"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "knitr",
       "name": "knitr",
       "provider": {
@@ -132,7 +144,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "279.09KB",
+  "fileSize": "283.124KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
