@@ -1,6 +1,6 @@
 ---
-title: "Fitting distributions using primarycensorseddist and cmdstan"
-description: "A guide on how to use primarycensoreddist with Stan for Bayesian inference."
+title: "How to use primarycensoreddist with Stan"
+description: "A guide on how to use primarycensoreddist with Stan."
 author: Sam Abbott
 output:
   bookdown::html_document2:
@@ -12,7 +12,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Fitting distributions using primarycensorseddist and cmdstan}
+  %\VignetteIndexEntry{How to use primarycensoreddist with Stan}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,13 +22,12 @@ vignette: >
 
 ## What are we going to do in this Vignette
 
-In this vignette, we'll explore how to use the `primarycensoreddist` package in conjunction with Stan for Bayesian inference on censored data. We'll cover the following key points:
+In this vignette, we'll explore how to use the `primarycensoreddist` package in conjunction with Stan. We'll cover the following key points:
 
 1. Introduction to Stan and its relevance for our analysis
 2. Overview of the packages we'll be using
 3. How to access and use Stan functions provided by `primarycensoreddist`
 4. Methods for integrating these Stan functions into your workflow
-5. Practical examples of fitting distributions to censored data using Stan
 
 ## What is Stan and why are we using it
 
@@ -137,31 +136,3 @@ We can now use the function in R. Note that this may get slightly more complicat
 ```{r}
 expgrowth_rng(0, 1, 0.4)
 ```
-
-# Fitting a delay estimation model
-
-## Simulating data in R
-
-## Writing a naive model in Stan
-
-## Fitting the model using cmdstan
-
-## Comparing posterior estimates with true values
-
-## Writing a model using primarycensoreddist Stan functions
-
-## Comparing posterior estimates with true values
-
-# Fitting a convolution model
-
-## Simulating data in R
-
-## Writing a model using primarycensoreddist Stan functions
-
-## Fitting the model using cmdstan
-
-## Comparing posterior estimates with true values
-
-# Other options for fitting primarycensoreddist models with Stan
-
-## Future support for other packages
