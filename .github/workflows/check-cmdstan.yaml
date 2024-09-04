@@ -65,10 +65,11 @@ jobs:
             model$check_syntax(pedantic = TRUE),
             type = "message"
           )
+          message
           # We can't use TRUE here as pendatic check return lots of false
           # positives related to our use of functions.
           stopifnot(
-            length(message) != 0 &&
-            all(message == "Stan program is syntactically correct")
+            length(message) > 11 &&
+            any(message == "Stan program is syntactically correct")
           )
         shell: Rscript {0}

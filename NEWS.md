@@ -4,10 +4,12 @@
 
 * Added support for `swindow = 0` to `rprimarycensoreddist` to allow for non-secondary event censored distributions.
 * Adapted `rprimarycensoreddist` so that truncation is based on the primary censored distribution before secondary events are censored. This better matches the generative process.
+* Added a new Stan interface tool to enable finding which files functions are implemented in the Stan code.
 
 ## Documentation
 
 * Added a getting started vignette.
+* Added a vignette showcasing how to use the package Stan code with `cmdstanr`.
 
 # primarycensoreddist 0.1.0
 

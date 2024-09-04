@@ -21,10 +21,12 @@ navbar:
     articles:
       text: Articles
       menu:
+      - text: How to use primarycensoreddist with Stan
+        href: articles/using-stan-tools.html
       - text: Fitting distributions using primarycensorseddist and cmdstan
-        href: articles/stan.html
+        href: articles/fitting-dists-with-stan.html
       - text: Fitting distributions using primarycensorseddist and fitdistr
-        href: articles/fitdistr.html
+        href: articles/fitting-dists-with-fitdistr.html
 
 authors:
   Sam Abbott:
