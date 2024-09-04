@@ -35,12 +35,13 @@ This vignette builds on the concepts introduced in the [Getting Started with pri
 
 ## Packages used in this vignette
 
-Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan and the `tidybayes` package for posterior analysis. We will also use the `ggplot2` package for plotting.
+Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstananalysis. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
 
 ```{r setup, message = FALSE}
 library(primarycensoreddist)
 library(cmdstanr)
 library(ggplot2)
+library(dplyr)
 ```
 
 # Simulating censored and truncated delay distribution data
