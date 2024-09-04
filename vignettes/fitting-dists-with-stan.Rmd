@@ -170,12 +170,11 @@ Now let's compile the model
 
 ```{r compile-naive-model}
 naive_model <- cmdstan_model(file.path(tempdir(), "naive_lognormal.stan"))
-naive_model
 ```
 
-aand now let's fit the compiledmodel.
+aand now let's fit the compiled model.
 
-```{r fit-naive-model}
+```{r fit-naive-model, message = FALSE}
 naive_fit <- naive_model$sample(
   data = list(
     # Add a small constant to avoid log(0)
@@ -185,7 +184,8 @@ naive_fit <- naive_model$sample(
   ),
   chains = 4,
   parallel_chains = 4,
-  show_messages = FALSE
+  show_messages = FALSE,
+  refresh = 0
 )
 naive_fit
 ```
@@ -243,12 +243,11 @@ primarycensoreddist_model <- cmdstan_model(
   file.path(tempdir(), "primarycensoreddist_lognormal.stan"),
   include_paths = pcd_stan_path()
 )
-primarycensoreddist_model
 ```
 
 Now let's fit the compiled model.
 
-```{r fit-primarycensoreddist-model}
+```{r fit-primarycensoreddist-model, message = FALSE}
 primarycensoreddist_fit <- primarycensoreddist_model$sample(
   data = list(
     y = delay_counts$observed_delay,
