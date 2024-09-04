@@ -167,7 +167,7 @@ writeLines(
 
 Now let's compile the model
 
-```{r fit-naive-model}
+```{r compile-naive-model}
 naive_model <- cmdstan_model(file.path(tempdir(), "naive_lognormal.stan"))
 naive_model
 ```
