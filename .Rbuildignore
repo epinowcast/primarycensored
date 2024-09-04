@@ -22,5 +22,5 @@
 ^Meta$
 ^\.vscode$
 ^CITATION\.cff$
-^using-stan-tools\.Rmd$
-^fitting-dists-with-stan\.Rmd$
+^vignettes/using-stan-tools\.Rmd$
+^vignettes/fitting-dists-with-stan\.Rmd$
