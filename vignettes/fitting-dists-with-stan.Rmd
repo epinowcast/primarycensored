@@ -35,7 +35,7 @@ This vignette builds on the concepts introduced in the [Getting Started with pri
 
 ## Packages used in this vignette
 
-Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstananalysis. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
+Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
 
 ```{r setup, message = FALSE}
 library(primarycensoreddist)
@@ -172,7 +172,7 @@ Now let's compile the model
 naive_model <- cmdstan_model(file.path(tempdir(), "naive_lognormal.stan"))
 ```
 
-aand now let's fit the compiled model.
+and now let's fit the compiled model.
 
 ```{r fit-naive-model, message = FALSE}
 naive_fit <- naive_model$sample(
