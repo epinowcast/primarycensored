@@ -120,22 +120,22 @@ test_that("pcd_stan_files returns correct files", {
   all_files <- pcd_stan_files()
   expect_type(all_files, "character")
   expect_gt(length(all_files), 0)
-  expect_true(all(grepl("\\.stan$", all_files)))
+  expect_true(all(grepl(".stan", all_files, fixed = TRUE)))
 
   # Test with specific functions
   expgrowth_functions <- c("expgrowth_pdf", "expgrowth_lpdf")
   expgrowth_files <- pcd_stan_files(functions = expgrowth_functions)
   expect_type(expgrowth_files, "character")
   expect_gt(length(expgrowth_files), 0)
-  expect_true(all(grepl("expgrowth", expgrowth_files)))
+  expect_true(all(grepl("expgrowth", expgrowth_files, fixed = TRUE)))
 
   # Test with functions from different files
   mixed_functions <- c("expgrowth_pdf", "primary_censored_integrand")
   mixed_files <- pcd_stan_files(functions = mixed_functions)
   expect_type(mixed_files, "character")
   expect_gt(length(mixed_files), 1)
-  expect_true(any(grepl("expgrowth", mixed_files)))
-  expect_true(any(grepl("primary_censored", mixed_files)))
+  expect_true(any(grepl("expgrowth", mixed_files, fixed = TRUE)))
+  expect_true(any(grepl("primary_censored", mixed_files, fixed = TRUE)))
 
   # Test with non-existent function
   non_existent <- pcd_stan_files(functions = "non_existent_function")

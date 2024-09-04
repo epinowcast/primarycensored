@@ -40,12 +40,11 @@ For more information on Stan:
 
 ## Packages used in this vignette
 
-Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan and the `tidybayes` package for posterior analysis.
+Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan.
 
 ```{r setup, message = FALSE}
 library(primarycensoreddist)
 library(cmdstanr)
-library(tidybayes)
 ```
 
 # Using Stan code in primarycensoreddist
