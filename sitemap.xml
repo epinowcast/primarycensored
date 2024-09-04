@@ -2,10 +2,11 @@
 <url><loc>https://primarycensoreddist.epinowcast.org/404.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/LICENSE-text.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/LICENSE.html</loc></url>
-<url><loc>https://primarycensoreddist.epinowcast.org/articles/fitdistr.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/articles/fitting-dists-with-fitdistr.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/articles/fitting-dists-with-stan.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/articles/index.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/articles/primarycensoreddist.html</loc></url>
-<url><loc>https://primarycensoreddist.epinowcast.org/articles/stan.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/articles/using-stan-tools.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/authors.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/index.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/news/index.html</loc></url>
@@ -16,6 +17,7 @@
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/expgrowth.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/index.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_load_stan_functions.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_stan_files.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_stan_functions.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_stan_path.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pprimarycensoreddist.html</loc></url>
