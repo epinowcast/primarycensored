@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/epinowcast/primarycensoreddist/",
   "issueTracker": "https://github.com/epinowcast/primarycensoreddist/issues/",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "0.1.0.1000",
+  "version": "0.2.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -17,16 +17,18 @@
   "runtimePlatform": "R version 4.4.1 (2024-06-14)",
   "author": [
     {
-      "@type": "Organization",
-      "name": "Sam Abbott",
+      "@type": "Person",
+      "givenName": "Sam",
+      "familyName": "Abbott",
       "email": "contact@samabbott.co.uk",
       "@id": "https://orcid.org/0000-0001-8057-8037"
     }
   ],
   "maintainer": [
     {
-      "@type": "Organization",
-      "name": "Sam Abbott",
+      "@type": "Person",
+      "givenName": "Sam",
+      "familyName": "Abbott",
       "email": "contact@samabbott.co.uk",
       "@id": "https://orcid.org/0000-0001-8057-8037"
     }
@@ -48,6 +50,18 @@
       "@type": "SoftwareApplication",
       "identifier": "cmdstanr",
       "name": "cmdstanr"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "identifier": "dplyr",
+      "name": "dplyr",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=dplyr"
     },
     {
       "@type": "SoftwareApplication",
@@ -132,15 +146,16 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "279.09KB",
+  "fileSize": "283.506KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
       "datePublished": "2024",
       "author": [
         {
-          "@type": "Organization",
-          "name": "Sam Abbott",
+          "@type": "Person",
+          "givenName": "Sam",
+          "familyName": "Abbott",
           "email": "contact@samabbott.co.uk",
           "@id": "https://orcid.org/0000-0001-8057-8037"
         }
