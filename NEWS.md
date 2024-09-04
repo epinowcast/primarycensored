@@ -1,3 +1,7 @@
+# primarycensoreddist 0.2.0.1000
+
+Development version.
+
 # primarycensoreddist 0.2.0
 
 This release puts in place initial documentation and vignettes. It also includes a new primary censored distribution interface to allow for non-secondary event censored distributions. Development of this release as identified some numerical issues in the
