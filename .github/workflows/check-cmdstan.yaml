@@ -69,6 +69,7 @@ jobs:
           # positives related to our use of functions.
           stopifnot(
             length(message) != 0 &&
-            all(message == "Stan program is syntactically correct")
+            all(message == "Stan program is syntactically correct"),
+            message
           )
         shell: Rscript {0}
