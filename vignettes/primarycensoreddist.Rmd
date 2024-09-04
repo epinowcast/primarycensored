@@ -63,13 +63,13 @@ $$d \sim f_d(x; \theta)$$
 
 $$t = p + d$$
 
-4. Round the total delays to the nearest secondary event window ($swindow$):
+4. Apply truncation to ensure that the delays are within the specified range $[0, D]$:
 
-$$t_{rounded} = \lfloor \frac{t}{swindow} \rfloor \times swindow$$
+$$t_{truncated} = \{t \mid 0 \leq t < D\}$$
 
-5. Apply truncation to ensure that the delays are within the specified range $[0, D]$:
+5. Round the truncated delays to the nearest secondary event window ($swindow$):
 
-$$t_{valid} = \{t_{rounded} \mid 0 \leq t_{rounded} < D\}$$
+$$t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor \times swindow$$
 
 Here's an example of how to use `rprimarycensoreddist()` to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily secondary censoring window for both events.
 
