@@ -40,7 +40,6 @@ Alongside the `primarycensoreddist` package we will use the `cmdstanr` package f
 ```{r setup, message = FALSE}
 library(primarycensoreddist)
 library(cmdstanr)
-library(tidybayes)
 library(ggplot2)
 ```
 
@@ -155,7 +154,7 @@ writeLines(
   }
   model {
     // Priors
-    mu ~ normal(1, 2);
+    mu ~ normal(1, 1);
     sigma ~ normal(0.5, 1);
 
     // Likelihood
@@ -219,8 +218,8 @@ writeLines(
   }
   model {
     // Priors
-    mu ~ normal(1, 2);
-    sigma ~ normal(0.5, 1);
+    mu ~ normal(1, 1);
+    sigma ~ normal(0.5, 0.5);
 
     // Likelihood
     for (i in 1:N) {
@@ -259,14 +258,16 @@ primarycensoreddist_fit <- primarycensoreddist_model$sample(
   ),
   chains = 4,
   parallel_chains = 4,
-  init = list(
-    list(mu = 1, sigma = 0.5),
-    list(mu = 1, sigma = 0.5),
-    list(mu = 1, sigma = 0.5),
-    list(mu = 1, sigma = 0.5)
-  )
+  init = list( # we use this to resolve initialisation issues
+    list(mu = 1.5, sigma = 0.6),
+    list(mu = 1.5, sigma = 0.4),
+    list(mu = 1.5, sigma = 0.3),
+    list(mu = 1.5, sigma = 0.55)
+  ),
+  refresh = 0,
+  show_messages = FALSE
 )
 primarycensoreddist_fit
 ```
 
-We see that the model has converged and the diagnostics look good. We also see that the posterior means are much closer to the true parameters.
+We see that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters.
