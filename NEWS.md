@@ -1,4 +1,8 @@
-# primarycensoreddist 0.1.0.1000
+# primarycensoreddist 0.2.0
+
+This release puts in place initial documentation and vignettes. It also includes a new primary censored distribution interface to allow for non-secondary event censored distributions. Development of this release as identified some numerical issues in the
+gradient evaluations for the primary censored distributions which may lead to breaking
+interface changes in `0.3.0` for the Stan code.
 
 ## Package
 

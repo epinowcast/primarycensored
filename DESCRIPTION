@@ -1,8 +1,8 @@
 Package: primarycensoreddist
 Title: Primary Event Censored Distributions in R and Stan
-Version: 0.1.0.1000
+Version: 0.2.0
 Authors@R:
-    person("Sam Abbott", , , "contact@samabbott.co.uk", role = c("aut", "cre"),
+    person("Sam", "Abbott", , "contact@samabbott.co.uk", role = c("aut", "cre"),
            comment = c(ORCID = "0000-0001-8057-8037"))
 Description: This package provides both R functions for working with primary
     event censored distributions and Stan implementations for use in Bayesian
