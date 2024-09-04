@@ -16,3 +16,122 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+# Introduction
+
+## What are we going to do in this Vignette
+
+In this vignette, we'll demonstrate how to use `primarycensoreddist` in conjunction with Stan for Bayesian inference of epidemiological delay distributions. We'll cover the following key points:
+
+1. Simulating censored delay distribution data
+2. Fitting a naive model using cmdstan
+3. Evaluating the naive model's performance
+4. Fitting an improved model using `primarycensoreddist` functionality
+5. Comparing the `primarycensoreddist` model's performance to the naive model
+
+## What might I need to know before starting
+
+This vignette builds on the concepts introduced in the [Getting Started with primarycensoreddist](primarycensoreddist.html) vignette and assumes familiarity with using Stan tools as covered in the [How to use primarycensoreddist with Stan](using-stan-tools.html) vignette.
+
+## Packages used in this vignette
+
+Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan and the `tidybayes` package for posterior analysis. We will also use the `ggplot2` package for plotting.
+
+```{r setup, message = FALSE}
+library(primarycensoreddist)
+library(cmdstanr)
+library(tidybayes)
+library(ggplot2)
+```
+
+# Simulating censored and truncated delay distribution data
+
+We'll start by simulating some censored and truncated delay distribution data. We'll use the `rprimarycensoreddist` function (actually we will use the `rpcens ` alias for brevity).
+
+```{r sample-lognormal}
+set.seed(123) # For reproducibility
+
+# Define the true distribution parameters
+n <- 1000
+meanlog <- 1.5
+sdlog <- 0.75
+
+# Generate varying pwindow, swindow, and obs_time lengths
+pwindows <- sample(1:5, n, replace = TRUE)
+swindows <- sample(1:5, n, replace = TRUE)
+obs_times <- sample(8:12, n, replace = TRUE)
+
+# Function to generate a single sample
+generate_sample <- function(pwindow, swindow, obs_time) {
+  rpcens(
+    1, rlnorm,
+    meanlog = meanlog, sdlog = sdlog,
+    pwindow = pwindow, swindow = swindow, D = obs_time
+  )
+}
+
+# Generate samples
+samples <- mapply(generate_sample, pwindows, swindows, obs_times)
+
+# Create initial data frame
+delay_data <- data.frame(
+  pwindow = pwindows,
+  swindow = swindows,
+  obs_time = obs_times,
+  observed_delay = samples
+)
+
+head(delay_data)
+
+# Aggregate to unique combinations and count occurrences
+# Aggregate to unique combinations and count occurrences
+delay_counts <- delay_data |>
+  summarise(n = n(), .by = c(pwindow, swindow, obs_time, observed_delay))
+
+head(delay_counts)
+
+# Compare the samples with and without secondary censoring to the true
+# distribution
+# Calculate empirical CDF
+empirical_cdf <- ecdf(samples)
+
+# Create a sequence of x values for the theoretical CDF
+x_seq <- seq(min(samples), max(samples), length.out = 100)
+
+# Calculate theoretical CDF
+theoretical_cdf <- plnorm(x_seq, meanlog = meanlog, sdlog = sdlog)
+
+# Create a long format data frame for plotting
+cdf_data <- data.frame(
+  x = rep(x_seq, 2),
+  probability = c(empirical_cdf(x_seq), theoretical_cdf),
+  type = rep(c("Observed", "Theoretical"), each = length(x_seq))
+)
+
+# Plot
+ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
+  geom_step(linewidth = 1) +
+  scale_color_manual(
+    values = c(Observed = "#4292C6", Theoretical = "#252525")
+  ) +
+  geom_vline(
+    aes(xintercept = mean(samples), color = "Observed"),
+    linetype = "dashed", linewidth = 1
+  ) +
+  geom_vline(
+    aes(xintercept = exp(meanlog + sdlog^2 / 2), color = "Theoretical"),
+    linetype = "dashed", linewidth = 1
+  ) +
+  labs(
+    title = "Comparison of Observed vs Theoretical CDF",
+    x = "Delay",
+    y = "Cumulative Probability",
+    color = "CDF Type"
+  ) +
+  theme_bw() +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  )
+```
