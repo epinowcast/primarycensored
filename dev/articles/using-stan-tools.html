@@ -30,7 +30,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.1.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.2.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -103,10 +103,13 @@
 <span class="header-section-number">1.2</span> What is Stan and why are we using it<a class="anchor" aria-label="anchor" href="#what-is-stan-and-why-are-we-using-it"></a>
 </h3>
 <p>Stan is a probabilistic programming language for statistical inference. It provides a flexible and efficient platform for Bayesian modeling and is widely used in various fields of data science and statistics. In this vignette, we’ll use Stan in conjunction with <code>primarycensoreddist</code> to perform Bayesian inference on censored data.</p>
-<p>For more information on Stan:
-- <a href="https://mc-stan.org/" class="external-link">Stan’s official website</a>
-- <a href="https://mc-stan.org/users/documentation/" class="external-link">Stan documentation</a>
-- <a href="https://discourse.mc-stan.org/" class="external-link">Stan forums</a> for community support and discussions</p>
+<p>For more information on Stan:</p>
+<ul>
+<li><a href="https://mc-stan.org/" class="external-link">Stan’s official website</a></li>
+<li><a href="https://mc-stan.org/users/documentation/" class="external-link">Stan documentation</a></li>
+<li>
+<a href="https://discourse.mc-stan.org/" class="external-link">Stan forums</a> for community support and discussions</li>
+</ul>
 </div>
 <div class="section level3" number="1.3">
 <h3 id="packages-used-in-this-vignette">
@@ -152,7 +155,7 @@
 <p>Stan functions are accessed using the <code><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions()</a></code> function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a <code>functions{}</code> block.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions</a></span><span class="op">(</span><span class="st">"primary_censored_dist_lpmf"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "// Stan functions from primarycensoreddist version 0.1.0.1000\nreal primary_censored_dist_lpmf(int d, int dist_id, array[] real params,\n                                data real pwindow, real swindow, data real D,\n                                int primary_dist_id, array[] real primary_params) {\n\n  real d_upper = d + swindow;\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow.\");\n  }\n  real log_cdf_upper = primary_censored_dist_lcdf(\n    d_upper | dist_id, params, pwindow, D, primary_dist_id, primary_params\n  );\n  real log_cdf_lower = primary_censored_dist_lcdf(\n    d | dist_id, params, pwindow, D, primary_dist_id, primary_params\n  );\n  return log_diff_exp(log_cdf_upper, log_cdf_lower);\n}"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "// Stan functions from primarycensoreddist version 0.2.0.1000\nreal primary_censored_dist_lpmf(int d, int dist_id, array[] real params,\n                                data real pwindow, real swindow, data real D,\n                                int primary_dist_id, array[] real primary_params) {\n\n  real d_upper = d + swindow;\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow.\");\n  }\n  real log_cdf_upper = primary_censored_dist_lcdf(\n    d_upper | dist_id, params, pwindow, D, primary_dist_id, primary_params\n  );\n  real log_cdf_lower = primary_censored_dist_lcdf(\n    d | dist_id, params, pwindow, D, primary_dist_id, primary_params\n  );\n  return log_diff_exp(log_cdf_upper, log_cdf_lower);\n}"</span></span></code></pre>
 </div>
 <div class="section level3" number="2.3">
 <h3 id="linking-the-stan-functions-to-your-workflow">
@@ -171,13 +174,13 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpaPRJO3/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpaPzbyH/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
 <span><span class="va">model</span></span></code></pre></div>
 <pre><code><span><span class="co">## functions {</span></span>
-<span><span class="co">## // Stan functions from primarycensoreddist version 0.1.0.1000</span></span>
+<span><span class="co">## // Stan functions from primarycensoreddist version 0.2.0.1000</span></span>
 <span><span class="co">## real expgrowth_rng(real min, real max, real r) {</span></span>
 <span><span class="co">##   real u = uniform_rng(0, 1);</span></span>
 <span><span class="co">##   if (abs(r) &lt; 1e-10) {</span></span>
@@ -203,20 +206,44 @@
 <span>  text <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span>
 <span>    <span class="st">"functions {"</span>,</span>
 <span>    <span class="st">"#include expgrowth.stan"</span>,</span>
+<span>    <span class="st">"}"</span>,</span>
+<span>    <span class="st">"generated quantities {"</span>,</span>
+<span>    <span class="st">"  real y = expgrowth_rng(0, 1, 0.4);"</span>,</span>
 <span>    <span class="st">"}"</span></span>
 <span>  <span class="op">)</span>,</span>
 <span>  con <span class="op">=</span> <span class="va">expgrowth_stan_file</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>}</p>
-<pre><code>We can now use this file to compile a model. **Note** that we need to include the path to the `primarycensoreddist` Stan functions using the `include_paths` argument to `cmdstan_model()`.
-
-
-``` r
-model &lt;- cmdstan_model(expgrowth_stan_file, include_paths = pcd_stan_path())
-model</code></pre>
+<p>We can now use this file to compile a model. <strong>Note</strong> that we need to include the path to the <code>primarycensoreddist</code> Stan functions using the <code>include_paths</code> argument to <code><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model()</a></code>.</p>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_stan_file</span>, include_paths <span class="op">=</span> <span class="fu"><a href="../reference/pcd_stan_path.html">pcd_stan_path</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">model</span></span></code></pre></div>
 <pre><code><span><span class="co">## functions {</span></span>
 <span><span class="co">## #include expgrowth.stan</span></span>
+<span><span class="co">## }</span></span>
+<span><span class="co">## generated quantities {</span></span>
+<span><span class="co">##   real y = expgrowth_rng(0, 1, 0.4);</span></span>
 <span><span class="co">## }</span></span></code></pre>
+<p>We can then sample from the model (we set <code>fixed_param = TRUE</code> here as our toy example doesn’t require MCMC sampling).</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>chains <span class="op">=</span> <span class="fl">1</span>, fixed_param <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Running MCMC with 1 chain...</span></span>
+<span><span class="co">## </span></span>
+<span><span class="co">## Chain 1 Iteration:   1 / 1000 [  0%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 100 / 1000 [ 10%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 200 / 1000 [ 20%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 300 / 1000 [ 30%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 400 / 1000 [ 40%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 500 / 1000 [ 50%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 600 / 1000 [ 60%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 700 / 1000 [ 70%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 800 / 1000 [ 80%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 900 / 1000 [ 90%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 Iteration: 1000 / 1000 [100%]  (Sampling) </span></span>
+<span><span class="co">## Chain 1 finished in 0.0 seconds.</span></span></code></pre>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">samples</span></span></code></pre></div>
+<pre><code><span><span class="co">##  variable mean median   sd  mad   q5  q95 rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##         y 0.51   0.52 0.29 0.38 0.06 0.95 1.00     1065      983</span></span></code></pre>
 </div>
 </div>
 <div class="section level3" number="2.4">
@@ -224,17 +251,12 @@ model</code></pre>
 <span class="header-section-number">2.4</span> Using Stan functions directly in R<a class="anchor" aria-label="anchor" href="#using-stan-functions-directly-in-r"></a>
 </h3>
 <p>Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in <code>primarycensoreddist</code> instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in <code>primarycensoreddist</code> to check our functions against the R implementations). To do this we use the <code>expose_functions()</code> method on our already compiled model.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">expose_functions</span><span class="op">(</span>global <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a</span></span></code></pre>
-<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a</span></span></code></pre>
-<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a</span></span></code></pre>
-<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a</span></span></code></pre>
-<pre><code><span><span class="co">## /home/runner/.cmdstan/cmdstan-2.35.0/stan/lib/stan_math/lib/tbb_2020.3/build/Makefile.tbb:28: CONFIG: cfg=release arch=intel64 compiler=gcc target=linux runtime=cc11.4.0_libc2.35_kernel6.5.0</span></span></code></pre>
 <p>We can now use the function in R. Note that this may get slightly more complicated if our stan function depends on other stan functions (i.e. you need to have those included in your compiled model as well).</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">expgrowth_rng</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 0.5643954</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 0.6524848</span></span></code></pre>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
