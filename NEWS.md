@@ -10,6 +10,7 @@
 
 * Added a getting started vignette.
 * Added a vignette showcasing how to use the package Stan code with `cmdstanr`.
+* Added a vignette showcasing how to fit distributions using the `cmdstanr` package.
 
 # primarycensoreddist 0.1.0
 
