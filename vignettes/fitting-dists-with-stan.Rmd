@@ -104,7 +104,8 @@ theoretical_cdf <- plnorm(x_seq, meanlog = meanlog, sdlog = sdlog)
 cdf_data <- data.frame(
   x = rep(x_seq, 2),
   probability = c(empirical_cdf(x_seq), theoretical_cdf),
-  type = rep(c("Observed", "Theoretical"), each = length(x_seq))
+  type = rep(c("Observed", "Theoretical"), each = length(x_seq)),
+  stringsAsFactors = FALSE
 )
 
 # Plot
