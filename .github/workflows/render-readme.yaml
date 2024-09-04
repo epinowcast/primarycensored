@@ -47,9 +47,10 @@ jobs:
         with:
           name: readme
           path: README.md
+
       - name: Update the wordlist
         run: |
-          spelling::update_wordlist(confirm = FALSE
+          spelling::update_wordlist(confirm = FALSE)
         shell: Rscript {0}
 
       - name: Create Pull Request
