@@ -30,7 +30,7 @@ jobs:
       - name: Install dependencies
         uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rmarkdown, local::., any::allcontributors
+          extra-packages: any::rmarkdown, local::., any::allcontributors, any::spelling
 
       - name: Update contributors
         if: github.ref == 'refs/heads/main'
@@ -47,6 +47,10 @@ jobs:
         with:
           name: readme
           path: README.md
+      - name: Update the wordlist
+        run: |
+          spelling::update_wordlist(confirm = FALSE
+        shell: Rscript {0}
 
       - name: Create Pull Request
         if: github.ref == 'refs/heads/main'
@@ -61,4 +65,5 @@ jobs:
           add-paths: |
             README.Rmd
             README.md
+            inst/WORDLIST
           token: ${{ secrets.GITHUB_TOKEN }}
