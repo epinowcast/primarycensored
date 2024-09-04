@@ -126,6 +126,9 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
 
   // Compute adjusted delay
   real d_adj = d - x;
+  if (d_adj <= 0) {
+    return 0;
+  }
 
   // Compute log probabilities
   real log_cdf = dist_lcdf(d_adj | params, dist_id);

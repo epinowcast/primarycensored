@@ -34,6 +34,7 @@ In this vignette, we'll explore how to use the `primarycensoreddist` package in 
 Stan is a probabilistic programming language for statistical inference. It provides a flexible and efficient platform for Bayesian modeling and is widely used in various fields of data science and statistics. In this vignette, we'll use Stan in conjunction with `primarycensoreddist` to perform Bayesian inference on censored data.
 
 For more information on Stan:
+
 - [Stan's official website](https://mc-stan.org/)
 - [Stan documentation](https://mc-stan.org/users/documentation/)
 - [Stan forums](https://discourse.mc-stan.org/) for community support and discussions
@@ -108,13 +109,15 @@ writeLines(
   text = c(
     "functions {",
     "#include expgrowth.stan",
+    "}",
+    "generated quantities {",
+    "  real y = expgrowth_rng(0, 1, 0.4);",
     "}"
   ),
   con = expgrowth_stan_file
 )
 ```
-}
-```
+
 We can now use this file to compile a model. **Note** that we need to include the path to the `primarycensoreddist` Stan functions using the `include_paths` argument to `cmdstan_model()`.
 
 ```{r}
@@ -122,11 +125,18 @@ model <- cmdstan_model(expgrowth_stan_file, include_paths = pcd_stan_path())
 model
 ```
 
+We can then sample from the model (we set `fixed_param = TRUE` here as our toy example doesn't require MCMC sampling).
+
+```{r}
+samples <- model$sample(chains = 1, fixed_param = TRUE)
+samples
+```
+
 ## Using Stan functions directly in R
 
 Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensoreddist` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensoreddist` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model.
 
-```{r}
+```{r, message = FALSE}
 model$expose_functions(global = TRUE)
 ```
 
