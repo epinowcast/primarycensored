@@ -171,7 +171,7 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpwIOeor/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/Rtmp8Gsb3F/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
@@ -228,11 +228,11 @@ model</code></pre>
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">expose_functions</span><span class="op">(</span>global <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_nvecserial.a</span></span></code></pre>
 <pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_cvodes.a</span></span></code></pre>
-<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a</span></span></code></pre>
-<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a</span></span></code></pre>
+<pre><code><span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_idas.a</span></span>
+<span><span class="co">## ar: creating stan/lib/stan_math/lib/sundials_6.1.1/lib/libsundials_kinsol.a</span></span></code></pre>
 <pre><code><span><span class="co">## /home/runner/.cmdstan/cmdstan-2.35.0/stan/lib/stan_math/lib/tbb_2020.3/build/Makefile.tbb:28: CONFIG: cfg=release arch=intel64 compiler=gcc target=linux runtime=cc11.4.0_libc2.35_kernel6.5.0</span></span></code></pre>
 <p>We can now use the function in R. Note that this may get slightly more complicated if our stan function depends on other stan functions (i.e. you need to have those included in your compiled model as well).</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">expgrowth_rng</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 0.5643954</span></span></code></pre>
 </div>
