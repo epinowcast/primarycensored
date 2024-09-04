@@ -226,10 +226,14 @@ Contributions of any kind are welcome!
 
 <a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>
 
-### Issues
+### Issue Authors
 
 <a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
 <a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3ASamuelBrand1">SamuelBrand1</a>
+
+### Issue Contributors
+
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+commenter%3Aathowes">athowes</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
