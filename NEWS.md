@@ -8,6 +8,7 @@
 ## Documentation
 
 * Added a getting started vignette.
+* Added a vignette showcasing how to use the package Stan code in a modeling workflow.
 
 # primarycensoreddist 0.1.0
 

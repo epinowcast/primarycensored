@@ -16,3 +16,25 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
+
+* What are we goingto do in this Vignette
+* High level what is stan and why are we using it
+* How to use the stan code in this package
+  * What is available?
+  * How to access it
+  * How to use it
+* Fitting a delay estimation model
+  * Simulate data in R
+  * Write a naive model in Stan
+  * Fit the model using cmdstan
+  * Compare posterior estimates with the true values
+  * Write a model using the primarycensoreddist stan functions
+  * Compare posterior estimates with the true values
+* Fitting a convolution model
+  * Simulate data in R
+  * Write a model in Stan using the primarycensoreddist stan functions
+  * Fit the model using cmdstan
+  * Compare posterior estimates with the true values
+* Other options for fitting primarycensoreddist models with stan
+  * The plan is to support other packages like `EpiNow2`, `epinowcast` and `epidist` to use the functionality in `primarycensoreddist` rather than shipping models with the package.
