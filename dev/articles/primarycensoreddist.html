@@ -125,13 +125,13 @@
 </ol>
 <p><span class="math display">\[t = p + d\]</span></p>
 <ol start="4" style="list-style-type: decimal">
-<li>Round the total delays to the nearest secondary event window (<span class="math inline">\(swindow\)</span>):</li>
-</ol>
-<p><span class="math display">\[t_{rounded} = \lfloor \frac{t}{swindow} \rfloor \times swindow\]</span></p>
-<ol start="5" style="list-style-type: decimal">
 <li>Apply truncation to ensure that the delays are within the specified range <span class="math inline">\([0, D]\)</span>:</li>
 </ol>
-<p><span class="math display">\[t_{valid} = \{t_{rounded} \mid 0 \leq t_{rounded} &lt; D\}\]</span></p>
+<p><span class="math display">\[t_{truncated} = \{t \mid 0 \leq t &lt; D\}\]</span></p>
+<ol start="5" style="list-style-type: decimal">
+<li>Round the truncated delays to the nearest secondary event window (<span class="math inline">\(swindow\)</span>):</li>
+</ol>
+<p><span class="math display">\[t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor \times swindow\]</span></p>
 <p>Here’s an example of how to use <code><a href="../reference/rprimarycensoreddist.html">rprimarycensoreddist()</a></code> to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily secondary censoring window for both events.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1e4</span></span>
