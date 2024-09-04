@@ -110,6 +110,54 @@ pcd_stan_functions <- function(
   unique(functions)
 }
 
+#' Get Stan files containing specified functions
+#'
+#' This function retrieves Stan files from a specified directory, optionally
+#' filtering for files that contain specific functions.
+#'
+#' @param functions Character vector of function names to search for. If NULL,
+#'   all Stan files are returned.
+#' @inheritParams pcd_stan_functions
+#'
+#' @return A character vector of file paths to Stan files.
+#'
+#' @export
+#'
+#' @family stantools
+pcd_stan_files <- function(
+    functions = NULL,
+    stan_path = primarycensoreddist::pcd_stan_path()) {
+  # List all Stan files in the directory
+  all_files <- list.files(
+    stan_path,
+    pattern = "\\.stan$",
+    full.names = TRUE,
+    recursive = TRUE
+  )
+
+  if (is.null(functions)) {
+    return(all_files)
+  } else {
+    # Initialize an empty vector to store matching files
+    matching_files <- character(0)
+
+    for (file in all_files) {
+      content <- readLines(file)
+      extracted_functions <- .extract_stan_functions(content, names_only = TRUE)
+
+      if (any(functions %in% extracted_functions)) {
+        matching_files <- c(matching_files, file)
+      }
+    }
+
+    # remove the path from the file names
+    matching_files <- sub(
+      paste0(stan_path, "/"), "", matching_files
+    )
+    return(matching_files)
+  }
+}
+
 #' Load Stan functions as a string
 #'
 #' @param functions Character vector of function names to load. Defaults to all

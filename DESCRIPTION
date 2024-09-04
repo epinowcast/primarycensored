@@ -25,6 +25,7 @@ Suggests:
     rmarkdown,
     spelling,
     testthat (>= 3.1.9),
+    tidybayes,
     usethis
 Additional_repositories:
     https://stan-dev.r-universe.dev

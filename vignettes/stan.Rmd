@@ -18,23 +18,150 @@ vignette: >
 ---
 
 
-* What are we goingto do in this Vignette
-* High level what is stan and why are we using it
-* How to use the stan code in this package
-  * What is available?
-  * How to access it
-  * How to use it
-* Fitting a delay estimation model
-  * Simulate data in R
-  * Write a naive model in Stan
-  * Fit the model using cmdstan
-  * Compare posterior estimates with the true values
-  * Write a model using the primarycensoreddist stan functions
-  * Compare posterior estimates with the true values
-* Fitting a convolution model
-  * Simulate data in R
-  * Write a model in Stan using the primarycensoreddist stan functions
-  * Fit the model using cmdstan
-  * Compare posterior estimates with the true values
-* Other options for fitting primarycensoreddist models with stan
-  * The plan is to support other packages like `EpiNow2`, `epinowcast` and `epidist` to use the functionality in `primarycensoreddist` rather than shipping models with the package.
+# Introduction
+
+## What are we going to do in this Vignette
+
+In this vignette, we'll explore how to use the `primarycensoreddist` package in conjunction with Stan for Bayesian inference on censored data. We'll cover the following key points:
+
+1. Introduction to Stan and its relevance for our analysis
+2. Overview of the packages we'll be using
+3. How to access and use Stan functions provided by `primarycensoreddist`
+4. Methods for integrating these Stan functions into your workflow
+5. Practical examples of fitting distributions to censored data using Stan
+
+## What is Stan and why are we using it
+
+Stan is a probabilistic programming language for statistical inference. It provides a flexible and efficient platform for Bayesian modeling and is widely used in various fields of data science and statistics. In this vignette, we'll use Stan in conjunction with `primarycensoreddist` to perform Bayesian inference on censored data.
+
+For more information on Stan:
+- [Stan's official website](https://mc-stan.org/)
+- [Stan documentation](https://mc-stan.org/users/documentation/)
+- [Stan forums](https://discourse.mc-stan.org/) for community support and discussions
+
+## Packages used in this vignette
+
+Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan and the `tidybayes` package for posterior analysis.
+
+```{r setup, message = FALSE}
+library(primarycensoreddist)
+library(cmdstanr)
+library(tidybayes)
+```
+
+# Using Stan code in primarycensoreddist
+
+`primarycensoreddist` includes a set of Stan functions that mirror the R functions in `primarycensoreddist`. Documentation for these functions can be found [here](https://primarycensoreddist.epinowcast.org/stan/). We support a range of approaches to integrate this Stan code into your workflow.
+
+## Checking available Stan functions using `pcd_stan_functions()`
+
+Aside from reading the documentation it is also possible to list the available Stan functions using a helper function directly in R.
+
+```{r}
+pcd_stan_functions()
+```
+
+## Accessing Stan functions
+
+Stan functions are accessed using the `pcd_load_stan_functions()` function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a `functions{}` block.
+
+```{r}
+pcd_load_stan_functions("primary_censored_dist_lpmf")
+```
+
+## Linking the Stan functions to your workflow
+
+### Writing functions to a file
+
+One option for using Stan functions is to write them to a file and then compile them using `cmdstanr`. This is a good approach as it means that once the functions are written they can be used in the same way as any other stan functions you might use. The downside is that it may mean more work keeping up to date with changes to the functions. We can do this using the `pcd_load_stan_functions()` function.
+
+```{r}
+expgrowth_rng_file <- file.path(tempdir(), "expgrowth_rng.stan")
+exp_model <- pcd_load_stan_functions(
+  "expgrowth_rng",
+  write_to_file = TRUE,
+  output_file = expgrowth_rng_file,
+  wrap_in_block = TRUE
+)
+```
+
+This can now be compiled and used in the same way as any other `cmdstanr` model.
+
+```{r}
+model <- cmdstan_model(expgrowth_rng_file)
+model
+```
+
+Alternatively, you could use `#include expgrowth_rng.stan` in a stan file functions block to include the function along with the path to that file as with any other stan file (see [here](https://mc-stan.org/cmdstanr/reference/model-method-compile.html)).
+
+### Including the functions directly via `include_paths`
+
+Rather than writing the functions to a file it is also possible to include them directly in the stan file using the `include_paths` argument to `cmdstan_model()`. This is useful if you don't to clutter your model with the stan code from `primarycensoreddist` and want automatic updating of the functions. To demonstrate we will first write a small model has has `expgrowth.stan` in its include paths (rather than writing it to a file and then including it). The first step is find the file and path for the `expgrowth_rng` function.
+
+```{r}
+pcd_stan_files("expgrowth_rng")
+```
+
+With that done we now write stan wrapper model.
+
+```{r}
+expgrowth_stan_file <- file.path(tempdir(), "expgrowth.stan")
+writeLines(
+  text = c(
+    "functions {",
+    "#include expgrowth.stan",
+    "}"
+  ),
+  con = expgrowth_stan_file
+)
+```
+}
+```
+We can now use this file to compile a model. **Note** that we need to include the path to the `primarycensoreddist` Stan functions using the `include_paths` argument to `cmdstan_model()`.
+
+```{r}
+model <- cmdstan_model(expgrowth_stan_file, include_paths = pcd_stan_path())
+model
+```
+
+## Using Stan functions directly in R
+
+Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensoreddist` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensoreddist` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model.
+
+```{r}
+model$expose_functions(global = TRUE)
+```
+
+We can now use the function in R. Note that this may get slightly more complicated if our stan function depends on other stan functions (i.e. you need to have those included in your compiled model as well).
+
+```{r}
+expgrowth_rng(0, 1, 0.4)
+```
+
+# Fitting a delay estimation model
+
+## Simulating data in R
+
+## Writing a naive model in Stan
+
+## Fitting the model using cmdstan
+
+## Comparing posterior estimates with true values
+
+## Writing a model using primarycensoreddist Stan functions
+
+## Comparing posterior estimates with true values
+
+# Fitting a convolution model
+
+## Simulating data in R
+
+## Writing a model using primarycensoreddist Stan functions
+
+## Fitting the model using cmdstan
+
+## Comparing posterior estimates with true values
+
+# Other options for fitting primarycensoreddist models with Stan
+
+## Future support for other packages
