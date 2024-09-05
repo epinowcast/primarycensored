@@ -219,7 +219,7 @@ writeLines(
     }
   }
   parameters {
-    real mu;
+    real<upper=4> mu;
     real<lower=0> sigma;
   }
   model {
@@ -254,15 +254,15 @@ Now let's fit the compiled model.
 ```{r fit-primarycensoreddist-model, message = FALSE}
 primarycensoreddist_fit <- primarycensoreddist_model$sample(
   data = list(
-    y = delay_counts$observed_delay[3],
-    n = delay_counts$n[3],
-    pwindow = delay_counts$pwindow[3],
-    swindow = delay_counts$swindow[3],
-    D = delay_counts$obs_time[3],
-    N = 1
+    y = delay_counts$observed_delay,
+    n = delay_counts$n,
+    pwindow = delay_counts$pwindow,
+    swindow = delay_counts$swindow,
+    D = delay_counts$obs_time,
+    N = nrow(delay_counts)
   ),
-  chains = 4,
-  parallel_chains = 1, refresh = 0, show_messages = FALSE
+  chains = 1,
+  parallel_chains = 1
 )
 primarycensoreddist_fit
 ```
