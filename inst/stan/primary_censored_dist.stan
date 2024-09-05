@@ -104,10 +104,6 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
   */
 real primary_censored_integrand(real x, real xc, array[] real theta,
                                 array[] real x_r, array[] int x_i) {
-  // Immediately return 0 if x or xc is less than or equal to 0
-  if (x <= 0) {
-    return 0;
-  }
   // Unpack parameters
   real d = x_r[1];
   int dist_id = x_i[1];
@@ -135,7 +131,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
     d_adj = d - xc;
     ppoint = xc;
   } else if (x < 0.1 * pwindow) {
-    d_adj = xc;
+    d_adj = -xc;
     ppoint = d - d_adj;
   } else {
     d_adj = x;
@@ -146,22 +142,12 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   if (log_cdf == negative_infinity()) {
     return 0;
   }
+  if (log_cdf == positive_infinity()) {
+    return 1;
+  }
   real log_primary_pdf = primary_dist_lpdf(
     ppoint | primary_dist_id, primary_params, 0, pwindow
   );
-  // if (log_cdf <= -20) {
-  //   print("ppoint: ", ppoint);
-  //   print("d_adj: ", d_adj);
-  //   print("x: ", x);
-  //   print("xc: ", xc);
-  //   print("d: ", d);
-  //   print("log_cdf: ", log_cdf);
-  //   print("log_primary_pdf: ", log_primary_pdf);
-  //   if (d_adj < 0) {
-  //     reject("d_adj is less than 0");
-  //   }
-  // }
-
   if (is_inf(D)) {
     // No truncation
     return exp(log_cdf + log_primary_pdf);
@@ -169,6 +155,9 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
     // Truncate at D
     real D_adj = D - ppoint;
     real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
+    if (log_cdf <= -20 || log_cdf >= 20 || log_cdf_D <= -20 || log_cdf_D >= 20) { 
+      print("ppoint:", ppoint, "d_adj:", d_adj, "x:", x, "xc:", xc, "d:", d, "log_cdf:", log_cdf, "log_primary_pdf:", log_primary_pdf, "theta:", theta[1:2], "D_adj:", D_adj, "D:", D, "Result:", exp(log_cdf - log_cdf_D + log_primary_pdf));
+    }  
     return exp(log_cdf - log_cdf_D + log_primary_pdf);
   }
 }
@@ -214,14 +203,11 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   array[4] int ids = {
     dist_id, primary_dist_id, size(params), size(primary_params)
   };
-  // print("d: ", d);
-  // print("pwindow: ", pwindow);
-  // print("D: ", D);
-  // print("theta: ", theta);
+  //print("d: ", d, " pwindow: ", pwindow, " D: ", D, " theta: ", theta);
   result = integrate_1d(
-    primary_censored_integrand, max({d - pwindow, 1e-3}), d, theta, {d, pwindow, D}, ids, 1e-3
+    primary_censored_integrand, max({d - pwindow, 1e-6}), d, theta, {d, pwindow, D}, ids, 1e-3
   );
-  // print("result: ", result);
+  //print("result: ", result);
   return result;
 }
 
