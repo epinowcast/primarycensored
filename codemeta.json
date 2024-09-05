@@ -8,7 +8,7 @@
   "codeRepository": "https://github.com/epinowcast/primarycensoreddist/",
   "issueTracker": "https://github.com/epinowcast/primarycensoreddist/issues/",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "0.2.0",
+  "version": "0.2.0.1000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -146,7 +146,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "283.506KB",
+  "fileSize": "283.567KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
