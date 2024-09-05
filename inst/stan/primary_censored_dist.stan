@@ -127,10 +127,10 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   // Compute adjusted delay and primary point
   real d_adj;
   real ppoint;
-  if (x > (d - 0.1 * pwindow)) {
+  if (x > (d - 0.2 * pwindow)) {
     d_adj = d - xc;
     ppoint = xc;
-  } else if (x < 0.1 * pwindow) {
+  } else if (x < 0.2 * pwindow) {
     d_adj = -xc;
     ppoint = d - d_adj;
   } else {
@@ -155,9 +155,9 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
     // Truncate at D
     real D_adj = D - ppoint;
     real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
-    if (log_cdf <= -20 || log_cdf >= 20 || log_cdf_D <= -20 || log_cdf_D >= 20) { 
-      print("ppoint:", ppoint, "d_adj:", d_adj, "x:", x, "xc:", xc, "d:", d, "log_cdf:", log_cdf, "log_primary_pdf:", log_primary_pdf, "theta:", theta[1:2], "D_adj:", D_adj, "D:", D, "Result:", exp(log_cdf - log_cdf_D + log_primary_pdf));
-    }  
+    // if (log_cdf <= -20 || log_cdf >= 20 || log_cdf_D <= -20 || log_cdf_D >= 20) { 
+    //   print("ppoint:", ppoint, "d_adj:", d_adj, "x:", x, "xc:", xc, "d:", d, "log_cdf:", log_cdf, "log_primary_pdf:", log_primary_pdf, "theta:", theta[1:2], "D_adj:", D_adj, "D:", D, "Result:", exp(log_cdf - log_cdf_D + log_primary_pdf));
+    // }  
     return exp(log_cdf - log_cdf_D + log_primary_pdf);
   }
 }
