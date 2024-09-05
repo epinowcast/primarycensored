@@ -219,7 +219,7 @@ writeLines(
     }
   }
   parameters {
-    real<upper=4> mu;
+    real mu;
     real<lower=0> sigma;
   }
   model {
@@ -261,7 +261,7 @@ primarycensoreddist_fit <- primarycensoreddist_model$sample(
     D = delay_counts$obs_time,
     N = nrow(delay_counts)
   ),
-  chains = 128,
+  chains = 16,
   parallel_chains = 16
 )
 primarycensoreddist_fit
