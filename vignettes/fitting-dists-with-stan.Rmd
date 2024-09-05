@@ -262,15 +262,7 @@ primarycensoreddist_fit <- primarycensoreddist_model$sample(
     N = 1
   ),
   chains = 4,
-  parallel_chains = 4,
-  init = list( # we use this to resolve initialisation issues
-    list(mu = 1.5, sigma = 0.75),
-    list(mu = 1.5, sigma = 0.4),
-    list(mu = 1.5, sigma = 0.3),
-    list(mu = 1.5, sigma = 0.8)
-  ),
-  refresh = ifelse(interactive(), 100, 0),
-  show_messages = interactive()
+  parallel_chains = 1, refresh = 0, show_messages = FALSE
 )
 primarycensoreddist_fit
 ```

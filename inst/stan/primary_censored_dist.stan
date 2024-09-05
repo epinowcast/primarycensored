@@ -124,35 +124,38 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
     primary_params = theta[(theta_len - primary_params_len + 1):theta_len];
   }
 
-  // Compute adjusted delay
-  real x_adj;
-  if (x > (pwindow - 0.1)) {
-    x_adj = pwindow - xc;
-  } else if (x < 0.1) {
-    x_adj = xc;
-  } else {
-    x_adj = x;
-  }
+  // Compute adjusted delay and primary point
   real d_adj;
-  d_adj = d - x_adj;
-  if (d_adj <= 0) {
-    return 0;
+  real ppoint;
+  if (x > (d - 0.2)) {
+    d_adj = d - xc;
+    ppoint = xc;
+  } else if (x < 0.2) {
+    d_adj = xc;
+    ppoint = d - d_adj;
+  } else {
+    d_adj = x;
+    ppoint = d - d_adj;
   }
-
-
+  // print("ppoint: ", ppoint);
+  // print("d_adj: ", d_adj);
   // Compute log probabilities
   real log_cdf = dist_lcdf(d_adj | params, dist_id);
   real log_primary_pdf = primary_dist_lpdf(
-    x_adj | primary_dist_id, primary_params, 0, pwindow
+    ppoint | primary_dist_id, primary_params, 0, pwindow
   );
+  // print("log_cdf: ", log_cdf);
+  // print("log_primary_pdf: ", log_primary_pdf);
 
   if (is_inf(D)) {
     // No truncation
     return exp(log_cdf + log_primary_pdf);
   } else {
     // Truncate at D
-    real D_adj = D - x_adj;
+    real D_adj = D - ppoint;
+    // print("D_adj: ", D_adj);
     real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
+    // print("log_cdf_D: ", log_cdf_D);
     return exp(log_cdf - log_cdf_D + log_primary_pdf);
   }
 }
@@ -200,7 +203,7 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   };
 
   result = integrate_1d(
-    primary_censored_integrand, 0, pwindow, theta, {d, pwindow, D}, ids, 1e-3
+    primary_censored_integrand, max({d - pwindow, 1e-3}), d - 1e-3, theta, {d, pwindow, D}, ids, 1e-6
   );
 
   return result;
