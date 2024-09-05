@@ -184,8 +184,8 @@ naive_fit <- naive_model$sample(
   ),
   chains = 4,
   parallel_chains = 4,
-  show_messages = FALSE,
-  refresh = 0
+  refresh = ifelse(interactive(), 50, 0),
+  show_messages = interactive()
 )
 naive_fit
 ```
@@ -213,6 +213,10 @@ writeLines(
   }
   transformed data {
     array[0] real primary_params;
+    array[N] real y_upper;
+    for (i in 1:N) {
+      y_upper[i] = y[i] + swindow[i];
+    }
   }
   parameters {
     real mu;
@@ -227,7 +231,7 @@ writeLines(
     for (i in 1:N) {
       target += n[i] * primary_censored_dist_lpmf(
         y[i] | 1, {mu, sigma},
-        pwindow[i], swindow[i], D[i],
+        pwindow[i], y_upper[i], D[i],
         1, primary_params
       );
     }
@@ -250,23 +254,23 @@ Now let's fit the compiled model.
 ```{r fit-primarycensoreddist-model, message = FALSE}
 primarycensoreddist_fit <- primarycensoreddist_model$sample(
   data = list(
-    y = delay_counts$observed_delay,
-    n = delay_counts$n,
-    pwindow = delay_counts$pwindow,
-    swindow = delay_counts$swindow,
-    D = delay_counts$obs_time,
-    N = nrow(delay_counts)
+    y = delay_counts$observed_delay[3],
+    n = delay_counts$n[3],
+    pwindow = delay_counts$pwindow[3],
+    swindow = delay_counts$swindow[3],
+    D = delay_counts$obs_time[3],
+    N = 1
   ),
   chains = 4,
   parallel_chains = 4,
   init = list( # we use this to resolve initialisation issues
-    list(mu = 1.5, sigma = 0.6),
+    list(mu = 1.5, sigma = 0.75),
     list(mu = 1.5, sigma = 0.4),
     list(mu = 1.5, sigma = 0.3),
-    list(mu = 1.5, sigma = 0.55)
+    list(mu = 1.5, sigma = 0.8)
   ),
-  refresh = 0,
-  show_messages = FALSE
+  refresh = ifelse(interactive(), 100, 0),
+  show_messages = interactive()
 )
 primarycensoreddist_fit
 ```
