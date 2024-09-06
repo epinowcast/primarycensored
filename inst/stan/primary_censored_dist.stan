@@ -112,6 +112,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   real D = x_r[3];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
+  int include_primary_pdf = x_i[4];
 
   // Extract distribution parameters
   array[dist_params_len] real params;
@@ -142,10 +143,16 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   if (log_cdf == negative_infinity()) {
     return 0;
   }
-  real log_primary_pdf = primary_dist_lpdf(
-    ppoint | primary_dist_id, primary_params, 0, pwindow
-  );
-  
+  real log_primary_pdf;
+
+  if (include_primary_pdf) {
+    log_primary_pdf = primary_dist_lpdf(
+      ppoint | primary_dist_id, primary_params, 0, pwindow
+    );
+  } else {
+    log_primary_pdf = 0;
+  }
+
   if (is_inf(D)) {
     // No truncation
     return exp(log_cdf + log_primary_pdf);
@@ -153,9 +160,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
     // Truncate at D
     real D_adj = D - ppoint;
     real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
-    // if (log_cdf <= -20 || log_cdf >= 20 || log_cdf_D <= -20 || log_cdf_D >= 20) { 
-    //   print("ppoint:", ppoint, "d_adj:", d_adj, "x:", x, "xc:", xc, "d:", d, "log_cdf:", log_cdf, "log_primary_pdf:", log_primary_pdf, "theta:", theta[1:2], "D_adj:", D_adj, "D:", D, "Result:", exp(log_cdf - log_cdf_D + log_primary_pdf));
-    // }  
+    // print("ppoint:", ppoint, "d_adj:", d_adj, "x:", x, "xc:", xc, "d:", d, "log_cdf:", log_cdf, "log_primary_pdf:", log_primary_pdf, "theta:", theta[1:2], "D_adj:", D_adj, "D:", D, "Result:", exp(log_cdf - log_cdf_D + log_primary_pdf));
     return exp(log_cdf - log_cdf_D + log_primary_pdf);
   }
 }
@@ -201,11 +206,24 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   array[4] int ids = {
     dist_id, primary_dist_id, size(params), size(primary_params)
   };
-  //print("d: ", d, " pwindow: ", pwindow, " D: ", D, " theta: ", theta);
-  result = integrate_1d(
-    primary_censored_integrand, max({d - pwindow, 1e-2}), d, theta, {d, pwindow, D}, ids, 1e-2
+  // print("d: ", d, " pwindow: ", pwindow, " D: ", D, " theta: ", theta);
+  // lower bound
+  real lower_bound = max({d - pwindow, 1e-6});
+  // Check the distribution at the midpoint
+  real midpoint = (lower_bound + d) / 2;
+  real midpoint_value = primary_censored_integrand(
+    midpoint, 0.0, theta, {d, pwindow, D}, append_array(ids, {0})
   );
-  //print("result: ", result);
+
+  if (midpoint_value < 0.001 || midpoint_value > 0.999) {
+    result = midpoint_value;
+  } else {
+    result = integrate_1d(
+      primary_censored_integrand, lower_bound, d, theta, {d, pwindow, D}, append_array(ids, {1}), 1e-2
+    );
+  }
+
+  // print("result: ", result);
   return result;
 }
 
