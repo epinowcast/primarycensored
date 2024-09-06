@@ -131,7 +131,7 @@ and rate parameters.</p></dd>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The primary event censored CDF is computed by integrating the product of
-the primary event distribution function (CDF) and the delay distribution
+the delay distribution function (CDF) and the primary event distribution
 function (PDF) over the primary event window. The integration is adjusted
 for truncation if a finite maximum delay (D) is specified.</p>
 <p>The primary event censored CDF, \(F_{\text{cens}}(q)\), is given by:
@@ -139,14 +139,15 @@ $$
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p)
 \, dp
 $$
-where \(F\) is the CDF of the primary event distribution,
+where \(F\) is the CDF of the delay distribution,
 \(f_{\text{primary}}\) is the PDF of the primary event times, and
 \(pwindow\) is the primary event window.</p>
-<p>If the maximum delay \(D\) is finite, the CDF is normalized by \(F(D)\):
+<p>If the maximum delay \(D\) is finite, the CDF is normalized by dividing
+by \(F_{\text{cens}}(D)\):
 $$
-F_{\text{cens}}(q) = \int_{0}^{pwindow} \frac{F(q - p)}{F(D - p)} \cdot
-f_{\text{primary}}(p) \, dp
-$$</p>
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
+$$
+where \(F_{\text{cens,norm}}(q)\) is the normalized CDF.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

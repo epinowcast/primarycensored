@@ -53,6 +53,10 @@
 <ul><li>Added support for <code>swindow = 0</code> to <code>rprimarycensoreddist</code> to allow for non-secondary event censored distributions.</li>
 <li>Adapted <code>rprimarycensoreddist</code> so that truncation is based on the primary censored distribution before secondary events are censored. This better matches the generative process.</li>
 <li>Added a new Stan interface tool to enable finding which files functions are implemented in the Stan code.</li>
+<li>Updated the approach to truncation to be outside the primary censored distribution integral.</li>
+<li>Improved tests that compare random sampling and probability mass/density functions between R and Stan.</li>
+<li>Improved cross testing between R and Stan implementations of the primary censored distributions.</li>
+<li>Worked on improving the stability of the <code>primary_censored_dist_lpmf</code> when used for NUTS based fitting (i.e. in Stan).</li>
 </ul></div>
 <div class="section level3">
 <h3 id="documentation-0-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-2-0"></a></h3>

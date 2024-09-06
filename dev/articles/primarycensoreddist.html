@@ -215,11 +215,12 @@
 <p><span class="math display">\[
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, dp
 \]</span></p>
-<p>where (<span class="math inline">\(F\)</span>) is the CDF of the primary event distribution, (<span class="math inline">\(f_{\text{primary}}\)</span>) is the PDF of the primary event times, and (<span class="math inline">\(pwindow\)</span>) is the primary event window.</p>
-<p>If the maximum delay (<span class="math inline">\(D\)</span>) is finite, the CDF is normalized by (<span class="math inline">\(F(D)\)</span>):</p>
+<p>where <span class="math inline">\(F\)</span> is the CDF of the delay distribution, <span class="math inline">\(f_{\text{primary}}\)</span> is the PDF of the primary event times, and <span class="math inline">\(pwindow\)</span> is the primary event window.</p>
+<p>If the maximum delay <span class="math inline">\(D\)</span> is finite, the CDF is normalized by dividing by <span class="math inline">\(F_{\text{cens}}(D)\)</span>:</p>
 <p><span class="math display">\[
-F_{\text{cens}}(q) = \int_{0}^{pwindow} \frac{F(q - p)}{F(D - p)} \cdot f_{\text{primary}}(p) \, dp
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 \]</span></p>
+<p>where <span class="math inline">\(F_{\text{cens,norm}}(q)\)</span> is the normalized CDF.</p>
 <p>Let’s compare the empirical CDF of our samples without secondary censoring to the theoretical CDF computed using <code><a href="../reference/pprimarycensoreddist.html">pprimarycensoreddist()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>

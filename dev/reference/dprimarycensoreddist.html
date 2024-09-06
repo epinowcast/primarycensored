@@ -149,9 +149,22 @@ primary event censored cumulative distribution function (CDF) at two points,
 $$
 f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 $$
-where \(F_{\text{cens}}\) is the primary event censored CDF. For the
-explanation and mathematical details of the CDF, refer to the documentation
-of <code><a href="pprimarycensoreddist.html">pprimarycensoreddist()</a></code>.</p>
+where \(F_{\text{cens}}\) is the primary event censored CDF.</p>
+<p>The function first computes the CDFs for all unique points (including both
+\(d\) and \(d + \text{swindow}\)) using <code><a href="pprimarycensoreddist.html">pprimarycensoreddist()</a></code>. It then
+creates a lookup table for these CDFs to efficiently calculate the PMF for
+each input value. For non-positive delays, the function returns 0.</p>
+<p>If a finite maximum delay \(D\) is specified, the PMF is normalized to
+ensure it sums to 1 over the range [0, D]. This normalization can be
+expressed as:
+$$
+f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{\sum_{i=0}^{D-1}
+ f_{\text{cens}}(i)}
+$$
+where \(f_{\text{cens,norm}}(d)\) is the normalized PMF and
+\(f_{\text{cens}}(d)\) is the unnormalized PMF. For the explanation and
+mathematical details of the CDF, refer to the documentation of
+<code><a href="pprimarycensoreddist.html">pprimarycensoreddist()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
