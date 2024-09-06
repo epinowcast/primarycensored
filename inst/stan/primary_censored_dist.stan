@@ -303,7 +303,7 @@ real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,
   );
   real log_cdf_lower = primary_censored_dist_lcdf(
     d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
-  ;
+);
   if (!is_inf(D)) {
     real log_cdf_D = primary_censored_dist_lcdf(
       D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
@@ -481,12 +481,11 @@ vector primary_censored_sone_pmf_vectorized(
   int max_delay, data real D, int dist_id,
   array[] real params, data real pwindow,
   int primary_dist_id,
-  array[] real primary_params,
-  int approx_truncation
+  array[] real primary_params
 ) {
   return exp(
     primary_censored_sone_lpmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, approx_truncation
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
   );
 }
