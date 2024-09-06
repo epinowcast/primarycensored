@@ -1,6 +1,17 @@
-# primarycensoreddist 0.2.0.1000
+# primarycensoreddist 0.3.0
 
-Development version.
+This release fixes and improves truncation handling across the code base. It also extends the tests coverage
+
+## Package
+
+* Updated the approach to truncation to be outside the primary censored distribution integral.
+* Improved tests that compare random sampling and probability mass/density functions between R and Stan.
+* Improved cross-testing between R and Stan implementations of the primary censored distributions.
+* Worked on improving the stability of the `primary_censored_dist_lpmf` when used for NUTS based fitting (i.e. in Stan).
+
+## Documentation
+
+* @athowes improved the getting started vignette by catching a few grammar errors and simplifying language.
 
 # primarycensoreddist 0.2.0
 
@@ -13,10 +24,6 @@ interface changes in `0.3.0` for the Stan code.
 * Added support for `swindow = 0` to `rprimarycensoreddist` to allow for non-secondary event censored distributions.
 * Adapted `rprimarycensoreddist` so that truncation is based on the primary censored distribution before secondary events are censored. This better matches the generative process.
 * Added a new Stan interface tool to enable finding which files functions are implemented in the Stan code.
-* Updated the approach to truncation to be outside the primary censored distribution integral.
-* Improved tests that compare random sampling and probability mass/density functions between R and Stan.
-* Improved cross testing between R and Stan implementations of the primary censored distributions.
-* Worked on improving the stability of the `primary_censored_dist_lpmf` when used for NUTS based fitting (i.e. in Stan).
 
 ## Documentation
 
