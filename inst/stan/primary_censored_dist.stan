@@ -209,19 +209,10 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   // print("d: ", d, " pwindow: ", pwindow, " D: ", D, " theta: ", theta);
   // lower bound
   real lower_bound = max({d - pwindow, 1e-6});
-  // Check the distribution at the midpoint
-  real midpoint = (lower_bound + d) / 2;
-  real midpoint_value = primary_censored_integrand(
-    midpoint, 0.0, theta, {d, pwindow, D}, append_array(ids, {0})
-  );
 
-  if (midpoint_value < 0.001 || midpoint_value > 0.999) {
-    result = midpoint_value;
-  } else {
-    result = integrate_1d(
-      primary_censored_integrand, lower_bound, d, theta, {d, pwindow, D}, append_array(ids, {1}), 1e-2
-    );
-  }
+  result = integrate_1d(
+    primary_censored_integrand, lower_bound, d, theta, {d, pwindow, D}, append_array(ids, {1}), 1e-2
+  );
 
   // print("result: ", result);
   return result;
@@ -306,12 +297,15 @@ real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,
            " and D is ", D, ". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.");
   }
   real log_cdf_upper = primary_censored_dist_lcdf(
-    d_upper | dist_id, params, pwindow, D, primary_dist_id, primary_params
+    d_upper | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
   );
   real log_cdf_lower = primary_censored_dist_lcdf(
-    d | dist_id, params, pwindow, D, primary_dist_id, primary_params
+    d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
   );
-  return log_diff_exp(log_cdf_upper, log_cdf_lower);
+  real log_cdf_D = primary_censored_dist_lcdf(
+    D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+  );
+  return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;
 }
 
 /**
