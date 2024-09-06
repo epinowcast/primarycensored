@@ -71,7 +71,7 @@ $$t_{truncated} = \{t \mid 0 \leq t < D\}$$
 
 $$t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor \times swindow$$
 
-Here's an example of how to use `rprimarycensoreddist()` to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily secondary censoring window for both events.
+Here's an example of how to use `rprimarycensoreddist()` to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily censoring window for both events.
 
 ```{r sample-lognormal}
 n <- 1e4
