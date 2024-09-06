@@ -200,4 +200,4 @@ summary(pcens_fit)
 
 We see very good agreement between the true and estimated parameters.
 
-**Note** that this approach is suboptimal as it prevents using from being able to specify our data using the `fitdistcens` `left` and `right` formulation. This in turns means that though both `primarycensoreddist` and `fitdistrplus` support mixed secondary censoring intervals as implmented here we are restricted to enforcing all individual secondary censoring intervals to be the same. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.
+**Note** that this approach is suboptimal as it prevents using from being able to specify our data using the `fitdistcens` `left` and `right` formulation. This in turns means that though both `primarycensoreddist` and `fitdistrplus` support mixed secondary censoring intervals as implemented here we are restricted to enforcing all individual secondary censoring intervals to be the same. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.
