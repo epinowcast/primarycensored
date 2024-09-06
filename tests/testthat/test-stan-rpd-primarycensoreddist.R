@@ -1,6 +1,7 @@
 skip_on_cran()
 skip_on_os("windows")
 skip_on_os("mac")
+
 test_that("Stan primary_censored_dist_cdf matches R pprimarycensoreddist", {
   d_values <- list(
     seq(0, 10, by = 0.5),
@@ -54,15 +55,13 @@ test_that(
       d, primary_censored_dist_lcdf, dist_id, params, pwindow, D,
       primary_dist_id, primary_params
     )
-    r_lcdf <- log(
-      pprimarycensoreddist(
-        d, plnorm,
-        pwindow = pwindow, D = D, meanlog = params[1],
-        sdlog = params[2]
-      )
+    r_cdf <- pprimarycensoreddist(
+      d, plnorm,
+      pwindow = pwindow, D = D, meanlog = params[1],
+      sdlog = params[2]
     )
 
-    expect_equal(stan_lcdf, r_lcdf, tolerance = 1e-6)
+    expect_equal(exp(stan_lcdf), r_cdf, tolerance = 1e-6)
   }
 )
 
@@ -142,9 +141,18 @@ test_that("Stan primary_censored_dist_pmf matches R dprimarycensoreddist", {
   primary_dist_id <- 1 # Uniform
   primary_params <- numeric(0)
 
-  stan_pmf <- sapply(
-    d, primary_censored_dist_pmf, dist_id, params, pwindow, d_upper, D,
-    primary_dist_id, primary_params
+  stan_pmf <- mapply(
+    primary_censored_dist_pmf,
+    d = d,
+    d_upper = d + 1,
+    MoreArgs = list(
+      dist_id = dist_id,
+      params = params,
+      pwindow = pwindow,
+      D = D,
+      primary_dist_id = primary_dist_id,
+      primary_params = primary_params
+    )
   )
   r_pmf <- dprimarycensoreddist(
     d, plnorm,
@@ -168,9 +176,18 @@ test_that(
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_lpmf <- sapply(
-      d, primary_censored_dist_lpmf, dist_id, params, pwindow, d_upper, D,
-      primary_dist_id, primary_params
+    stan_lpmf <- mapply(
+      primary_censored_dist_lpmf,
+      d = d,
+      d_upper = d_upper,
+      MoreArgs = list(
+        dist_id = dist_id,
+        params = params,
+        pwindow = pwindow,
+        D = D,
+        primary_dist_id = primary_dist_id,
+        primary_params = primary_params
+      )
     )
     r_lpmf <- log(
       dprimarycensoreddist(

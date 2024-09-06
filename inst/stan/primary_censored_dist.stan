@@ -128,13 +128,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   // Compute adjusted delay and primary point
   real d_adj;
   real ppoint;
-  if (x < width * 0.1) {
-    d_adj = lower_bound - xc;
-  } else if (x > width * 0.1) {
-    d_adj = d - xc;
-  } else {
-    d_adj = x;
-  }
+  d_adj = x;
   ppoint = d - d_adj;
   // Compute log probabilities
   real log_cdf = dist_lcdf(d_adj | params, dist_id);
@@ -429,7 +423,7 @@ vector primary_censored_sone_lpmf_vectorized(
       log_normalizer = 0; // No normalization needed for infinite D
     } else {
       log_normalizer = primary_censored_dist_lcdf(
-        upper_interval | dist_id, params, pwindow, positive_infinity(),
+        D | dist_id, params, pwindow, positive_infinity(),
         primary_dist_id, primary_params
       );
     }
