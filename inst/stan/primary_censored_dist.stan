@@ -128,7 +128,13 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   // Compute adjusted delay and primary point
   real d_adj;
   real ppoint;
-  d_adj = x;
+  if (x < width * 0.4) {
+    d_adj = lower_bound - xc;
+  } else if (x > width * 0.4) {
+    d_adj = d - xc;
+  } else {
+    d_adj = x;
+  }
   ppoint = d - d_adj;
   // Compute log probabilities
   real log_cdf = dist_lcdf(d_adj | params, dist_id);
@@ -193,10 +199,10 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
     dist_id, primary_dist_id, size(params), size(primary_params)
   };
 
+  print("Integrating from ", lower_bound, " to ", d, " with mu: ", params[1], ", sigma: ", params[2], ", D: ", D);
   result = integrate_1d(
     primary_censored_integrand, lower_bound, d, theta, {d, pwindow}, ids, 1e-2
   );
-
   if (!is_inf(D)) {
     real log_cdf_D = primary_censored_dist_lcdf(
       D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
@@ -204,7 +210,7 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
     result = exp(log(result) - log_cdf_D);
   }
 
-  // print("result: ", result);
+  print("result: ", result);
   return result;
 }
 
@@ -287,18 +293,22 @@ real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,
     reject("Upper truncation point is greater than D. It is ", d_upper,
            " and D is ", D, ". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.");
   }
+  print("Computing upper CDF");
   real log_cdf_upper = primary_censored_dist_lcdf(
     d_upper | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
   );
+  print("Computing lower CDF");
   real log_cdf_lower = primary_censored_dist_lcdf(
     d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
-);
+  );
   if (!is_inf(D)) {
     real log_cdf_D;
 
     if (d_upper == D) {
+      print("Using upper CDF for D");
       log_cdf_D = log_cdf_upper;
     } else {
+      print("Computing D CDF");
       log_cdf_D = primary_censored_dist_lcdf(
         D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
       );

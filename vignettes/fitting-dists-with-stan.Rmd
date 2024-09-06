@@ -53,7 +53,7 @@ set.seed(123) # For reproducibility
 
 # Define the true distribution parameters
 n <- 1000
-meanlog <- 1.5
+meanlog <- 2
 sdlog <- 0.75
 
 # Generate varying pwindow, swindow, and obs_time lengths
@@ -261,10 +261,14 @@ primarycensoreddist_fit <- primarycensoreddist_model$sample(
     D = delay_counts$obs_time,
     N = nrow(delay_counts)
   ),
-  chains = 600,
-  parallel_chains = 16,
+  chains = 1,
+  parallel_chains = 1,
   refresh = ifelse(interactive(), 50, 0),
-  show_messages = interactive()
+  show_messages = interactive(),
+  init = function() {
+    list(mu = rnorm(1, 1.5, 0.1), sigma = rnorm(1, 0.7, 0.1))
+  },
+  seed = 123456
 )
 primarycensoreddist_fit
 ```
