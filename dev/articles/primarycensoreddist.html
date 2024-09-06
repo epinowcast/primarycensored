@@ -109,9 +109,9 @@
 </div>
 <div class="section level2" number="3">
 <h2 id="generating-random-samples-with-rprimarycensoreddist">
-<span class="header-section-number">3</span> Generating Random Samples with <code>rprimarycensoreddist()</code><a class="anchor" aria-label="anchor" href="#generating-random-samples-with-rprimarycensoreddist"></a>
+<span class="header-section-number">3</span> Generating random samples with <code>rprimarycensoreddist()</code><a class="anchor" aria-label="anchor" href="#generating-random-samples-with-rprimarycensoreddist"></a>
 </h2>
-<p>This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay (D), and secondary event censoring.</p>
+<p>This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay (<span class="math inline">\(D\)</span>), and secondary event censoring.</p>
 <p>The mathematical formulation for generating random samples from a primary event censored distribution is as follows:</p>
 <ol style="list-style-type: decimal">
 <li>Generate primary event times (<span class="math inline">\(p\)</span>) from the specified primary event distribution (<span class="math inline">\(f_p\)</span>) within the primary event window (<span class="math inline">\(pwindow\)</span>):</li>
@@ -133,7 +133,7 @@
 <li>Round the truncated delays to the nearest secondary event window (<span class="math inline">\(swindow\)</span>):</li>
 </ol>
 <p><span class="math display">\[t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor \times swindow\]</span></p>
-<p>Here’s an example of how to use <code><a href="../reference/rprimarycensoreddist.html">rprimarycensoreddist()</a></code> to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily secondary censoring window for both events.</p>
+<p>Here’s an example of how to use <code><a href="../reference/rprimarycensoreddist.html">rprimarycensoreddist()</a></code> to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily censoring window for both events.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1e4</span></span>
 <span><span class="va">meanlog</span> <span class="op">&lt;-</span> <span class="fl">1.5</span></span>
@@ -204,13 +204,13 @@
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="primarycensoreddist_files/figure-html/sample-lognormal-1.png" width="672"></p>
-<p>Neither distribution matches the true distribution due to the truncation at <code>D</code> which biases both observed distributions towards shorter delays and the primary and secondary event censoring.</p>
+<p>Neither distribution matches the true distribution due to the truncation at <code>D</code> which biases both observed distributions towards shorter delays, as well as the primary and secondary event censoring.</p>
 </div>
 <div class="section level2" number="4">
 <h2 id="compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensoreddist">
 <span class="header-section-number">4</span> Compute the primary event censored cumulative distribution function (CDF) for delays with <code>pprimarycensoreddist()</code><a class="anchor" aria-label="anchor" href="#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensoreddist"></a>
 </h2>
-<p>This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution by accounting for the primary event distribution and potential truncation at a maximum delay (D).</p>
+<p>This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution by accounting for the primary event distribution and potential truncation at a maximum delay (<span class="math inline">\(D\)</span>).</p>
 <p>The primary event censored CDF, (<span class="math inline">\(F_{\text{cens}}(q)\)</span>), is given by:</p>
 <p><span class="math display">\[
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, dp
@@ -261,10 +261,10 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 <p>The theoretical CDF matches the empirical CDF very well, confirming that <code><a href="../reference/pprimarycensoreddist.html">pprimarycensoreddist()</a></code> is working as expected.</p>
 </div>
 <div class="section level2" number="5">
-<h2 id="compute-the-primary-event-censored-probability-mass-function-pmfwith-dprimarycensoreddist">
-<span class="header-section-number">5</span> Compute the primary event censored probability mass function (PMF)with <code>dprimarycensoreddist()</code><a class="anchor" aria-label="anchor" href="#compute-the-primary-event-censored-probability-mass-function-pmfwith-dprimarycensoreddist"></a>
+<h2 id="compute-the-primary-event-censored-probability-mass-function-pmf-with-dprimarycensoreddist">
+<span class="header-section-number">5</span> Compute the primary event censored probability mass function (PMF) with <code>dprimarycensoreddist()</code><a class="anchor" aria-label="anchor" href="#compute-the-primary-event-censored-probability-mass-function-pmf-with-dprimarycensoreddist"></a>
 </h2>
-<p>This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation it also accounts for secondary event censoring.</p>
+<p>This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation, it also accounts for secondary event censoring.</p>
 <p>The primary event censored PMF, (<span class="math inline">\(f_{\text{cens}}(d)\)</span>), is given by:</p>
 <p><span class="math display">\[
 f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
