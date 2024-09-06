@@ -111,8 +111,9 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   real pwindow = x_r[2];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
-  real lower_bound = theta[size(theta) - 1];
-  real width = theta[size(theta)];
+  // Needed if using xc experimental code
+  // real lower_bound = theta[size(theta) - 1];
+  // real width = theta[size(theta)];
 
   // Extract distribution parameters
   array[dist_params_len] real params;
@@ -121,7 +122,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   }
   array[primary_params_len] real primary_params;
   if (primary_params_len) {
-    int primary_loc = size(theta) - 2;
+    int primary_loc = size(theta);
     primary_params = theta[primary_loc - primary_params_len + 1:primary_loc];
   }
 
@@ -187,13 +188,9 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   real lower_bound = max({d - pwindow, 1e-6});
   real width = d - lower_bound;
 
-  array[size(params) + size(primary_params) + 2] real theta =
-    append_array(
-      append_array(
-        append_array(params, primary_params), {lower_bound}
-      ),
-      {width}
-    );
+  array[size(params) + size(primary_params)] real theta = append_array(
+    params, primary_params
+  );
   array[4] int ids = {
     dist_id, primary_dist_id, size(params), size(primary_params)
   };
