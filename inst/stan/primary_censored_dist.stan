@@ -111,6 +111,8 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   real pwindow = x_r[2];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
+  real lower_bound = theta[size(theta) - 1];
+  real width = theta[size(theta)];
 
   // Extract distribution parameters
   array[dist_params_len] real params;
@@ -119,23 +121,15 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   }
   array[primary_params_len] real primary_params;
   if (primary_params_len) {
-    int theta_len = size(theta);
-    primary_params = theta[(theta_len - primary_params_len + 1):theta_len];
+    int primary_loc = size(theta) - 2;
+    primary_params = theta[primary_loc - primary_params_len + 1:primary_loc];
   }
 
   // Compute adjusted delay and primary point
   real d_adj;
   real ppoint;
-  if (x > (d - 0.1 * pwindow)) {
-    d_adj = d - xc;
-    ppoint = xc;
-  } else if (x < 0.1 * pwindow) {
-    d_adj = -xc;
-    ppoint = d - d_adj;
-  } else {
-    d_adj = x;
-    ppoint = d - d_adj;
-  }
+  d_adj = x;
+  ppoint = d - d_adj;
   // Compute log probabilities
   real log_cdf = dist_lcdf(d_adj | params, dist_id);
   if (log_cdf == negative_infinity()) {
@@ -183,14 +177,21 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
     return 0;
   }
 
-  array[size(params) + size(primary_params)] real theta =
-    append_array(params, primary_params);
-  array[4] int ids = {
-    dist_id, primary_dist_id, size(params), size(primary_params)
-  };
   // print("d: ", d, " pwindow: ", pwindow, " D: ", D, " theta: ", theta);
   // lower bound
   real lower_bound = max({d - pwindow, 1e-6});
+  real width = d - lower_bound;
+
+  array[size(params) + size(primary_params) + 2] real theta =
+    append_array(
+      append_array(
+        append_array(params, primary_params), {lower_bound}
+      ),
+      {width}
+    );
+  array[4] int ids = {
+    dist_id, primary_dist_id, size(params), size(primary_params)
+  };
 
   result = integrate_1d(
     primary_censored_integrand, lower_bound, d, theta, {d, pwindow}, ids, 1e-2
