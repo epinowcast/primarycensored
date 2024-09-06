@@ -84,15 +84,6 @@ delay_data <- data.frame(
 
 head(delay_data)
 
-# Aggregate to unique combinations and count occurrences
-delay_counts <- delay_data |>
-  summarise(
-    n = n(),
-    .by = c(pwindow, swindow, obs_time, observed_delay, observed_delay_upper)
-  )
-
-head(delay_counts)
-
 # Compare the samples with and without secondary censoring to the true
 # distribution
 # Calculate empirical CDF
@@ -141,13 +132,11 @@ ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
   coord_cartesian(xlim = c(0, 8)) # Set x-axis limit to match truncation
 ```
 
-We've aggregated the data to unique combinations of `pwindow`, `swindow`, and `obs_time` and counted the number of occurrences of each `observed_delay` for each combination. This is the data we will use to fit our model.
-
 # Fitting a naive model using `fitdistr`
 
 We first fit a naive model using the `fitdistcens()` function. This function is designed to handle secondary censored data but does not handle primary censoring or truncation without extension.
 
-```{r fit-naive-model, message = FALSE}
+```{r fit-naive-model}
 fit <- delay_data |>
   dplyr::select(left = observed_delay, right = observed_delay_upper) |>
   fitdistcens(
@@ -164,7 +153,7 @@ We see that the naive model has fit poorly due to the primary censoring and righ
 
 We'll now fit an improved model using the `primarycensoreddist` package. To do this we need to define the custom distribution functions using the `primarycensoreddist` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
 
-```{r fit-improved-model, message = FALSE}
+```{r fit-improved-model}
 # Define custom distribution functions using primarycensoreddist
 # The try catch is required by fitdistrplus
 dpcens_gamma <- function(x, shape, rate) {
@@ -200,13 +189,13 @@ ppcens_gamma <- function(q, shape, rate) {
 }
 
 # Fit the model using fitdistcens with custom gamma distribution
-fit <- samples |>
+pcens_fit <- samples |>
   fitdist(
     distr = "pcens_gamma",
     start = list(shape = 1, rate = 1)
   )
 
-summary(fit)
+summary(pcens_fit)
 ```
 
 We see very good agreement between the true and estimated parameters.
