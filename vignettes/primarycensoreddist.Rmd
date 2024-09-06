@@ -208,7 +208,7 @@ ggplot(cdf_data, aes(x = x)) +
 The theoretical CDF matches the empirical CDF very well, confirming that `pprimarycensoreddist()` is working as expected.
 
 
-# Compute the primary event censored probability mass function (PMF)with `dprimarycensoreddist()`
+# Compute the primary event censored probability mass function (PMF) with `dprimarycensoreddist()`
 
 This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation it also accounts for secondary event censoring.
 
