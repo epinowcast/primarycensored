@@ -132,7 +132,7 @@ ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
   coord_cartesian(xlim = c(0, 8)) # Set x-axis limit to match truncation
 ```
 
-# Fitting a naive model using `fitdistr`
+# Fitting a naive model using `fitdistrplus`
 
 We first fit a naive model using the `fitdistcens()` function. This function is designed to handle secondary censored data but does not handle primary censoring or truncation without extension.
 
@@ -149,7 +149,7 @@ summary(fit)
 
 We see that the naive model has fit poorly due to the primary censoring and right truncation in the data.
 
-# Fitting an improved model using `primarycensoreddist`
+# Fitting an improved model using `primarycensoreddist` and `fitdistrplus`
 
 We'll now fit an improved model using the `primarycensoreddist` package. To do this we need to define the custom distribution functions using the `primarycensoreddist` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
 
