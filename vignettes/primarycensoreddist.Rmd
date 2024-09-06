@@ -148,7 +148,7 @@ Neither distribution matches the true distribution due to the truncation at `D` 
 
 # Compute the primary event censored cumulative distribution function (CDF) for delays with `pprimarycensoreddist()`
 
-This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution  by accounting for the primary event distribution and potential truncation at a maximum delay (D).
+This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution  by accounting for the primary event distribution and potential truncation at a maximum delay ($D$).
 
 The primary event censored CDF, ($F_{\text{cens}}(q)$), is given by:
 
