@@ -144,7 +144,7 @@ ggplot() +
   )
 ```
 
-Neither distribution matches the true distribution due to the truncation at `D` which biases both observed distributions towards shorter delays and the primary and secondary event censoring.
+Neither distribution matches the true distribution due to the truncation at `D` which biases both observed distributions towards shorter delays, as well as the primary and secondary event censoring.
 
 # Compute the primary event censored cumulative distribution function (CDF) for delays with `pprimarycensoreddist()`
 
