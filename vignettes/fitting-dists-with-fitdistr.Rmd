@@ -31,7 +31,7 @@ In this vignette, we'll demonstrate how to use `primarycensoreddist` in conjunct
 
 ## What might I need to know before starting
 
-This vignette assumes some familiarity with the `fitdistrplus` package.
+This vignette assumes some familiarity with the `fitdistrplus` package. If you are not familiar with it then you might want to start with the [Introduction to `fitdistrplus`](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html) vignette.
 
 ## Packages used in this vignette
 
@@ -53,8 +53,8 @@ set.seed(123) # For reproducibility
 
 # Define the true distribution parameters
 n <- 1000
-shape <- 16 / 9 # This gives a mean of 4 and sd of 3 for a gamma distribution
-rate <- 1 / 2.25
+shape <- 1.77 # This gives a mean of 4 and sd of 3 for a gamma distribution
+rate <- 0.44
 
 # Generate fixed pwindow, swindow, and obs_time
 pwindows <- rep(1, n)
@@ -145,6 +145,8 @@ We've aggregated the data to unique combinations of `pwindow`, `swindow`, and `o
 
 # Fitting a naive model using `fitdistr`
 
+We first fit a naive model using the `fitdistcens()` function. This function is designed to handle secondary censored data but does not handle primary censoring or truncation without extension.
+
 ```{r fit-naive-model, message = FALSE}
 fit <- delay_data |>
   dplyr::select(left = observed_delay, right = observed_delay_upper) |>
@@ -156,7 +158,57 @@ fit <- delay_data |>
 summary(fit)
 ```
 
+We see that the naive model has fit poorly due to the primary censoring and right truncation in the data.
 
 # Fitting an improved model using `primarycensoreddist`
 
-We'll now fit an improved model using the `primarycensoreddist` package.
+We'll now fit an improved model using the `primarycensoreddist` package. To do this we need to define the custom distribution functions using the `primarycensoreddist` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+
+```{r fit-improved-model, message = FALSE}
+# Define custom distribution functions using primarycensoreddist
+# The try catch is required by fitdistrplus
+dpcens_gamma <- function(x, shape, rate) {
+  result <- tryCatch(
+    {
+      dprimarycensoreddist(
+        x, pgamma,
+        shape = shape, rate = rate,
+        pwindow = 1, swindow = 1, D = 8
+      )
+    },
+    error = function(e) {
+      rep(NaN, length(x))
+    }
+  )
+  return(result)
+}
+
+ppcens_gamma <- function(q, shape, rate) {
+  result <- tryCatch(
+    {
+      pprimarycensoreddist(
+        q, pgamma,
+        shape = shape, rate = rate,
+        pwindow = 1, D = 8
+      )
+    },
+    error = function(e) {
+      rep(NaN, length(q))
+    }
+  )
+  return(result)
+}
+
+# Fit the model using fitdistcens with custom gamma distribution
+fit <- samples |>
+  fitdist(
+    distr = "pcens_gamma",
+    start = list(shape = 1, rate = 1)
+  )
+
+summary(fit)
+```
+
+We see very good agreement between the true and estimated parameters.
+
+**Note** that this approach is suboptimal as it prevents using from being able to specify our data using the `fitdistcens` `left` and `right` formulation. This in turns means that though both `primarycensoreddist` and `fitdistrplus` support mixed secondary censoring intervals as implmented here we are restricted to enforcing all individual secondary censoring intervals to be the same. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.
