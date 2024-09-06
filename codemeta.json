@@ -24,6 +24,15 @@
       "@id": "https://orcid.org/0000-0001-8057-8037"
     }
   ],
+  "contributor": [
+    {
+      "@type": "Person",
+      "givenName": "Adam",
+      "familyName": "Howes",
+      "email": "adamthowes@gmail.com",
+      "@id": "https://orcid.org/0000-0003-2386-4031"
+    }
+  ],
   "maintainer": [
     {
       "@type": "Person",
@@ -146,7 +155,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "283.567KB",
+  "fileSize": "290.239KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
