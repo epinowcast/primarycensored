@@ -156,13 +156,15 @@ $$
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, dp
 $$
 
-where ($F$) is the CDF of the primary event distribution, ($f_{\text{primary}}$) is the PDF of the primary event times, and ($pwindow$) is the primary event window.
+where $F$ is the CDF of the delay distribution, $f_{\text{primary}}$ is the PDF of the primary event times, and $pwindow$ is the primary event window.
 
-If the maximum delay ($D$) is finite, the CDF is normalized by ($F(D)$):
+If the maximum delay $D$ is finite, the CDF is normalized by dividing by $F_{\text{cens}}(D)$:
 
 $$
-F_{\text{cens}}(q) = \int_{0}^{pwindow} \frac{F(q - p)}{F(D - p)} \cdot f_{\text{primary}}(p) \, dp
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 $$
+
+where $F_{\text{cens,norm}}(q)$ is the normalized CDF.
 
 Let's compare the empirical CDF of our samples without secondary censoring to the theoretical CDF computed using `pprimarycensoreddist()`:
 
