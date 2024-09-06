@@ -45,9 +45,9 @@ library(ggplot2)
 set.seed(123)
 ```
 
-# Generating Random Samples with `rprimarycensoreddist()`
+# Generating random samples with `rprimarycensoreddist()`
 
-This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay (D), and secondary event censoring.
+This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay ($D$), and secondary event censoring.
 
 The mathematical formulation for generating random samples from a primary event censored distribution is as follows:
 
@@ -71,7 +71,7 @@ $$t_{truncated} = \{t \mid 0 \leq t < D\}$$
 
 $$t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor \times swindow$$
 
-Here's an example of how to use `rprimarycensoreddist()` to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily secondary censoring window for both events.
+Here's an example of how to use `rprimarycensoreddist()` to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily censoring window for both events.
 
 ```{r sample-lognormal}
 n <- 1e4
@@ -144,11 +144,11 @@ ggplot() +
   )
 ```
 
-Neither distribution matches the true distribution due to the truncation at `D` which biases both observed distributions towards shorter delays and the primary and secondary event censoring.
+Neither distribution matches the true distribution due to the truncation at `D` which biases both observed distributions towards shorter delays, as well as the primary and secondary event censoring.
 
 # Compute the primary event censored cumulative distribution function (CDF) for delays with `pprimarycensoreddist()`
 
-This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution  by accounting for the primary event distribution and potential truncation at a maximum delay (D).
+This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution  by accounting for the primary event distribution and potential truncation at a maximum delay ($D$).
 
 The primary event censored CDF, ($F_{\text{cens}}(q)$), is given by:
 
@@ -208,9 +208,9 @@ ggplot(cdf_data, aes(x = x)) +
 The theoretical CDF matches the empirical CDF very well, confirming that `pprimarycensoreddist()` is working as expected.
 
 
-# Compute the primary event censored probability mass function (PMF)with `dprimarycensoreddist()`
+# Compute the primary event censored probability mass function (PMF) with `dprimarycensoreddist()`
 
-This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation it also accounts for secondary event censoring.
+This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation, it also accounts for secondary event censoring.
 
 The primary event censored PMF, ($f_{\text{cens}}(d)$), is given by:
 
