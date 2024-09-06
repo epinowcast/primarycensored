@@ -47,7 +47,7 @@ set.seed(123)
 
 # Generating Random Samples with `rprimarycensoreddist()`
 
-This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay (D), and secondary event censoring.
+This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay ($D$), and secondary event censoring.
 
 The mathematical formulation for generating random samples from a primary event censored distribution is as follows:
 
