@@ -402,7 +402,7 @@ vector primary_censored_sone_lpmf_vectorized(
         log_normalizer = 0; // No normalization needed for infinite D
       } else {
         log_normalizer = primary_censored_dist_lcdf(
-          upper_interval | dist_id, params, pwindow, positive_infinity(),
+          D | dist_id, params, pwindow, positive_infinity(),
           primary_dist_id, primary_params
         );
       }
