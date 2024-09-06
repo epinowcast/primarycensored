@@ -75,7 +75,7 @@ test_that(
   }
 )
 
-test_that("dprimarycensoreddist throws an error for negative d", {
+test_that("dprimarycensoreddist returns 0 for negative d", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5
@@ -86,5 +86,11 @@ test_that("dprimarycensoreddist throws an error for negative d", {
       d, plnorm, pwindow, swindow, D,
       meanlog = 0, sdlog = 1
     ), 0
+  )
+  expect_identical(
+    dpcens(
+      c(8, d), plnorm, pwindow, swindow, D,
+      meanlog = 0, sdlog = 1
+    )[2], 0
   )
 })

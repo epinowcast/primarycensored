@@ -69,7 +69,7 @@ jobs:
           # We can't use TRUE here as pendatic check return lots of false
           # positives related to our use of functions.
           stopifnot(
-            length(message) > 11 &&
+            length(message) != 0 && length(message) < 12 &&
             any(message == "Stan program is syntactically correct")
           )
         shell: Rscript {0}

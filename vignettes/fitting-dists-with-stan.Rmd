@@ -78,7 +78,8 @@ delay_data <- data.frame(
   pwindow = pwindows,
   swindow = swindows,
   obs_time = obs_times,
-  observed_delay = samples
+  observed_delay = samples,
+  observed_delay_upper = samples + swindows
 )
 
 head(delay_data)
@@ -86,7 +87,10 @@ head(delay_data)
 # Aggregate to unique combinations and count occurrences
 # Aggregate to unique combinations and count occurrences
 delay_counts <- delay_data |>
-  summarise(n = n(), .by = c(pwindow, swindow, obs_time, observed_delay))
+  summarise(
+    n = n(),
+    .by = c(pwindow, swindow, obs_time, observed_delay, observed_delay_upper)
+  )
 
 head(delay_counts)
 
@@ -184,8 +188,8 @@ naive_fit <- naive_model$sample(
   ),
   chains = 4,
   parallel_chains = 4,
-  show_messages = FALSE,
-  refresh = 0
+  refresh = ifelse(interactive(), 50, 0),
+  show_messages = interactive()
 )
 naive_fit
 ```
@@ -206,9 +210,9 @@ writeLines(
   data {
     int<lower=0> N;  // number of observations
     array[N] int<lower=0> y;     // observed delays
+    array[N] int<lower=0> y_upper;     // observed delays upper bound
     array[N] int<lower=0> n;     // number of occurrences for each delay
     array[N] int<lower=0> pwindow; // primary censoring window
-    array[N] int<lower=0> swindow; // secondary censoring window
     array[N] int<lower=0> D; // maximum delay
   }
   transformed data {
@@ -227,7 +231,7 @@ writeLines(
     for (i in 1:N) {
       target += n[i] * primary_censored_dist_lpmf(
         y[i] | 1, {mu, sigma},
-        pwindow[i], swindow[i], D[i],
+        pwindow[i], y_upper[i], D[i],
         1, primary_params
       );
     }
@@ -251,22 +255,16 @@ Now let's fit the compiled model.
 primarycensoreddist_fit <- primarycensoreddist_model$sample(
   data = list(
     y = delay_counts$observed_delay,
+    y_upper = delay_counts$observed_delay_upper,
     n = delay_counts$n,
     pwindow = delay_counts$pwindow,
-    swindow = delay_counts$swindow,
     D = delay_counts$obs_time,
     N = nrow(delay_counts)
   ),
   chains = 4,
   parallel_chains = 4,
-  init = list( # we use this to resolve initialisation issues
-    list(mu = 1.5, sigma = 0.6),
-    list(mu = 1.5, sigma = 0.4),
-    list(mu = 1.5, sigma = 0.3),
-    list(mu = 1.5, sigma = 0.55)
-  ),
-  refresh = 0,
-  show_messages = FALSE
+  refresh = ifelse(interactive(), 50, 0),
+  show_messages = interactive()
 )
 primarycensoreddist_fit
 ```

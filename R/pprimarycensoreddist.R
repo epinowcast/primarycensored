@@ -41,7 +41,7 @@
 #'
 #' @details
 #' The primary event censored CDF is computed by integrating the product of
-#' the primary event distribution function (CDF) and the delay distribution
+#' the delay distribution function (CDF) and the primary event distribution
 #' function (PDF) over the primary event window. The integration is adjusted
 #' for truncation if a finite maximum delay (D) is specified.
 #'
@@ -50,15 +50,16 @@
 #' F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p)
 #' \, dp
 #' }
-#' where \eqn{F} is the CDF of the primary event distribution,
+#' where \eqn{F} is the CDF of the delay distribution,
 #' \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
 #' \eqn{pwindow} is the primary event window.
 #'
-#' If the maximum delay \eqn{D} is finite, the CDF is normalized by \eqn{F(D)}:
+#' If the maximum delay \eqn{D} is finite, the CDF is normalized by dividing
+#' by \eqn{F_{\text{cens}}(D)}:
 #' \deqn{
-#' F_{\text{cens}}(q) = \int_{0}^{pwindow} \frac{F(q - p)}{F(D - p)} \cdot
-#' f_{\text{primary}}(p) \, dp
+#' F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 #' }
+#' where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
 #'
 #' @family primarycensoreddist
 #'
@@ -82,27 +83,27 @@ pprimarycensoreddist <- function(
     if (d <= 0) {
       return(0) # Return 0 for non-positive delays
     } else {
-      if (is.infinite(D)) {
-        integrand <- function(p) {
-          d_adj <- d - p
-          pdist(d_adj, ...) *
-            do.call(
-              dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
-            )
-        }
-      } else {
-        integrand <- function(p) {
-          d_adj <- d - p
-          D_adj <- D - p
-          pdist(d_adj, ...) / pdist(D_adj, ...) *
-            do.call(
-              dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
-            )
-        }
+      integrand <- function(p) {
+        d_adj <- d - p
+        pdist(d_adj, ...) *
+          do.call(
+            dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
+          )
       }
+
       stats::integrate(integrand, lower = 0, upper = pwindow)$value
     }
   }, numeric(1))
+
+  if (!is.infinite(D)) {
+    # Compute normalization factor for finite D
+    normalizer <- if (max(q) == D) {
+      result[length(result)]
+    } else {
+      pprimarycensoreddist(D, pdist, pwindow, Inf, dprimary, dprimary_args, ...)
+    }
+    result <- result / normalizer
+  }
 
   return(result)
 }
