@@ -63,7 +63,7 @@ custom primary event distributions and delay distributions.
 }
 \details{
 The primary event censored CDF is computed by integrating the product of
-the primary event distribution function (CDF) and the delay distribution
+the delay distribution function (CDF) and the primary event distribution
 function (PDF) over the primary event window. The integration is adjusted
 for truncation if a finite maximum delay (D) is specified.
 
@@ -72,15 +72,16 @@ The primary event censored CDF, \eqn{F_{\text{cens}}(q)}, is given by:
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p)
 \, dp
 }
-where \eqn{F} is the CDF of the primary event distribution,
+where \eqn{F} is the CDF of the delay distribution,
 \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
 \eqn{pwindow} is the primary event window.
 
-If the maximum delay \eqn{D} is finite, the CDF is normalized by \eqn{F(D)}:
+If the maximum delay \eqn{D} is finite, the CDF is normalized by dividing
+by \eqn{F_{\text{cens}}(D)}:
 \deqn{
-F_{\text{cens}}(q) = \int_{0}^{pwindow} \frac{F(q - p)}{F(D - p)} \cdot
-f_{\text{primary}}(p) \, dp
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 }
+where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
 }
 \examples{
 # Example: Lognormal distribution with uniform primary events

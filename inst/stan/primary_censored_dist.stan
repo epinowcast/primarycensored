@@ -290,6 +290,10 @@ real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,
     reject("Upper truncation point is greater than D. It is ", d_upper,
            " and D is ", D, ". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.");
   }
+  if (d_upper <= d) {
+    reject("Upper truncation point is less than or equal to d. It is ", d_upper,
+           " and d is ", d, ". Resolve this by increasing d to be less than d_upper.");
+  }
   // print("Computing upper CDF");
   real log_cdf_upper = primary_censored_dist_lcdf(
     d_upper | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params

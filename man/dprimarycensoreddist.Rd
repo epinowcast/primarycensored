@@ -77,9 +77,24 @@ primary event censored cumulative distribution function (CDF) at two points,
 \deqn{
 f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 }
-where \eqn{F_{\text{cens}}} is the primary event censored CDF. For the
-explanation and mathematical details of the CDF, refer to the documentation
-of \code{\link[=pprimarycensoreddist]{pprimarycensoreddist()}}.
+where \eqn{F_{\text{cens}}} is the primary event censored CDF.
+
+The function first computes the CDFs for all unique points (including both
+\eqn{d} and \eqn{d + \text{swindow}}) using \code{\link[=pprimarycensoreddist]{pprimarycensoreddist()}}. It then
+creates a lookup table for these CDFs to efficiently calculate the PMF for
+each input value. For non-positive delays, the function returns 0.
+
+If a finite maximum delay \eqn{D} is specified, the PMF is normalized to
+ensure it sums to 1 over the range \link{0, D}. This normalization can be
+expressed as:
+\deqn{
+f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{\sum_{i=0}^{D-1}
+ f_{\text{cens}}(i)}
+}
+where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF and
+\eqn{f_{\text{cens}}(d)} is the unnormalized PMF. For the explanation and
+mathematical details of the CDF, refer to the documentation of
+\code{\link[=pprimarycensoreddist]{pprimarycensoreddist()}}.
 }
 \examples{
 # Example: Weibull distribution with uniform primary events
