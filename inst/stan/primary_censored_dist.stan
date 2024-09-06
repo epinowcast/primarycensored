@@ -109,7 +109,6 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   int dist_id = x_i[1];
   int primary_dist_id = x_i[2];
   real pwindow = x_r[2];
-  real D = x_r[3];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
 
@@ -145,17 +144,7 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   real log_primary_pdf = primary_dist_lpdf(
       ppoint | primary_dist_id, primary_params, 0, pwindow
   );
-
-  if (is_inf(D)) {
-    // No truncation
-    return exp(log_cdf + log_primary_pdf);
-  } else {
-    // Truncate at D
-    real D_adj = D - ppoint;
-    real log_cdf_D = dist_lcdf(D_adj | params, dist_id);
-    // print("ppoint:", ppoint, "d_adj:", d_adj, "x:", x, "xc:", xc, "d:", d, "log_cdf:", log_cdf, "log_primary_pdf:", log_primary_pdf, "theta:", theta[1:2], "D_adj:", D_adj, "D:", D, "Result:", exp(log_cdf - log_cdf_D + log_primary_pdf));
-    return exp(log_cdf - log_cdf_D + log_primary_pdf);
-  }
+  return exp(log_cdf + log_primary_pdf);
 }
 
   /**
@@ -204,13 +193,12 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   real lower_bound = max({d - pwindow, 1e-6});
 
   result = integrate_1d(
-    primary_censored_integrand, lower_bound, d, theta,
-    {d, pwindow, positive_infinity()}, ids, 1e-2
+    primary_censored_integrand, lower_bound, d, theta, {d, pwindow}, ids, 1e-2
   );
 
   if (!is_inf(D)) {
     real log_cdf_D = primary_censored_dist_lcdf(
-      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
     );
     result = exp(log(result) - log_cdf_D);
   }
