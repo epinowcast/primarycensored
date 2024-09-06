@@ -25,8 +25,8 @@ navbar:
         href: articles/using-stan-tools.html
       - text: Fitting distributions using primarycensorseddist and cmdstan
         href: articles/fitting-dists-with-stan.html
-      - text: Fitting distributions using primarycensorseddist and fitdistr
-        href: articles/fitting-dists-with-fitdistr.html
+      - text: Fitting distributions using primarycensorseddist and fitdistrplus
+        href: articles/fitting-dists-with-fitdistrplus.html
 
 authors:
   Sam Abbott:

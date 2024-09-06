@@ -1,6 +1,6 @@
 ---
-title: "Fitting distributions using primarycensorseddist and fitdistr"
-description: "A guide on how to fit distributions using primarycensoreddist."
+title: "Fitting distributions using primarycensorseddist and fitdistrplus"
+description: "A guide on how to fit distributions using primarycensoreddist and fitdistrplus."
 author: Sam Abbott
 output:
   bookdown::html_document2:
@@ -12,7 +12,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Fitting distributions using primarycensorseddist and fitdistr}
+  %\VignetteIndexEntry{Fitting distributions using primarycensoreddist and fitdistrplus}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
