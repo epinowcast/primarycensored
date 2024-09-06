@@ -261,7 +261,7 @@ primarycensoreddist_fit <- primarycensoreddist_model$sample(
     D = delay_counts$obs_time,
     N = nrow(delay_counts)
   ),
-  chains = 600,
+  chains = 16,
   parallel_chains = 16,
   refresh = ifelse(interactive(), 50, 0),
   show_messages = interactive()

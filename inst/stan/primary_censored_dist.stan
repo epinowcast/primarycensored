@@ -293,9 +293,15 @@ real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,
     d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
 );
   if (!is_inf(D)) {
-    real log_cdf_D = primary_censored_dist_lcdf(
-      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
-    );
+    real log_cdf_D;
+
+    if (d_upper == D) {
+      log_cdf_D = log_cdf_upper;
+    } else {
+      log_cdf_D = primary_censored_dist_lcdf(
+        D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+      );
+    }
     return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;
   } else {
     return log_diff_exp(log_cdf_upper, log_cdf_lower);
