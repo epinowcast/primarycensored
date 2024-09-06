@@ -112,7 +112,6 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   real D = x_r[3];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
-  int include_primary_pdf = x_i[4];
 
   // Extract distribution parameters
   array[dist_params_len] real params;
@@ -143,15 +142,9 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   if (log_cdf == negative_infinity()) {
     return 0;
   }
-  real log_primary_pdf;
-
-  if (include_primary_pdf) {
-    log_primary_pdf = primary_dist_lpdf(
+  real log_primary_pdf = primary_dist_lpdf(
       ppoint | primary_dist_id, primary_params, 0, pwindow
-    );
-  } else {
-    log_primary_pdf = 0;
-  }
+  );
 
   if (is_inf(D)) {
     // No truncation
@@ -197,7 +190,7 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
                                int primary_dist_id,
                                array[] real primary_params) {
   real result;
-  if (d <= 0 || d > D) {
+  if (d <= 0) {
     return 0;
   }
 
@@ -211,8 +204,16 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   real lower_bound = max({d - pwindow, 1e-6});
 
   result = integrate_1d(
-    primary_censored_integrand, lower_bound, d, theta, {d, pwindow, D}, append_array(ids, {1}), 1e-2
+    primary_censored_integrand, lower_bound, d, theta,
+    {d, pwindow, positive_infinity()}, ids, 1e-2
   );
+
+  if (!is_inf(D)) {
+    real log_cdf_D = primary_censored_dist_lcdf(
+      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+    );
+    result = exp(log(result) - log_cdf_D);
+  }
 
   // print("result: ", result);
   return result;
@@ -249,9 +250,10 @@ real primary_censored_dist_lcdf(data real d, int dist_id, array[] real params,
                                 data real pwindow, data real D,
                                 int primary_dist_id,
                                 array[] real primary_params) {
-  if (d <= 0 || d > D) {
+  if (d <= 0) {
     return negative_infinity();
   }
+
   return log(
     primary_censored_dist_cdf(
       d | dist_id, params, pwindow, D, primary_dist_id, primary_params
@@ -301,11 +303,15 @@ real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,
   );
   real log_cdf_lower = primary_censored_dist_lcdf(
     d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
-  );
-  real log_cdf_D = primary_censored_dist_lcdf(
-    D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
-  );
-  return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;
+  ;
+  if (!is_inf(D)) {
+    real log_cdf_D = primary_censored_dist_lcdf(
+      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+    );
+    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;
+  } else {
+    return log_diff_exp(log_cdf_upper, log_cdf_lower);
+  }
 }
 
 /**
@@ -390,8 +396,7 @@ real primary_censored_dist_pmf(data int d, int dist_id, array[] real params,
 vector primary_censored_sone_lpmf_vectorized(
   int max_delay, data real D, int dist_id,
   array[] real params, data real pwindow,
-  int primary_dist_id, array[] real primary_params,
-  int approx_truncation
+  int primary_dist_id, array[] real primary_params
 ) {
 
   int upper_interval = max_delay + 1;
@@ -405,37 +410,25 @@ vector primary_censored_sone_lpmf_vectorized(
   }
 
   // Compute log CDFs
-  if (approx_truncation) {
-    for (d in 1:upper_interval) {
-      log_cdfs[d] = primary_censored_dist_lcdf(
-        d | dist_id, params, pwindow, positive_infinity(), primary_dist_id,
-        primary_params
-      );
-    }
-  } else {
-    for (d in 1:upper_interval) {
-      log_cdfs[d] = primary_censored_dist_lcdf(
-        d | dist_id, params, pwindow, D, primary_dist_id, primary_params
-      );
-    }
+  for (d in 1:upper_interval) {
+    log_cdfs[d] = primary_censored_dist_lcdf(
+      d | dist_id, params, pwindow, positive_infinity(), primary_dist_id,
+      primary_params
+    );
   }
 
   // Compute log normalizer using upper_interval
-  if (approx_truncation) {
-    if (D > upper_interval) {
-      if (is_inf(D)) {
-        log_normalizer = 0; // No normalization needed for infinite D
-      } else {
-        log_normalizer = primary_censored_dist_lcdf(
-          upper_interval | dist_id, params, pwindow, positive_infinity(),
-          primary_dist_id, primary_params
-        );
-      }
+  if (D > upper_interval) {
+    if (is_inf(D)) {
+      log_normalizer = 0; // No normalization needed for infinite D
     } else {
-      log_normalizer = log_cdfs[upper_interval];
+      log_normalizer = primary_censored_dist_lcdf(
+        upper_interval | dist_id, params, pwindow, positive_infinity(),
+        primary_dist_id, primary_params
+      );
     }
   } else {
-    log_normalizer = 0; // No external normalization for exact truncation
+    log_normalizer = log_cdfs[upper_interval];
   }
 
   // Compute log PMFs
