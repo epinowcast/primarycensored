@@ -59,21 +59,19 @@ test_that(
     dist_id <- 1 # Lognormal
     params <- c(0, 1) # meanlog, sdlog
     pwindow <- 1
-    swindow <- 1
+    d_upper <- 11
     D <- 10
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
     expect_error(
       primary_censored_dist_lpmf(
-        d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params
+        d, dist_id, params, pwindow, d_upper, D, primary_dist_id, primary_params
       ),
       "Upper truncation point is greater than D"
     )
   }
 )
-
-
 
 test_that(
   "Stan primary_censored_dist matches R primarycensoreddist when d is the same
@@ -87,7 +85,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_pmf <- primary_censored_dist_pmf(
-      d, dist_id, params, pwindow, 1, d + 1, primary_dist_id, primary_params
+      d, dist_id, params, pwindow, d + 1, d + 1, primary_dist_id, primary_params
     )
     r_pmf <- dprimarycensoreddist(
       d, plnorm,
@@ -99,24 +97,23 @@ test_that(
   }
 )
 
-
 test_that("Stan primary_censored_dist_pmf matches R dprimarycensoreddist", {
   d <- 0:10
   dist_id <- 1 # Lognormal
   params <- c(0, 1) # meanlog, sdlog
   pwindow <- 1
-  swindow <- 1
+  d_upper <- d + 1
   D <- Inf
   primary_dist_id <- 1 # Uniform
   primary_params <- numeric(0)
 
   stan_pmf <- sapply(
-    d, primary_censored_dist_pmf, dist_id, params, pwindow, swindow, D,
+    d, primary_censored_dist_pmf, dist_id, params, pwindow, d_upper, D,
     primary_dist_id, primary_params
   )
   r_pmf <- dprimarycensoreddist(
     d, plnorm,
-    pwindow = pwindow, swindow = swindow, D = D,
+    pwindow = pwindow, swindow = 1, D = D,
     meanlog = params[1], sdlog = params[2]
   )
 
@@ -131,19 +128,19 @@ test_that(
     dist_id <- 1 # Lognormal
     params <- c(0, 1) # meanlog, sdlog
     pwindow <- 1
-    swindow <- 1
+    d_upper <- d + 1
     D <- Inf
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
     stan_lpmf <- sapply(
-      d, primary_censored_dist_lpmf, dist_id, params, pwindow, swindow, D,
+      d, primary_censored_dist_lpmf, dist_id, params, pwindow, d_upper, D,
       primary_dist_id, primary_params
     )
     r_lpmf <- log(
       dprimarycensoreddist(
         d, plnorm,
-        pwindow = pwindow, swindow = swindow, D = D,
+        pwindow = pwindow, swindow = 1, D = D,
         meanlog = params[1], sdlog = params[2]
       )
     )
@@ -163,11 +160,8 @@ test_that(
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_pmf_approx <- primary_censored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 1
-    )
-    stan_pmf_exact <- primary_censored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 0
+    stan_pmf <- primary_censored_sone_pmf_vectorized(
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
     r_pmf <- dprimarycensoreddist(
       0:max_delay, plnorm,
@@ -175,8 +169,7 @@ test_that(
       meanlog = params[1], sdlog = params[2]
     )
 
-    expect_equal(stan_pmf_approx, r_pmf, tolerance = 1e-6)
-    expect_equal(stan_pmf_exact, r_pmf, tolerance = 1e-6)
+    expect_equal(stan_pmf, r_pmf, tolerance = 1e-6)
   }
 )
 
@@ -192,11 +185,8 @@ test_that(
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_pmf_approx <- primary_censored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 1
-    )
-    stan_pmf_exact <- primary_censored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 0
+    stan_pmf <- primary_censored_sone_pmf_vectorized(
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
     r_pmf <- dprimarycensoreddist(
       0:max_delay, plnorm,
@@ -204,9 +194,7 @@ test_that(
       meanlog = params[1], sdlog = params[2]
     )
 
-    expect_equal(stan_pmf_approx, r_pmf, tolerance = 1e-2)
-    expect_equal(stan_pmf_exact, r_pmf, tolerance = 1e-6)
-    expect_true(all(abs(stan_pmf_exact - r_pmf) < abs(stan_pmf_approx - r_pmf)))
+    expect_equal(stan_pmf, r_pmf, tolerance = 1e-6)
   }
 )
 
@@ -222,11 +210,8 @@ test_that(
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_pmf_approx <- primary_censored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 1
-    )
-    stan_pmf_exact <- primary_censored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 0
+    stan_pmf <- primary_censored_sone_pmf_vectorized(
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
     r_pmf <- dprimarycensoreddist(
       0:max_delay, plnorm,
@@ -234,9 +219,7 @@ test_that(
       meanlog = params[1], sdlog = params[2]
     )
 
-    expect_equal(stan_pmf_approx, r_pmf, tolerance = 1e-3)
-    expect_equal(stan_pmf_exact, r_pmf, tolerance = 1e-6)
-    expect_true(all(abs(stan_pmf_exact - r_pmf) < abs(stan_pmf_approx - r_pmf)))
+    expect_equal(stan_pmf, r_pmf, tolerance = 1e-6)
   }
 )
 
@@ -252,11 +235,8 @@ test_that(
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_lpmf_approx <- primary_censored_sone_lpmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 1
-    )
-    stan_lpmf_exact <- primary_censored_sone_lpmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params, 0
+    stan_lpmf <- primary_censored_sone_lpmf_vectorized(
+      max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params
     )
     r_lpmf <- dprimarycensoreddist(
       0:max_delay, plnorm,
@@ -264,10 +244,6 @@ test_that(
       meanlog = params[1], sdlog = params[2], log = TRUE
     )
 
-    expect_equal(stan_lpmf_approx, r_lpmf, tolerance = 1e-6)
-    expect_equal(stan_lpmf_exact, r_lpmf, tolerance = 1e-8)
-    expect_true(
-      all(abs(stan_lpmf_exact - r_lpmf) <= abs(stan_lpmf_approx - r_lpmf))
-    )
+    expect_equal(stan_lpmf, r_lpmf, tolerance = 1e-6)
   }
 )

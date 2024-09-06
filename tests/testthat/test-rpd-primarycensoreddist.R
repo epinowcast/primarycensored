@@ -39,18 +39,19 @@ test_that(
 
 
 test_that(
-  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist for exponential growth primary distribution",
+  "rprimarycensoreddist is consistent with dprimarycensoreddist and
+   pprimarycensoreddist for exponential growth primary distribution",
   { # nolint
-    n <- 10000
+    n <- 1e6
     pwindow <- 3
-    D <- 10
+    D <- 6
     r <- 0.5
     samples <- rpcens(
       n, rlnorm, pwindow,
       D = D,
       rprimary = rexpgrowth,
       rprimary_args = list(r = r),
-      meanlog = 1, sdlog = 0.5
+      meanlog = 1.5, sdlog = 0.5
     )
 
     # Check empirical mean and pmf
@@ -58,8 +59,8 @@ test_that(
     empirical_mean <- mean(samples)
     empirical_sd <- sd(samples)
 
-    expect_equal(empirical_mean, 4.3, tolerance = 0.05)
-    expect_equal(empirical_sd, 1.6, tolerance = 0.05)
+    expect_equal(empirical_mean, 4.12, tolerance = 0.01)
+    expect_equal(empirical_sd, 0.94, tolerance = 0.01)
 
     # Check empirical cdf against theoretical cdf
     x_values <- 0:(D - 1)
@@ -68,12 +69,12 @@ test_that(
       D = D,
       dprimary = dexpgrowth,
       dprimary_args = list(r = r),
-      meanlog = 1, sdlog = 0.5
+      meanlog = 1.5, sdlog = 0.5
     )
     theoretical_mean <- sum(x_values * pmf)
 
-    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
-    expect_equal(empirical_pmf, pmf, tolerance = 0.05)
+    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.01)
+    expect_equal(empirical_pmf, pmf, tolerance = 0.01)
 
     # Check empirical cdf against theoretical cdf
     empirical_cdf <- ecdf(samples)(x_values)
@@ -81,9 +82,59 @@ test_that(
       c(x_values[-1], D), plnorm, pwindow, D,
       dprimary = dexpgrowth,
       dprimary_args = list(r = r),
-      meanlog = 1, sdlog = 0.5
+      meanlog = 1.5, sdlog = 0.5
     )
-    expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
+    expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.01)
+  }
+)
+
+test_that(
+  "rprimarycensoreddist with wider windows and different delay distribution
+   mathches p and d numerically",
+  {
+    n <- 1e6
+    pwindow <- 7 # One week primary window
+    swindow <- 3 # Three-day secondary window
+    D <- 30 # Maximum delay of 30 days
+
+    # Using Weibull distribution for delay
+    shape <- 2
+    scale <- 10
+
+    samples <- rpcens(
+      n, rweibull, pwindow, swindow,
+      D = D, shape = shape, scale = scale
+    )
+
+    # Check empirical mean and standard deviation
+    empirical_mean <- mean(samples)
+    empirical_sd <- sd(samples)
+
+    # Calculate theoretical mean and standard deviation
+    x_values <- seq(0, D - swindow, by = swindow)
+    pmf <- dpcens(
+      x_values, pweibull, pwindow, swindow,
+      D = D, shape = shape, scale = scale
+    )
+    theoretical_mean <- sum(x_values * pmf)
+    theoretical_sd <- sqrt(sum((x_values - theoretical_mean)^2 * pmf))
+
+    # Compare empirical and theoretical statistics
+    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.1)
+    expect_equal(empirical_sd, theoretical_sd, tolerance = 0.1)
+
+    # Check empirical PMF against theoretical PMF
+    empirical_pmf <- as.vector(table(samples) / n)
+    expect_equal(empirical_pmf, pmf, tolerance = 0.01)
+
+    # Check empirical CDF against theoretical CDF
+    empirical_cdf <- ecdf(samples)(x_values)
+    theoretical_cdf <- ppcens(
+      c(x_values[-1], D), pweibull, pwindow, D,
+      shape = shape, scale = scale
+    )
+    expect_equal(cumsum(pmf), theoretical_cdf, tolerance = 0.01)
+    expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.01)
   }
 )
 

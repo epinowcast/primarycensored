@@ -34,9 +34,24 @@
 #' \deqn{
 #' f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 #' }
-#' where \eqn{F_{\text{cens}}} is the primary event censored CDF. For the
-#' explanation and mathematical details of the CDF, refer to the documentation
-#' of [pprimarycensoreddist()].
+#' where \eqn{F_{\text{cens}}} is the primary event censored CDF.
+#'
+#' The function first computes the CDFs for all unique points (including both
+#' \eqn{d} and \eqn{d + \text{swindow}}) using [pprimarycensoreddist()]. It then
+#' creates a lookup table for these CDFs to efficiently calculate the PMF for
+#' each input value. For non-positive delays, the function returns 0.
+#'
+#' If a finite maximum delay \eqn{D} is specified, the PMF is normalized to
+#' ensure it sums to 1 over the range [0, D]. This normalization can be
+#' expressed as:
+#' \deqn{
+#' f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{\sum_{i=0}^{D-1}
+#'  f_{\text{cens}}(i)}
+#' }
+#' where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF and
+#' \eqn{f_{\text{cens}}(d)} is the unnormalized PMF. For the explanation and
+#' mathematical details of the CDF, refer to the documentation of
+#' [pprimarycensoreddist()].
 #'
 #' @family primarycensoreddist
 #'
@@ -65,18 +80,44 @@ dprimarycensoreddist <- function(
     )
   }
 
+  # Compute CDFs for all unique points
+  unique_points <- sort(unique(c(x, x + swindow)))
+  unique_points <- unique_points[unique_points > 0]
+  if (length(unique_points) == 0) {
+    return(rep(0, length(x)))
+  }
+
+  cdfs <- pprimarycensoreddist(
+    unique_points, pdist, pwindow, Inf, dprimary, dprimary_args, ...
+  )
+
+  # Create a lookup table for CDFs
+  cdf_lookup <- setNames(cdfs, as.character(unique_points))
+
   result <- vapply(x, function(d) {
     if (d < 0) {
-      return(0) # Return log(0) for non-positive delays
+      return(0) # Return 0 for negative delays
+    } else if (d == 0) {
+      # Special case for d = 0
+      cdf_upper <- cdf_lookup[as.character(swindow)]
+      return(cdf_upper)
     } else {
-      pprimarycensoreddist(
-        d + swindow, pdist, pwindow, D, dprimary, dprimary_args, ...
-      ) -
-        pprimarycensoreddist(
-          d, pdist, pwindow, D, dprimary, dprimary_args, ...
-        )
+      cdf_upper <- cdf_lookup[as.character(d + swindow)]
+      cdf_lower <- cdf_lookup[as.character(d)]
+      return(cdf_upper - cdf_lower)
     }
   }, numeric(1))
+
+  if (is.finite(D)) {
+    if (max(unique_points) == D) {
+      cdf_D <- max(cdfs)
+    } else {
+      cdf_D <- pprimarycensoreddist(
+        D, pdist, pwindow, Inf, dprimary, dprimary_args, ...
+      )
+    }
+    result <- result / cdf_D
+  }
 
   if (log) {
     return(log(result))

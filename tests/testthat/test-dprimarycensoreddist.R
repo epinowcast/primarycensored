@@ -75,7 +75,7 @@ test_that(
   }
 )
 
-test_that("dprimarycensoreddist throws an error for negative d", {
+test_that("dprimarycensoreddist returns 0 for negative d", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5
