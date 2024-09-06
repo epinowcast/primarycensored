@@ -1,6 +1,6 @@
 Package: primarycensoreddist
 Title: Primary Event Censored Distributions in R and Stan
-Version: 0.2.0.1000
+Version: 0.3.0
 Authors@R:
   c(person(given = "Sam",
            family = "Abbott",
