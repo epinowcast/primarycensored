@@ -1,6 +1,6 @@
 # primarycensoreddist 0.3.0
 
-This release fixes and improves truncation handling across the code base. It also extends the tests coverage
+This release fixes and improves truncation handling across the code base. It also adds a new vignette showcasing how to use the `primarycensoreddist` and `fitdistrplus` packages together to fit distributions.
 
 ## Package
 
@@ -12,6 +12,7 @@ This release fixes and improves truncation handling across the code base. It als
 ## Documentation
 
 * @athowes improved the getting started vignette by catching a few grammar errors and simplifying language.
+* Added a new vignette showcasing how to use the `primarycensoreddist` and `fitdistrplus` packages together to fit distributions.
 
 # primarycensoreddist 0.2.0
 
