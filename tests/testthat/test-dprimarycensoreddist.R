@@ -87,4 +87,10 @@ test_that("dprimarycensoreddist returns 0 for negative d", {
       meanlog = 0, sdlog = 1
     ), 0
   )
+  expect_identical(
+    dpcens(
+      c(8, d), plnorm, pwindow, swindow, D,
+      meanlog = 0, sdlog = 1
+    )[2], 0
+  )
 })

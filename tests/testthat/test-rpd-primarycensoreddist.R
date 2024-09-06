@@ -2,7 +2,8 @@
 # and the random number generators for primary events
 
 test_that(
-  "rprimarycensoreddist is consistent with dprimarycensoreddist and pprimarycensoreddist",
+  "rprimarycensoreddist is consistent with dprimarycensoreddist and
+   pprimarycensoreddist",
   { # nolint
     n <- 10000
     pwindow <- 4

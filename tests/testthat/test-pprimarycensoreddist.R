@@ -2,7 +2,7 @@ test_that("pprimarycensoreddist returns 0 for non-positive quantiles", {
   pwindow <- 1
   D <- 10
   cdf <- ppcens(c(-1, 0), plnorm, pwindow, D = D, meanlog = 1, sdlog = 1)
-  expect_equal(cdf, c(0, 0))
+  expect_identical(cdf, c(0, 0))
 })
 
 test_that("pprimarycensoreddist approaches 1 for large quantiles", {
