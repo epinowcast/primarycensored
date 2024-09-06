@@ -17,4 +17,187 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-*Under construction*
+# Introduction
+
+## What are we going to do in this Vignette
+
+In this vignette, we'll demonstrate how to use `primarycensoreddist` in conjunction with `fitdistrplus` for fitting distributions. We'll cover the following key points:
+
+1. Simulating censored delay distribution data
+2. Fitting a naive model using `fitdistrplus`
+3. Evaluating the naive model's performance
+4. Fitting an improved model using `primarycensoreddist` functionality
+5. Comparing the `primarycensoreddist` model's performance to the naive model
+
+## What might I need to know before starting
+
+This vignette assumes some familiarity with the `fitdistrplus` package. If you are not familiar with it then you might want to start with the [Introduction to `fitdistrplus`](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html) vignette.
+
+## Packages used in this vignette
+
+Alongside the `primarycensoreddist` package we will use the `fitdistrplus` package for fitting distributions. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
+
+```{r setup, message = FALSE}
+library(primarycensoreddist)
+library(fitdistrplus)
+library(ggplot2)
+library(dplyr)
+```
+
+# Simulating censored and truncated delay distribution data
+
+We'll start by simulating some censored and truncated delay distribution data. We'll use the `rprimarycensoreddist` function (actually we will use the `rpcens ` alias for brevity).
+
+```{r sample-lognormal}
+set.seed(123) # For reproducibility
+
+# Define the true distribution parameters
+n <- 1000
+shape <- 1.77 # This gives a mean of 4 and sd of 3 for a gamma distribution
+rate <- 0.44
+
+# Generate fixed pwindow, swindow, and obs_time
+pwindows <- rep(1, n)
+swindows <- rep(1, n)
+obs_times <- rep(8, n) # Truncation at 8
+
+# Function to generate a single sample
+generate_sample <- function(pwindow, swindow, obs_time) {
+  rpcens(
+    1, rgamma,
+    shape = shape, rate = rate,
+    pwindow = pwindow, swindow = swindow, D = obs_time
+  )
+}
+
+# Generate samples
+samples <- mapply(generate_sample, pwindows, swindows, obs_times)
+
+# Create initial data frame
+delay_data <- data.frame(
+  pwindow = pwindows,
+  swindow = swindows,
+  obs_time = obs_times,
+  observed_delay = samples,
+  observed_delay_upper = samples + swindows
+)
+
+head(delay_data)
+
+# Compare the samples with and without secondary censoring to the true
+# distribution
+# Calculate empirical CDF
+empirical_cdf <- ecdf(samples)
+
+# Create a sequence of x values for the theoretical CDF
+x_seq <- seq(0, 8, length.out = 100)
+
+# Calculate theoretical CDF
+theoretical_cdf <- pgamma(x_seq, shape = shape, rate = rate)
+
+# Create a long format data frame for plotting
+cdf_data <- data.frame(
+  x = rep(x_seq, 2),
+  probability = c(empirical_cdf(x_seq), theoretical_cdf),
+  type = rep(c("Observed", "Theoretical"), each = length(x_seq)),
+  stringsAsFactors = FALSE
+)
+
+# Plot
+ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
+  geom_step(linewidth = 1) +
+  scale_color_manual(
+    values = c(Observed = "#4292C6", Theoretical = "#252525")
+  ) +
+  geom_vline(
+    aes(xintercept = mean(samples), color = "Observed"),
+    linetype = "dashed", linewidth = 1
+  ) +
+  geom_vline(
+    aes(xintercept = shape / rate, color = "Theoretical"),
+    linetype = "dashed", linewidth = 1
+  ) +
+  labs(
+    title = "Comparison of Observed vs Theoretical CDF",
+    x = "Delay",
+    y = "Cumulative Probability",
+    color = "CDF Type"
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid.minor = element_blank(),
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
+  ) +
+  coord_cartesian(xlim = c(0, 8)) # Set x-axis limit to match truncation
+```
+
+# Fitting a naive model using `fitdistr`
+
+We first fit a naive model using the `fitdistcens()` function. This function is designed to handle secondary censored data but does not handle primary censoring or truncation without extension.
+
+```{r fit-naive-model}
+fit <- delay_data |>
+  dplyr::select(left = observed_delay, right = observed_delay_upper) |>
+  fitdistcens(
+    distr = "gamma",
+    start = list(shape = 1, rate = 1)
+  )
+
+summary(fit)
+```
+
+We see that the naive model has fit poorly due to the primary censoring and right truncation in the data.
+
+# Fitting an improved model using `primarycensoreddist`
+
+We'll now fit an improved model using the `primarycensoreddist` package. To do this we need to define the custom distribution functions using the `primarycensoreddist` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+
+```{r fit-improved-model}
+# Define custom distribution functions using primarycensoreddist
+# The try catch is required by fitdistrplus
+dpcens_gamma <- function(x, shape, rate) {
+  result <- tryCatch(
+    {
+      dprimarycensoreddist(
+        x, pgamma,
+        shape = shape, rate = rate,
+        pwindow = 1, swindow = 1, D = 8
+      )
+    },
+    error = function(e) {
+      rep(NaN, length(x))
+    }
+  )
+  return(result)
+}
+
+ppcens_gamma <- function(q, shape, rate) {
+  result <- tryCatch(
+    {
+      pprimarycensoreddist(
+        q, pgamma,
+        shape = shape, rate = rate,
+        pwindow = 1, D = 8
+      )
+    },
+    error = function(e) {
+      rep(NaN, length(q))
+    }
+  )
+  return(result)
+}
+
+# Fit the model using fitdistcens with custom gamma distribution
+pcens_fit <- samples |>
+  fitdist(
+    distr = "pcens_gamma",
+    start = list(shape = 1, rate = 1)
+  )
+
+summary(pcens_fit)
+```
+
+We see very good agreement between the true and estimated parameters.
+
+**Note** that this approach is suboptimal as it prevents using from being able to specify our data using the `fitdistcens` `left` and `right` formulation. This in turns means that though both `primarycensoreddist` and `fitdistrplus` support mixed secondary censoring intervals as implemented here we are restricted to enforcing all individual secondary censoring intervals to be the same. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.

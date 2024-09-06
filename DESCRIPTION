@@ -29,6 +29,7 @@ Suggests:
     bookdown,
     cmdstanr,
     dplyr,
+    fitdistrplus,
     knitr,
     ggplot2,
     rmarkdown,
