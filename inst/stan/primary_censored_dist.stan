@@ -128,13 +128,17 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   // Compute adjusted delay and primary point
   real d_adj;
   real ppoint;
-  if (x < (lower_bound + width * 0.01)) {
-    d_adj = lower_bound - xc;
-  } else if (x > (d - width * 0.01)) {
-    d_adj = d - xc;
-  } else {
-    d_adj = x;
-  }
+  // This whilst theoretically correct is appears to make the integral
+  // very hard to solve numerically and so has a large knock on effect
+  // on sampling efficiency.
+  // if (x < (lower_bound + width * 0.01)) {
+  //   d_adj = lower_bound - xc;
+  // } else if (x > (d - width * 0.01)) {
+  //   d_adj = d - xc;
+  // } else {
+  //   d_adj = x;
+  // }
+  d_adj = x;
   ppoint = d - d_adj;
   // Compute log probabilities
   real log_cdf = dist_lcdf(d_adj | params, dist_id);

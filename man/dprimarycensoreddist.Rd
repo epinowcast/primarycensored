@@ -85,7 +85,7 @@ creates a lookup table for these CDFs to efficiently calculate the PMF for
 each input value. For non-positive delays, the function returns 0.
 
 If a finite maximum delay \eqn{D} is specified, the PMF is normalized to
-ensure it sums to 1 over the range \link{0, D}. This normalization can be
+ensure it sums to 1 over the range [0, D]. This normalization can be
 expressed as:
 \deqn{
 f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{\sum_{i=0}^{D-1}
