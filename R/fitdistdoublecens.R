@@ -69,34 +69,40 @@ fitdistdoublecens <- function(censdata, distr, start,
 #' Define custom density function
 #' @keywords internal
 dpcens <- function(x, pdist, pwindow, D, dprimary, dprimary_args, unique_swindows, swindow_freq, ...) {
-  result <- tryCatch({
-    densities <- vapply(unique_swindows, function(sw) {
-      dprimarycensoreddist(
-        x, pdist,
-        pwindow = pwindow, swindow = sw,
-        D = D, dprimary = dprimary, dprimary_args = dprimary_args, ...
-      )
-    }, numeric(length(x)))
+  result <- tryCatch(
+    {
+      densities <- vapply(unique_swindows, function(sw) {
+        dprimarycensoreddist(
+          x, pdist,
+          pwindow = pwindow, swindow = sw,
+          D = D, dprimary = dprimary, dprimary_args = dprimary_args, ...
+        )
+      }, numeric(length(x)))
 
-    # Scale densities by frequency and sum
-    rowSums(densities * rep(swindow_freq, each = length(x)))
-  }, error = function(e) {
-    rep(NaN, length(x))
-  })
+      # Scale densities by frequency and sum
+      rowSums(densities * rep(swindow_freq, each = length(x)))
+    },
+    error = function(e) {
+      rep(NaN, length(x))
+    }
+  )
   return(result)
 }
 
 #' Define custom distribution function
 #' @keywords internal
 ppcens_ <- function(q, pdist, pwindow, D, dprimary, dprimary_args, ...) {
-  result <- tryCatch({
-    pprimarycensoreddist(
-      q, pdist,
-      pwindow = pwindow,
-      D = D, dprimary = dprimary, dprimary_args = dprimary_args, ...
-    )
-  }, error = function(e) {
-    rep(NaN, length(q))
-  })
+  result <- tryCatch(
+    {
+      pprimarycensoreddist(
+        q, pdist,
+        pwindow = pwindow,
+        D = D, dprimary = dprimary, dprimary_args = dprimary_args, ...
+      )
+    },
+    error = function(e) {
+      rep(NaN, length(q))
+    }
+  )
   return(result)
 }
