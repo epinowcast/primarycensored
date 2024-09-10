@@ -21,9 +21,9 @@ test_that("fitdistdoublecens works correctly", {
 
   # Create data frame
   delay_data <- data.frame(
-    left = samples,
-    right = samples + swindow
+    left = samples
   )
+  delay_data$right <- delay_data$left + swindow
 
   # Fit the model using fitdistdoublecens
   fit <- fitdistdoublecens(
