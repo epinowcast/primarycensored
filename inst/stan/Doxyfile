@@ -237,9 +237,9 @@ QT_AUTOBRIEF           = NO
 
 # The MULTILINE_CPP_IS_BRIEF tag can be set to YES to make Doxygen treat a
 # multi-line C++ special comment block (i.e. a block of //! or /// comments) as
-# a brief description. This used to be the default behavior. The new default is
+# a brief description. This used to be the default behaviour. The new default is
 # to treat a multi-line C++ comment block as a detailed description. Set this
-# tag to YES if you prefer the old behavior instead.
+# tag to YES if you prefer the old behaviour instead.
 #
 # Note that setting this tag to YES also means that rational rose comments are
 # not recognized any more.
@@ -920,7 +920,7 @@ WARN_IF_UNDOC_ENUM_VAL = NO
 # of a run, in case a WARN_LOGFILE is defined the warning messages will be
 # besides being in the defined file also be shown at the end of a run, unless
 # the WARN_LOGFILE is defined as - i.e. standard output (stdout) in that case
-# the behavior will remain as with the setting FAIL_ON_WARNINGS.
+# the behaviour will remain as with the setting FAIL_ON_WARNINGS.
 # Possible values are: NO, YES, FAIL_ON_WARNINGS and FAIL_ON_WARNINGS_PRINT.
 # The default value is: NO.
 
@@ -2159,7 +2159,7 @@ PDF_HYPERLINKS         = YES
 
 USE_PDFLATEX           = YES
 
-# The LATEX_BATCHMODE tag signals the behavior of LaTeX in case of an error.
+# The LATEX_BATCHMODE tag signals the behaviour of LaTeX in case of an error.
 # Possible values are: NO same as ERROR_STOP, YES same as BATCH, BATCH In batch
 # mode nothing is printed on the terminal, errors are scrolled as if <return> is
 # hit at every error; missing files that TeX tries to input or request from

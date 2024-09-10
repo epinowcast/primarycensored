@@ -3,8 +3,14 @@
 #' This function wraps the custom approach for fitting distributions to doubly
 #' censored data using fitdistrplus and primarycensoreddist.
 #'
+#' @details
+#' This function temporarily assigns and then removes functions from the global
+#' environment in order to work with fitdistr. Users should be aware of this
+#' behaviour, especially if they have existing functions with the same names in
+#' their global environment.
+#'
 #' @param censdata A data frame with columns 'left' and 'right' representing
-#'   the lower and upper bounds of the censored observations. Unlike
+#' the lower and upper bounds of the censored observations. Unlike
 #' [fitdistrplus::fitdistcens()] `NA` is not supported for either the
 #' upper or lower bounds.
 #'
@@ -17,13 +23,35 @@
 #' @return An object of class "fitdist" as returned by fitdistrplus::fitdist.
 #'
 #' @export
-#'
+#' @family modelhelpers
 #' @examples
-#' censdata <- data.frame(left = c(1, 2, 3), right = c(2, 3, 4))
-#' fit <- fitdistdoublecens(
-#'   censdata, "gamma",
-#'   start = list(shape = 1, rate = 1)
+#' # Example with normal distribution
+#' set.seed(123)
+#' n <- 1000
+#' true_mean <- 5
+#' true_sd <- 2
+#' pwindow <- 2
+#' swindow <- 2
+#' D <- 10
+#' samples <- rprimarycensoreddist(
+#'   n, rnorm,
+#'   mean = true_mean, sd = true_sd,
+#'   pwindow = pwindow, swindow = swindow, D = D
 #' )
+#'
+#' delay_data <- data.frame(
+#'   left = samples,
+#'   right = samples + swindow
+#' )
+#'
+#' fit_norm <- fitdistdoublecens(
+#'   delay_data,
+#'   distr = "norm",
+#'   start = list(mean = 0, sd = 1),
+#'   D = D, pwindow = pwindow
+#' )
+#'
+#' summary(fit_norm)
 fitdistdoublecens <- function(censdata, distr,
                               pwindow = 1, D = Inf,
                               dprimary = stats::dunif,
@@ -44,24 +72,49 @@ fitdistdoublecens <- function(censdata, distr,
 
   swindows <- censdata$right - censdata$left
 
-  assign(paste0("dpcens_", distr), function(x, ...) {
-    .dpcens(
-      x, swindows, pdist, pwindow, D, dprimary, dprimary_args, ...
-    )
-  })
+  # Create the function definition with named arguments for dpcens
+  dpcens_dist <- function() {
+    args <- as.list(environment())
+    do.call(.dpcens, c(
+      args,
+      list(
+        swindows = swindows,
+        pdist = pdist,
+        pwindow = pwindow,
+        D = D,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args
+      )
+    ))
+  }
+  formals(dpcens_dist) <- formals(get(paste0("d", distr)))
 
-  assign(paste0("ppcens_", distr), function(q, ...) {
-    .ppcens(q, pdist, pwindow, D, dprimary, dprimary_args, ...)
-  })
+  # Create the function definition with named arguments for ppcens
+  ppcens_dist <- function() {
+    args <- as.list(environment())
+    do.call(.ppcens, c(
+      args,
+      list(
+        pdist = pdist,
+        pwindow = pwindow,
+        D = D,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args
+      )
+    ))
+  }
+  formals(ppcens_dist) <- formals(pdist)
 
+  assign("d.pcens_dist", dpcens_dist, envir = .GlobalEnv)
+  assign("p.pcens_dist", ppcens_dist, envir = .GlobalEnv)
 
   # Fit the distribution
   fit <- fitdistrplus::fitdist(
     censdata$left,
-    distr = paste0("pcens_", distr),
+    distr = ".pcens_dist",
     ...
   )
-
+  rm(dpcens_dist, ppcens_dist)
   return(fit)
 }
 
@@ -75,13 +128,21 @@ fitdistdoublecens <- function(censdata, distr,
                     dprimary_args, ...) {
   tryCatch(
     {
-      vapply(seq_along(x), function(i) {
+      if (length(unique(swindows)) == 1) {
         dprimarycensoreddist(
-          x[i], pdist,
-          pwindow = pwindow, swindow = swindows[i], D = D, dprimary = dprimary,
+          x, pdist,
+          pwindow = pwindow, swindow = swindows[1], D = D, dprimary = dprimary,
           dprimary_args = dprimary_args, ...
         )
-      }, numeric(length(x)))
+      } else {
+        vapply(seq_along(x), function(i) {
+          dprimarycensoreddist(
+            x[i], pdist,
+            pwindow = pwindow, swindow = swindows[i], D = D,
+            dprimary = dprimary, dprimary_args = dprimary_args, ...
+          )
+        }, numeric(length(x)))
+      }
     },
     error = function(e) {
       rep(NaN, length(x))

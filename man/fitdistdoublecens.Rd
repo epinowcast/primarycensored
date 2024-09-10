@@ -49,9 +49,39 @@ An object of class "fitdist" as returned by fitdistrplus::fitdist.
 This function wraps the custom approach for fitting distributions to doubly
 censored data using fitdistrplus and primarycensoreddist.
 }
-\examples{
-censdata <- data.frame(left = c(1, 2, 3), right = c(2, 3, 4))
-fit <- fitdistdoublecens(
- censdata, "gamma", start = list(shape = 1, rate = 1)
-)
+\details{
+This function temporarily assigns and then removes functions from the global
+environment in order to work with fitdistr. Users should be aware of this
+behaviour, especially if they have existing functions with the same names in
+their global environment.
 }
+\examples{
+# Example with normal distribution
+set.seed(123)
+n <- 1000
+true_mean <- 5
+true_sd <- 2
+pwindow <- 2
+swindow <- 2
+D <- 10
+samples <- rprimarycensoreddist(
+  n, rnorm,
+  mean = true_mean, sd = true_sd,
+  pwindow = pwindow, swindow = swindow, D = D
+)
+
+delay_data <- data.frame(
+  left = samples,
+  right = samples + swindow
+)
+
+fit_norm <- fitdistdoublecens(
+  delay_data,
+  distr = "norm",
+  start = list(mean = 0, sd = 1),
+  D = D, pwindow = pwindow
+)
+
+summary(fit_norm)
+}
+\concept{modelhelpers}
