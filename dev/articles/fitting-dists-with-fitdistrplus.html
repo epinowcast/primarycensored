@@ -298,7 +298,28 @@
 <span><span class="co">## shape 1.00000 0.92969</span></span>
 <span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
 <p>We see very good agreement between the true and estimated parameters.</p>
-<p><strong>Note</strong> that this approach is suboptimal as it prevents using from being able to specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation. This in turns means that though both <code>primarycensoreddist</code> and <code>fitdistrplus</code> support mixed secondary censoring intervals as implemented here we are restricted to enforcing all individual secondary censoring intervals to be the same. If this functionality is of interest then please open an issue on the <code>primarycensoreddist</code> GitHub page.</p>
+<p>Rather than using <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist()</a></code> directly <code>primarycensoreddist</code> provides a wrapper function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation and support mixed secondary censoring intervals.</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>left <span class="op">=</span> <span class="va">observed_delay</span>, right <span class="op">=</span> <span class="va">observed_delay_upper</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="../reference/fitdistdoublecens.html">fitdistdoublecens</a></span><span class="op">(</span></span>
+<span>    distr <span class="op">=</span> <span class="st">"gamma"</span>,</span>
+<span>    start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>    D <span class="op">=</span> <span class="fl">8</span>, pwindow <span class="op">=</span> <span class="fl">1</span></span>
+<span>  <span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fitdistdoublecens_fit</span><span class="op">)</span></span></code></pre></div>
+<pre><code><span><span class="co">## Fitting of the distribution ' .pcens_dist ' by maximum likelihood </span></span>
+<span><span class="co">## Parameters : </span></span>
+<span><span class="co">##        estimate Std. Error</span></span>
+<span><span class="co">## shape 1.7847171 0.11590733</span></span>
+<span><span class="co">## rate  0.4642622 0.04744382</span></span>
+<span><span class="co">## Loglikelihood:  -1970.286   AIC:  3944.572   BIC:  3954.388 </span></span>
+<span><span class="co">## Correlation matrix:</span></span>
+<span><span class="co">##         shape    rate</span></span>
+<span><span class="co">## shape 1.00000 0.92969</span></span>
+<span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
+<p><strong>Note</strong> Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the <code>primarycensoreddist</code> GitHub page.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
