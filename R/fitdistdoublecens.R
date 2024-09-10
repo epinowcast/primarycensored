@@ -135,13 +135,20 @@ fitdistdoublecens <- function(censdata, distr,
           dprimary_args = dprimary_args, ...
         )
       } else {
-        vapply(seq_along(x), function(i) {
-          dprimarycensoreddist(
-            x[i], pdist,
-            pwindow = pwindow, swindow = swindows[i], D = D,
+        # Group x and swindows by unique swindow values
+        unique_swindows <- unique(swindows)
+        result <- numeric(length(x))
+
+        for (sw in unique_swindows) {
+          mask <- swindows == sw
+          result[mask] <- dprimarycensoreddist(
+            x[mask], pdist,
+            pwindow = pwindow, swindow = sw, D = D,
             dprimary = dprimary, dprimary_args = dprimary_args, ...
           )
-        }, numeric(length(x)))
+        }
+
+        result
       }
     },
     error = function(e) {
