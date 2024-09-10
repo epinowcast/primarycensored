@@ -1,5 +1,9 @@
 # primarycensoreddist 0.3.0.1000
 
+## Package
+
+* Added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package.
+
 # primarycensoreddist 0.3.0
 
 This release fixes and improves truncation handling across the code base. It also adds a new vignette showcasing how to use the `primarycensoreddist` and `fitdistrplus` packages together to fit distributions.

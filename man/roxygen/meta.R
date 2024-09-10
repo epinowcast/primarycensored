@@ -3,6 +3,7 @@ list( # nolint
     primarycensoreddist = "Primary event censored distribution functions",
     primaryeventdistributions = "Primary event distributions",
     check = "Distribution checking functions",
-    stantools = "Tools for working with package Stan functions"
+    stantools = "Tools for working with package Stan functions",
+    modelhelpers = "Modelling wrappers for external fitting packages"
   )
 )

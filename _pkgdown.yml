@@ -34,18 +34,21 @@ authors:
 
 reference:
 - title: Primary event censored distribution functions
-  desc: Primary event censored distribution functions
+  desc: Functions for generating, evaluating density, and computing cumulative probabilities of primary event censored distributions
   contents:
   - has_concept("primarycensoreddist")
 - title: Primary event distributions
-  desc: Primary event distributions
+  desc: Probability density and random generation functions for primary event distributions
   contents:
   - has_concept("primaryeventdistributions")
 - title: Distribution checking functions
-  desc: Distribution checking functions
+  desc: Functions to validate cumulative distribution functions (CDFs) and probability density functions (PDFs)
   contents:
   - has_concept("check")
 - title: Tools for working with package Stan functions
-  desc: Tools for working with package Stan functions
+  desc: Utility functions for interfacing with Stan models and extracting results
   contents:
   - has_concept("stantools")
+- title: Wrappers facilitating the use of other modelling packages
+  desc: Functions that wrap around external packages like fitdistrplus to fit distributions to doubly censored data
+  contents: has_concept("modelhelpers")

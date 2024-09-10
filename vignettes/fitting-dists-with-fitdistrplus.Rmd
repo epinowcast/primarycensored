@@ -200,4 +200,19 @@ summary(pcens_fit)
 
 We see very good agreement between the true and estimated parameters.
 
-**Note** that this approach is suboptimal as it prevents using from being able to specify our data using the `fitdistcens` `left` and `right` formulation. This in turns means that though both `primarycensoreddist` and `fitdistrplus` support mixed secondary censoring intervals as implemented here we are restricted to enforcing all individual secondary censoring intervals to be the same. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.
+Rather than using `fitdist()` directly `primarycensoreddist` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
+
+```{r primarycensoreddist-fitdistdoublecens}
+fitdistdoublecens_fit <- delay_data |>
+  dplyr::select(left = observed_delay, right = observed_delay_upper) |>
+  fitdistdoublecens(
+    distr = "gamma",
+    start = list(shape = 1, rate = 1),
+    D = 8, pwindow = 1
+  )
+
+summary(fitdistdoublecens_fit)
+```
+
+
+**Note** Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.
