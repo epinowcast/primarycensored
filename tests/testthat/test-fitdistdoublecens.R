@@ -23,7 +23,7 @@ test_that("fitdistdoublecens works correctly", {
   delay_data <- data.frame(
     left = samples
   )
-  delay_data$right <- delay_data$left + swindow
+  delay_data$right <- delay_data$left + 1
 
   # Fit the model using fitdistdoublecens
   fit <- fitdistdoublecens(
@@ -82,9 +82,9 @@ test_that("fitdistdoublecens works with different distributions", {
   )
 
   delay_data <- data.frame(
-    left = samples,
-    right = samples + 2
+    left = samples
   )
+  delay_data$right <- delay_data$left + 2
 
   fit_norm <- fitdistdoublecens(
     delay_data,
