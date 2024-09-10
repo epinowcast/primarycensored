@@ -98,7 +98,6 @@ test_that("fitdistdoublecens works with different distributions", {
   expect_equal(unname(fit_norm$estimate["sd"]), true_sd, tolerance = 0.2)
 })
 
-
 test_that("fitdistdoublecens works with mixed secondary windows", {
   set.seed(456)
   n <- 1000
@@ -138,4 +137,21 @@ test_that("fitdistdoublecens works with mixed secondary windows", {
   expect_s3_class(fit_gamma, "fitdist")
   expect_equal(unname(fit_gamma$estimate["shape"]), true_shape, tolerance = 0.3)
   expect_equal(unname(fit_gamma$estimate["rate"]), true_rate, tolerance = 0.2)
+})
+
+test_that("fitdistdoublecens throws error when fitdistrplus is not installed", {
+  with_mocked_bindings(
+    {
+      # Create dummy data
+      dummy_data <- data.frame(left = 1:5, right = 2:6)
+
+      # Expect an error when trying to use fitdistdoublecens
+      expect_error(
+        fitdistdoublecens(dummy_data, "norm"),
+        "Package 'fitdistrplus' is required but not installed for this"
+      )
+    },
+    requireNamespace = function(...) FALSE,
+    .package = "base"
+  )
 })
