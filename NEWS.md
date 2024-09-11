@@ -3,6 +3,7 @@
 ## Package
 
 * Added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package.
+* Added low level tests for the Stan `primary_censored_integrand` function.
 
 # primarycensoreddist 0.3.0
 
