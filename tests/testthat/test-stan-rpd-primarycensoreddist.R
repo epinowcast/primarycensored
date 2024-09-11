@@ -1,6 +1,9 @@
 skip_on_cran()
-skip_on_os("windows")
-skip_on_os("mac")
+if (!on_ci()) {
+  skip_on_os("windows")
+  skip_on_os("mac")
+}
+
 
 test_that("Stan primary_censored_dist_cdf matches R pprimarycensoreddist", {
   d_values <- list(

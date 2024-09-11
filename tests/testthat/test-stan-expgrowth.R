@@ -1,6 +1,9 @@
 skip_on_cran()
-skip_on_os("windows")
-skip_on_os("mac")
+if (!on_ci()) {
+  skip_on_os("windows")
+  skip_on_os("mac")
+}
+
 
 test_that("Stan expgrowth_pdf matches R dexpgrowth", {
   x <- seq(0, 1, by = 0.1)
