@@ -3,7 +3,8 @@
 ## Package
 
 * Added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package.
-* Added low level tests for the Stan `primary_censored_integrand` function.
+* Added low level tests for the Stan `primary_censored_ode` function.
+* Rephrased the stan code to use a ODE solver rather than a numerical integration method. This allows for much faster and more stable computation of the likelihood
 
 # primarycensoreddist 0.3.0
 
