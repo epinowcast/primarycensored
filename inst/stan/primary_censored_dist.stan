@@ -78,42 +78,24 @@ real primary_dist_lpdf(real x, int primary_dist_id, array[] real params, real mi
 }
 
 /**
-  * Compute the integrand for the primary censored distribution
+  * ODE system for the primary censored distribution
   *
-  * @param x Integration variable
-  * @param xc A high precision version of the distance from x to the nearest
-  * endpoint in a definite integral
-  * @param theta Distribution parameters
-  * @param x_r Real data (contains d, pwindow, obs_time_add)
-  * @param x_i Integer data (contains dist_id and primary_dist_id)
+  * @param t Time
+  * @param y State variables
+  * @param theta Parameters
+  * @param x_r Real data
+  * @param x_i Integer data
   *
-  * @return Value of the integrand
-  *
-  * @code
-  * // Example: Lognormal delay distribution with uniform primary distribution
-  * real x = 0.5;
-  * real xc = 1.5;
-  * array[2] real theta = {2.0, 0.0, 1.0}; // truncation point, mean and
-  * // standard deviation on log scale
-  * array[1] real x_r = {1.0}; // pwindow
-  * array[2] int x_i = {1, 1}; // dist_id = 1 (Lognormal), primary_dist_id = 1 (Uniform)
-  * real integrand_value = primary_censored_integrand(
-  *   p, xc, theta, x_r, x_i
-  * );
-  * @endcode
+  * @return Derivatives of the state variables
   */
-real primary_censored_integrand(real x, real xc, array[] real theta,
-                                array[] real x_r, array[] int x_i) {
-  // Unpack parameters
+vector primary_censored_ode(real t, vector y, array[] real theta,
+                            array[] real x_r, array[] int x_i) {
   real d = x_r[1];
   int dist_id = x_i[1];
   int primary_dist_id = x_i[2];
   real pwindow = x_r[2];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
-  // Needed if using xc experimental code
-  // real lower_bound = theta[size(theta) - 1];
-  // real width = theta[size(theta)];
 
   // Extract distribution parameters
   array[dist_params_len] real params;
@@ -126,27 +108,10 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
     primary_params = theta[primary_loc - primary_params_len + 1:primary_loc];
   }
 
-  // Compute adjusted delay and primary point
-  real d_adj;
-  real ppoint;
-  // This whilst theoretically correct is appears to make the integral
-  // very hard to solve numerically and so has a large knock on effect
-  // on sampling efficiency.
-  // if (x < (lower_bound + width * 0.01)) {
-  //   d_adj = lower_bound - xc;
-  // } else if (x > (d - width * 0.01)) {
-  //   d_adj = d - xc;
-  // } else {
-  //   d_adj = x;
-  // }
-  d_adj = x;
-  ppoint = d - d_adj;
-  // Compute log probabilities
-  real log_cdf = dist_lcdf(d_adj | params, dist_id);
-  real log_primary_pdf = primary_dist_lpdf(
-      ppoint | primary_dist_id, primary_params, 0, pwindow
-  );
-  return exp(log_cdf + log_primary_pdf);
+  real log_cdf = dist_lcdf(t | params, dist_id);
+  real log_primary_pdf = primary_dist_lpdf(d - t | primary_dist_id, primary_params, 0, pwindow);
+
+  return rep_vector(exp(log_cdf + log_primary_pdf), 1);
 }
 
 /**
@@ -161,20 +126,6 @@ real primary_censored_integrand(real x, real xc, array[] real theta,
   * @param primary_params Primary distribution parameters
   *
   * @return Primary event censored CDF, normalized by D if finite (truncation adjustment)
-  *
-  * @code
-  * // Example: Weibull delay distribution with uniform primary distribution
-  * real d = 3.0;
-  * int dist_id = 5; // Weibull
-  * array[2] real params = {2.0, 1.5}; // shape and scale
-  * real pwindow = 1.0;
-  * real D = positive_infinity();
-  * int primary_dist_id = 1; // Uniform
-  * array[0] real primary_params = {};
-  * real cdf = primary_censored_dist_cdf(
-  *   d, dist_id, params, pwindow, D, primary_dist_id, primary_params
-  * );
-  * @endcode
   */
 real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
                                data real pwindow, data real D,
@@ -186,18 +137,12 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   }
 
   real lower_bound = max({d - pwindow, 1e-6});
-  real width = d - lower_bound;
+  array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);
+  array[4] int ids = {dist_id, primary_dist_id, size(params), size(primary_params)};
 
-  array[size(params) + size(primary_params)] real theta = append_array(
-    params, primary_params
-  );
-  array[4] int ids = {
-    dist_id, primary_dist_id, size(params), size(primary_params)
-  };
+  vector[1] y0 = rep_vector(0.0, 1);
+  result = ode_rk45(primary_censored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
 
-  result = integrate_1d(
-    primary_censored_integrand, lower_bound, d, theta, {d, pwindow}, ids, 1e-2
-  );
   if (!is_inf(D)) {
     real log_cdf_D = primary_censored_dist_lcdf(
       D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
