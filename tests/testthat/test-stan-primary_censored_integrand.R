@@ -1,5 +1,5 @@
 skip_on_cran()
-if (!on_ci()) {
+if (on_ci()) {
   skip_on_os("windows")
   skip_on_os("mac")
 }
