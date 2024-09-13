@@ -227,3 +227,51 @@ pcd_load_stan_functions <- function(
 
   return(result)
 }
+#' Create a CmdStanModel with primarycensoreddist Stan functions
+#'
+#' This function creates a CmdStanModel object using the Stan model and
+#' functions from primarycensoreddist and optionally includes additional
+#' user-specified Stan files.
+#'
+#' @param include_paths Character vector of paths to include for Stan
+#'  compilation. Defaults to the result of `pcd_stan_path()`.
+#'
+#' @param ... Additional arguments passed to cmdstanr::cmdstan_model().
+#'
+#' @return A CmdStanModel object.
+#'
+#' @details
+#' The underlying Stan model (`pcens_model.stan`) supports various features:
+#' - Multiple probability distributions for modeling delays
+#' - Primary and secondary censoring
+#' - Truncation
+#' - Optional use of reduce_sum for improved performance (via
+#'   within chain parallelism).
+#' - Flexible prior specifications
+#' - Optional computation of log-likelihood for model comparison
+#'
+#' @export
+#' @family modelhelpers
+#'
+#' @examples
+#' \dontrun{
+#' model <- pcd_cmdstan_model()
+#' fit <- model$sample(data = stan_data)
+#' }
+pcd_cmdstan_model <- function(
+    include_paths = primarycensoreddist::pcd_stan_path(), ...) {
+  if (!requireNamespace("cmdstanr", quietly = TRUE)) {
+    stop("Package 'cmdstanr' is required but not installed for this function.")
+  }
+
+  pcd_stan_model <- system.file(
+    "pcens_model.stan",
+    package = "primarycensoreddist"
+  )
+
+  cmdstanr::cmdstan_model(
+    pcd_stan_model,
+    include_paths = include_paths,
+    ...
+  )
+}
