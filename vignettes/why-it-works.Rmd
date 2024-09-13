@@ -1,0 +1,81 @@
+---
+title: "Interval censoring and truncation in epidemiological delay modelling"
+format: html
+bibliography: library.bib
+---
+
+# Introduction {#introduction}
+
+Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensoreddist` we focus on two particular missing data problems:
+
+-   **Interval censoring**. The primary (start) time and/or the secondary (end) time of the delay is unobserved but known to be within an interval.
+-   **Truncation**. Delay data items are only contained in the data set conditional on aspect of the data point, for example if the secondary event is the observation time which add the data item to the data set.
+
+In statistical epidemiology, these missing data problems occur frequently in both data analysis and theoretical modelling.
+
+In data analysis, events in epidemiology are commonly reported as occurring in a particular day or week (*interval censoring*). Also, in an emergency situation data analysis can be happening on datasets that are streaming in real time, which introduces biases around which data items have been observed (*truncation*).
+
+In theoretical epidemiological modelling, it is often appropriate to model the evolution of an infectious disease as occurring in discrete time, for example in the [`EpiNow2`](https://epiforecasts.io/EpiNow2/) modelling package. This means appropriately discretizing continuous distributions, such as the generation interval distribution. In `primarycensoreddist` we treat the discretization of intrinsically continuous distributions as an *interval censoring* problem.
+
+# Statistical model used in `primarycensoreddist`
+
+As described in [Introduction](#introduction), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point.
+
+A key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring. It is useful to consider the time from the initial (left) point of the primary censoring interval to the secondary time as a random variable,
+
+$$
+S_+ = T + C_P.
+$$
+
+Where $T$ is the delay distribution of interest and $C_P$ is interval between the initial (left) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed. 
+
+With non-informative censoring, it is possible to derive the distribution function of $S_+$ from the distribution of $T$ and the distribution of $C$. The distribution of $S_+$ is given by the sum of the distribution of $T$ and the distribution of $C_P$ formula,
+
+$$
+F_{S_+}(t) = \mathbb{E}_{C_P} \Big[F_T(t - C_P)\Big] = \int_0^{pwindow} F_T(t - p) c_r(p) dp.
+$$
+
+Where $c_r$ is the density function of delay from the initial (left) point of the primary censoring window to the primary event time.
+
+
+
+```{mermaid} 
+timeline
+    title Interval censoring and truncation
+    section Primary censoring window
+        Time before primary event: Duration <br> Cp
+        Time between primary event to end of primary censoring window: Duration <br> Wp - Cp
+    section Between censoring windows
+        Time between end of primary censoring window and start of secondary censoring window: Duration <br> T + Cp - Wp - Cs
+    section Secondary censoring window
+        Time between start of secondary window to secondary event: Duration <br> Cs
+        Time between secondary event to end of secondary censoring window: Duration <br> Ws - Cs
+    section Observation time
+        Truncation effect: Event only observed if secondary censoring window ends before observation time. 
+```
+
+we can treat the secondary event time as a random variable that is the sum of two indepent random variables: delay between primary and secondary  and the primary time within.
+
+
+See \@ref(tab:notation)
+
+| Notation | Description                           |
+|----------|---------------------------------------|
+| $P_k$    | Primary event time of $k$th data item |
+| S        |                                       |
+|          |                                       |
+
+: (#tab:notation) Mathematical notation used in this note.
+
+The `primarycensoreddist` package aims to address these challenges by providing tools to manipulate primary censored delay distributions. By accounting for the censoring and truncation present in the data, the package enables more accurate estimation and use of the underlying true distribution.
+
+In this vignette, we will provide a quick introduction to the main functions and concepts in the `primarycensoreddist` package. We will cover the mathematical formulation of the problem, demonstrate the usage of the key functions, and provide signposting on how to learn more.
+
+| Column 1 | Column 2 |
+|----------|----------|
+| A        | B        |
+| C        | D        |
+
+: (#tab:mytable) Caption for my table
+
+See Table \@ref(tab:mytable) for details.
