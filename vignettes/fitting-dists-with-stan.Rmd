@@ -52,14 +52,14 @@ We'll start by simulating some censored and truncated delay distribution data. W
 set.seed(123) # For reproducibility
 
 # Define the true distribution parameters
-n <- 1000
+n <- 2000
 meanlog <- 1.5
 sdlog <- 0.75
 
 # Generate varying pwindow, swindow, and obs_time lengths
-pwindows <- sample(1, n, replace = TRUE)
-swindows <- sample(1, n, replace = TRUE)
-obs_times <- 10
+pwindows <- sample(1:2, n, replace = TRUE)
+swindows <- sample(1:2, n, replace = TRUE)
+obs_times <- sample(8:10, n, replace = TRUE)
 
 # Function to generate a single sample
 generate_sample <- function(pwindow, swindow, obs_time) {
@@ -76,11 +76,13 @@ samples <- mapply(generate_sample, pwindows, swindows, obs_times)
 # Create initial data frame
 delay_data <- data.frame(
   pwindow = pwindows,
-  swindow = swindows,
   obs_time = obs_times,
   observed_delay = samples,
   observed_delay_upper = samples + swindows
-)
+) |>
+  mutate(
+    observed_delay_upper = pmin(obs_time, observed_delay_upper)
+  )
 
 head(delay_data)
 
@@ -89,7 +91,7 @@ head(delay_data)
 delay_counts <- delay_data |>
   summarise(
     n = n(),
-    .by = c(pwindow, swindow, obs_time, observed_delay, observed_delay_upper)
+    .by = c(pwindow, obs_time, observed_delay, observed_delay_upper)
   )
 
 head(delay_counts)
