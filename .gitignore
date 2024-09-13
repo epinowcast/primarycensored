@@ -21,3 +21,4 @@ cache
 .here
 *.pdf
 *.html
+inst/pcens_model

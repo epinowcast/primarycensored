@@ -43,34 +43,23 @@ data {
   array[n_primary_params] real primary_prior_scale; // scale parameters for primary priors
 }
 
-transformed data {
-  array[n_primary_params] real primary_params;
-  for (i in 1:n_primary_params) {
-    primary_params[i] = 0; // Initialize to 0, update in parameters block if needed
-  }
-}
-
 parameters {
   vector<lower=param_lower_bounds, upper=param_upper_bounds>[n_params] params; // distribution parameters
-  vector<lower=primary_param_lower_bounds, upper=primary_param_upper_bounds>[n_primary_params] primary_params_raw; // primary distribution parameters
+  vector<lower=primary_param_lower_bounds, upper=primary_param_upper_bounds>[n_primary_params] primary_params; // primary distribution parameters
 }
 
-transformed parameters {
-  if (n_primary_params > 0) {
-    for (i in 1:n_primary_params) {
-      primary_params[i] = primary_params_raw[i];
-    }
-  }
-}
 
 model {
   // Priors
   for (i in 1:n_params) {
     params[i] ~ normal(prior_location[i], prior_scale[i]);
   }
-  if (n_primary_params > 0) {
+  if (n_primary_params) {
     for (i in 1:n_primary_params) {
-      primary_params_raw[i] ~ normal(primary_prior_location[i], primary_prior_scale[i]);
+      primary_params[i] ~ normal(
+        primary_prior_location[i],
+        primary_prior_scale[i]
+      );
     }
   }
 
@@ -78,13 +67,13 @@ model {
   if (use_reduce_sum) {
     target += reduce_sum(partial_sum, y, 1,
                          y_upper, n, pwindow, D, dist_id, params,
-                         primary_dist_id, primary_params);
+                         primary_dist_id, to_array_1d(primary_params));
   } else {
     for (i in 1:N) {
       target += n[i] * primary_censored_dist_lpmf(
         y[i] | dist_id, to_array_1d(params),
         pwindow[i], y_upper[i], D[i],
-        primary_dist_id, primary_params
+        primary_dist_id, to_array_1d(primary_params)
       );
     }
   }
@@ -97,7 +86,7 @@ generated quantities {
       log_lik[i] = primary_censored_dist_lpmf(
         y[i] | dist_id, to_array_1d(params),
         pwindow[i], y_upper[i], D[i],
-        primary_dist_id, primary_params
+        primary_dist_id, to_array_1d(primary_params)
       );
     }
   }
