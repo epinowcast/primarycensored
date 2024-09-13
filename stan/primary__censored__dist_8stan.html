@@ -110,8 +110,8 @@ Functions</h2></td></tr>
 <tr class="separator:a0761ffd0ab06dc8b52d0ef30090941ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af5c31cb3dd318102b1a3f6faacdcafad" id="r_af5c31cb3dd318102b1a3f6faacdcafad"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist_8stan.html#af5c31cb3dd318102b1a3f6faacdcafad">primary_dist_lpdf</a> (real x, int primary_dist_id, array[] real params, real min, real max)</td></tr>
 <tr class="separator:af5c31cb3dd318102b1a3f6faacdcafad"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:accaaebc98f41751f485021b20573d299" id="r_accaaebc98f41751f485021b20573d299"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist_8stan.html#accaaebc98f41751f485021b20573d299">primary_censored_integrand</a> (real x, real xc, array[] real theta, array[] real x_r, array[] int x_i)</td></tr>
-<tr class="separator:accaaebc98f41751f485021b20573d299"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6c361dcc01e552ffd4a7fbbde83ff5ba" id="r_a6c361dcc01e552ffd4a7fbbde83ff5ba"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist_8stan.html#a6c361dcc01e552ffd4a7fbbde83ff5ba">primary_censored_ode</a> (real t, vector y, array[] real theta, array[] real x_r, array[] int x_i)</td></tr>
+<tr class="separator:a6c361dcc01e552ffd4a7fbbde83ff5ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e6f02b18d869fb76bd6aa2a2384228a" id="r_a5e6f02b18d869fb76bd6aa2a2384228a"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist_8stan.html#a5e6f02b18d869fb76bd6aa2a2384228a">primary_censored_dist_cdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</td></tr>
 <tr class="separator:a5e6f02b18d869fb76bd6aa2a2384228a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acd40f2d15c47192d8dea6ff364cad192" id="r_acd40f2d15c47192d8dea6ff364cad192"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist_8stan.html#acd40f2d15c47192d8dea6ff364cad192">primary_censored_dist_lcdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</td></tr>
@@ -246,21 +246,9 @@ Functions</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Primary event censored CDF, normalized by D if finite (truncation adjustment)</dd></dl>
-<div class="fragment"><div class="line"><span class="comment">// Example: Weibull delay distribution with uniform primary distribution</span></div>
-<div class="line">real d = 3.0;</div>
-<div class="line"><span class="keywordtype">int</span> dist_id = 5; <span class="comment">// Weibull</span></div>
-<div class="line">array[2] real params = {2.0, 1.5}; <span class="comment">// shape and scale</span></div>
-<div class="line">real pwindow = 1.0;</div>
-<div class="line">real D = positive_infinity();</div>
-<div class="line"><span class="keywordtype">int</span> primary_dist_id = 1; <span class="comment">// Uniform</span></div>
-<div class="line">array[0] real primary_params = {};</div>
-<div class="line">real cdf = <a class="code hl_function" href="primary__censored__dist_8stan.html#a5e6f02b18d869fb76bd6aa2a2384228a">primary_censored_dist_cdf</a>(</div>
-<div class="line">  d, dist_id, params, pwindow, D, primary_dist_id, primary_params</div>
-<div class="line">);</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_a5e6f02b18d869fb76bd6aa2a2384228a"><div class="ttname"><a href="primary__censored__dist_8stan.html#a5e6f02b18d869fb76bd6aa2a2384228a">primary_censored_dist_cdf</a></div><div class="ttdeci">real primary_censored_dist_cdf(data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00179">primary_censored_dist.stan:179</a></div></div>
-</div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00179">179</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>Primary event censored CDF, normalized by D if finite (truncation adjustment) </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00130">130</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
@@ -344,9 +332,9 @@ Functions</h2></td></tr>
 <div class="line">real log_cdf = <a class="code hl_function" href="primary__censored__dist_8stan.html#acd40f2d15c47192d8dea6ff364cad192">primary_censored_dist_lcdf</a>(</div>
 <div class="line">  d, dist_id, params, pwindow, D, primary_dist_id, primary_params</div>
 <div class="line">);</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_acd40f2d15c47192d8dea6ff364cad192"><div class="ttname"><a href="primary__censored__dist_8stan.html#acd40f2d15c47192d8dea6ff364cad192">primary_censored_dist_lcdf</a></div><div class="ttdeci">real primary_censored_dist_lcdf(data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00238">primary_censored_dist.stan:238</a></div></div>
+<div class="ttc" id="aprimary__censored__dist_8stan_html_acd40f2d15c47192d8dea6ff364cad192"><div class="ttname"><a href="primary__censored__dist_8stan.html#acd40f2d15c47192d8dea6ff364cad192">primary_censored_dist_lcdf</a></div><div class="ttdeci">real primary_censored_dist_lcdf(data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00183">primary_censored_dist.stan:183</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00238">238</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00183">183</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
@@ -438,9 +426,9 @@ Functions</h2></td></tr>
 <div class="line">real log_pmf = <a class="code hl_function" href="primary__censored__dist_8stan.html#af83d93f79e8ee66ce1b479a21d4be408">primary_censored_dist_lpmf</a>(</div>
 <div class="line">  d, dist_id, params, pwindow, d_upper, D, primary_dist_id, primary_params</div>
 <div class="line">);</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_af83d93f79e8ee66ce1b479a21d4be408"><div class="ttname"><a href="primary__censored__dist_8stan.html#af83d93f79e8ee66ce1b479a21d4be408">primary_censored_dist_lpmf</a></div><div class="ttdeci">real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params, data real pwindow, data real d_upper, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00282">primary_censored_dist.stan:282</a></div></div>
+<div class="ttc" id="aprimary__censored__dist_8stan_html_af83d93f79e8ee66ce1b479a21d4be408"><div class="ttname"><a href="primary__censored__dist_8stan.html#af83d93f79e8ee66ce1b479a21d4be408">primary_censored_dist_lpmf</a></div><div class="ttdeci">real primary_censored_dist_lpmf(data int d, int dist_id, array[] real params, data real pwindow, data real d_upper, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00227">primary_censored_dist.stan:227</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00282">282</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00227">227</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
@@ -531,29 +519,29 @@ Functions</h2></td></tr>
 <div class="line"><span class="keywordtype">int</span> primary_dist_id = 1; <span class="comment">// Uniform</span></div>
 <div class="line">array[0] real primary_params = {};</div>
 <div class="line">real pmf = <a class="code hl_function" href="primary__censored__dist_8stan.html#af146deaa805366d6f341cfe1ea1d7812">primary_censored_dist_pmf</a>(d, dist_id, params, pwindow, swindow, D, primary_dist_id, primary_params);</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_af146deaa805366d6f341cfe1ea1d7812"><div class="ttname"><a href="primary__censored__dist_8stan.html#af146deaa805366d6f341cfe1ea1d7812">primary_censored_dist_pmf</a></div><div class="ttdeci">real primary_censored_dist_pmf(data int d, int dist_id, array[] real params, data real pwindow, data real d_upper, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00344">primary_censored_dist.stan:344</a></div></div>
+<div class="ttc" id="aprimary__censored__dist_8stan_html_af146deaa805366d6f341cfe1ea1d7812"><div class="ttname"><a href="primary__censored__dist_8stan.html#af146deaa805366d6f341cfe1ea1d7812">primary_censored_dist_pmf</a></div><div class="ttdeci">real primary_censored_dist_pmf(data int d, int dist_id, array[] real params, data real pwindow, data real d_upper, data real D, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00289">primary_censored_dist.stan:289</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00344">344</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00289">289</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
-<a id="accaaebc98f41751f485021b20573d299" name="accaaebc98f41751f485021b20573d299"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#accaaebc98f41751f485021b20573d299">&#9670;&#160;</a></span>primary_censored_integrand()</h2>
+<a id="a6c361dcc01e552ffd4a7fbbde83ff5ba" name="a6c361dcc01e552ffd4a7fbbde83ff5ba"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6c361dcc01e552ffd4a7fbbde83ff5ba">&#9670;&#160;</a></span>primary_censored_ode()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">real primary_censored_integrand </td>
+          <td class="memname">vector primary_censored_ode </td>
           <td>(</td>
           <td class="paramtype">real&#160;</td>
-          <td class="paramname"><em>x</em>, </td>
+          <td class="paramname"><em>t</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">real&#160;</td>
-          <td class="paramname"><em>xc</em>, </td>
+          <td class="paramtype">vector&#160;</td>
+          <td class="paramname"><em>y</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -580,31 +568,20 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<p>Compute the integrand for the primary censored distribution</p>
+<p>ODE system for the primary censored distribution</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">x</td><td>Integration variable </td></tr>
-    <tr><td class="paramname">xc</td><td>A high precision version of the distance from x to the nearest endpoint in a definite integral </td></tr>
-    <tr><td class="paramname">theta</td><td>Distribution parameters </td></tr>
-    <tr><td class="paramname">x_r</td><td>Real data (contains d, pwindow, obs_time_add) </td></tr>
-    <tr><td class="paramname">x_i</td><td>Integer data (contains dist_id and primary_dist_id)</td></tr>
+    <tr><td class="paramname">t</td><td>Time </td></tr>
+    <tr><td class="paramname">y</td><td>State variables </td></tr>
+    <tr><td class="paramname">theta</td><td>Parameters </td></tr>
+    <tr><td class="paramname">x_r</td><td>Real data </td></tr>
+    <tr><td class="paramname">x_i</td><td>Integer data</td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Value of the integrand</dd></dl>
-<div class="fragment"><div class="line"><span class="comment">// Example: Lognormal delay distribution with uniform primary distribution</span></div>
-<div class="line">real x = 0.5;</div>
-<div class="line">real xc = 1.5;</div>
-<div class="line">array[2] real theta = {2.0, 0.0, 1.0}; <span class="comment">// truncation point, mean and</span></div>
-<div class="line"><span class="comment">// standard deviation on log scale</span></div>
-<div class="line">array[1] real x_r = {1.0}; <span class="comment">// pwindow</span></div>
-<div class="line">array[2] <span class="keywordtype">int</span> x_i = {1, 1}; <span class="comment">// dist_id = 1 (Lognormal), primary_dist_id = 1 (Uniform)</span></div>
-<div class="line">real integrand_value = <a class="code hl_function" href="primary__censored__dist_8stan.html#accaaebc98f41751f485021b20573d299">primary_censored_integrand</a>(</div>
-<div class="line">  p, xc, theta, x_r, x_i</div>
-<div class="line">);</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_accaaebc98f41751f485021b20573d299"><div class="ttname"><a href="primary__censored__dist_8stan.html#accaaebc98f41751f485021b20573d299">primary_censored_integrand</a></div><div class="ttdeci">real primary_censored_integrand(real x, real xc, array[] real theta, array[] real x_r, array[] int x_i)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00105">primary_censored_dist.stan:105</a></div></div>
-</div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00105">105</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<dl class="section return"><dt>Returns</dt><dd>Derivatives of the state variables </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00091">91</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
@@ -696,9 +673,9 @@ Functions</h2></td></tr>
 <div class="line">     max_delay, D, dist_id, params, pwindow, primary_dist_id,</div>
 <div class="line">     primary_params</div>
 <div class="line">  );</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_a402412dcb133ec6a968a192856119fcc"><div class="ttname"><a href="primary__censored__dist_8stan.html#a402412dcb133ec6a968a192856119fcc">primary_censored_sone_lpmf_vectorized</a></div><div class="ttdeci">vector primary_censored_sone_lpmf_vectorized(int max_delay, data real D, int dist_id, array[] real params, data real pwindow, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00393">primary_censored_dist.stan:393</a></div></div>
+<div class="ttc" id="aprimary__censored__dist_8stan_html_a402412dcb133ec6a968a192856119fcc"><div class="ttname"><a href="primary__censored__dist_8stan.html#a402412dcb133ec6a968a192856119fcc">primary_censored_sone_lpmf_vectorized</a></div><div class="ttdeci">vector primary_censored_sone_lpmf_vectorized(int max_delay, data real D, int dist_id, array[] real params, data real pwindow, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00338">primary_censored_dist.stan:338</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00393">393</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00338">338</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
@@ -788,9 +765,9 @@ Functions</h2></td></tr>
 <div class="line">  <a class="code hl_function" href="primary__censored__dist_8stan.html#ae13e01f99e21c32d2087179102b57e01">primary_censored_sone_pmf_vectorized</a>(</div>
 <div class="line">     max_delay, D, dist_id, params, pwindow, primary_dist_id, primary_params</div>
 <div class="line">  );</div>
-<div class="ttc" id="aprimary__censored__dist_8stan_html_ae13e01f99e21c32d2087179102b57e01"><div class="ttname"><a href="primary__censored__dist_8stan.html#ae13e01f99e21c32d2087179102b57e01">primary_censored_sone_pmf_vectorized</a></div><div class="ttdeci">vector primary_censored_sone_pmf_vectorized(int max_delay, data real D, int dist_id, array[] real params, data real pwindow, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00475">primary_censored_dist.stan:475</a></div></div>
+<div class="ttc" id="aprimary__censored__dist_8stan_html_ae13e01f99e21c32d2087179102b57e01"><div class="ttname"><a href="primary__censored__dist_8stan.html#ae13e01f99e21c32d2087179102b57e01">primary_censored_sone_pmf_vectorized</a></div><div class="ttdeci">vector primary_censored_sone_pmf_vectorized(int max_delay, data real D, int dist_id, array[] real params, data real pwindow, int primary_dist_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primary__censored__dist_8stan_source.html#l00420">primary_censored_dist.stan:420</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00475">475</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist_8stan_source.html#l00420">420</a> of file <a class="el" href="primary__censored__dist_8stan_source.html">primary_censored_dist.stan</a>.</p>
 
 </div>
 </div>
