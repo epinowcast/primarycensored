@@ -125,14 +125,14 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span> <span class="co"># For reproducibility</span></span>
 <span></span>
 <span><span class="co"># Define the true distribution parameters</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">2000</span></span>
 <span><span class="va">meanlog</span> <span class="op">&lt;-</span> <span class="fl">1.5</span></span>
 <span><span class="va">sdlog</span> <span class="op">&lt;-</span> <span class="fl">0.75</span></span>
 <span></span>
 <span><span class="co"># Generate varying pwindow, swindow, and obs_time lengths</span></span>
-<span><span class="va">pwindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">swindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">obs_times</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">pwindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">swindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">obs_times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">8</span><span class="op">:</span><span class="fl">10</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Function to generate a single sample</span></span>
 <span><span class="va">generate_sample</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">swindow</span>, <span class="va">obs_time</span><span class="op">)</span> <span class="op">{</span></span>
@@ -149,37 +149,39 @@
 <span><span class="co"># Create initial data frame</span></span>
 <span><span class="va">delay_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  pwindow <span class="op">=</span> <span class="va">pwindows</span>,</span>
-<span>  swindow <span class="op">=</span> <span class="va">swindows</span>,</span>
 <span>  obs_time <span class="op">=</span> <span class="va">obs_times</span>,</span>
 <span>  observed_delay <span class="op">=</span> <span class="va">samples</span>,</span>
 <span>  observed_delay_upper <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="va">swindows</span></span>
-<span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    observed_delay_upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">obs_time</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">delay_data</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   pwindow swindow obs_time observed_delay observed_delay_upper</span></span>
-<span><span class="co">## 1       1       1       10              2                    3</span></span>
-<span><span class="co">## 2       1       1       10              1                    2</span></span>
-<span><span class="co">## 3       1       1       10              8                    9</span></span>
-<span><span class="co">## 4       1       1       10              6                    7</span></span>
-<span><span class="co">## 5       1       1       10              5                    6</span></span>
-<span><span class="co">## 6       1       1       10              4                    5</span></span></code></pre>
+<pre><code><span><span class="co">##   pwindow obs_time observed_delay observed_delay_upper</span></span>
+<span><span class="co">## 1       1        9              3                    4</span></span>
+<span><span class="co">## 2       1        9              4                    5</span></span>
+<span><span class="co">## 3       1        8              6                    7</span></span>
+<span><span class="co">## 4       2       10              6                    8</span></span>
+<span><span class="co">## 5       1       10              8                   10</span></span>
+<span><span class="co">## 6       2        8              4                    5</span></span></code></pre>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Aggregate to unique combinations and count occurrences</span></span>
 <span><span class="co"># Aggregate to unique combinations and count occurrences</span></span>
 <span><span class="va">delay_counts</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
 <span>    n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    .by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">swindow</span>, <span class="va">obs_time</span>, <span class="va">observed_delay</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
+<span>    .by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">obs_time</span>, <span class="va">observed_delay</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">delay_counts</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   pwindow swindow obs_time observed_delay observed_delay_upper   n</span></span>
-<span><span class="co">## 1       1       1       10              2                    3 160</span></span>
-<span><span class="co">## 2       1       1       10              1                    2  96</span></span>
-<span><span class="co">## 3       1       1       10              8                    9  59</span></span>
-<span><span class="co">## 4       1       1       10              6                    7 113</span></span>
-<span><span class="co">## 5       1       1       10              5                    6 119</span></span>
-<span><span class="co">## 6       1       1       10              4                    5 150</span></span></code></pre>
+<pre><code><span><span class="co">##   pwindow obs_time observed_delay observed_delay_upper  n</span></span>
+<span><span class="co">## 1       1        9              3                    4 37</span></span>
+<span><span class="co">## 2       1        9              4                    5 31</span></span>
+<span><span class="co">## 3       1        8              6                    7 16</span></span>
+<span><span class="co">## 4       2       10              6                    8 26</span></span>
+<span><span class="co">## 5       1       10              8                   10 22</span></span>
+<span><span class="co">## 6       2        8              4                    5 43</span></span></code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compare the samples with and without secondary censoring to the true</span></span>
 <span><span class="co"># distribution</span></span>
@@ -274,14 +276,14 @@
 <span><span class="op">)</span></span>
 <span><span class="va">naive_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: NAs introduced by coercion</span></span></code></pre>
-<pre><code><span><span class="co">##  variable      mean    median   sd  mad        q5       q95 rhat ess_bulk</span></span>
-<span><span class="co">##     lp__  -28480.45 -28480.10 1.00 0.74 -28482.40 -28479.50 1.00     1999</span></span>
-<span><span class="co">##     mu        -0.10     -0.10 0.05 0.04     -0.18     -0.02 1.00     2691</span></span>
-<span><span class="co">##     sigma      4.61      4.61 0.03 0.03      4.56      4.67 1.00     3820</span></span>
+<pre><code><span><span class="co">##  variable       mean     median   sd  mad         q5        q95 rhat ess_bulk</span></span>
+<span><span class="co">##     lp__  -381721.39 -381721.00 1.04 0.00 -381723.00 -381720.00 1.00     1641</span></span>
+<span><span class="co">##     mu         -0.60      -0.60 0.01 0.01      -0.62      -0.58 1.00     1331</span></span>
+<span><span class="co">##     sigma       5.10       5.10 0.01 0.01       5.09       5.12 1.00     4340</span></span>
 <span><span class="co">##  ess_tail</span></span>
 <span><span class="co">##        NA</span></span>
-<span><span class="co">##      2310</span></span>
-<span><span class="co">##      2869</span></span></code></pre>
+<span><span class="co">##      1521</span></span>
+<span><span class="co">##      2759</span></span></code></pre>
 <p>We see that the model has converged and the diagnostics look good. However, just from the model posterior summary we see that we might not be very happy with the fit. <code>mu</code> is smaller than the target 1.5 and <code>sigma</code> is larger than the target 0.75.</p>
 </div>
 <div class="section level2" number="4">
@@ -351,9 +353,9 @@
 <span><span class="op">)</span></span>
 <span><span class="va">primarycensoreddist_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##  variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##     lp__  -2134.45 -2134.16 0.97 0.71 -2136.44 -2133.50 1.00     1741     2206</span></span>
-<span><span class="co">##     mu        1.53     1.53 0.05 0.05     1.46     1.61 1.00     1386     1540</span></span>
-<span><span class="co">##     sigma     0.77     0.77 0.04 0.04     0.71     0.83 1.00     1373     1786</span></span></code></pre>
+<span><span class="co">##     lp__  -3422.72 -3422.43 1.00 0.71 -3424.51 -3421.79 1.00     1379     1857</span></span>
+<span><span class="co">##     mu        1.55     1.54 0.04 0.04     1.47     1.62 1.00     1133     1313</span></span>
+<span><span class="co">##     sigma     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1107     1212</span></span></code></pre>
 <p>We see that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
