@@ -2,17 +2,17 @@ functions {
   #include primary_censored_dist.stan
   #include expgrowth.stan
 
-  real partial_sum(array[] int y_slice,
+  real partial_sum(array[] int d_slice,
                    int start, int end,
-                   array[] int y_upper, array[] int n,
+                   array[] int d_upper, array[] int n,
                    array[] int pwindow, array[] int D,
                    int dist_id, vector params,
                    int primary_dist_id, array[] real primary_params) {
     real partial_target = 0;
     for (i in start:end) {
       partial_target += n[i] * primary_censored_dist_lpmf(
-        y_slice[i] | dist_id, to_array_1d(params),
-        pwindow[i], y_upper[i], D[i],
+        d_slice[i] | dist_id, to_array_1d(params),
+        pwindow[i], d_upper[i], D[i],
         primary_dist_id, primary_params
       );
     }
@@ -22,8 +22,8 @@ functions {
 
 data {
   int<lower=0> N;  // number of observations
-  array[N] int<lower=0> y;     // observed delays
-  array[N] int<lower=0> y_upper;     // observed delays upper bound
+  array[N] int<lower=0> d;     // observed delays
+  array[N] int<lower=0> d_upper;     // observed delays upper bound
   array[N] int<lower=0> n;     // number of occurrences for each delay
   array[N] int<lower=0> pwindow; // primary censoring window
   array[N] int<lower=0> D; // maximum delay
@@ -65,14 +65,14 @@ model {
 
   // Likelihood
   if (use_reduce_sum) {
-    target += reduce_sum(partial_sum, y, 1,
-                         y_upper, n, pwindow, D, dist_id, params,
+    target += reduce_sum(partial_sum, d, 1,
+                         d_upper, n, pwindow, D, dist_id, params,
                          primary_dist_id, to_array_1d(primary_params));
   } else {
     for (i in 1:N) {
       target += n[i] * primary_censored_dist_lpmf(
-        y[i] | dist_id, to_array_1d(params),
-        pwindow[i], y_upper[i], D[i],
+        d[i] | dist_id, to_array_1d(params),
+        pwindow[i], d_upper[i], D[i],
         primary_dist_id, to_array_1d(primary_params)
       );
     }
@@ -84,8 +84,8 @@ generated quantities {
   if (compute_log_lik) {
     for (i in 1:N) {
       log_lik[i] = primary_censored_dist_lpmf(
-        y[i] | dist_id, to_array_1d(params),
-        pwindow[i], y_upper[i], D[i],
+        d[i] | dist_id, to_array_1d(params),
+        pwindow[i], d_upper[i], D[i],
         primary_dist_id, to_array_1d(primary_params)
       );
     }
