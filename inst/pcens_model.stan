@@ -2,16 +2,15 @@ functions {
   #include primary_censored_dist.stan
   #include expgrowth.stan
 
-  real partial_sum(array[] int d_slice,
-                   int start, int end,
-                   array[] int d_upper, array[] int n,
+  real partial_sum(array[] int dummy, int start, int end,
+                   array[] int d, array[] int d_upper, array[] int n,
                    array[] int pwindow, array[] int D,
-                   int dist_id, vector params,
+                   int dist_id, array[] real params,
                    int primary_dist_id, array[] real primary_params) {
     real partial_target = 0;
     for (i in start:end) {
       partial_target += n[i] * primary_censored_dist_lpmf(
-        d_slice[i] | dist_id, to_array_1d(params),
+        d[i] | dist_id, params,
         pwindow[i], d_upper[i], D[i],
         primary_dist_id, primary_params
       );
@@ -43,6 +42,10 @@ data {
   array[n_primary_params] real primary_prior_scale; // scale parameters for primary priors
 }
 
+transformed data {
+  array[N] int indexes = linspaced_int_array(N, 1, N);
+}
+
 parameters {
   vector<lower=param_lower_bounds, upper=param_upper_bounds>[n_params] params; // distribution parameters
   vector<lower=primary_param_lower_bounds, upper=primary_param_upper_bounds>[n_primary_params] primary_params; // primary distribution parameters
@@ -65,8 +68,8 @@ model {
 
   // Likelihood
   if (use_reduce_sum) {
-    target += reduce_sum(partial_sum, d, 1,
-                         d_upper, n, pwindow, D, dist_id, params,
+    target += reduce_sum(partial_sum, indexes, 1, d,
+                         d_upper, n, pwindow, D, dist_id, to_array_1d(params),
                          primary_dist_id, to_array_1d(primary_params));
   } else {
     for (i in 1:N) {
