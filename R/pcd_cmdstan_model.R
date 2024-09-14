@@ -131,9 +131,9 @@ pcd_as_cmdstan_data <- function(
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
     stop(
-      "Missing required columns: ", paste(missing_cols, collapse = ", "), "\n",
+      "Missing required columns: ", toString(missing_cols), "\n",
       "Please ensure your data frame contains these columns or set the",
-      "corresponding arguments:\n",
+      " corresponding arguments:\n",
       "delay = '", delay, "'\n",
       "delay_upper = '", delay_upper, "'\n",
       "n = '", n, "'\n",
