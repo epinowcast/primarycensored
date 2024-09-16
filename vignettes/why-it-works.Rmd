@@ -98,7 +98,7 @@ In this case, the primary event time is uniformly distributed within the primary
 $$
 Q_{S_+}(t) = Q_T(t + W_P) + { 1 \over W_P} \int_0^{W_P} f_T(t+p) p~ dp.
 $$
-This is analytically solvable whenever the upper distribtution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
+This is analytically solvable whenever the upper distribution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
 
 In each case it is easier to change the integration variable:
 
