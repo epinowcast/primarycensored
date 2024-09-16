@@ -21,16 +21,16 @@ skip_if_not_installed("cmdstanr")
 skip_if_not_installed("dplyr")
 
 test_that("pcd_cmdstan_model creates a valid CmdStanModel object", {
-  model <- pcd_cmdstan_model()
+  model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   expect_s3_class(model, "CmdStanModel")
 })
 
 test_that("pcd_cmdstan_model handles custom include paths", {
   custom_path <- tempdir()
-  model <- pcd_cmdstan_model(
+  model <- suppressMessages(suppressWarnings(pcd_cmdstan_model(
     include_paths = c(custom_path, pcd_stan_path()),
     force_recompile = TRUE
-  )
+  )))
   expect_true(custom_path %in% model$include_paths())
 })
 
@@ -75,8 +75,8 @@ test_that("pcd_cmdstan_model recovers true values for simple lognormal data", {
   )
 
   # Fit model
-  model <- pcd_cmdstan_model()
-  fit <- model$sample(
+  model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+  fit <- suppressMessages(suppressWarnings(model$sample(
     data = stan_data,
     seed = 123,
     chains = 4,
@@ -84,7 +84,7 @@ test_that("pcd_cmdstan_model recovers true values for simple lognormal data", {
     refresh = 0,
     show_messages = FALSE,
     iter_warmup = 500
-  )
+  )))
 
   # Extract posterior
   posterior <- fit$draws(c("params[1]", "params[2]"), format = "df")
@@ -150,15 +150,15 @@ test_that(
     )
 
     # Fit model
-    model <- pcd_cmdstan_model()
-    fit <- model$sample(
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    fit <- suppressMessages(suppressWarnings(model$sample(
       data = stan_data,
       seed = 456,
       chains = 2,
       parallel_chains = 2,
       refresh = 0,
       show_messages = FALSE
-    )
+    )))
 
     # Extract posterior
     posterior <- fit$draws(
@@ -230,8 +230,10 @@ test_that(
     )
 
     # Fit model with within-chain parallelization
-    model_parallel <- pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE))
-    fit <- model_parallel$sample(
+    model_parallel <- suppressMessages(suppressWarnings(
+      pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE))
+    ))
+    fit <- suppressMessages(suppressWarnings(model_parallel$sample(
       data = stan_data,
       seed = 789,
       chains = 2,
@@ -239,7 +241,7 @@ test_that(
       threads_per_chain = 2,
       refresh = 0,
       show_messages = FALSE
-    )
+    )))
 
     # Extract posterior
     posterior <- fit$draws(c("params[1]", "params[2]"), format = "df")
@@ -308,15 +310,15 @@ test_that(
     )
 
     # Fit model
-    model <- pcd_cmdstan_model()
-    fit <- model$sample(
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    fit <- suppressMessages(suppressWarnings(model$sample(
       data = stan_data,
       seed = 456,
       chains = 2,
       parallel_chains = 2,
       refresh = 0,
       show_messages = FALSE
-    )
+    )))
 
     # Extract posterior summaries
     summary <- fit$summary()
