@@ -48,6 +48,9 @@
 <ul><li>Added a new function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to allow for fitting of double censored and truncated data using the <code>fitdistrplus</code> package.</li>
 <li>Added low level tests for the Stan <code>primary_censored_ode</code> function.</li>
 <li>Rephrased the stan code to use a ODE solver rather than a numerical integration method. This allows for much faster and more stable computation of the likelihood</li>
+<li>Added a <code>CmdStan</code> model for fitting distributions using the <code>cmdstanr</code> package.</li>
+<li>Added helpers functions for working with the new <code>CmdStan</code> model and added an example to the vignette.</li>
+<li>Added parameter recovery tests for the new <code>CmdStan</code> model which tests the <code>primary_censored_dist_lpmf</code> function when used with NUTS based fitting.</li>
 </ul></div>
 </div>
     <div class="section level2">
