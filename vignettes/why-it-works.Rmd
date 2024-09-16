@@ -21,38 +21,155 @@ In theoretical epidemiological modelling, it is often appropriate to model the e
 
 As described in [Introduction](#introduction), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point.
 
-A key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring. It is useful to consider the time from the initial (left) point of the primary censoring interval to the secondary time as a random variable,
+## Survival function of secondary event time after primary event window
+
+A key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring. It is useful to consider the time from the end (right) point of the primary censoring interval to the secondary time as a random variable,
 
 $$
-S_+ = T + C_P.
+S_+ = T - C_P.
 $$
 
-Where $T$ is the delay distribution of interest and $C_P$ is interval between the initial (left) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed. 
+Where $T$ is the delay distribution of interest and $C_P$ is interval between the end (right) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed. 
 
-With non-informative censoring, it is possible to derive the distribution function of $S_+$ from the distribution of $T$ and the distribution of $C$. The distribution of $S_+$ is given by the sum of the distribution of $T$ and the distribution of $C_P$ formula,
+With non-informative censoring, it is possible to derive the upper distribution function of $S_+$, or _survival function_ of $S_+$, from the distribution of $T$ and the distribution of $C_P$.
 
 $$
-F_{S_+}(t) = \mathbb{E}_{C_P} \Big[F_T(t - C_P)\Big] = \int_0^{pwindow} F_T(t - p) c_r(p) dp.
+Q_{S_+}(t) = \mathbb{E}_{C_P} \Big[Q_T(t + C_P)\Big] = \int_0^{W_P} Q_T(t + p) c(p) dp.
 $$
 
-Where $c_r$ is the density function of delay from the initial (left) point of the primary censoring window to the primary event time.
+Using integration by parts gives:
+$$
+Q_{S_+}(t) = Q_T(t + W_P) + \int_0^{W_P} f_T(t+p) C(p) dp.
+$$
+
+Where $c$ is the density function of delay from the primary event to the end (right) point of the primary censoring window with distribution function $C$, $Q_T$ is the survival function of the actual delay distribution of interest and $W_P$ is the length of the primary censoring window.
+
+## Probability mass of secondary event time within a secondary censoring window
+
+The probability of the secondary event time falling within a secondary censoring window of length $W_S$ that begins at time $n$ _after_ the primary censoring window is then given by:
+
+$$
+Pr(S_+ \in [n, n + W_S)) = Q_{S_+}(n) - Q_{S_+}(n + W_S).
+$$
+
+Which can in general be calculated by numerical quadrature.
+
+Note that the secondary event time can also occur within the primary censoring window. This happens with probability, 
+$$
+Q_{S_+}(-W_P) - Q_{S_+}(0) = 1 - Q_T(W_P) - \int_0^{W_P} f_T(p) C(p) dp = Pr(T< C).
+$$
+
+Using a difference operator defined as:
+
+$$
+\Delta_{W}f(t) = f(t + W) - f(t).
+$$
+
+The common case where every primary and secondary event window is a single time unit, $W_P = W_S = 1$, simplifies the above expressions to:
+
+$$
+\begin{aligned}
+f_n = Pr(S_+ \in [n, n + 1)) &= Q_{S_+}(n) - Q_{S_+}(n + 1), \\
+& = - \Delta_1 Q_{S_+}(n),\qquad n = -1, 0,\dots.
+\end{aligned}
+$$
+Which is a discrete probability mass function of the secondary event time relative to the primary event time in units of the event window.
+
+## Analytic solutions for exponentially tilted primary event times
+
+In epidemiological analysis, it is common for primary events to be arriving at exponentially increasing or decreasing rates, for example, incidence of new infections in a growing epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay. If we assume a reference uniform distribution within a primary censoring window $[k, k + W_P)$ then the distribution of the primary event time within the censoring window is the exponential tilted uniform distribution:
+
+$$
+f_P(t) \propto \exp(r t) \mathbb{1}_{[k, k + W_P]}(t).
+$$
+
+In this case, the distribution function for $C_P$, that is the length of time left in the primary censor window _after_ the primary event time, is given by:
+
+$$
+C(p) = {  1 - \exp(-r p) \over 1 - \exp(-r W_P)}, \qquad p \in [0, W_P].
+$$
+
+We consider two situations: 1) uniform primary event time ($r=0$) and 2) non-uniform primary event time ($r\neq0$).
+
+### Uniform primary event time ($r=0$)
+
+In this case, the primary event time is uniformly distributed within the primary censoring window. The survival function of $S_+$ is then:
+
+$$
+Q_{S_+} = Q_T(t + W_P) + { 1 \over W_P} \int_0^{W_P} f_T(t+p) p~ dp.
+$$
+This is analytically solvable whenever the upper distribtution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
+
+In each case it is easier to change the integration variable:
+
+$$
+Q_{S_+} = Q_T(t + W_P) + { 1 \over W_P} \int_t^{t+W_P} f_T(z) (z-t)~ dz.
+$$
+
+
+#### Gamma distribution
+
+The Gamma distribution has the density function:
+
+$$
+f_T(z;k, \theta) = {1 \over \Gamma(k) \theta^k} z^{k-1} \exp(-z/\theta).
+$$
+
+This gives a solution:
+
+$$
+\begin{aligned}
+Q_{S_+} &= Q_T(t + W_P) + { 1 \over W_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+W_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
+&= Q_T(t + W_P) + { 1 \over W_P} \big[ k \theta \Delta_{W_P}F(t; k+1, \theta) - t \Delta_{W_P}F(t; k, \theta) \big].
+\end{aligned}
+$$
+In the special case of the equal event window then the discrete delay distribution is:
+
+$$
+\begin{aligned}
+f_n &= (n+2) F(n+2; k, \theta) + n F(n; k, \theta) - 2  (n+1) F(n+1; k, \theta) \\
+ &+  k \theta \Big( 2 F(n+1; k+1, \theta) - F(n; k+1, \theta) - F(n+2; k+1,\theta)  \Big).
+\end{aligned}
+$$
+
+Which was also found by Cori _et al_ [@cori2013new].
+
+#### Weibull distribution
+
+The Weibull distribution has the density function:
+
+$$
+f_T(z;k, \lambda) = {k \over \lambda} \left( {z \over \lambda} \right)^{k-1} \exp\left( - \left( {z \over \lambda} \right)^k \right).
+$$
+
+
+Expanding the integral in the survival function of $S_+$ gives:
+
+$$
+Q_{S_+} = Q_T(t + W_P) + { 1 \over 1 - \exp(-r W_P)} \int_0^{W_P} f_T(t+p) dp - 
+$$
 
 
 
-```{mermaid} 
+
+```{r} 
+library(DiagrammeR)
+DiagrammeR("
 timeline
     title Interval censoring and truncation
     section Primary censoring window
-        Time before primary event: Duration <br> Cp
-        Time between primary event to end of primary censoring window: Duration <br> Wp - Cp
+        Time before primary event: Duration <br> Wp - Cp
+        Time between primary event to end of primary censoring window: Duration <br> Cp
     section Between censoring windows
-        Time between end of primary censoring window and start of secondary censoring window: Duration <br> T + Cp - Wp - Cs
+        Time between end of primary censoring window and start of secondary censoring window: Duration <br> T - Cp - Cs
     section Secondary censoring window
         Time between start of secondary window to secondary event: Duration <br> Cs
         Time between secondary event to end of secondary censoring window: Duration <br> Ws - Cs
     section Observation time
-        Truncation effect: Event only observed if secondary censoring window ends before observation time. 
+        Truncation effect: Event only observed if secondary censoring window ends before observation time.")
 ```
+
+
 
 we can treat the secondary event time as a random variable that is the sum of two indepent random variables: delay between primary and secondary  and the primary time within.
 
