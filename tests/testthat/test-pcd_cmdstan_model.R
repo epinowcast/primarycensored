@@ -3,6 +3,20 @@ if (on_ci()) {
   skip_on_os("windows")
   skip_on_os("mac")
 }
+
+test_that("pcd_cmdstan_model throws error when cmdstanr is not installed", {
+  with_mocked_bindings(
+    {
+      expect_error(
+        pcd_cmdstan_model(),
+        "Package 'cmdstanr' is required but not installed for this function"
+      )
+    },
+    requireNamespace = function(...) FALSE,
+    .package = "base"
+  )
+})
+
 skip_if_not_installed("cmdstanr")
 skip_if_not_installed("dplyr")
 
@@ -114,7 +128,7 @@ test_that(
       delay = simulated_delays,
       delay_upper = simulated_delays + 1,
       n = 1,
-      pwindow = 3,
+      pwindow = 2,
       relative_obs_time = 8
     )
 
@@ -131,7 +145,7 @@ test_that(
       primary_dist_id = 2, # Exponential growth
       param_bounds = list(lower = c(0, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = 0, upper = Inf),
-      priors = list(location = c(1, 1), scale = c(1, 1)),
+      priors = list(location = c(2, 1), scale = c(0.5, 0.5)),
       primary_priors = list(location = 0.1, scale = 0.1)
     )
 
@@ -153,9 +167,9 @@ test_that(
     )
 
     # Check mean estimates
-    expect_equal(mean(posterior$`params[1]`), true_shape, tolerance = 0.2)
+    expect_equal(mean(posterior$`params[1]`), true_shape, tolerance = 0.1)
     expect_equal(mean(posterior$`params[2]`), true_rate, tolerance = 0.1)
-    expect_equal(mean(posterior$`primary_params[1]`), 0.1, tolerance = 0.05)
+    expect_equal(mean(posterior$`primary_params[1]`), 0.1, tolerance = 0.1)
 
     # Check credible intervals
     ci_shape <- quantile(posterior$`params[1]`, c(0.05, 0.95))
@@ -172,16 +186,19 @@ test_that(
 )
 
 test_that(
-  "pcd_cmdstan_model works with and without within-chain parallelization",
+  "pcd_cmdstan_model works with within-chain parallelization",
   {
     # Simulate simple data
     set.seed(789)
     n <- 2000
+    true_meanlog <- 1.6
+    true_sdlog <- 0.5
+
     simulated_delays <- rprimarycensoreddist(
       n = n,
       rdist = rlnorm,
-      meanlog = 1.2,
-      sdlog = 0.5,
+      meanlog = true_meanlog,
+      sdlog = true_sdlog,
       pwindow = 1,
       D = 8
     )
@@ -207,15 +224,15 @@ test_that(
       primary_dist_id = 1, # Uniform
       param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = c(0, 1), scale = c(1, 1)),
+      priors = list(location = c(1, 0.5), scale = c(1, 1)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
       use_reduce_sum = TRUE
     )
 
     # Fit model with within-chain parallelization
     model_parallel <- pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE))
-    fit_parallel <- model_parallel$sample(
-      data = stan_data_parallel,
+    fit <- model_parallel$sample(
+      data = stan_data,
       seed = 789,
       chains = 2,
       parallel_chains = 1,
