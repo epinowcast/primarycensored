@@ -3,7 +3,11 @@
 ## Package
 
 * Added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package.
-* Added low level tests for the Stan `primary_censored_integrand` function.
+* Added low level tests for the Stan `primary_censored_ode` function.
+* Rephrased the stan code to use a ODE solver rather than a numerical integration method. This allows for much faster and more stable computation of the likelihood
+* Added a `CmdStan` model for fitting distributions using the `cmdstanr` package.
+* Added helpers functions for working with the new `CmdStan` model and added an example to the vignette.
+* Added parameter recovery tests for the new `CmdStan` model which tests the `primary_censored_dist_lpmf` function when used with NUTS based fitting.
 
 # primarycensoreddist 0.3.0
 
