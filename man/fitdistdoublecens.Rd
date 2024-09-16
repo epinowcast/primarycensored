@@ -84,4 +84,9 @@ fit_norm <- fitdistdoublecens(
 
 summary(fit_norm)
 }
+\seealso{
+Modelling wrappers for external fitting packages
+\code{\link{pcd_as_cmdstan_data}()},
+\code{\link{pcd_cmdstan_model}()}
+}
 \concept{modelhelpers}
