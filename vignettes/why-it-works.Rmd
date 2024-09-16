@@ -29,7 +29,7 @@ $$
 S_+ = T - C_P.
 $$
 
-Where $T$ is the delay distribution of interest and $C_P$ is interval between the end (right) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed. 
+Where $T$ is the delay distribution of interest and $C_P$ is interval between the end (right) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed.
 
 With non-informative censoring, it is possible to derive the upper distribution function of $S_+$, or _survival function_ of $S_+$, from the distribution of $T$ and the distribution of $C_P$.
 
@@ -54,7 +54,7 @@ $$
 
 Which can in general be calculated by numerical quadrature.
 
-Note that the secondary event time can also occur within the primary censoring window. This happens with probability, 
+Note that the secondary event time can also occur within the primary censoring window. This happens with probability,
 $$
 Q_{S_+}(-W_P) - Q_{S_+}(0) = 1 - Q_T(W_P) - \int_0^{W_P} f_T(p) C(p) dp = Pr(T< C).
 $$
@@ -127,10 +127,10 @@ Q_{S_+}(t; k, \theta) &= Q_T(t + W_P; k, \theta) + { 1 \over W_P} \left( {1 \ove
 \end{aligned}
 $$
 
-Where we have used the standard Gamma integration trick of rewriting 
+Where we have used the standard Gamma integration trick of rewriting
 $$
 {z z^{k-1} \over \Gamma(k) \theta^k} = {k \theta z^k \over\Gamma(k+1) \theta^{k+1} }.
-$$ 
+$$
 
 In the special case of the equal event window then the discrete delay distribution is:
 
@@ -171,7 +171,7 @@ Where we have used the Log-Normal integration trick of making a further substitu
 $$
 \begin{aligned}
 \int_t^{t+W_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
-&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\ 
+&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
 &= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+W_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
 &= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{W_P}F_T(t; \mu + \sigma^2, \sigma).
 \end{aligned}
