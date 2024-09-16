@@ -96,14 +96,17 @@ We consider two situations: 1) uniform primary event time ($r=0$) and 2) non-uni
 In this case, the primary event time is uniformly distributed within the primary censoring window. The survival function of $S_+$ is then:
 
 $$
-Q_{S_+} = Q_T(t + W_P) + { 1 \over W_P} \int_0^{W_P} f_T(t+p) p~ dp.
+Q_{S_+}(t) = Q_T(t + W_P) + { 1 \over W_P} \int_0^{W_P} f_T(t+p) p~ dp.
 $$
 This is analytically solvable whenever the upper distribtution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
 
 In each case it is easier to change the integration variable:
 
 $$
-Q_{S_+} = Q_T(t + W_P) + { 1 \over W_P} \int_t^{t+W_P} f_T(z) (z-t)~ dz.
+\begin{aligned}
+Q_{S_+}(t) &= Q_T(t + W_P) + { 1 \over W_P} \int_t^{t+W_P} f_T(z) (z-t)~ dz \\
+&= Q_T(t + W_P) + { 1 \over W_P} \Big[  \int_t^{t+W_P} f_T(z) z~ dz - t \Delta_{W_P}F_T(t) \Big].
+\end{aligned}
 $$
 
 
@@ -115,84 +118,73 @@ $$
 f_T(z;k, \theta) = {1 \over \Gamma(k) \theta^k} z^{k-1} \exp(-z/\theta).
 $$
 
-This gives a solution:
+This gives a solution to the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
-Q_{S_+} &= Q_T(t + W_P) + { 1 \over W_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+W_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
-&= Q_T(t + W_P) + { 1 \over W_P} \big[ k \theta \Delta_{W_P}F(t; k+1, \theta) - t \Delta_{W_P}F(t; k, \theta) \big].
+Q_{S_+}(t; k, \theta) &= Q_T(t + W_P; k, \theta) + { 1 \over W_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+W_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
+&= Q_T(t + W_P; k, \theta) + { 1 \over W_P} \big[ k \theta \Delta_{W_P}F_T(t; k+1, \theta) - t \Delta_{W_P}F_T(t; k, \theta) \big].
 \end{aligned}
 $$
+
+Where we have used the standard Gamma integration trick of rewriting 
+$$
+{z z^{k-1} \over \Gamma(k) \theta^k} = {k \theta z^k \over\Gamma(k+1) \theta^{k+1} }.
+$$ 
+
 In the special case of the equal event window then the discrete delay distribution is:
 
 $$
 \begin{aligned}
-f_n &= (n+2) F(n+2; k, \theta) + n F(n; k, \theta) - 2  (n+1) F(n+1; k, \theta) \\
- &+  k \theta \Big( 2 F(n+1; k+1, \theta) - F(n; k+1, \theta) - F(n+2; k+1,\theta)  \Big).
+f_n &= (n+2) F_T(n+2; k, \theta) + n F_T(n; k, \theta) - 2  (n+1) F_T(n+1; k, \theta) \\
+ &+  k \theta \Big( 2 F_T(n+1; k+1, \theta) - F_T(n; k+1, \theta) - F_T(n+2; k+1,\theta)  \Big).
 \end{aligned}
 $$
 
 Which was also found by Cori _et al_ [@cori2013new].
 
-#### Weibull distribution
+#### Log-Normal distribution
 
-The Weibull distribution has the density function:
-
-$$
-f_T(z;k, \lambda) = {k \over \lambda} \left( {z \over \lambda} \right)^{k-1} \exp\left( - \left( {z \over \lambda} \right)^k \right).
-$$
-
-
-Expanding the integral in the survival function of $S_+$ gives:
+The Log-Normal distribution has the density function:
 
 $$
-Q_{S_+} = Q_T(t + W_P) + { 1 \over 1 - \exp(-r W_P)} \int_0^{W_P} f_T(t+p) dp - 
+f_T(z;\mu, \sigma) = {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right).
+$$
+And distribution function:
+
+$$
+F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
+$$
+Where $\Phi$ is the standard normal distribution function.
+
+This gives a solution to the survival function of $S_+$ in terms of analytically available functions:
+
+$$
+\begin{aligned}
+Q_{S+}(t ;\mu, \sigma) &= Q_T(t + W_P;\mu, \sigma) + { 1 \over W_P} \int_t^{t+W_P} {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) (z-t)~ dz, \\
+&= Q_T(t + W_P;\mu, \sigma) + { 1 \over W_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{W_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{W_P}F_T(t; \mu, \sigma) \Big]
+\end{aligned}
+$$
+
+Where we have used the Log-Normal integration trick of making a further substitution $y = (\ln z - \mu) / \sigma$ and using the shift property of the standard normal distribution function. This gives:
+
+$$
+\begin{aligned}
+\int_t^{t+W_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
+&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\ 
+&= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+W_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
+&= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{W_P}F_T(t; \mu + \sigma^2, \sigma).
+\end{aligned}
+$$
+
+In the special case of the equal event window then the discrete delay distribution is:
+
+$$
+\begin{aligned}
+f_n &= (n+2) F_T(n+2; \mu, \sigma) + n F_T(n; \mu, \sigma) - 2  (n+1) F_T(n+1; \mu, \sigma) \\
+ &+  e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n; \mu + \sigma^2, \sigma) - F_T(n+2; \mu + \sigma^2, \sigma)  \Big).
+\end{aligned}
 $$
 
 
-
-
-```{r} 
-library(DiagrammeR)
-DiagrammeR("
-timeline
-    title Interval censoring and truncation
-    section Primary censoring window
-        Time before primary event: Duration <br> Wp - Cp
-        Time between primary event to end of primary censoring window: Duration <br> Cp
-    section Between censoring windows
-        Time between end of primary censoring window and start of secondary censoring window: Duration <br> T - Cp - Cs
-    section Secondary censoring window
-        Time between start of secondary window to secondary event: Duration <br> Cs
-        Time between secondary event to end of secondary censoring window: Duration <br> Ws - Cs
-    section Observation time
-        Truncation effect: Event only observed if secondary censoring window ends before observation time.")
-```
-
-
-
-we can treat the secondary event time as a random variable that is the sum of two indepent random variables: delay between primary and secondary  and the primary time within.
-
-
-See \@ref(tab:notation)
-
-| Notation | Description                           |
-|----------|---------------------------------------|
-| $P_k$    | Primary event time of $k$th data item |
-| S        |                                       |
-|          |                                       |
-
-: (#tab:notation) Mathematical notation used in this note.
-
-The `primarycensoreddist` package aims to address these challenges by providing tools to manipulate primary censored delay distributions. By accounting for the censoring and truncation present in the data, the package enables more accurate estimation and use of the underlying true distribution.
-
-In this vignette, we will provide a quick introduction to the main functions and concepts in the `primarycensoreddist` package. We will cover the mathematical formulation of the problem, demonstrate the usage of the key functions, and provide signposting on how to learn more.
-
-| Column 1 | Column 2 |
-|----------|----------|
-| A        | B        |
-| C        | D        |
-
-: (#tab:mytable) Caption for my table
-
-See Table \@ref(tab:mytable) for details.
+## References
