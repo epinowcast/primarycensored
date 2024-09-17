@@ -13,7 +13,7 @@ touchstone::benchmark_run(
   pprimarycensoreddist_lnorm = {
     pprimarycensoreddist(q, plnorm, meanlog = 0, sdlog = 1)
   },
-  n = 100
+  n = 50
 )
 
 # Benchmark for pprimarycensoreddist with exponential growth
@@ -30,7 +30,7 @@ touchstone::benchmark_run(
       meanlog = 0, sdlog = 1
     )
   },
-  n = 100
+  n = 50
 )
 
 # Benchmark for dprimarycensoreddist with Weibull distribution
@@ -42,7 +42,7 @@ touchstone::benchmark_run(
   dprimarycensoreddist_weibull = {
     dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0)
   },
-  n = 100
+  n = 50
 )
 
 # Benchmark for dprimarycensoreddist with exponential growth
@@ -59,7 +59,7 @@ touchstone::benchmark_run(
       shape = 1.5, scale = 2.0
     )
   },
-  n = 100
+  n = 50
 )
 
 # Benchmark for fitdistdoublecens with normal distribution
@@ -112,23 +112,19 @@ touchstone::benchmark_run(
       n, rgamma,
       shape = true_shape, rate = true_rate,
       pwindow = pwindow, swindow = swindow, D = D,
-      rprimary = rexpgrowth,
-      rprimary_args = list(r = 0.1)
     )
     delay_data <- data.frame(
       left = samples,
       right = samples + swindow
     )
   },
-  fitdistdoublecens_expgrowth = {
+  fitdistdoublecens_gamma = {
     fitdistdoublecens(
       delay_data,
       distr = "gamma",
       start = list(shape = 1, rate = 1),
       D = D,
-      pwindow = pwindow,
-      dprimary = dexpgrowth,
-      dprimary_args = list(r = 0.1)
+      pwindow = pwindow
     )
   },
   n = 10
