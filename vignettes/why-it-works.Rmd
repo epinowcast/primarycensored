@@ -14,7 +14,7 @@ Time to event analysis, also known as survival analysis, concerns estimating the
 
 In statistical epidemiology, these missing data problems occur frequently in both data analysis and theoretical modelling.
 
-In data analysis, events in epidemiology are commonly reported as occurring in a particular day or week (*interval censoring*). Also, in an emergency situation data analysis can be happening on datasets that are streaming in real time, which introduces biases around which data items have been observed (*truncation*).
+In data analysis, events in epidemiology are commonly reported as occurring on a particular day or week (*interval censoring*). In an emerging outbreak, datasets can be incompletely observed (*right truncation*) and their can be a great deal of uncertainty around the precise timing of events (*interval censoring*).
 
 In theoretical epidemiological modelling, it is often appropriate to model the evolution of an infectious disease as occurring in discrete time, for example in the [`EpiNow2`](https://epiforecasts.io/EpiNow2/) modelling package. This means appropriately discretising continuous distributions, such as the generation interval distribution. In `primarycensoreddist` we treat the discretisation of intrinsically continuous distributions as an *interval censoring* problem.
 
