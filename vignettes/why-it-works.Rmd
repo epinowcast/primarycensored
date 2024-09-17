@@ -1,7 +1,19 @@
 ---
-title: "Interval censoring and truncation in epidemiological delay modelling"
+title: "Why it works"
 format: html
 bibliography: library.bib
+output:
+  bookdown::html_document2:
+    fig_caption: yes
+    code_folding: show
+pkgdown:
+  as_is: true
+csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
+link-citations: true
+vignette: >
+  %\VignetteIndexEntry{Why it works}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
 ---
 
 # Introduction {#introduction}
@@ -19,11 +31,13 @@ In theoretical epidemiological modelling, it is often appropriate to model the e
 
 # Statistical model used in `primarycensoreddist`
 
-As described in [Introduction](#introduction), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point.
+As described in [Introduction](#introduction), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.
 
 ## Survival function of secondary event time after primary event window
 
-A key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring. It is useful to consider the time from the end (right) point of the primary censoring interval to the secondary time as a random variable,
+
+
+It is useful to consider the time from the end (right) point of the primary censoring interval to the secondary time as a random variable,
 
 $$
 S_+ = T - C_P.
