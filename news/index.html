@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistr.html">Fitting distributions using primarycensorseddist and fitdistr</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -41,6 +41,19 @@
       <small>Source: <a href="https://github.com/epinowcast/primarycensoreddist/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.4.0" id="primarycensoreddist-040">primarycensoreddist 0.4.0<a class="anchor" aria-label="anchor" href="#primarycensoreddist-040"></a></h2>
+<p>In this release, we have added a new package <code>stan</code> model for fitting distributions using the <code>cmdstanr</code> package. We have also added a new function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to allow for fitting of double censored and truncated data using the <code>fitdistrplus</code> package. As well as these functionality improvements this release focuses on improving the stability of the <code>stan</code> model and improving the speed of the <code>primary_censored_ode</code> function.</p>
+<div class="section level3">
+<h3 id="package-0-4-0">Package<a class="anchor" aria-label="anchor" href="#package-0-4-0"></a></h3>
+<ul><li>Added a new function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to allow for fitting of double censored and truncated data using the <code>fitdistrplus</code> package.</li>
+<li>Added low level tests for the Stan <code>primary_censored_ode</code> function.</li>
+<li>Rephrased the stan code to use a ODE solver rather than a numerical integration method. This allows for much faster and more stable computation of the likelihood</li>
+<li>Added a <code>CmdStan</code> model for fitting distributions using the <code>cmdstanr</code> package.</li>
+<li>Added helpers functions for working with the new <code>CmdStan</code> model and added an example to the vignette.</li>
+<li>Added parameter recovery tests for the new <code>CmdStan</code> model which tests the <code>primary_censored_dist_lpmf</code> function when used with NUTS based fitting.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.3.0" id="primarycensoreddist-030">primarycensoreddist 0.3.0<a class="anchor" aria-label="anchor" href="#primarycensoreddist-030"></a></h2>
 <p>This release fixes and improves truncation handling across the code base. It also adds a new vignette showcasing how to use the <code>primarycensoreddist</code> and <code>fitdistrplus</code> packages together to fit distributions.</p>

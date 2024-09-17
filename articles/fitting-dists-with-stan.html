@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,7 +51,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistr.html">Fitting distributions using primarycensorseddist and fitdistr</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
   </ul>
 </li>
       </ul>
@@ -124,14 +124,14 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span> <span class="co"># For reproducibility</span></span>
 <span></span>
 <span><span class="co"># Define the true distribution parameters</span></span>
-<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
+<span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">2000</span></span>
 <span><span class="va">meanlog</span> <span class="op">&lt;-</span> <span class="fl">1.5</span></span>
 <span><span class="va">sdlog</span> <span class="op">&lt;-</span> <span class="fl">0.75</span></span>
 <span></span>
 <span><span class="co"># Generate varying pwindow, swindow, and obs_time lengths</span></span>
-<span><span class="va">pwindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">swindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
-<span><span class="va">obs_times</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">pwindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">swindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">2</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
+<span><span class="va">obs_times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">8</span><span class="op">:</span><span class="fl">10</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Function to generate a single sample</span></span>
 <span><span class="va">generate_sample</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">swindow</span>, <span class="va">obs_time</span><span class="op">)</span> <span class="op">{</span></span>
@@ -148,37 +148,39 @@
 <span><span class="co"># Create initial data frame</span></span>
 <span><span class="va">delay_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  pwindow <span class="op">=</span> <span class="va">pwindows</span>,</span>
-<span>  swindow <span class="op">=</span> <span class="va">swindows</span>,</span>
 <span>  obs_time <span class="op">=</span> <span class="va">obs_times</span>,</span>
 <span>  observed_delay <span class="op">=</span> <span class="va">samples</span>,</span>
 <span>  observed_delay_upper <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="va">swindows</span></span>
-<span><span class="op">)</span></span>
+<span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
+<span>    observed_delay_upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">obs_time</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
+<span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">delay_data</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   pwindow swindow obs_time observed_delay observed_delay_upper</span></span>
-<span><span class="co">## 1       1       1       10              2                    3</span></span>
-<span><span class="co">## 2       1       1       10              1                    2</span></span>
-<span><span class="co">## 3       1       1       10              8                    9</span></span>
-<span><span class="co">## 4       1       1       10              6                    7</span></span>
-<span><span class="co">## 5       1       1       10              5                    6</span></span>
-<span><span class="co">## 6       1       1       10              4                    5</span></span></code></pre>
+<pre><code><span><span class="co">##   pwindow obs_time observed_delay observed_delay_upper</span></span>
+<span><span class="co">## 1       1        9              3                    4</span></span>
+<span><span class="co">## 2       1        9              4                    5</span></span>
+<span><span class="co">## 3       1        8              6                    7</span></span>
+<span><span class="co">## 4       2       10              6                    8</span></span>
+<span><span class="co">## 5       1       10              8                   10</span></span>
+<span><span class="co">## 6       2        8              4                    5</span></span></code></pre>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Aggregate to unique combinations and count occurrences</span></span>
 <span><span class="co"># Aggregate to unique combinations and count occurrences</span></span>
 <span><span class="va">delay_counts</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/summarise.html" class="external-link">summarise</a></span><span class="op">(</span></span>
 <span>    n <span class="op">=</span> <span class="fu"><a href="https://dplyr.tidyverse.org/reference/context.html" class="external-link">n</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>    .by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">swindow</span>, <span class="va">obs_time</span>, <span class="va">observed_delay</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
+<span>    .by <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">obs_time</span>, <span class="va">observed_delay</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">delay_counts</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   pwindow swindow obs_time observed_delay observed_delay_upper   n</span></span>
-<span><span class="co">## 1       1       1       10              2                    3 160</span></span>
-<span><span class="co">## 2       1       1       10              1                    2  96</span></span>
-<span><span class="co">## 3       1       1       10              8                    9  59</span></span>
-<span><span class="co">## 4       1       1       10              6                    7 113</span></span>
-<span><span class="co">## 5       1       1       10              5                    6 119</span></span>
-<span><span class="co">## 6       1       1       10              4                    5 150</span></span></code></pre>
+<pre><code><span><span class="co">##   pwindow obs_time observed_delay observed_delay_upper  n</span></span>
+<span><span class="co">## 1       1        9              3                    4 37</span></span>
+<span><span class="co">## 2       1        9              4                    5 31</span></span>
+<span><span class="co">## 3       1        8              6                    7 16</span></span>
+<span><span class="co">## 4       2       10              6                    8 26</span></span>
+<span><span class="co">## 5       1       10              8                   10 22</span></span>
+<span><span class="co">## 6       2        8              4                    5 43</span></span></code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compare the samples with and without secondary censoring to the true</span></span>
 <span><span class="co"># distribution</span></span>
@@ -273,14 +275,14 @@
 <span><span class="op">)</span></span>
 <span><span class="va">naive_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">## Warning: NAs introduced by coercion</span></span></code></pre>
-<pre><code><span><span class="co">##  variable      mean    median   sd  mad        q5       q95 rhat ess_bulk</span></span>
-<span><span class="co">##     lp__  -28480.45 -28480.10 1.00 0.74 -28482.40 -28479.50 1.00     1999</span></span>
-<span><span class="co">##     mu        -0.10     -0.10 0.05 0.04     -0.18     -0.02 1.00     2691</span></span>
-<span><span class="co">##     sigma      4.61      4.61 0.03 0.03      4.56      4.67 1.00     3820</span></span>
+<pre><code><span><span class="co">##  variable       mean     median   sd  mad         q5        q95 rhat ess_bulk</span></span>
+<span><span class="co">##     lp__  -381721.39 -381721.00 1.04 0.00 -381723.00 -381720.00 1.00     1641</span></span>
+<span><span class="co">##     mu         -0.60      -0.60 0.01 0.01      -0.62      -0.58 1.00     1331</span></span>
+<span><span class="co">##     sigma       5.10       5.10 0.01 0.01       5.09       5.12 1.00     4340</span></span>
 <span><span class="co">##  ess_tail</span></span>
 <span><span class="co">##        NA</span></span>
-<span><span class="co">##      2310</span></span>
-<span><span class="co">##      2869</span></span></code></pre>
+<span><span class="co">##      1521</span></span>
+<span><span class="co">##      2759</span></span></code></pre>
 <p>We see that the model has converged and the diagnostics look good. However, just from the model posterior summary we see that we might not be very happy with the fit. <code>mu</code> is smaller than the target 1.5 and <code>sigma</code> is larger than the target 0.75.</p>
 </div>
 <div class="section level2" number="4">
@@ -350,10 +352,51 @@
 <span><span class="op">)</span></span>
 <span><span class="va">primarycensoreddist_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##  variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##     lp__  -2134.45 -2134.16 0.97 0.71 -2136.44 -2133.50 1.00     1741     2206</span></span>
-<span><span class="co">##     mu        1.53     1.53 0.05 0.05     1.46     1.61 1.00     1386     1540</span></span>
-<span><span class="co">##     sigma     0.77     0.77 0.04 0.04     0.71     0.83 1.00     1373     1786</span></span></code></pre>
+<span><span class="co">##     lp__  -3422.72 -3422.43 1.00 0.71 -3424.51 -3421.79 1.00     1379     1857</span></span>
+<span><span class="co">##     mu        1.55     1.54 0.04 0.04     1.47     1.62 1.00     1133     1313</span></span>
+<span><span class="co">##     sigma     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1107     1212</span></span></code></pre>
 <p>We see that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters.</p>
+</div>
+<div class="section level2" number="5">
+<h2 id="using-pcd_cmdstan_model-for-a-more-efficient-approach">
+<span class="header-section-number">5</span> Using <code>pcd_cmdstan_model()</code> for a more efficient approach<a class="anchor" aria-label="anchor" href="#using-pcd_cmdstan_model-for-a-more-efficient-approach"></a>
+</h2>
+<p>While the previous approach works well, <code>primarycensoreddist</code> provides a more efficient and convenient model which we can compile using <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code>. This approach not only saves time in model specification but also leverages within chain parallelisation to make best use of your machine’s resources. Alongside this we also supply a convenience function <code><a href="../reference/pcd_as_cmdstan_data.html">pcd_as_cmdstan_data()</a></code> to convert our data into a format that can be used to fit the model and supply priors, bounds, and other settings.</p>
+<p>Let’s use this function to fit our data:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># Compile the model with multithreading support</span></span>
+<span><span class="va">pcd_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model</a></span><span class="op">(</span>cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>stan_threads <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pcd_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pcd_as_cmdstan_data.html">pcd_as_cmdstan_data</a></span><span class="op">(</span></span>
+<span>  <span class="va">delay_counts</span>,</span>
+<span>  delay <span class="op">=</span> <span class="st">"observed_delay"</span>,</span>
+<span>  delay_upper <span class="op">=</span> <span class="st">"observed_delay_upper"</span>,</span>
+<span>  relative_obs_time <span class="op">=</span> <span class="st">"obs_time"</span>,</span>
+<span>  dist_id <span class="op">=</span> <span class="fl">1</span>, <span class="co"># Lognormal distribution</span></span>
+<span>  primary_dist_id <span class="op">=</span> <span class="fl">1</span>, <span class="co"># Uniform primary distribution</span></span>
+<span>  param_bounds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="cn">Inf</span>, <span class="fl">0</span><span class="op">)</span>, upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="cn">Inf</span>, <span class="cn">Inf</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  primary_param_bounds <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>lower <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>location <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span>, scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">0.5</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  primary_priors <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>location <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, scale <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>  use_reduce_sum <span class="op">=</span> <span class="cn">TRUE</span> <span class="co"># use within chain parallelisation</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pcd_fit</span> <span class="op">&lt;-</span> <span class="va">pcd_model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">pcd_data</span>,</span>
+<span>  chains <span class="op">=</span> <span class="fl">4</span>,</span>
+<span>  parallel_chains <span class="op">=</span> <span class="fl">2</span>, <span class="co"># Run 2 chains in parallel</span></span>
+<span>  threads_per_chain <span class="op">=</span> <span class="fl">2</span>, <span class="co"># Use 2 cores per chain</span></span>
+<span>  refresh <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span>, <span class="fl">50</span>, <span class="fl">0</span><span class="op">)</span>,</span>
+<span>  show_messages <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">pcd_fit</span></span></code></pre></div>
+<pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
+<span><span class="co">##  lp__      -3422.78 -3422.46 1.03 0.71 -3424.85 -3421.80 1.00     1290     1686</span></span>
+<span><span class="co">##  params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00     1043     1128</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1047     1204</span></span></code></pre>
+<p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example. We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
+<p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
