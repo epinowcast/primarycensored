@@ -29,7 +29,7 @@
 #' model <- pcd_cmdstan_model()
 #' fit <- model$sample(data = stan_data)
 #' }
-pcd_cmdstan_model <- function(
+pcd_cmdstan_model <- function( 
     include_paths = primarycensoreddist::pcd_stan_path(), ...) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
     stop("Package 'cmdstanr' is required but not installed for this function.")
