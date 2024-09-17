@@ -147,6 +147,7 @@ Q_{S_+}(t) &= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \\
 &= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].
 \end{aligned} (\#eq:unifprim)
 $$
+Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref{eq:unifprim} can be solved
 
 We now consider some specific delay distributions.
 
