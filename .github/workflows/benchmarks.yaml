@@ -67,10 +67,10 @@ jobs:
           cmdstan-version: 'latest'
           num-cores: 2
 
-      - uses: lorenzwalthert/touchstone/actions/receive@main
+      - uses: seabbs/touchstone/actions/receive@main
         with:
           cache-version: 1
-          touchstone_ref: '@6cbc622'
+          touchstone_ref: '@f5c859e'
           benchmarking_repo: ${{ matrix.config.benchmarking_repo }}
           benchmarking_ref: ${{ matrix.config.benchmarking_ref }}
           benchmarking_path: ${{ matrix.config.benchmarking_path }}
