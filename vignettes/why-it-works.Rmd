@@ -9,7 +9,7 @@ bibliography: library.bib
 
 Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensoreddist` we focus on two particular missing data problems:
 
--   **Interval censoring**. The primary (start) time and/or the secondary (end) time of the delay is unobserved but known to be within an interval.
+-   **Interval censoring**. The primary (start) time and/or the secondary (end) time of the delay are unobserved but both are known to be within intervals.
 -   **Truncation**. Delay data items are only contained in the data set conditional on aspect of the data point, for example if the secondary event is the observation time which add the data item to the data set.
 
 In statistical epidemiology, these missing data problems occur frequently in both data analysis and theoretical modelling.
