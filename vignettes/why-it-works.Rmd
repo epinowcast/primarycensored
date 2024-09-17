@@ -31,9 +31,15 @@ In theoretical epidemiological modelling, it is often appropriate to model the e
 
 # Statistical model used in `primarycensoreddist`
 
-As described in [Introduction](#introduction), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.
+As described in [Getting Started with `primarycensoreddist`](primarycensoreddist.html), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.
+
+The target for inference is the distribution of the delay time between the primary and secondary events. We assume that the delay time is a random variable $T = S - P$ with distribution function $F_T(t)$ and density function $f_T(t)$. The primary event time is a random variable $P$ with distribution function $F_P(t)$ and density function $f_P(t)$. The secondary event time is a random variable $S$, but in this treatment we construct the secondary event time as $S = P + T$ and therefore the marginal distribution of $S$ is not considered.
+
+The *censoring window* for each event is the interval within which each event is known to have occurred, respectively, $P \in [t_P, t_P + w_P]$ and $S \in [t_S, t_S + w_S]$. The lengths of the censoring windowes are $w_P$ and $w_S$ respectively. The precise event times within their windows are unobserved. We measure the censored delay time between the primary and secondary event windows as $t_P + w_P - (t_S + w_S)$.
+
 
 ## Survival function of secondary event time after primary event window
+
 
 
 
@@ -48,15 +54,15 @@ Where $T$ is the delay distribution of interest and $C_P$ is interval between th
 With non-informative censoring, it is possible to derive the upper distribution function of $S_+$, or _survival function_ of $S_+$, from the distribution of $T$ and the distribution of $C_P$.
 
 $$
-Q_{S_+}(t) = \mathbb{E}_{C_P} \Big[Q_T(t + C_P)\Big] = \int_0^{W_P} Q_T(t + p) c(p) dp.
+Q_{S_+}(t) = \mathbb{E}_{C_P} \Big[Q_T(t + C_P)\Big] = \int_0^{w_P} Q_T(t + p) c(p) dp.
 $$
 
 Using integration by parts gives:
 $$
-Q_{S_+}(t) = Q_T(t + W_P) + \int_0^{W_P} f_T(t+p) C(p) dp.
+Q_{S_+}(t) = Q_T(t + w_P) + \int_0^{w_P} f_T(t+p) C(p) dp.
 $$
 
-Where $c$ is the density function of delay from the primary event to the end (right) point of the primary censoring window with distribution function $C$, $Q_T$ is the survival function of the actual delay distribution of interest and $W_P$ is the length of the primary censoring window.
+Where $c$ is the density function of delay from the primary event to the end (right) point of the primary censoring window with distribution function $C$, $Q_T$ is the survival function of the actual delay distribution of interest and $w_P$ is the length of the primary censoring window.
 
 ## Probability mass of secondary event time within a secondary censoring window
 
@@ -70,7 +76,7 @@ Which can in general be calculated by numerical quadrature.
 
 Note that the secondary event time can also occur within the primary censoring window. This happens with probability,
 $$
-Q_{S_+}(-W_P) - Q_{S_+}(0) = 1 - Q_T(W_P) - \int_0^{W_P} f_T(p) C(p) dp = Pr(T< C).
+Q_{S_+}(-w_P) - Q_{S_+}(0) = 1 - Q_T(w_P) - \int_0^{w_P} f_T(p) C(p) dp = Pr(T< C).
 $$
 
 Using a difference operator defined as:
@@ -79,7 +85,7 @@ $$
 \Delta_{W}f(t) = f(t + W) - f(t).
 $$
 
-The common case where every primary and secondary event window is a single time unit, $W_P = W_S = 1$, simplifies the above expressions to:
+The common case where every primary and secondary event window is a single time unit, $w_P = W_S = 1$, simplifies the above expressions to:
 
 $$
 \begin{aligned}
@@ -91,16 +97,16 @@ Which is a discrete probability mass function of the secondary event time relati
 
 ## Analytic solutions for exponentially tilted primary event times
 
-In epidemiological analysis, it is common for primary events to be arriving at exponentially increasing or decreasing rates, for example, incidence of new infections in a growing epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay. If we assume a reference uniform distribution within a primary censoring window $[k, k + W_P)$ then the distribution of the primary event time within the censoring window is the exponential tilted uniform distribution:
+In epidemiological analysis, it is common for primary events to be arriving at exponentially increasing or decreasing rates, for example, incidence of new infections in a growing epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay. If we assume a reference uniform distribution within a primary censoring window $[k, k + w_P)$ then the distribution of the primary event time within the censoring window is the exponential tilted uniform distribution:
 
 $$
-f_P(t) \propto \exp(r t) \mathbb{1}_{[k, k + W_P]}(t).
+f_P(t) \propto \exp(r t) \mathbb{1}_{[k, k + w_P]}(t).
 $$
 
 In this case, the distribution function for $C_P$, that is the length of time left in the primary censor window _after_ the primary event time, is given by:
 
 $$
-C(p) = {  1 - \exp(-r p) \over 1 - \exp(-r W_P)}, \qquad p \in [0, W_P].
+C(p) = {  1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p \in [0, w_P].
 $$
 
 We consider two situations: 1) uniform primary event time ($r=0$) and 2) non-uniform primary event time ($r\neq0$).
@@ -110,7 +116,7 @@ We consider two situations: 1) uniform primary event time ($r=0$) and 2) non-uni
 In this case, the primary event time is uniformly distributed within the primary censoring window. The survival function of $S_+$ is then:
 
 $$
-Q_{S_+}(t) = Q_T(t + W_P) + { 1 \over W_P} \int_0^{W_P} f_T(t+p) p~ dp.
+Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
 $$
 This is analytically solvable whenever the upper distribution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
 
@@ -118,8 +124,8 @@ In each case it is easier to change the integration variable:
 
 $$
 \begin{aligned}
-Q_{S_+}(t) &= Q_T(t + W_P) + { 1 \over W_P} \int_t^{t+W_P} f_T(z) (z-t)~ dz \\
-&= Q_T(t + W_P) + { 1 \over W_P} \Big[  \int_t^{t+W_P} f_T(z) z~ dz - t \Delta_{W_P}F_T(t) \Big].
+Q_{S_+}(t) &= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \\
+&= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].
 \end{aligned}
 $$
 
@@ -136,8 +142,8 @@ This gives a solution to the survival function of $S_+$ in terms of analytically
 
 $$
 \begin{aligned}
-Q_{S_+}(t; k, \theta) &= Q_T(t + W_P; k, \theta) + { 1 \over W_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+W_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
-&= Q_T(t + W_P; k, \theta) + { 1 \over W_P} \big[ k \theta \Delta_{W_P}F_T(t; k+1, \theta) - t \Delta_{W_P}F_T(t; k, \theta) \big].
+Q_{S_+}(t; k, \theta) &= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
+&= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
 \end{aligned}
 $$
 
@@ -175,8 +181,8 @@ This gives a solution to the survival function of $S_+$ in terms of analytically
 
 $$
 \begin{aligned}
-Q_{S+}(t ;\mu, \sigma) &= Q_T(t + W_P;\mu, \sigma) + { 1 \over W_P} \int_t^{t+W_P} {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) (z-t)~ dz, \\
-&= Q_T(t + W_P;\mu, \sigma) + { 1 \over W_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{W_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{W_P}F_T(t; \mu, \sigma) \Big]
+Q_{S+}(t ;\mu, \sigma) &= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \int_t^{t+w_P} {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) (z-t)~ dz, \\
+&= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 \end{aligned}
 $$
 
@@ -184,10 +190,10 @@ Where we have used the Log-Normal integration trick of making a further substitu
 
 $$
 \begin{aligned}
-\int_t^{t+W_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
-&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+W_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
-&= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+W_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
-&= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{W_P}F_T(t; \mu + \sigma^2, \sigma).
+\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
+&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
+&= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
+&= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
 \end{aligned}
 $$
 
