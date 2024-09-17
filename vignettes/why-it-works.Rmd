@@ -1,6 +1,5 @@
 ---
 title: "Interval censoring and truncation in epidemiological delay modelling"
-author: "Samuel Brand"
 format: html
 bibliography: library.bib
 ---
