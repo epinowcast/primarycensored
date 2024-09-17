@@ -61,7 +61,9 @@ jobs:
           use-public-rspm: true
           extra-repositories: 'https://stan-dev.r-universe.dev'
 
-      - uses: r-lib/actions/setup-r-dependencies@v2
+     - name: Install cmdstanr
+        run: install.packages("cmdstanr")
+        shell: Rscript {0}
 
       - name: Install cmdstan
         uses: epinowcast/actions/install-cmdstan@v1
