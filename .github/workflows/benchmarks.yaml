@@ -61,7 +61,7 @@ jobs:
           use-public-rspm: true
           extra-repositories: 'https://stan-dev.r-universe.dev'
 
-     - name: Install cmdstanr
+      - name: Install cmdstanr
         run: install.packages("cmdstanr")
         shell: Rscript {0}
 
