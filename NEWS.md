@@ -1,4 +1,6 @@
-# primarycensoreddist 0.3.0.1000
+# primarycensoreddist 0.4.0
+
+In this release we have added a new package `stan` model for fitting distributions using the `cmdstanr` package. We have also added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package. As well as these functionality improvements this release focusses on improving the stability of the `CmdStan` model and improving the speed of the `primary_censored_ode` function.
 
 ## Package
 
