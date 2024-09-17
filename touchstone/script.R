@@ -8,58 +8,58 @@ touchstone::branch_install()
 touchstone::benchmark_run(
   expr_before_benchmark = {
     library(primarycensoreddist)
-    q <- seq(0, 10, by = 0.1)
+    q <- seq(0, 10, by = 0.01)
   },
   pprimarycensoreddist_lnorm = {
-    pprimarycensoreddist(q, plnorm, meanlog = 0, sdlog = 1)
+    pprimarycensoreddist(q, plnorm, meanlog = 0, sdlog = 1, D = 12)
   },
-  n = 50
+  n = 20
 )
 
 # Benchmark for pprimarycensoreddist with exponential growth
 touchstone::benchmark_run(
   expr_before_benchmark = {
     library(primarycensoreddist)
-    q <- seq(0, 10, by = 0.1)
+    q <- seq(0, 10, by = 0.01)
   },
   pprimarycensoreddist_expgrowth = {
     pprimarycensoreddist(
       q, plnorm,
       dprimary = dexpgrowth,
       dprimary_args = list(r = 0.2),
-      meanlog = 0, sdlog = 1
+      meanlog = 0, sdlog = 1, D = 12
     )
   },
-  n = 50
+  n = 20
 )
 
 # Benchmark for dprimarycensoreddist with Weibull distribution
 touchstone::benchmark_run(
   expr_before_benchmark = {
     library(primarycensoreddist)
-    x <- seq(0, 10, by = 0.1)
+    x <- seq(0, 10, by = 1)
   },
   dprimarycensoreddist_weibull = {
-    dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0)
+    dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0, D = 12)
   },
-  n = 50
+  n = 20
 )
 
 # Benchmark for dprimarycensoreddist with exponential growth
 touchstone::benchmark_run(
   expr_before_benchmark = {
     library(primarycensoreddist)
-    x <- seq(0, 10, by = 0.1)
+    x <- seq(0, 10, by = 1)
   },
   dprimarycensoreddist_expgrowth = {
     dprimarycensoreddist(
       x, pweibull,
       dprimary = dexpgrowth,
       dprimary_args = list(r = 0.2),
-      shape = 1.5, scale = 2.0
+      shape = 1.5, scale = 2.0, D = 12
     )
   },
-  n = 50
+  n = 20
 )
 
 # Benchmark for fitdistdoublecens with normal distribution
