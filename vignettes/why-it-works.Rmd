@@ -262,7 +262,7 @@ By substituting \@ref{eq:lognormpartexp} into \@ref{eq:disccensprob} we get the 
 $$
 \begin{aligned}
 f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) - e^{\mu + \frac{1}{2} \sigma^2} \Delta_1^{(2)}F_T(n-1;\mu + \sigma^2, \sigma) \\
- &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) + e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n; \mu + \sigma^2, \sigma) - F_T(n+2; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
+ &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) + e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n; \mu + \sigma^2, \sigma) - F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n-1; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
 \end{aligned}
 $$
 
