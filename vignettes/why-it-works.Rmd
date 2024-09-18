@@ -101,7 +101,7 @@ Equation \@ref(eq:survivalfunc) is the key equation in this note and is used to 
 
 ### Probability of secondary event time within a secondary censoring window
 
-Having constructed the survival function of $S_+$ with equation \@ref(eq:survivalfunc), using numerical quadrature or in some other way, we can calculate the probability mass of a secondary event time falling within a observed secondary censoring window of length $w_S$ that begins at time $n$ _after_ the primary censoring window. This gives the censored delay time probability [by integrating over censored values](https://mc-stan.org/docs/2_18/stan-users-guide/censored-data.html):
+Having constructed the survival function of $S_+$ with equation \@ref(eq:survivalfunc), using numerical quadrature or in some other way, we can calculate the probability mass of a secondary event time falling within a observed secondary censoring window of length $w_S$ that begins at time $n$ _after_ the primary censoring window. This gives the censored delay time probability [by integrating over censored values](https://mc-stan.org/docs/stan-users-guide/truncation-censoring.html#integrating-out-censored-values):
 
 $$
 Pr(S_+ \in [n, n + w_S)) = Q_{S_+}(n) - Q_{S_+}(n + w_S). (\#eq:seccensorprob)
@@ -162,7 +162,7 @@ $$
 
 **General partial expectation**
 
-Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref{eq:unifprim} can be solved so long as the _partial expectation_
+Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref(eq:unifprim) can be solved so long as the _partial expectation_
 
 $$
 \int_t^{t+w_P} f_T(z) z~ dz (\#eq:partexp)
@@ -172,7 +172,7 @@ can be reduced to an analytic expression.
 
 **General Discrete censored delay distribution**
 
-First we note that equation \@ref{eq:disccensprob} can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref{eq:unifprim} to give the discrete censored delay distribution for uniformly distributed primary event times:
+First we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
 
 $$
 f_n = \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] = (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big]. (\#eq:disccensunifprim)
@@ -211,7 +211,7 @@ $$
 
 **Survival function of $S_{+}$ for Gamma distribution**
 
-By substituting equation \@ref{eq:gammapartexp} into equation \@ref{eq:disccensunifprim} we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for both the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -222,7 +222,7 @@ $$
 
 **Gamma discrete censored delay distribution**
 
-By substituting \@ref{eq:survgammaunifprim} into \@ref{eq:disccensprob} we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
 $$
 \begin{aligned}
 f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1, \theta)\\
@@ -261,7 +261,7 @@ $$
 
 **Survival function of $S_{+}$ for Log-Normal distribution**
 
-By substituting equation \@ref{eq:lognormpartexp} into equation \@ref{eq:disccensunifprim} we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for both the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -272,7 +272,7 @@ $$
 
 **Log-Normal discrete censored delay distribution**
 
-By substituting \@ref{eq:lognormpartexp} into \@ref{eq:disccensprob} we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:lognormpartex) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
 
 $$
 \begin{aligned}
