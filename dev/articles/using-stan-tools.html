@@ -53,6 +53,7 @@
 <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
   </ul>
 </li>
       </ul>
@@ -174,7 +175,7 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpLs7dA5/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpCPQbON/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
@@ -266,11 +267,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
 </div>
 
     </footer>
