@@ -15,7 +15,6 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-
 # Introduction {#introduction}
 
 Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensoreddist` we focus on two particular missing data problems:
@@ -63,12 +62,14 @@ Where $T$ is the delay distribution of interest and $C_P = (t_P + w_P) - P$ is i
 With non-informative censoring, it is possible to derive the upper distribution function of $S_+$, or [_survival function_](https://en.wikipedia.org/wiki/Survival_function) of $S_+$, from the distribution of $T$ and the distribution of $C_P$.
 
 $$
-\begin{aligned}
+\begin{equation}
+\begin{split}
 Q_{S_+}(t) &= Pr(S_+ > t) \\
 &= Pr(T > C_P + t) \\
 &= \mathbb{E}_{C_P} \Big[Q_T(t + C_P)\Big] \\
 &= \int_0^{w_P} Q_T(t + p) f_{C_P}(p) dp.
-\end{aligned}
+\end{split}
+\end{equation}
 $$
 
 Using [integration by parts](https://en.wikipedia.org/wiki/Integration_by_parts) gives:
@@ -102,10 +103,10 @@ A common situation is when every primary and secondary event window is a single 
 In this situation, we are interested in the probability of censored delays $T_c$ in units of the event window. This simplifies equation \@ref(eq:seccensorprob) to:
 
 $$
-\begin{aligned}
-f_n = Pr(T_c = n) = Pr(S_+ \in [n - 1, n)) &= Q_{S_+}(n-1) - Q_{S_+}(n ) \\
+\begin{align}
+f_n = Pr(T_c = n) = Pr(S_+ \in [n - 1, n)) &= Q_{S_+}(n-1) - Q_{S_+}(n ) \notag \\
 & =  F_T(n+1) - F_T(n) + \int_0^1 [f_T(n+p -1) - f_T(n+p)]  F_{C_P}(p) dp,\qquad n = 0, 1, \dots.
-\end{aligned} (\#eq:disccensprob)
+\end{align} (\#eq:disccensprob)
 $$
 Which is a discrete probability mass function of the secondary event time relative to the primary event time in units of the event window.
 
@@ -142,12 +143,12 @@ This is analytically solvable whenever the upper distribution function of $T$ is
 In each case considered below it is easier to change the integration variable:
 
 $$
-\begin{aligned}
-Q_{S_+}(t) &= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \\
-&= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].
-\end{aligned} (\#eq:unifprim)
+\begin{align}
+Q_{S_+}(t) &= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \notag \\
+&= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].(\#eq:unifprim)
+\end{align}
 $$
-Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref{eq:unifprim} can be solved
+Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref{eq:unifprim} can be solved so long as the partial expectation $\int_t^{t+w_P} f_T(z) z~ dz$ can be reduced to an analytic expression.
 
 We now consider some specific delay distributions.
 
@@ -163,11 +164,25 @@ Where $\Gamma$ is the Gamma function.
 The Gamma distribution has the distribution function:
 
 $$
-F_T(z;k, \theta) = {\gamma(k, z/\theta) \over \Gamma(k)}.
+\begin{aligned}
+F_T(z;k, \theta) &= {\gamma(k, z/\theta) \over \Gamma(k)}, \qquad z\geq 0,
+F_T(z;k, \theta) &= 0, \qquad z < 0.
+\end{aligned}
 $$
 Where $\gamma$ is the lower incomplete gamma function.
 
-By substituting the Gamma distribution into equation \@ref{eq:unifprim} we can solve for both the survival function of $S_+$ and the discrete delay distribution $f_n$ in terms of analytically available functions:
+**Partial expectation**
+
+$$
+\begin{aligned}
+\int_t^{t+w_P} f_T(z) z~ dz &= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P}z z^{k-1} \exp(-z/\theta)~dz \\
+&=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P}z^{k} \exp(-z/\theta)~dz\\
+&= k\theta \Delta_{w_P} F_T(t; k + 1, \theta).
+\end{aligned} (\#eq:gammapartexp)
+$$
+**Survival function of $S_{+}$**
+
+By substituting equation \@ref{eq:gammapartexp} into equation \@ref{eq:unifprim} we can solve for both the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -176,17 +191,13 @@ Q_{S_+}(t; k, \theta) &= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \left( {1 \ove
 \end{aligned} (\#eq:survgammaunifprim)
 $$
 
-Where we have used the standard Gamma integration trick of rewriting
-$$
-{z z^{k-1} \over \Gamma(k) \theta^k} = {k \theta z^k \over\Gamma(k+1) \theta^{k+1} }.
-$$
+**Discrete censored delay distribution**
 
-In the special case of the equal event window then the discrete delay distribution is:
-
+By substituting \@ref{eq:survgammaunifprim} into \@ref{eq:disccensprob} we get the discrete censored delay distribution in terms of analytically available functions:
 $$
 \begin{aligned}
-f_n &= (n+2) F_T(n+2; k, \theta) + n F_T(n; k, \theta) - 2  (n+1) F_T(n+1; k, \theta) \\
- &+  k \theta \Big( 2 F_T(n+1; k+1, \theta) - F_T(n; k+1, \theta) - F_T(n+2; k+1,\theta)  \Big).
+f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) \\
+ &+  k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1; k+1, \theta) - F_T(n+1; k+1,\theta)  \Big) \qquad n = 0, 1, \dots.
 \end{aligned}
 $$
 
