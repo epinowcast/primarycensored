@@ -15,7 +15,20 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
-# Introduction {#introduction}
+
+# Introduction
+
+## What are we going to do in this Vignette
+
+In this vignette, we'll explain the underlying statistical model that the `primarycensoreddist` package. We'll cover the following key points:
+
+1. Introduction to the censored data problems in time to event analysis.
+2. Discuss the relevant issues from censoring in epidemiological data.
+3. Introduce the statistical model used in `primarycensoreddist`.
+4. Distributions where we can derive the censored delay distribution analytically.
+
+
+# Censoring and right truncation problems in time to event analysis
 
 Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensoreddist` we focus on two particular missing data problems:
 
