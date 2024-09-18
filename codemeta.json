@@ -22,6 +22,13 @@
       "familyName": "Abbott",
       "email": "contact@samabbott.co.uk",
       "@id": "https://orcid.org/0000-0001-8057-8037"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Sam",
+      "familyName": "Brand",
+      "email": "usi1@cdc.gov",
+      "@id": "https://orcid.org/0000-0003-0645-5367"
     }
   ],
   "contributor": [
@@ -167,7 +174,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "343.237KB",
+  "fileSize": "361.522KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -179,6 +186,13 @@
           "familyName": "Abbott",
           "email": "contact@samabbott.co.uk",
           "@id": "https://orcid.org/0000-0001-8057-8037"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Sam",
+          "familyName": "Brand",
+          "email": "usi1@cdc.gov",
+          "@id": "https://orcid.org/0000-0003-0645-5367"
         }
       ],
       "name": "primarycensoreddist: Primary Event Censored Distributions in R and Stan",
