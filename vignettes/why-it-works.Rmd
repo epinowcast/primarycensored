@@ -76,6 +76,7 @@ Using [integration by parts](https://en.wikipedia.org/wiki/Integration_by_parts)
 $$
 Q_{S_+}(t) = Q_T(t + w_P) + \int_0^{w_P} f_T(t+p) F_{C_P}(p) dp. (\#eq:survivalfunc)
 $$
+
 Where we have used that $Q^{'}_{T} = - f_T$, $Q_T$ is the survival function of the actual delay distribution of interest and $w_P$ is the length of the primary censoring window.
 
 Equation \@ref(eq:survivalfunc) is the key equation in this note and is used to derive the distribution of the censored delay time $T_c$. It has the interpretation that the probability that the secondary event time is greater than $t$ after the end of the primary censoring window is the sum of two disjoint event probabilities:
@@ -100,14 +101,12 @@ $$
 
 A common situation is when every primary and secondary event window is a single time unit, $w_P = w_S = 1$, and data arrives in non-overlapping intervals. For example, in the context of infectious disease modelling, we might have a data set of symptom onsets (primary event) and time of seeking health care (secondary event) which are both reported in days.
 
-In this situation, we are interested in the probability of censored delays $T_c$ in units of the event window. This simplifies equation \@ref(eq:seccensorprob) to:
+In this situation, we are interested in the probability of censored delays $T_c$ in units of the event window. In this case equation \@ref(eq:seccensorprob) is:
 
 $$
-\begin{align}
-f_n = Pr(T_c = n) = Pr(S_+ \in [n - 1, n)) &= Q_{S_+}(n-1) - Q_{S_+}(n ) \notag \\
-& =  F_T(n+1) - F_T(n) + \int_0^1 [f_T(n+p -1) - f_T(n+p)]  F_{C_P}(p) dp,\qquad n = 0, 1, \dots.
-\end{align} (\#eq:disccensprob)
+f_n = Pr(T_c = n) = Pr(S_+ \in [n - 1, n)) = Q_{S_+}(n-1) - Q_{S_+}(n )\qquad n = 0, 1, \dots. (\#eq:disccensprob)
 $$
+
 Which is a discrete probability mass function of the secondary event time relative to the primary event time in units of the event window.
 
 ## Analytic solutions for exponentially tilted primary event times
@@ -125,7 +124,7 @@ F_{C_P}(p; r) = {  1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p \in [0, w_P]
 $$
 Note that taking the limit $\lim_r \rightarrow 0$ in equation \@ref(eq:fcp) gives the uniform distribution function $F_{C_P}(p, 0) = p / w_P$.
 
-In the following it is convenient to use a difference operator defined as:
+In the following it is convenient to use a (linear) difference operator defined as:
 
 $$
 \Delta_{w}f(t) = f(t + w) - f(t).
@@ -133,7 +132,7 @@ $$
 
 ### Uniform primary event time ($r=0$)
 
-Applying a uniform primary event time distribution to equation \@ref{eq:survivalfunc} gives:
+Applying a uniform primary event time distribution to equation \@ref(eq:survivalfunc) gives:
 
 $$
 Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
@@ -143,12 +142,26 @@ This is analytically solvable whenever the upper distribution function of $T$ is
 In each case considered below it is easier to change the integration variable:
 
 $$
-\begin{align}
-Q_{S_+}(t) &= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \notag \\
-&= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].(\#eq:unifprim)
-\end{align}
+Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz = Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big]. (\#eq:unifprim)
 $$
-Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref{eq:unifprim} can be solved so long as the partial expectation $\int_t^{t+w_P} f_T(z) z~ dz$ can be reduced to an analytic expression.
+
+**General partial expectation**
+
+Note that for any distribution with an analytically available distribution function $F_T$ equation \@ref{eq:unifprim} can be solved so long as the _partial expectation_
+
+$$
+\int_t^{t+w_P} f_T(z) z~ dz (\#eq:partexp)
+$$
+
+can be reduced to an analytic expression.
+
+**General Discrete censored delay distribution**
+
+First we note that equation \@ref{eq:disccensprob} can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref{eq:unifprim} to give the discrete censored delay distribution for uniformly distributed primary event times:
+
+$$
+f_n = \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] = (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big]. (\#eq:disccensunifprim)
+$$
 
 We now consider some specific delay distributions.
 
@@ -171,7 +184,7 @@ F_T(z;k, \theta) &= 0, \qquad z < 0.
 $$
 Where $\gamma$ is the lower incomplete gamma function.
 
-**Partial expectation**
+**Gamma partial expectation**
 
 $$
 \begin{aligned}
@@ -180,9 +193,10 @@ $$
 &= k\theta \Delta_{w_P} F_T(t; k + 1, \theta).
 \end{aligned} (\#eq:gammapartexp)
 $$
-**Survival function of $S_{+}$**
 
-By substituting equation \@ref{eq:gammapartexp} into equation \@ref{eq:unifprim} we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+**Survival function of $S_{+}$ for Gamma distribution**
+
+By substituting equation \@ref{eq:gammapartexp} into equation \@ref{eq:disccensunifprim} we can solve for both the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -191,13 +205,13 @@ Q_{S_+}(t; k, \theta) &= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \left( {1 \ove
 \end{aligned} (\#eq:survgammaunifprim)
 $$
 
-**Discrete censored delay distribution**
+**Gamma discrete censored delay distribution**
 
 By substituting \@ref{eq:survgammaunifprim} into \@ref{eq:disccensprob} we get the discrete censored delay distribution in terms of analytically available functions:
 $$
 \begin{aligned}
-f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) \\
- &+  k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1; k+1, \theta) - F_T(n+1; k+1,\theta)  \Big) \qquad n = 0, 1, \dots.
+f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1, \theta)\\
+ &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) + k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1; k+1, \theta) - F_T(n+1; k+1,\theta)  \Big) \qquad n = 0, 1, \dots.
 \end{aligned}
 $$
 
@@ -217,7 +231,22 @@ F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
 $$
 Where $\Phi$ is the standard normal distribution function.
 
-This gives a solution to the survival function of $S_+$ in terms of analytically available functions:
+**Log-Normal partial expectation**
+
+We use an integration substitution $y = (\ln z - \mu) / \sigma$ and using the shift property of the standard normal distribution function. This gives:
+
+$$
+\begin{aligned}
+\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
+&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
+&= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
+&= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
+\end{aligned} (\#eq:lognormpartexp)
+$$
+
+**Survival function of $S_{+}$ for Log-Normal distribution**
+
+By substituting equation \@ref{eq:lognormpartexp} into equation \@ref{eq:disccensunifprim} we can solve for both the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -226,23 +255,14 @@ Q_{S+}(t ;\mu, \sigma) &= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \int_t^{t+w_
 \end{aligned}
 $$
 
-Where we have used the Log-Normal integration trick of making a further substitution $y = (\ln z - \mu) / \sigma$ and using the shift property of the standard normal distribution function. This gives:
+**Log-Normal discrete censored delay distribution**
+
+By substituting \@ref{eq:lognormpartexp} into \@ref{eq:disccensprob} we get the discrete censored delay distribution in terms of analytically available functions:
 
 $$
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
-&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
-&= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
-&= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
-\end{aligned}
-$$
-
-In the special case of the equal event window then the discrete delay distribution is:
-
-$$
-\begin{aligned}
-f_n &= (n+2) F_T(n+2; \mu, \sigma) + n F_T(n; \mu, \sigma) - 2  (n+1) F_T(n+1; \mu, \sigma) \\
- &+  e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n; \mu + \sigma^2, \sigma) - F_T(n+2; \mu + \sigma^2, \sigma)  \Big).
+f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) - e^{\mu + \frac{1}{2} \sigma^2} \Delta_1^{(2)}F_T(n-1;\mu + \sigma^2, \sigma) \\
+ &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) + e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n; \mu + \sigma^2, \sigma) - F_T(n+2; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
 \end{aligned}
 $$
 
