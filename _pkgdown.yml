@@ -27,6 +27,8 @@ navbar:
         href: articles/fitting-dists-with-stan.html
       - text: Fitting distributions using primarycensorseddist and fitdistrplus
         href: articles/fitting-dists-with-fitdistrplus.html
+      - text: Why it works
+        href: articles/why-it-works.html
 
 authors:
   Sam Abbott:
