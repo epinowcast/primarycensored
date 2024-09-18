@@ -20,9 +20,9 @@ vignette: >
 Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensoreddist` we focus on two particular missing data problems:
 
 -   **Interval censoring**. The primary (start) time and/or the secondary (end) time of the delay are unobserved but both are known to be within intervals.
--   **Truncation**. Delay data items are only contained in the data set conditional on aspect of the data point, for example if the secondary event is the observation time which add the data item to the data set.
+-   **Right truncation**. Truncated delay data items are only reported if their secondary events are less than a known time, for example the current data collection time.
 
-In statistical epidemiology, these missing data problems occur frequently in both data analysis and theoretical modelling.
+In statistical epidemiology, these missing data problems occur frequently in both data analysis and theoretical modelling. For a more detailed description of these problems in an epidemiological context see [@Park2024; @Charniga2024].
 
 In data analysis, events in epidemiology are commonly reported as occurring on a particular day or week (*interval censoring*). In an emerging outbreak, datasets can be incompletely observed (*right truncation*) and their can be a great deal of uncertainty around the precise timing of events (*interval censoring*).
 
@@ -44,6 +44,8 @@ f_{P}(p) &= 0, \qquad &\text{otherwise}.
 $$
 
 We measure the *censored delay time* $T_c$ between the primary and secondary event windows from endpoint to endpoint: $T_c = t_S + w_S - (t_P + w_P)$.
+
+In our treatment below we focus on the [survival function](https://en.wikipedia.org/wiki/Survival_function) of the time after the end of the primary window to the secondary event time which we denote $S_{+}$. We then use this to derive the distribution of the censored delay time $T_c$. This is equivalent to, but differ in mathematical approach from other treatments of the censoring problems in epidemiology, such as [@Park2024].
 
 ## Censored delay time distribution
 
@@ -178,7 +180,7 @@ The Gamma distribution has the distribution function:
 
 $$
 \begin{aligned}
-F_T(z;k, \theta) &= {\gamma(k, z/\theta) \over \Gamma(k)}, \qquad z\geq 0,
+F_T(z;k, \theta) &= {\gamma(k, z/\theta) \over \Gamma(k)}, \qquad z\geq 0,\\
 F_T(z;k, \theta) &= 0, \qquad z < 0.
 \end{aligned}
 $$
