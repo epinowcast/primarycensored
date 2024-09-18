@@ -1,4 +1,14 @@
-# primarycensoreddist 0.3.0.1000
+# primarycensoreddist 0.4.0.1000
+
+This is the current development version.
+
+## Package
+
+* Add `{touchstone}` based benchmarks for benchmarking R utility functions, and fitting the `stan` and `fitdistplus` models.
+
+# primarycensoreddist 0.4.0
+
+In this release, we have added a new package `stan` model for fitting distributions using the `cmdstanr` package. We have also added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package. As well as these functionality improvements this release focuses on improving the stability of the `stan` model and improving the speed of the `primary_censored_ode` function.
 
 ## Package
 

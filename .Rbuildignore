@@ -25,3 +25,4 @@
 ^vignettes/using-stan-tools\.Rmd$
 ^vignettes/fitting-dists-with-stan\.Rmd$
 ^inst/pcens_model$
+^touchstone$
