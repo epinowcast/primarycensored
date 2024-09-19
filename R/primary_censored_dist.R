@@ -1,13 +1,13 @@
-#' Internal S3 class for primary event censored CDF computation
+#' S3 class for primary event censored distribution computation
 #'
 #' @inheritParams pprimarycensoreddist
 #'
 #' @return An object of class primary_censored_cdf
 #'
-#' @importFrom stats pgamma plnorm dunif integrate
+#' @family primary_censored_dist
 #'
 #' @export
-new_primary_censored_cdf <- function(pdist, dprimary, dprimary_args, ...) {
+new_primary_censored_dist <- function(pdist, dprimary, dprimary_args, ...) {
   structure(
     list(
       pdist = pdist,
@@ -19,10 +19,9 @@ new_primary_censored_cdf <- function(pdist, dprimary, dprimary_args, ...) {
       paste0(
         "pcens_",
         deparse(substitute(pdist)), "_",
-        deparse(substitute(dprimary)),
-        "_cdf"
+        deparse(substitute(dprimary))
       ),
-      "pcens_numeric_cdf"
+      "pcens_numeric"
     )
   )
 }
@@ -31,23 +30,43 @@ new_primary_censored_cdf <- function(pdist, dprimary, dprimary_args, ...) {
 #'
 #' @inheritParams pprimarycensoreddist
 #'
-#' @param object A primary_censored_cdf object
+#' @param object A `primary_censored_dist` object as created by
+#' [new_primary_censored_dist()].
 #'
 #' @param use_numeric Logical, if TRUE forces use of numeric integration
-#' even for distributions with analytical solutions.
+#' even for distributions with analytical solutions. This is primarily
+#' useful for testing purposes or for settings where the analytical solution
+#' breaks down.
 #'
 #' @return Vector of primary event censored CDFs
 #'
+#' @family primary_censored_dist
+#'
 #' @export
-compute_primary_censored_cdf <- function(
+primary_censored_cdf <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  UseMethod("compute_primary_censored_cdf")
+  UseMethod("primary_censored_cdf")
 }
 
 #' Numeric method for computing primary event censored CDF
 #'
+#' This method uses numerical integration to compute the primary event censored
+#' CDF for any combination of delay distribution and primary event distribution.
+#'
+#' @inheritParams primary_censored_cdf
+#' @inheritParams pprimarycensoreddist
+#'
+#' @details
+#' This method implements the numerical integration approach for computing
+#' the primary event censored CDF. It uses the same mathematical formulation
+#' as described in the details section of [pprimarycensoreddist()], but
+#' applies numerical integration instead of analytical solutions.
+#'
+#' @seealso [pprimarycensoreddist()] for the mathematical details of the
+#' primary event censored CDF computation.
+#'
 #' @export
-compute_primary_censored_cdf.pcens_numeric_cdf <- function(
+primary_censored_cdf.pcens_numeric <- function(
     object, q, pwindow, use_numeric = FALSE) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
@@ -71,10 +90,12 @@ compute_primary_censored_cdf.pcens_numeric_cdf <- function(
 
 #' Method for Gamma delay with uniform primary
 #'
-#' @inheritParams compute_primary_censored_cdf
+#' @inheritParams primary_censored_cdf
+#'
+#' @family primary_censored_dist
 #'
 #' @export
-compute_primary_censored_cdf.pcens_pgamma_dunif <- function(
+primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (use_numeric) {
     NextMethod()
@@ -92,10 +113,12 @@ compute_primary_censored_cdf.pcens_pgamma_dunif <- function(
 
 #' Method for Log-Normal delay with uniform primary
 #'
-#' @inheritParams compute_primary_censored_cdf
+#' @inheritParams primary_censored_cdf
+#'
+#' @family primary_censored_dist
 #'
 #' @export
-compute_primary_censored_cdf.pcens_plnorm_dunif <- function(
+primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (use_numeric) {
     NextMethod()

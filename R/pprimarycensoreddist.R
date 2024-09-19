@@ -61,7 +61,14 @@
 #' }
 #' where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
 #'
+#' This function creates a `primary_censored_dist` object using
+#' [new_primary_censored_dist()] and then computes the primary event
+#' censored CDF using [primary_censored_cdf()]. This abstraction allows
+#' for automatic use of analytical solutions when available, while
+#' seamlessly falling back to numerical integration when necessary.
+#'
 #' @family primarycensoreddist
+#' @seealso [new_primary_censored_dist()] and [primary_censored_cdf()]
 #'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events
@@ -79,21 +86,11 @@ pprimarycensoreddist <- function(
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
-  result <- vapply(q, function(d) {
-    if (d <= 0) {
-      return(0) # Return 0 for non-positive delays
-    } else {
-      integrand <- function(p) {
-        d_adj <- d - p
-        pdist(d_adj, ...) *
-          do.call(
-            dprimary, c(list(x = p, min = 0, max = pwindow), dprimary_args)
-          )
-      }
+  # Create a new primary_censored_dist object
+  pcens_obj <- new_primary_censored_dist(pdist, dprimary, dprimary_args, ...)
 
-      stats::integrate(integrand, lower = 0, upper = pwindow)$value
-    }
-  }, numeric(1))
+  # Compute the CDF using the S3 method
+  result <- primary_censored_cdf(pcens_obj, q, pwindow, use_numeric = TRUE)
 
   if (!is.infinite(D)) {
     # Compute normalization factor for finite D

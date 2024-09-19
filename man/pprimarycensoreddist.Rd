@@ -82,6 +82,12 @@ by \eqn{F_{\text{cens}}(D)}:
 F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 }
 where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
+
+This function creates a \code{primary_censored_dist} object using
+\code{\link[=new_primary_censored_dist]{new_primary_censored_dist()}} and then computes the primary event
+censored CDF using \code{\link[=primary_censored_cdf]{primary_censored_cdf()}}. This abstraction allows
+for automatic use of analytical solutions when available, while
+seamlessly falling back to numerical integration when necessary.
 }
 \examples{
 # Example: Lognormal distribution with uniform primary events
@@ -95,6 +101,8 @@ pprimarycensoreddist(
 )
 }
 \seealso{
+\code{\link[=new_primary_censored_dist]{new_primary_censored_dist()}} and \code{\link[=primary_censored_cdf]{primary_censored_cdf()}}
+
 Primary event censored distribution functions
 \code{\link{dprimarycensoreddist}()},
 \code{\link{rprimarycensoreddist}()}
