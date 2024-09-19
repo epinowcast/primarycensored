@@ -2,20 +2,22 @@
 #'
 #' @inheritParams pprimarycensoreddist
 #'
-#' @param pdist_name A string specifying the name of the delay distribution
-#' function.
-#'
-#' @param dprimary_name A string specifying the name of the primary event
-#' distribution function.
-#'
 #' @return An object of class primary_censored_cdf
 #'
 #' @family primary_censored_dist
 #'
 #' @export
 new_primary_censored_dist <- function(
-    pdist_name, pdist,
-    dprimary_name, dprimary, dprimary_args, ...) {
+    pdist, dprimary, dprimary_args,
+    pdist_name = NULL,
+    dprimary_name = NULL, ...) {
+  if (is.null(pdist_name)) {
+    pdist_name <- .extract_function_name(substitute(pdist))
+  }
+  if (is.null(dprimary_name)) {
+    dprimary_name <- .extract_function_name(substitute(dprimary))
+  }
+
   structure(
     list(
       pdist = pdist,
@@ -93,7 +95,6 @@ primary_censored_cdf.default <- function(
 #' @export
 primary_censored_cdf.pcens_numeric <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  message("Using numeric integration")
   result <- vapply(q, function(d) {
     if (d <= 0) {
       return(0) # Return 0 for non-positive delays
@@ -124,9 +125,10 @@ primary_censored_cdf.pcens_numeric <- function(
 primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   use_numeric <- TRUE
-  message("Found analytical solution")
   if (isTRUE(use_numeric)) {
-    primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+    return(
+      primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+    )
   }
 
   result <- vapply(q, function(n) {
@@ -146,9 +148,10 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   use_numeric <- TRUE
-  message("Found analytical solution")
   if (isTRUE(use_numeric)) {
-    primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+    return(
+      primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+    )
   }
 
   result <- vapply(q, function(n) {

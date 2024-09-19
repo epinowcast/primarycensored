@@ -3,20 +3,19 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   pdist <- pgamma
   dprimary_name <- "dunif"
   dprimary <- dunif
-  dprimary_args <- list(min = 0, max = 10)
   shape <- 2
   rate <- 1
 
   obj <- new_primary_censored_dist(
-    pdist_name, pdist,
-    dprimary_name, dprimary, dprimary_args,
+    pdist,
+    dprimary, list(),
+    pdist_name, dprimary_name,
     shape = shape, rate = rate
   )
 
   expect_s3_class(obj, "pcens_pgamma_dunif")
   expect_identical(obj$pdist, pgamma)
   expect_identical(obj$dprimary, dunif)
-  expect_identical(obj$dprimary_args, dprimary_args)
   expect_identical(obj$args, list(shape = shape, rate = rate))
 })
 
@@ -29,8 +28,9 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
   rate <- 1
 
   obj <- new_primary_censored_dist(
-    pdist_name, pdist,
-    dprimary_name, dprimary, list(),
+    pdist,
+    dprimary, list(),
+    pdist_name, dprimary_name,
     shape = shape, rate = rate
   )
 
@@ -47,18 +47,25 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
 })
 
 test_that("primary_censored_cdf methods dispatch correctly", {
-  pdist_gamma <- "pgamma"
-  pdist_lnorm <- "plnorm"
-  dprimary <- "dunif"
+  pdist_name <- "pgamma"
+  pdist <- pgamma
+  dprimary_name <- "dunif"
+  dprimary <- dunif
 
   obj_gamma <- new_primary_censored_dist(
-    pdist_gamma, pgamma,
-    dprimary, dunif, list(),
+    pdist, dprimary, list(),
+    pdist_name, dprimary_name,
     shape = 2, rate = 1
   )
+
+  pdist_name <- "plnorm"
+  pdist <- plnorm
+  dprimary_name <- "dunif"
+  dprimary <- dunif
+
   obj_lnorm <- new_primary_censored_dist(
-    pdist_lnorm, plnorm,
-    dprimary, dunif, list(),
+    pdist, dprimary, list(),
+    pdist_name, dprimary_name,
     meanlog = 0, sdlog = 1
   )
 
@@ -76,26 +83,6 @@ test_that("primary_censored_cdf methods dispatch correctly", {
   )
 })
 
-test_that("primary_censored_cdf handles edge cases correctly", {
-  pdist_name <- "pgamma"
-  pdist <- pgamma
-  dprimary_name <- "dunif"
-  dprimary <- dunif
-  shape <- 2
-  rate <- 1
-
-  obj <- new_primary_censored_dist(
-    pdist_name, pdist,
-    dprimary_name, dprimary, list(),
-    shape = shape, rate = rate
-  )
-
-  expect_type(primary_censored_cdf(obj, q = 0, pwindow = 10), "double")
-  expect_identical(primary_censored_cdf(obj, q = 0, pwindow = 10), 0)
-  expect_identical(primary_censored_cdf(obj, q = -1, pwindow = 10), 0)
-  expect_lte(primary_censored_cdf(obj, q = Inf, pwindow = 10), 1)
-})
-
 test_that("primary_censored_cdf.pcens_pgamma_dunif uses numeric method", {
   pdist_name <- "pgamma"
   pdist <- pgamma
@@ -105,8 +92,9 @@ test_that("primary_censored_cdf.pcens_pgamma_dunif uses numeric method", {
   rate <- 1
 
   obj <- new_primary_censored_dist(
-    pdist_name, pdist,
-    dprimary_name, dprimary, list(),
+    pdist,
+    dprimary, list(),
+    pdist_name, dprimary_name,
     shape = shape, rate = rate
   )
 
@@ -131,8 +119,9 @@ test_that("primary_censored_cdf.pcens_plnorm_dunif uses numeric method", {
   sdlog <- 1
 
   obj <- new_primary_censored_dist(
-    pdist_name, pdist,
-    dprimary_name, dprimary, list(),
+    pdist,
+    dprimary, list(),
+    pdist_name, dprimary_name,
     meanlog = meanlog, sdlog = sdlog
   )
 

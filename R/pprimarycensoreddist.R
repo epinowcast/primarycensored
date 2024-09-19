@@ -26,7 +26,19 @@
 #' @param dprimary_args List of additional arguments to be passed to
 #' dprimary. For example, when using `dexpgrowth`, you would
 #' pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
-#' and rate parameters.
+#' and rate parameters
+#'
+#' @param pdist_name A string specifying the name of the delay distribution
+#' function. If NULL, the function name is extracted using
+#' [.extract_function_name()]. Used to determine if a analytical solution
+#' exists for the primary censored distribution. Must be set if `pdist` is
+#' passed a pre-assigned variable rather than a function name.
+#'
+#' @param dprimary_name A string specifying the name of the primary event
+#' distribution function. If NULL, the function name is extracted using
+#' [.extract_function_name()]. Used to determine if a analytical solution
+#' exists for the primary censored distribution. Must be set if `dprimary` is
+#' passed a pre-assigned variable rather than a function name.
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
@@ -68,7 +80,9 @@
 #' seamlessly falling back to numerical integration when necessary.
 #'
 #' Note: For analytical detection to work correctly, `pdist` and `dprimary`
-#' must be directly passed as distribution functions, not via assignment.
+#' must be directly passed as distribution functions, not via assignment or
+#' `pdist_name` and `dprimary_name` must be used to override the default
+#' extraction of the function name.
 #'
 #' @family primarycensoreddist
 #' @seealso [new_primary_censored_dist()] and [primary_censored_cdf()]
@@ -85,17 +99,24 @@
 #' )
 pprimarycensoreddist <- function(
     q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
-    dprimary_args = list(), ...) {
+    dprimary_args = list(), pdist_name = NULL, dprimary_name = NULL, ...) {
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
+  if (is.null(pdist_name)) {
+    pdist_name <- .extract_function_name(substitute(pdist))
+  }
+  if (is.null(dprimary_name)) {
+    dprimary_name <- .extract_function_name(substitute(dprimary))
+  }
+
   # Create a new primary_censored_dist object
   pcens_obj <- new_primary_censored_dist(
-    deparse(substitute(pdist)),
     pdist,
-    deparse(substitute(dprimary)),
     dprimary,
     dprimary_args,
+    pdist_name = pdist_name,
+    dprimary_name = dprimary_name,
     ...
   )
 
