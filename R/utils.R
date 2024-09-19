@@ -7,10 +7,6 @@
 #'
 #' @return A character string representing the base name of the function.
 #'
-#' @examples
-#' .extract_function_name(substitute(plnorm))
-#' .extract_function_name(substitute(stats::dunif))
-#'
 #' @keywords internal
 .extract_function_name <- function(func) {
   func_name <- deparse(func)

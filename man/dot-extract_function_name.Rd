@@ -16,9 +16,4 @@ A character string representing the base name of the function.
 This helper function extracts the base name of a function, removing an
 namespace prefixes.
 }
-\examples{
-.extract_function_name(substitute(plnorm))
-.extract_function_name(substitute(stats::dunif))
-
-}
 \keyword{internal}
