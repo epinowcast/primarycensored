@@ -144,8 +144,8 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
     # Compute necessary survival and distribution functions
     pgamma_q <- partial_pgamma(valid_q)
     pgamma_q_pwindow <- partial_pgamma(valid_q + pwindow)
+    pgamma_q_1 <- partial_pgamm_k_1(valid_q)
     pgamma_q_pwindow_1 <- partial_pgamm_k_1(valid_q + pwindow)
-    pgamma_q_1 <- partial_pgamm_k_1(valid_q + 1)
 
     Q_T <- 1 - pgamma_q_pwindow
     Delta_F_T_kp1 <- pgamma_q_pwindow_1 - pgamma_q_1
@@ -203,8 +203,8 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
     # Compute necessary survival and distribution functions
     plnorm_q <- partial_plnorm(valid_q)
     plnorm_q_pwindow <- partial_plnorm(valid_q + pwindow)
-    plnorm_q_pwindow_sigma2 <- partial_plnorm_sigma2(valid_q + pwindow)
     plnorm_q_sigma2 <- partial_plnorm_sigma2(valid_q)
+    plnorm_q_pwindow_sigma2 <- partial_plnorm_sigma2(valid_q + pwindow)
 
     # Compute necessary survival and distribution functions
     Q_T <- 1 - plnorm_q_pwindow
