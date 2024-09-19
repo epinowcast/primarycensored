@@ -17,6 +17,12 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   expect_identical(obj$pdist, pgamma)
   expect_identical(obj$dprimary, dunif)
   expect_identical(obj$args, list(shape = shape, rate = rate))
+
+  new_obj <- new_primary_censored_dist(
+    pgamma, dunif, list(),
+    shape = shape, rate = rate
+  )
+  expect_identical(obj, new_obj)
 })
 
 test_that("primary_censored_cdf.pcens_numeric computes correct values", {
