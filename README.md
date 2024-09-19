@@ -224,16 +224,17 @@ Contributions of any kind are welcome!
 
 ### Code
 
-<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=SamuelBrand1">SamuelBrand1</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=athowes">athowes</a>
 
 ### Issue Authors
 
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3ASamuelBrand1">SamuelBrand1</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>
 
 ### Issue Contributors
 
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+commenter%3Aathowes">athowes</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
