@@ -134,7 +134,8 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
   partial_pgamm_k_1 <- function(q) {
     pgamma(q, shape = shape + 1, scale = scale)
   }
-
+  # Adjust q so that we have [q-pwindow, q]
+  q <- q - pwindow
   # Handle negative q values safely
   result <- ifelse(q < 0, 0, NA)
 
