@@ -45,7 +45,9 @@ In theoretical epidemiological modelling, it is often appropriate to model the e
 
 As described in [Getting Started with `primarycensoreddist`](primarycensoreddist.html), `primarycensoreddist` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.
 
-The target for inference is the distribution of the delay time between the primary and secondary events. We assume that the delay time is a random variable $T = S - P_{u}$ with distribution function $F_T(t) = Pr(T < t)$ and density function $f_T(t)$. The (unconditional) primary event time is a random variable $P_{u}$ with distribution function $F_{P_{u}}(t)$ and density function $f_{P_{u}}(t)$. The secondary event time is a random variable $S$, but in this treatment we construct the secondary event time from the primary time and delay, therefore the marginal distribution of $S$ is not considered.
+The target for inference is the distribution of the delay time between the primary and secondary events. We assume that the delay time is a random variable $T = S - P_{u}$ with distribution function $F_T(t) = Pr(T < t)$ and density function $f_T(t)$. In this treatment we assume that the delay time is shift-invariant, that is, the distribution of the delay time is the same regardless of the primary event time.
+
+The (unconditional) primary event time is a random variable $P_{u}$ with distribution function $F_{P_{u}}(t)$ and density function $f_{P_{u}}(t)$. The secondary event time is a random variable $S$, but in this treatment we construct the secondary event time from the primary time and delay, therefore the marginal distribution of $S$ is not considered.
 
 The *censoring window* for each event is the interval within which each event is known to have occurred, respectively, $P \in [t_P, t_P + w_P]$ and $S \in [t_S, t_S + w_S]$. The lengths of the censoring windows are $w_P$ and $w_S$ respectively. The precise event times within their windows are unobserved. Note that since the primary event time is known up to the censoring window, we are predominantly interested in the _conditional_ primary time $P = P_{u} | \{ P_{u} \in [t_P, t_P + w_P]\}$ which has density function:
 
@@ -72,7 +74,7 @@ $$
 S_+ = S - (t_P + w_P) = T - ((t_P + w_P) - P) = T - C_P.
 $$
 
-Where $T$ is the delay distribution of interest and $C_P = (t_P + w_P) - P$ is interval between the end (right) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed but we can relate its distribution to the distribution of $P$: $F_{C_P}(p) = Pr(C_P < p) = Pr(P > w_P - p)$.
+Where $T$ is the delay distribution of interest and $C_P = (t_P + w_P) - P$ is interval between the end (right) point of the primary censoring window and the primary event time; note that by definition $C_P$ is not observed but we can relate its distribution to the distribution of $P$: $F_{C_P}(p) = Pr(C_P < p) = Pr(P > t_P + w_P - p)$.
 
 With non-informative censoring, it is possible to derive the upper distribution function of $S_+$, or [_survival function_](https://en.wikipedia.org/wiki/Survival_function) of $S_+$, from the distribution of $T$ and the distribution of $C_P$.
 
@@ -157,7 +159,10 @@ This is analytically solvable whenever the upper distribution function of $T$ is
 In each case considered below it is easier to change the integration variable:
 
 $$
-Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz = Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big]. (\#eq:unifprim)
+\begin{aligned}
+Q_{S_+}(t) &= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \\
+&= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].
+\end{aligned} (\#eq:unifprim)
 $$
 
 **General partial expectation**
@@ -175,7 +180,10 @@ can be reduced to an analytic expression.
 First we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
 
 $$
-f_n = \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] = (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big]. (\#eq:disccensunifprim)
+\begin{aligned}
+f_n &= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
+\end{aligned}  (\#eq:disccensunifprim)
 $$
 
 We now consider some specific delay distributions.
@@ -226,7 +234,8 @@ By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensprob) we get t
 $$
 \begin{aligned}
 f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1, \theta)\\
- &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) + k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1; k+1, \theta) - F_T(n+1; k+1,\theta)  \Big) \qquad n = 0, 1, \dots.
+ &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) \\
+ &+ k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1; k+1, \theta) - F_T(n+1; k+1,\theta)  \Big) \qquad n = 0, 1, \dots.
 \end{aligned}
 $$
 
@@ -276,8 +285,10 @@ By substituting \@ref(eq:lognormpartex) into \@ref(eq:disccensprob) we get the d
 
 $$
 \begin{aligned}
-f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) - e^{\mu + \frac{1}{2} \sigma^2} \Delta_1^{(2)}F_T(n-1;\mu + \sigma^2, \sigma) \\
- &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) + e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n; \mu + \sigma^2, \sigma) - F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n-1; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
+f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\
+ &- e^{\mu + \frac{1}{2} \sigma^2} \Delta_1^{(2)}F_T(n-1;\mu + \sigma^2, \sigma) \\
+ &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\
+  &+ e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n; \mu + \sigma^2, \sigma) - F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n-1; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
 \end{aligned}
 $$
 
