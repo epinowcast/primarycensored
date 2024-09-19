@@ -64,21 +64,6 @@ primary_censored_cdf <- function(
 #' the numeric integration method.
 #'
 #' @inheritParams primary_censored_cdf
-#'
-#' @family primary_censored_dist
-#'
-#' @export
-primary_censored_cdf.default <- function(
-    object, q, pwindow, use_numeric = FALSE) {
-  primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
-}
-
-#' Numeric method for computing primary event censored CDF
-#'
-#' This method uses numerical integration to compute the primary event censored
-#' CDF for any combination of delay distribution and primary event distribution.
-#'
-#' @inheritParams primary_censored_cdf
 #' @inheritParams pprimarycensoreddist
 #'
 #' @details
@@ -93,7 +78,7 @@ primary_censored_cdf.default <- function(
 #' @family primary_censored_dist
 #'
 #' @export
-primary_censored_cdf.pcens_numeric <- function(
+primary_censored_cdf.default <- function(
     object, q, pwindow, use_numeric = FALSE) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
@@ -126,7 +111,7 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+      primary_censored_cdf.default(object, q, pwindow, use_numeric)
     )
   }
   # Extract Gamma distribution parameters
@@ -186,7 +171,7 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+      primary_censored_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
