@@ -31,7 +31,7 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
   dprimary_name <- "dunif"
   dprimary <- dunif
   shape <- 2
-  rate <- 1
+  rate <- 0.5
 
   obj <- new_primary_censored_dist(
     pdist,
@@ -40,7 +40,7 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
     shape = shape, rate = rate
   )
 
-  q_values <- c(0, 3, 5, 7, 10, 15)
+  q_values <- 0:20
   pwindow <- 1
 
   result <- primary_censored_cdf(obj, q = q_values, pwindow = pwindow, use_numeric = TRUE)

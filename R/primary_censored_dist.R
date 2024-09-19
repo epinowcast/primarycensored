@@ -136,9 +136,9 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
   }
 
   # Handle negative q values safely
-  result <- ifelse(q <= 0, 0, NA)
+  result <- ifelse(q < 0, 0, NA)
 
-  valid_q <- q[q > 0]
+  valid_q <- q[q >= 0]
 
   if (length(valid_q) > 0) {
     # Compute necessary survival and distribution functions
@@ -157,7 +157,7 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
       (valid_q / pwindow) * Delta_F_T_k
 
     # Compute the CDF as 1 - Q_Splus
-    result[q > 0] <- 1 - Q_Splus
+    result[q >= 0] <- 1 - Q_Splus
   }
 
   return(result)
@@ -194,10 +194,12 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
   partial_plnorm_sigma2 <- function(q) {
     plnorm(q, meanlog = mu + sigma^2, sdlog = sigma)
   }
+  # Adjust q so that we have [q-pwindow, q]
+  q <- q - pwindow
   # Handle negative q values safely
-  result <- ifelse(q <= 0, 0, NA)
+  result <- ifelse(q < 0, 0, NA)
 
-  valid_q <- q[q > 0]
+  valid_q <- q[q >= 0]
 
   if (length(valid_q) > 0) {
     # Compute necessary survival and distribution functions
@@ -218,7 +220,7 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
       (valid_q / pwindow) * Delta_F_T
 
     # Compute the CDF as 1 - Q_Splus
-    result[q > 0] <- 1 - Q_Splus
+    result[q >= 0] <- 1 - Q_Splus
   }
 
   return(result)
