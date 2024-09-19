@@ -25,7 +25,7 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   expect_identical(obj, new_obj)
 })
 
-test_that("primary_censored_cdf.pcens_numeric computes correct values", {
+test_that("primary_censored_cdf.default computes correct values", {
   pdist_name <- "pgamma"
   pdist <- pgamma
   dprimary_name <- "dunif"
@@ -42,14 +42,24 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
 
   q_values <- 0:20
   pwindow <- 2
+  result_numeric <- primary_censored_cdf(
+    obj,
+    q = q_values, pwindow = pwindow, use_numeric = TRUE
+  )
+  result_analytical <- primary_censored_cdf(
+    obj,
+    q = q_values, pwindow = pwindow, use_numeric = FALSE
+  )
 
-  result <- primary_censored_cdf(obj, q = q_values, pwindow = pwindow, use_numeric = TRUE)
+  # Check properties of numeric result
+  expect_true(all(result_numeric >= 0))
+  expect_true(all(result_numeric <= 1))
+  expect_type(result_numeric, "double")
+  expect_length(result_numeric, length(q_values))
+  expect_true(all(diff(result_numeric) >= 0)) # Ensure CDF is non-decreasing
 
-  expect_true(all(result >= 0))
-  expect_true(all(result <= 1))
-  expect_type(result, "double")
-  expect_length(result, length(q_values))
-  expect_true(all(diff(result) >= 0)) # Ensure CDF is non-decreasing
+  # Check that analytical and numeric results are the same
+  expect_equal(result_numeric, result_analytical, tolerance = 1e-6)
 })
 
 test_that("primary_censored_cdf methods dispatch correctly", {
