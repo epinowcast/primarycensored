@@ -40,10 +40,10 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
     shape = shape, rate = rate
   )
 
-  q_values <- c(0, 5, 10, 15)
-  pwindow <- 10
+  q_values <- c(0, 3, 5, 7, 10, 15)
+  pwindow <- 1
 
-  result <- primary_censored_cdf(obj, q = q_values, pwindow = pwindow)
+  result <- primary_censored_cdf(obj, q = q_values, pwindow = pwindow, use_numeric = TRUE)
 
   expect_true(all(result >= 0))
   expect_true(all(result <= 1))
