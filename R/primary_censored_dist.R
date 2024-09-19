@@ -97,7 +97,8 @@ primary_censored_cdf.pcens_numeric <- function(
 #' @export
 primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  if (use_numeric) {
+  use_numeric <- TRUE
+  if (isTRUE(use_numeric)) {
     NextMethod()
   }
 
@@ -120,7 +121,8 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 #' @export
 primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  if (use_numeric) {
+  use_numeric <- TRUE
+  if (isTRUE(use_numeric)) {
     NextMethod()
   }
 

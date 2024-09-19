@@ -90,7 +90,7 @@ pprimarycensoreddist <- function(
   pcens_obj <- new_primary_censored_dist(pdist, dprimary, dprimary_args, ...)
 
   # Compute the CDF using the S3 method
-  result <- primary_censored_cdf(pcens_obj, q, pwindow, use_numeric = TRUE)
+  result <- primary_censored_cdf(pcens_obj, q, pwindow)
 
   if (!is.infinite(D)) {
     # Compute normalization factor for finite D
