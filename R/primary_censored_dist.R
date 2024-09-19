@@ -65,6 +65,8 @@ primary_censored_cdf <- function(
 #' @seealso [pprimarycensoreddist()] for the mathematical details of the
 #' primary event censored CDF computation.
 #'
+#' @family primary_censored_dist
+#'
 #' @export
 primary_censored_cdf.pcens_numeric <- function(
     object, q, pwindow, use_numeric = FALSE) {

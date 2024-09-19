@@ -28,6 +28,7 @@ Compute primary event censored CDF
 \seealso{
 Low level primary event censored distribution objects and methods
 \code{\link{new_primary_censored_dist}()},
+\code{\link{primary_censored_cdf.pcens_numeric}()},
 \code{\link{primary_censored_cdf.pcens_pgamma_dunif}()},
 \code{\link{primary_censored_cdf.pcens_plnorm_dunif}()}
 }
