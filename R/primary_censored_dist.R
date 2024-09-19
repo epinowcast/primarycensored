@@ -136,17 +136,27 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
   }
   # Adjust q so that we have [q-pwindow, q]
   q <- q - pwindow
-  # Handle negative q values safely
-  result <- ifelse(q < 0, 0, NA)
+  # Adjust q and pwindow for cases crossing zero
+  adjusted_q <- pmax(q, 0)
+  adjusted_pwindow <- pmin(pwindow, pmax(0, q + pwindow) - adjusted_q)
 
-  valid_q <- q[q >= 0]
+  # Initialize result vector
+  result <- numeric(length(q))
 
-  if (length(valid_q) > 0) {
+  # Handle cases where q + pwindow <= 0
+  zero_cases <- q + pwindow <= 0
+  result[zero_cases] <- 0
+
+  # Process non-zero cases only if there are any
+  if (any(!zero_cases)) {
+    non_zero_q <- adjusted_q[!zero_cases]
+    non_zero_pwindow <- adjusted_pwindow[!zero_cases]
+
     # Compute necessary survival and distribution functions
-    pgamma_q <- partial_pgamma(valid_q)
-    pgamma_q_pwindow <- partial_pgamma(valid_q + pwindow)
-    pgamma_q_1 <- partial_pgamm_k_1(valid_q)
-    pgamma_q_pwindow_1 <- partial_pgamm_k_1(valid_q + pwindow)
+    pgamma_q <- partial_pgamma(non_zero_q)
+    pgamma_q_pwindow <- partial_pgamma(non_zero_q + non_zero_pwindow)
+    pgamma_q_1 <- partial_pgamm_k_1(non_zero_q)
+    pgamma_q_pwindow_1 <- partial_pgamm_k_1(non_zero_q + non_zero_pwindow)
 
     Q_T <- 1 - pgamma_q_pwindow
     Delta_F_T_kp1 <- pgamma_q_pwindow_1 - pgamma_q_1
@@ -155,10 +165,13 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
     # Calculate Q_Splus using the analytical formula
     Q_Splus <- Q_T +
       (shape * scale / pwindow) * Delta_F_T_kp1 -
-      (valid_q / pwindow) * Delta_F_T_k
+      (non_zero_q / pwindow) * Delta_F_T_k
 
     # Compute the CDF as 1 - Q_Splus
-    result[q >= 0] <- 1 - Q_Splus
+    non_zero_result <- 1 - Q_Splus
+
+    # Assign non-zero results back to the main result vector
+    result[!zero_cases] <- non_zero_result
   }
 
   return(result)
@@ -197,31 +210,44 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
   }
   # Adjust q so that we have [q-pwindow, q]
   q <- q - pwindow
-  # Handle negative q values safely
-  result <- ifelse(q < 0, 0, NA)
+  # Adjust q and pwindow for cases crossing zero
+  adjusted_q <- pmax(q, 0)
+  adjusted_pwindow <- pmin(pwindow, pmax(0, q + pwindow) - adjusted_q)
 
-  valid_q <- q[q >= 0]
+  # Initialize result vector
+  result <- numeric(length(q))
 
-  if (length(valid_q) > 0) {
+  # Handle cases where q + pwindow <= 0
+  zero_cases <- q + pwindow <= 0
+  result[zero_cases] <- 0
+
+  # Process non-zero cases only if there are any
+  if (any(!zero_cases)) {
+    non_zero_q <- adjusted_q[!zero_cases]
+    non_zero_pwindow <- adjusted_pwindow[!zero_cases]
+
     # Compute necessary survival and distribution functions
-    plnorm_q <- partial_plnorm(valid_q)
-    plnorm_q_pwindow <- partial_plnorm(valid_q + pwindow)
-    plnorm_q_sigma2 <- partial_plnorm_sigma2(valid_q)
-    plnorm_q_pwindow_sigma2 <- partial_plnorm_sigma2(valid_q + pwindow)
+    plnorm_q <- partial_plnorm(non_zero_q)
+    plnorm_q_pwindow <- partial_plnorm(non_zero_q + non_zero_pwindow)
+    plnorm_q_sigma2 <- partial_plnorm_sigma2(non_zero_q)
+    plnorm_q_pwindow_sigma2 <- partial_plnorm_sigma2(
+      non_zero_q + non_zero_pwindow
+    )
 
-    # Compute necessary survival and distribution functions
     Q_T <- 1 - plnorm_q_pwindow
-    Delta_F_T_mu_sigma <- plnorm_q_pwindow_sigma2 -
-      plnorm_q_sigma2
+    Delta_F_T_mu_sigma <- plnorm_q_pwindow_sigma2 - plnorm_q_sigma2
     Delta_F_T <- plnorm_q_pwindow - plnorm_q
 
     # Calculate Q_Splus using the analytical formula
     Q_Splus <- Q_T +
       (exp(mu + 0.5 * sigma^2) / pwindow) * Delta_F_T_mu_sigma -
-      (valid_q / pwindow) * Delta_F_T
+      (non_zero_q / pwindow) * Delta_F_T
 
     # Compute the CDF as 1 - Q_Splus
-    result[q >= 0] <- 1 - Q_Splus
+    non_zero_result <- 1 - Q_Splus
+
+    # Assign non-zero results back to the main result vector
+    result[!zero_cases] <- non_zero_result
   }
 
   return(result)
