@@ -124,16 +124,53 @@ primary_censored_cdf.pcens_numeric <- function(
 #' @export
 primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  use_numeric <- TRUE
   if (isTRUE(use_numeric)) {
     return(
       primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
     )
   }
+  # Extract Gamma distribution parameters
+  shape <- object$args$shape
+  scale <- object$args$scale
+  # if we don't have scale get fromm rate
+  if (is.null(scale)) {
+    scale <- 1 / object$args$rate
+  }
+  if (is.null(shape)) {
+    stop("shape parameter is required for Gamma distribution")
+  }
+  if (is.null(scale)) {
+    stop("scale or rate parameter is required for Gamma distribution")
+  }
 
-  result <- vapply(q, function(n) {
-    # Implement analytical solution here
-  }, numeric(1))
+  partial_pgamma <- function(q) {
+    pgamma(q, shape = shape, scale = scale)
+  }
+
+  # Handle negative q values safely
+  result <- ifelse(q < 0, 0, NA)
+
+  valid_q <- q[q >= 0]
+
+  if (length(valid_q) > 0) {
+    # Compute necessary survival and distribution functions
+    pgamma_q <- partial_pgamma(valid_q)
+    pgamma_q_pwindow <- partial_pgamma(valid_q + pwindow)
+    pgamma_q_pwindow_1 <- partial_pgamma(valid_q + pwindow + 1)
+    pgamma_q_1 <- partial_pgamma(valid_q + 1)
+
+    Q_T <- 1 - pgamma_q_pwindow
+    Delta_F_T_kp1 <- pgamma_q_pwindow_1 - pgamma_q_1
+    Delta_F_T_k <- pgamma_q_pwindow - pgamma_q
+
+    # Calculate Q_Splus using the analytical formula
+    Q_Splus <- Q_T +
+      (shape * scale / pwindow) * Delta_F_T_kp1 -
+      (valid_q / pwindow) * Delta_F_T_k
+
+    # Compute the CDF as 1 - Q_Splus
+    result[q >= 0] <- 1 - Q_Splus
+  }
 
   return(result)
 }
@@ -147,16 +184,54 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 #' @export
 primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  use_numeric <- TRUE
   if (isTRUE(use_numeric)) {
     return(
       primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
     )
   }
 
-  result <- vapply(q, function(n) {
-    # Implement analytical solution here
-  }, numeric(1))
+  # Extract Log-Normal distribution parameters
+  mu <- object$args$meanlog
+  sigma <- object$args$sdlog
+  if (is.null(mu)) {
+    stop("meanlog parameter is required for Log-Normal distribution")
+  }
+  if (is.null(sigma)) {
+    stop("sdlog parameter is required for Log-Normal distribution")
+  }
+
+  partial_plnorm <- function(q) {
+    plnorm(q, meanlog = mu, sdlog = sigma)
+  }
+
+  # Handle negative q values safely
+  result <- ifelse(q < 0, 0, NA)
+
+  valid_q <- q[q >= 0]
+
+  if (length(valid_q) > 0) {
+    # Compute necessary survival and distribution functions
+    plnorm_q <- partial_plnorm(valid_q)
+    plnorm_q_pwindow <- partial_plnorm(valid_q + pwindow)
+    plnorm_q_pwindow_sigma2 <- partial_plnorm(
+      valid_q + pwindow + sigma^2
+    )
+    plnorm_q_sigma2 <- partial_plnorm(valid_q + sigma^2)
+
+    # Compute necessary survival and distribution functions
+    Q_T <- 1 - plnorm_q_pwindow
+    Delta_F_T_mu_sigma <- plnorm_q_pwindow_sigma2 -
+      plnorm_q_sigma2
+    Delta_F_T <- plnorm_q_pwindow - plnorm_q
+
+    # Calculate Q_Splus using the analytical formula
+    Q_Splus <- Q_T +
+      (exp(mu + 0.5 * sigma^2) / pwindow) * Delta_F_T_mu_sigma -
+      (valid_q / pwindow) * Delta_F_T
+
+    # Compute the CDF as 1 - Q_Splus
+    result[q >= 0] <- 1 - Q_Splus
+  }
 
   return(result)
 }
