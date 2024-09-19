@@ -102,9 +102,6 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
     NextMethod()
   }
 
-  k <- object$args$shape
-  theta <- object$args$scale
-
   result <- vapply(q, function(n) {
     # Implement analytical solution here
   }, numeric(1))
@@ -125,9 +122,6 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
   if (isTRUE(use_numeric)) {
     NextMethod()
   }
-
-  mu <- object$args$meanlog
-  sigma <- object$args$sdlog
 
   result <- vapply(q, function(n) {
     # Implement analytical solution here
