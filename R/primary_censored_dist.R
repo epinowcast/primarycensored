@@ -164,8 +164,8 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 
     # Calculate Q_Splus using the analytical formula
     Q_Splus <- Q_T +
-      (shape * scale / pwindow) * Delta_F_T_kp1 -
-      (non_zero_q / pwindow) * Delta_F_T_k
+      (shape * scale / non_zero_pwindow) * Delta_F_T_kp1 -
+      (non_zero_q / non_zero_pwindow) * Delta_F_T_k
 
     # Compute the CDF as 1 - Q_Splus
     non_zero_result <- 1 - Q_Splus
@@ -240,8 +240,8 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
 
     # Calculate Q_Splus using the analytical formula
     Q_Splus <- Q_T +
-      (exp(mu + 0.5 * sigma^2) / pwindow) * Delta_F_T_mu_sigma -
-      (non_zero_q / pwindow) * Delta_F_T
+      (exp(mu + 0.5 * sigma^2) / non_zero_pwindow) * Delta_F_T_mu_sigma -
+      (non_zero_q / non_zero_pwindow) * Delta_F_T
 
     # Compute the CDF as 1 - Q_Splus
     non_zero_result <- 1 - Q_Splus

@@ -41,7 +41,7 @@ test_that("primary_censored_cdf.pcens_numeric computes correct values", {
   )
 
   q_values <- 0:20
-  pwindow <- 1
+  pwindow <- 2
 
   result <- primary_censored_cdf(obj, q = q_values, pwindow = pwindow, use_numeric = TRUE)
 
