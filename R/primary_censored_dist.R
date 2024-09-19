@@ -96,7 +96,7 @@ primary_censored_cdf.default <- function(
 primary_censored_cdf.pcens_numeric <- function(
     object, q, pwindow, use_numeric = FALSE) {
   result <- vapply(q, function(d) {
-    if (d < 0) {
+    if (d <= 0) {
       return(0) # Return 0 for non-positive delays
     } else {
       integrand <- function(p) {
