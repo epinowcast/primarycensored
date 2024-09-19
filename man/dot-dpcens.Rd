@@ -30,7 +30,7 @@ See \code{primary_dists.R} for examples.}
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters.}
+and rate parameters}
 
 \item{...}{Additional arguments to be passed to the distribution function}
 }

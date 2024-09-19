@@ -15,6 +15,7 @@ PMFs
 Poisson
 SamuelBrand
 athowes
+cdf
 cdot
 cens
 cmdstan
@@ -23,6 +24,7 @@ disccensprob
 disccensunifprim
 discretisation
 discretising
+dist
 dp
 dprimary
 dprimarycensoreddist

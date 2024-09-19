@@ -12,6 +12,8 @@ pprimarycensoreddist(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
+  pdist_name = NULL,
+  dprimary_name = NULL,
   ...
 )
 
@@ -22,6 +24,8 @@ ppcens(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
+  pdist_name = NULL,
+  dprimary_name = NULL,
   ...
 )
 }
@@ -46,7 +50,19 @@ See \code{primary_dists.R} for examples.}
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters.}
+and rate parameters}
+
+\item{pdist_name}{A string specifying the name of the delay distribution
+function. If NULL, the function name is extracted using
+\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if \code{pdist} is
+passed a pre-assigned variable rather than a function name.}
+
+\item{dprimary_name}{A string specifying the name of the primary event
+distribution function. If NULL, the function name is extracted using
+\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if \code{dprimary} is
+passed a pre-assigned variable rather than a function name.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }
@@ -82,6 +98,17 @@ by \eqn{F_{\text{cens}}(D)}:
 F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 }
 where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
+
+This function creates a \code{primary_censored_dist} object using
+\code{\link[=new_primary_censored_dist]{new_primary_censored_dist()}} and then computes the primary event
+censored CDF using \code{\link[=primary_censored_cdf]{primary_censored_cdf()}}. This abstraction allows
+for automatic use of analytical solutions when available, while
+seamlessly falling back to numerical integration when necessary.
+
+Note: For analytical detection to work correctly, \code{pdist} and \code{dprimary}
+must be directly passed as distribution functions, not via assignment or
+\code{pdist_name} and \code{dprimary_name} must be used to override the default
+extraction of the function name.
 }
 \examples{
 # Example: Lognormal distribution with uniform primary events
@@ -95,6 +122,8 @@ pprimarycensoreddist(
 )
 }
 \seealso{
+\code{\link[=new_primary_censored_dist]{new_primary_censored_dist()}} and \code{\link[=primary_censored_cdf]{primary_censored_cdf()}}
+
 Primary event censored distribution functions
 \code{\link{dprimarycensoreddist}()},
 \code{\link{rprimarycensoreddist}()}
