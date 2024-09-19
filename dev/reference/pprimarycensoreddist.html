@@ -68,6 +68,8 @@ custom primary event distributions and delay distributions.</p>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -78,6 +80,8 @@ custom primary event distributions and delay distributions.</p>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -117,7 +121,23 @@ See <code>primary_dists.R</code> for examples.</p></dd>
 <dd><p>List of additional arguments to be passed to
 dprimary. For example, when using <code>dexpgrowth</code>, you would
 pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
-and rate parameters.</p></dd>
+and rate parameters</p></dd>
+
+
+<dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
+<dd><p>A string specifying the name of the delay distribution
+function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>pdist</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
+
+
+<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
+<dd><p>A string specifying the name of the primary event
+distribution function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>dprimary</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -149,10 +169,20 @@ $$
 F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 $$
 where \(F_{\text{cens,norm}}(q)\) is the normalized CDF.</p>
+<p>This function creates a <code>primary_censored_dist</code> object using
+<code><a href="new_primary_censored_dist.html">new_primary_censored_dist()</a></code> and then computes the primary event
+censored CDF using <code><a href="primary_censored_cdf.html">primary_censored_cdf()</a></code>. This abstraction allows
+for automatic use of analytical solutions when available, while
+seamlessly falling back to numerical integration when necessary.</p>
+<p>Note: For analytical detection to work correctly, <code>pdist</code> and <code>dprimary</code>
+must be directly passed as distribution functions, not via assignment or
+<code>pdist_name</code> and <code>dprimary_name</code> must be used to override the default
+extraction of the function name.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>Primary event censored distribution functions
+    <div class="dont-index"><p><code><a href="new_primary_censored_dist.html">new_primary_censored_dist()</a></code> and <code><a href="primary_censored_cdf.html">primary_censored_cdf()</a></code></p>
+<p>Primary event censored distribution functions
 <code><a href="dprimarycensoreddist.html">dprimarycensoreddist</a>()</code>,
 <code><a href="rprimarycensoreddist.html">rprimarycensoreddist</a>()</code></p></div>
     </div>

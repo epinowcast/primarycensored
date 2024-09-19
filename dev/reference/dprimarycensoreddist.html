@@ -70,6 +70,8 @@ event distributions and delay distributions.</p>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -82,6 +84,8 @@ event distributions and delay distributions.</p>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -125,11 +129,27 @@ See <code>primary_dists.R</code> for examples.</p></dd>
 <dd><p>List of additional arguments to be passed to
 dprimary. For example, when using <code>dexpgrowth</code>, you would
 pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
-and rate parameters.</p></dd>
+and rate parameters</p></dd>
 
 
 <dt id="arg-log">log<a class="anchor" aria-label="anchor" href="#arg-log"></a></dt>
 <dd><p>Logical; if TRUE, probabilities p are given as log(p)</p></dd>
+
+
+<dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
+<dd><p>A string specifying the name of the delay distribution
+function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>pdist</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
+
+
+<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
+<dd><p>A string specifying the name of the primary event
+distribution function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>dprimary</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
