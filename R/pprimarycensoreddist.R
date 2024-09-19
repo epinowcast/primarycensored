@@ -67,6 +67,9 @@
 #' for automatic use of analytical solutions when available, while
 #' seamlessly falling back to numerical integration when necessary.
 #'
+#' Note: For analytical detection to work correctly, `pdist` and `dprimary`
+#' must be directly passed as distribution functions, not via assignment.
+#'
 #' @family primarycensoreddist
 #' @seealso [new_primary_censored_dist()] and [primary_censored_cdf()]
 #'
@@ -87,7 +90,14 @@ pprimarycensoreddist <- function(
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   # Create a new primary_censored_dist object
-  pcens_obj <- new_primary_censored_dist(pdist, dprimary, dprimary_args, ...)
+  pcens_obj <- new_primary_censored_dist(
+    deparse(substitute(pdist)),
+    pdist,
+    deparse(substitute(dprimary)),
+    dprimary,
+    dprimary_args,
+    ...
+  )
 
   # Compute the CDF using the S3 method
   result <- primary_censored_cdf(pcens_obj, q, pwindow)

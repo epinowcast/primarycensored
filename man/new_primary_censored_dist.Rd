@@ -4,10 +4,23 @@
 \alias{new_primary_censored_dist}
 \title{S3 class for primary event censored distribution computation}
 \usage{
-new_primary_censored_dist(pdist, dprimary, dprimary_args, ...)
+new_primary_censored_dist(
+  pdist_name,
+  pdist,
+  dprimary_name,
+  dprimary,
+  dprimary_args,
+  ...
+)
 }
 \arguments{
+\item{pdist_name}{A string specifying the name of the delay distribution
+function.}
+
 \item{pdist}{Distribution function (CDF)}
+
+\item{dprimary_name}{A string specifying the name of the primary event
+distribution function.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -33,6 +46,7 @@ S3 class for primary event censored distribution computation
 \seealso{
 Low level primary event censored distribution objects and methods
 \code{\link{primary_censored_cdf}()},
+\code{\link{primary_censored_cdf.default}()},
 \code{\link{primary_censored_cdf.pcens_numeric}()},
 \code{\link{primary_censored_cdf.pcens_pgamma_dunif}()},
 \code{\link{primary_censored_cdf.pcens_plnorm_dunif}()}

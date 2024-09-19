@@ -88,6 +88,9 @@ This function creates a \code{primary_censored_dist} object using
 censored CDF using \code{\link[=primary_censored_cdf]{primary_censored_cdf()}}. This abstraction allows
 for automatic use of analytical solutions when available, while
 seamlessly falling back to numerical integration when necessary.
+
+Note: For analytical detection to work correctly, \code{pdist} and \code{dprimary}
+must be directly passed as distribution functions, not via assignment.
 }
 \examples{
 # Example: Lognormal distribution with uniform primary events

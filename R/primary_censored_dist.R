@@ -2,12 +2,20 @@
 #'
 #' @inheritParams pprimarycensoreddist
 #'
+#' @param pdist_name A string specifying the name of the delay distribution
+#' function.
+#'
+#' @param dprimary_name A string specifying the name of the primary event
+#' distribution function.
+#'
 #' @return An object of class primary_censored_cdf
 #'
 #' @family primary_censored_dist
 #'
 #' @export
-new_primary_censored_dist <- function(pdist, dprimary, dprimary_args, ...) {
+new_primary_censored_dist <- function(
+    pdist_name, pdist,
+    dprimary_name, dprimary, dprimary_args, ...) {
   structure(
     list(
       pdist = pdist,
@@ -18,10 +26,9 @@ new_primary_censored_dist <- function(pdist, dprimary, dprimary_args, ...) {
     class = c(
       paste0(
         "pcens_",
-        deparse(substitute(pdist)), "_",
-        deparse(substitute(dprimary))
-      ),
-      "pcens_numeric"
+        pdist_name, "_",
+        dprimary_name
+      )
     )
   )
 }
@@ -48,6 +55,22 @@ primary_censored_cdf <- function(
   UseMethod("primary_censored_cdf")
 }
 
+#' Default method for computing primary event censored CDF
+#'
+#' This method serves as a fallback for combinations of delay and primary
+#' event distributions that don't have specific implementations. It uses
+#' the numeric integration method.
+#'
+#' @inheritParams primary_censored_cdf
+#'
+#' @family primary_censored_dist
+#'
+#' @export
+primary_censored_cdf.default <- function(
+    object, q, pwindow, use_numeric = FALSE) {
+  primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+}
+
 #' Numeric method for computing primary event censored CDF
 #'
 #' This method uses numerical integration to compute the primary event censored
@@ -70,6 +93,7 @@ primary_censored_cdf <- function(
 #' @export
 primary_censored_cdf.pcens_numeric <- function(
     object, q, pwindow, use_numeric = FALSE) {
+  message("Using numeric integration")
   result <- vapply(q, function(d) {
     if (d <= 0) {
       return(0) # Return 0 for non-positive delays
@@ -100,8 +124,9 @@ primary_censored_cdf.pcens_numeric <- function(
 primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   use_numeric <- TRUE
+  message("Found analytical solution")
   if (isTRUE(use_numeric)) {
-    NextMethod()
+    primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
   }
 
   result <- vapply(q, function(n) {
@@ -121,8 +146,9 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   use_numeric <- TRUE
+  message("Found analytical solution")
   if (isTRUE(use_numeric)) {
-    NextMethod()
+    primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
   }
 
   result <- vapply(q, function(n) {
