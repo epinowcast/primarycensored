@@ -7,6 +7,7 @@ This is the current development version.
 * Add `{touchstone}` based benchmarks for benchmarking R utility functions, and fitting the `stan` and `fitdistplus` models.
 * Added a "How it works" vignette.
 * Added R infrastructure for analytical solutions via the `primary_censored_dist` S3 class.
+* Added Weibull analytical solution to "How it works" vignette.
 
 # primarycensoreddist 0.4.0
 
