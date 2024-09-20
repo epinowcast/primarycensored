@@ -154,6 +154,7 @@ Applying a uniform primary event time distribution to equation \@ref(eq:survival
 $$
 Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
 $$
+
 This is analytically solvable whenever the upper distribution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
 
 In each case considered below it is easier to change the integration variable:
@@ -177,12 +178,12 @@ can be reduced to an analytic expression.
 
 **General Discrete censored delay distribution**
 
-First we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
+First, we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
 
 $$
 \begin{aligned}
-f_n &= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
-&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
+f_n &= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
 \end{aligned}  (\#eq:disccensunifprim)
 $$
 
@@ -219,7 +220,7 @@ $$
 
 **Survival function of $S_{+}$ for Gamma distribution**
 
-By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -270,7 +271,7 @@ $$
 
 **Survival function of $S_{+}$ for Log-Normal distribution**
 
-By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -281,7 +282,7 @@ $$
 
 **Log-Normal discrete censored delay distribution**
 
-By substituting \@ref(eq:lognormpartex) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:lognormpartexp) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -292,5 +293,56 @@ f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \m
 \end{aligned}
 $$
 
+#### Weibull distribution
+
+The Weibull distribution has the density function:
+
+$$
+f_T(z;\lambda,k) =
+\begin{cases}
+\frac{k}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}}, & z\geq0 ,\\
+0, & z<0,
+\end{cases}
+$$
+And distribution function:
+
+$$
+F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, & z\geq0,\\ 0, & z<0.\end{cases}
+$$
+Where $\Phi$ is the standard normal distribution function.
+
+**Weibull partial expectation**
+
+We use an integration substitution $y = (z / \lambda)^k$. This gives:
+
+$$
+\begin{aligned}
+\int_t^{t+w_P} z~ f_T(z; \lambda,k) dz &= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y^{1/k} e^{-y} dy\\
+&= \lambda \Delta_{w_P} g(t; \lambda,k)
+\end{aligned} (\#eq:weibullpartexp)
+$$
+
+Where $g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k)$ is a reparametrisation of the lower incomplete gamma function.
+
+**Survival function of $S_{+}$ for Weibull distribution**
+
+By substituting equation \@ref(eq:weibullpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
+
+$$
+Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
+$$
+
+**Weibull discrete censored delay distribution**
+
+By substituting \@ref(eq:weibullpartexp) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+
+$$
+\begin{aligned}
+f_n &= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \lambda \Delta_1^{(2)} g(n-1; \lambda,k) \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) \\
+&+ \lambda [2 g(n; \lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)] \qquad n = 0, 1, \dots.
+\end{aligned}
+$$
 
 ## References
