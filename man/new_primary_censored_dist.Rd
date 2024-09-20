@@ -53,7 +53,6 @@ S3 class for primary event censored distribution computation
 Low level primary event censored distribution objects and methods
 \code{\link{primary_censored_cdf}()},
 \code{\link{primary_censored_cdf.default}()},
-\code{\link{primary_censored_cdf.pcens_numeric}()},
 \code{\link{primary_censored_cdf.pcens_pgamma_dunif}()},
 \code{\link{primary_censored_cdf.pcens_plnorm_dunif}()}
 }
