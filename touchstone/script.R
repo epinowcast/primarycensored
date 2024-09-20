@@ -22,7 +22,7 @@ touchstone::benchmark_run(
     library(primarycensoreddist)
     q <- seq(0, 10, by = 0.01)
   },
-  pprimarycensoreddist_expgrowth = {
+  pprimarycensoreddist_plnrom_expgrowth = {
     pprimarycensoreddist(
       q, plnorm,
       dprimary = dexpgrowth,
@@ -51,7 +51,7 @@ touchstone::benchmark_run(
     library(primarycensoreddist)
     x <- seq(0, 10, by = 1)
   },
-  dprimarycensoreddist_expgrowth = {
+  dprimarycensoreddist_pweibull_expgrowth = {
     dprimarycensoreddist(
       x, pweibull,
       dprimary = dexpgrowth,
@@ -118,7 +118,7 @@ touchstone::benchmark_run(
       right = samples + swindow
     )
   },
-  fitdistdoublecens_gamma = {
+  fitdistdoublecens_gamma_expgrowth = {
     fitdistdoublecens(
       delay_data,
       distr = "gamma",
