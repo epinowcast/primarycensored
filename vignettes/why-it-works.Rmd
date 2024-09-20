@@ -322,7 +322,12 @@ $$
 \end{aligned} (\#eq:weibullpartexp)
 $$
 
-Where $g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k)$ is a reparametrisation of the lower incomplete gamma function.
+Where 
+
+$$
+g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
+$$ 
+is a reparametrisation of the lower incomplete gamma function.
 
 **Survival function of $S_{+}$ for Weibull distribution**
 
@@ -344,5 +349,7 @@ f_n &= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_
 &+ \lambda [2 g(n; \lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)] \qquad n = 0, 1, \dots.
 \end{aligned}
 $$
+
+Which was also found by Cori _et al_ [@cori2013new].
 
 ## References
