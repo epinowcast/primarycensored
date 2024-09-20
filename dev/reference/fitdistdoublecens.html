@@ -58,6 +58,7 @@ censored data using fitdistrplus and primarycensoreddist.</p>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -95,6 +96,14 @@ normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like <code>dexpgrowth</code> for an exponential growth distribution.
 See <code>primary_dists.R</code> for examples.</p></dd>
+
+
+<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
+<dd><p>A string specifying the name of the primary event
+distribution function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>dprimary</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
 
 
 <dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
