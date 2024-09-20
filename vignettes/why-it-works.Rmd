@@ -154,6 +154,7 @@ Applying a uniform primary event time distribution to equation \@ref(eq:survival
 $$
 Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
 $$
+
 This is analytically solvable whenever the upper distribution function of $T$ is known and the mean of $T$ is analytically solvable from its integral definition.
 
 In each case considered below it is easier to change the integration variable:
@@ -173,16 +174,18 @@ $$
 \int_t^{t+w_P} f_T(z) z~ dz (\#eq:partexp)
 $$
 
-can be reduced to an analytic expression.
+can be reduced to an analytic expression. 
+
+The insight here is that this will be possible for any distribution where the average of the distribution can be calculated analytically, which includes commonly used non-negative distributions such as the Gamma, Log-Normal and Weibull distributions.
 
 **General Discrete censored delay distribution**
 
-First we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
+First, we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
 
 $$
 \begin{aligned}
-f_n &= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
-&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
+f_n &= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
 \end{aligned}  (\#eq:disccensunifprim)
 $$
 
@@ -209,6 +212,8 @@ Where $\gamma$ is the lower incomplete gamma function.
 
 **Gamma partial expectation**
 
+We know that the full expectation of the Gamma distribution is $\mathbb{E}[T] = k\theta$, which can be calculated as a standard integral. Doing the same integral for the partial expectation gives:
+
 $$
 \begin{aligned}
 \int_t^{t+w_P} f_T(z) z~ dz &= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P}z z^{k-1} \exp(-z/\theta)~dz \\
@@ -219,7 +224,7 @@ $$
 
 **Survival function of $S_{+}$ for Gamma distribution**
 
-By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -257,12 +262,19 @@ Where $\Phi$ is the standard normal distribution function.
 
 **Log-Normal partial expectation**
 
-We use an integration substitution $y = (\ln z - \mu) / \sigma$ and using the shift property of the standard normal distribution function. This gives:
+We know that the full expectation of the Log-Normal distribution is $\mathbb{E}[T] = e^{\mu + \frac{1}{2} \sigma^2}$, which can be calculated by integration with the integration substitution $y = (\ln z - \mu) / \sigma$. This has transformation Jacobian:
+
+$$
+\frac{dz}{dy} = \sigma e^{\sigma y + \mu}.
+$$
+
+Doing the same integral for the partial expectation, and using the same integration substitution gives:
 
 $$
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
-&= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
+\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
+&= {1 \over \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
+&= {e^{\mu + \frac{1}{2} \sigma^2} \over \sqrt{2 \pi} } \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
 &= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
 &= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
 \end{aligned} (\#eq:lognormpartexp)
@@ -270,7 +282,7 @@ $$
 
 **Survival function of $S_{+}$ for Log-Normal distribution**
 
-By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for both the survival function of $S_+$ in terms of analytically available functions:
+By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -281,7 +293,7 @@ $$
 
 **Log-Normal discrete censored delay distribution**
 
-By substituting \@ref(eq:lognormpartex) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:lognormpartexp) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -292,5 +304,72 @@ f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \m
 \end{aligned}
 $$
 
+#### Weibull distribution
+
+The Weibull distribution has the density function:
+
+$$
+f_T(z;\lambda,k) =
+\begin{cases}
+\frac{k}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}}, & z\geq0 ,\\
+0, & z<0,
+\end{cases}
+$$
+And distribution function:
+
+$$
+F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, & z\geq0,\\ 0, & z<0.\end{cases}
+$$
+Where $\Phi$ is the standard normal distribution function.
+
+**Weibull partial expectation**
+
+We know that the full expectation of the Weibull distribution is $\mathbb{E}[T] = \lambda \Gamma(1 + 1/k)$, which can be calculated by integration using the integration substitution $y = (z / \lambda)^k$, which has transformation Jacobian:
+
+$$
+\frac{dz}{dy} = \frac{\lambda}{k}y^{1/k - 1}.
+$$
+
+Doing the same integral for the partial expectation, and using the same integration substitution gives:
+
+$$
+\begin{aligned}
+\int_t^{t+w_P} z~ f_T(z; \lambda,k) dz  &= \int_t^{t+w_P} \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
+&= k\int_t^{t+w_P} \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
+&= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y y^{1/k - 1} e^{-y} dy  \\
+&= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y^{1/k} e^{-y} dy\\
+&= \lambda \Delta_{w_P} g(t; \lambda,k)
+\end{aligned} (\#eq:weibullpartexp)
+$$
+
+Where 
+
+$$
+g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
+$$ 
+is a reparametrisation of the lower incomplete gamma function.
+
+**Survival function of $S_{+}$ for Weibull distribution**
+
+By substituting equation \@ref(eq:weibullpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
+
+$$
+Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
+$$
+
+**Weibull discrete censored delay distribution**
+
+By substituting \@ref(eq:weibullpartexp) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+
+$$
+\begin{aligned}
+f_n &= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \lambda \Delta_1^{(2)} g(n-1; \lambda,k) \\
+&= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) \\
+&+ \lambda [2 g(n; \lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)] \qquad n = 0, 1, \dots.
+\end{aligned}
+$$
+
+Which was also found by Cori _et al_ [@cori2013new].
 
 ## References
