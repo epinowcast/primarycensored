@@ -211,8 +211,8 @@ Note that taking the limit <span class="math inline">\(\lim_r \rightarrow 0\)</s
 <p>Applying a uniform primary event time distribution to equation <a href="#eq:survivalfunc">(3.1)</a> gives:</p>
 <p><span class="math display">\[
 Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
-\]</span>
-This is analytically solvable whenever the upper distribution function of <span class="math inline">\(T\)</span> is known and the mean of <span class="math inline">\(T\)</span> is analytically solvable from its integral definition.</p>
+\]</span></p>
+<p>This is analytically solvable whenever the upper distribution function of <span class="math inline">\(T\)</span> is known and the mean of <span class="math inline">\(T\)</span> is analytically solvable from its integral definition.</p>
 <p>In each case considered below it is easier to change the integration variable:</p>
 <p><span class="math display" id="eq:unifprim">\[
 \begin{aligned}
@@ -226,12 +226,13 @@ Q_{S_+}(t) &amp;= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz 
 \int_t^{t+w_P} f_T(z) z~ dz \tag{3.6}
 \]</span></p>
 <p>can be reduced to an analytic expression.</p>
+<p>The insight here is that this will be possible for any distribution where the average of the distribution can be calculated analytically, which includes commonly used non-negative distributions such as the Gamma, Log-Normal and Weibull distributions.</p>
 <p><strong>General Discrete censored delay distribution</strong></p>
-<p>First we note that equation <a href="#eq:disccensprob">(3.3)</a> can be written using the difference operator: <span class="math inline">\(f_n = -\Delta_1 Q_{S_+}(n-1)\)</span>. We can insert this expression into equation <a href="#eq:unifprim">(3.5)</a> to give the discrete censored delay distribution for uniformly distributed primary event times:</p>
+<p>First, we note that equation <a href="#eq:disccensprob">(3.3)</a> can be written using the difference operator: <span class="math inline">\(f_n = -\Delta_1 Q_{S_+}(n-1)\)</span>. We can insert this expression into equation <a href="#eq:unifprim">(3.5)</a> to give the discrete censored delay distribution for uniformly distributed primary event times:</p>
 <p><span class="math display" id="eq:disccensunifprim">\[
 \begin{aligned}
-f_n &amp;= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
-&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) + \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
+f_n &amp;= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
 \end{aligned}  \tag{3.7}
 \]</span></p>
 <p>We now consider some specific delay distributions.</p>
@@ -253,6 +254,7 @@ F_T(z;k, \theta) &amp;= 0, \qquad z &lt; 0.
 \]</span>
 Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma function.</p>
 <p><strong>Gamma partial expectation</strong></p>
+<p>We know that the full expectation of the Gamma distribution is <span class="math inline">\(\mathbb{E}[T] = k\theta\)</span>, which can be calculated as a standard integral. Doing the same integral for the partial expectation gives:</p>
 <p><span class="math display" id="eq:gammapartexp">\[
 \begin{aligned}
 \int_t^{t+w_P} f_T(z) z~ dz &amp;= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P}z z^{k-1} \exp(-z/\theta)~dz \\
@@ -261,7 +263,7 @@ Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma 
 \end{aligned} \tag{3.8}
 \]</span></p>
 <p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Gamma distribution</strong></p>
-<p>By substituting equation <a href="#eq:gammapartexp">(3.8)</a> into equation <a href="#eq:disccensunifprim">(3.7)</a> we can solve for both the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+<p>By substituting equation <a href="#eq:gammapartexp">(3.8)</a> into equation <a href="#eq:disccensunifprim">(3.7)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display" id="eq:survgammaunifprim">\[
 \begin{aligned}
 Q_{S_+}(t; k, \theta) &amp;= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
@@ -293,17 +295,22 @@ F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
 \]</span>
 Where <span class="math inline">\(\Phi\)</span> is the standard normal distribution function.</p>
 <p><strong>Log-Normal partial expectation</strong></p>
-<p>We use an integration substitution <span class="math inline">\(y = (\ln z - \mu) / \sigma\)</span> and using the shift property of the standard normal distribution function. This gives:</p>
+<p>We know that the full expectation of the Log-Normal distribution is <span class="math inline">\(\mathbb{E}[T] = e^{\mu + \frac{1}{2} \sigma^2}\)</span>, which can be calculated by integration with the integration substitution <span class="math inline">\(y = (\ln z - \mu) / \sigma\)</span>. This has transformation Jacobian:</p>
+<p><span class="math display">\[
+\frac{dz}{dy} = \sigma e^{\sigma y + \mu}.
+\]</span></p>
+<p>Doing the same integral for the partial expectation, and using the same integration substitution gives:</p>
 <p><span class="math display" id="eq:lognormpartexp">\[
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &amp;= {1 \over \sigma \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
-&amp;= e^{\mu + \frac{1}{2} \sigma^2} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
+\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &amp;= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
+&amp;= {1 \over \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
+&amp;= {e^{\mu + \frac{1}{2} \sigma^2} \over \sqrt{2 \pi} } \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
 &amp;= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
 &amp;= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
 \end{aligned} \tag{3.10}
 \]</span></p>
 <p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution</strong></p>
-<p>By substituting equation <a href="#eq:lognormpartexp">(3.10)</a> into equation <a href="#eq:disccensunifprim">(3.7)</a> we can solve for both the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+<p>By substituting equation <a href="#eq:lognormpartexp">(3.10)</a> into equation <a href="#eq:disccensunifprim">(3.7)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display">\[
 \begin{aligned}
 Q_{S+}(t ;\mu, \sigma) &amp;= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \int_t^{t+w_P} {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) (z-t)~ dz, \\
@@ -311,7 +318,7 @@ Q_{S+}(t ;\mu, \sigma) &amp;= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \int_t^{
 \end{aligned}
 \]</span></p>
 <p><strong>Log-Normal discrete censored delay distribution</strong></p>
-<p>By substituting <a href="#eq:lognormpartex">(<strong>??</strong>)</a> into <a href="#eq:disccensprob">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
+<p>By substituting <a href="#eq:lognormpartexp">(3.10)</a> into <a href="#eq:disccensprob">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
 <p><span class="math display">\[
 \begin{aligned}
 f_n &amp;= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\
@@ -320,6 +327,60 @@ f_n &amp;= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n
   &amp;+ e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n; \mu + \sigma^2, \sigma) - F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n-1; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
 \end{aligned}
 \]</span></p>
+</div>
+<div class="section level5" number="3.2.1.3">
+<h5 id="weibull-distribution">
+<span class="header-section-number">3.2.1.3</span> Weibull distribution<a class="anchor" aria-label="anchor" href="#weibull-distribution"></a>
+</h5>
+<p>The Weibull distribution has the density function:</p>
+<p><span class="math display">\[
+f_T(z;\lambda,k) =
+\begin{cases}
+\frac{k}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}}, &amp; z\geq0 ,\\
+0, &amp; z&lt;0,
+\end{cases}
+\]</span>
+And distribution function:</p>
+<p><span class="math display">\[
+F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, &amp; z\geq0,\\ 0, &amp; z&lt;0.\end{cases}
+\]</span>
+Where <span class="math inline">\(\Phi\)</span> is the standard normal distribution function.</p>
+<p><strong>Weibull partial expectation</strong></p>
+<p>We know that the full expectation of the Weibull distribution is <span class="math inline">\(\mathbb{E}[T] = \lambda \Gamma(1 + 1/k)\)</span>, which can be calculated by integration using the integration substitution <span class="math inline">\(y = (z / \lambda)^k\)</span>, which has transformation Jacobian:</p>
+<p><span class="math display">\[
+\frac{dz}{dy} = \frac{\lambda}{k}y^{1/k - 1}.
+\]</span></p>
+<p>Doing the same integral for the partial expectation, and using the same integration substitution gives:</p>
+<p><span class="math display" id="eq:weibullpartexp">\[
+\begin{aligned}
+\int_t^{t+w_P} z~ f_T(z; \lambda,k) dz  &amp;= \int_t^{t+w_P} \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
+&amp;= k\int_t^{t+w_P} \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
+&amp;= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y y^{1/k - 1} e^{-y} dy  \\
+&amp;= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y^{1/k} e^{-y} dy\\
+&amp;= \lambda \Delta_{w_P} g(t; \lambda,k)
+\end{aligned} \tag{3.11}
+\]</span></p>
+<p>Where</p>
+<p><span class="math display">\[
+g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
+\]</span>
+is a reparametrisation of the lower incomplete gamma function.</p>
+<p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Weibull distribution</strong></p>
+<p>By substituting equation <a href="#eq:weibullpartexp">(3.11)</a> into equation <a href="#eq:disccensunifprim">(3.7)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+<p><span class="math display">\[
+Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
+\]</span></p>
+<p><strong>Weibull discrete censored delay distribution</strong></p>
+<p>By substituting <a href="#eq:weibullpartexp">(3.11)</a> into <a href="#eq:disccensprob">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
+<p><span class="math display">\[
+\begin{aligned}
+f_n &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
+&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \lambda \Delta_1^{(2)} g(n-1; \lambda,k) \\
+&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) \\
+&amp;+ \lambda [2 g(n; \lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)] \qquad n = 0, 1, \dots.
+\end{aligned}
+\]</span></p>
+<p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">4</a>]</sup></span>.</p>
 </div>
 </div>
 </div>
