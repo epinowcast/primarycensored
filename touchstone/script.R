@@ -179,7 +179,7 @@ touchstone::benchmark_run(
 
     model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   },
-  cmdstan_fit_lognormal = {
+  cmdstan_fit_lognormal_unif = {
     fit1 <- model$sample(
       data = stan_data1,
       seed = 123,
@@ -246,7 +246,7 @@ touchstone::benchmark_run(
 
     model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   },
-  cmdstan_fit_gamma = {
+  cmdstan_fit_gamma_expgrowth = {
     fit2 <- model$sample(
       data = stan_data2,
       seed = 456,
