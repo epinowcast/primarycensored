@@ -8,6 +8,7 @@ This is the current development version.
 * Added a "How it works" vignette.
 * Added R infrastructure for analytical solutions via the `primary_censored_dist` S3 class.
 * Added Weibull analytical solution to "How it works" vignette.
+* Added analytical solutions for the gamma and lognormal distributions with uniform primary censoring.
 
 # primarycensoreddist 0.4.0
 
