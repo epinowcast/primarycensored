@@ -25,46 +25,108 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   expect_identical(obj, new_obj)
 })
 
-test_that("primary_censored_cdf methods dispatch correctly", {
-  pdist_name <- "pgamma"
-  pdist <- pgamma
-  dprimary_name <- "dunif"
-  dprimary <- dunif
+test_that(
+  "primary_censored_cdf methods dispatch correctly to existing
+   analytical solutions",
+  {
+    pdist_name <- "pgamma"
+    pdist <- pgamma
+    dprimary_name <- "dunif"
+    dprimary <- dunif
 
-  obj_gamma <- new_primary_censored_dist(
-    pdist, dprimary, list(),
-    pdist_name, dprimary_name,
-    shape = 2, rate = 1
-  )
+    obj_gamma <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      shape = 2, rate = 1
+    )
 
-  pdist_name <- "plnorm"
-  pdist <- plnorm
-  dprimary_name <- "dunif"
-  dprimary <- dunif
+    pdist_name <- "plnorm"
+    pdist <- plnorm
+    dprimary_name <- "dunif"
+    dprimary <- dunif
 
-  obj_lnorm <- new_primary_censored_dist(
-    pdist, dprimary, list(),
-    pdist_name, dprimary_name,
-    meanlog = 0, sdlog = 1
-  )
+    obj_lnorm <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      meanlog = 0, sdlog = 1
+    )
 
-  expect_s3_class(obj_gamma, "pcens_pgamma_dunif")
-  expect_s3_class(obj_lnorm, "pcens_plnorm_dunif")
+    expect_s3_class(obj_gamma, "pcens_pgamma_dunif")
+    expect_s3_class(obj_lnorm, "pcens_plnorm_dunif")
 
-  q_values <- c(5, 10)
-  pwindow <- 10
+    q_values <- c(5, 10)
+    pwindow <- 10
 
-  expect_no_error(
-    primary_censored_cdf(obj_gamma, q = q_values, pwindow = pwindow)
-  )
-  expect_no_error(
-    primary_censored_cdf(obj_lnorm, q = q_values, pwindow = pwindow)
-  )
-})
+    expect_no_error(
+      primary_censored_cdf(obj_gamma, q = q_values, pwindow = pwindow)
+    )
+    expect_no_error(
+      primary_censored_cdf(obj_lnorm, q = q_values, pwindow = pwindow)
+    )
+  }
+)
 
 test_that(
-  "primary_censored_cdf.default computes correct values for various
-   parameters",
+  "primary_censored_cdf errors as expected when the wrong distributional
+   parameters are supplied",
+  {
+    pdist_name <- "pgamma"
+    pdist <- pgamma
+    dprimary_name <- "dunif"
+    dprimary <- dunif
+
+    obj_gamma <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      rate = 1
+    )
+
+    expect_error(
+      primary_censored_cdf(obj_gamma, q = 1, pwindow = 1),
+      "shape parameter is required for Gamma distribution"
+    )
+
+    obj_gamma_no_rate <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      shape = 2
+    )
+
+    expect_error(
+      primary_censored_cdf(obj_gamma_no_rate, q = 1, pwindow = 1),
+      "scale or rate parameter is required for Gamma distribution"
+    )
+
+    pdist_name <- "plnorm"
+    pdist <- plnorm
+
+    obj_lnorm_no_meanlog <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      sdlog = 1
+    )
+
+    expect_error(
+      primary_censored_cdf(obj_lnorm_no_meanlog, q = 1, pwindow = 1),
+      "meanlog parameter is required for Log-Normal distribution"
+    )
+
+    obj_lnorm_no_sdlog <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      meanlog = 0
+    )
+
+    expect_error(
+      primary_censored_cdf(obj_lnorm_no_sdlog, q = 1, pwindow = 1),
+      "sdlog parameter is required for Log-Normal distribution"
+    )
+  }
+)
+
+test_that(
+  "primary_censored_cdf.default computes the same values as
+   primary_censored_cdf.pcens_pgamma_dunif",
   {
     pdist_name <- "pgamma"
     pdist <- pgamma
@@ -118,8 +180,8 @@ test_that(
 )
 
 test_that(
-  "primary_censored_cdf.pcens_plnorm_dunif uses numeric method for various
-   parameters",
+  "primary_censored_cdf.default computes the same values as
+   primary_censored_cdf.pcens_plnorm_dunif",
   {
     pdist_name <- "plnorm"
     pdist <- plnorm

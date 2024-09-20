@@ -117,9 +117,10 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
   # Extract Gamma distribution parameters
   shape <- object$args$shape
   scale <- object$args$scale
+  rate <- object$args$rate
   # if we don't have scale get fromm rate
-  if (is.null(scale)) {
-    scale <- 1 / object$args$rate
+  if (is.null(scale) && !is.null(rate)) {
+    scale <- 1 / rate
   }
   if (is.null(shape)) {
     stop("shape parameter is required for Gamma distribution")
