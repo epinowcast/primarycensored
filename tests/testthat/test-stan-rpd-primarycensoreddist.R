@@ -50,7 +50,7 @@ test_that(
     dist_id <- 1 # Lognormal
     params <- c(0, 1) # meanlog, sdlog
     pwindow <- 1
-    D <- Inf
+    D < 12
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
@@ -62,6 +62,25 @@ test_that(
       d, plnorm,
       pwindow = pwindow, D = D, meanlog = params[1],
       sdlog = params[2]
+    )
+
+    expect_equal(exp(stan_lcdf), r_cdf, tolerance = 1e-6)
+
+    # Gamma
+    dist_id <- 2 # Gamma
+    params <- c(2, 1) # shape, scale
+    pwindow <- 1
+    D <- 12
+    primary_dist_id <- 1 # Uniform
+    primary_params <- numeric(0)
+
+    stan_lcdf <- sapply(
+      d, primary_censored_dist_lcdf, dist_id, params, pwindow, D,
+      primary_dist_id, primary_params
+    )
+    r_cdf <- pprimarycensoreddist(
+      d, pgamma,
+      pwindow = pwindow, D = D, shape = params[1], scale = params[2]
     )
 
     expect_equal(exp(stan_lcdf), r_cdf, tolerance = 1e-6)

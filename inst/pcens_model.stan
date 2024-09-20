@@ -1,6 +1,6 @@
 functions {
   #include primary_censored_dist.stan
-  #include primary_censored_dist_cdf_analytical.stan
+  #include primary_censored_dist_analytical_cdf.stan
   #include expgrowth.stan
 
   real partial_sum(array[] int dummy, int start, int end,

@@ -18,21 +18,23 @@ int check_for_analytical(int dist_id, int primary_dist_id) {
   */
 real primary_censored_gamma_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real shape = params[1];
-  real scale = params[2];
+  real scale = 1 / params[2];
   real log_pgamma_q = gamma_lcdf(q | shape, scale);
   real log_pgamma_d = gamma_lcdf(d | shape, scale);
   real log_pgamma_q_1 = gamma_lcdf(q | shape + 1, scale);
   real log_pgamma_d_1 = gamma_lcdf(d | shape + 1, scale);
 
-  real log_Q_T = log1m_exp(log_pgamma_d);
+  real log_Q_T = gamma_lccdf(q | shape, scale);
   real log_Delta_F_T_kp1 = log_diff_exp(log_pgamma_d_1, log_pgamma_q_1);
   real log_Delta_F_T_k = log_diff_exp(log_pgamma_d, log_pgamma_q);
 
-  real log_Q_Splus = log_sum_exp({
+  real log_Q_Splus = log_sum_exp(
     log_Q_T,
-    log(shape * scale / pwindow) + log_Delta_F_T_kp1,
-    log(q / pwindow) + log_Delta_F_T_k
-  });
+    log_diff_exp(
+      log(shape * scale / pwindow) + log_Delta_F_T_kp1,
+      log(q / pwindow) + log_Delta_F_T_k
+    )
+  );
 
   return log1m_exp(log_Q_Splus);
 }
@@ -48,15 +50,17 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
   real log_plnorm_q_sigma2 = lognormal_lcdf(q | mu + sigma^2, sigma);
   real log_plnorm_d_sigma2 = lognormal_lcdf(d | mu + sigma^2, sigma);
 
-  real log_Q_T = log1m_exp(log_plnorm_d);
+  real log_Q_T = lognormal_lccdf(q | mu, sigma);
   real log_Delta_F_T_mu_sigma = log_diff_exp(log_plnorm_d_sigma2, log_plnorm_q_sigma2);
   real log_Delta_F_T = log_diff_exp(log_plnorm_d, log_plnorm_q);
 
-  real log_Q_Splus = log_sum_exp({
+  real log_Q_Splus = log_sum_exp(
     log_Q_T,
-    log(exp(mu + 0.5 * sigma^2) / pwindow) + log_Delta_F_T_mu_sigma,
-    log(q / pwindow) + log_Delta_F_T
-  });
+    log_diff_exp(
+      log(exp(mu + 0.5 * sigma^2) / pwindow) + log_Delta_F_T_mu_sigma,
+      log(q / pwindow) + log_Delta_F_T
+    )
+  );
 
   return log1m_exp(log_Q_Splus);
 }
@@ -80,7 +84,7 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
                                            data real pwindow, data real D,
                                            int primary_dist_id,
                                            array[] real primary_params,
-                                          real lower_bound) {
+                                           real lower_bound) {
   real result;
   real q;
   real log_cdf_D;
@@ -101,7 +105,10 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
   }
 
   if (!is_inf(D)) {
-    log_cdf_D = primary_censored_dist_lcdf(D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params);
+    log_cdf_D = primary_censored_dist_lcdf(
+      D | dist_id, params, pwindow, positive_infinity(),
+      primary_dist_id, primary_params
+    );
     result = result - log_cdf_D;
   }
 
@@ -122,7 +129,8 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
   *
   * @return Primary event censored CDF, normalized by D if finite (truncation adjustment)
   */
-real primary_censored_dist_analytical_cdf(data real d, int dist_id, array[] real params,
+real primary_censored_dist_analytical_cdf(data real d, int dist_id,
+                                          array[] real params,
                                           data real pwindow, data real D,
                                           int primary_dist_id,
                                           array[] real primary_params,
