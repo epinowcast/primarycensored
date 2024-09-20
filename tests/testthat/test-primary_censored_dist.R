@@ -62,6 +62,43 @@ test_that("primary_censored_cdf.default computes correct values", {
   expect_equal(result_numeric, result_analytical, tolerance = 1e-6)
 })
 
+test_that("primary_censored_cdf.pcens_plnorm_dunif uses numeric method", {
+  pdist_name <- "plnorm"
+  pdist <- plnorm
+  dprimary_name <- "dunif"
+  dprimary <- dunif
+  meanlog <- 0
+  sdlog <- 1
+
+  obj <- new_primary_censored_dist(
+    pdist,
+    dprimary, list(),
+    pdist_name, dprimary_name,
+    meanlog = meanlog, sdlog = sdlog
+  )
+
+  q_values <- 0:20
+  pwindow <- 2
+  result_numeric <- primary_censored_cdf(
+    obj,
+    q = q_values, pwindow = pwindow, use_numeric = TRUE
+  )
+  result_analytical <- primary_censored_cdf(
+    obj,
+    q = q_values, pwindow = pwindow, use_numeric = FALSE
+  )
+
+  # Check properties of numeric result
+  expect_true(all(result_numeric >= 0))
+  expect_true(all(result_numeric <= 1))
+  expect_type(result_numeric, "double")
+  expect_length(result_numeric, length(q_values))
+  expect_true(all(diff(result_numeric) >= 0)) # Ensure CDF is non-decreasing
+
+  # Check that analytical and numeric results are the same
+  expect_equal(result_numeric, result_analytical, tolerance = 1e-6)
+})
+
 test_that("primary_censored_cdf methods dispatch correctly", {
   pdist_name <- "pgamma"
   pdist <- pgamma
