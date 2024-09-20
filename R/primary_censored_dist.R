@@ -64,21 +64,6 @@ primary_censored_cdf <- function(
 #' the numeric integration method.
 #'
 #' @inheritParams primary_censored_cdf
-#'
-#' @family primary_censored_dist
-#'
-#' @export
-primary_censored_cdf.default <- function(
-    object, q, pwindow, use_numeric = FALSE) {
-  primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
-}
-
-#' Numeric method for computing primary event censored CDF
-#'
-#' This method uses numerical integration to compute the primary event censored
-#' CDF for any combination of delay distribution and primary event distribution.
-#'
-#' @inheritParams primary_censored_cdf
 #' @inheritParams pprimarycensoreddist
 #'
 #' @details
@@ -93,7 +78,7 @@ primary_censored_cdf.default <- function(
 #' @family primary_censored_dist
 #'
 #' @export
-primary_censored_cdf.pcens_numeric <- function(
+primary_censored_cdf.default <- function(
     object, q, pwindow, use_numeric = FALSE) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
@@ -124,16 +109,63 @@ primary_censored_cdf.pcens_numeric <- function(
 #' @export
 primary_censored_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  use_numeric <- TRUE
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+      primary_censored_cdf.default(object, q, pwindow, use_numeric)
     )
   }
+  # Extract Gamma distribution parameters
+  shape <- object$args$shape
+  scale <- object$args$scale
+  rate <- object$args$rate
+  # if we don't have scale get fromm rate
+  if (is.null(scale) && !is.null(rate)) {
+    scale <- 1 / rate
+  }
+  if (is.null(shape)) {
+    stop("shape parameter is required for Gamma distribution")
+  }
+  if (is.null(scale)) {
+    stop("scale or rate parameter is required for Gamma distribution")
+  }
 
-  result <- vapply(q, function(n) {
-    # Implement analytical solution here
-  }, numeric(1))
+  partial_pgamma <- function(q) {
+    pgamma(q, shape = shape, scale = scale)
+  }
+  partial_pgamm_k_1 <- function(q) {
+    pgamma(q, shape = shape + 1, scale = scale)
+  }
+  # Adjust q so that we have [q-pwindow, q]
+  q <- q - pwindow
+  # Handle cases where q + pwindow <= 0
+  zero_cases <- q + pwindow <= 0
+  result <- ifelse(zero_cases, 0, NA)
+
+  # Process non-zero cases only if there are any
+  if (!all(zero_cases)) {
+    non_zero_q <- q[!zero_cases]
+
+    # Compute necessary survival and distribution functions
+    pgamma_q <- partial_pgamma(non_zero_q)
+    pgamma_q_pwindow <- partial_pgamma(non_zero_q + pwindow)
+    pgamma_q_1 <- partial_pgamm_k_1(non_zero_q)
+    pgamma_q_pwindow_1 <- partial_pgamm_k_1(non_zero_q + pwindow)
+
+    Q_T <- 1 - pgamma_q_pwindow
+    Delta_F_T_kp1 <- pgamma_q_pwindow_1 - pgamma_q_1
+    Delta_F_T_k <- pgamma_q_pwindow - pgamma_q
+
+    # Calculate Q_Splus using the analytical formula
+    Q_Splus <- Q_T +
+      (shape * scale / pwindow) * Delta_F_T_kp1 -
+      (non_zero_q / pwindow) * Delta_F_T_k
+
+    # Compute the CDF as 1 - Q_Splus
+    non_zero_result <- 1 - Q_Splus
+
+    # Assign non-zero results back to the main result vector
+    result[!zero_cases] <- non_zero_result
+  }
 
   return(result)
 }
@@ -147,16 +179,62 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 #' @export
 primary_censored_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  use_numeric <- TRUE
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.pcens_numeric(object, q, pwindow, use_numeric)
+      primary_censored_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
-  result <- vapply(q, function(n) {
-    # Implement analytical solution here
-  }, numeric(1))
+  # Extract Log-Normal distribution parameters
+  mu <- object$args$meanlog
+  sigma <- object$args$sdlog
+  if (is.null(mu)) {
+    stop("meanlog parameter is required for Log-Normal distribution")
+  }
+  if (is.null(sigma)) {
+    stop("sdlog parameter is required for Log-Normal distribution")
+  }
+
+  partial_plnorm <- function(q) {
+    plnorm(q, meanlog = mu, sdlog = sigma)
+  }
+  partial_plnorm_sigma2 <- function(q) {
+    plnorm(q, meanlog = mu + sigma^2, sdlog = sigma)
+  }
+  # Adjust q so that we have [q-pwindow, q]
+  q <- q - pwindow
+
+  # Handle cases where q + pwindow <= 0
+  zero_cases <- q + pwindow <= 0
+  result <- ifelse(zero_cases, 0, NA)
+
+  # Process non-zero cases only if there are any
+  if (!all(zero_cases)) {
+    non_zero_q <- q[!zero_cases]
+
+    # Compute necessary survival and distribution functions
+    plnorm_q <- partial_plnorm(non_zero_q)
+    plnorm_q_pwindow <- partial_plnorm(non_zero_q + pwindow)
+    plnorm_q_sigma2 <- partial_plnorm_sigma2(non_zero_q)
+    plnorm_q_pwindow_sigma2 <- partial_plnorm_sigma2(
+      non_zero_q + pwindow
+    )
+
+    Q_T <- 1 - plnorm_q_pwindow
+    Delta_F_T_mu_sigma <- plnorm_q_pwindow_sigma2 - plnorm_q_sigma2
+    Delta_F_T <- plnorm_q_pwindow - plnorm_q
+
+    # Calculate Q_Splus using the analytical formula
+    Q_Splus <- Q_T +
+      (exp(mu + 0.5 * sigma^2) / pwindow) * Delta_F_T_mu_sigma -
+      (non_zero_q / pwindow) * Delta_F_T
+
+    # Compute the CDF as 1 - Q_Splus
+    non_zero_result <- 1 - Q_Splus
+
+    # Assign non-zero results back to the main result vector
+    result[!zero_cases] <- non_zero_result
+  }
 
   return(result)
 }

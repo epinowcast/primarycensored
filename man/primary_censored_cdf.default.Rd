@@ -24,11 +24,19 @@ This method serves as a fallback for combinations of delay and primary
 event distributions that don't have specific implementations. It uses
 the numeric integration method.
 }
+\details{
+This method implements the numerical integration approach for computing
+the primary event censored CDF. It uses the same mathematical formulation
+as described in the details section of \code{\link[=pprimarycensoreddist]{pprimarycensoreddist()}}, but
+applies numerical integration instead of analytical solutions.
+}
 \seealso{
+\code{\link[=pprimarycensoreddist]{pprimarycensoreddist()}} for the mathematical details of the
+primary event censored CDF computation.
+
 Low level primary event censored distribution objects and methods
 \code{\link{new_primary_censored_dist}()},
 \code{\link{primary_censored_cdf}()},
-\code{\link{primary_censored_cdf.pcens_numeric}()},
 \code{\link{primary_censored_cdf.pcens_pgamma_dunif}()},
 \code{\link{primary_censored_cdf.pcens_plnorm_dunif}()}
 }
