@@ -68,6 +68,7 @@ rprimary
 seabbs
 seccensorprob
 sim
+speedups
 stan
 stantools
 survgammaunifprim
@@ -75,5 +76,6 @@ survivalfunc
 swindow
 u
 unifprim
+weibull
 weibullpartexp
 zsusswein
