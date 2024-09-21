@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['dist_5flcdf_0',['dist_lcdf',['../primary__censored__dist_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce',1,'primary_censored_dist.stan']]]
+  ['check_5ffor_5fanalytical_0',['check_for_analytical',['../primary__censored__dist__analytical__cdf_8stan.html#a2730550b8ff0306ecc83e2544e575eca',1,'primary_censored_dist_analytical_cdf.stan']]]
 ];
