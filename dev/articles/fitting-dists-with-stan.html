@@ -30,7 +30,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -297,6 +297,7 @@
 <span>  <span class="st">"</span></span>
 <span><span class="st">  functions {</span></span>
 <span><span class="st">    #include primary_censored_dist.stan</span></span>
+<span><span class="st">    #include primary_censored_dist_analytical_cdf.stan</span></span>
 <span><span class="st">    #include expgrowth.stan</span></span>
 <span><span class="st">  }</span></span>
 <span><span class="st">  data {</span></span>
@@ -354,9 +355,9 @@
 <span><span class="op">)</span></span>
 <span><span class="va">primarycensoreddist_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##  variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##     lp__  -3422.72 -3422.43 1.00 0.71 -3424.51 -3421.79 1.00     1379     1857</span></span>
-<span><span class="co">##     mu        1.55     1.54 0.04 0.04     1.47     1.62 1.00     1133     1313</span></span>
-<span><span class="co">##     sigma     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1107     1212</span></span></code></pre>
+<span><span class="co">##     lp__  -3422.78 -3422.46 1.06 0.73 -3425.06 -3421.80 1.00     1357     1504</span></span>
+<span><span class="co">##     mu        1.55     1.54 0.05 0.04     1.47     1.62 1.00     1236     1308</span></span>
+<span><span class="co">##     sigma     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1280     1149</span></span></code></pre>
 <p>We see that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters.</p>
 </div>
 <div class="section level2" number="5">
@@ -394,9 +395,9 @@
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.78 -3422.47 1.02 0.73 -3424.76 -3421.80 1.00     1425     1731</span></span>
-<span><span class="co">##  params[1]     1.55     1.54 0.05 0.05     1.48     1.63 1.00     1064     1179</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.01     1043     1392</span></span></code></pre>
+<span><span class="co">##  lp__      -3422.74 -3422.43 0.98 0.71 -3424.69 -3421.80 1.00     1310     1373</span></span>
+<span><span class="co">##  params[1]     1.55     1.55 0.05 0.05     1.48     1.63 1.00     1061      855</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1104      861</span></span></code></pre>
 <p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example. We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 </div>

@@ -30,7 +30,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -134,20 +134,25 @@
 <p>Aside from reading the documentation it is also possible to list the available Stan functions using a helper function directly in R.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pcd_stan_functions.html">pcd_stan_functions</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##  [1] "expgrowth_pdf"                        </span></span>
-<span><span class="co">##  [2] "expgrowth_lpdf"                       </span></span>
-<span><span class="co">##  [3] "expgrowth_cdf"                        </span></span>
-<span><span class="co">##  [4] "expgrowth_lcdf"                       </span></span>
-<span><span class="co">##  [5] "expgrowth_rng"                        </span></span>
-<span><span class="co">##  [6] "dist_lcdf"                            </span></span>
-<span><span class="co">##  [7] "primary_dist_lpdf"                    </span></span>
-<span><span class="co">##  [8] "primary_censored_ode"                 </span></span>
-<span><span class="co">##  [9] "primary_censored_dist_cdf"            </span></span>
-<span><span class="co">## [10] "primary_censored_dist_lcdf"           </span></span>
-<span><span class="co">## [11] "primary_censored_dist_lpmf"           </span></span>
-<span><span class="co">## [12] "primary_censored_dist_pmf"            </span></span>
-<span><span class="co">## [13] "primary_censored_sone_lpmf_vectorized"</span></span>
-<span><span class="co">## [14] "primary_censored_sone_pmf_vectorized"</span></span></code></pre>
+<pre><code><span><span class="co">##  [1] "expgrowth_pdf"                          </span></span>
+<span><span class="co">##  [2] "expgrowth_lpdf"                         </span></span>
+<span><span class="co">##  [3] "expgrowth_cdf"                          </span></span>
+<span><span class="co">##  [4] "expgrowth_lcdf"                         </span></span>
+<span><span class="co">##  [5] "expgrowth_rng"                          </span></span>
+<span><span class="co">##  [6] "check_for_analytical"                   </span></span>
+<span><span class="co">##  [7] "primary_censored_gamma_uniform_lcdf"    </span></span>
+<span><span class="co">##  [8] "primary_censored_lognormal_uniform_lcdf"</span></span>
+<span><span class="co">##  [9] "primary_censored_dist_analytical_lcdf"  </span></span>
+<span><span class="co">## [10] "primary_censored_dist_analytical_cdf"   </span></span>
+<span><span class="co">## [11] "dist_lcdf"                              </span></span>
+<span><span class="co">## [12] "primary_dist_lpdf"                      </span></span>
+<span><span class="co">## [13] "primary_censored_ode"                   </span></span>
+<span><span class="co">## [14] "primary_censored_dist_cdf"              </span></span>
+<span><span class="co">## [15] "primary_censored_dist_lcdf"             </span></span>
+<span><span class="co">## [16] "primary_censored_dist_lpmf"             </span></span>
+<span><span class="co">## [17] "primary_censored_dist_pmf"              </span></span>
+<span><span class="co">## [18] "primary_censored_sone_lpmf_vectorized"  </span></span>
+<span><span class="co">## [19] "primary_censored_sone_pmf_vectorized"</span></span></code></pre>
 </div>
 <div class="section level3" number="2.2">
 <h3 id="accessing-stan-functions">
@@ -156,7 +161,7 @@
 <p>Stan functions are accessed using the <code><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions()</a></code> function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a <code>functions{}</code> block.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions</a></span><span class="op">(</span><span class="st">"primary_censored_dist_lpmf"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "// Stan functions from primarycensoreddist version 0.4.0.1000\nreal primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_dist_id,\n                                array[] real primary_params) {\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper &lt;= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primary_censored_dist_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params\n  );\n  real log_cdf_lower = primary_censored_dist_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primary_censored_dist_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "// Stan functions from primarycensoreddist version 0.5.0.1000\nreal primary_censored_dist_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_dist_id,\n                                array[] real primary_params) {\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper &lt;= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primary_censored_dist_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params\n  );\n  real log_cdf_lower = primary_censored_dist_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primary_censored_dist_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"</span></span></code></pre>
 </div>
 <div class="section level3" number="2.3">
 <h3 id="linking-the-stan-functions-to-your-workflow">
@@ -175,13 +180,13 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpfICS7w/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpbAAKua/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
 <span><span class="va">model</span></span></code></pre></div>
 <pre><code><span><span class="co">## functions {</span></span>
-<span><span class="co">## // Stan functions from primarycensoreddist version 0.4.0.1000</span></span>
+<span><span class="co">## // Stan functions from primarycensoreddist version 0.5.0.1000</span></span>
 <span><span class="co">## real expgrowth_rng(real min, real max, real r) {</span></span>
 <span><span class="co">##   real u = uniform_rng(0, 1);</span></span>
 <span><span class="co">##   if (abs(r) &lt; 1e-10) {</span></span>

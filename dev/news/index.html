@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.4.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -43,15 +43,21 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.4.0.1000" id="primarycensoreddist-0401000">primarycensoreddist 0.4.0.1000<a class="anchor" aria-label="anchor" href="#primarycensoreddist-0401000"></a></h2>
-<p>This is the current development version.</p>
+<h2 class="pkg-version" data-toc-text="0.5.0.1000" id="primarycensoreddist-0501000">primarycensoreddist 0.5.0.1000<a class="anchor" aria-label="anchor" href="#primarycensoreddist-0501000"></a></h2>
+<p>This is the development version of <code>primarycensoreddist</code> and is not yet ready for release.</p>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="primarycensoreddist-050">primarycensoreddist 0.5.0<a class="anchor" aria-label="anchor" href="#primarycensoreddist-050"></a></h2>
+<p>This release adds a new <code>{touchstone}</code> based benchmark suite to the package. It also adds a new “How it works” vignette which aims to give the reader more details into how the primary censored distributions work.</p>
+<p>As part of the “How it works” we (<a href="https://github.com/SamuelBrand1" class="external-link">@SamuelBrand1</a>) found analytical solutions for the gamma, lognormal, and weibull distributions with uniform primary censoring. These are now implemented for the lognormal and gamma distributions in the <code>R</code> and <code>stan</code> code providing significant speedups to the fitting process (~10-20 times faster). The Weibull will be added in the next release.</p>
 <div class="section level3">
-<h3 id="package-0-4-0-1000">Package<a class="anchor" aria-label="anchor" href="#package-0-4-0-1000"></a></h3>
+<h3 id="package-0-5-0">Package<a class="anchor" aria-label="anchor" href="#package-0-5-0"></a></h3>
 <ul><li>Add <code>{touchstone}</code> based benchmarks for benchmarking R utility functions, and fitting the <code>stan</code> and <code>fitdistplus</code> models.</li>
 <li>Added a “How it works” vignette.</li>
 <li>Added R infrastructure for analytical solutions via the <code>primary_censored_dist</code> S3 class.</li>
 <li>Added Weibull analytical solution to “How it works” vignette.</li>
-<li>Added analytical solutions for the gamma and lognormal distributions with uniform primary censoring.</li>
+<li>Added analytical solutions for the gamma and lognormal distributions with uniform primary censoring to both the <code>R</code> and <code>stan</code> code.</li>
+<li>Added numerical protection to ensure that CDFs for delays greater than the maximum truncation are exactly 1.</li>
 </ul></div>
 </div>
     <div class="section level2">
