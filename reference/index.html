@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -86,6 +87,47 @@
 
         </dt>
         <dd>Exponential growth distribution functions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="primary-censored-distribution-class-and-methods">Primary censored distribution class and methods<a class="anchor" aria-label="anchor" href="#primary-censored-distribution-class-and-methods"></a></h2>
+
+      <div class="section-desc"><p>S3 class and methods for computing primary event censored distributions, focusing on the internal machinery used by the package. Unlike the primary event distributions section which deals with specific distribution functions, this section covers the general framework for handling censored distributions.</p></div>
+
+
+    </div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="new_primary_censored_dist.html">new_primary_censored_dist()</a></code>
+
+        </dt>
+        <dd>S3 class for primary event censored distribution computation</dd>
+      </dl><dl><dt>
+
+          <code><a href="primary_censored_cdf.html">primary_censored_cdf()</a></code>
+
+        </dt>
+        <dd>Compute primary event censored CDF</dd>
+      </dl><dl><dt>
+
+          <code><a href="primary_censored_cdf.default.html">primary_censored_cdf(<i>&lt;default&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Default method for computing primary event censored CDF</dd>
+      </dl><dl><dt>
+
+          <code><a href="primary_censored_cdf.pcens_pgamma_dunif.html">primary_censored_cdf(<i>&lt;pcens_pgamma_dunif&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Method for Gamma delay with uniform primary</dd>
+      </dl><dl><dt>
+
+          <code><a href="primary_censored_cdf.pcens_plnorm_dunif.html">primary_censored_cdf(<i>&lt;pcens_plnorm_dunif&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Method for Log-Normal delay with uniform primary</dd>
       </dl></div><div class="section level2">
       <h2 id="distribution-checking-functions">Distribution checking functions<a class="anchor" aria-label="anchor" href="#distribution-checking-functions"></a></h2>
 
@@ -179,11 +221,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
 </div>
 
     </footer></div>

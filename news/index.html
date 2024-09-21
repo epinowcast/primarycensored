@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -26,6 +26,7 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -41,6 +42,20 @@
       <small>Source: <a href="https://github.com/epinowcast/primarycensoreddist/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="primarycensoreddist-050">primarycensoreddist 0.5.0<a class="anchor" aria-label="anchor" href="#primarycensoreddist-050"></a></h2>
+<p>This release adds a new <code>{touchstone}</code> based benchmark suite to the package. It also adds a new “How it works” vignette which aims to give the reader more details into how the primary censored distributions work.</p>
+<p>As part of the “How it works” we (<a href="https://github.com/SamuelBrand1" class="external-link">@SamuelBrand1</a>) found analytical solutions for the gamma, lognormal, and weibull distributions with uniform primary censoring. These are now implemented for the lognormal and gamma distributions in the <code>R</code> and <code>stan</code> code providing significant speedups to the fitting process (~10-20 times faster). The Weibull will be added in the next release.</p>
+<div class="section level3">
+<h3 id="package-0-5-0">Package<a class="anchor" aria-label="anchor" href="#package-0-5-0"></a></h3>
+<ul><li>Add <code>{touchstone}</code> based benchmarks for benchmarking R utility functions, and fitting the <code>stan</code> and <code>fitdistplus</code> models.</li>
+<li>Added a “How it works” vignette.</li>
+<li>Added R infrastructure for analytical solutions via the <code>primary_censored_dist</code> S3 class.</li>
+<li>Added Weibull analytical solution to “How it works” vignette.</li>
+<li>Added analytical solutions for the gamma and lognormal distributions with uniform primary censoring to both the <code>R</code> and <code>stan</code> code.</li>
+<li>Added numerical protection to ensure that CDFs for delays greater than the maximum truncation are exactly 1.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.4.0" id="primarycensoreddist-040">primarycensoreddist 0.4.0<a class="anchor" aria-label="anchor" href="#primarycensoreddist-040"></a></h2>
 <p>In this release, we have added a new package <code>stan</code> model for fitting distributions using the <code>cmdstanr</code> package. We have also added a new function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to allow for fitting of double censored and truncated data using the <code>fitdistrplus</code> package. As well as these functionality improvements this release focuses on improving the stability of the <code>stan</code> model and improving the speed of the <code>primary_censored_ode</code> function.</p>
@@ -109,11 +124,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
 </div>
 
     </footer></div>

@@ -7,18 +7,21 @@
 <url><loc>https://primarycensoreddist.epinowcast.org/articles/index.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/articles/primarycensoreddist.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/articles/using-stan-tools.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/articles/why-it-works.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/authors.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/index.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/news/index.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/check_dprimary.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/check_pdist.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/dot-dpcens.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/dot-extract_function_name.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/dot-extract_stan_functions.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/dot-ppcens.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/dprimarycensoreddist.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/expgrowth.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/fitdistdoublecens.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/index.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/new_primary_censored_dist.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_as_cmdstan_data.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_cmdstan_model.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_load_stan_functions.html</loc></url>
@@ -26,6 +29,10 @@
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_stan_functions.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pcd_stan_path.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/pprimarycensoreddist.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/primary_censored_cdf.default.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/primary_censored_cdf.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/primary_censored_cdf.pcens_pgamma_dunif.html</loc></url>
+<url><loc>https://primarycensoreddist.epinowcast.org/reference/primary_censored_cdf.pcens_plnorm_dunif.html</loc></url>
 <url><loc>https://primarycensoreddist.epinowcast.org/reference/rprimarycensoreddist.html</loc></url>
 </urlset>
 

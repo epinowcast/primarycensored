@@ -15,7 +15,7 @@ event distributions and delay distributions."><meta property="og:image" content=
 
     <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,7 @@ event distributions and delay distributions."><meta property="og:image" content=
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
   </ul></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json"></form></li>
@@ -69,6 +70,8 @@ event distributions and delay distributions.</p>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span>
 <span></span>
@@ -81,6 +84,8 @@ event distributions and delay distributions.</p>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  log <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -124,11 +129,27 @@ See <code>primary_dists.R</code> for examples.</p></dd>
 <dd><p>List of additional arguments to be passed to
 dprimary. For example, when using <code>dexpgrowth</code>, you would
 pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
-and rate parameters.</p></dd>
+and rate parameters</p></dd>
 
 
 <dt id="arg-log">log<a class="anchor" aria-label="anchor" href="#arg-log"></a></dt>
 <dd><p>Logical; if TRUE, probabilities p are given as log(p)</p></dd>
+
+
+<dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
+<dd><p>A string specifying the name of the delay distribution
+function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>pdist</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
+
+
+<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
+<dd><p>A string specifying the name of the primary event
+distribution function. If NULL, the function name is extracted using
+<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
+exists for the primary censored distribution. Must be set if <code>dprimary</code> is
+passed a pre-assigned variable rather than a function name.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -193,11 +214,11 @@ mathematical details of the CDF, refer to the documentation of
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
 </div>
 
     </footer></div>
