@@ -131,6 +131,8 @@ pprimarycensoreddist <- function(
       pprimarycensoreddist(D, pdist, pwindow, Inf, dprimary, dprimary_args, ...)
     }
     result <- result / normalizer
+
+    result <- ifelse(q > D, 1, result)
   }
 
   return(result)
