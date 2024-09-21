@@ -147,6 +147,7 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
   real log_cdf_D;
 
   if (d <= 0) return negative_infinity();
+  if (d >= D) return 0;
 
   real q = max({d - pwindow, 0});
 
