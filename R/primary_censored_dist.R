@@ -133,10 +133,10 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
   }
 
   partial_pgamma <- function(q) {
-    pgamma(q, shape = shape, scale = scale)
+    stats::pgamma(q, shape = shape, scale = scale)
   }
   partial_pgamm_k_1 <- function(q) {
-    pgamma(q, shape = shape + 1, scale = scale)
+    stats::pgamma(q, shape = shape + 1, scale = scale)
   }
   # Adjust q so that we have [q-pwindow, q]
   q <- q - pwindow
@@ -202,10 +202,10 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
   }
 
   partial_plnorm <- function(q) {
-    plnorm(q, meanlog = mu, sdlog = sigma)
+    stats::plnorm(q, meanlog = mu, sdlog = sigma)
   }
   partial_plnorm_sigma2 <- function(q) {
-    plnorm(q, meanlog = mu + sigma^2, sdlog = sigma)
+    stats::plnorm(q, meanlog = mu + sigma^2, sdlog = sigma)
   }
   # Adjust q so that we have [q-pwindow, q]
   q <- q - pwindow
