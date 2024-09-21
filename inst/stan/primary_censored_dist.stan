@@ -136,18 +136,31 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
     return 0;
   }
 
-  real lower_bound = max({d - pwindow, 1e-6});
-  array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);
-  array[4] int ids = {dist_id, primary_dist_id, size(params), size(primary_params)};
+  if (d >= D) {
+    return 1;
+  }
 
-  vector[1] y0 = rep_vector(0.0, 1);
-  result = ode_rk45(primary_censored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
-
-  if (!is_inf(D)) {
-    real log_cdf_D = primary_censored_dist_lcdf(
-      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
+  // Check if an analytical solution exists
+  if (check_for_analytical(dist_id, primary_dist_id)) {
+    // Use analytical solution
+    result = primary_censored_dist_analytical_cdf(
+      d | dist_id, params, pwindow, D, primary_dist_id, primary_params
     );
-    result = exp(log(result) - log_cdf_D);
+  } else {
+    // Use numerical integration for other cases
+    real lower_bound = max({d - pwindow, 1e-6});
+    array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);
+    array[4] int ids = {dist_id, primary_dist_id, size(params), size(primary_params)};
+
+    vector[1] y0 = rep_vector(0.0, 1);
+    result = ode_rk45(primary_censored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
+
+    if (!is_inf(D)) {
+      real log_cdf_D = primary_censored_dist_lcdf(
+        D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
+      );
+      result = exp(log(result) - log_cdf_D);
+    }
   }
 
   return result;
@@ -184,15 +197,37 @@ real primary_censored_dist_lcdf(data real d, int dist_id, array[] real params,
                                 data real pwindow, data real D,
                                 int primary_dist_id,
                                 array[] real primary_params) {
+  real result;
+
   if (d <= 0) {
     return negative_infinity();
   }
 
-  return log(
-    primary_censored_dist_cdf(
-      d | dist_id, params, pwindow, D, primary_dist_id, primary_params
-    )
-  );
+  if (d >= D) {
+    return 0;
+  }
+
+  // Check if an analytical solution exists
+  if (check_for_analytical(dist_id, primary_dist_id)) {
+    result = primary_censored_dist_analytical_lcdf(
+      d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+    );
+  } else {
+    // Use numerical integration
+    result = log(primary_censored_dist_cdf(
+      d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+    ));
+  }
+
+  // Handle truncation
+  if (!is_inf(D)) {
+    real log_cdf_D = primary_censored_dist_lcdf(
+      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
+    );
+    result = result - log_cdf_D;
+  }
+
+  return result;
 }
 
 /**
