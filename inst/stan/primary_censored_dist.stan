@@ -135,6 +135,11 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   if (d <= 0) {
     return 0;
   }
+
+  if (d >= D) {
+    return 1;
+  }
+
   // Check if an analytical solution exists
   if (check_for_analytical(dist_id, primary_dist_id)) {
     // Use analytical solution
@@ -196,6 +201,10 @@ real primary_censored_dist_lcdf(data real d, int dist_id, array[] real params,
 
   if (d <= 0) {
     return negative_infinity();
+  }
+
+  if (d >= D) {
+    return 0;
   }
 
   // Check if an analytical solution exists
