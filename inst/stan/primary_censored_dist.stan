@@ -154,13 +154,13 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
 
     vector[1] y0 = rep_vector(0.0, 1);
     result = ode_rk45(primary_censored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
-  }
 
-  if (!is_inf(D)) {
-    real log_cdf_D = primary_censored_dist_lcdf(
-      D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
-    );
-    result = exp(log(result) - log_cdf_D);
+    if (!is_inf(D)) {
+      real log_cdf_D = primary_censored_dist_lcdf(
+        D | dist_id, params, pwindow, positive_infinity(), primary_dist_id,primary_params
+      );
+      result = exp(log(result) - log_cdf_D);
+    }
   }
 
   return result;
