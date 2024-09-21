@@ -97,6 +97,9 @@ primary_censored_cdf.default <- function(
     }
   }, numeric(1))
 
+  # Ensure the result is not greater than 1 (accounts for numerical errors)
+  result <- pmin(1, result)
+
   return(result)
 }
 
@@ -167,6 +170,9 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
     result[!zero_cases] <- non_zero_result
   }
 
+  # Ensure the result is not greater than 1 (accounts for numerical errors)
+  result <- pmin(1, result)
+
   return(result)
 }
 
@@ -235,6 +241,9 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
     # Assign non-zero results back to the main result vector
     result[!zero_cases] <- non_zero_result
   }
+
+  # Ensure the result is not greater than 1 (accounts for numerical errors)
+  result <- pmin(1, result)
 
   return(result)
 }
