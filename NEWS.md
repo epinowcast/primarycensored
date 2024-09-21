@@ -1,6 +1,8 @@
-# primarycensoreddist 0.4.0.1000
+# primarycensoreddist 0.5.0
 
-This is the current development version.
+This release adds a new `{touchstone}` based benchmark suite to the package. It also adds a new "How it works" vignette which aims to give the reader more details into how the primary censored distributions work.
+
+As part of the "How it works" we (@SamuelBrand1) found analytical solutions for the gamma, lognormal, and weibull distributions with uniform primary censoring. These are now implemented for the lognormal and gamma distributions in the `R` and `stan` code providing significant speedups to the fitting process (~10-20 times faster). The Weibull will be added in the next release.
 
 ## Package
 
