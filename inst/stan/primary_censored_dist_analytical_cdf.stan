@@ -15,84 +15,114 @@ int check_for_analytical(int dist_id, int primary_dist_id) {
 
 /**
   * Compute the primary event censored log CDF analytically for Gamma delay with Uniform primary
+  *
+  * @param d Delay time
+  * @param q Lower bound of integration (max(d - pwindow, 0))
+  * @param params Array of Gamma distribution parameters [shape, rate]
+  * @param pwindow Primary event window
+  *
+  * @return Log of the primary event censored CDF for Gamma delay with Uniform
+  * primary
   */
 real primary_censored_gamma_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real shape = params[1];
   real rate = params[2];
+  real shape_1 = shape + 1;
+  real log_window = log(pwindow);
 
-  real log_Q_T = gamma_lccdf(d | shape, rate);
-  real log_pgamma_d = gamma_lcdf(d | shape, rate);
-  real log_pgamma_d_1 = gamma_lcdf(d | shape + 1, rate);
+  real log_F_T = gamma_lcdf(d | shape, rate);
+  real log_F_T_kp1 = gamma_lcdf(d | shape_1, rate);
 
-  real log_Delta_F_T_kp1;
-  real log_Delta_F_T_k;
-  real log_Q_Splus;
+  real log_delta_F_T_kp1;
+  real log_delta_F_T_k;
+  real log_F_Splus;
+
   if (q != 0) {
-    real log_pgamma_q = gamma_lcdf(q | shape, rate);
-    real log_pgamma_q_1 = gamma_lcdf(q | shape + 1, rate);
-    log_Delta_F_T_kp1 = log_diff_exp(log_pgamma_d_1, log_pgamma_q_1);
-    log_Delta_F_T_k = log_diff_exp(log_pgamma_d, log_pgamma_q);
+    real log_F_T_q = gamma_lcdf(q | shape, rate);
+    real log_F_T_q_kp1 = gamma_lcdf(q | shape_1, rate);
 
-    log_Q_Splus = log_sum_exp(
-      log_Q_T,
+    // Ensure that the first argument is greater than the second
+    log_delta_F_T_kp1 = log_diff_exp(log_F_T_kp1, log_F_T_q_kp1);
+    log_delta_F_T_k = log_diff_exp(log_F_T, log_F_T_q);
+
+    log_F_Splus = log_diff_exp(
+      log_F_T,
       log_diff_exp(
-        log(shape * inv(rate)) + log_Delta_F_T_kp1,
-        log(pwindow - d) + log_Delta_F_T_k
-      ) - log(pwindow)
+        log(shape * inv(rate)) + log_delta_F_T_kp1,
+        log(d - pwindow) + log_delta_F_T_k
+      ) - log_window
     );
   } else {
-    log_Delta_F_T_kp1 = log_pgamma_d_1;
-    log_Delta_F_T_k = log_pgamma_d;
+    log_delta_F_T_kp1 = log_F_T_kp1;
+    log_delta_F_T_k = log_F_T;
 
-    log_Q_Splus = log_sum_exp({
-      log_Q_T,
-      log(shape * inv(rate) / pwindow) + log_Delta_F_T_kp1,
-      log(pwindow - d) - log(pwindow) + log_Delta_F_T_k
-    });
+    log_F_Splus = log_diff_exp(
+      log_F_T,
+      log_sum_exp(
+        log(shape * inv(rate)) + log_delta_F_T_kp1,
+        log(pwindow - d) + log_delta_F_T_k
+      ) - log_window
+    );
   }
 
-  return log1m_exp(log_Q_Splus);
+  return log_F_Splus;
 }
 
 /**
   * Compute the primary event censored log CDF analytically for Lognormal delay with Uniform primary
+  *
+  * @param d Delay time
+  * @param q Lower bound of integration (max(d - pwindow, 0))
+  * @param params Array of Lognormal distribution parameters [mu, sigma]
+  * @param pwindow Primary event window
+  *
+  * @return Log of the primary event censored CDF for Lognormal delay with
+  * Uniform primary
   */
 real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real mu = params[1];
   real sigma = params[2];
+  real mu_sigma2 = mu + square(sigma);
+  real log_window = log(pwindow);
 
-  real log_Q_T = lognormal_lccdf(d | mu, sigma);
-  real log_plnorm_d = lognormal_lcdf(d | mu, sigma);
-  real log_plnorm_d_sigma2 = lognormal_lcdf(d | mu + sigma^2, sigma);
+  real log_F_T = lognormal_lcdf(d | mu, sigma);
+  real log_F_T_mu_sigma2 = lognormal_lcdf(d | mu_sigma2, sigma);
 
-  real log_Delta_F_T_mu_sigma;
-  real log_Delta_F_T;
-  real log_Q_Splus;
+  real log_delta_F_T_mu_sigma;
+  real log_delta_F_T;
+  real log_F_Splus;
+
   if (q != 0) {
-    real log_plnorm_q = lognormal_lcdf(q | mu, sigma);
-    real log_plnorm_q_sigma2 = lognormal_lcdf(q | mu + sigma^2, sigma);
-    log_Delta_F_T_mu_sigma = log_diff_exp(log_plnorm_d_sigma2, log_plnorm_q_sigma2);
-    log_Delta_F_T = log_diff_exp(log_plnorm_d, log_plnorm_q);
+    real log_F_T_q = lognormal_lcdf(q | mu, sigma);
+    real log_F_T_q_mu_sigma2 = lognormal_lcdf(q | mu_sigma2, sigma);
 
-    log_Q_Splus = log_sum_exp(
-      log_Q_T,
+    // Ensure that the first argument is greater than the second
+    log_delta_F_T_mu_sigma = log_diff_exp(
+      log_F_T_mu_sigma2, log_F_T_q_mu_sigma2
+    );
+    log_delta_F_T = log_diff_exp(log_F_T, log_F_T_q);
+
+    log_F_Splus = log_diff_exp(
+      log_F_T,
       log_diff_exp(
-        (mu + 0.5 * sigma^2) + log_Delta_F_T_mu_sigma,
-        log(d - pwindow) + log_Delta_F_T
-      ) - log(pwindow)
+        (mu + 0.5 * square(sigma)) + log_delta_F_T_mu_sigma,
+        log(d - pwindow) + log_delta_F_T
+      ) - log_window
     );
   } else {
-    log_Delta_F_T_mu_sigma = log_plnorm_d_sigma2;
-    log_Delta_F_T = log_plnorm_d;
+    log_delta_F_T_mu_sigma = log_F_T_mu_sigma2;
+    log_delta_F_T = log_F_T;
 
-    log_Q_Splus = log_sum_exp({
-      log_Q_T,
-      (mu + 0.5 * sigma^2) - log(pwindow) + log_Delta_F_T_mu_sigma,
-      log(pwindow - d) - log(pwindow) + log_Delta_F_T
-    });
+    log_F_Splus = log_diff_exp(
+      log_F_T,
+      log_sum_exp(
+        (mu + 0.5 * square(sigma)) + log_delta_F_T_mu_sigma,
+        log(pwindow - d) + log_delta_F_T
+      ) - log_window
+    );
   }
 
-  return log1m_exp(log_Q_Splus);
+  return log_F_Splus;
 }
 
 /**
