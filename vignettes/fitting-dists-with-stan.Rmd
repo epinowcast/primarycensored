@@ -283,7 +283,7 @@ Let's use this function to fit our data:
 
 ```{r pcd-cmdstan-model, message = FALSE}
 # Compile the model with multithreading support
-pcd_model <- pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE))
+pcd_model <- pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE), force_recompile = TRUE)
 
 pcd_data <- pcd_as_cmdstan_data(
   delay_counts,

@@ -135,19 +135,18 @@ real primary_censored_dist_cdf(data real d, int dist_id, array[] real params,
   if (d <= 0) {
     return 0;
   }
-
-  real lower_bound = max({d - pwindow, 1e-6});
-  array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);
-  array[4] int ids = {dist_id, primary_dist_id, size(params), size(primary_params)};
-
   // Check if an analytical solution exists
   if (check_for_analytical(dist_id, primary_dist_id)) {
     // Use analytical solution
     result = primary_censored_dist_analytical_cdf(
-      d | dist_id, params, pwindow, D, primary_dist_id, primary_params, lower_bound
+      d | dist_id, params, pwindow, D, primary_dist_id, primary_params
     );
   } else {
-      // Use numerical integration for other cases
+    // Use numerical integration for other cases
+    real lower_bound = max({d - pwindow, 1e-6});
+    array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);
+    array[4] int ids = {dist_id, primary_dist_id, size(params), size(primary_params)};
+
     vector[1] y0 = rep_vector(0.0, 1);
     result = ode_rk45(primary_censored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
   }
@@ -201,9 +200,8 @@ real primary_censored_dist_lcdf(data real d, int dist_id, array[] real params,
 
   // Check if an analytical solution exists
   if (check_for_analytical(dist_id, primary_dist_id)) {
-    real lower_bound = max({d - pwindow, 1e-6});
     result = primary_censored_dist_analytical_lcdf(
-      d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params, lower_bound
+      d | dist_id, params, pwindow, positive_infinity(), primary_dist_id, primary_params
     );
   } else {
     // Use numerical integration

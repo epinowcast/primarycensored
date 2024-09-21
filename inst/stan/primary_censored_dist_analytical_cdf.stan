@@ -19,22 +19,37 @@ int check_for_analytical(int dist_id, int primary_dist_id) {
 real primary_censored_gamma_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real shape = params[1];
   real rate = params[2];
-  real log_pgamma_q = gamma_lcdf(q | shape, rate);
-  real log_pgamma_d = gamma_lcdf(d | shape, rate);
-  real log_pgamma_q_1 = gamma_lcdf(q | shape + 1, rate);
-  real log_pgamma_d_1 = gamma_lcdf(d | shape + 1, rate);
 
   real log_Q_T = gamma_lccdf(d | shape, rate);
-  real log_Delta_F_T_kp1 = log_diff_exp(log_pgamma_d_1, log_pgamma_q_1);
-  real log_Delta_F_T_k = log_diff_exp(log_pgamma_d, log_pgamma_q);
+  real log_pgamma_d = gamma_lcdf(d | shape, rate);
+  real log_pgamma_d_1 = gamma_lcdf(d | shape + 1, rate);
 
-  real log_Q_Splus = log_sum_exp(
-    log_Q_T,
-    log_diff_exp(
-      log(shape * inv(rate)) + log_Delta_F_T_kp1,
-      log(q) + log_Delta_F_T_k
-    ) - log(pwindow)
-  );
+  real log_Delta_F_T_kp1;
+  real log_Delta_F_T_k;
+  real log_Q_Splus;
+  if (q != 0) {
+    real log_pgamma_q = gamma_lcdf(q | shape, rate);
+    real log_pgamma_q_1 = gamma_lcdf(q | shape + 1, rate);
+    log_Delta_F_T_kp1 = log_diff_exp(log_pgamma_d_1, log_pgamma_q_1);
+    log_Delta_F_T_k = log_diff_exp(log_pgamma_d, log_pgamma_q);
+
+    log_Q_Splus = log_sum_exp(
+      log_Q_T,
+      log_diff_exp(
+        log(shape * inv(rate)) + log_Delta_F_T_kp1,
+        log(pwindow - d) + log_Delta_F_T_k
+      ) - log(pwindow)
+    );
+  } else {
+    log_Delta_F_T_kp1 = log_pgamma_d_1;
+    log_Delta_F_T_k = log_pgamma_d;
+
+    log_Q_Splus = log_sum_exp({
+      log_Q_T,
+      log(shape * inv(rate) / pwindow) + log_Delta_F_T_kp1,
+      log(pwindow - d) - log(pwindow) + log_Delta_F_T_k
+    });
+  }
 
   return log1m_exp(log_Q_Splus);
 }
@@ -45,22 +60,37 @@ real primary_censored_gamma_uniform_lcdf(data real d, real q, array[] real param
 real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real mu = params[1];
   real sigma = params[2];
-  real log_plnorm_q = lognormal_lcdf(q | mu, sigma);
-  real log_plnorm_d = lognormal_lcdf(d | mu, sigma);
-  real log_plnorm_q_sigma2 = lognormal_lcdf(q | mu + sigma^2, sigma);
-  real log_plnorm_d_sigma2 = lognormal_lcdf(d | mu + sigma^2, sigma);
 
   real log_Q_T = lognormal_lccdf(d | mu, sigma);
-  real log_Delta_F_T_mu_sigma = log_diff_exp(log_plnorm_d_sigma2, log_plnorm_q_sigma2);
-  real log_Delta_F_T = log_diff_exp(log_plnorm_d, log_plnorm_q);
+  real log_plnorm_d = lognormal_lcdf(d | mu, sigma);
+  real log_plnorm_d_sigma2 = lognormal_lcdf(d | mu + sigma^2, sigma);
 
-  real log_Q_Splus = log_sum_exp(
-    log_Q_T,
-    log_diff_exp(
-      (mu + 0.5 * sigma^2) + log_Delta_F_T_mu_sigma,
-      log(q) + log_Delta_F_T
-    ) - log(pwindow)
-  );
+  real log_Delta_F_T_mu_sigma;
+  real log_Delta_F_T;
+  real log_Q_Splus;
+  if (q != 0) {
+    real log_plnorm_q = lognormal_lcdf(q | mu, sigma);
+    real log_plnorm_q_sigma2 = lognormal_lcdf(q | mu + sigma^2, sigma);
+    log_Delta_F_T_mu_sigma = log_diff_exp(log_plnorm_d_sigma2, log_plnorm_q_sigma2);
+    log_Delta_F_T = log_diff_exp(log_plnorm_d, log_plnorm_q);
+
+    log_Q_Splus = log_sum_exp(
+      log_Q_T,
+      log_diff_exp(
+        (mu + 0.5 * sigma^2) + log_Delta_F_T_mu_sigma,
+        log(d - pwindow) + log_Delta_F_T
+      ) - log(pwindow)
+    );
+  } else {
+    log_Delta_F_T_mu_sigma = log_plnorm_d_sigma2;
+    log_Delta_F_T = log_plnorm_d;
+
+    log_Q_Splus = log_sum_exp({
+      log_Q_T,
+      (mu + 0.5 * sigma^2) - log(pwindow) + log_Delta_F_T_mu_sigma,
+      log(pwindow - d) - log(pwindow) + log_Delta_F_T
+    });
+  }
 
   return log1m_exp(log_Q_Splus);
 }
@@ -75,7 +105,6 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
   * @param D Maximum delay (truncation point)
   * @param primary_dist_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
-  * @param lower_bound Lower bound for the delay interval
   *
   * @return Primary event censored log CDF, normalized by D if finite (truncation adjustment)
   */
@@ -83,15 +112,13 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
                                            array[] real params,
                                            data real pwindow, data real D,
                                            int primary_dist_id,
-                                           array[] real primary_params,
-                                           real lower_bound) {
+                                           array[] real primary_params) {
   real result;
-  real q;
   real log_cdf_D;
 
   if (d <= 0) return negative_infinity();
 
-  q = lower_bound;
+  real q = max({d - pwindow, 0});
 
   if (dist_id == 2 && primary_dist_id == 1) {
     // Gamma delay with Uniform primary
@@ -125,7 +152,6 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
   * @param D Maximum delay (truncation point)
   * @param primary_dist_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
-  * @param lower_bound Lower bound for the delay interval
   *
   * @return Primary event censored CDF, normalized by D if finite (truncation adjustment)
   */
@@ -133,7 +159,6 @@ real primary_censored_dist_analytical_cdf(data real d, int dist_id,
                                           array[] real params,
                                           data real pwindow, data real D,
                                           int primary_dist_id,
-                                          array[] real primary_params,
-                                          real lower_bound) {
-  return exp(primary_censored_dist_analytical_lcdf(d | dist_id, params, pwindow, D, primary_dist_id, primary_params, lower_bound));
+                                          array[] real primary_params) {
+  return exp(primary_censored_dist_analytical_lcdf(d | dist_id, params, pwindow, D, primary_dist_id, primary_params));
 }
