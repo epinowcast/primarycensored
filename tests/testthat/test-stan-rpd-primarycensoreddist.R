@@ -50,7 +50,7 @@ test_that(
     dist_id <- 1 # Lognormal
     params <- c(0, 1) # meanlog, sdlog
     pwindow <- 1
-    D < 12
+    D <- 12
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)
 
@@ -69,7 +69,7 @@ test_that(
     # Gamma
     dist_id <- 2 # Gamma
     params <- c(2, 1) # shape, scale
-    pwindow <- 1
+    pwindow <- 2
     D <- 12
     primary_dist_id <- 1 # Uniform
     primary_params <- numeric(0)

@@ -18,22 +18,22 @@ int check_for_analytical(int dist_id, int primary_dist_id) {
   */
 real primary_censored_gamma_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real shape = params[1];
-  real scale = 1 / params[2];
-  real log_pgamma_q = gamma_lcdf(q | shape, scale);
-  real log_pgamma_d = gamma_lcdf(d | shape, scale);
-  real log_pgamma_q_1 = gamma_lcdf(q | shape + 1, scale);
-  real log_pgamma_d_1 = gamma_lcdf(d | shape + 1, scale);
+  real rate = params[2];
+  real log_pgamma_q = gamma_lcdf(q | shape, rate);
+  real log_pgamma_d = gamma_lcdf(d | shape, rate);
+  real log_pgamma_q_1 = gamma_lcdf(q | shape + 1, rate);
+  real log_pgamma_d_1 = gamma_lcdf(d | shape + 1, rate);
 
-  real log_Q_T = gamma_lccdf(q | shape, scale);
+  real log_Q_T = gamma_lccdf(d | shape, rate);
   real log_Delta_F_T_kp1 = log_diff_exp(log_pgamma_d_1, log_pgamma_q_1);
   real log_Delta_F_T_k = log_diff_exp(log_pgamma_d, log_pgamma_q);
 
   real log_Q_Splus = log_sum_exp(
     log_Q_T,
     log_diff_exp(
-      log(shape * scale / pwindow) + log_Delta_F_T_kp1,
-      log(q / pwindow) + log_Delta_F_T_k
-    )
+      log(shape * inv(rate)) + log_Delta_F_T_kp1,
+      log(q) + log_Delta_F_T_k
+    ) - log(pwindow)
   );
 
   return log1m_exp(log_Q_Splus);
@@ -50,16 +50,16 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
   real log_plnorm_q_sigma2 = lognormal_lcdf(q | mu + sigma^2, sigma);
   real log_plnorm_d_sigma2 = lognormal_lcdf(d | mu + sigma^2, sigma);
 
-  real log_Q_T = lognormal_lccdf(q | mu, sigma);
+  real log_Q_T = lognormal_lccdf(d | mu, sigma);
   real log_Delta_F_T_mu_sigma = log_diff_exp(log_plnorm_d_sigma2, log_plnorm_q_sigma2);
   real log_Delta_F_T = log_diff_exp(log_plnorm_d, log_plnorm_q);
 
   real log_Q_Splus = log_sum_exp(
     log_Q_T,
     log_diff_exp(
-      log(exp(mu + 0.5 * sigma^2) / pwindow) + log_Delta_F_T_mu_sigma,
-      log(q / pwindow) + log_Delta_F_T
-    )
+      (mu + 0.5 * sigma^2) + log_Delta_F_T_mu_sigma,
+      log(q) + log_Delta_F_T
+    ) - log(pwindow)
   );
 
   return log1m_exp(log_Q_Splus);
