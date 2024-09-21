@@ -40,6 +40,7 @@ gammapartexp
 geq
 hexsticker
 int
+kz
 leq
 lfloor
 lim
@@ -60,6 +61,7 @@ primaryeventdistributions
 propto
 pwindow
 qquad
+reparametrisation
 rfloor
 rightarrow
 rprimary
@@ -73,4 +75,5 @@ survivalfunc
 swindow
 u
 unifprim
+weibullpartexp
 zsusswein

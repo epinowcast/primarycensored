@@ -7,6 +7,7 @@ This is the current development version.
 * Add `{touchstone}` based benchmarks for benchmarking R utility functions, and fitting the `stan` and `fitdistplus` models.
 * Added a "How it works" vignette.
 * Added R infrastructure for analytical solutions via the `primary_censored_dist` S3 class.
+* Added Weibull analytical solution to "How it works" vignette.
 * Added analytical solutions for the gamma and lognormal distributions with uniform primary censoring to both the `R` and `stan` code.
 * Added numerical protection to ensure that CDFs for delays greater than the maximum truncation are exactly 1.
 
