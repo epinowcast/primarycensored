@@ -8,7 +8,7 @@ development:
 
 navbar:
   structure:
-    left: [intro, metareference, articles]
+    left: [intro, metareference, articles, news]
     right: [search, github, lightswitch]
   components:
     metareference:
