@@ -17,7 +17,7 @@ vignette: >
 ---
 
 
-## Analytic solutions for exponentially tilted primary event times
+# Analytic solutions for exponentially tilted primary event times
 
 In epidemiological analysis, it is common for primary events to be arriving at exponentially increasing or decreasing rates, for example, incidence of new infections in a growing epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay. If we assume a reference uniform distribution within a primary censoring window $[k, k + w_P)$ then the distribution of the primary event time within the censoring window is the exponential tilted uniform distribution:
 
@@ -38,9 +38,9 @@ $$
 \Delta_{w}f(t) = f(t + w) - f(t).
 $$
 
-### Uniform primary event time ($r=0$)
+# Uniform primary event time ($r=0$)
 
-Applying a uniform primary event time distribution to equation \@ref(eq:survivalfunc) gives:
+Applying a uniform primary event time distribution to equation 3.1 from ["Why it works"](why-it-works.html) gives:
 
 $$
 Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
@@ -71,7 +71,7 @@ The insight here is that this will be possible for any distribution where the av
 
 **General Discrete censored delay distribution**
 
-First, we note that equation \@ref(eq:disccensprob) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
+First, we note that equation 3.3 from ["Why it works"](why-it-works.html) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
 
 $$
 \begin{aligned}
@@ -82,7 +82,7 @@ $$
 
 We now consider some specific delay distributions.
 
-#### Gamma distributed delay times
+## Gamma distributed delay times
 
 The Gamma distribution has the density function:
 
@@ -126,7 +126,7 @@ $$
 
 **Gamma discrete censored delay distribution**
 
-By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 $$
 \begin{aligned}
 f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1, \theta)\\
@@ -137,7 +137,7 @@ $$
 
 Which was also found by Cori _et al_ [@cori2013new].
 
-#### Log-Normal distribution
+## Log-Normal distribution
 
 The Log-Normal distribution has the density function:
 
@@ -184,7 +184,7 @@ $$
 
 **Log-Normal discrete censored delay distribution**
 
-By substituting \@ref(eq:lognormpartexp) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:lognormpartexp) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -195,7 +195,7 @@ f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \m
 \end{aligned}
 $$
 
-#### Weibull distribution
+## Weibull distribution
 
 The Weibull distribution has the density function:
 
@@ -250,7 +250,7 @@ $$
 
 **Weibull discrete censored delay distribution**
 
-By substituting \@ref(eq:weibullpartexp) into \@ref(eq:disccensprob) we get the discrete censored delay distribution in terms of analytically available functions:
+By substituting \@ref(eq:weibullpartexp) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 
 $$
 \begin{aligned}
@@ -262,4 +262,4 @@ f_n &= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_
 $$
 
 Which was also found by Cori _et al_ [@cori2013new].
-## References
+# References
