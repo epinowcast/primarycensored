@@ -2,6 +2,10 @@
 
 This is the development version of `primarycensoreddist` and is not yet ready for release.
 
+## Package
+
+* Split "Why it works" vignette into two separate vignettes, "Why it works" and "Analytic solutions for censored delay distributions".
+
 # primarycensoreddist 0.5.0
 
 This release adds a new `{touchstone}` based benchmark suite to the package. It also adds a new "How it works" vignette which aims to give the reader more details into how the primary censored distributions work.

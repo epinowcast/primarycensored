@@ -28,6 +28,7 @@ dist
 dp
 dprimary
 dprimarycensoreddist
+dx
 dy
 dz
 eq
@@ -38,6 +39,7 @@ fitdistrplus
 frac
 gammapartexp
 geq
+gh
 hexsticker
 int
 kz
@@ -47,6 +49,7 @@ lim
 ln
 lognormpartexp
 mathbb
+mathrm
 modelhelpers
 modeling
 nF
@@ -71,6 +74,7 @@ sim
 speedups
 stan
 stantools
+startpoint
 survgammaunifprim
 survivalfunc
 swindow

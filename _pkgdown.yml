@@ -29,6 +29,8 @@ navbar:
         href: articles/fitting-dists-with-fitdistrplus.html
       - text: Why it works
         href: articles/why-it-works.html
+      - text: Analytic solutions for censored delay distributions
+        href: articles/analytic-solutions.html
 
 authors:
   Sam Abbott:
