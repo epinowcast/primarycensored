@@ -24,7 +24,6 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   )
   expect_identical(obj, new_obj)
 })
-
 test_that(
   "primary_censored_cdf methods dispatch correctly to existing
    analytical solutions",
@@ -51,8 +50,20 @@ test_that(
       meanlog = 0, sdlog = 1
     )
 
+    pdist_name <- "pweibull"
+    pdist <- pweibull
+    dprimary_name <- "dunif"
+    dprimary <- dunif
+
+    obj_weibull <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      shape = 2, scale = 1
+    )
+
     expect_s3_class(obj_gamma, "pcens_pgamma_dunif")
     expect_s3_class(obj_lnorm, "pcens_plnorm_dunif")
+    expect_s3_class(obj_weibull, "pcens_pweibull_dunif")
 
     q_values <- c(5, 10)
     pwindow <- 10
@@ -62,6 +73,9 @@ test_that(
     )
     expect_no_error(
       primary_censored_cdf(obj_lnorm, q = q_values, pwindow = pwindow)
+    )
+    expect_no_error(
+      primary_censored_cdf(obj_weibull, q = q_values, pwindow = pwindow)
     )
   }
 )
@@ -225,6 +239,61 @@ test_that(
             info = sprintf(
               "Mismatch for meanlog = %s, sdlog = %s, pwindow = %s",
               meanlog, sdlog, pwindow
+            )
+          )
+        }
+      }
+    }
+  }
+)
+
+test_that(
+  "primary_censored_cdf.default computes the same values as
+   primary_censored_cdf.pcens_pweibull_dunif",
+  {
+    pdist_name <- "pweibull"
+    pdist <- pweibull
+    dprimary_name <- "dunif"
+    dprimary <- dunif
+
+    shapes <- c(0.5, 1, 2, 3)
+    scales <- c(0.5, 1, 2, 5)
+    pwindows <- c(1, 2, 5, 10)
+
+    for (shape in shapes) {
+      for (scale in scales) {
+        for (pwindow in pwindows) {
+          obj <- new_primary_censored_dist(
+            pdist,
+            dprimary, list(),
+            pdist_name, dprimary_name,
+            shape = shape, scale = scale
+          )
+
+          q_values <- seq(0, 30, by = 0.1)
+          result_numeric <- primary_censored_cdf(
+            obj,
+            q = q_values, pwindow = pwindow, use_numeric = TRUE
+          )
+          result_analytical <- primary_censored_cdf(
+            obj,
+            q = q_values, pwindow = pwindow, use_numeric = FALSE
+          )
+
+          # Check properties of numeric result
+          expect_type(result_numeric, "double")
+          expect_length(result_numeric, length(q_values))
+          expect_true(
+            all(diff(result_numeric) >= 0)
+          ) # Ensure CDF is non-decreasing
+
+          # Check that analytical and numeric results are the same
+          expect_equal(
+            result_numeric, result_analytical,
+            tolerance = 1e-5,
+            info = sprintf(
+              "Mismatch for shape = %s, scale = %s, pwindow = %s",
+              shape, scale, pwindow
             )
           )
         }

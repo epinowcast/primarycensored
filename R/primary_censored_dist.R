@@ -247,3 +247,80 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
 
   return(result)
 }
+
+#' Method for Weibull delay with uniform primary
+#'
+#' @inheritParams primary_censored_cdf
+#'
+#' @family primary_censored_dist
+#'
+#' @export
+primary_censored_cdf.pcens_pweibull_dunif <- function(
+    object, q, pwindow, use_numeric = FALSE) {
+  if (isTRUE(use_numeric)) {
+    return(
+      primary_censored_cdf.default(object, q, pwindow, use_numeric)
+    )
+  }
+
+  # Extract Weibull distribution parameters
+  shape <- object$args$shape
+  scale <- object$args$scale
+  if (is.null(shape)) {
+    stop("shape parameter is required for Weibull distribution")
+  }
+  if (is.null(scale)) {
+    stop("scale parameter is required for Weibull distribution")
+  }
+
+  partial_pweibull <- function(q) {
+    stats::pweibull(q, shape = shape, scale = scale)
+  }
+
+  g <- function(t) {
+    gamma_1k <- pgamma(
+      (t / scale)^shape,
+      shape = 1 / shape,
+      lower.tail = TRUE
+    ) / shape
+    gamma_1k - (t / scale) * exp(-(t / scale)^shape)
+  }
+
+  # Adjust q so that we have [q-pwindow, q]
+  q <- q - pwindow
+
+  # Handle cases where q + pwindow <= 0
+  zero_cases <- q + pwindow <= 0
+  result <- ifelse(zero_cases, 0, NA)
+
+  # Process non-zero cases only if there are any
+  if (!all(zero_cases)) {
+    non_zero_q <- q[!zero_cases]
+
+    # Compute necessary survival and distribution functions
+    pweibull_q <- partial_pweibull(non_zero_q)
+    pweibull_q_pwindow <- partial_pweibull(non_zero_q + pwindow)
+    g_q <- g(non_zero_q)
+    g_q_pwindow <- g(non_zero_q + pwindow)
+
+    Q_T <- 1 - pweibull_q_pwindow
+    Delta_g <- g_q_pwindow - g_q
+    Delta_F_T <- pweibull_q_pwindow - pweibull_q
+
+    # Calculate Q_Splus using the analytical formula
+    Q_Splus <- Q_T +
+      (scale / pwindow) * Delta_g -
+      (non_zero_q / pwindow) * Delta_F_T
+
+    # Compute the CDF as 1 - Q_Splus
+    non_zero_result <- 1 - Q_Splus
+
+    # Assign non-zero results back to the main result vector
+    result[!zero_cases] <- non_zero_result
+  }
+
+  # Ensure the result is not greater than 1 (accounts for numerical errors)
+  result <- pmin(1, result)
+
+  return(result)
+}
