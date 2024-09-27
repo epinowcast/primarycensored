@@ -4,6 +4,10 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 
 ## Package
 
+* Added R and stan implementations of the primary censored cdf for the weibull distribution with uniform primary censoring.
+
+## Documentation
+
 * Split "Why it works" vignette into two separate vignettes, "Why it works" and "Analytic solutions for censored delay distributions".
 * Removed the need to assign functions to the global environment for `fitdistdoublecens()` by using `withr`.
 * Added a `check_truncation()` function to check if the truncation time is larger than the maximum observed delay. This is used in `fitdistdoublecens()` and `pcd_as_stan_data()` to ensure that the truncation time is appropriate to maximise computational efficiency.

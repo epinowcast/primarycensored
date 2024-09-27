@@ -3,6 +3,7 @@
 S3method(primary_censored_cdf,default)
 S3method(primary_censored_cdf,pcens_pgamma_dunif)
 S3method(primary_censored_cdf,pcens_plnorm_dunif)
+S3method(primary_censored_cdf,pcens_pweibull_dunif)
 export(check_dprimary)
 export(check_pdist)
 export(check_truncation)
