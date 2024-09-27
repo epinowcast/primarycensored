@@ -126,6 +126,78 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
 }
 
 /**
+  * Compute the log of the integral of the Weibull PDF from 0 to t
+  *
+  * This function is used in the analytical solution for the primary censored
+  * Weibull distribution with uniform primary censoring. It corresponds to the
+  * g(t; λ, k) function described in the analytic solutions document.
+  *
+  * @param t Upper bound of integration
+  * @param shape Shape parameter (k) of the Weibull distribution
+  * @param scale Scale parameter (λ) of the Weibull distribution
+  *
+  * @return Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k) / k - (t/λ) * exp(-(t/λ)^k)
+  */
+real log_weibull_g(real t, real shape, real scale) {
+  real x = (t / scale)^shape;
+  return log(gamma_p(1.0 / shape, x) / shape) - log(scale) - x;
+}
+
+/**
+  * Compute the primary event censored log CDF analytically for Weibull delay with Uniform primary
+  *
+  * @param d Delay time
+  * @param q Lower bound of integration (max(d - pwindow, 0))
+  * @param params Array of Weibull distribution parameters [shape, scale]
+  * @param pwindow Primary event window
+  *
+  * @return Log of the primary event censored CDF for Weibull delay with
+  * Uniform primary
+  */
+real primary_censored_weibull_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
+  real shape = params[1];
+  real scale = params[2];
+  real log_window = log(pwindow);
+
+  real log_F_T = weibull_lcdf(d | shape, scale);
+
+  real log_delta_g;
+  real log_delta_F_T;
+  real log_F_Splus;
+
+  if (q != 0) {
+    real log_F_T_q = weibull_lcdf(q | shape, scale);
+
+    log_delta_g = log_diff_exp(
+      log_weibull_g(d, shape, scale),
+      log_weibull_g(q, shape, scale)
+    );
+    log_delta_F_T = log_diff_exp(log_F_T, log_F_T_q);
+
+    log_F_Splus = log_diff_exp(
+      log_F_T,
+      log_diff_exp(
+        log(scale) + log_delta_g,
+        log(d - pwindow) + log_delta_F_T
+      ) - log_window
+    );
+  } else {
+    log_delta_g = log_weibull_g(d, shape, scale);
+    log_delta_F_T = log_F_T;
+
+    log_F_Splus = log_diff_exp(
+      log_F_T,
+      log_sum_exp(
+        log(scale) + log_delta_g,
+        log(pwindow - d) + log_delta_F_T
+      ) - log_window
+    );
+  }
+
+  return log_F_Splus;
+}
+
+/**
   * Compute the primary event censored log CDF analytically for a single delay
   *
   * @param d Delay
