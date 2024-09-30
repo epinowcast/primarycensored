@@ -230,7 +230,8 @@ Contributions of any kind are welcome!
 
 ### Issue Authors
 
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
 
 ### Issue Contributors
 
