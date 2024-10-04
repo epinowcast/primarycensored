@@ -226,7 +226,8 @@ Contributions of any kind are welcome!
 
 <a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>,
 <a href="https://github.com/epinowcast/primarycensoreddist/commits?author=SamuelBrand1">SamuelBrand1</a>,
-<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=athowes">athowes</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=athowes">athowes</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=sbfnk">sbfnk</a>
 
 ### Issue Authors
 
