@@ -38,6 +38,7 @@ check_dprimary(dunif, pwindow = 1)
 }
 \seealso{
 Distribution checking functions
-\code{\link{check_pdist}()}
+\code{\link{check_pdist}()},
+\code{\link{check_truncation}()}
 }
 \concept{check}

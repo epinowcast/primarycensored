@@ -74,3 +74,64 @@ check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
   }
   return(invisible(NULL))
 }
+
+#' Check if truncation time is appropriate relative to the maximum delay
+#'
+#' This function checks if the truncation time D is appropriate relative to the
+#' maximum delay. If D is much larger than necessary, it suggests
+#' considering setting it to `Inf` for better efficiency with minimal accuracy
+#' cost.
+#'
+#' @param delays A numeric vector of delay times
+#'
+#' @param D The truncation time
+#'
+#' @param multiplier The multiplier for the maximum delay to compare with D.
+#'   Default is 2.
+#'
+#' @return Invisible NULL. Prints a message if the condition is met.
+#'
+#' @export
+#' @family check
+#'
+#' @examples
+#' check_truncation(delays = c(1, 2, 3, 4), D = 10, multiplier = 2)
+check_truncation <- function(delays, D, multiplier = 2) {
+  if (!is.numeric(delays) || !is.numeric(D) || !is.numeric(multiplier)) {
+    stop("All arguments must be numeric.")
+  }
+
+  if (D <= 0 || multiplier <= 1) {
+    stop(
+      "Invalid argument values. D must be positive and multiplier must be ",
+      "greater than 1."
+    )
+  }
+
+  # Remove NA and infinite values
+  delays <- delays[is.finite(delays)]
+
+  if (length(delays) == 0) {
+    warning("No finite observed delays to check.")
+    return(invisible(NULL))
+  }
+
+  max_delay <- max(delays)
+  expected_D <- max_delay * multiplier
+
+  # Check if D is much larger than expected
+  if (D > expected_D) {
+    message(
+      sprintf(
+        paste0(
+          "The truncation time D (%g) is larger than %g times the maximum ",
+          "observed delay (%g). Consider setting D to Inf for better ",
+          "efficiency with minimal accuracy cost for this case."
+        ),
+        D, multiplier, max_delay
+      )
+    )
+  }
+
+  invisible(NULL)
+}
