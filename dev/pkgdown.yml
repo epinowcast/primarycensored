@@ -1,6 +1,6 @@
 pandoc: 3.1.11
 pkgdown: 2.1.1.9000
-pkgdown_sha: 0a18bc718640aee7160a0ebbcdef5ecaae2ac4a4
+pkgdown_sha: 0cb9d38d1dc25946f01ee7500be9665985d8784e
 articles:
   analytic-solutions: analytic-solutions.html
   fitting-dists-with-fitdistrplus: fitting-dists-with-fitdistrplus.html
@@ -8,7 +8,7 @@ articles:
   primarycensoreddist: primarycensoreddist.html
   using-stan-tools: using-stan-tools.html
   why-it-works: why-it-works.html
-last_built: 2024-09-30T09:53Z
+last_built: 2024-10-04T12:16Z
 urls:
   reference: https://primarycensoreddist.epinowcast.org/reference
   article: https://primarycensoreddist.epinowcast.org/articles
