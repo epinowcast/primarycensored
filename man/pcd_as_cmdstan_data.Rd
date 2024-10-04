@@ -18,7 +18,8 @@ pcd_as_cmdstan_data(
   priors,
   primary_priors,
   compute_log_lik = FALSE,
-  use_reduce_sum = FALSE
+  use_reduce_sum = FALSE,
+  truncation_check_multiplier = 2
 )
 }
 \arguments{
@@ -26,15 +27,13 @@ pcd_as_cmdstan_data(
 
 \item{delay}{Column name for observed delays (default: "delay")}
 
-\item{delay_upper}{Column name for upper bound of delays
-(default: "delay_upper")}
+\item{delay_upper}{Column name for upper bound of delays (default: "delay_upper")}
 
 \item{n}{Column name for count of observations (default: "n")}
 
 \item{pwindow}{Column name for primary window (default: "pwindow")}
 
-\item{relative_obs_time}{Column name for relative observation time
-(default: "relative_obs_time")}
+\item{relative_obs_time}{Column name for relative observation time (default: "relative_obs_time")}
 
 \item{dist_id}{Integer identifying the delay distribution:
 1 = Lognormal, 2 = Gamma, 3 = Weibull, 4 = Exponential,
@@ -60,12 +59,14 @@ numeric vector specifying priors for the primary distribution parameters.}
 
 \item{compute_log_lik}{Logical; compute log likelihood? (default: FALSE)}
 
-\item{use_reduce_sum}{Logical; use reduce_sum for performance?
-(default: FALSE)}
+\item{use_reduce_sum}{Logical; use reduce_sum for performance? (default: FALSE)}
+
+\item{truncation_check_multiplier}{Numeric multiplier to use for checking
+if the truncation time D is appropriate relative to the maximum delay
+for each unique D value. Set to NULL to skip the check. Default is 2.}
 }
 \value{
-A list containing the data formatted for use with
-\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}}
+A list containing the data formatted for use with \code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}}
 }
 \description{
 This function takes in delay data and prepares it for use with the

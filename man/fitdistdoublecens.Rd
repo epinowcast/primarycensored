@@ -12,6 +12,7 @@ fitdistdoublecens(
   dprimary = stats::dunif,
   dprimary_name = NULL,
   dprimary_args = list(),
+  truncation_check_multiplier = 2,
   ...
 )
 }
@@ -46,6 +47,10 @@ passed a pre-assigned variable rather than a function name.}
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
+
+\item{truncation_check_multiplier}{Numeric multiplier to use for checking
+if the truncation time D is appropriate relative to the maximum delay.
+Set to NULL to skip the check. Default is 2.}
 
 \item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.}
 }
