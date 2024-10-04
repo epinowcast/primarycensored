@@ -30,7 +30,8 @@
 #' fit <- model$sample(data = stan_data)
 #' }
 pcd_cmdstan_model <- function(
-    include_paths = primarycensoreddist::pcd_stan_path(), ...) {
+    include_paths = primarycensoreddist::pcd_stan_path(),
+    ...) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
     stop("Package 'cmdstanr' is required but not installed for this function.")
   }
@@ -57,7 +58,7 @@ pcd_cmdstan_model <- function(
 #' @param delay Column name for observed delays (default: "delay")
 #'
 #' @param delay_upper Column name for upper bound of delays
-#'  (default: "delay_upper")
+#' (default: "delay_upper")
 #'
 #' @param n Column name for count of observations (default: "n")
 #'
@@ -93,8 +94,12 @@ pcd_cmdstan_model <- function(
 #' @param use_reduce_sum Logical; use reduce_sum for performance?
 #'  (default: FALSE)
 #'
+#' @param truncation_check_multiplier Numeric multiplier to use for checking
+#'   if the truncation time D is appropriate relative to the maximum delay
+#'   for each unique D value. Set to NULL to skip the check. Default is 2.
+#'
 #' @return A list containing the data formatted for use with
-#'  [pcd_cmdstan_model()]
+#' [pcd_cmdstan_model()]
 #'
 #' @export
 #' @family modelhelpers
@@ -108,7 +113,7 @@ pcd_cmdstan_model <- function(
 #'   pwindow = c(1, 1, 2),
 #'   relative_obs_time = c(10, 10, 10)
 #' )
-#' stan_data <- pcd_as_cmdstan_data(
+#' stan_data <- pcd_as_stan_data(
 #'   data,
 #'   dist_id = 1,
 #'   primary_dist_id = 1,
@@ -118,7 +123,7 @@ pcd_cmdstan_model <- function(
 #'   primary_priors = list(location = numeric(0), scale = numeric(0))
 #' )
 #' }
-pcd_as_cmdstan_data <- function(
+pcd_as_stan_data <- function(
     data, delay = "delay", delay_upper = "delay_upper",
     n = "n", pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",
@@ -126,7 +131,8 @@ pcd_as_cmdstan_data <- function(
     param_bounds, primary_param_bounds,
     priors, primary_priors,
     compute_log_lik = FALSE,
-    use_reduce_sum = FALSE) {
+    use_reduce_sum = FALSE,
+    truncation_check_multiplier = 2) {
   required_cols <- c(delay, delay_upper, n, pwindow, relative_obs_time)
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
@@ -140,6 +146,18 @@ pcd_as_cmdstan_data <- function(
       "pwindow = '", pwindow, "'\n",
       "relative_obs_time = '", relative_obs_time, "'"
     )
+  }
+
+  if (!is.null(truncation_check_multiplier)) {
+    unique_D <- unique(data[[relative_obs_time]])
+    for (D in unique_D) {
+      delays_subset <- data[[delay]][data[[relative_obs_time]] == D]
+      check_truncation(
+        delays = delays_subset,
+        D = D,
+        multiplier = truncation_check_multiplier
+      )
+    }
   }
 
   stan_data <- list(

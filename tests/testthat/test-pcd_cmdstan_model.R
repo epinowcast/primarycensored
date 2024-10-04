@@ -64,7 +64,7 @@ test_that("pcd_cmdstan_model recovers true values for simple lognormal data", {
     )
 
   # Prepare data for Stan
-  stan_data <- pcd_as_cmdstan_data(
+  stan_data <- pcd_as_stan_data(
     delay_counts,
     dist_id = 1, # Lognormal
     primary_dist_id = 1, # Uniform
@@ -139,7 +139,7 @@ test_that(
       )
 
     # Prepare data for Stan
-    stan_data <- pcd_as_cmdstan_data(
+    stan_data <- pcd_as_stan_data(
       delay_counts,
       dist_id = 2, # Gamma
       primary_dist_id = 2, # Exponential growth
@@ -218,7 +218,7 @@ test_that(
       )
 
     # Prepare data for Stan
-    stan_data <- pcd_as_cmdstan_data(
+    stan_data <- pcd_as_stan_data(
       delay_counts,
       dist_id = 1, # Lognormal
       primary_dist_id = 1, # Uniform
@@ -299,7 +299,7 @@ test_that(
       )
 
     # Prepare data for Stan
-    stan_data <- pcd_as_cmdstan_data(
+    stan_data <- pcd_as_stan_data(
       delay_counts,
       dist_id = 1, # Lognormal
       primary_dist_id = 1, # Uniform

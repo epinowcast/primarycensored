@@ -20,6 +20,10 @@
 #'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
 #'
+#' @param truncation_check_multiplier Numeric multiplier to use for checking
+#'   if the truncation time D is appropriate relative to the maximum delay.
+#'   Set to NULL to skip the check. Default is 2.
+#'
 #' @return An object of class "fitdist" as returned by fitdistrplus::fitdist.
 #'
 #' @export
@@ -56,7 +60,9 @@ fitdistdoublecens <- function(censdata, distr,
                               pwindow = 1, D = Inf,
                               dprimary = stats::dunif,
                               dprimary_name = NULL,
-                              dprimary_args = list(), ...) {
+                              dprimary_args = list(),
+                              truncation_check_multiplier = 2,
+                              ...) {
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -76,6 +82,14 @@ fitdistdoublecens <- function(censdata, distr,
 
   if (is.null(dprimary_name)) {
     dprimary_name <- .extract_function_name(dprimary)
+  }
+
+  if (!is.null(truncation_check_multiplier)) {
+    check_truncation(
+      delays = censdata$left,
+      D = D,
+      multiplier = truncation_check_multiplier
+    )
   }
 
   # Get the distribution functions

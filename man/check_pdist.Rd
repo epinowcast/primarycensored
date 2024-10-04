@@ -27,6 +27,7 @@ check_pdist(pnorm, D = 10)
 }
 \seealso{
 Distribution checking functions
-\code{\link{check_dprimary}()}
+\code{\link{check_dprimary}()},
+\code{\link{check_truncation}()}
 }
 \concept{check}

@@ -167,7 +167,7 @@ touchstone::benchmark_run(
         .by = c(pwindow, relative_obs_time, delay, delay_upper)
       )
 
-    stan_data1 <- pcd_as_cmdstan_data(
+    stan_data1 <- pcd_as_stan_data(
       delay_counts1,
       dist_id = 1,
       primary_dist_id = 1,
@@ -234,7 +234,7 @@ touchstone::benchmark_run(
         .by = c(pwindow, relative_obs_time, delay, delay_upper)
       )
 
-    stan_data2 <- pcd_as_cmdstan_data(
+    stan_data2 <- pcd_as_stan_data(
       delay_counts2,
       dist_id = 2,
       primary_dist_id = 2,

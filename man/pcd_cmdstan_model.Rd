@@ -41,6 +41,6 @@ fit <- model$sample(data = stan_data)
 \seealso{
 Modelling wrappers for external fitting packages
 \code{\link{fitdistdoublecens}()},
-\code{\link{pcd_as_cmdstan_data}()}
+\code{\link{pcd_as_stan_data}()}
 }
 \concept{modelhelpers}

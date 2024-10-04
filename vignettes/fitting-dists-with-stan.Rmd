@@ -277,7 +277,7 @@ We see that the model has converged and the diagnostics look good. We also see t
 
 # Using `pcd_cmdstan_model()` for a more efficient approach
 
-While the previous approach works well, `primarycensoreddist` provides a more efficient and convenient model which we can compile using `pcd_cmdstan_model()`. This approach not only saves time in model specification but also leverages within chain parallelisation to make best use of your machine's resources. Alongside this we also supply a convenience function `pcd_as_cmdstan_data()` to convert our data into a format that can be used to fit the model and supply priors, bounds, and other settings.
+While the previous approach works well, `primarycensoreddist` provides a more efficient and convenient model which we can compile using `pcd_cmdstan_model()`. This approach not only saves time in model specification but also leverages within chain parallelisation to make best use of your machine's resources. Alongside this we also supply a convenience function `pcd_as_stan_data()` to convert our data into a format that can be used to fit the model and supply priors, bounds, and other settings.
 
 Let's use this function to fit our data:
 
@@ -285,7 +285,7 @@ Let's use this function to fit our data:
 # Compile the model with multithreading support
 pcd_model <- pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE))
 
-pcd_data <- pcd_as_cmdstan_data(
+pcd_data <- pcd_as_stan_data(
   delay_counts,
   delay = "observed_delay",
   delay_upper = "observed_delay_upper",
