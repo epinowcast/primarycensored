@@ -21,7 +21,7 @@ vignette: >
 In this vignette, we'll derive the analytic solutions for the primary censored delay distributions for a range of commonly used distributions.
 
 1. Examine the case of exponentially tilted primary event times
-2. Analyze the uniform primary event time case ($r=0$)
+2. Analyse the uniform primary event time case ($r=0$)
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
 
@@ -41,7 +41,7 @@ F_{C_P}(p; r) = {  1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p \in [0, w_P]
 $$
 Note that taking the limit $\lim_r \rightarrow 0$ in equation \@ref(eq:fcp) gives the uniform distribution function $F_{C_P}(p, 0) = p / w_P$.
 
-In the following it is convenient to use a (linear) difference operator defined as:
+In the following, it is convenient to use a (linear) difference operator defined as:
 
 $$
 \Delta_{w}f(t) = f(t + w) - f(t).
