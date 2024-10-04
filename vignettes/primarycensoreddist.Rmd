@@ -83,14 +83,14 @@ pwindow <- 1
 # Random samples without secondary censoring
 samples <- rprimarycensoreddist(
   n,
-  rdist = rlnorm, rprimary = stats::runif,
+  rdist = rlnorm, rprimary = runif,
   pwindow = pwindow, swindow = 0, D = obs_time,
   meanlog = meanlog, sdlog = sdlog
 )
 # Random samples with secondary censoring
 samples_sc <- rprimarycensoreddist(
   n,
-  rdist = rlnorm, rprimary = stats::runif,
+  rdist = rlnorm, rprimary = runif,
   pwindow = pwindow, swindow = 1, D = obs_time,
   meanlog = meanlog, sdlog = sdlog
 )
@@ -174,8 +174,7 @@ Let's compare the empirical CDF of our samples without secondary censoring to th
 empirical_cdf <- ecdf(samples)
 theoretical_cdf <- pprimarycensoreddist(
   seq(0, obs_time, length.out = 100),
-  pdist = plnorm,
-  dprimary = stats::dunif,
+  pdist = plnorm, dprimary = dunif,
   pwindow = pwindow, D = obs_time,
   meanlog = meanlog, sdlog = sdlog
 )
@@ -229,8 +228,7 @@ Let's compare the empirical PMF of our samples with secondary censoring to the t
 # Calculate the theoretical PMF using dprimarycensoreddist
 theoretical_pmf <- dprimarycensoreddist(
   0:(obs_time - 1),
-  pdist = plnorm,
-  dprimary = stats::dunif,
+  pdist = plnorm, dprimary = dunif,
   pwindow = pwindow, swindow = 1, D = obs_time,
   meanlog = meanlog, sdlog = sdlog
 )
