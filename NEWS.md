@@ -10,6 +10,7 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 ## Documentation
 
 * Simplified the "Analytic solutions" vignette by removing verbose derivation details.
+* Added links between vignettes to make it easier to navigate the documentation.
 
 # primarycensoreddist 0.5.0
 
