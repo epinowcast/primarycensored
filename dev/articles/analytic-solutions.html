@@ -167,10 +167,8 @@ Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma 
 <p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Gamma distribution</strong></p>
 <p>By substituting equation <a href="#eq:gammapartexp">(2.4)</a> into equation <a href="#eq:disccensunifprim">(2.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display" id="eq:survgammaunifprim">\[
-\begin{aligned}
-Q_{S_+}(t; k, \theta) &amp;= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
-&amp;= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
-\end{aligned} \tag{2.5}
+Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
+\tag{2.5}
 \]</span></p>
 <p><strong>Gamma discrete censored delay distribution</strong></p>
 <p>By substituting <a href="#eq:survgammaunifprim">(2.5)</a> into <a href="#eq:disccensunifprim">(2.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:
@@ -214,10 +212,7 @@ Where <span class="math inline">\(\Phi\)</span> is the standard normal distribut
 <p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution</strong></p>
 <p>By substituting equation <a href="#eq:lognormpartexp">(2.6)</a> into equation <a href="#eq:disccensunifprim">(2.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display">\[
-\begin{aligned}
-Q_{S+}(t ;\mu, \sigma) &amp;= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \int_t^{t+w_P} {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) (z-t)~ dz, \\
-&amp;= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
-\end{aligned}
+Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 \]</span></p>
 <p><strong>Log-Normal discrete censored delay distribution</strong></p>
 <p>By substituting <a href="#eq:lognormpartexp">(2.6)</a> into <a href="#eq:disccensunifprim">(2.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
