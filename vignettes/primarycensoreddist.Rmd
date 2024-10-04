@@ -286,5 +286,7 @@ In addition to these main functions, the package also includes:
 # Learning more
 
 - For more on `primarycensoreddist` see the other package vignettes and the function documentation.
+- For a more detailed explanation of the mathematical formulation of the primary event censored distribution see the `vignette("why-it-works")`.
+- For more mathematical details on the analytic solutions see the `vignette("analytic-solutions")`.
 - For more methodological background on delay distributions see Park et al.[@Park2024].
 - For advice on best practices when estimating or handling delay distributions see Charniga et al.[@Charniga2024].

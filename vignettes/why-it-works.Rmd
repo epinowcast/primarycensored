@@ -27,6 +27,7 @@ In this vignette, we'll explain the underlying statistical model that the `prima
 3. Introduce the statistical model used in `primarycensoreddist`.
 4. Distributions where we can derive the censored delay distribution analytically.
 
+If you are new to the package, we recommend that you start with the `vignette("primarycensoreddist")` vignette.
 
 # Censoring and right truncation problems in time to event analysis
 
@@ -188,5 +189,10 @@ $$
 which is same as equation \@ref(eq:seccensorprob).
 
 In this derivation, we have used that $G_P(x|-w_P, 0)$ is the distribution function from the time _from_ the start of the primary interval _until_ primary event time, and $F_{C_P}$ is the distribution function of the time _until_ the end of the primary event window _from_ the primary event time. Therefore, $G_P(-p|-w_P, 0) = Pr(P < -p | P \in (-w_P, 0)) = 1 - Pr(C_P \leq p) = 1 - F_{C_P}(p)$.
+
+# Learning more
+
+- For more mathematical background on the analytic solutions see the `vignette("analytic-solutions")`.
+- For a more introductory explanation of the primary event censored distribution see the `vignette("primarycensoreddist")`.
 
 # References
