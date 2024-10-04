@@ -64,6 +64,12 @@ fitdistdoublecens <- function(censdata, distr,
     )
   }
 
+  if (!requireNamespace("withr", quietly = TRUE)) {
+    stop(
+      "Package 'withr' is required but not installed for this function."
+    )
+  }
+
   if (!all(c("left", "right") %in% names(censdata))) {
     stop("censdata must contain 'left' and 'right' columns")
   }
