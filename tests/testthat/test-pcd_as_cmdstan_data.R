@@ -1,4 +1,4 @@
-test_that("pcd_as_cmdstan_data correctly formats data", {
+test_that("pcd_as_stan_data correctly formats data", {
   data <- data.frame(
     delay = c(1, 2, 3),
     delay_upper = c(2, 3, 4),
@@ -14,7 +14,7 @@ test_that("pcd_as_cmdstan_data correctly formats data", {
   priors <- list(location = c(1, 1), scale = c(1, 1))
   primary_priors <- list(location = numeric(0), scale = numeric(0))
 
-  result <- pcd_as_cmdstan_data(
+  result <- pcd_as_stan_data(
     data,
     dist_id = dist_id,
     primary_dist_id = primary_dist_id,
@@ -51,7 +51,7 @@ test_that("pcd_as_cmdstan_data correctly formats data", {
   expect_identical(result$primary_prior_scale, primary_priors$scale)
 })
 
-test_that("pcd_as_cmdstan_data handles missing columns correctly", {
+test_that("pcd_as_stan_data handles missing columns correctly", {
   data <- data.frame(
     delay = c(1, 2, 3),
     n = c(10, 20, 15),
@@ -59,7 +59,7 @@ test_that("pcd_as_cmdstan_data handles missing columns correctly", {
   )
 
   expect_error(
-    pcd_as_cmdstan_data(
+    pcd_as_stan_data(
       data,
       dist_id = 1,
       primary_dist_id = 1,
@@ -72,7 +72,7 @@ test_that("pcd_as_cmdstan_data handles missing columns correctly", {
   )
 })
 
-test_that("pcd_as_cmdstan_data handles optional parameters correctly", {
+test_that("pcd_as_stan_data handles optional parameters correctly", {
   data <- data.frame(
     delay = c(1, 2, 3),
     delay_upper = c(2, 3, 4),
@@ -81,7 +81,7 @@ test_that("pcd_as_cmdstan_data handles optional parameters correctly", {
     relative_obs_time = c(10, 10, 10)
   )
 
-  result <- pcd_as_cmdstan_data(
+  result <- pcd_as_stan_data(
     data,
     dist_id = 1,
     primary_dist_id = 1,
@@ -97,7 +97,7 @@ test_that("pcd_as_cmdstan_data handles optional parameters correctly", {
   expect_identical(result$use_reduce_sum, 1L)
 })
 
-test_that("pcd_as_cmdstan_data handles custom column names correctly", {
+test_that("pcd_as_stan_data handles custom column names correctly", {
   data <- data.frame(
     obs_delay = c(1, 2, 3),
     obs_delay_upper = c(2, 3, 4),
@@ -106,7 +106,7 @@ test_that("pcd_as_cmdstan_data handles custom column names correctly", {
     obs_time = c(10, 10, 10)
   )
 
-  result <- pcd_as_cmdstan_data(
+  result <- pcd_as_stan_data(
     data,
     delay = "obs_delay",
     delay_upper = "obs_delay_upper",

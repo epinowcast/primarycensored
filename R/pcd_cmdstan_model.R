@@ -6,11 +6,7 @@
 #'
 #' @param include_paths Character vector of paths to include for Stan
 #'  compilation. Defaults to the result of `pcd_stan_path()`.
-#' @param check_truncation_multiplier Numeric multiplier to use for checking
-#'   if the truncation time D is appropriate relative to the maximum delay.
-#'   Set to NULL to skip the check. Default is 2.
-#' @param delays Optional numeric vector of observed delays to use for checking
-#'   the truncation time. Only used if `check_truncation_multiplier` is not NULL.
+#'
 #' @param ... Additional arguments passed to cmdstanr::cmdstan_model().
 #'
 #' @return A CmdStanModel object.
@@ -35,8 +31,6 @@
 #' }
 pcd_cmdstan_model <- function(
     include_paths = primarycensoreddist::pcd_stan_path(),
-    check_truncation_multiplier = 2,
-    delays = NULL,
     ...) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
     stop("Package 'cmdstanr' is required but not installed for this function.")
@@ -46,14 +40,6 @@ pcd_cmdstan_model <- function(
     "pcens_model.stan",
     package = "primarycensoreddist"
   )
-
-  if (!is.null(check_truncation_multiplier) && !is.null(delays)) {
-    check_truncation(
-      delays = delays,
-      D = stan_data$D,
-      multiplier = check_truncation_multiplier
-    )
-  }
 
   cmdstanr::cmdstan_model(
     pcd_stan_model,
@@ -68,36 +54,54 @@ pcd_cmdstan_model <- function(
 #' primarycensoreddist Stan model.
 #'
 #' @param data A data frame containing the delay data.
+#'
 #' @param delay Column name for observed delays (default: "delay")
-#' @param delay_upper Column name for upper bound of delays (default: "delay_upper")
+#'
+#' @param delay_upper Column name for upper bound of delays
+#' (default: "delay_upper")
+#'
 #' @param n Column name for count of observations (default: "n")
+#'
 #' @param pwindow Column name for primary window (default: "pwindow")
-#' @param relative_obs_time Column name for relative observation time (default: "relative_obs_time")
+#'
+#' @param relative_obs_time Column name for relative observation time
+#' (default: "relative_obs_time")
+#'
 #' @param dist_id Integer identifying the delay distribution:
 #'   1 = Lognormal, 2 = Gamma, 3 = Weibull, 4 = Exponential,
 #'   5 = Generalized Gamma, 6 = Negative Binomial, 7 = Poisson,
 #'   8 = Bernoulli, 9 = Beta, 10 = Binomial, 11 = Categorical, 12 = Cauchy,
 #'   13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
 #'   17 = Logistic
+#'
 #' @param primary_dist_id Integer identifying the primary distribution:
 #'   1 = Uniform, 2 = Exponential growth
+#'
 #' @param param_bounds A list with elements `lower` and `upper`, each a numeric
 #'   vector specifying bounds for the delay distribution parameters.
+#'
 #' @param primary_param_bounds A list with elements `lower` and `upper`, each a
 #'   numeric vector specifying bounds for the primary distribution parameters.
+#'
 #' @param priors A list with elements `location` and `scale`, each a numeric
 #'   vector specifying priors for the delay distribution parameters.
+#'
 #' @param primary_priors A list with elements `location` and `scale`, each a
 #'   numeric vector specifying priors for the primary distribution parameters.
+#'
 #' @param compute_log_lik Logical; compute log likelihood? (default: FALSE)
-#' @param use_reduce_sum Logical; use reduce_sum for performance? (default: FALSE)
+#'
+#' @param use_reduce_sum Logical; use reduce_sum for performance?
+#'  (default: FALSE)
+#'
 #' @param truncation_check_multiplier Numeric multiplier to use for checking
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
-#' @return A list containing the data formatted for use with [pcd_cmdstan_model()]
-#' @export
+#' @return A list containing the data formatted for use with
+#' [pcd_cmdstan_model()]
 #'
+#' @export
 #' @family modelhelpers
 #'
 #' @examples
@@ -109,7 +113,7 @@ pcd_cmdstan_model <- function(
 #'   pwindow = c(1, 1, 2),
 #'   relative_obs_time = c(10, 10, 10)
 #' )
-#' stan_data <- pcd_as_cmdstan_data(
+#' stan_data <- pcd_as_stan_data(
 #'   data,
 #'   dist_id = 1,
 #'   primary_dist_id = 1,
@@ -119,7 +123,7 @@ pcd_cmdstan_model <- function(
 #'   primary_priors = list(location = numeric(0), scale = numeric(0))
 #' )
 #' }
-pcd_as_cmdstan_data <- function(
+pcd_as_stan_data <- function(
     data, delay = "delay", delay_upper = "delay_upper",
     n = "n", pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",

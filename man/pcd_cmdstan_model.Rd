@@ -4,23 +4,11 @@
 \alias{pcd_cmdstan_model}
 \title{Create a CmdStanModel with primarycensoreddist Stan functions}
 \usage{
-pcd_cmdstan_model(
-  include_paths = primarycensoreddist::pcd_stan_path(),
-  check_truncation_multiplier = 2,
-  delays = NULL,
-  ...
-)
+pcd_cmdstan_model(include_paths = primarycensoreddist::pcd_stan_path(), ...)
 }
 \arguments{
 \item{include_paths}{Character vector of paths to include for Stan
 compilation. Defaults to the result of \code{pcd_stan_path()}.}
-
-\item{check_truncation_multiplier}{Numeric multiplier to use for checking
-if the truncation time D is appropriate relative to the maximum delay.
-Set to NULL to skip the check. Default is 2.}
-
-\item{delays}{Optional numeric vector of observed delays to use for checking
-the truncation time. Only used if \code{check_truncation_multiplier} is not NULL.}
 
 \item{...}{Additional arguments passed to cmdstanr::cmdstan_model().}
 }
@@ -53,6 +41,6 @@ fit <- model$sample(data = stan_data)
 \seealso{
 Modelling wrappers for external fitting packages
 \code{\link{fitdistdoublecens}()},
-\code{\link{pcd_as_cmdstan_data}()}
+\code{\link{pcd_as_stan_data}()}
 }
 \concept{modelhelpers}
