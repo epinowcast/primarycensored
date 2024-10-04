@@ -5,6 +5,7 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 ## Package
 
 * Split "Why it works" vignette into two separate vignettes, "Why it works" and "Analytic solutions for censored delay distributions".
+* Removed the need to assign functions to the global environment for `fitdistdoublecens()` by using `withr`.
 
 # primarycensoreddist 0.5.0
 
