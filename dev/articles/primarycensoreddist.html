@@ -154,15 +154,17 @@
 <span></span>
 <span><span class="co"># Random samples without secondary censoring</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rprimarycensoreddist.html">rprimarycensoreddist</a></span><span class="op">(</span></span>
-<span>  <span class="va">n</span>, <span class="va">rlnorm</span>,</span>
-<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span>,</span>
-<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">0</span>, D <span class="op">=</span> <span class="va">obs_time</span></span>
+<span>  <span class="va">n</span>,</span>
+<span>  rdist <span class="op">=</span> <span class="va">rlnorm</span>, rprimary <span class="op">=</span> <span class="va">runif</span>,</span>
+<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">0</span>, D <span class="op">=</span> <span class="va">obs_time</span>,</span>
+<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co"># Random samples with secondary censoring</span></span>
 <span><span class="va">samples_sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rprimarycensoreddist.html">rprimarycensoreddist</a></span><span class="op">(</span></span>
-<span>  <span class="va">n</span>, <span class="va">rlnorm</span>,</span>
-<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span>,</span>
-<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="va">obs_time</span></span>
+<span>  <span class="va">n</span>,</span>
+<span>  rdist <span class="op">=</span> <span class="va">rlnorm</span>, rprimary <span class="op">=</span> <span class="va">runif</span>,</span>
+<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="va">obs_time</span>,</span>
+<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co"># Calculate the PMF for the samples with secondary censoring</span></span>
 <span><span class="va">samples_sc_pmf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
@@ -237,9 +239,9 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 <code class="sourceCode R"><span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
 <span><span class="va">theoretical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pprimarycensoreddist.html">pprimarycensoreddist</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="va">obs_time</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span>,</span>
-<span>  <span class="va">plnorm</span>,</span>
-<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span>,</span>
-<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, D <span class="op">=</span> <span class="va">obs_time</span></span>
+<span>  pdist <span class="op">=</span> <span class="va">plnorm</span>, dprimary <span class="op">=</span> <span class="va">dunif</span>,</span>
+<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, D <span class="op">=</span> <span class="va">obs_time</span>,</span>
+<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Create a data frame for plotting</span></span>
@@ -286,9 +288,9 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 <code class="sourceCode R"><span><span class="co"># Calculate the theoretical PMF using dprimarycensoreddist</span></span>
 <span><span class="va">theoretical_pmf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dprimarycensoreddist.html">dprimarycensoreddist</a></span><span class="op">(</span></span>
 <span>  <span class="fl">0</span><span class="op">:</span><span class="op">(</span><span class="va">obs_time</span> <span class="op">-</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  <span class="va">plnorm</span>,</span>
-<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span>,</span>
-<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="va">obs_time</span></span>
+<span>  pdist <span class="op">=</span> <span class="va">plnorm</span>, dprimary <span class="op">=</span> <span class="va">dunif</span>,</span>
+<span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="va">obs_time</span>,</span>
+<span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">pmf_df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
