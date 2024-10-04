@@ -195,8 +195,4 @@ In this derivation, we have used that $G_P(x|-w_P, 0)$ is the distribution funct
 - For more mathematical background on the analytic solutions see the `vignette("analytic-solutions")`.
 - For a more introductory explanation of the primary event censored distribution see the `vignette("primarycensoreddist")`.
 
-# Acknowledgements
-
-We thank Sang Woo Park (gh: `@parksw3`) for making demonstrating the direct link between the approach taken in this note and the approach taken in Park et al[@Park2024]. The connection between the two approaches written above is substantially from [his comment](https://github.com/epinowcast/primarycensoreddist/issues/83#issuecomment-2359365128).
-
 # References
