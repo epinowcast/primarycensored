@@ -103,6 +103,7 @@
 <li>Introduce the statistical model used in <code>primarycensoreddist</code>.</li>
 <li>Distributions where we can derive the censored delay distribution analytically.</li>
 </ol>
+<p>If you are new to the package, we recommend that you start with the <code><a href="../articles/primarycensoreddist.html">vignette("primarycensoreddist")</a></code> vignette.</p>
 </div>
 </div>
 <div class="section level2" number="2">
@@ -256,6 +257,15 @@ Making the transformation <span class="math inline">\(x = -p\)</span>, and rewri
 which is same as equation <a href="#eq:seccensorprob">(3.2)</a>.</p>
 <p>In this derivation, we have used that <span class="math inline">\(G_P(x|-w_P, 0)\)</span> is the distribution function from the time <em>from</em> the start of the primary interval <em>until</em> primary event time, and <span class="math inline">\(F_{C_P}\)</span> is the distribution function of the time <em>until</em> the end of the primary event window <em>from</em> the primary event time. Therefore, <span class="math inline">\(G_P(-p|-w_P, 0) = Pr(P &lt; -p | P \in (-w_P, 0)) = 1 - Pr(C_P \leq p) = 1 - F_{C_P}(p)\)</span>.</p>
 </div>
+</div>
+<div class="section level2" number="5">
+<h2 id="learning-more">
+<span class="header-section-number">5</span> Learning more<a class="anchor" aria-label="anchor" href="#learning-more"></a>
+</h2>
+<ul>
+<li>For more mathematical background on the analytic solutions see the <code><a href="../articles/analytic-solutions.html">vignette("analytic-solutions")</a></code>.</li>
+<li>For a more introductory explanation of the primary event censored distribution see the <code><a href="../articles/primarycensoreddist.html">vignette("primarycensoreddist")</a></code>.</li>
+</ul>
 </div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

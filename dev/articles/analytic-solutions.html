@@ -89,8 +89,21 @@
     
     
 <div class="section level2" number="1">
+<h2 id="what-are-we-going-to-do-in-this-vignette">
+<span class="header-section-number">1</span> What are we going to do in this Vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
+</h2>
+<p>In this vignette, we’ll derive the analytic solutions for the primary censored delay distributions for a range of commonly used distributions.</p>
+<ol style="list-style-type: decimal">
+<li>Examine the case of exponentially tilted primary event times</li>
+<li>Analyse the uniform primary event time case (<span class="math inline">\(r=0\)</span>)</li>
+<li>Explore general partial expectation and its role in solving equation <a href="#eq:unifprim">(3.1)</a>
+</li>
+<li>Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression</li>
+</ol>
+</div>
+<div class="section level2" number="2">
 <h2 id="analytic-solutions-for-exponentially-tilted-primary-event-times">
-<span class="header-section-number">1</span> Analytic solutions for exponentially tilted primary event times<a class="anchor" aria-label="anchor" href="#analytic-solutions-for-exponentially-tilted-primary-event-times"></a>
+<span class="header-section-number">2</span> Analytic solutions for exponentially tilted primary event times<a class="anchor" aria-label="anchor" href="#analytic-solutions-for-exponentially-tilted-primary-event-times"></a>
 </h2>
 <p>In epidemiological analysis, it is common for primary events to be arriving at exponentially increasing or decreasing rates, for example, incidence of new infections in a growing epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay. If we assume a reference uniform distribution within a primary censoring window <span class="math inline">\([k, k + w_P)\)</span> then the distribution of the primary event time within the censoring window is the exponential tilted uniform distribution:</p>
 <p><span class="math display">\[
@@ -98,17 +111,17 @@ f_P(t) \propto \exp(r t) \mathbb{1}_{[k, k + w_P]}(t).
 \]</span></p>
 <p>In this case, the distribution function for <span class="math inline">\(C_P\)</span>, that is the length of time left in the primary censor window <em>after</em> the primary event time, is given by:</p>
 <p><span class="math display" id="eq:fcp">\[
-F_{C_P}(p; r) = {  1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p \in [0, w_P]. \tag{1.1}
+F_{C_P}(p; r) = {  1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p \in [0, w_P]. \tag{2.1}
 \]</span>
-Note that taking the limit <span class="math inline">\(\lim_r \rightarrow 0\)</span> in equation <a href="#eq:fcp">(1.1)</a> gives the uniform distribution function <span class="math inline">\(F_{C_P}(p, 0) = p / w_P\)</span>.</p>
-<p>In the following it is convenient to use a (linear) difference operator defined as:</p>
+Note that taking the limit <span class="math inline">\(\lim_r \rightarrow 0\)</span> in equation <a href="#eq:fcp">(2.1)</a> gives the uniform distribution function <span class="math inline">\(F_{C_P}(p, 0) = p / w_P\)</span>.</p>
+<p>In the following, it is convenient to use a (linear) difference operator defined as:</p>
 <p><span class="math display">\[
 \Delta_{w}f(t) = f(t + w) - f(t).
 \]</span></p>
 </div>
-<div class="section level2" number="2">
+<div class="section level2" number="3">
 <h2 id="uniform-primary-event-time-r0">
-<span class="header-section-number">2</span> Uniform primary event time (<span class="math inline">\(r=0\)</span>)<a class="anchor" aria-label="anchor" href="#uniform-primary-event-time-r0"></a>
+<span class="header-section-number">3</span> Uniform primary event time (<span class="math inline">\(r=0\)</span>)<a class="anchor" aria-label="anchor" href="#uniform-primary-event-time-r0"></a>
 </h2>
 <p>Applying a uniform primary event time distribution to equation 3.1 from <a href="why-it-works.html">“Why it works”</a> gives:</p>
 <p><span class="math display">\[
@@ -120,27 +133,35 @@ Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
 \begin{aligned}
 Q_{S_+}(t) &amp;= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \\
 &amp;= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].
-\end{aligned} \tag{2.1}
+\end{aligned} \tag{3.1}
 \]</span></p>
-<p><strong>General partial expectation</strong></p>
-<p>Note that for any distribution with an analytically available distribution function <span class="math inline">\(F_T\)</span> equation <a href="#eq:unifprim">(2.1)</a> can be solved so long as the <em>partial expectation</em></p>
+<div class="section level3" number="3.1">
+<h3 id="general-partial-expectation">
+<span class="header-section-number">3.1</span> General partial expectation<a class="anchor" aria-label="anchor" href="#general-partial-expectation"></a>
+</h3>
+<p>Note that for any distribution with an analytically available distribution function <span class="math inline">\(F_T\)</span> equation <a href="#eq:unifprim">(3.1)</a> can be solved so long as the <em>partial expectation</em></p>
 <p><span class="math display" id="eq:partexp">\[
-\int_t^{t+w_P} f_T(z) z~ dz \tag{2.2}
+\int_t^{t+w_P} f_T(z) z~ dz \tag{3.2}
 \]</span></p>
 <p>can be reduced to an analytic expression.</p>
 <p>The insight here is that this will be possible for any distribution where the average of the distribution can be calculated analytically, which includes commonly used non-negative distributions such as the Gamma, Log-Normal and Weibull distributions.</p>
-<p><strong>General Discrete censored delay distribution</strong></p>
-<p>First, we note that equation 3.3 from <a href="why-it-works.html">“Why it works”</a> can be written using the difference operator: <span class="math inline">\(f_n = -\Delta_1 Q_{S_+}(n-1)\)</span>. We can insert this expression into equation <a href="#eq:unifprim">(2.1)</a> to give the discrete censored delay distribution for uniformly distributed primary event times:</p>
+</div>
+<div class="section level3" number="3.2">
+<h3 id="general-discrete-censored-delay-distribution">
+<span class="header-section-number">3.2</span> General Discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#general-discrete-censored-delay-distribution"></a>
+</h3>
+<p>First, we note that equation 3.3 from <a href="why-it-works.html">“Why it works”</a> can be written using the difference operator: <span class="math inline">\(f_n = -\Delta_1 Q_{S_+}(n-1)\)</span>. We can insert this expression into equation <a href="#eq:unifprim">(3.1)</a> to give the discrete censored delay distribution for uniformly distributed primary event times:</p>
 <p><span class="math display" id="eq:disccensunifprim">\[
 \begin{aligned}
 f_n &amp;= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
 &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
-\end{aligned}  \tag{2.3}
+\end{aligned}  \tag{3.3}
 \]</span></p>
 <p>We now consider some specific delay distributions.</p>
-<div class="section level3" number="2.1">
+</div>
+<div class="section level3" number="3.3">
 <h3 id="gamma-distributed-delay-times">
-<span class="header-section-number">2.1</span> Gamma distributed delay times<a class="anchor" aria-label="anchor" href="#gamma-distributed-delay-times"></a>
+<span class="header-section-number">3.3</span> Gamma distributed delay times<a class="anchor" aria-label="anchor" href="#gamma-distributed-delay-times"></a>
 </h3>
 <p>The Gamma distribution has the density function:</p>
 <p><span class="math display">\[
@@ -155,23 +176,34 @@ F_T(z;k, \theta) &amp;= 0, \qquad z &lt; 0.
 \end{aligned}
 \]</span>
 Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma function.</p>
-<p><strong>Gamma partial expectation</strong></p>
+<div class="section level4" number="3.3.1">
+<h4 id="gamma-partial-expectation">
+<span class="header-section-number">3.3.1</span> Gamma partial expectation<a class="anchor" aria-label="anchor" href="#gamma-partial-expectation"></a>
+</h4>
 <p>We know that the full expectation of the Gamma distribution is <span class="math inline">\(\mathbb{E}[T] = k\theta\)</span>, which can be calculated as a standard integral. Doing the same integral for the partial expectation gives:</p>
 <p><span class="math display" id="eq:gammapartexp">\[
 \begin{aligned}
 \int_t^{t+w_P} f_T(z) z~ dz &amp;= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P}z z^{k-1} \exp(-z/\theta)~dz \\
 &amp;=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P}z^{k} \exp(-z/\theta)~dz\\
 &amp;= k\theta \Delta_{w_P} F_T(t; k + 1, \theta).
-\end{aligned} \tag{2.4}
+\end{aligned} \tag{3.4}
 \]</span></p>
-<p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Gamma distribution</strong></p>
-<p>By substituting equation <a href="#eq:gammapartexp">(2.4)</a> into equation <a href="#eq:disccensunifprim">(2.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+</div>
+<div class="section level4" number="3.3.2">
+<h4 id="survival-function-of-s_-for-gamma-distribution">
+<span class="header-section-number">3.3.2</span> Survival function of <span class="math inline">\(S_{+}\)</span> for Gamma distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-gamma-distribution"></a>
+</h4>
+<p>By substituting equation <a href="#eq:gammapartexp">(3.4)</a> into equation <a href="#eq:disccensunifprim">(3.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display" id="eq:survgammaunifprim">\[
 Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
-\tag{2.5}
+\tag{3.5}
 \]</span></p>
-<p><strong>Gamma discrete censored delay distribution</strong></p>
-<p>By substituting <a href="#eq:survgammaunifprim">(2.5)</a> into <a href="#eq:disccensunifprim">(2.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:
+</div>
+<div class="section level4" number="3.3.3">
+<h4 id="gamma-discrete-censored-delay-distribution">
+<span class="header-section-number">3.3.3</span> Gamma discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#gamma-discrete-censored-delay-distribution"></a>
+</h4>
+<p>By substituting <a href="#eq:survgammaunifprim">(3.5)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:
 <span class="math display">\[
 \begin{aligned}
 f_n &amp;= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1, \theta)\\
@@ -181,9 +213,10 @@ f_n &amp;= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k
 \]</span></p>
 <p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">1</a>]</sup></span>.</p>
 </div>
-<div class="section level3" number="2.2">
+</div>
+<div class="section level3" number="3.4">
 <h3 id="log-normal-distribution">
-<span class="header-section-number">2.2</span> Log-Normal distribution<a class="anchor" aria-label="anchor" href="#log-normal-distribution"></a>
+<span class="header-section-number">3.4</span> Log-Normal distribution<a class="anchor" aria-label="anchor" href="#log-normal-distribution"></a>
 </h3>
 <p>The Log-Normal distribution has the density function:</p>
 <p><span class="math display">\[
@@ -194,7 +227,10 @@ And distribution function:</p>
 F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
 \]</span>
 Where <span class="math inline">\(\Phi\)</span> is the standard normal distribution function.</p>
-<p><strong>Log-Normal partial expectation</strong></p>
+<div class="section level4" number="3.4.1">
+<h4 id="log-normal-partial-expectation">
+<span class="header-section-number">3.4.1</span> Log-Normal partial expectation<a class="anchor" aria-label="anchor" href="#log-normal-partial-expectation"></a>
+</h4>
 <p>We know that the full expectation of the Log-Normal distribution is <span class="math inline">\(\mathbb{E}[T] = e^{\mu + \frac{1}{2} \sigma^2}\)</span>, which can be calculated by integration with the integration substitution <span class="math inline">\(y = (\ln z - \mu) / \sigma\)</span>. This has transformation Jacobian:</p>
 <p><span class="math display">\[
 \frac{dz}{dy} = \sigma e^{\sigma y + \mu}.
@@ -207,15 +243,23 @@ Where <span class="math inline">\(\Phi\)</span> is the standard normal distribut
 &amp;= {e^{\mu + \frac{1}{2} \sigma^2} \over \sqrt{2 \pi} } \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
 &amp;= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
 &amp;= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
-\end{aligned} \tag{2.6}
+\end{aligned} \tag{3.6}
 \]</span></p>
-<p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution</strong></p>
-<p>By substituting equation <a href="#eq:lognormpartexp">(2.6)</a> into equation <a href="#eq:disccensunifprim">(2.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+</div>
+<div class="section level4" number="3.4.2">
+<h4 id="survival-function-of-s_-for-log-normal-distribution">
+<span class="header-section-number">3.4.2</span> Survival function of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-log-normal-distribution"></a>
+</h4>
+<p>By substituting equation <a href="#eq:lognormpartexp">(3.6)</a> into equation <a href="#eq:disccensunifprim">(3.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display">\[
 Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 \]</span></p>
-<p><strong>Log-Normal discrete censored delay distribution</strong></p>
-<p>By substituting <a href="#eq:lognormpartexp">(2.6)</a> into <a href="#eq:disccensunifprim">(2.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
+</div>
+<div class="section level4" number="3.4.3">
+<h4 id="log-normal-discrete-censored-delay-distribution">
+<span class="header-section-number">3.4.3</span> Log-Normal discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#log-normal-discrete-censored-delay-distribution"></a>
+</h4>
+<p>By substituting <a href="#eq:lognormpartexp">(3.6)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
 <p><span class="math display">\[
 \begin{aligned}
 f_n &amp;= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\
@@ -225,9 +269,10 @@ f_n &amp;= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n
 \end{aligned}
 \]</span></p>
 </div>
-<div class="section level3" number="2.3">
+</div>
+<div class="section level3" number="3.5">
 <h3 id="weibull-distribution">
-<span class="header-section-number">2.3</span> Weibull distribution<a class="anchor" aria-label="anchor" href="#weibull-distribution"></a>
+<span class="header-section-number">3.5</span> Weibull distribution<a class="anchor" aria-label="anchor" href="#weibull-distribution"></a>
 </h3>
 <p>The Weibull distribution has the density function:</p>
 <p><span class="math display">\[
@@ -242,7 +287,10 @@ And distribution function:</p>
 F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, &amp; z\geq0,\\ 0, &amp; z&lt;0.\end{cases}
 \]</span>
 Where <span class="math inline">\(\Phi\)</span> is the standard normal distribution function.</p>
-<p><strong>Weibull partial expectation</strong></p>
+<div class="section level4" number="3.5.1">
+<h4 id="weibull-partial-expectation">
+<span class="header-section-number">3.5.1</span> Weibull partial expectation<a class="anchor" aria-label="anchor" href="#weibull-partial-expectation"></a>
+</h4>
 <p>We know that the full expectation of the Weibull distribution is <span class="math inline">\(\mathbb{E}[T] = \lambda \Gamma(1 + 1/k)\)</span>, which can be calculated by integration using the integration substitution <span class="math inline">\(y = (z / \lambda)^k\)</span>, which has transformation Jacobian:</p>
 <p><span class="math display">\[
 \frac{dz}{dy} = \frac{\lambda}{k}y^{1/k - 1}.
@@ -255,20 +303,28 @@ Where <span class="math inline">\(\Phi\)</span> is the standard normal distribut
 &amp;= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y y^{1/k - 1} e^{-y} dy  \\
 &amp;= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y^{1/k} e^{-y} dy\\
 &amp;= \lambda \Delta_{w_P} g(t; \lambda,k)
-\end{aligned} \tag{2.7}
+\end{aligned} \tag{3.7}
 \]</span></p>
 <p>Where</p>
 <p><span class="math display">\[
 g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
 \]</span>
 is a reparametrisation of the lower incomplete gamma function.</p>
-<p><strong>Survival function of <span class="math inline">\(S_{+}\)</span> for Weibull distribution</strong></p>
-<p>By substituting equation <a href="#eq:weibullpartexp">(2.7)</a> into equation <a href="#eq:disccensunifprim">(2.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+</div>
+</div>
+<div class="section level3" number="3.6">
+<h3 id="survival-function-of-s_-for-weibull-distribution">
+<span class="header-section-number">3.6</span> Survival function of <span class="math inline">\(S_{+}\)</span> for Weibull distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-weibull-distribution"></a>
+</h3>
+<p>By substituting equation <a href="#eq:weibullpartexp">(3.7)</a> into equation <a href="#eq:disccensunifprim">(3.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
 <p><span class="math display">\[
 Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
 \]</span></p>
-<p><strong>Weibull discrete censored delay distribution</strong></p>
-<p>By substituting <a href="#eq:weibullpartexp">(2.7)</a> into <a href="#eq:disccensunifprim">(2.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
+<div class="section level4" number="3.6.1">
+<h4 id="weibull-discrete-censored-delay-distribution">
+<span class="header-section-number">3.6.1</span> Weibull discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#weibull-discrete-censored-delay-distribution"></a>
+</h4>
+<p>By substituting <a href="#eq:weibullpartexp">(3.7)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
 <p><span class="math display">\[
 \begin{aligned}
 f_n &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
@@ -277,12 +333,25 @@ f_n &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^
 &amp;+ \lambda [2 g(n; \lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)] \qquad n = 0, 1, \dots.
 \end{aligned}
 \]</span></p>
-<p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">1</a>]</sup></span>.
-# References</p>
+<p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">1</a>]</sup></span>.</p>
+</div>
+</div>
+</div>
+<div class="section level2" number="4">
+<h2 id="learning-more">
+<span class="header-section-number">4</span> Learning more<a class="anchor" aria-label="anchor" href="#learning-more"></a>
+</h2>
+<ul>
+<li>For more mathematical background on the analytic solutions see the <code><a href="../articles/why-it-works.html">vignette("why-it-works")</a></code>.</li>
+<li>For a more introductory explanation of the primary event censored distribution see the <code><a href="../articles/primarycensoreddist.html">vignette("primarycensoreddist")</a></code>.</li>
+</ul>
+</div>
+<div class="section level2">
+<h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
+</h2>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
 <div id="ref-cori2013new" class="csl-entry">
 1. Cori, A., Ferguson, N. M., Fraser, C., &amp; Cauchemez, S. (2013). A new framework and software to estimate time-varying reproduction numbers during epidemics. <em>American Journal of Epidemiology</em>, <em>178</em>(9), 1505–1512.
-</div>
 </div>
 </div>
 </div>
