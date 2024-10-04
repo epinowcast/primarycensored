@@ -65,7 +65,7 @@ $$
 \int_t^{t+w_P} f_T(z) z~ dz (\#eq:partexp)
 $$
 
-can be reduced to an analytic expression. 
+can be reduced to an analytic expression.
 
 The insight here is that this will be possible for any distribution where the average of the distribution can be calculated analytically, which includes commonly used non-negative distributions such as the Gamma, Log-Normal and Weibull distributions.
 
@@ -118,10 +118,8 @@ $$
 By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
 $$
-\begin{aligned}
-Q_{S_+}(t; k, \theta) &= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \left( {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} z^{k-1}  \exp(-z/\theta) (z-t)~ dz \right), \\
-&= Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
-\end{aligned} (\#eq:survgammaunifprim)
+Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
+(\#eq:survgammaunifprim)
 $$
 
 **Gamma discrete censored delay distribution**
@@ -176,10 +174,7 @@ $$
 By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
 $$
-\begin{aligned}
-Q_{S+}(t ;\mu, \sigma) &= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \int_t^{t+w_P} {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) (z-t)~ dz, \\
-&= Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
-\end{aligned}
+Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 $$
 
 **Log-Normal discrete censored delay distribution**
@@ -233,11 +228,11 @@ $$
 \end{aligned} (\#eq:weibullpartexp)
 $$
 
-Where 
+Where
 
 $$
 g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
-$$ 
+$$
 is a reparametrisation of the lower incomplete gamma function.
 
 **Survival function of $S_{+}$ for Weibull distribution**

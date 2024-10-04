@@ -105,7 +105,7 @@ Note that in ["Getting started"](primarycensoreddist.html#compute-the-primary-ev
 
 ### Probability of secondary event time within a secondary censoring window
 
-Having constructed the survival function of $S_+$ with equation \@ref(eq:survivalfunc), using numerical quadrature or in some other way, we can calculate the probability mass of a secondary event time falling within a observed secondary censoring window of length $w_S$ that begins at time $n - w_S$ _after_ the primary censoring window. This is the probability that the censored delay time $T_c$ is $n$. 
+Having constructed the survival function of $S_+$ with equation \@ref(eq:survivalfunc), using numerical quadrature or in some other way, we can calculate the probability mass of a secondary event time falling within a observed secondary censoring window of length $w_S$ that begins at time $n - w_S$ _after_ the primary censoring window. This is the probability that the censored delay time $T_c$ is $n$.
 
 This gives the censored delay time probability [by integrating over censored values](https://mc-stan.org/docs/stan-users-guide/truncation-censoring.html#integrating-out-censored-values):
 
@@ -156,7 +156,7 @@ Then, by using integration by parts, we get:
 
 $$
 \begin{split}
-\int_{P_L}^{P_R} g_P(x|P_L, P_R) \big[F(S_R - x) - F(S_L - x)\big] dx &= 
+\int_{P_L}^{P_R} g_P(x|P_L, P_R) \big[F(S_R - x) - F(S_L - x)\big] dx &=
 F(S_R - P_R) - F(S_L - P_R)  \\ & - \int_{P_L}^{P_R} G_P(x|P_L, P_R) \big[f(S_L - x) - f(S_R - x)\big] dx
 \end{split} (\#eq:park)
 $$
@@ -188,9 +188,5 @@ $$
 which is same as equation \@ref(eq:seccensorprob).
 
 In this derivation, we have used that $G_P(x|-w_P, 0)$ is the distribution function from the time _from_ the start of the primary interval _until_ primary event time, and $F_{C_P}$ is the distribution function of the time _until_ the end of the primary event window _from_ the primary event time. Therefore, $G_P(-p|-w_P, 0) = Pr(P < -p | P \in (-w_P, 0)) = 1 - Pr(C_P \leq p) = 1 - F_{C_P}(p)$.
-
-# Acknowledgements
-
-We thank Sang Woo Park (gh: `@parksw3`) for making demonstrating the direct link between the approach taken in this note and the approach taken in Park et al[@Park2024]. The connection between the two approaches written above is substantially from [his comment](https://github.com/epinowcast/primarycensoreddist/issues/83#issuecomment-2359365128).
 
 # References
