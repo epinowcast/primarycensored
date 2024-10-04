@@ -40,7 +40,8 @@ Suggests:
     rmarkdown,
     spelling,
     testthat (>= 3.1.9),
-    usethis
+    usethis,
+    withr
 Additional_repositories:
     https://stan-dev.r-universe.dev
 Config/Needs/hexsticker: hexSticker, sysfonts, ggplot2
