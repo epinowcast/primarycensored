@@ -108,8 +108,12 @@ check_truncation <- function(delays, D, multiplier = 2) {
     )
   }
 
-  # Remove NA and infinite values
-  delays <- delays[is.finite(delays)]
+  if (is.infinite(D)) {
+    return(invisible(NULL))
+  }
+
+  # Remove NA
+  delays <- delays[!is.na(delays)]
 
   if (length(delays) == 0) {
     warning("No finite observed delays to check.")

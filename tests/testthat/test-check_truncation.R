@@ -1,6 +1,6 @@
 test_that("check_truncation is silent when D is appropriate", {
   expect_silent(
-    check_truncation(delays = c(1, 2, 3, 4), D = 10, multiplier = 2)
+    check_truncation(delays = c(1, 2, 3, 4), D = 5, multiplier = 2)
   )
 })
 
@@ -8,8 +8,9 @@ test_that("check_truncation gives a message when D is too large", {
   expect_message(
     check_truncation(delays = c(1, 2, 3, 4), D = 20, multiplier = 2),
     paste0(
-      "The truncation time D (20) is larger than 2 times ",
-      "the maximum observed delay (4)."
+      "The truncation time D \\(20\\) is larger than 2 times the maximum ", # nolint
+      "observed delay \\(4\\). Consider setting D to Inf for better ", # nolint
+      "efficiency with minimal accuracy cost for this case."
     )
   )
 })
@@ -53,5 +54,11 @@ test_that("check_truncation errors on multiplier <= 1", {
       "Invalid argument values. D must be positive and multiplier ",
       "must be greater than 1."
     )
+  )
+})
+
+test_that("check_truncation is silent when D is infinite", {
+  expect_silent(
+    check_truncation(delays = c(1, 2, 3, 4), D = Inf, multiplier = 2)
   )
 })
