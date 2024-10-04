@@ -7,6 +7,10 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 * Split "Why it works" vignette into two separate vignettes, "Why it works" and "Analytic solutions for censored delay distributions".
 * Removed the need to assign functions to the global environment for `fitdistdoublecens()` by using `withr`.
 
+## Documentation
+
+* Simplified the "Analytic solutions" vignette by removing verbose derivation details.
+
 # primarycensoreddist 0.5.0
 
 This release adds a new `{touchstone}` based benchmark suite to the package. It also adds a new "How it works" vignette which aims to give the reader more details into how the primary censored distributions work.
