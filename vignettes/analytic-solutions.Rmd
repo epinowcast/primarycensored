@@ -91,7 +91,7 @@ $$
 
 We now consider some specific delay distributions.
 
-# Gamma distributed delay times
+## Gamma distributed delay times
 
 The Gamma distribution has the density function:
 
@@ -110,7 +110,7 @@ F_T(z;k, \theta) &= 0, \qquad z < 0.
 $$
 Where $\gamma$ is the lower incomplete gamma function.
 
-## Gamma partial expectation
+### Gamma partial expectation
 
 We know that the full expectation of the Gamma distribution is $\mathbb{E}[T] = k\theta$, which can be calculated as a standard integral. Doing the same integral for the partial expectation gives:
 
@@ -122,7 +122,7 @@ $$
 \end{aligned} (\#eq:gammapartexp)
 $$
 
-## Survival function of $S_{+}$ for Gamma distribution
+### Survival function of $S_{+}$ for Gamma distribution
 
 By substituting equation \@ref(eq:gammapartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
@@ -131,7 +131,7 @@ Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta 
 (\#eq:survgammaunifprim)
 $$
 
-## Gamma discrete censored delay distribution
+### Gamma discrete censored delay distribution
 
 By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 $$
@@ -144,7 +144,7 @@ $$
 
 Which was also found by Cori _et al_ [@cori2013new].
 
-# Log-Normal distribution
+## Log-Normal distribution
 
 The Log-Normal distribution has the density function:
 
@@ -158,7 +158,7 @@ F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
 $$
 Where $\Phi$ is the standard normal distribution function.
 
-## Log-Normal partial expectation
+### Log-Normal partial expectation
 
 We know that the full expectation of the Log-Normal distribution is $\mathbb{E}[T] = e^{\mu + \frac{1}{2} \sigma^2}$, which can be calculated by integration with the integration substitution $y = (\ln z - \mu) / \sigma$. This has transformation Jacobian:
 
@@ -178,7 +178,7 @@ $$
 \end{aligned} (\#eq:lognormpartexp)
 $$
 
-## Survival function of $S_{+}$ for Log-Normal distribution
+### Survival function of $S_{+}$ for Log-Normal distribution
 
 By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
@@ -186,7 +186,7 @@ $$
 Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 $$
 
-## Log-Normal discrete censored delay distribution
+### Log-Normal discrete censored delay distribution
 
 By substituting \@ref(eq:lognormpartexp) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 
@@ -199,7 +199,7 @@ f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \m
 \end{aligned}
 $$
 
-# Weibull distribution
+## Weibull distribution
 
 The Weibull distribution has the density function:
 
@@ -217,7 +217,7 @@ F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, & z\geq0,\\ 0, & z<0.\end
 $$
 Where $\Phi$ is the standard normal distribution function.
 
-## Weibull partial expectation
+### Weibull partial expectation
 
 We know that the full expectation of the Weibull distribution is $\mathbb{E}[T] = \lambda \Gamma(1 + 1/k)$, which can be calculated by integration using the integration substitution $y = (z / \lambda)^k$, which has transformation Jacobian:
 
@@ -252,7 +252,7 @@ $$
 Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
 $$
 
-## Weibull discrete censored delay distribution
+### Weibull discrete censored delay distribution
 
 By substituting \@ref(eq:weibullpartexp) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 
