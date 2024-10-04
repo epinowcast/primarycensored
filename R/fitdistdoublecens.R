@@ -114,16 +114,12 @@ fitdistdoublecens <- function(censdata, distr,
   }
   formals(ppcens_dist) <- formals(pdist)
 
-  assign("d.pcens_dist", dpcens_dist, envir = .GlobalEnv)
-  assign("p.pcens_dist", ppcens_dist, envir = .GlobalEnv)
-
   # Fit the distribution
-  fit <- fitdistrplus::fitdist(
+  fit <- withr::with_environment(environment(), fitdistrplus::fitdist(
     censdata$left,
-    distr = ".pcens_dist",
+    distr = "pcens_dist",
     ...
-  )
-  rm(dpcens_dist, ppcens_dist)
+  ))
   return(fit)
 }
 
