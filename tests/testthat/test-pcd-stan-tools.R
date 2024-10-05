@@ -1,7 +1,7 @@
 test_that("pcd_stan_path returns correct path", {
   path <- pcd_stan_path()
   expect_true(file.exists(path))
-  expect_true(grepl("stan$", path)) # nolint
+  expect_true(grepl(file.path("stan", "functions$"), path))
   expect_true(dir.exists(path))
 })
 

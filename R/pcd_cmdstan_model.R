@@ -37,7 +37,7 @@ pcd_cmdstan_model <- function(
   }
 
   pcd_stan_model <- system.file(
-    "pcens_model.stan",
+    "stan", "pcens_model.stan",
     package = "primarycensoreddist"
   )
 

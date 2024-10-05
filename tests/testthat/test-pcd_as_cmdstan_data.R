@@ -14,14 +14,16 @@ test_that("pcd_as_stan_data correctly formats data", {
   priors <- list(location = c(1, 1), scale = c(1, 1))
   primary_priors <- list(location = numeric(0), scale = numeric(0))
 
-  result <- pcd_as_stan_data(
-    data,
-    dist_id = dist_id,
-    primary_dist_id = primary_dist_id,
-    param_bounds = param_bounds,
-    primary_param_bounds = primary_param_bounds,
-    priors = priors,
-    primary_priors = primary_priors
+  expect_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      dist_id = dist_id,
+      primary_dist_id = primary_dist_id,
+      param_bounds = param_bounds,
+      primary_param_bounds = primary_param_bounds,
+      priors = priors,
+      primary_priors = primary_priors
+    )
   )
 
   expect_type(result, "list")
@@ -81,16 +83,18 @@ test_that("pcd_as_stan_data handles optional parameters correctly", {
     relative_obs_time = c(10, 10, 10)
   )
 
-  result <- pcd_as_stan_data(
-    data,
-    dist_id = 1,
-    primary_dist_id = 1,
-    param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
-    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-    priors = list(location = c(1, 1), scale = c(1, 1)),
-    primary_priors = list(location = numeric(0), scale = numeric(0)),
-    compute_log_lik = TRUE,
-    use_reduce_sum = TRUE
+  expect_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      dist_id = 1,
+      primary_dist_id = 1,
+      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(1, 1), scale = c(1, 1)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      compute_log_lik = TRUE,
+      use_reduce_sum = TRUE
+    )
   )
 
   expect_identical(result$compute_log_lik, 1L)
@@ -106,19 +110,21 @@ test_that("pcd_as_stan_data handles custom column names correctly", {
     obs_time = c(10, 10, 10)
   )
 
-  result <- pcd_as_stan_data(
-    data,
-    delay = "obs_delay",
-    delay_upper = "obs_delay_upper",
-    n = "count",
-    pwindow = "primary_window",
-    relative_obs_time = "obs_time",
-    dist_id = 1,
-    primary_dist_id = 1,
-    param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
-    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-    priors = list(location = c(1, 1), scale = c(1, 1)),
-    primary_priors = list(location = numeric(0), scale = numeric(0))
+  expect_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      delay = "obs_delay",
+      delay_upper = "obs_delay_upper",
+      n = "count",
+      pwindow = "primary_window",
+      relative_obs_time = "obs_time",
+      dist_id = 1,
+      primary_dist_id = 1,
+      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(1, 1), scale = c(1, 1)),
+      primary_priors = list(location = numeric(0), scale = numeric(0))
+    )
   )
 
   expect_identical(result$d, data$obs_delay)
