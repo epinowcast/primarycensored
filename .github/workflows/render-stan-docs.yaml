@@ -45,5 +45,5 @@ jobs:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         # Default Doxyfile build documentation to html directory.
         # Change the directory if changes in Doxyfile
-        publish_dir: ./inst/stan/html
+        publish_dir: ./inst/stan/functions/html
         destination_dir: stan
