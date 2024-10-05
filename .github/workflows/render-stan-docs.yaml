@@ -35,7 +35,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: stan-docs
-        path: ./inst/stan/html
+        path: ./inst/stan/functions/html
         if-no-files-found: error
 
     - name: Deploy
