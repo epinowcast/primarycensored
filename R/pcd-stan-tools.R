@@ -6,7 +6,7 @@
 #'
 #' @export
 pcd_stan_path <- function() {
-  system.file("stan", package = "primarycensoreddist")
+  system.file("stan", "functions", package = "primarycensoreddist")
 }
 
 #' Count the number of unmatched braces in a line
