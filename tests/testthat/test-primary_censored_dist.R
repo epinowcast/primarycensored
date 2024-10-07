@@ -24,6 +24,7 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   )
   expect_identical(obj, new_obj)
 })
+
 test_that(
   "primary_censored_cdf methods dispatch correctly to existing
    analytical solutions",
