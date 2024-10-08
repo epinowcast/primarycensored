@@ -277,13 +277,17 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
     stats::pweibull(q, shape = shape, scale = scale)
   }
 
+  # Precompute constants
+  inv_shape <- 1 / shape
+  inv_scale <- 1 / scale
+
   g <- function(t) {
-    gamma_1k <- pgamma(
-      (t / scale)^shape,
-      shape = 1 / shape,
-      lower.tail = TRUE
-    ) / shape
-    gamma_1k - (t / scale) * exp(-(t / scale)^shape)
+    # Use the lower incomplete gamma function
+    scaled_t <- (t * inv_scale)^shape
+    gamma_1k <- vapply(scaled_t, function(x) {
+      pracma::gammainc(inv_shape, x)["lowinc"]
+    }, numeric(1)) * inv_shape
+    scale * gamma_1k - t * exp(-scaled_t)
   }
 
   # Adjust q so that we have [q-pwindow, q]
@@ -309,7 +313,7 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
 
     # Calculate Q_Splus using the analytical formula
     Q_Splus <- Q_T +
-      (scale / pwindow) * Delta_g -
+      (1 / pwindow) * Delta_g -
       (non_zero_q / pwindow) * Delta_F_T
 
     # Compute the CDF as 1 - Q_Splus
