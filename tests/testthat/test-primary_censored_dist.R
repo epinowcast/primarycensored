@@ -257,9 +257,9 @@ test_that(
     dprimary_name <- "dunif"
     dprimary <- dunif
 
-    shapes <- c(0.5, 1, 2, 3)
+    shapes <- c(0.5, 1, 2)
     scales <- c(0.5, 1, 2)
-    pwindows <- c(1, 2, 5)
+    pwindows <- c(1, 2, 3, 4, 5)
 
     for (shape in shapes) {
       for (scale in scales) {

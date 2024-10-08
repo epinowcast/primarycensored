@@ -263,6 +263,12 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
     )
   }
 
+  if (pwindow > 3) {
+    return(
+      primary_censored_cdf.default(object, q, pwindow, use_numeric)
+    )
+  }
+
   # Extract Weibull distribution parameters
   shape <- object$args$shape
   scale <- object$args$scale
@@ -284,9 +290,16 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
   g <- function(t) {
     # Use the lower incomplete gamma function
     scaled_t <- (t * inv_scale)^shape
-    vapply(scaled_t, function(x) {
-      pracma::gammainc(x, 1 + inv_shape)["lowinc"]
+    g_out <- vapply(scaled_t, function(x) {
+      a <- 1 + inv_shape
+      if (abs(-x + a * log(x)) > 700 || abs(a) > 170) {
+        return(0)
+      } else {
+        result <- pracma::gammainc(x, a)["lowinc"]
+      }
+      return(result)
     }, numeric(1))
+    return(g_out)
   }
 
   # Adjust q so that we have [q-pwindow, q]
