@@ -183,8 +183,8 @@ Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma 
 <p>We know that the full expectation of the Gamma distribution is <span class="math inline">\(\mathbb{E}[T] = k\theta\)</span>, which can be calculated as a standard integral. Doing the same integral for the partial expectation gives:</p>
 <p><span class="math display" id="eq:gammapartexp">\[
 \begin{aligned}
-\int_t^{t+w_P} f_T(z) z~ dz &amp;= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P}z z^{k-1} \exp(-z/\theta)~dz \\
-&amp;=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P}z^{k} \exp(-z/\theta)~dz\\
+\int_t^{t+w_P} f_T(z) z~ dz &amp;= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} \mathbb{1}(z \geq 0)  z  z^{k-1} \exp(-z/\theta)~dz \\
+&amp;=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P} \mathbb{1}(z \geq 0)  z^{k}  \exp(-z/\theta)~dz\\
 &amp;= k\theta \Delta_{w_P} F_T(t; k + 1, \theta).
 \end{aligned} \tag{3.4}
 \]</span></p>
@@ -220,7 +220,10 @@ f_n &amp;= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k
 </h3>
 <p>The Log-Normal distribution has the density function:</p>
 <p><span class="math display">\[
-f_T(z;\mu, \sigma) = {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right).
+\begin{aligned}
+f_T(z;\mu, \sigma) &amp;= {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right)\\
+F_T(z;\mu, \sigma) &amp;= 0, \qquad z &lt; 0.
+\end{aligned}
 \]</span>
 And distribution function:</p>
 <p><span class="math display">\[
@@ -238,7 +241,7 @@ Where <span class="math inline">\(\Phi\)</span> is the standard normal distribut
 <p>Doing the same integral for the partial expectation, and using the same integration substitution gives:</p>
 <p><span class="math display" id="eq:lognormpartexp">\[
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &amp;= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
+\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &amp;= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \mathbb{1}(z \geq 0)  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
 &amp;= {1 \over \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
 &amp;= {e^{\mu + \frac{1}{2} \sigma^2} \over \sqrt{2 \pi} } \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
 &amp;= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
@@ -298,18 +301,18 @@ Where <span class="math inline">\(\Phi\)</span> is the standard normal distribut
 <p>Doing the same integral for the partial expectation, and using the same integration substitution gives:</p>
 <p><span class="math display" id="eq:weibullpartexp">\[
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \lambda,k) dz  &amp;= \int_t^{t+w_P} \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
-&amp;= k\int_t^{t+w_P} \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
-&amp;= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y y^{1/k - 1} e^{-y} dy  \\
-&amp;= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y^{1/k} e^{-y} dy\\
+\int_{t}^{t+w_P} z~ f_T(z; \lambda,k) dz  &amp;= \int_t^{t+w_P} \mathbb{1}(z \geq 0) \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
+&amp;= k\int_t^{t+w_P} \mathbb{1}(z \geq 0) \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
+&amp;= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0) y y^{1/k - 1} e^{-y} dy  \\
+&amp;= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0)  y^{1/k} e^{-y} dy\\
 &amp;= \lambda \Delta_{w_P} g(t; \lambda,k)
 \end{aligned} \tag{3.7}
 \]</span></p>
 <p>Where</p>
 <p><span class="math display">\[
-g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
+g(t; \lambda, k) =  \gamma\left(1 + 1/k, \left({t\vee 0 \over \lambda}\right)^k\right) =  \frac{1}{k}\gamma\left(1/k, \left({t\vee 0 \over \lambda}\right)^k\right) - \frac{t}{\lambda}\exp\left(-\left({t\vee 0 \over \lambda}\right)^k\right)
 \]</span>
-is a reparametrisation of the lower incomplete gamma function.</p>
+is a reparametrisation of the lower incomplete gamma function. Note that the <span class="math inline">\(\vee\)</span> operator <span class="math inline">\(t \vee 0 = \text{max}(0, t)\)</span> comes into the expression due to <span class="math inline">\(\mathbb{1}(y \geq 0)\)</span> term in the integrand.</p>
 </div>
 </div>
 <div class="section level3" number="3.6">
