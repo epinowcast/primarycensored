@@ -15,6 +15,7 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 * Simplified the "Analytic solutions" vignette by removing verbose derivation details.
 * Added links between vignettes to make it easier to navigate the documentation.
 * Added explicit usage of `pdist`, `dprimary`, `rdist`, and `rprimary` arguments in the getting started vignette to make it easier to link to mathematical details.
+* Fixed error in "Analytic solutions" vignette where the Weibull density was not being treated as zero for negative delays.
 
 # primarycensoreddist 0.5.0
 
