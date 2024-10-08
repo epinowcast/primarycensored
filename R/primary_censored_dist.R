@@ -285,12 +285,9 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
     # Use the lower incomplete gamma function
     scaled_t <- (t * inv_scale)^shape
     gamma_1k <- vapply(scaled_t, function(x) {
-      if (x <= 0) {
-        return(0)
-      }
       pracma::gammainc(1 + inv_shape, x)["lowinc"]
-    }, numeric(1)) * inv_shape
-    scale * gamma_1k
+    }, numeric(1))
+    return(gamma_1k)
   }
 
   # Adjust q so that we have [q-pwindow, q]
@@ -311,7 +308,7 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
     g_q_pwindow <- g(non_zero_q + pwindow)
 
     Q_T <- 1 - pweibull_q_pwindow
-    Delta_g <- g_q_pwindow - g_q
+    Delta_g <- scale * (g_q_pwindow - g_q)
     Delta_F_T <- pweibull_q_pwindow - pweibull_q
 
     # Calculate Q_Splus using the analytical formula

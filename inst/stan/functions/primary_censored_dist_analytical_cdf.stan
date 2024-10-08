@@ -136,12 +136,11 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
   * @param shape Shape parameter (k) of the Weibull distribution
   * @param scale Scale parameter (λ) of the Weibull distribution
   *
-  * @return Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k) / k - (t/λ) * exp(-(t/λ)^k)
+  * @return Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k)
   */
 real log_weibull_g(real t, real shape, real scale) {
   real x = pow(t / scale, shape);
-  real log_gamma_term = log(gamma_p(1 + inv(shape), x)) - log(shape);
-  return log_gamma_term;
+  return log(gamma_p(1 + inv(shape), x));
 }
 
 /**
