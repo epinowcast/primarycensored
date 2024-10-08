@@ -285,9 +285,12 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
     # Use the lower incomplete gamma function
     scaled_t <- (t * inv_scale)^shape
     gamma_1k <- vapply(scaled_t, function(x) {
+      if (x <= 0) {
+        return(0)
+      }
       pracma::gammainc(1 + inv_shape, x)["lowinc"]
     }, numeric(1)) * inv_shape
-    scale * gamma_1k - t * exp(-scaled_t)
+    scale * gamma_1k
   }
 
   # Adjust q so that we have [q-pwindow, q]
