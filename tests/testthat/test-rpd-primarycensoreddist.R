@@ -104,6 +104,8 @@ test_that(
 
     samples <- rpcens(
       n, rweibull, pwindow, swindow,
+      rprimary = rexpgrowth,
+      rprimary_args = list(r = 0.5),
       D = D, shape = shape, scale = scale
     )
 
@@ -115,6 +117,8 @@ test_that(
     x_values <- seq(0, D - swindow, by = swindow)
     pmf <- dpcens(
       x_values, pweibull, pwindow, swindow,
+      dprimary = dexpgrowth,
+      dprimary_args = list(r = 0.5),
       D = D, shape = shape, scale = scale
     )
     theoretical_mean <- sum(x_values * pmf)
@@ -132,6 +136,8 @@ test_that(
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
       c(x_values[-1], D), pweibull, pwindow, D,
+      dprimary = dexpgrowth,
+      dprimary_args = list(r = 0.5),
       shape = shape, scale = scale
     )
     expect_equal(cumsum(pmf), theoretical_cdf, tolerance = 0.01)

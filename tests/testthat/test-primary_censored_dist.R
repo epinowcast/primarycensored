@@ -67,7 +67,7 @@ test_that(
     expect_s3_class(obj_weibull, "pcens_pweibull_dunif")
 
     q_values <- c(5, 10)
-    pwindow <- 10
+    pwindow <- 2
 
     expect_no_error(
       primary_censored_cdf(obj_gamma, q = q_values, pwindow = pwindow)
