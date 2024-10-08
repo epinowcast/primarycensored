@@ -116,8 +116,8 @@ We know that the full expectation of the Gamma distribution is $\mathbb{E}[T] = 
 
 $$
 \begin{aligned}
-\int_t^{t+w_P} f_T(z) z~ dz &= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P}z z^{k-1} \exp(-z/\theta)~dz \\
-&=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P}z^{k} \exp(-z/\theta)~dz\\
+\int_t^{t+w_P} f_T(z) z~ dz &= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} \mathbb{1}(z \geq 0)  z  z^{k-1} \exp(-z/\theta)~dz \\
+&=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P} \mathbb{1}(z \geq 0)  z^{k}  \exp(-z/\theta)~dz\\
 &= k\theta \Delta_{w_P} F_T(t; k + 1, \theta).
 \end{aligned} (\#eq:gammapartexp)
 $$
@@ -149,7 +149,10 @@ Which was also found by Cori _et al_ [@cori2013new].
 The Log-Normal distribution has the density function:
 
 $$
-f_T(z;\mu, \sigma) = {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right).
+\begin{aligned}
+f_T(z;\mu, \sigma) &= {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right)\\
+F_T(z;\mu, \sigma) &= 0, \qquad z < 0.
+\end{aligned}
 $$
 And distribution function:
 
@@ -170,7 +173,7 @@ Doing the same integral for the partial expectation, and using the same integrat
 
 $$
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
+\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \mathbb{1}(z \geq 0)  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
 &= {1 \over \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
 &= {e^{\mu + \frac{1}{2} \sigma^2} \over \sqrt{2 \pi} } \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
 &= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
@@ -229,10 +232,10 @@ Doing the same integral for the partial expectation, and using the same integrat
 
 $$
 \begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \lambda,k) dz  &= \int_t^{t+w_P} \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
-&= k\int_t^{t+w_P} \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
-&= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y y^{1/k - 1} e^{-y} dy  \\
-&= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} y^{1/k} e^{-y} dy\\
+\int_{t}^{t+w_P} z~ f_T(z; \lambda,k) dz  &= \int_t^{t+w_P} \mathbb{1}(z \geq 0) \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
+&= k\int_t^{t+w_P} \mathbb{1}(z \geq 0) \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
+&= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0) y y^{1/k - 1} e^{-y} dy  \\
+&= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0)  y^{1/k} e^{-y} dy\\
 &= \lambda \Delta_{w_P} g(t; \lambda,k)
 \end{aligned} (\#eq:weibullpartexp)
 $$
@@ -240,9 +243,9 @@ $$
 Where
 
 $$
-g(t; \lambda, k) = \gamma(1 + 1/k, (t/\lambda)^k) = \frac{1}{k}\gamma(1/k, (t/\lambda)^k) - \frac{t}{\lambda}e^{-(t/\lambda)^k}.
+g(t; \lambda, k) =  \gamma\left(1 + 1/k, \left({t\vee 0 \over \lambda}\right)^k\right) =  \frac{1}{k}\gamma\left(1/k, \left({t\vee 0 \over \lambda}\right)^k\right) - \frac{t}{\lambda}\exp\left(-\left({t\vee 0 \over \lambda}\right)^k\right)
 $$
-is a reparametrisation of the lower incomplete gamma function.
+is a reparametrisation of the lower incomplete gamma function. Note that the $\vee$ operator $t \vee 0 = \text{max}(0, t)$ comes into the expression due to $\mathbb{1}(y \geq 0)$ term in the integrand.
 
 ## Survival function of $S_{+}$ for Weibull distribution
 
