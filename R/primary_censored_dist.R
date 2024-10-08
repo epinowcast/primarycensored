@@ -283,7 +283,6 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
 
   g <- function(t) {
     # Use the lower incomplete gamma function
-    t <- pmax(t, 0)
     scaled_t <- (t * inv_scale)^shape
     vapply(scaled_t, function(x) {
       pracma::gammainc(1 + inv_shape, x)["lowinc"]
@@ -300,12 +299,14 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
   # Process non-zero cases only if there are any
   if (!all(zero_cases)) {
     non_zero_q <- q[!zero_cases]
+    q_pwindow <- pmax(non_zero_q + pwindow, 0)
+    non_zero_q <- pmax(non_zero_q, 0)
 
     # Compute necessary survival and distribution functions
     pweibull_q <- partial_pweibull(non_zero_q)
-    pweibull_q_pwindow <- partial_pweibull(non_zero_q + pwindow)
+    pweibull_q_pwindow <- partial_pweibull(q_pwindow)
     g_q <- g(non_zero_q)
-    g_q_pwindow <- g(non_zero_q + pwindow)
+    g_q_pwindow <- g(q_pwindow)
 
     Q_T <- 1 - pweibull_q_pwindow
     Delta_g <- (g_q_pwindow - g_q)
