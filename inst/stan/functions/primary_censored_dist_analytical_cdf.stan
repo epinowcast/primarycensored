@@ -10,6 +10,7 @@
 int check_for_analytical(int dist_id, int primary_dist_id) {
   if (dist_id == 2 && primary_dist_id == 1) return 1; // Gamma delay with Uniform primary
   if (dist_id == 1 && primary_dist_id == 1) return 1; // Lognormal delay with Uniform primary
+  if (dist_id == 3 && primary_dist_id == 1) return 1; // Weibull delay with Uniform primary
   return 0; // No analytical solution for other combinations
 }
 
