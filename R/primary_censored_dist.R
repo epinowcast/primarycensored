@@ -283,11 +283,9 @@ primary_censored_cdf.pcens_pweibull_dunif <- function(
 
   g <- function(t) {
     # Use the lower incomplete gamma function
+    t <- pmax(t, 0)
     scaled_t <- (t * inv_scale)^shape
     vapply(scaled_t, function(x) {
-      if (x <= 0) {
-        return(0)
-      }
       pracma::gammainc(x, 1 + inv_shape)["lowinc"]
     }, numeric(1))
   }

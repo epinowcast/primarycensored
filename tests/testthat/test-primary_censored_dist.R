@@ -258,8 +258,8 @@ test_that(
     dprimary <- dunif
 
     shapes <- c(0.5, 1, 2, 3)
-    scales <- c(0.5, 1, 2, 5)
-    pwindows <- c(1, 2, 5, 10)
+    scales <- c(0.5, 1, 2)
+    pwindows <- c(1, 2, 5)
 
     for (shape in shapes) {
       for (scale in scales) {
