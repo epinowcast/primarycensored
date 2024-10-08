@@ -126,7 +126,7 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
 }
 
 /**
-  * Compute the log of the integral of the Weibull PDF from 0 to t
+  * Compute the log of the lower incomplete gamma function
   *
   * This function is used in the analytical solution for the primary censored
   * Weibull distribution with uniform primary censoring. It corresponds to the
