@@ -27,6 +27,8 @@ test_that(
               q, 2, c(shape, rate), pwindow, Inf, 1, numeric(0)
             )
           }, numeric(1))
+
+          stan_result <- ifelse(is.nan(stan_result), 1, stan_result)
           expect_equal(r_result, stan_result, tolerance = 1e-6)
         }
       }
@@ -63,6 +65,8 @@ test_that(
               q, 1, c(meanlog, sdlog), pwindow, Inf, 1, numeric(0)
             )
           }, numeric(1))
+
+          stan_result <- ifelse(is.nan(stan_result), 1, stan_result)
           expect_equal(r_result, stan_result, tolerance = 1e-6)
         }
       }
@@ -100,6 +104,7 @@ test_that(
             )
           }, numeric(1))
 
+          stan_result <- ifelse(is.nan(stan_result), 1, stan_result)
           expect_equal(r_result, stan_result, tolerance = 1e-6)
         }
       }

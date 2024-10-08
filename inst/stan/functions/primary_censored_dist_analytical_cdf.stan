@@ -140,7 +140,7 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
   */
 real log_weibull_g(real t, real shape, real scale) {
   real x = pow(t / scale, shape);
-  return log(gamma_p(1 + inv(shape), x));
+  return log(gamma_p(x, 1 + inv(shape)));
 }
 
 /**
@@ -229,6 +229,9 @@ real primary_censored_dist_analytical_lcdf(data real d, int dist_id,
   } else if (dist_id == 1 && primary_dist_id == 1) {
     // Lognormal delay with Uniform primary
     result = primary_censored_lognormal_uniform_lcdf(d | q, params, pwindow);
+  } else if (dist_id == 3 && primary_dist_id == 1) {
+    // Weibull delay with Uniform primary
+    result = primary_censored_weibull_uniform_lcdf(d | q, params, pwindow);
   } else {
     // No analytical solution available
     return negative_infinity();
