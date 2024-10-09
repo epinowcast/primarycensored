@@ -62,10 +62,10 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * array[0] real params = {}; // No additional parameters for uniform
   * real min = 0;
   * real max = 1;
-  * real log_pdf = primray_lpdf(x, primary_id, params, min, max);
+  * real log_pdf = primary_lpdf(x, primary_id, params, min, max);
   * @endcode
   */
-real primray_lpdf(real x, int primary_id, array[] real params, real min, real max) {
+real primary_lpdf(real x, int primary_id, array[] real params, real min, real max) {
   // Implement switch for different primary distributions
   if (primary_id == 1) return uniform_lpdf(x | min, max);
   if (primary_id == 2) return expgrowth_lpdf(x | min, max, params[1]);
@@ -105,7 +105,7 @@ vector primarycensored_ode(real t, vector y, array[] real theta,
   }
 
   real log_cdf = dist_lcdf(t | params, dist_id);
-  real log_primary_pdf = primray_lpdf(d - t | primary_id, primary_params, 0, pwindow);
+  real log_primary_pdf = primary_lpdf(d - t | primary_id, primary_params, 0, pwindow);
 
   return rep_vector(exp(log_cdf + log_primary_pdf), 1);
 }
