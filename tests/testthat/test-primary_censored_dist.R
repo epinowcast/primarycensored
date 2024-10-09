@@ -136,6 +136,31 @@ test_that(
       primary_censored_cdf(obj_lnorm_no_sdlog, q = 1, pwindow = 1),
       "sdlog parameter is required for Log-Normal distribution"
     )
+
+    pdist_name <- "pweibull"
+    pdist <- pweibull
+
+    obj_weibull_no_shape <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      scale = 1
+    )
+
+    expect_error(
+      primary_censored_cdf(obj_weibull_no_shape, q = 1, pwindow = 1),
+      "shape parameter is required for Weibull distribution"
+    )
+
+    obj_weibull_no_scale <- new_primary_censored_dist(
+      pdist, dprimary, list(),
+      pdist_name, dprimary_name,
+      shape = 2
+    )
+
+    expect_error(
+      primary_censored_cdf(obj_weibull_no_scale, q = 1, pwindow = 1),
+      "scale parameter is required for Weibull distribution"
+    )
   }
 )
 
