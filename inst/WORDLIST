@@ -57,6 +57,7 @@ obs
 parksw
 partexp
 pcd
+pcens
 pdist
 pprimarycensored
 primarycensorseddist
@@ -67,7 +68,6 @@ qquad
 reparametrisation
 rfloor
 rightarrow
-rpd
 rprimary
 sbfnk
 seabbs
