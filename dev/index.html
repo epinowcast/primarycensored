@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Primary Event Censored Distributions in R and Stan • primarycensoreddist</title>
+<title>Primary Event Censored Distributions in R and Stan • primarycensored</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
@@ -17,9 +17,9 @@
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><script src="deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Primary Event Censored Distributions in R and Stan">
-<meta name="description" content="This package provides both R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for.">
-<meta property="og:description" content="This package provides both R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for.">
-<meta property="og:image" content="https://primarycensoreddist.epinowcast.org/logo.png">
+<meta name="description" content="This package provides R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for. In addition, it provides both frequentist and Bayesian methods for fitting primary event censored distributions to data.">
+<meta property="og:description" content="This package provides R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for. In addition, it provides both frequentist and Bayesian methods for fitting primary event censored distributions to data.">
+<meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png">
 <meta name="robots" content="noindex">
 </head>
 <body>
@@ -28,7 +28,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="index.html">primarycensoreddist</a>
+    <a class="navbar-brand me-2" href="index.html">primarycensored</a>
 
     <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.1000</small>
 
@@ -39,20 +39,20 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="articles/primarycensoreddist.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="articles/primarycensored.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-reference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Reference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-reference">
 <li><a class="dropdown-item" href="reference/index.html">R reference</a></li>
-    <li><a class="dropdown-item" href="https://primarycensoreddist.epinowcast.org/stan/">Stan reference</a></li>
+    <li><a class="dropdown-item" href="https://primarycensored.epinowcast.org/stan/">Stan reference</a></li>
   </ul>
 </li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
-    <li><a class="dropdown-item" href="articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
-    <li><a class="dropdown-item" href="articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+<li><a class="dropdown-item" href="articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
+    <li><a class="dropdown-item" href="articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
     <li><a class="dropdown-item" href="articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
   </ul>
@@ -63,7 +63,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/epinowcast/primarycensoreddist/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/epinowcast/primarycensored/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -87,7 +87,7 @@
 </div>
 <!-- badges: start -->
 
-<p><a href="https://epinowcast.r-universe.dev/primarycensoreddist" class="external-link"><img src="https://epinowcast.r-universe.dev/badges/primarycensoreddist" alt="Universe"></a> <a href="https://github.com/epinowcast/primarycensoreddist/blob/master/LICENSE.md/" class="external-link"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license"></a> <a href="https://github.com/epinowcast/primarycensoreddist/graphs/contributors" class="external-link"><img src="https://img.shields.io/github/contributors/epinowcast/primarycensoreddist" alt="GitHub contributors"></a></p>
+<p><a href="https://epinowcast.r-universe.dev/primarycensored" class="external-link"><img src="https://epinowcast.r-universe.dev/badges/primarycensored" alt="Universe"></a> <a href="https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/" class="external-link"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT license"></a> <a href="https://github.com/epinowcast/primarycensored/graphs/contributors" class="external-link"><img src="https://img.shields.io/github/contributors/epinowcast/primarycensored" alt="GitHub contributors"></a></p>
 <p><a href="https://zenodo.org/doi/10.5281/zenodo.13632838" class="external-link"><img src="https://zenodo.org/badge/845633278.svg" alt="DOI"></a> <!-- badges: end --></p>
 <div class="section level2">
 <h2 id="summary">Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
@@ -102,19 +102,19 @@ Installing the package
 </summary><p>You can install the latest released version using the normal <code>R</code> function, though you need to point to <code>r-universe</code> instead of CRAN:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
-<span>  <span class="st">"primarycensoreddist"</span>,</span>
+<span>  <span class="st">"primarycensored"</span>,</span>
 <span>  repos <span class="op">=</span> <span class="st">"https://epinowcast.r-universe.dev"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Alternatively, you can use the <a href="https://remotes.r-lib.org/" class="external-link"><code>remotes</code> package</a> to install the development version from Github (warning! this version may contain breaking changes and/or bugs):</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
-<span>  <span class="st">"epinowcast/primarycensoreddist"</span>,</span>
+<span>  <span class="st">"epinowcast/primarycensored"</span>,</span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<p>Similarly, you can install historical versions by specifying the release tag (e.g. this installs <a href="https://github.com/epinowcast/primarycensoreddist/releases/tag/v0.2.0" class="external-link"><code>0.2.0</code></a>):</p>
+<p>Similarly, you can install historical versions by specifying the release tag (e.g. this installs <a href="https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0" class="external-link"><code>0.2.0</code></a>):</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span></span>
-<span>  <span class="st">"epinowcast/primarycensoreddist"</span>,</span>
+<span>  <span class="st">"epinowcast/primarycensored"</span>,</span>
 <span>  dependencies <span class="op">=</span> <span class="cn">TRUE</span>, ref <span class="op">=</span> <span class="st">"v0.2.0"</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p><em>Note: You can also use that last approach to install a specific commit if needed, e.g. if you want to try out a specific unreleased feature, but not the absolute latest developmental version.</em></p>
@@ -122,7 +122,7 @@ Installing the package
 Installing CmdStan (optional for Stan functionality)
 </summary><p>If you wish to use the Stan functions, you will need to install <a href="https://mc-stan.org/users/interfaces/cmdstan" class="external-link">CmdStan</a>, which also entails having a suitable C++ toolchain setup. We recommend using the <a href="https://mc-stan.org/cmdstanr/" class="external-link"><code>cmdstanr</code> package</a>. The Stan team provides instructions in the <a href="https://mc-stan.org/cmdstanr/articles/cmdstanr.html" class="external-link"><em>Getting started with <code>cmdstanr</code></em></a> vignette, with other details and support at the <a href="https://mc-stan.org/cmdstanr/" class="external-link">package site</a> along with some key instructions available in the <a href="https://package.epinowcast.org/articles/stan-help.html#toolchain" class="external-link">Stan resources package vignette</a>, but the brief version is:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># if you not yet installed `primarycensoreddist`, or you installed it without</span></span>
+<code class="sourceCode R"><span><span class="co"># if you not yet installed `primarycensored`, or you installed it without</span></span>
 <span><span class="co"># `Suggests` dependencies</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span></span>
 <span>  <span class="st">"cmdstanr"</span>,</span>
@@ -139,38 +139,38 @@ Installing CmdStan (optional for Stan functionality)
 <p>We provide a range of other documentation, case studies, and community spaces to ask (and answer!) questions:</p>
 <details><summary>
 Package Website
-</summary><p>The <a href="https://primarycensoreddist.epinowcast.org/"><code>primarycensoreddist</code> website</a> includes a function reference, model outline, and case studies using the package. The site mainly concerns the release version, but you can also find documentation for <a href="https://primarycensoreddist.epinowcast.org/dev/">the latest development version</a>.</p>
+</summary><p>The <a href="https://primarycensored.epinowcast.org/"><code>primarycensored</code> website</a> includes a function reference, model outline, and case studies using the package. The site mainly concerns the release version, but you can also find documentation for <a href="https://primarycensored.epinowcast.org/dev/">the latest development version</a>.</p>
 </details><details><summary>
 Vignettes
-</summary><p>We have created <a href="https://primarycensoreddist.epinowcast.org/articles">package vignettes</a> to help you get started with primarycensoreddist and to highlight other features with case studies.</p>
+</summary><p>We have created <a href="https://primarycensored.epinowcast.org/articles">package vignettes</a> to help you get started with primarycensored and to highlight other features with case studies.</p>
 </details><details><summary>
 Organisation Website
 </summary><p>Our <a href="https://www.epinowcast.org/" class="external-link">organisation website</a> includes links to other resources, <a href="https://www.epinowcast.org/blog.html" class="external-link">guest posts</a>, and <a href="https://www.epinowcast.org/seminars.html" class="external-link">seminar schedule</a> for both upcoming and past recordings.</p>
 </details><details><summary>
 Community Forum
-</summary><p>Our <a href="https://community.epinowcast.org/" class="external-link">community forum</a> has areas for <a href="https://community.epinowcast.org/c/interface/15" class="external-link">question and answer</a> and <a href="https://community.epinowcast.org/c/projects/11" class="external-link">considering new methods and tools</a>, among others. If you are generally interested in real-time analysis of infectious disease, you may find this useful even if you do not use <code>primarycensoreddist</code>.</p>
+</summary><p>Our <a href="https://community.epinowcast.org/" class="external-link">community forum</a> has areas for <a href="https://community.epinowcast.org/c/interface/15" class="external-link">question and answer</a> and <a href="https://community.epinowcast.org/c/projects/11" class="external-link">considering new methods and tools</a>, among others. If you are generally interested in real-time analysis of infectious disease, you may find this useful even if you do not use <code>primarycensored</code>.</p>
 </details>
 </div>
 <div class="section level2">
 <h2 id="contributing">Contributing<a class="anchor" aria-label="anchor" href="#contributing"></a>
 </h2>
-<p>We welcome contributions and new contributors! We particularly appreciate help on <a href="https://github.com/epinowcast/primarycensoreddist/issues" class="external-link">identifying and identified issues</a>. Please check and add to the issues, and/or add a <a href="https://github.com/epinowcast/primarycensoreddist/pulls" class="external-link">pull request</a> and see our <a href="https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md" class="external-link">contributing guide</a> for more information.</p>
-<p>If you need a different underlying model for your work: <code>primarycensoreddist</code> provides a flexible framework for censored distributions in both R and Stan. If you implement new distributions or censoring mechanisms that expand the overall flexibility or improve the defaults, please let us know either here or on the <a href="https://community.epinowcast.org/" class="external-link">community forum</a>. We always like to hear about new use-cases and extensions to the package.</p>
+<p>We welcome contributions and new contributors! We particularly appreciate help on <a href="https://github.com/epinowcast/primarycensored/issues" class="external-link">identifying and identified issues</a>. Please check and add to the issues, and/or add a <a href="https://github.com/epinowcast/primarycensored/pulls" class="external-link">pull request</a> and see our <a href="https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md" class="external-link">contributing guide</a> for more information.</p>
+<p>If you need a different underlying model for your work: <code>primarycensored</code> provides a flexible framework for censored distributions in both R and Stan. If you implement new distributions or censoring mechanisms that expand the overall flexibility or improve the defaults, please let us know either here or on the <a href="https://community.epinowcast.org/" class="external-link">community forum</a>. We always like to hear about new use-cases and extensions to the package.</p>
 <div class="section level3">
 <h3 id="how-to-make-a-bug-report-or-feature-request">How to make a bug report or feature request<a class="anchor" aria-label="anchor" href="#how-to-make-a-bug-report-or-feature-request"></a>
 </h3>
-<p>Please briefly describe your problem and what output you expect in an <a href="https://github.com/epinowcast/primarycensoreddist/issues" class="external-link">issue</a>. If you have a question, please don’t open an issue. Instead, ask on our <a href="https://github.com/epinowcast/primarycensoreddist/discussions/categories/q-a" class="external-link">Q and A page</a>. See our <a href="https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md" class="external-link">contributing guide</a> for more information.</p>
+<p>Please briefly describe your problem and what output you expect in an <a href="https://github.com/epinowcast/primarycensored/issues" class="external-link">issue</a>. If you have a question, please don’t open an issue. Instead, ask on our <a href="https://github.com/epinowcast/primarycensored/discussions/categories/q-a" class="external-link">Q and A page</a>. See our <a href="https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md" class="external-link">contributing guide</a> for more information.</p>
 </div>
 <div class="section level3">
 <h3 id="code-of-conduct">Code of Conduct<a class="anchor" aria-label="anchor" href="#code-of-conduct"></a>
 </h3>
-<p>Please note that the <code>primarycensoreddist</code> project is released with a <a href="https://github.com/epinowcast/.github/blob/main/CODE_OF_CONDUCT.md" class="external-link">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
+<p>Please note that the <code>primarycensored</code> project is released with a <a href="https://github.com/epinowcast/.github/blob/main/CODE_OF_CONDUCT.md" class="external-link">Contributor Code of Conduct</a>. By contributing to this project, you agree to abide by its terms.</p>
 </div>
 </div>
 <div class="section level2">
 <h2 id="citation">Citation<a class="anchor" aria-label="anchor" href="#citation"></a>
 </h2>
-<p>If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our <a href="https://primarycensoreddist.epinowcast.org/articles/primarycensoreddist.html">methods outline</a>. If you use <code>primarycensoreddist</code> in your work, please consider citing it with <code>citation("primarycensoreddist")</code>.</p>
+<p>If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our <a href="https://primarycensored.epinowcast.org/articles/primarycensored.html">methods outline</a>. If you use <code>primarycensored</code> in your work, please consider citing it with <code>citation("primarycensored")</code>.</p>
 </div>
 <div class="section level2">
 <h2 id="contributors">Contributors<a class="anchor" aria-label="anchor" href="#contributors"></a>
@@ -182,17 +182,17 @@ Community Forum
 <div class="section level3">
 <h3 id="code">Code<a class="anchor" aria-label="anchor" href="#code"></a>
 </h3>
-<p><a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs" class="external-link">seabbs</a>, <a href="https://github.com/epinowcast/primarycensoreddist/commits?author=SamuelBrand1" class="external-link">SamuelBrand1</a>, <a href="https://github.com/epinowcast/primarycensoreddist/commits?author=athowes" class="external-link">athowes</a>, <a href="https://github.com/epinowcast/primarycensoreddist/commits?author=sbfnk" class="external-link">sbfnk</a></p>
+<p><a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs" class="external-link">seabbs</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1" class="external-link">SamuelBrand1</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=athowes" class="external-link">athowes</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk" class="external-link">sbfnk</a></p>
 </div>
 <div class="section level3">
 <h3 id="issue-authors">Issue Authors<a class="anchor" aria-label="anchor" href="#issue-authors"></a>
 </h3>
-<p><a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein" class="external-link">zsusswein</a>, <a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Ajcblemai" class="external-link">jcblemai</a></p>
+<p><a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein" class="external-link">zsusswein</a>, <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai" class="external-link">jcblemai</a></p>
 </div>
 <div class="section level3">
 <h3 id="issue-contributors">Issue Contributors<a class="anchor" aria-label="anchor" href="#issue-contributors"></a>
 </h3>
-<p><a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+commenter%3Aparksw3" class="external-link">parksw3</a></p>
+<p><a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3" class="external-link">parksw3</a></p>
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
@@ -202,8 +202,8 @@ Community Forum
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li><a href="https://github.com/epinowcast/primarycensoreddist/" class="external-link">Browse source code</a></li>
-<li><a href="https://github.com/epinowcast/primarycensoreddist/issues/" class="external-link">Report a bug</a></li>
+<li><a href="https://github.com/epinowcast/primarycensored/" class="external-link">Browse source code</a></li>
+<li><a href="https://github.com/epinowcast/primarycensored/issues/" class="external-link">Report a bug</a></li>
 </ul>
 </div>
 
@@ -229,7 +229,7 @@ Community Forum
 <div class="citation">
 <h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html#citation">Citing primarycensoreddist</a></li>
+<li><a href="authors.html#citation">Citing primarycensored</a></li>
 </ul>
 </div>
 
@@ -247,8 +247,8 @@ Community Forum
 <h2 data-toc-skip>Dev status</h2>
 <ul class="list-unstyled">
 <li><a href="https://www.tidyverse.org/lifecycle/#experimental" class="external-link"><img src="https://img.shields.io/badge/lifecycle-experimental-orange.svg" alt="Lifecycle: experimental"></a></li>
-<li><a href="https://github.com/epinowcast/primarycensoreddist/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/epinowcast/primarycensoreddist/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
-<li><a href="https://app.codecov.io/gh/epinowcast/primarycensoreddist" class="external-link"><img src="https://codecov.io/gh/epinowcast/primarycensoreddist/branch/main/graph/badge.svg" alt="Codecov test coverage"></a></li>
+<li><a href="https://github.com/epinowcast/primarycensored/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/epinowcast/primarycensored/workflows/R-CMD-check/badge.svg" alt="R-CMD-check"></a></li>
+<li><a href="https://app.codecov.io/gh/epinowcast/primarycensored" class="external-link"><img src="https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/badge.svg" alt="Codecov test coverage"></a></li>
 </ul>
 </div>
 

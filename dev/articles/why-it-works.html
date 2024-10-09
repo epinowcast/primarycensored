@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Why it works • primarycensoreddist</title>
+<title>Why it works • primarycensored</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
@@ -25,7 +25,7 @@
 
     <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
+    <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
     <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.1000</small>
 
@@ -36,20 +36,20 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../articles/primarycensoreddist.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/primarycensored.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-reference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Reference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-reference">
 <li><a class="dropdown-item" href="../reference/index.html">R reference</a></li>
-    <li><a class="dropdown-item" href="https://primarycensoreddist.epinowcast.org/stan/">Stan reference</a></li>
+    <li><a class="dropdown-item" href="https://primarycensored.epinowcast.org/stan/">Stan reference</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
   </ul>
@@ -60,7 +60,7 @@
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/epinowcast/primarycensoreddist/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/epinowcast/primarycensored/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -82,7 +82,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Why it works</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensoreddist/blob/main/vignettes/why-it-works.Rmd" class="external-link"><code>vignettes/why-it-works.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/vignettes/why-it-works.Rmd" class="external-link"><code>vignettes/why-it-works.Rmd</code></a></small>
       <div class="d-none name"><code>why-it-works.Rmd</code></div>
     </div>
 
@@ -96,21 +96,21 @@
 <h3 id="what-are-we-going-to-do-in-this-vignette">
 <span class="header-section-number">1.1</span> What are we going to do in this Vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
 </h3>
-<p>In this vignette, we’ll explain the underlying statistical model that the <code>primarycensoreddist</code> package. We’ll cover the following key points:</p>
+<p>In this vignette, we’ll explain the underlying statistical model that the <code>primarycensored</code> package. We’ll cover the following key points:</p>
 <ol style="list-style-type: decimal">
 <li>Introduction to the censored data problems in time to event analysis.</li>
 <li>Discuss the relevant issues from censoring in epidemiological data.</li>
-<li>Introduce the statistical model used in <code>primarycensoreddist</code>.</li>
+<li>Introduce the statistical model used in <code>primarycensored</code>.</li>
 <li>Distributions where we can derive the censored delay distribution analytically.</li>
 </ol>
-<p>If you are new to the package, we recommend that you start with the <code><a href="../articles/primarycensoreddist.html">vignette("primarycensoreddist")</a></code> vignette.</p>
+<p>If you are new to the package, we recommend that you start with the <code><a href="../articles/primarycensored.html">vignette("primarycensored")</a></code> vignette.</p>
 </div>
 </div>
 <div class="section level2" number="2">
 <h2 id="censoring-and-right-truncation-problems-in-time-to-event-analysis">
 <span class="header-section-number">2</span> Censoring and right truncation problems in time to event analysis<a class="anchor" aria-label="anchor" href="#censoring-and-right-truncation-problems-in-time-to-event-analysis"></a>
 </h2>
-<p>Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times<span class="citation"><sup>[<a href="#ref-leung1997censoring">1</a>]</sup></span>. In <code>primarycensoreddist</code> we focus on two particular missing data problems:</p>
+<p>Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times<span class="citation"><sup>[<a href="#ref-leung1997censoring">1</a>]</sup></span>. In <code>primarycensored</code> we focus on two particular missing data problems:</p>
 <ul>
 <li>
 <strong>Interval censoring</strong>. The primary (start) time and/or the secondary (end) time of the delay are unobserved but both are known to be within intervals.</li>
@@ -119,13 +119,13 @@
 </ul>
 <p>In statistical epidemiology, these missing data problems occur frequently in both data analysis and theoretical modelling. For a more detailed description of these problems in an epidemiological context see<span class="citation"><sup>[<a href="#ref-Park2024">2</a>,<a href="#ref-Charniga2024">3</a>]</sup></span>.</p>
 <p>In data analysis, events in epidemiology are commonly reported as occurring on a particular day or week (<em>interval censoring</em>). In an emerging outbreak, datasets can be incompletely observed (<em>right truncation</em>) and their can be a great deal of uncertainty around the precise timing of events (<em>interval censoring</em>).</p>
-<p>In theoretical epidemiological modelling, it is often appropriate to model the evolution of an infectious disease as occurring in discrete time, for example in the <a href="https://epiforecasts.io/EpiNow2/" class="external-link"><code>EpiNow2</code></a> and <a href="https://mrc-ide.github.io/EpiEstim/index.html" class="external-link">EpiEstim</a> modelling packages. This means appropriately discretising continuous distributions, such as the generation interval distribution. In <code>primarycensoreddist</code> we treat the discretisation of intrinsically continuous distributions as an <em>interval censoring</em> problem which allows us to simultaneously provide methods for both applied and theoretical contexts.</p>
+<p>In theoretical epidemiological modelling, it is often appropriate to model the evolution of an infectious disease as occurring in discrete time, for example in the <a href="https://epiforecasts.io/EpiNow2/" class="external-link"><code>EpiNow2</code></a> and <a href="https://mrc-ide.github.io/EpiEstim/index.html" class="external-link">EpiEstim</a> modelling packages. This means appropriately discretising continuous distributions, such as the generation interval distribution. In <code>primarycensored</code> we treat the discretisation of intrinsically continuous distributions as an <em>interval censoring</em> problem which allows us to simultaneously provide methods for both applied and theoretical contexts.</p>
 </div>
 <div class="section level2" number="3">
-<h2 id="statistical-model-used-in-primarycensoreddist">
-<span class="header-section-number">3</span> Statistical model used in <code>primarycensoreddist</code><a class="anchor" aria-label="anchor" href="#statistical-model-used-in-primarycensoreddist"></a>
+<h2 id="statistical-model-used-in-primarycensored">
+<span class="header-section-number">3</span> Statistical model used in <code>primarycensored</code><a class="anchor" aria-label="anchor" href="#statistical-model-used-in-primarycensored"></a>
 </h2>
-<p>As described in <a href="primarycensoreddist.html">Getting Started with <code>primarycensoreddist</code></a>, <code>primarycensoreddist</code> focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.</p>
+<p>As described in <a href="primarycensored.html">Getting Started with <code>primarycensored</code></a>, <code>primarycensored</code> focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.</p>
 <p>The target for inference is the distribution of the delay time between the primary and secondary events. We assume that the delay time is a random variable <span class="math inline">\(T = S - P_{u}\)</span> with distribution function <span class="math inline">\(F_T(t) = Pr(T &lt; t)\)</span> and density function <span class="math inline">\(f_T(t)\)</span>. In this treatment we assume that the delay time is shift-invariant, that is, the distribution of the delay time is the same regardless of the primary event time.</p>
 <p>The (unconditional) primary event time is a random variable <span class="math inline">\(P_{u}\)</span> with distribution function <span class="math inline">\(F_{P_{u}}(t)\)</span> and density function <span class="math inline">\(f_{P_{u}}(t)\)</span>. The secondary event time is a random variable <span class="math inline">\(S\)</span>, but in this treatment we construct the secondary event time from the primary time and delay, therefore the marginal distribution of <span class="math inline">\(S\)</span> is not considered.</p>
 <p>The <em>censoring window</em> for each event is the interval within which each event is known to have occurred, respectively, <span class="math inline">\(P \in [t_P, t_P + w_P]\)</span> and <span class="math inline">\(S \in [t_S, t_S + w_S]\)</span>. The lengths of the censoring windows are <span class="math inline">\(w_P\)</span> and <span class="math inline">\(w_S\)</span> respectively. The precise event times within their windows are unobserved. Note that since the primary event time is known up to the censoring window, we are predominantly interested in the <em>conditional</em> primary time <span class="math inline">\(P = P_{u} | \{ P_{u} \in [t_P, t_P + w_P]\}\)</span> which has density function:</p>
@@ -135,7 +135,7 @@ f_{P}(p) &amp;= {f_{P_{u}}(p) \over F_{P_{u}}(t_P + w_P) - F_{P_{u}}(t_P)}, \qqu
 f_{P}(p) &amp;= 0, \qquad &amp;\text{otherwise}.
 \end{aligned}
 \]</span></p>
-<p>In this note, we measure the <em>censored delay time</em> <span class="math inline">\(T_c\)</span> between the primary and secondary event windows from endpoint to endpoint: <span class="math inline">\(T_c = t_S + w_S - (t_P + w_P)\)</span>. Note that in the <a href="primarycensoreddist.html#generating-random-samples-with-rprimarycensoreddist">generative model for delays</a> from “Getting started” the truncated delay <span class="math inline">\(t_{\text{valid}}\)</span> is measured from startpoint to startpoint of event windows.</p>
+<p>In this note, we measure the <em>censored delay time</em> <span class="math inline">\(T_c\)</span> between the primary and secondary event windows from endpoint to endpoint: <span class="math inline">\(T_c = t_S + w_S - (t_P + w_P)\)</span>. Note that in the <a href="primarycensored.html#generating-random-samples-with-rprimarycensored">generative model for delays</a> from “Getting started” the truncated delay <span class="math inline">\(t_{\text{valid}}\)</span> is measured from startpoint to startpoint of event windows.</p>
 <p>In our treatment below we focus on the <a href="https://en.wikipedia.org/wiki/Survival_function" class="external-link">survival function</a> of the time after the end of the primary window to the secondary event time which we denote <span class="math inline">\(S_{+}\)</span>. We then use this to derive the distribution of the censored delay time <span class="math inline">\(T_c\)</span>. This is equivalent to, but differs in mathematical approach from other treatments of the censoring problems in epidemiology, such as<span class="citation"><sup>[<a href="#ref-Park2024">2</a>]</sup></span>, see section <a href="#connections-to-other-approaches">Connections to other approaches</a> for details.</p>
 <div class="section level3" number="3.1">
 <h3 id="censored-delay-time-distribution">
@@ -172,7 +172,7 @@ Q_{S_+}(t) = Q_T(t + w_P) + \int_0^{w_P} f_T(t+p) F_{C_P}(p) dp. \tag{3.1}
 <li>The probability that the <em>actual</em> delay time <span class="math inline">\(T\)</span> is greater than <span class="math inline">\(t + w_P\)</span>.</li>
 <li>The probability that the <em>actual</em> delay time <span class="math inline">\(T\)</span> is between <span class="math inline">\(t\)</span> and <span class="math inline">\(t + w_P\)</span>, and the primary event time <span class="math inline">\(P\)</span> occurred sufficiently close to the end of the primary censor window that the secondary even occurred more than time <span class="math inline">\(t\)</span> after the end of the primary window.</li>
 </ol>
-<p>Note that in <a href="primarycensoreddist.html#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensoreddist">“Getting started”</a> the target for numerical quadrature is the cumulative distribution function of the sum of the primary time within the primary censor window and the delay time.</p>
+<p>Note that in <a href="primarycensored.html#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored">“Getting started”</a> the target for numerical quadrature is the cumulative distribution function of the sum of the primary time within the primary censor window and the delay time.</p>
 </div>
 <div class="section level4" number="3.1.2">
 <h4 id="probability-of-secondary-event-time-within-a-secondary-censoring-window">
@@ -205,7 +205,7 @@ f_n = Pr(T_c = n) = Pr(S_+ \in [n - 1, n)) = Q_{S_+}(n-1) - Q_{S_+}(n)\qquad n =
 <h2 id="connections-to-other-approaches">
 <span class="header-section-number">4</span> Connections to other approaches<a class="anchor" aria-label="anchor" href="#connections-to-other-approaches"></a>
 </h2>
-<p>In this section, we discuss how the approach taken in <code>primarycensoreddist</code> relates to some other approaches to the censored data problems in time to event analysis.</p>
+<p>In this section, we discuss how the approach taken in <code>primarycensored</code> relates to some other approaches to the censored data problems in time to event analysis.</p>
 <div class="section level3" number="4.1">
 <h3 id="connection-to-park-et-al-2014">
 <span class="header-section-number">4.1</span> Connection to Park et al 2014<a class="anchor" aria-label="anchor" href="#connection-to-park-et-al-2014"></a>
@@ -264,7 +264,7 @@ which is same as equation <a href="#eq:seccensorprob">(3.2)</a>.</p>
 </h2>
 <ul>
 <li>For more mathematical background on the analytic solutions see the <code><a href="../articles/analytic-solutions.html">vignette("analytic-solutions")</a></code>.</li>
-<li>For a more introductory explanation of the primary event censored distribution see the <code><a href="../articles/primarycensoreddist.html">vignette("primarycensoreddist")</a></code>.</li>
+<li>For a more introductory explanation of the primary event censored distribution see the <code><a href="../articles/primarycensored.html">vignette("primarycensored")</a></code>.</li>
 </ul>
 </div>
 <div class="section level2">
