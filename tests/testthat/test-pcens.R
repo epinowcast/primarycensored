@@ -76,7 +76,7 @@ test_that(
       pcens_cdf(obj_lnorm, q = q_values, pwindow = pwindow)
     )
     expect_no_error(
-      pcens_cdfindow = pwindow)
+      pcens_cdf(obj_weibull, q = q_values, pwindow = pwindow)
     )
   }
 )
@@ -97,7 +97,7 @@ test_that(
     )
 
     expect_error(
-      pcens_cdf
+      pcens_cdf(obj_gamma, q = 1, pwindow = 1),
       "shape parameter is required for Gamma distribution"
     )
 
@@ -108,7 +108,7 @@ test_that(
     )
 
     expect_error(
-      pcens_cdf_no_rate, q = 1, pwindow = 1),
+      pcens_cdf(obj_gamma_no_rate, q = 1, pwindow = 1),
       "scale or rate parameter is required for Gamma distribution"
     )
 
@@ -133,7 +133,7 @@ test_that(
     )
 
     expect_error(
-      pcens_cdf q = 1, pwindow = 1),
+      pcens_cdf(obj_lnorm_no_sdlog, q = 1, pwindow = 1),
       "sdlog parameter is required for Log-Normal distribution"
     )
 
