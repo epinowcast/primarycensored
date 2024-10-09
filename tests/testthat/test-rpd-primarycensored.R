@@ -1,9 +1,9 @@
-# Test the interactions between dprimarycensoreddist, pprimarycensoreddist,
+# Test the interactions between dprimarycensored, pprimarycensored,
 # and the random number generators for primary events
 
 test_that(
-  "rprimarycensoreddist is consistent with dprimarycensoreddist and
-   pprimarycensoreddist",
+  "rprimarycensored is consistent with dprimarycensored and
+   pprimarycensored",
   { # nolint
     n <- 10000
     pwindow <- 4
@@ -40,8 +40,8 @@ test_that(
 
 
 test_that(
-  "rprimarycensoreddist is consistent with dprimarycensoreddist and
-   pprimarycensoreddist for exponential growth primary distribution",
+  "rprimarycensored is consistent with dprimarycensored and
+   pprimarycensored for exponential growth primary distribution",
   { # nolint
     n <- 1e6
     pwindow <- 3
@@ -90,7 +90,7 @@ test_that(
 )
 
 test_that(
-  "rprimarycensoreddist with wider windows and different delay distribution
+  "rprimarycensored with wider windows and different delay distribution
    mathches p and d numerically",
   {
     n <- 1e6

@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitdistdoublecens.R
 \name{.ppcens}
 \alias{.ppcens}
-\title{Define a fitdistrplus compatible wrapper around pprimarycensoreddist}
+\title{Define a fitdistrplus compatible wrapper around pprimarycensored}
 \usage{
 .ppcens(
   q,
@@ -54,6 +54,6 @@ passed a pre-assigned variable rather than a function name.}
 \item{...}{Additional arguments to be passed to pdist}
 }
 \description{
-Define a fitdistrplus compatible wrapper around pprimarycensoreddist
+Define a fitdistrplus compatible wrapper around pprimarycensored
 }
 \keyword{internal}

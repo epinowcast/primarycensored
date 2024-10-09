@@ -2,7 +2,7 @@
 % Please edit documentation in R/fitdistdoublecens.R
 \name{.dpcens}
 \alias{.dpcens}
-\title{Define a fitdistrplus compatible wrapper around dprimarycensoreddist}
+\title{Define a fitdistrplus compatible wrapper around dprimarycensored}
 \usage{
 .dpcens(
   x,
@@ -58,6 +58,6 @@ passed a pre-assigned variable rather than a function name.}
 \item{...}{Additional arguments to be passed to the distribution function}
 }
 \description{
-Define a fitdistrplus compatible wrapper around dprimarycensoreddist
+Define a fitdistrplus compatible wrapper around dprimarycensored
 }
 \keyword{internal}

@@ -1,6 +1,6 @@
 ---
 title: "Fitting distributions using primarycensorseddist and fitdistrplus"
-description: "A guide on how to fit distributions using primarycensoreddist and fitdistrplus."
+description: "A guide on how to fit distributions using primarycensored and fitdistrplus."
 author: Sam Abbott
 output:
   bookdown::html_document2:
@@ -12,7 +12,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Fitting distributions using primarycensoreddist and fitdistrplus}
+  %\VignetteIndexEntry{Fitting distributions using primarycensored and fitdistrplus}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -21,13 +21,13 @@ vignette: >
 
 ## What are we going to do in this Vignette
 
-In this vignette, we'll demonstrate how to use `primarycensoreddist` in conjunction with `fitdistrplus` for fitting distributions. We'll cover the following key points:
+In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with `fitdistrplus` for fitting distributions. We'll cover the following key points:
 
 1. Simulating censored delay distribution data
 2. Fitting a naive model using `fitdistrplus`
 3. Evaluating the naive model's performance
-4. Fitting an improved model using `primarycensoreddist` functionality
-5. Comparing the `primarycensoreddist` model's performance to the naive model
+4. Fitting an improved model using `primarycensored` functionality
+5. Comparing the `primarycensored` model's performance to the naive model
 
 ## What might I need to know before starting
 
@@ -35,10 +35,10 @@ This vignette assumes some familiarity with the `fitdistrplus` package. If you a
 
 ## Packages used in this vignette
 
-Alongside the `primarycensoreddist` package we will use the `fitdistrplus` package for fitting distributions. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
+Alongside the `primarycensored` package we will use the `fitdistrplus` package for fitting distributions. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
 
 ```{r setup, message = FALSE}
-library(primarycensoreddist)
+library(primarycensored)
 library(fitdistrplus)
 library(ggplot2)
 library(dplyr)
@@ -46,7 +46,7 @@ library(dplyr)
 
 # Simulating censored and truncated delay distribution data
 
-We'll start by simulating some censored and truncated delay distribution data. We'll use the `rprimarycensoreddist` function (actually we will use the `rpcens ` alias for brevity).
+We'll start by simulating some censored and truncated delay distribution data. We'll use the `rprimarycensored` function (actually we will use the `rpcens ` alias for brevity).
 
 ```{r sample-lognormal}
 set.seed(123) # For reproducibility
@@ -149,17 +149,17 @@ summary(fit)
 
 We see that the naive model has fit poorly due to the primary censoring and right truncation in the data.
 
-# Fitting an improved model using `primarycensoreddist` and `fitdistrplus`
+# Fitting an improved model using `primarycensored` and `fitdistrplus`
 
-We'll now fit an improved model using the `primarycensoreddist` package. To do this we need to define the custom distribution functions using the `primarycensoreddist` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+We'll now fit an improved model using the `primarycensored` package. To do this we need to define the custom distribution functions using the `primarycensored` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
 
 ```{r fit-improved-model}
-# Define custom distribution functions using primarycensoreddist
+# Define custom distribution functions using primarycensored
 # The try catch is required by fitdistrplus
 dpcens_gamma <- function(x, shape, rate) {
   result <- tryCatch(
     {
-      dprimarycensoreddist(
+      dprimarycensored(
         x, pgamma,
         shape = shape, rate = rate,
         pwindow = 1, swindow = 1, D = 8
@@ -175,7 +175,7 @@ dpcens_gamma <- function(x, shape, rate) {
 ppcens_gamma <- function(q, shape, rate) {
   result <- tryCatch(
     {
-      pprimarycensoreddist(
+      pprimarycensored(
         q, pgamma,
         shape = shape, rate = rate,
         pwindow = 1, D = 8
@@ -200,9 +200,9 @@ summary(pcens_fit)
 
 We see very good agreement between the true and estimated parameters.
 
-Rather than using `fitdist()` directly `primarycensoreddist` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
+Rather than using `fitdist()` directly `primarycensored` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
 
-```{r primarycensoreddist-fitdistdoublecens}
+```{r primarycensored-fitdistdoublecens}
 fitdistdoublecens_fit <- delay_data |>
   dplyr::select(left = observed_delay, right = observed_delay_upper) |>
   fitdistdoublecens(
@@ -215,4 +215,4 @@ summary(fitdistdoublecens_fit)
 ```
 
 
-**Note** Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the `primarycensoreddist` GitHub page.
+**Note** Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the `primarycensored` GitHub page.

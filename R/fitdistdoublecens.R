@@ -1,7 +1,7 @@
 #' Fit a distribution to doubly censored data
 #'
 #' This function wraps the custom approach for fitting distributions to doubly
-#' censored data using fitdistrplus and primarycensoreddist.
+#' censored data using fitdistrplus and primarycensored.
 #'
 #' @details
 #' This function temporarily assigns and then removes functions from the global
@@ -16,7 +16,7 @@
 #'
 #' @param distr A character string naming the distribution to be fitted.
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pprimarycensored
 #'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
 #'
@@ -37,7 +37,7 @@
 #' pwindow <- 2
 #' swindow <- 2
 #' D <- 10
-#' samples <- rprimarycensoreddist(
+#' samples <- rprimarycensored(
 #'   n, rnorm,
 #'   mean = true_mean, sd = true_sd,
 #'   pwindow = pwindow, swindow = swindow, D = D
@@ -143,8 +143,8 @@ fitdistdoublecens <- function(censdata, distr,
   return(fit)
 }
 
-#' Define a fitdistrplus compatible wrapper around dprimarycensoreddist
-#' @inheritParams dprimarycensoreddist
+#' Define a fitdistrplus compatible wrapper around dprimarycensored
+#' @inheritParams dprimarycensored
 #'
 #' @param swindows A numeric vector of secondary window sizes corresponding to
 #' each element in x
@@ -154,7 +154,7 @@ fitdistdoublecens <- function(censdata, distr,
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {
-        dprimarycensoreddist(
+        dprimarycensored(
           x, pdist,
           pwindow = pwindow, swindow = swindows[1], D = D, dprimary = dprimary,
           dprimary_args = dprimary_args, pdist_name = pdist_name,
@@ -167,7 +167,7 @@ fitdistdoublecens <- function(censdata, distr,
 
         for (sw in unique_swindows) {
           mask <- swindows == sw
-          result[mask] <- dprimarycensoreddist(
+          result[mask] <- dprimarycensored(
             x[mask], pdist,
             pwindow = pwindow, swindow = sw, D = D,
             dprimary = dprimary, dprimary_args = dprimary_args,
@@ -184,14 +184,14 @@ fitdistdoublecens <- function(censdata, distr,
   )
 }
 
-#' Define a fitdistrplus compatible wrapper around pprimarycensoreddist
-#' @inheritParams pprimarycensoreddist
+#' Define a fitdistrplus compatible wrapper around pprimarycensored
+#' @inheritParams pprimarycensored
 #' @keywords internal
 .ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args,
                     pdist_name, dprimary_name, ...) {
   tryCatch(
     {
-      pprimarycensoreddist(
+      pprimarycensored(
         q, pdist,
         pwindow = pwindow,
         D = D, dprimary = dprimary, dprimary_args = dprimary_args,

@@ -6,7 +6,7 @@
 #' function allows for custom primary event distributions and delay
 #' distributions.
 #'
-#' @inheritParams dprimarycensoreddist
+#' @inheritParams dprimarycensored
 #'
 #' @param rdist Function to generate random samples from the delay distribution
 #' for example [stats::rlnorm()] for lognormal distribution.
@@ -63,22 +63,22 @@
 #' The function oversamples to account for potential truncation and generates
 #' additional samples if needed to reach the desired number of valid samples.
 #'
-#' @family primarycensoreddist
+#' @family rpd_primarycensored
 #'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events
-#' rprimarycensoreddist(10, rlnorm, meanlog = 0, sdlog = 1)
+#' rprimarycensored(10, rlnorm, meanlog = 0, sdlog = 1)
 #'
 #' # Example: Lognormal distribution with exponential growth primary events
-#' rprimarycensoreddist(
+#' rprimarycensored(
 #'   10, rlnorm,
 #'   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
 #'   meanlog = 0, sdlog = 1
 #' )
-rprimarycensoreddist <- function(n, rdist, pwindow = 1, swindow = 1,
-                                 D = Inf, rprimary = stats::runif,
-                                 rprimary_args = list(),
-                                 oversampling_factor = 1.2, ...) {
+rprimarycensored <- function(n, rdist, pwindow = 1, swindow = 1,
+                             D = Inf, rprimary = stats::runif,
+                             rprimary_args = list(),
+                             oversampling_factor = 1.2, ...) {
   # Generate more samples than needed to account for truncation
   n_generate <- ceiling(n * oversampling_factor)
 
@@ -98,7 +98,7 @@ rprimarycensoreddist <- function(n, rdist, pwindow = 1, swindow = 1,
 
   # If we don't have enough samples, generate more
   while (length(valid_samples) < n) {
-    additional_samples <- rprimarycensoreddist(
+    additional_samples <- rprimarycensored(
       n - length(valid_samples), rdist, pwindow, swindow, D, rprimary,
       rprimary_args, ...
     )
@@ -118,6 +118,6 @@ rprimarycensoreddist <- function(n, rdist, pwindow = 1, swindow = 1,
   return(rounded_samples)
 }
 
-#' @rdname rprimarycensoreddist
+#' @rdname rprimarycensored
 #' @export
-rpcens <- rprimarycensoreddist
+rpcens <- rprimarycensored

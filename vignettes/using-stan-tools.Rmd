@@ -1,6 +1,6 @@
 ---
-title: "How to use primarycensoreddist with Stan"
-description: "A guide on how to use primarycensoreddist with Stan."
+title: "How to use primarycensored with Stan"
+description: "A guide on how to use primarycensored with Stan."
 author: Sam Abbott
 output:
   bookdown::html_document2:
@@ -12,7 +12,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{How to use primarycensoreddist with Stan}
+  %\VignetteIndexEntry{How to use primarycensored with Stan}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -22,16 +22,16 @@ vignette: >
 
 ## What are we going to do in this Vignette
 
-In this vignette, we'll explore how to use the `primarycensoreddist` package in conjunction with Stan. We'll cover the following key points:
+In this vignette, we'll explore how to use the `primarycensored` package in conjunction with Stan. We'll cover the following key points:
 
 1. Introduction to Stan and its relevance for our analysis
 2. Overview of the packages we'll be using
-3. How to access and use Stan functions provided by `primarycensoreddist`
+3. How to access and use Stan functions provided by `primarycensored`
 4. Methods for integrating these Stan functions into your workflow
 
 ## What is Stan and why are we using it
 
-Stan is a probabilistic programming language for statistical inference. It provides a flexible and efficient platform for Bayesian modeling and is widely used in various fields of data science and statistics. In this vignette, we'll use Stan in conjunction with `primarycensoreddist` to perform Bayesian inference on censored data.
+Stan is a probabilistic programming language for statistical inference. It provides a flexible and efficient platform for Bayesian modeling and is widely used in various fields of data science and statistics. In this vignette, we'll use Stan in conjunction with `primarycensored` to perform Bayesian inference on censored data.
 
 For more information on Stan:
 
@@ -41,16 +41,16 @@ For more information on Stan:
 
 ## Packages used in this vignette
 
-Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan.
+Alongside the `primarycensored` package we will use the `cmdstanr` package for interfacing with cmdstan.
 
 ```{r setup, message = FALSE}
-library(primarycensoreddist)
+library(primarycensored)
 library(cmdstanr)
 ```
 
-# Using Stan code in primarycensoreddist
+# Using Stan code in primarycensored
 
-`primarycensoreddist` includes a set of Stan functions that mirror the R functions in `primarycensoreddist`. Documentation for these functions can be found [here](https://primarycensoreddist.epinowcast.org/stan/). We support a range of approaches to integrate this Stan code into your workflow.
+`primarycensored` includes a set of Stan functions that mirror the R functions in `primarycensored`. Documentation for these functions can be found [here](https://primarycensored.epinowcast.org/stan/). We support a range of approaches to integrate this Stan code into your workflow.
 
 ## Checking available Stan functions using `pcd_stan_functions()`
 
@@ -65,7 +65,7 @@ pcd_stan_functions()
 Stan functions are accessed using the `pcd_load_stan_functions()` function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a `functions{}` block.
 
 ```{r}
-pcd_load_stan_functions("primary_censored_dist_lpmf")
+pcd_load_stan_functions("primarycensored_lpmf")
 ```
 
 ## Linking the Stan functions to your workflow
@@ -95,7 +95,7 @@ Alternatively, you could use `#include expgrowth_rng.stan` in a stan file functi
 
 ### Including the functions directly via `include_paths`
 
-Rather than writing the functions to a file it is also possible to include them directly in the stan file using the `include_paths` argument to `cmdstan_model()`. This is useful if you don't to clutter your model with the stan code from `primarycensoreddist` and want automatic updating of the functions. To demonstrate we will first write a small model has has `expgrowth.stan` in its include paths (rather than writing it to a file and then including it). The first step is find the file and path for the `expgrowth_rng` function.
+Rather than writing the functions to a file it is also possible to include them directly in the stan file using the `include_paths` argument to `cmdstan_model()`. This is useful if you don't to clutter your model with the stan code from `primarycensored` and want automatic updating of the functions. To demonstrate we will first write a small model has has `expgrowth.stan` in its include paths (rather than writing it to a file and then including it). The first step is find the file and path for the `expgrowth_rng` function.
 
 ```{r}
 pcd_stan_files("expgrowth_rng")
@@ -118,7 +118,7 @@ writeLines(
 )
 ```
 
-We can now use this file to compile a model. **Note** that we need to include the path to the `primarycensoreddist` Stan functions using the `include_paths` argument to `cmdstan_model()`.
+We can now use this file to compile a model. **Note** that we need to include the path to the `primarycensored` Stan functions using the `include_paths` argument to `cmdstan_model()`.
 
 ```{r}
 model <- cmdstan_model(expgrowth_stan_file, include_paths = pcd_stan_path())
@@ -134,7 +134,7 @@ samples
 
 ## Using Stan functions directly in R
 
-Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensoreddist` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensoreddist` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model.
+Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensored` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensored` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model.
 
 ```{r, message = FALSE}
 model$expose_functions(global = TRUE)

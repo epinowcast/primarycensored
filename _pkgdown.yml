@@ -1,4 +1,4 @@
-url: https://primarycensoreddist.epinowcast.org/
+url: https://primarycensored.epinowcast.org/
 template:
   package: enwtheme
   math-rendering: mathjax
@@ -17,11 +17,11 @@ navbar:
       - text: R reference
         href: reference/index.html
       - text: Stan reference
-        href: https://primarycensoreddist.epinowcast.org/stan/
+        href: https://primarycensored.epinowcast.org/stan/
     articles:
       text: Articles
       menu:
-      - text: How to use primarycensoreddist with Stan
+      - text: How to use primarycensored with Stan
         href: articles/using-stan-tools.html
       - text: Fitting distributions using primarycensorseddist and cmdstan
         href: articles/fitting-dists-with-stan.html
@@ -40,7 +40,7 @@ reference:
 - title: Primary event censored distribution functions
   desc: Functions for generating, evaluating density, and computing cumulative probabilities of primary event censored distributions
   contents:
-  - has_concept("primarycensoreddist")
+  - has_concept("primarycensored")
 - title: Primary event distributions
   desc: Probability density and random generation functions for primary event distributions
   contents:
@@ -48,7 +48,7 @@ reference:
 - title: Primary censored distribution class and methods
   desc: S3 class and methods for computing primary event censored distributions, focusing on the internal machinery used by the package. Unlike the primary event distributions section which deals with specific distribution functions, this section covers the general framework for handling censored distributions.
   contents:
-  - has_concept("primary_censored_dist")
+  - has_concept("primarycensored")
 - title: Distribution checking functions
   desc: Functions to validate cumulative distribution functions (CDFs) and probability density functions (PDFs)
   contents:

@@ -1,7 +1,7 @@
-#' Create a CmdStanModel with primarycensoreddist Stan functions
+#' Create a CmdStanModel with primarycensored Stan functions
 #'
 #' This function creates a CmdStanModel object using the Stan model and
-#' functions from primarycensoreddist and optionally includes additional
+#' functions from primarycensored and optionally includes additional
 #' user-specified Stan files.
 #'
 #' @param include_paths Character vector of paths to include for Stan
@@ -30,7 +30,7 @@
 #' fit <- model$sample(data = stan_data)
 #' }
 pcd_cmdstan_model <- function(
-    include_paths = primarycensoreddist::pcd_stan_path(),
+    include_paths = primarycensored::pcd_stan_path(),
     ...) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
     stop("Package 'cmdstanr' is required but not installed for this function.")
@@ -38,7 +38,7 @@ pcd_cmdstan_model <- function(
 
   pcd_stan_model <- system.file(
     "stan", "pcens_model.stan",
-    package = "primarycensoreddist"
+    package = "primarycensored"
   )
 
   cmdstanr::cmdstan_model(
@@ -48,10 +48,10 @@ pcd_cmdstan_model <- function(
   )
 }
 
-#' Prepare data for primarycensoreddist Stan model
+#' Prepare data for primarycensored Stan model
 #'
 #' This function takes in delay data and prepares it for use with the
-#' primarycensoreddist Stan model.
+#' primarycensored Stan model.
 #'
 #' @param data A data frame containing the delay data.
 #'
@@ -74,7 +74,7 @@ pcd_cmdstan_model <- function(
 #'   13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
 #'   17 = Logistic
 #'
-#' @param primary_dist_id Integer identifying the primary distribution:
+#' @param primray_id Integer identifying the primary distribution:
 #'   1 = Uniform, 2 = Exponential growth
 #'
 #' @param param_bounds A list with elements `lower` and `upper`, each a numeric
@@ -116,7 +116,7 @@ pcd_cmdstan_model <- function(
 #' stan_data <- pcd_as_stan_data(
 #'   data,
 #'   dist_id = 1,
-#'   primary_dist_id = 1,
+#'   primray_id = 1,
 #'   param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
 #'   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
 #'   priors = list(location = c(1, 1), scale = c(1, 1)),
@@ -127,7 +127,7 @@ pcd_as_stan_data <- function(
     data, delay = "delay", delay_upper = "delay_upper",
     n = "n", pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",
-    dist_id, primary_dist_id,
+    dist_id, primray_id,
     param_bounds, primary_param_bounds,
     priors, primary_priors,
     compute_log_lik = FALSE,
@@ -168,7 +168,7 @@ pcd_as_stan_data <- function(
     pwindow = data[[pwindow]],
     D = data[[relative_obs_time]],
     dist_id = dist_id,
-    primary_dist_id = primary_dist_id,
+    primray_id = primray_id,
     n_params = length(param_bounds$lower),
     n_primary_params = length(primary_param_bounds$lower),
     compute_log_lik = as.integer(compute_log_lik),

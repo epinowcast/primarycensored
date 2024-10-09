@@ -51,7 +51,7 @@ jobs:
       - name: Compile model and check syntax
         run: |
           stan_file <- file.path(tempdir(), "pcd_functions.stan")
-          primarycensoreddist::pcd_load_stan_functions(
+          primarycensored::pcd_load_stan_functions(
             wrap_in_block = TRUE,
             write_to_file = TRUE,
             output_file = stan_file

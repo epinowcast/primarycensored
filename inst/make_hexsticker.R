@@ -37,8 +37,8 @@ data <- data[data$id != 5, ]
 # Create the plot
 plot <- ggplot(data, aes(y = id)) +
   # Add linking bar between primary and secondary events (behind other elements)
-  geom_segment(data = subset(data, !crosses_observation), aes(x = primary, xend = secondary, yend = id), size = 0.6, color = "#708090") +
-  geom_segment(data = subset(data, crosses_observation), aes(x = primary, xend = secondary, yend = id), size = 0.6, color = "#708090", linetype = "dotted") +
+  geom_segment(data = subset(data, !crosses_observation), aes(x = primary, xend = secondary, yend = id), linewidth = 0.6, color = "#708090") +
+  geom_segment(data = subset(data, crosses_observation), aes(x = primary, xend = secondary, yend = id), linewidth = 0.6, color = "#708090", linetype = "dotted") +
   # Add primary events
   geom_point(aes(x = primary), color = "#4682B4", size = 1) +
   # Add secondary events
@@ -62,7 +62,7 @@ plot <- ggplot(data, aes(y = id)) +
 # make and save hexsticker
 sticker(
   plot,
-  package = "primarycensoreddist",
+  package = "primarycensored",
   p_size = 12,
   p_color = "#4682B4",
   s_x = 1,

@@ -73,9 +73,9 @@
 #' }
 #' where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
 #'
-#' This function creates a `primary_censored_dist` object using
-#' [new_primary_censored_dist()] and then computes the primary event
-#' censored CDF using [primary_censored_cdf()]. This abstraction allows
+#' This function creates a `primarycensored` object using
+#' [new_primarycensored()] and then computes the primary event
+#' censored CDF using [primarycensored_cdf()]. This abstraction allows
 #' for automatic use of analytical solutions when available, while
 #' seamlessly falling back to numerical integration when necessary.
 #'
@@ -84,20 +84,20 @@
 #' `pdist_name` and `dprimary_name` must be used to override the default
 #' extraction of the function name.
 #'
-#' @family primarycensoreddist
-#' @seealso [new_primary_censored_dist()] and [primary_censored_cdf()]
+#' @family rpd_primarycensored
+#' @seealso [new_primarycensored()] and [primarycensored_cdf()]
 #'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events
-#' pprimarycensoreddist(c(0.1, 0.5, 1), plnorm, meanlog = 0, sdlog = 1)
+#' pprimarycensored(c(0.1, 0.5, 1), plnorm, meanlog = 0, sdlog = 1)
 #'
 #' # Example: Lognormal distribution with exponential growth primary events
-#' pprimarycensoreddist(
+#' pprimarycensored(
 #'   c(0.1, 0.5, 1), plnorm,
 #'   dprimary = dexpgrowth,
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
-pprimarycensoreddist <- function(
+pprimarycensored <- function(
     q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), pdist_name = NULL, dprimary_name = NULL, ...) {
   check_pdist(pdist, D, ...)
@@ -110,8 +110,8 @@ pprimarycensoreddist <- function(
     dprimary_name <- .extract_function_name(substitute(dprimary))
   }
 
-  # Create a new primary_censored_dist object
-  pcens_obj <- new_primary_censored_dist(
+  # Create a new primarycensored object
+  pcens_obj <- new_primarycensored(
     pdist,
     dprimary,
     dprimary_args,
@@ -121,14 +121,14 @@ pprimarycensoreddist <- function(
   )
 
   # Compute the CDF using the S3 method
-  result <- primary_censored_cdf(pcens_obj, q, pwindow)
+  result <- primarycensored_cdf(pcens_obj, q, pwindow)
 
   if (!is.infinite(D)) {
     # Compute normalization factor for finite D
     normalizer <- if (max(q) == D) {
       result[length(result)]
     } else {
-      pprimarycensoreddist(D, pdist, pwindow, Inf, dprimary, dprimary_args, ...)
+      pprimarycensored(D, pdist, pwindow, Inf, dprimary, dprimary_args, ...)
     }
     result <- result / normalizer
 
@@ -138,6 +138,6 @@ pprimarycensoreddist <- function(
   return(result)
 }
 
-#' @rdname pprimarycensoreddist
+#' @rdname pprimarycensored
 #' @export
-ppcens <- pprimarycensoreddist
+ppcens <- pprimarycensored

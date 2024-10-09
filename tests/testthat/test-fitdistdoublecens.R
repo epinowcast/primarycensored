@@ -13,7 +13,7 @@ test_that("fitdistdoublecens works correctly", {
   rate <- 0.44
 
   # Generate samples
-  samples <- rprimarycensoreddist(
+  samples <- rprimarycensored(
     n, rgamma,
     shape = shape, rate = rate,
     pwindow = 1, swindow = 1, D = 8
@@ -75,7 +75,7 @@ test_that("fitdistdoublecens works with different distributions", {
   # Test with normal distribution
   true_mean <- 5
   true_sd <- 2
-  samples <- rprimarycensoreddist(
+  samples <- rprimarycensored(
     n, rnorm,
     mean = true_mean, sd = true_sd,
     pwindow = 2, swindow = 2, D = 10

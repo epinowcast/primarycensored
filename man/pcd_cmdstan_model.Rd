@@ -2,9 +2,9 @@
 % Please edit documentation in R/pcd_cmdstan_model.R
 \name{pcd_cmdstan_model}
 \alias{pcd_cmdstan_model}
-\title{Create a CmdStanModel with primarycensoreddist Stan functions}
+\title{Create a CmdStanModel with primarycensored Stan functions}
 \usage{
-pcd_cmdstan_model(include_paths = primarycensoreddist::pcd_stan_path(), ...)
+pcd_cmdstan_model(include_paths = primarycensored::pcd_stan_path(), ...)
 }
 \arguments{
 \item{include_paths}{Character vector of paths to include for Stan
@@ -17,7 +17,7 @@ A CmdStanModel object.
 }
 \description{
 This function creates a CmdStanModel object using the Stan model and
-functions from primarycensoreddist and optionally includes additional
+functions from primarycensored and optionally includes additional
 user-specified Stan files.
 }
 \details{

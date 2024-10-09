@@ -1,6 +1,6 @@
 ---
 title: "Fitting distributions using primarycensorseddist and cmdstan"
-description: "A guide on how to use primarycensoreddist with Stan for Bayesian inference of epidemiological delay distributions."
+description: "A guide on how to use primarycensored with Stan for Bayesian inference of epidemiological delay distributions."
 author: Sam Abbott
 output:
   bookdown::html_document2:
@@ -21,24 +21,24 @@ vignette: >
 
 ## What are we going to do in this Vignette
 
-In this vignette, we'll demonstrate how to use `primarycensoreddist` in conjunction with Stan for Bayesian inference of epidemiological delay distributions. We'll cover the following key points:
+In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with Stan for Bayesian inference of epidemiological delay distributions. We'll cover the following key points:
 
 1. Simulating censored delay distribution data
 2. Fitting a naive model using cmdstan
 3. Evaluating the naive model's performance
-4. Fitting an improved model using `primarycensoreddist` functionality
-5. Comparing the `primarycensoreddist` model's performance to the naive model
+4. Fitting an improved model using `primarycensored` functionality
+5. Comparing the `primarycensored` model's performance to the naive model
 
 ## What might I need to know before starting
 
-This vignette builds on the concepts introduced in the [Getting Started with primarycensoreddist](primarycensoreddist.html) vignette and assumes familiarity with using Stan tools as covered in the [How to use primarycensoreddist with Stan](using-stan-tools.html) vignette.
+This vignette builds on the concepts introduced in the [Getting Started with primarycensored](primarycensored.html) vignette and assumes familiarity with using Stan tools as covered in the [How to use primarycensored with Stan](using-stan-tools.html) vignette.
 
 ## Packages used in this vignette
 
-Alongside the `primarycensoreddist` package we will use the `cmdstanr` package for interfacing with cmdstan. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
+Alongside the `primarycensored` package we will use the `cmdstanr` package for interfacing with cmdstan. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
 
 ```{r setup, message = FALSE}
-library(primarycensoreddist)
+library(primarycensored)
 library(cmdstanr)
 library(ggplot2)
 library(dplyr)
@@ -46,7 +46,7 @@ library(dplyr)
 
 # Simulating censored and truncated delay distribution data
 
-We'll start by simulating some censored and truncated delay distribution data. We'll use the `rprimarycensoreddist` function (actually we will use the `rpcens ` alias for brevity).
+We'll start by simulating some censored and truncated delay distribution data. We'll use the `rprimarycensored` function (actually we will use the `rpcens ` alias for brevity).
 
 ```{r sample-lognormal}
 set.seed(123) # For reproducibility
@@ -147,7 +147,7 @@ We've aggregated the data to unique combinations of `pwindow`, `swindow`, and `o
 
 # Fitting a naive model using cmdstan
 
-We'll start by fitting a naive model using cmdstan. We'll use the `cmdstanr` package to interface with cmdstan. We define the model in a string and then write it to a file as in the [How to use primarycensoreddist with Stan](using-stan-tools.html) vignette.
+We'll start by fitting a naive model using cmdstan. We'll use the `cmdstanr` package to interface with cmdstan. We define the model in a string and then write it to a file as in the [How to use primarycensored with Stan](using-stan-tools.html) vignette.
 
 ```{r naive-model}
 writeLines(
@@ -198,16 +198,18 @@ naive_fit
 
 We see that the model has converged and the diagnostics look good. However, just from the model posterior summary we see that we might not be very happy with the fit. `mu` is smaller than the target `r meanlog` and `sigma` is larger than the target `r sdlog`.
 
-# Fitting an improved model using primarycensoreddist
+# Fitting an improved model using primarycensored
 
-We'll now fit an improved model using the `primarycensoreddist` package. The main improvement is that we will use the `primary_censored_dist_lpdf` function to fit the model. This is the Stan version of the `pcens()` function and accounts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the `dist_id` parameter and that our primary event distribution is uniform by passing 1 as the `primary_dist_id` parameter. See the [Stan documentation](https://primarycensoreddist.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d) for more details on the `primary_censored_dist_lpdf` function.
+We'll now fit an improved model using the `primarycensored` package. The main improvement is that we will use the `primarycensored_lpdf` function to fit the model. This is the Stan version of the `pcens()` function and accounts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the `dist_id` parameter and that our primary event distribution is uniform by passing 1 as the `primray_id` parameter. See the [Stan documentation](https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d) for more details on the `primarycensored_lpdf` function.
 
 ```{r pimarycensoreddist-model}
 writeLines(
   "
   functions {
-    #include primary_censored_dist.stan
-    #include primary_censored_dist_analytical_cdf.stan
+    #include primarycensored.stan
+    // These functions are required for the primarycensored_lpdf function
+    #include primarycensored_ode.stan
+    #include primarycensored_analytical_cdf.stan
     #include expgrowth.stan
   }
   data {
@@ -232,30 +234,30 @@ writeLines(
 
     // Likelihood
     for (i in 1:N) {
-      target += n[i] * primary_censored_dist_lpmf(
+      target += n[i] * primarycensored_lpmf(
         y[i] | 1, {mu, sigma},
         pwindow[i], y_upper[i], D[i],
         1, primary_params
       );
     }
   }",
-  con = file.path(tempdir(), "primarycensoreddist_lognormal.stan")
+  con = file.path(tempdir(), "primarycensored_lognormal.stan")
 )
 ```
 
 Now let's compile the model
 
-```{r compile-primarycensoreddist-model, message = FALSE}
-primarycensoreddist_model <- cmdstan_model(
-  file.path(tempdir(), "primarycensoreddist_lognormal.stan"),
+```{r compile-primarycensored-model, message = FALSE}
+primarycensored_model <- cmdstan_model(
+  file.path(tempdir(), "primarycensored_lognormal.stan"),
   include_paths = pcd_stan_path()
 )
 ```
 
 Now let's fit the compiled model.
 
-```{r fit-primarycensoreddist-model, message = FALSE}
-primarycensoreddist_fit <- primarycensoreddist_model$sample(
+```{r fit-primarycensored-model, message = FALSE}
+primarycensored_fit <- primarycensored_model$sample(
   data = list(
     y = delay_counts$observed_delay,
     y_upper = delay_counts$observed_delay_upper,
@@ -269,7 +271,7 @@ primarycensoreddist_fit <- primarycensoreddist_model$sample(
   refresh = ifelse(interactive(), 50, 0),
   show_messages = interactive()
 )
-primarycensoreddist_fit
+primarycensored_fit
 ```
 
 We see that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters.
@@ -277,7 +279,7 @@ We see that the model has converged and the diagnostics look good. We also see t
 
 # Using `pcd_cmdstan_model()` for a more efficient approach
 
-While the previous approach works well, `primarycensoreddist` provides a more efficient and convenient model which we can compile using `pcd_cmdstan_model()`. This approach not only saves time in model specification but also leverages within chain parallelisation to make best use of your machine's resources. Alongside this we also supply a convenience function `pcd_as_stan_data()` to convert our data into a format that can be used to fit the model and supply priors, bounds, and other settings.
+While the previous approach works well, `primarycensored` provides a more efficient and convenient model which we can compile using `pcd_cmdstan_model()`. This approach not only saves time in model specification but also leverages within chain parallelisation to make best use of your machine's resources. Alongside this we also supply a convenience function `pcd_as_stan_data()` to convert our data into a format that can be used to fit the model and supply priors, bounds, and other settings.
 
 Let's use this function to fit our data:
 
@@ -291,7 +293,7 @@ pcd_data <- pcd_as_stan_data(
   delay_upper = "observed_delay_upper",
   relative_obs_time = "obs_time",
   dist_id = 1, # Lognormal distribution
-  primary_dist_id = 1, # Uniform primary distribution
+  primray_id = 1, # Uniform primary distribution
   param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
   priors = list(location = c(1, 0.5), scale = c(1, 0.5)),

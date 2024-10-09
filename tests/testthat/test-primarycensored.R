@@ -1,4 +1,4 @@
-test_that("new_primary_censored_dist creates object with correct structure", {
+test_that("new_primarycensored creates object with correct structure", {
   pdist_name <- "pgamma"
   pdist <- pgamma
   dprimary_name <- "dunif"
@@ -6,7 +6,7 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   shape <- 2
   rate <- 1
 
-  obj <- new_primary_censored_dist(
+  obj <- new_primarycensored(
     pdist,
     dprimary, list(),
     pdist_name, dprimary_name,
@@ -18,7 +18,7 @@ test_that("new_primary_censored_dist creates object with correct structure", {
   expect_identical(obj$dprimary, dunif)
   expect_identical(obj$args, list(shape = shape, rate = rate))
 
-  new_obj <- new_primary_censored_dist(
+  new_obj <- new_primarycensored(
     pgamma, dunif, list(),
     shape = shape, rate = rate
   )
@@ -26,7 +26,7 @@ test_that("new_primary_censored_dist creates object with correct structure", {
 })
 
 test_that(
-  "primary_censored_cdf methods dispatch correctly to existing
+  "primarycensored_cdf methods dispatch correctly to existing
    analytical solutions",
   {
     pdist_name <- "pgamma"
@@ -34,7 +34,7 @@ test_that(
     dprimary_name <- "dunif"
     dprimary <- dunif
 
-    obj_gamma <- new_primary_censored_dist(
+    obj_gamma <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       shape = 2, rate = 1
@@ -45,7 +45,7 @@ test_that(
     dprimary_name <- "dunif"
     dprimary <- dunif
 
-    obj_lnorm <- new_primary_censored_dist(
+    obj_lnorm <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       meanlog = 0, sdlog = 1
@@ -56,7 +56,7 @@ test_that(
     dprimary_name <- "dunif"
     dprimary <- dunif
 
-    obj_weibull <- new_primary_censored_dist(
+    obj_weibull <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       shape = 2, scale = 1
@@ -70,19 +70,19 @@ test_that(
     pwindow <- 2
 
     expect_no_error(
-      primary_censored_cdf(obj_gamma, q = q_values, pwindow = pwindow)
+      primarycensored_cdf(obj_gamma, q = q_values, pwindow = pwindow)
     )
     expect_no_error(
-      primary_censored_cdf(obj_lnorm, q = q_values, pwindow = pwindow)
+      primarycensored_cdf(obj_lnorm, q = q_values, pwindow = pwindow)
     )
     expect_no_error(
-      primary_censored_cdf(obj_weibull, q = q_values, pwindow = pwindow)
+      primarycensored_cdf(obj_weibull, q = q_values, pwindow = pwindow)
     )
   }
 )
 
 test_that(
-  "primary_censored_cdf errors as expected when the wrong distributional
+  "primarycensored_cdf errors as expected when the wrong distributional
    parameters are supplied",
   {
     pdist_name <- "pgamma"
@@ -90,83 +90,83 @@ test_that(
     dprimary_name <- "dunif"
     dprimary <- dunif
 
-    obj_gamma <- new_primary_censored_dist(
+    obj_gamma <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       rate = 1
     )
 
     expect_error(
-      primary_censored_cdf(obj_gamma, q = 1, pwindow = 1),
+      primarycensored_cdf(obj_gamma, q = 1, pwindow = 1),
       "shape parameter is required for Gamma distribution"
     )
 
-    obj_gamma_no_rate <- new_primary_censored_dist(
+    obj_gamma_no_rate <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       shape = 2
     )
 
     expect_error(
-      primary_censored_cdf(obj_gamma_no_rate, q = 1, pwindow = 1),
+      primarycensored_cdf(obj_gamma_no_rate, q = 1, pwindow = 1),
       "scale or rate parameter is required for Gamma distribution"
     )
 
     pdist_name <- "plnorm"
     pdist <- plnorm
 
-    obj_lnorm_no_meanlog <- new_primary_censored_dist(
+    obj_lnorm_no_meanlog <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       sdlog = 1
     )
 
     expect_error(
-      primary_censored_cdf(obj_lnorm_no_meanlog, q = 1, pwindow = 1),
+      primarycensored_cdf(obj_lnorm_no_meanlog, q = 1, pwindow = 1),
       "meanlog parameter is required for Log-Normal distribution"
     )
 
-    obj_lnorm_no_sdlog <- new_primary_censored_dist(
+    obj_lnorm_no_sdlog <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       meanlog = 0
     )
 
     expect_error(
-      primary_censored_cdf(obj_lnorm_no_sdlog, q = 1, pwindow = 1),
+      primarycensored_cdf(obj_lnorm_no_sdlog, q = 1, pwindow = 1),
       "sdlog parameter is required for Log-Normal distribution"
     )
 
     pdist_name <- "pweibull"
     pdist <- pweibull
 
-    obj_weibull_no_shape <- new_primary_censored_dist(
+    obj_weibull_no_shape <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       scale = 1
     )
 
     expect_error(
-      primary_censored_cdf(obj_weibull_no_shape, q = 1, pwindow = 1),
+      primarycensored_cdf(obj_weibull_no_shape, q = 1, pwindow = 1),
       "shape parameter is required for Weibull distribution"
     )
 
-    obj_weibull_no_scale <- new_primary_censored_dist(
+    obj_weibull_no_scale <- new_primarycensored(
       pdist, dprimary, list(),
       pdist_name, dprimary_name,
       shape = 2
     )
 
     expect_error(
-      primary_censored_cdf(obj_weibull_no_scale, q = 1, pwindow = 1),
+      primarycensored_cdf(obj_weibull_no_scale, q = 1, pwindow = 1),
       "scale parameter is required for Weibull distribution"
     )
   }
 )
 
 test_that(
-  "primary_censored_cdf.default computes the same values as
-   primary_censored_cdf.pcens_pgamma_dunif",
+  "primarycensored_cdf.default computes the same values as
+   primarycensored_cdf.pcens_pgamma_dunif",
   {
     pdist_name <- "pgamma"
     pdist <- pgamma
@@ -180,7 +180,7 @@ test_that(
     for (shape in shapes) {
       for (rate in rates) {
         for (pwindow in pwindows) {
-          obj <- new_primary_censored_dist(
+          obj <- new_primarycensored(
             pdist,
             dprimary, list(),
             pdist_name, dprimary_name,
@@ -188,11 +188,11 @@ test_that(
           )
 
           q_values <- seq(0, 30, by = 0.1)
-          result_numeric <- primary_censored_cdf(
+          result_numeric <- primarycensored_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = TRUE
           )
-          result_analytical <- primary_censored_cdf(
+          result_analytical <- primarycensored_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = FALSE
           )
@@ -220,8 +220,8 @@ test_that(
 )
 
 test_that(
-  "primary_censored_cdf.default computes the same values as
-   primary_censored_cdf.pcens_plnorm_dunif",
+  "primarycensored_cdf.default computes the same values as
+   primarycensored_cdf.pcens_plnorm_dunif",
   {
     pdist_name <- "plnorm"
     pdist <- plnorm
@@ -235,7 +235,7 @@ test_that(
     for (meanlog in meanlogs) {
       for (sdlog in sdlogs) {
         for (pwindow in pwindows) {
-          obj <- new_primary_censored_dist(
+          obj <- new_primarycensored(
             pdist,
             dprimary, list(),
             pdist_name, dprimary_name,
@@ -243,11 +243,11 @@ test_that(
           )
 
           q_values <- seq(0, 30, by = 0.1)
-          result_numeric <- primary_censored_cdf(
+          result_numeric <- primarycensored_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = TRUE
           )
-          result_analytical <- primary_censored_cdf(
+          result_analytical <- primarycensored_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = FALSE
           )
@@ -274,8 +274,8 @@ test_that(
 )
 
 test_that(
-  "primary_censored_cdf.default computes the same values as
-   primary_censored_cdf.pcens_pweibull_dunif",
+  "primarycensored_cdf.default computes the same values as
+   primarycensored_cdf.pcens_pweibull_dunif",
   {
     pdist_name <- "pweibull"
     pdist <- pweibull
@@ -289,7 +289,7 @@ test_that(
     for (shape in shapes) {
       for (scale in scales) {
         for (pwindow in pwindows) {
-          obj <- new_primary_censored_dist(
+          obj <- new_primarycensored(
             pdist,
             dprimary, list(),
             pdist_name, dprimary_name,
@@ -297,11 +297,11 @@ test_that(
           )
 
           q_values <- seq(0, 30, by = 0.1)
-          result_numeric <- primary_censored_cdf(
+          result_numeric <- primarycensored_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = TRUE
           )
-          result_analytical <- primary_censored_cdf(
+          result_analytical <- primarycensored_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = FALSE
           )

@@ -4,26 +4,26 @@
 # installs branches to benchmark
 touchstone::branch_install()
 
-# Benchmark for pprimarycensoreddist with lognormal distribution
+# Benchmark for pprimarycensored with lognormal distribution
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     q <- seq(0, 10, by = 0.01)
   },
-  pprimarycensoreddist_lnorm = {
-    pprimarycensoreddist(q, plnorm, meanlog = 0, sdlog = 1, D = 12)
+  pprimarycensored_lnorm = {
+    pprimarycensored(q, plnorm, meanlog = 0, sdlog = 1, D = 12)
   },
   n = 20
 )
 
-# Benchmark for pprimarycensoreddist with exponential growth
+# Benchmark for pprimarycensored with exponential growth
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     q <- seq(0, 10, by = 0.01)
   },
-  pprimarycensoreddist_plnrom_expgrowth = {
-    pprimarycensoreddist(
+  pprimarycensored_plnrom_expgrowth = {
+    pprimarycensored(
       q, plnorm,
       dprimary = dexpgrowth,
       dprimary_args = list(r = 0.2),
@@ -33,26 +33,26 @@ touchstone::benchmark_run(
   n = 20
 )
 
-# Benchmark for dprimarycensoreddist with Weibull distribution
+# Benchmark for dprimarycensored with Weibull distribution
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     x <- seq(0, 10, by = 1)
   },
-  dprimarycensoreddist_weibull = {
-    dprimarycensoreddist(x, pweibull, shape = 1.5, scale = 2.0, D = 12)
+  dprimarycensored_weibull = {
+    dprimarycensored(x, pweibull, shape = 1.5, scale = 2.0, D = 12)
   },
   n = 20
 )
 
-# Benchmark for dprimarycensoreddist with exponential growth
+# Benchmark for dprimarycensored with exponential growth
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     x <- seq(0, 10, by = 1)
   },
-  dprimarycensoreddist_pweibull_expgrowth = {
-    dprimarycensoreddist(
+  dprimarycensored_pweibull_expgrowth = {
+    dprimarycensored(
       x, pweibull,
       dprimary = dexpgrowth,
       dprimary_args = list(r = 0.2),
@@ -65,7 +65,7 @@ touchstone::benchmark_run(
 # Benchmark for fitdistdoublecens with normal distribution
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     library(fitdistrplus)
     set.seed(123)
     n <- 1000
@@ -74,7 +74,7 @@ touchstone::benchmark_run(
     pwindow <- 1
     swindow <- 1
     D <- 10
-    samples <- rprimarycensoreddist(
+    samples <- rprimarycensored(
       n, rnorm,
       mean = true_mean, sd = true_sd,
       pwindow = pwindow, swindow = swindow, D = D
@@ -99,7 +99,7 @@ touchstone::benchmark_run(
 # Benchmark for fitdistdoublecens with exponential growth
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     library(fitdistrplus)
     set.seed(456)
     n <- 1000
@@ -108,7 +108,7 @@ touchstone::benchmark_run(
     pwindow <- 1
     swindow <- 1
     D <- 8
-    samples <- rprimarycensoreddist(
+    samples <- rprimarycensored(
       n, rgamma,
       shape = true_shape, rate = true_rate,
       pwindow = pwindow, swindow = swindow, D = D,
@@ -133,7 +133,7 @@ touchstone::benchmark_run(
 # Benchmark for fitting lognormal distribution
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     library(dplyr)
     library(cmdstanr)
 
@@ -145,7 +145,7 @@ touchstone::benchmark_run(
     true_meanlog1 <- 1.5
     true_sdlog1 <- 0.5
 
-    simulated_delays1 <- rprimarycensoreddist(
+    simulated_delays1 <- rprimarycensored(
       n = n1,
       rdist = rlnorm,
       meanlog = true_meanlog1,
@@ -170,7 +170,7 @@ touchstone::benchmark_run(
     stan_data1 <- pcd_as_stan_data(
       delay_counts1,
       dist_id = 1,
-      primary_dist_id = 1,
+      primray_id = 1,
       param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(0, 1), scale = c(1, 1)),
@@ -197,7 +197,7 @@ touchstone::benchmark_run(
 # Benchmark for fitting gamma distribution
 touchstone::benchmark_run(
   expr_before_benchmark = {
-    library(primarycensoreddist)
+    library(primarycensored)
     library(dplyr)
     library(cmdstanr)
 
@@ -209,7 +209,7 @@ touchstone::benchmark_run(
     true_shape2 <- 2
     true_rate2 <- 0.5
 
-    simulated_delays2 <- rprimarycensoreddist(
+    simulated_delays2 <- rprimarycensored(
       n = n2,
       rdist = rgamma,
       shape = true_shape2,
@@ -237,7 +237,7 @@ touchstone::benchmark_run(
     stan_data2 <- pcd_as_stan_data(
       delay_counts2,
       dist_id = 2,
-      primary_dist_id = 2,
+      primray_id = 2,
       param_bounds = list(lower = c(0, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = 0, upper = Inf),
       priors = list(location = c(2, 1), scale = c(0.5, 0.5)),

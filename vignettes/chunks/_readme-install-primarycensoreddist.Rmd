@@ -2,7 +2,7 @@ You can install the latest released version using the normal `R` function, thoug
 
 ```{r, eval = FALSE}
 install.packages(
-  "primarycensoreddist",
+  "primarycensored",
   repos = "https://epinowcast.r-universe.dev"
 )
 ```
@@ -11,16 +11,16 @@ Alternatively, you can use the [`remotes` package](https://remotes.r-lib.org/) t
 
 ```{r, eval = FALSE}
 remotes::install_github(
-  "epinowcast/primarycensoreddist",
+  "epinowcast/primarycensored",
   dependencies = TRUE
 )
 ```
 
-Similarly, you can install historical versions by specifying the release tag (e.g. this installs [`0.2.0`](https://github.com/epinowcast/primarycensoreddist/releases/tag/v0.2.0)):
+Similarly, you can install historical versions by specifying the release tag (e.g. this installs [`0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
 
 ```{r, eval = FALSE}
 remotes::install_github(
-  "epinowcast/primarycensoreddist",
+  "epinowcast/primarycensored",
   dependencies = TRUE, ref = "v0.2.0"
 )
 ```

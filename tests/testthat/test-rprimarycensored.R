@@ -1,4 +1,4 @@
-test_that("rprimarycensoreddist generates samples within the correct range", {
+test_that("rprimarycensored generates samples within the correct range", {
   n <- 1000
   pwindow <- 5
   D <- 10
@@ -10,7 +10,7 @@ test_that("rprimarycensoreddist generates samples within the correct range", {
   expect_true(all(samples >= 0 & samples < D))
 })
 
-test_that("rprimarycensoreddist handles different primary distributions", {
+test_that("rprimarycensored handles different primary distributions", {
   n <- 1000
   pwindow <- 5
   D <- 10
@@ -24,7 +24,7 @@ test_that("rprimarycensoreddist handles different primary distributions", {
   expect_true(all(samples >= 0 & samples < D))
 })
 
-test_that("rprimarycensoreddist handles very truncated distributions", {
+test_that("rprimarycensored handles very truncated distributions", {
   n <- 1000
   pwindow <- 0.1
   D <- 1
@@ -38,7 +38,7 @@ test_that("rprimarycensoreddist handles very truncated distributions", {
 })
 
 test_that(
-  "rprimarycensoreddist supports non-secondary event censored distributions",
+  "rprimarycensored supports non-secondary event censored distributions",
   {
     n <- 1000
     pwindow <- 5

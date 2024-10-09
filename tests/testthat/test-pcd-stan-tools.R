@@ -14,8 +14,8 @@ test_that("pcd_stan_functions returns unique function names", {
   # Check if specific Stan functions are included
   expected_functions <- c(
     "expgrowth_pdf", "expgrowth_lpdf", "expgrowth_cdf", "expgrowth_lcdf",
-    "expgrowth_rng", "primary_censored_ode", "dist_lcdf",
-    "primary_censored_dist_lcdf", "primary_censored_dist_lpmf"
+    "expgrowth_rng", "primarycensored_ode", "dist_lcdf",
+    "primarycensored_lcdf", "primarycensored_lpmf"
   )
   for (func in expected_functions) {
     expect_true(
@@ -27,7 +27,7 @@ test_that("pcd_stan_functions returns unique function names", {
 
 test_that("pcd_load_stan_functions loads specific functions", {
   specific_functions <- c(
-    "expgrowth_pdf", "expgrowth_lpdf", "primary_censored_ode"
+    "expgrowth_pdf", "expgrowth_lpdf", "primarycensored_ode"
   )
   stan_code <- pcd_load_stan_functions(functions = specific_functions)
   expect_type(stan_code, "character")
@@ -75,7 +75,7 @@ test_that("pcd_load_stan_functions writes to file when specified", {
   file_content <- readLines(output_file)
   expect_gt(length(file_content), 0)
   expect_true(
-    grepl("Stan functions from primarycensoreddist version", file_content[1],
+    grepl("Stan functions from primarycensored version", file_content[1],
       fixed = TRUE
     )
   )
@@ -100,13 +100,13 @@ test_that("pcd_load_stan_functions loads functions from specific files", {
       info = paste("Function", func, "not found in loaded Stan code")
     )
   }
-  expect_false(grepl("primary_censored_ode", stan_code, fixed = TRUE))
+  expect_false(grepl("primarycensored_ode", stan_code, fixed = TRUE))
 
-  primary_censored_functions <- c(
-    "primary_censored_ode", "dist_lcdf", "primary_censored_dist_lcdf"
+  primarycensored_functions <- c(
+    "primarycensored_ode", "dist_lcdf", "primarycensored_lcdf"
   )
-  stan_code <- pcd_load_stan_functions(functions = primary_censored_functions)
-  for (func in primary_censored_functions) {
+  stan_code <- pcd_load_stan_functions(functions = primarycensored_functions)
+  for (func in primarycensored_functions) {
     expect_true(
       grepl(func, stan_code),
       info = paste("Function", func, "not found in loaded Stan code")
@@ -130,7 +130,7 @@ test_that("pcd_stan_files returns correct files", {
   expect_true(all(grepl("expgrowth", expgrowth_files, fixed = TRUE)))
 
   # Test with functions from different files
-  mixed_functions <- c("expgrowth_pdf", "primary_censored_ode")
+  mixed_functions <- c("expgrowth_pdf", "primarycensored_ode")
   mixed_files <- pcd_stan_files(functions = mixed_functions)
   expect_type(mixed_files, "character")
   expect_gt(length(mixed_files), 1)

@@ -27,7 +27,7 @@ discretising
 dist
 dp
 dprimary
-dprimarycensoreddist
+dprimarycensored
 dx
 dy
 dz
@@ -58,7 +58,7 @@ parksw
 partexp
 pcd
 pdist
-pprimarycensoreddist
+pprimarycensored
 primarycensorseddist
 primaryeventdistributions
 propto
