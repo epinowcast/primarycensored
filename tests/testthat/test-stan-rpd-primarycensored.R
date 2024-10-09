@@ -224,7 +224,7 @@ test_that(
 )
 
 test_that(
-  "Stan primarycensored_sone_lpmf_vectorized matches R dprimarycensored",
+  "Stan primarycensored_sone_pmf_vectorized matches R dprimarycensored",
   {
     max_delay <- 10
     dist_id <- 1 # Lognormal
@@ -234,7 +234,7 @@ test_that(
     primray_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_pmf <- primarycensored_sone_lpmf_vectorized(
+    stan_pmf <- primarycensored_sone_pmf_vectorized(
       max_delay, D, dist_id, params, pwindow, primray_id, primary_params
     )
     r_pmf <- dprimarycensored(
@@ -248,7 +248,7 @@ test_that(
 )
 
 test_that(
-  "Stan primarycensored_sone_lpmf_vectorized matches R dprimarycensored
+  "Stan primarycensored_sone_pmf_vectorized matches R dprimarycensored
    with finite D",
   {
     max_delay <- 10
@@ -259,7 +259,7 @@ test_that(
     primray_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_pmf <- primarycensored_sone_lpmf_vectorized(
+    stan_pmf <- primarycensored_sone_pmf_vectorized(
       max_delay, D, dist_id, params, pwindow, primray_id, primary_params
     )
     r_pmf <- dprimarycensored(
@@ -273,7 +273,7 @@ test_that(
 )
 
 test_that(
-  "Stan primarycensored_sone_lpmf_vectorized matches R dprimarycensored
+  "Stan primarycensored_sone_pmf_vectorized matches R dprimarycensored
    with D equal to max_delay + 1",
   {
     max_delay <- 10
@@ -284,7 +284,7 @@ test_that(
     primray_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    stan_pmf <- primarycensored_sone_lpmf_vectorized(
+    stan_pmf <- primarycensored_sone_pmf_vectorized(
       max_delay, D, dist_id, params, pwindow, primray_id, primary_params
     )
     r_pmf <- dprimarycensored(
