@@ -1,3 +1,9 @@
+skip_on_cran()
+if (on_ci()) {
+  skip_on_os("windows")
+  skip_on_os("mac")
+}
+
 test_that(
   "Stan primary_censored_dist_analytical_lcdf matches R implementation for
    Gamma",
