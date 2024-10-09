@@ -5,31 +5,31 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Fitting distributions using primarycensorseddist and fitdistrplus • primarycensoreddist</title>
+<title>Fitting distributions using primarycensored and fitdistrplus • primarycensored</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
 <link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
 <link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
-<script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="../deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fitting distributions using primarycensorseddist and fitdistrplus">
-<meta name="description" content="A guide on how to fit distributions using primarycensoreddist and fitdistrplus.">
-<meta property="og:description" content="A guide on how to fit distributions using primarycensoreddist and fitdistrplus.">
-<meta property="og:image" content="https://primarycensoreddist.epinowcast.org/logo.png">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="../deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fitting distributions using primarycensored and fitdistrplus">
+<meta name="description" content="A guide on how to fit distributions using primarycensored and fitdistrplus.">
+<meta property="og:description" content="A guide on how to fit distributions using primarycensored and fitdistrplus.">
+<meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
-    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+    <nav class="navbar navbar-expand-lg fixed-top " aria-label="Site navigation"><div class="container">
 
-    <a class="navbar-brand me-2" href="../index.html">primarycensoreddist</a>
+    <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -38,29 +38,39 @@
 
     <div id="navbar" class="collapse navbar-collapse ms-3">
       <ul class="navbar-nav me-auto">
-<li class="nav-item"><a class="nav-link" href="../articles/primarycensoreddist.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="../articles/primarycensored.html">Get started</a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-reference" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Reference</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-reference">
 <li><a class="dropdown-item" href="../reference/index.html">R reference</a></li>
-    <li><a class="dropdown-item" href="https://primarycensoreddist.epinowcast.org/stan/">Stan reference</a></li>
+    <li><a class="dropdown-item" href="https://primarycensored.epinowcast.org/stan/">Stan reference</a></li>
   </ul>
 </li>
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensoreddist with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensorseddist and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensorseddist and fitdistrplus</a></li>
+<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
+    <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
   </ul>
 </li>
+<li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul>
 <ul class="navbar-nav">
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
-<li class="nav-item"><a class="external-link nav-link" href="https://github.com/epinowcast/primarycensoreddist/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/epinowcast/primarycensored/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
+  <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
+<li><button class="dropdown-item" data-bs-theme-value="light"><span class="fa fa-sun"></span> Light</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="dark"><span class="fa fa-moon"></span> Dark</button></li>
+    <li><button class="dropdown-item" data-bs-theme-value="auto"><span class="fa fa-adjust"></span> Auto</button></li>
+  </ul>
+</li>
       </ul>
 </div>
 
@@ -71,11 +81,11 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Fitting distributions using primarycensorseddist and fitdistrplus</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Fitting distributions using primarycensored and fitdistrplus</h1>
                         <h4 data-toc-skip class="author">Sam Abbott</h4>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensoreddist/blob/main/vignettes/fitting-dists-with-fitdistrplus.Rmd" class="external-link"><code>vignettes/fitting-dists-with-fitdistrplus.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/vignettes/fitting-dists-with-fitdistrplus.Rmd" class="external-link"><code>vignettes/fitting-dists-with-fitdistrplus.Rmd</code></a></small>
       <div class="d-none name"><code>fitting-dists-with-fitdistrplus.Rmd</code></div>
     </div>
 
@@ -89,14 +99,14 @@
 <h3 id="what-are-we-going-to-do-in-this-vignette">
 <span class="header-section-number">1.1</span> What are we going to do in this Vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
 </h3>
-<p>In this vignette, we’ll demonstrate how to use <code>primarycensoreddist</code> in conjunction with <code>fitdistrplus</code> for fitting distributions. We’ll cover the following key points:</p>
+<p>In this vignette, we’ll demonstrate how to use <code>primarycensored</code> in conjunction with <code>fitdistrplus</code> for fitting distributions. We’ll cover the following key points:</p>
 <ol style="list-style-type: decimal">
 <li>Simulating censored delay distribution data</li>
 <li>Fitting a naive model using <code>fitdistrplus</code>
 </li>
 <li>Evaluating the naive model’s performance</li>
-<li>Fitting an improved model using <code>primarycensoreddist</code> functionality</li>
-<li>Comparing the <code>primarycensoreddist</code> model’s performance to the naive model</li>
+<li>Fitting an improved model using <code>primarycensored</code> functionality</li>
+<li>Comparing the <code>primarycensored</code> model’s performance to the naive model</li>
 </ol>
 </div>
 <div class="section level3" number="1.2">
@@ -109,9 +119,9 @@
 <h3 id="packages-used-in-this-vignette">
 <span class="header-section-number">1.3</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
 </h3>
-<p>Alongside the <code>primarycensoreddist</code> package we will use the <code>fitdistrplus</code> package for fitting distributions. We will also use the <code>ggplot2</code> package for plotting and <code>dplyr</code> for data manipulation.</p>
+<p>Alongside the <code>primarycensored</code> package we will use the <code>fitdistrplus</code> package for fitting distributions. We will also use the <code>ggplot2</code> package for plotting and <code>dplyr</code> for data manipulation.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://primarycensoreddist.epinowcast.org">primarycensoreddist</a></span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://primarycensored.epinowcast.org">primarycensored</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://lbbe-software.github.io/fitdistrplus/" class="external-link">fitdistrplus</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
@@ -121,7 +131,7 @@
 <h2 id="simulating-censored-and-truncated-delay-distribution-data">
 <span class="header-section-number">2</span> Simulating censored and truncated delay distribution data<a class="anchor" aria-label="anchor" href="#simulating-censored-and-truncated-delay-distribution-data"></a>
 </h2>
-<p>We’ll start by simulating some censored and truncated delay distribution data. We’ll use the <code>rprimarycensoreddist</code> function (actually we will use the <code>rpcens</code> alias for brevity).</p>
+<p>We’ll start by simulating some censored and truncated delay distribution data. We’ll use the <code>rprimarycensored</code> function (actually we will use the <code>rpcens</code> alias for brevity).</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span> <span class="co"># For reproducibility</span></span>
 <span></span>
@@ -137,7 +147,7 @@
 <span></span>
 <span><span class="co"># Function to generate a single sample</span></span>
 <span><span class="va">generate_sample</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">swindow</span>, <span class="va">obs_time</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="fu"><a href="../reference/rprimarycensoreddist.html">rpcens</a></span><span class="op">(</span></span>
+<span>  <span class="fu"><a href="../reference/rprimarycensored.html">rpcens</a></span><span class="op">(</span></span>
 <span>    <span class="fl">1</span>, <span class="va">rgamma</span>,</span>
 <span>    shape <span class="op">=</span> <span class="va">shape</span>, rate <span class="op">=</span> <span class="va">rate</span>,</span>
 <span>    pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="va">swindow</span>, D <span class="op">=</span> <span class="va">obs_time</span></span>
@@ -240,17 +250,17 @@
 <p>We see that the naive model has fit poorly due to the primary censoring and right truncation in the data.</p>
 </div>
 <div class="section level2" number="4">
-<h2 id="fitting-an-improved-model-using-primarycensoreddist-and-fitdistrplus">
-<span class="header-section-number">4</span> Fitting an improved model using <code>primarycensoreddist</code> and <code>fitdistrplus</code><a class="anchor" aria-label="anchor" href="#fitting-an-improved-model-using-primarycensoreddist-and-fitdistrplus"></a>
+<h2 id="fitting-an-improved-model-using-primarycensored-and-fitdistrplus">
+<span class="header-section-number">4</span> Fitting an improved model using <code>primarycensored</code> and <code>fitdistrplus</code><a class="anchor" aria-label="anchor" href="#fitting-an-improved-model-using-primarycensored-and-fitdistrplus"></a>
 </h2>
-<p>We’ll now fit an improved model using the <code>primarycensoreddist</code> package. To do this we need to define the custom distribution functions using the <code>primarycensoreddist</code> package that are required by <code>fitdistrplus</code>. Rather than using <code>fitdistcens</code> we use <code>fitdist</code> because our functions are handling the censoring themselves.</p>
+<p>We’ll now fit an improved model using the <code>primarycensored</code> package. To do this we need to define the custom distribution functions using the <code>primarycensored</code> package that are required by <code>fitdistrplus</code>. Rather than using <code>fitdistcens</code> we use <code>fitdist</code> because our functions are handling the censoring themselves.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Define custom distribution functions using primarycensoreddist</span></span>
+<code class="sourceCode R"><span><span class="co"># Define custom distribution functions using primarycensored</span></span>
 <span><span class="co"># The try catch is required by fitdistrplus</span></span>
 <span><span class="va">dpcens_gamma</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">shape</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
 <span>    <span class="op">{</span></span>
-<span>      <span class="fu"><a href="../reference/dprimarycensoreddist.html">dprimarycensoreddist</a></span><span class="op">(</span></span>
+<span>      <span class="fu"><a href="../reference/dprimarycensored.html">dprimarycensored</a></span><span class="op">(</span></span>
 <span>        <span class="va">x</span>, <span class="va">pgamma</span>,</span>
 <span>        shape <span class="op">=</span> <span class="va">shape</span>, rate <span class="op">=</span> <span class="va">rate</span>,</span>
 <span>        pwindow <span class="op">=</span> <span class="fl">1</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">8</span></span>
@@ -266,7 +276,7 @@
 <span><span class="va">ppcens_gamma</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">q</span>, <span class="va">shape</span>, <span class="va">rate</span><span class="op">)</span> <span class="op">{</span></span>
 <span>  <span class="va">result</span> <span class="op">&lt;-</span> <span class="kw"><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch</a></span><span class="op">(</span></span>
 <span>    <span class="op">{</span></span>
-<span>      <span class="fu"><a href="../reference/pprimarycensoreddist.html">pprimarycensoreddist</a></span><span class="op">(</span></span>
+<span>      <span class="fu"><a href="../reference/pprimarycensored.html">pprimarycensored</a></span><span class="op">(</span></span>
 <span>        <span class="va">q</span>, <span class="va">pgamma</span>,</span>
 <span>        shape <span class="op">=</span> <span class="va">shape</span>, rate <span class="op">=</span> <span class="va">rate</span>,</span>
 <span>        pwindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">8</span></span>
@@ -298,7 +308,7 @@
 <span><span class="co">## shape 1.00000 0.92969</span></span>
 <span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
 <p>We see very good agreement between the true and estimated parameters.</p>
-<p>Rather than using <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist()</a></code> directly <code>primarycensoreddist</code> provides a wrapper function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation and support mixed secondary censoring intervals.</p>
+<p>Rather than using <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist()</a></code> directly <code>primarycensored</code> provides a wrapper function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation and support mixed secondary censoring intervals.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>left <span class="op">=</span> <span class="va">observed_delay</span>, right <span class="op">=</span> <span class="va">observed_delay_upper</span><span class="op">)</span> <span class="op">|&gt;</span></span>
@@ -309,7 +319,7 @@
 <span>  <span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fitdistdoublecens_fit</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Fitting of the distribution ' .pcens_dist ' by maximum likelihood </span></span>
+<pre><code><span><span class="co">## Fitting of the distribution ' pcens_dist ' by maximum likelihood </span></span>
 <span><span class="co">## Parameters : </span></span>
 <span><span class="co">##        estimate Std. Error</span></span>
 <span><span class="co">## shape 1.7847171 0.11590733</span></span>
@@ -319,7 +329,7 @@
 <span><span class="co">##         shape    rate</span></span>
 <span><span class="co">## shape 1.00000 0.92969</span></span>
 <span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
-<p><strong>Note</strong> Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the <code>primarycensoreddist</code> GitHub page.</p>
+<p><strong>Note</strong> Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the <code>primarycensored</code> GitHub page.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
