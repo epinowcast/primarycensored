@@ -1,3 +1,7 @@
+# primarycensored 0.6.0.1000
+
+This is the development version of `primarycensored` and is not yet ready for release.
+
 # primarycensored 0.6.0
 
 This release renames the package to `primarycensored` from `primarycensoredist` and also renames many of the functions to remove the `dist` in their name. This was done to make the package name and the functions more consistent and to remove the need to use the `dist` suffix. It also aligns it with the new `PrimaryCensored.jl` package in our [Julia ecosystem](https://github.com/Epiaware).
