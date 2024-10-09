@@ -15,7 +15,7 @@ test_that(
     for (shape in shapes) {
       for (rate in rates) {
         for (pwindow in pwindows) {
-          obj <- new_primarycensored(
+          obj <- new_pcens(
             pgamma,
             dunif, list(),
             "pgamma", "dunif",
@@ -23,7 +23,7 @@ test_that(
           )
 
           q_values <- seq(0, 30, by = 1)
-          r_result <- primarycensored_cdf(
+          r_result <- pcens_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = FALSE
           )
@@ -60,7 +60,7 @@ test_that(
     for (meanlog in meanlogs) {
       for (sdlog in sdlogs) {
         for (pwindow in pwindows) {
-          obj <- new_primarycensored(
+          obj <- new_pcens(
             plnorm,
             dunif, list(),
             "plnorm", "dunif",
@@ -68,7 +68,7 @@ test_that(
           )
 
           q_values <- seq(0, 30, by = 1)
-          r_result <- primarycensored_cdf(
+          r_result <- pcens_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = FALSE
           )
@@ -105,7 +105,7 @@ test_that(
     for (shape in shapes) {
       for (scale in scales) {
         for (pwindow in pwindows) {
-          obj <- new_primarycensored(
+          obj <- new_pcens(
             pweibull,
             dunif, list(),
             "pweibull", "dunif",
@@ -113,7 +113,7 @@ test_that(
           )
 
           q_values <- seq(0, 30, by = 1)
-          r_result <- primarycensored_cdf(
+          r_result <- pcens_cdf(
             obj,
             q = q_values, pwindow = pwindow, use_numeric = FALSE
           )

@@ -128,4 +128,4 @@ Primary event censored distribution functions
 \code{\link{pprimarycensored}()},
 \code{\link{rprimarycensored}()}
 }
-\concept{rpd_primarycensored}
+\concept{primarycensored}

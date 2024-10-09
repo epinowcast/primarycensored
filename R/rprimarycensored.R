@@ -63,7 +63,7 @@
 #' The function oversamples to account for potential truncation and generates
 #' additional samples if needed to reach the desired number of valid samples.
 #'
-#' @family rpd_primarycensored
+#' @family primarycensored
 #'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events

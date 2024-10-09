@@ -48,7 +48,7 @@ reference:
 - title: Primary censored distribution class and methods
   desc: S3 class and methods for computing primary event censored distributions, focusing on the internal machinery used by the package. Unlike the primary event distributions section which deals with specific distribution functions, this section covers the general framework for handling censored distributions.
   contents:
-  - has_concept("primarycensored")
+  - has_concept("pcens")
 - title: Distribution checking functions
   desc: Functions to validate cumulative distribution functions (CDFs) and probability density functions (PDFs)
   contents:

@@ -74,8 +74,8 @@
 #' where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
 #'
 #' This function creates a `primarycensored` object using
-#' [new_primarycensored()] and then computes the primary event
-#' censored CDF using [primarycensored_cdf()]. This abstraction allows
+#' [new_pcens()] and then computes the primary event
+#' censored CDF using [pcens_cdf()]. This abstraction allows
 #' for automatic use of analytical solutions when available, while
 #' seamlessly falling back to numerical integration when necessary.
 #'
@@ -84,8 +84,8 @@
 #' `pdist_name` and `dprimary_name` must be used to override the default
 #' extraction of the function name.
 #'
-#' @family rpd_primarycensored
-#' @seealso [new_primarycensored()] and [primarycensored_cdf()]
+#' @family primarycensored
+#' @seealso [new_pcens()] and [pcens_cdf()]
 #'
 #' @examples
 #' # Example: Lognormal distribution with uniform primary events
@@ -111,7 +111,7 @@ pprimarycensored <- function(
   }
 
   # Create a new primarycensored object
-  pcens_obj <- new_primarycensored(
+  pcens_obj <- new_pcens(
     pdist,
     dprimary,
     dprimary_args,
@@ -121,7 +121,7 @@ pprimarycensored <- function(
   )
 
   # Compute the CDF using the S3 method
-  result <- primarycensored_cdf(pcens_obj, q, pwindow)
+  result <- pcens_cdf(pcens_obj, q, pwindow)
 
   if (!is.infinite(D)) {
     # Compute normalization factor for finite D

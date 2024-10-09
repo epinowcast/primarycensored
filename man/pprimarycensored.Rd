@@ -100,8 +100,8 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
 
 This function creates a \code{primarycensored} object using
-\code{\link[=new_primarycensored]{new_primarycensored()}} and then computes the primary event
-censored CDF using \code{\link[=primarycensored_cdf]{primarycensored_cdf()}}. This abstraction allows
+\code{\link[=new_pcens]{new_pcens()}} and then computes the primary event
+censored CDF using \code{\link[=pcens_cdf]{pcens_cdf()}}. This abstraction allows
 for automatic use of analytical solutions when available, while
 seamlessly falling back to numerical integration when necessary.
 
@@ -122,10 +122,10 @@ pprimarycensored(
 )
 }
 \seealso{
-\code{\link[=new_primarycensored]{new_primarycensored()}} and \code{\link[=primarycensored_cdf]{primarycensored_cdf()}}
+\code{\link[=new_pcens]{new_pcens()}} and \code{\link[=pcens_cdf]{pcens_cdf()}}
 
 Primary event censored distribution functions
 \code{\link{dprimarycensored}()},
 \code{\link{rprimarycensored}()}
 }
-\concept{rpd_primarycensored}
+\concept{primarycensored}

@@ -2,12 +2,12 @@
 #'
 #' @inheritParams pprimarycensored
 #'
-#' @return An object of class primarycensored_cdf
+#' @return An object of class pcens_{pdist_name}_{dprimary_name}
 #'
-#' @family primarycensored
+#' @family pcens
 #'
 #' @export
-new_primarycensored <- function(
+new_pcens <- function(
     pdist, dprimary, dprimary_args,
     pdist_name = NULL,
     dprimary_name = NULL, ...) {
@@ -40,7 +40,7 @@ new_primarycensored <- function(
 #' @inheritParams pprimarycensored
 #'
 #' @param object A `primarycensored` object as created by
-#' [new_primarycensored()].
+#' [new_pcens()].
 #'
 #' @param use_numeric Logical, if TRUE forces use of numeric integration
 #' even for distributions with analytical solutions. This is primarily
@@ -49,12 +49,12 @@ new_primarycensored <- function(
 #'
 #' @return Vector of primary event censored CDFs
 #'
-#' @family primarycensored
+#' @family pcens
 #'
 #' @export
-primarycensored_cdf <- function(
+pcens_cdf <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  UseMethod("primarycensored_cdf")
+  UseMethod("pcens_cdf")
 }
 
 #' Default method for computing primary event censored CDF
@@ -63,7 +63,7 @@ primarycensored_cdf <- function(
 #' event distributions that don't have specific implementations. It uses
 #' the numeric integration method.
 #'
-#' @inheritParams primarycensored_cdf
+#' @inheritParams pcens_cdf
 #' @inheritParams pprimarycensored
 #'
 #' @details
@@ -75,10 +75,10 @@ primarycensored_cdf <- function(
 #' @seealso [pprimarycensored()] for the mathematical details of the
 #' primary event censored CDF computation.
 #'
-#' @family primarycensored
+#' @family pcens
 #'
 #' @export
-primarycensored_cdf.default <- function(
+pcens_cdf.default <- function(
     object, q, pwindow, use_numeric = FALSE) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
@@ -105,16 +105,16 @@ primarycensored_cdf.default <- function(
 
 #' Method for Gamma delay with uniform primary
 #'
-#' @inheritParams primarycensored_cdf
+#' @inheritParams pcens_cdf
 #'
-#' @family primarycensored
+#' @family pcens
 #'
 #' @export
-primarycensored_cdf.pcens_pgamma_dunif <- function(
+pcens_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primarycensored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
   # Extract Gamma distribution parameters
@@ -178,16 +178,16 @@ primarycensored_cdf.pcens_pgamma_dunif <- function(
 
 #' Method for Log-Normal delay with uniform primary
 #'
-#' @inheritParams primarycensored_cdf
+#' @inheritParams pcens_cdf
 #'
-#' @family primarycensored
+#' @family pcens
 #'
 #' @export
-primarycensored_cdf.pcens_plnorm_dunif <- function(
+pcens_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primarycensored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
@@ -250,22 +250,22 @@ primarycensored_cdf.pcens_plnorm_dunif <- function(
 
 #' Method for Weibull delay with uniform primary
 #'
-#' @inheritParams primarycensored_cdf
+#' @inheritParams pcens_cdf
 #'
-#' @family primarycensored
+#' @family pcens
 #'
 #' @export
-primarycensored_cdf.pcens_pweibull_dunif <- function(
+pcens_cdf.pcens_pweibull_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primarycensored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
   if (pwindow > 3) {
     return(
-      primarycensored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 

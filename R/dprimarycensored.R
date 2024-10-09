@@ -53,7 +53,7 @@
 #' mathematical details of the CDF, refer to the documentation of
 #' [pprimarycensored()].
 #'
-#' @family rpd_primarycensored
+#' @family primarycensored
 #'
 #' @importFrom stats setNames
 #'
