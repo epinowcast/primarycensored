@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.5.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">0.6.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,10 +51,19 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.5.0.1000" id="primarycensored-0501000">primarycensored 0.5.0.1000<a class="anchor" aria-label="anchor" href="#primarycensored-0501000"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.6.0.1000" id="primarycensored-0601000">primarycensored 0.6.0.1000<a class="anchor" aria-label="anchor" href="#primarycensored-0601000"></a></h2>
 <p>This is the development version of <code>primarycensored</code> and is not yet ready for release.</p>
 <div class="section level3">
-<h3 id="package-0-5-0-1000">Package<a class="anchor" aria-label="anchor" href="#package-0-5-0-1000"></a></h3>
+<h3 id="package-0-6-0-1000">Package<a class="anchor" aria-label="anchor" href="#package-0-6-0-1000"></a></h3>
+<ul><li>Fix internal package misspelling of <code>primary_lpdf</code>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.6.0" id="primarycensored-060">primarycensored 0.6.0<a class="anchor" aria-label="anchor" href="#primarycensored-060"></a></h2>
+<p>This release renames the package to <code>primarycensored</code> from <code>primarycensoredist</code> and also renames many of the functions to remove the <code>dist</code> in their name. This was done to make the package name and the functions more consistent and to remove the need to use the <code>dist</code> suffix. It also aligns it with the new <code>PrimaryCensored.jl</code> package in our <a href="https://github.com/Epiaware" class="external-link">Julia ecosystem</a>.</p>
+<p>Aside from name changes, this release also adds an analytical solution for the weibull distribution with uniform primary censoring, removes the need to assign functions to the global environment for <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> by using <code>withr</code>, and adds a <code><a href="../reference/check_truncation.html">check_truncation()</a></code> function to check if the truncation time is larger than the maximum observed delay. This is used in <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> and <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to ensure that the truncation time is appropriate to maximise computational efficiency.</p>
+<div class="section level3">
+<h3 id="package-0-6-0">Package<a class="anchor" aria-label="anchor" href="#package-0-6-0"></a></h3>
 <ul><li>Removed the need to assign functions to the global environment for <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> by using <code>withr</code>.</li>
 <li>Added a <code><a href="../reference/check_truncation.html">check_truncation()</a></code> function to check if the truncation time is larger than the maximum observed delay. This is used in <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> and <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to ensure that the truncation time is appropriate to maximise computational efficiency.</li>
 <li>
@@ -64,7 +73,7 @@
 <li>The package has been renamed to <code>primarycensored</code> as have all functions that use “dist” in their name.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-0-5-0-1000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-5-0-1000"></a></h3>
+<h3 id="documentation-0-6-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-6-0"></a></h3>
 <ul><li>Simplified the “Analytic solutions” vignette by removing verbose derivation details.</li>
 <li>Added links between vignettes to make it easier to navigate the documentation.</li>
 <li>Added explicit usage of <code>pdist</code>, <code>dprimary</code>, <code>rdist</code>, and <code>rprimary</code> arguments in the getting started vignette to make it easier to link to mathematical details.</li>
