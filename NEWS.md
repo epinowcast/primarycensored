@@ -1,6 +1,8 @@
-# primarycensored 0.5.0.1000
+# primarycensored 0.6.0
 
-This is the development version of `primarycensored` and is not yet ready for release.
+This releases renames the package to `primarycensored` from `primarycensoredist` and also renames many of the functions to remove the `dist` in their name. This was done to make the package name and the functions more consistent and to remove the need to use the `dist` suffix. It also brings into into aligment with the new `PrimaryCensored.jl` package in our [Julia ecosystem](https://github.com/Epiaware).
+
+Aside from name changes, this release also adds an analtical solution for the weibull distribution with uniform primary censoring, removes the need to assign functions to the global environment for `fitdistdoublecens()` by using `withr`, and adds a `check_truncation()` function to check if the truncation time is larger than the maximum observed delay. This is used in `fitdistdoublecens()` and `pcd_as_stan_data()` to ensure that the truncation time is appropriate to maximise computational efficiency.
 
 ## Package
 
