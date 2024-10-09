@@ -29,7 +29,14 @@ test_that(
           }, numeric(1))
 
           stan_result <- ifelse(is.nan(stan_result), 1, stan_result)
-          expect_equal(r_result, stan_result, tolerance = 1e-6)
+          expect_equal(
+            r_result, stan_result,
+            tolerance = 1e-6,
+            info = sprintf(
+              "Mismatch for shape = %s, rate = %s, pwindow = %s",
+              shape, rate, pwindow
+            )
+          )
         }
       }
     }
@@ -67,7 +74,14 @@ test_that(
           }, numeric(1))
 
           stan_result <- ifelse(is.nan(stan_result), 1, stan_result)
-          expect_equal(r_result, stan_result, tolerance = 1e-6)
+          expect_equal(
+            r_result, stan_result,
+            tolerance = 1e-6,
+            info = sprintf(
+              "Mismatch for meanlog = %s, sdlog = %s, pwindow = %s",
+              meanlog, sdlog, pwindow
+            )
+          )
         }
       }
     }
@@ -105,7 +119,14 @@ test_that(
           }, numeric(1))
 
           stan_result <- ifelse(is.nan(stan_result), 1, stan_result)
-          expect_equal(r_result, stan_result, tolerance = 1e-6)
+          expect_equal(
+            r_result, stan_result,
+            tolerance = 1e-6,
+            info = sprintf(
+              "Mismatch for shape = %s, scale = %s, pwindow = %s",
+              shape, scale, pwindow
+            )
+          )
         }
       }
     }
