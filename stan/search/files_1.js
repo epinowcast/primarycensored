@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['primary_5fcensored_5fdist_2estan_0',['primary_censored_dist.stan',['../primary__censored__dist_8stan.html',1,'']]],
-  ['primary_5fcensored_5fdist_5fanalytical_5fcdf_2estan_1',['primary_censored_dist_analytical_cdf.stan',['../primary__censored__dist__analytical__cdf_8stan.html',1,'']]]
+  ['primarycensored_2estan_0',['primarycensored.stan',['../primarycensored_8stan.html',1,'']]],
+  ['primarycensored_5fanalytical_5fcdf_2estan_1',['primarycensored_analytical_cdf.stan',['../primarycensored__analytical__cdf_8stan.html',1,'']]],
+  ['primarycensored_5fode_2estan_2',['primarycensored_ode.stan',['../primarycensored__ode_8stan.html',1,'']]]
 ];
