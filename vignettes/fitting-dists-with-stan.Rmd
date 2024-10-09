@@ -1,5 +1,5 @@
 ---
-title: "Fitting distributions using primarycensorsed and cmdstan"
+title: "Fitting distributions using primarycensored and cmdstan"
 description: "A guide on how to use primarycensored with Stan for Bayesian inference of epidemiological delay distributions."
 author: Sam Abbott
 output:
@@ -12,7 +12,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Fitting distributions using primarycensorsed and cmdstan}
+  %\VignetteIndexEntry{Fitting distributions using primarycensored and cmdstan}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
