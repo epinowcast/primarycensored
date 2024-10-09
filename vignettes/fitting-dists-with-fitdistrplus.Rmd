@@ -1,5 +1,5 @@
 ---
-title: "Fitting distributions using primarycensorseddist and fitdistrplus"
+title: "Fitting distributions using primarycensorsed and fitdistrplus"
 description: "A guide on how to fit distributions using primarycensored and fitdistrplus."
 author: Sam Abbott
 output:

@@ -23,9 +23,9 @@ navbar:
       menu:
       - text: How to use primarycensored with Stan
         href: articles/using-stan-tools.html
-      - text: Fitting distributions using primarycensorseddist and cmdstan
+      - text: Fitting distributions using primarycensorsed and cmdstan
         href: articles/fitting-dists-with-stan.html
-      - text: Fitting distributions using primarycensorseddist and fitdistrplus
+      - text: Fitting distributions using primarycensorsed and fitdistrplus
         href: articles/fitting-dists-with-fitdistrplus.html
       - text: Why it works
         href: articles/why-it-works.html
