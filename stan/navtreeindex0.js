@@ -31,7 +31,7 @@ var NAVTREEINDEX0 =
 "primarycensored__analytical__cdf_8stan_source.html":[0,0,2],
 "primarycensored__ode_8stan.html":[0,0,3],
 "primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce":[0,0,3,0],
-"primarycensored__ode_8stan.html#a36bcf9457dc8dca5bb617405733b2d0f":[0,0,3,1],
-"primarycensored__ode_8stan.html#a9f3b9bc71a0603fe92f307c11cc25e49":[0,0,3,2],
+"primarycensored__ode_8stan.html#a36bcf9457dc8dca5bb617405733b2d0f":[0,0,3,2],
+"primarycensored__ode_8stan.html#a8ff5fd4d60c7f181715bb62f645d8b08":[0,0,3,1],
 "primarycensored__ode_8stan_source.html":[0,0,3]
 };
