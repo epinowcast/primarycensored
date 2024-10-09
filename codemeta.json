@@ -191,9 +191,21 @@
       "name": "R",
       "version": ">= 4.0.0"
     },
+    "2": {
+      "@type": "SoftwareApplication",
+      "identifier": "pracma",
+      "name": "pracma",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=pracma"
+    },
     "SystemRequirements": null
   },
-  "fileSize": "408.752KB",
+  "fileSize": "431.537KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
