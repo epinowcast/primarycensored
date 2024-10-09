@@ -1,7 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Primary Event Censored Distributions in R and Stan <a href="https://primarycensored.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensored website" /></a>
+# Primary event censored distributions in R and Stan <a href="https://primarycensored.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensored website" /></a>
 
 <!-- badges: start -->
 
@@ -22,13 +22,15 @@ contributors](https://img.shields.io/github/contributors/epinowcast/primarycenso
 
 ## Summary
 
-This package provides both R functions for working with primary event
+This package provides R functions for working with primary event
 censored distributions and Stan implementations for use in Bayesian
 modeling. Primary event censored distributions are useful for modeling
 delayed reporting scenarios in epidemiology and other fields. It
 provides support for arbitrary delay distributions, a range of common
 primary distributions, and allows for truncation and secondary event
-censoring to be accounted for.
+censoring to be accounted for. In addition, it provides both frequentist
+and Bayesian methods for fitting primary event censored distributions to
+data.
 
 ## Installation
 
@@ -120,11 +122,10 @@ spaces to ask (and answer!) questions:
 Package Website
 </summary>
 
-The [`primarycensored`
-website](https://primarycensored.epinowcast.org/) includes a
-function reference, model outline, and case studies using the package.
-The site mainly concerns the release version, but you can also find
-documentation for [the latest development
+The [`primarycensored` website](https://primarycensored.epinowcast.org/)
+includes a function reference, model outline, and case studies using the
+package. The site mainly concerns the release version, but you can also
+find documentation for [the latest development
 version](https://primarycensored.epinowcast.org/dev/).
 
 </details>
@@ -134,9 +135,9 @@ Vignettes
 </summary>
 
 We have created [package
-vignettes](https://primarycensored.epinowcast.org/articles) to help
-you get started with primarycensored and to highlight other features
-with case studies.
+vignettes](https://primarycensored.epinowcast.org/articles) to help you
+get started with primarycensored and to highlight other features with
+case studies.
 
 </details>
 <details>
@@ -169,10 +170,10 @@ disease, you may find this useful even if you do not use
 
 We welcome contributions and new contributors! We particularly
 appreciate help on [identifying and identified
-issues](https://github.com/epinowcast/primarycensored/issues).
-Please check and add to the issues, and/or add a [pull
-request](https://github.com/epinowcast/primarycensored/pulls) and
-see our [contributing
+issues](https://github.com/epinowcast/primarycensored/issues). Please
+check and add to the issues, and/or add a [pull
+request](https://github.com/epinowcast/primarycensored/pulls) and see
+our [contributing
 guide](https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md)
 for more information.
 
@@ -187,9 +188,9 @@ new use-cases and extensions to the package.
 ### How to make a bug report or feature request
 
 Please briefly describe your problem and what output you expect in an
-[issue](https://github.com/epinowcast/primarycensored/issues). If
-you have a question, please don’t open an issue. Instead, ask on our [Q
-and A
+[issue](https://github.com/epinowcast/primarycensored/issues). If you
+have a question, please don’t open an issue. Instead, ask on our [Q and
+A
 page](https://github.com/epinowcast/primarycensored/discussions/categories/q-a).
 See our [contributing
 guide](https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md)
@@ -224,19 +225,19 @@ Contributions of any kind are welcome!
 
 ### Code
 
-<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>,
-<a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>,
-<a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>,
-<a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=SamuelBrand1">SamuelBrand1</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=athowes">athowes</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=sbfnk">sbfnk</a>
 
 ### Issue Authors
 
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
 
 ### Issue Contributors
 
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
+<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
