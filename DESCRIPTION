@@ -35,6 +35,8 @@ URL: https://primarycensoreddist.epinowcast.org,
 BugReports: https://github.com/epinowcast/primarycensoreddist/issues/
 Depends:
     R (>= 4.0.0)
+Imports:
+    pracma
 Suggests:
     bookdown,
     cmdstanr,
