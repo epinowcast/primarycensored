@@ -7,7 +7,7 @@
 #' truncation at a maximum delay (D). The function allows for custom primary
 #' event distributions and delay distributions.
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pprimarycensored
 #'
 #' @param x Vector of quantiles
 #'
@@ -37,7 +37,7 @@
 #' where \eqn{F_{\text{cens}}} is the primary event censored CDF.
 #'
 #' The function first computes the CDFs for all unique points (including both
-#' \eqn{d} and \eqn{d + \text{swindow}}) using [pprimarycensoreddist()]. It then
+#' \eqn{d} and \eqn{d + \text{swindow}}) using [pprimarycensored()]. It then
 #' creates a lookup table for these CDFs to efficiently calculate the PMF for
 #' each input value. For non-positive delays, the function returns 0.
 #'
@@ -51,23 +51,23 @@
 #' where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF and
 #' \eqn{f_{\text{cens}}(d)} is the unnormalized PMF. For the explanation and
 #' mathematical details of the CDF, refer to the documentation of
-#' [pprimarycensoreddist()].
+#' [pprimarycensored()].
 #'
-#' @family primarycensoreddist
+#' @family primarycensored
 #'
 #' @importFrom stats setNames
 #'
 #' @examples
 #' # Example: Weibull distribution with uniform primary events
-#' dprimarycensoreddist(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
+#' dprimarycensored(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
 #'
 #' # Example: Weibull distribution with exponential growth primary events
-#' dprimarycensoreddist(
+#' dprimarycensored(
 #'   c(0.1, 0.5, 1), pweibull,
 #'   dprimary = dexpgrowth,
 #'   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 #' )
-dprimarycensoreddist <- function(
+dprimarycensored <- function(
     x, pdist, pwindow = 1, swindow = 1,
     D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), log = FALSE,
@@ -97,7 +97,7 @@ dprimarycensoreddist <- function(
     return(rep(0, length(x)))
   }
 
-  cdfs <- pprimarycensoreddist(
+  cdfs <- pprimarycensored(
     unique_points, pdist, pwindow, Inf, dprimary, dprimary_args,
     pdist_name = pdist_name, dprimary_name = dprimary_name, ...
   )
@@ -123,7 +123,7 @@ dprimarycensoreddist <- function(
     if (max(unique_points) == D) {
       cdf_D <- max(cdfs)
     } else {
-      cdf_D <- pprimarycensoreddist(
+      cdf_D <- pprimarycensored(
         D, pdist, pwindow, Inf, dprimary, dprimary_args, ...
       )
     }
@@ -137,6 +137,6 @@ dprimarycensoreddist <- function(
   }
 }
 
-#' @rdname dprimarycensoreddist
+#' @rdname dprimarycensored
 #' @export
-dpcens <- dprimarycensoreddist
+dpcens <- dprimarycensored

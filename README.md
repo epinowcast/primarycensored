@@ -1,21 +1,21 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# Primary Event Censored Distributions in R and Stan <a href="https://primarycensoreddist.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensoreddist website" /></a>
+# Primary Event Censored Distributions in R and Stan <a href="https://primarycensored.epinowcast.org/"><img src="man/figures/logo.png" align="right" height="139" alt="primarycensored website" /></a>
 
 <!-- badges: start -->
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
-[![R-CMD-check](https://github.com/epinowcast/primarycensoreddist/workflows/R-CMD-check/badge.svg)](https://github.com/epinowcast/primarycensoreddist/actions/workflows/R-CMD-check.yaml)
+[![R-CMD-check](https://github.com/epinowcast/primarycensored/workflows/R-CMD-check/badge.svg)](https://github.com/epinowcast/primarycensored/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
-coverage](https://codecov.io/gh/epinowcast/primarycensoreddist/branch/main/graph/badge.svg)](https://app.codecov.io/gh/epinowcast/primarycensoreddist)
+coverage](https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/badge.svg)](https://app.codecov.io/gh/epinowcast/primarycensored)
 
-[![Universe](https://epinowcast.r-universe.dev/badges/primarycensoreddist)](https://epinowcast.r-universe.dev/primarycensoreddist)
+[![Universe](https://epinowcast.r-universe.dev/badges/primarycensored)](https://epinowcast.r-universe.dev/primarycensored)
 [![MIT
-license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensoreddist/blob/master/LICENSE.md/)
+license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/)
 [![GitHub
-contributors](https://img.shields.io/github/contributors/epinowcast/primarycensoreddist)](https://github.com/epinowcast/primarycensoreddist/graphs/contributors)
+contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
 
 [![DOI](https://zenodo.org/badge/845633278.svg)](https://zenodo.org/doi/10.5281/zenodo.13632838)
 <!-- badges: end -->
@@ -42,7 +42,7 @@ function, though you need to point to `r-universe` instead of CRAN:
 
 ``` r
 install.packages(
-  "primarycensoreddist",
+  "primarycensored",
   repos = "https://epinowcast.r-universe.dev"
 )
 ```
@@ -54,18 +54,18 @@ bugs):
 
 ``` r
 remotes::install_github(
-  "epinowcast/primarycensoreddist",
+  "epinowcast/primarycensored",
   dependencies = TRUE
 )
 ```
 
 Similarly, you can install historical versions by specifying the release
 tag (e.g. this installs
-[`0.2.0`](https://github.com/epinowcast/primarycensoreddist/releases/tag/v0.2.0)):
+[`0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
 
 ``` r
 remotes::install_github(
-  "epinowcast/primarycensoreddist",
+  "epinowcast/primarycensored",
   dependencies = TRUE, ref = "v0.2.0"
 )
 ```
@@ -93,7 +93,7 @@ vignette](https://package.epinowcast.org/articles/stan-help.html#toolchain),
 but the brief version is:
 
 ``` r
-# if you not yet installed `primarycensoreddist`, or you installed it without
+# if you not yet installed `primarycensored`, or you installed it without
 # `Suggests` dependencies
 install.packages(
   "cmdstanr",
@@ -120,12 +120,12 @@ spaces to ask (and answer!) questions:
 Package Website
 </summary>
 
-The [`primarycensoreddist`
-website](https://primarycensoreddist.epinowcast.org/) includes a
+The [`primarycensored`
+website](https://primarycensored.epinowcast.org/) includes a
 function reference, model outline, and case studies using the package.
 The site mainly concerns the release version, but you can also find
 documentation for [the latest development
-version](https://primarycensoreddist.epinowcast.org/dev/).
+version](https://primarycensored.epinowcast.org/dev/).
 
 </details>
 <details>
@@ -134,8 +134,8 @@ Vignettes
 </summary>
 
 We have created [package
-vignettes](https://primarycensoreddist.epinowcast.org/articles) to help
-you get started with primarycensoreddist and to highlight other features
+vignettes](https://primarycensored.epinowcast.org/articles) to help
+you get started with primarycensored and to highlight other features
 with case studies.
 
 </details>
@@ -161,7 +161,7 @@ and [considering new methods and
 tools](https://community.epinowcast.org/c/projects/11), among others. If
 you are generally interested in real-time analysis of infectious
 disease, you may find this useful even if you do not use
-`primarycensoreddist`.
+`primarycensored`.
 
 </details>
 
@@ -169,15 +169,15 @@ disease, you may find this useful even if you do not use
 
 We welcome contributions and new contributors! We particularly
 appreciate help on [identifying and identified
-issues](https://github.com/epinowcast/primarycensoreddist/issues).
+issues](https://github.com/epinowcast/primarycensored/issues).
 Please check and add to the issues, and/or add a [pull
-request](https://github.com/epinowcast/primarycensoreddist/pulls) and
+request](https://github.com/epinowcast/primarycensored/pulls) and
 see our [contributing
 guide](https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md)
 for more information.
 
 If you need a different underlying model for your work:
-`primarycensoreddist` provides a flexible framework for censored
+`primarycensored` provides a flexible framework for censored
 distributions in both R and Stan. If you implement new distributions or
 censoring mechanisms that expand the overall flexibility or improve the
 defaults, please let us know either here or on the [community
@@ -187,17 +187,17 @@ new use-cases and extensions to the package.
 ### How to make a bug report or feature request
 
 Please briefly describe your problem and what output you expect in an
-[issue](https://github.com/epinowcast/primarycensoreddist/issues). If
+[issue](https://github.com/epinowcast/primarycensored/issues). If
 you have a question, please don’t open an issue. Instead, ask on our [Q
 and A
-page](https://github.com/epinowcast/primarycensoreddist/discussions/categories/q-a).
+page](https://github.com/epinowcast/primarycensored/discussions/categories/q-a).
 See our [contributing
 guide](https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md)
 for more information.
 
 ### Code of Conduct
 
-Please note that the `primarycensoreddist` project is released with a
+Please note that the `primarycensored` project is released with a
 [Contributor Code of
 Conduct](https://github.com/epinowcast/.github/blob/main/CODE_OF_CONDUCT.md).
 By contributing to this project, you agree to abide by its terms.
@@ -206,9 +206,9 @@ By contributing to this project, you agree to abide by its terms.
 
 If making use of our methodology or the methodology on which ours is
 based, please cite the relevant papers from our [methods
-outline](https://primarycensoreddist.epinowcast.org/articles/primarycensoreddist.html).
-If you use `primarycensoreddist` in your work, please consider citing it
-with `citation("primarycensoreddist")`.
+outline](https://primarycensored.epinowcast.org/articles/primarycensored.html).
+If you use `primarycensored` in your work, please consider citing it
+with `citation("primarycensored")`.
 
 ## Contributors
 
@@ -224,19 +224,19 @@ Contributions of any kind are welcome!
 
 ### Code
 
-<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=seabbs">seabbs</a>,
-<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=SamuelBrand1">SamuelBrand1</a>,
-<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=athowes">athowes</a>,
-<a href="https://github.com/epinowcast/primarycensoreddist/commits?author=sbfnk">sbfnk</a>
+<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>
 
 ### Issue Authors
 
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
 
 ### Issue Contributors
 
-<a href="https://github.com/epinowcast/primarycensoreddist/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->

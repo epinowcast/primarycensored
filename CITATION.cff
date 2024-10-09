@@ -2,17 +2,17 @@
 # CITATION file created with {cffr} R package
 # See also: https://docs.ropensci.org/cffr/
 # --------------------------------------------
- 
+
 cff-version: 1.2.0
-message: 'To cite package "primarycensoreddist" in publications use:'
+message: 'To cite package "primarycensored" in publications use:'
 type: software
 license: MIT
-title: 'primarycensoreddist: Primary Event Censored Distributions in R and Stan'
+title: 'primarycensored: Primary Event Censored Distributions in R and Stan'
 version: 0.1.0.1000
 doi: 10.5281/zenodo.13632839
 identifiers:
 - type: url
-  value: https://github.com/epinowcast/primarycensoreddist/
+  value: https://github.com/epinowcast/primarycensored/
 abstract: This package provides both R functions for working with primary event censored
   distributions and Stan implementations for use in Bayesian modeling. Primary event
   censored distributions are useful for modeling delayed reporting scenarios in epidemiology
@@ -25,15 +25,15 @@ authors:
   orcid: https://orcid.org/0000-0001-8057-8037
 preferred-citation:
   type: manual
-  title: 'primarycensoreddist: Primary Event Censored Distributions in R and Stan'
+  title: 'primarycensored: Primary Event Censored Distributions in R and Stan'
   authors:
   - name: Sam Abbott
     email: contact@samabbott.co.uk
     orcid: https://orcid.org/0000-0001-8057-8037
   year: '2024'
   doi: 10.5281/zenodo.13632839
-repository-code: https://github.com/epinowcast/primarycensoreddist/issues/
-url: https://primarycensoreddist.epinowcast.org
+repository-code: https://github.com/epinowcast/primarycensored/issues/
+url: https://primarycensored.epinowcast.org
 contact:
 - name: Sam Abbott
   email: contact@samabbott.co.uk
@@ -195,4 +195,3 @@ references:
     orcid: https://orcid.org/0000-0002-7840-692X
   year: '2024'
   doi: 10.32614/CRAN.package.usethis
-

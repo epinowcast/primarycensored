@@ -4,17 +4,14 @@
 \alias{pcd_stan_files}
 \title{Get Stan files containing specified functions}
 \usage{
-pcd_stan_files(
-  functions = NULL,
-  stan_path = primarycensoreddist::pcd_stan_path()
-)
+pcd_stan_files(functions = NULL, stan_path = primarycensored::pcd_stan_path())
 }
 \arguments{
 \item{functions}{Character vector of function names to search for. If NULL,
 all Stan files are returned.}
 
 \item{stan_path}{Character string specifying the path to the directory
-containing Stan files. Defaults to the Stan path of the primarycensoreddist
+containing Stan files. Defaults to the Stan path of the primarycensored
 package.}
 }
 \value{

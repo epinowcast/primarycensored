@@ -273,6 +273,6 @@ Which was also found by Cori _et al_ [@cori2013new].
 # Learning more
 
 - For more mathematical background on the analytic solutions see the `vignette("why-it-works")`.
-- For a more introductory explanation of the primary event censored distribution see the `vignette("primarycensoreddist")`.
+- For a more introductory explanation of the primary event censored distribution see the `vignette("primarycensored")`.
 
 # References

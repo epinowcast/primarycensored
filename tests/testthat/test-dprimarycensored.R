@@ -1,4 +1,4 @@
-test_that("dprimarycensoreddist sums to 1 for discrete values", {
+test_that("dprimarycensored sums to 1 for discrete values", {
   pwindow <- 1
   D <- 10
   pmf <- dpcens(
@@ -8,7 +8,7 @@ test_that("dprimarycensoreddist sums to 1 for discrete values", {
   expect_equal(sum(pmf), 1, tolerance = 1e-6)
 })
 
-test_that("dprimarycensoreddist handles log probabilities", {
+test_that("dprimarycensored handles log probabilities", {
   pwindow <- 1
   D <- 10
   pmf <- dpcens(
@@ -22,7 +22,7 @@ test_that("dprimarycensoreddist handles log probabilities", {
   expect_equal(exp(log_pmf), pmf, tolerance = 1e-6)
 })
 
-test_that("dprimarycensoreddist handles non-finite D", {
+test_that("dprimarycensored handles non-finite D", {
   pwindow <- 1
   D <- Inf
   pmf <- dpcens(
@@ -33,7 +33,7 @@ test_that("dprimarycensoreddist handles non-finite D", {
   expect_equal(sum(pmf), 1, tolerance = 0.01)
 })
 
-test_that("dprimarycensoreddist matches difference of pprimarycensoreddist", {
+test_that("dprimarycensored matches difference of pprimarycensored", {
   x <- c(1, 2, 3)
   pwindow <- 5
   swindow <- 0.5
@@ -58,7 +58,7 @@ test_that("dprimarycensoreddist matches difference of pprimarycensoreddist", {
 })
 
 test_that(
-  "dprimarycensoreddist throws an error for invalid upper truncation point",
+  "dprimarycensored throws an error for invalid upper truncation point",
   {
     d <- 10
     pwindow <- 1
@@ -75,7 +75,7 @@ test_that(
   }
 )
 
-test_that("dprimarycensoreddist returns 0 for negative d", {
+test_that("dprimarycensored returns 0 for negative d", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5

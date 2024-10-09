@@ -3,7 +3,7 @@
 #' This function tests whether a given function behaves like a valid CDF by
 #' checking if it's monotonically increasing and bounded between 0 and 1.
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pprimarycensored
 #' @return NULL. The function will stop execution with an error message if
 #'         pdist is not a valid CDF.
 #' @export
@@ -40,7 +40,7 @@ check_pdist <- function(pdist, D, ...) {
 #' checking if it integrates to approximately 1 over the specified range
 #' and if it takes the arguments min and max.
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pprimarycensored
 #' @param tolerance The tolerance for the integral to be considered close to 1
 #'
 #' @return NULL. The function will stop execution with an error message if

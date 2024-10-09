@@ -1,19 +1,20 @@
 functions {
-  #include primary_censored_dist.stan
-  #include primary_censored_dist_analytical_cdf.stan
+  #include primarycensored.stan
+  #include primarycensored_ode.stan
+  #include primarycensored_analytical_cdf.stan
   #include expgrowth.stan
 
   real partial_sum(array[] int dummy, int start, int end,
                    array[] int d, array[] int d_upper, array[] int n,
                    array[] int pwindow, array[] int D,
                    int dist_id, array[] real params,
-                   int primary_dist_id, array[] real primary_params) {
+                   int primary_id, array[] real primary_params) {
     real partial_target = 0;
     for (i in start:end) {
-      partial_target += n[i] * primary_censored_dist_lpmf(
+      partial_target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, params,
         pwindow[i], d_upper[i], D[i],
-        primary_dist_id, primary_params
+        primary_id, primary_params
       );
     }
     return partial_target;
@@ -28,7 +29,7 @@ data {
   array[N] int<lower=0> pwindow; // primary censoring window
   array[N] int<lower=0> D; // maximum delay
   int<lower=1, upper=17> dist_id; // distribution identifier
-  int<lower=1, upper=2> primary_dist_id; // primary distribution identifier
+  int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters
   int<lower=0, upper=1> compute_log_lik; // whether to compute log likelihood
@@ -71,13 +72,13 @@ model {
   if (use_reduce_sum) {
     target += reduce_sum(partial_sum, indexes, 1, d,
                          d_upper, n, pwindow, D, dist_id, to_array_1d(params),
-                         primary_dist_id, to_array_1d(primary_params));
+                         primary_id, to_array_1d(primary_params));
   } else {
     for (i in 1:N) {
-      target += n[i] * primary_censored_dist_lpmf(
+      target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, to_array_1d(params),
         pwindow[i], d_upper[i], D[i],
-        primary_dist_id, to_array_1d(primary_params)
+        primary_id, to_array_1d(primary_params)
       );
     }
   }
@@ -87,10 +88,10 @@ generated quantities {
   vector[compute_log_lik ? N : 0] log_lik;
   if (compute_log_lik) {
     for (i in 1:N) {
-      log_lik[i] = primary_censored_dist_lpmf(
+      log_lik[i] = primarycensored_lpmf(
         d[i] | dist_id, to_array_1d(params),
         pwindow[i], d_upper[i], D[i],
-        primary_dist_id, to_array_1d(primary_params)
+        primary_id, to_array_1d(primary_params)
       );
     }
   }

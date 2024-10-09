@@ -59,7 +59,7 @@ An object of class "fitdist" as returned by fitdistrplus::fitdist.
 }
 \description{
 This function wraps the custom approach for fitting distributions to doubly
-censored data using fitdistrplus and primarycensoreddist.
+censored data using fitdistrplus and primarycensored.
 }
 \details{
 This function temporarily assigns and then removes functions from the global
@@ -76,7 +76,7 @@ true_sd <- 2
 pwindow <- 2
 swindow <- 2
 D <- 10
-samples <- rprimarycensoreddist(
+samples <- rprimarycensored(
   n, rnorm,
   mean = true_mean, sd = true_sd,
   pwindow = pwindow, swindow = swindow, D = D

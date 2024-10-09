@@ -1,13 +1,13 @@
 #' S3 class for primary event censored distribution computation
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pprimarycensored
 #'
-#' @return An object of class primary_censored_cdf
+#' @return An object of class pcens_{pdist_name}_{dprimary_name}
 #'
-#' @family primary_censored_dist
+#' @family pcens
 #'
 #' @export
-new_primary_censored_dist <- function(
+new_pcens <- function(
     pdist, dprimary, dprimary_args,
     pdist_name = NULL,
     dprimary_name = NULL, ...) {
@@ -37,10 +37,10 @@ new_primary_censored_dist <- function(
 
 #' Compute primary event censored CDF
 #'
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pprimarycensored
 #'
-#' @param object A `primary_censored_dist` object as created by
-#' [new_primary_censored_dist()].
+#' @param object A `primarycensored` object as created by
+#' [new_pcens()].
 #'
 #' @param use_numeric Logical, if TRUE forces use of numeric integration
 #' even for distributions with analytical solutions. This is primarily
@@ -49,12 +49,12 @@ new_primary_censored_dist <- function(
 #'
 #' @return Vector of primary event censored CDFs
 #'
-#' @family primary_censored_dist
+#' @family pcens
 #'
 #' @export
-primary_censored_cdf <- function(
+pcens_cdf <- function(
     object, q, pwindow, use_numeric = FALSE) {
-  UseMethod("primary_censored_cdf")
+  UseMethod("pcens_cdf")
 }
 
 #' Default method for computing primary event censored CDF
@@ -63,22 +63,22 @@ primary_censored_cdf <- function(
 #' event distributions that don't have specific implementations. It uses
 #' the numeric integration method.
 #'
-#' @inheritParams primary_censored_cdf
-#' @inheritParams pprimarycensoreddist
+#' @inheritParams pcens_cdf
+#' @inheritParams pprimarycensored
 #'
 #' @details
 #' This method implements the numerical integration approach for computing
 #' the primary event censored CDF. It uses the same mathematical formulation
-#' as described in the details section of [pprimarycensoreddist()], but
+#' as described in the details section of [pprimarycensored()], but
 #' applies numerical integration instead of analytical solutions.
 #'
-#' @seealso [pprimarycensoreddist()] for the mathematical details of the
+#' @seealso [pprimarycensored()] for the mathematical details of the
 #' primary event censored CDF computation.
 #'
-#' @family primary_censored_dist
+#' @family pcens
 #'
 #' @export
-primary_censored_cdf.default <- function(
+pcens_cdf.default <- function(
     object, q, pwindow, use_numeric = FALSE) {
   result <- vapply(q, function(d) {
     if (d <= 0) {
@@ -105,16 +105,16 @@ primary_censored_cdf.default <- function(
 
 #' Method for Gamma delay with uniform primary
 #'
-#' @inheritParams primary_censored_cdf
+#' @inheritParams pcens_cdf
 #'
-#' @family primary_censored_dist
+#' @family pcens
 #'
 #' @export
-primary_censored_cdf.pcens_pgamma_dunif <- function(
+pcens_cdf.pcens_pgamma_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
   # Extract Gamma distribution parameters
@@ -178,16 +178,16 @@ primary_censored_cdf.pcens_pgamma_dunif <- function(
 
 #' Method for Log-Normal delay with uniform primary
 #'
-#' @inheritParams primary_censored_cdf
+#' @inheritParams pcens_cdf
 #'
-#' @family primary_censored_dist
+#' @family pcens
 #'
 #' @export
-primary_censored_cdf.pcens_plnorm_dunif <- function(
+pcens_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
@@ -250,22 +250,22 @@ primary_censored_cdf.pcens_plnorm_dunif <- function(
 
 #' Method for Weibull delay with uniform primary
 #'
-#' @inheritParams primary_censored_cdf
+#' @inheritParams pcens_cdf
 #'
-#' @family primary_censored_dist
+#' @family pcens
 #'
 #' @export
-primary_censored_cdf.pcens_pweibull_dunif <- function(
+pcens_cdf.pcens_pweibull_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(
-      primary_censored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
   if (pwindow > 3) {
     return(
-      primary_censored_cdf.default(object, q, pwindow, use_numeric)
+      pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 

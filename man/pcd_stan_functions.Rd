@@ -4,11 +4,11 @@
 \alias{pcd_stan_functions}
 \title{Get Stan function names from Stan files}
 \usage{
-pcd_stan_functions(stan_path = primarycensoreddist::pcd_stan_path())
+pcd_stan_functions(stan_path = primarycensored::pcd_stan_path())
 }
 \arguments{
 \item{stan_path}{Character string specifying the path to the directory
-containing Stan files. Defaults to the Stan path of the primarycensoreddist
+containing Stan files. Defaults to the Stan path of the primarycensored
 package.}
 }
 \value{

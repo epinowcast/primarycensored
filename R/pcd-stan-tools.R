@@ -6,7 +6,7 @@
 #'
 #' @export
 pcd_stan_path <- function() {
-  system.file("stan", "functions", package = "primarycensoreddist")
+  system.file("stan", "functions", package = "primarycensored")
 }
 
 #' Count the number of unmatched braces in a line
@@ -84,7 +84,7 @@ pcd_stan_path <- function() {
 #' the names of all functions defined in those files.
 #'
 #' @param stan_path Character string specifying the path to the directory
-#' containing Stan files. Defaults to the Stan path of the primarycensoreddist
+#' containing Stan files. Defaults to the Stan path of the primarycensored
 #' package.
 #'
 #' @return A character vector containing unique names of all functions found in
@@ -94,7 +94,7 @@ pcd_stan_path <- function() {
 #'
 #' @family stantools
 pcd_stan_functions <- function(
-    stan_path = primarycensoreddist::pcd_stan_path()) {
+    stan_path = primarycensored::pcd_stan_path()) {
   stan_files <- list.files(
     stan_path,
     pattern = "\\.stan$", full.names = TRUE,
@@ -126,7 +126,7 @@ pcd_stan_functions <- function(
 #' @family stantools
 pcd_stan_files <- function(
     functions = NULL,
-    stan_path = primarycensoreddist::pcd_stan_path()) {
+    stan_path = primarycensored::pcd_stan_path()) {
   # List all Stan files in the directory
   all_files <- list.files(
     stan_path,
@@ -164,7 +164,7 @@ pcd_stan_files <- function(
 #' functions.
 #'
 #' @param stan_path Character string, the path to the Stan code. Defaults to the
-#' path to the Stan code in the primarycensoreddist package.
+#' path to the Stan code in the primarycensored package.
 #'
 #' @param wrap_in_block Logical, whether to wrap the functions in a
 #' `functions{}` block. Default is FALSE.
@@ -181,7 +181,7 @@ pcd_stan_files <- function(
 #'
 #' @export
 pcd_load_stan_functions <- function(
-    functions = NULL, stan_path = primarycensoreddist::pcd_stan_path(),
+    functions = NULL, stan_path = primarycensored::pcd_stan_path(),
     wrap_in_block = FALSE, write_to_file = FALSE,
     output_file = "pcd_functions.stan") {
   stan_files <- list.files(
@@ -209,8 +209,8 @@ pcd_load_stan_functions <- function(
 
   # Add version comment
   version_comment <- paste(
-    "// Stan functions from primarycensoreddist version",
-    utils::packageVersion("primarycensoreddist")
+    "// Stan functions from primarycensored version",
+    utils::packageVersion("primarycensored")
   )
   all_content <- c(version_comment, all_content)
 

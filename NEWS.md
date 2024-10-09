@@ -1,6 +1,6 @@
-# primarycensoreddist 0.5.0.1000
+# primarycensored 0.5.0.1000
 
-This is the development version of `primarycensoreddist` and is not yet ready for release.
+This is the development version of `primarycensored` and is not yet ready for release.
 
 ## Package
 
@@ -9,6 +9,7 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 * `pcd_as_cmdstan_data()` has been renamed to `pcd_as_stan_data()` to better reflect that it is used for `Stan` models in general rather than just the `CmdStan` models.
 * The stan code has been refactored into a folder of functions within the current `stan` folder and the `stan` model has been moved into the `stan` folder. All paths to the stan code have been updated to reflect this.
 * Added R and stan implementations of the primary censored cdf for the weibull distribution with uniform primary censoring.
+* The package has been renamed to `primarycensored` as have all functions that use "dist" in their name.
 
 ## Documentation
 
@@ -18,7 +19,7 @@ This is the development version of `primarycensoreddist` and is not yet ready fo
 * Fixed error in "Analytic solutions" vignette where the Weibull density was not being treated as zero for negative delays.
 * Split "Why it works" vignette into two separate vignettes, "Why it works" and "Analytic solutions for censored delay distributions".
 
-# primarycensoreddist 0.5.0
+# primarycensored 0.5.0
 
 This release adds a new `{touchstone}` based benchmark suite to the package. It also adds a new "How it works" vignette which aims to give the reader more details into how the primary censored distributions work.
 
@@ -28,41 +29,41 @@ As part of the "How it works" we (@SamuelBrand1) found analytical solutions for 
 
 * Add `{touchstone}` based benchmarks for benchmarking R utility functions, and fitting the `stan` and `fitdistplus` models.
 * Added a "How it works" vignette.
-* Added R infrastructure for analytical solutions via the `primary_censored_dist` S3 class.
+* Added R infrastructure for analytical solutions via the `primarycensored` S3 class.
 * Added Weibull analytical solution to "How it works" vignette.
 * Added analytical solutions for the gamma and lognormal distributions with uniform primary censoring to both the `R` and `stan` code.
 * Added numerical protection to ensure that CDFs for delays greater than the maximum truncation are exactly 1.
 
-# primarycensoreddist 0.4.0
+# primarycensored 0.4.0
 
-In this release, we have added a new package `stan` model for fitting distributions using the `cmdstanr` package. We have also added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package. As well as these functionality improvements this release focuses on improving the stability of the `stan` model and improving the speed of the `primary_censored_ode` function.
+In this release, we have added a new package `stan` model for fitting distributions using the `cmdstanr` package. We have also added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package. As well as these functionality improvements this release focuses on improving the stability of the `stan` model and improving the speed of the `primarycensored_ode` function.
 
 ## Package
 
 * Added a new function `fitdistdoublecens()` to allow for fitting of double censored and truncated data using the `fitdistrplus` package.
-* Added low level tests for the Stan `primary_censored_ode` function.
+* Added low level tests for the Stan `primarycensored_ode` function.
 * Rephrased the stan code to use a ODE solver rather than a numerical integration method. This allows for much faster and more stable computation of the likelihood
 * Added a `CmdStan` model for fitting distributions using the `cmdstanr` package.
 * Added helpers functions for working with the new `CmdStan` model and added an example to the vignette.
-* Added parameter recovery tests for the new `CmdStan` model which tests the `primary_censored_dist_lpmf` function when used with NUTS based fitting.
+* Added parameter recovery tests for the new `CmdStan` model which tests the `primarycensored_lpmf` function when used with NUTS based fitting.
 
-# primarycensoreddist 0.3.0
+# primarycensored 0.3.0
 
-This release fixes and improves truncation handling across the code base. It also adds a new vignette showcasing how to use the `primarycensoreddist` and `fitdistrplus` packages together to fit distributions.
+This release fixes and improves truncation handling across the code base. It also adds a new vignette showcasing how to use the `primarycensored` and `fitdistrplus` packages together to fit distributions.
 
 ## Package
 
 * Updated the approach to truncation to be outside the primary censored distribution integral.
 * Improved tests that compare random sampling and probability mass/density functions between R and Stan.
 * Improved cross-testing between R and Stan implementations of the primary censored distributions.
-* Worked on improving the stability of the `primary_censored_dist_lpmf` when used for NUTS based fitting (i.e. in Stan).
+* Worked on improving the stability of the `primarycensored_lpmf` when used for NUTS based fitting (i.e. in Stan).
 
 ## Documentation
 
 * @athowes improved the getting started vignette by catching a few grammar errors and simplifying language.
-* Added a new vignette showcasing how to use the `primarycensoreddist` and `fitdistrplus` packages together to fit distributions.
+* Added a new vignette showcasing how to use the `primarycensored` and `fitdistrplus` packages together to fit distributions.
 
-# primarycensoreddist 0.2.0
+# primarycensored 0.2.0
 
 This release puts in place initial documentation and vignettes. It also includes a new primary censored distribution interface to allow for non-secondary event censored distributions. Development of this release as identified some numerical issues in the
 gradient evaluations for the primary censored distributions which may lead to breaking
@@ -70,8 +71,8 @@ interface changes in `0.3.0` for the Stan code.
 
 ## Package
 
-* Added support for `swindow = 0` to `rprimarycensoreddist` to allow for non-secondary event censored distributions.
-* Adapted `rprimarycensoreddist` so that truncation is based on the primary censored distribution before secondary events are censored. This better matches the generative process.
+* Added support for `swindow = 0` to `rprimarycensored` to allow for non-secondary event censored distributions.
+* Adapted `rprimarycensored` so that truncation is based on the primary censored distribution before secondary events are censored. This better matches the generative process.
 * Added a new Stan interface tool to enable finding which files functions are implemented in the Stan code.
 
 ## Documentation
@@ -80,9 +81,9 @@ interface changes in `0.3.0` for the Stan code.
 * Added a vignette showcasing how to use the package Stan code with `cmdstanr`.
 * Added a vignette showcasing how to fit distributions using the `cmdstanr` package.
 
-# primarycensoreddist 0.1.0
+# primarycensored 0.1.0
 
-This is the initial `primarycensoreddist` release and includes R and stan tools for dealing with potentially truncated primary event censored delay distributions. We expect all current features to work but the UI may change as the package matures over the next few versions.
+This is the initial `primarycensored` release and includes R and stan tools for dealing with potentially truncated primary event censored delay distributions. We expect all current features to work but the UI may change as the package matures over the next few versions.
 
 ## Package
 
