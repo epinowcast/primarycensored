@@ -140,8 +140,9 @@ real primary_censored_lognormal_uniform_lcdf(data real d, real q, array[] real p
   * @return Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k)
   */
 real log_weibull_g(real t, real shape, real scale) {
-  real x = pow(t / scale, shape);
-  return log(gamma_p(1 + inv(shape), x));
+  real x = pow(t * inv(scale), shape);
+  real a = 1 + inv(shape);
+  return log(gamma_p(a, x)) + lgamma(a);
 }
 
 /**
