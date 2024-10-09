@@ -112,6 +112,10 @@ Functions</h2></td></tr>
 <tr class="separator:a741b0d1e3a200e17c7dc6ec171f47172"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22c620ef4bcb88ded090cbbd1201862d" id="r_a22c620ef4bcb88ded090cbbd1201862d"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist__analytical__cdf_8stan.html#a22c620ef4bcb88ded090cbbd1201862d">primary_censored_lognormal_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
 <tr class="separator:a22c620ef4bcb88ded090cbbd1201862d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2cc78a10c9ffbc81af20655c206acfc4" id="r_a2cc78a10c9ffbc81af20655c206acfc4"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist__analytical__cdf_8stan.html#a2cc78a10c9ffbc81af20655c206acfc4">log_weibull_g</a> (real t, real shape, real scale)</td></tr>
+<tr class="separator:a2cc78a10c9ffbc81af20655c206acfc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:addf4bd455d4fe509c91c9a59b52a781d" id="r_addf4bd455d4fe509c91c9a59b52a781d"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist__analytical__cdf_8stan.html#addf4bd455d4fe509c91c9a59b52a781d">primary_censored_weibull_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
+<tr class="separator:addf4bd455d4fe509c91c9a59b52a781d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6139330762d1a3170f3c89df5443b5f7" id="r_a6139330762d1a3170f3c89df5443b5f7"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist__analytical__cdf_8stan.html#a6139330762d1a3170f3c89df5443b5f7">primary_censored_dist_analytical_lcdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</td></tr>
 <tr class="separator:a6139330762d1a3170f3c89df5443b5f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a547a182bb4658716bb0f0e545c803fc1" id="r_a547a182bb4658716bb0f0e545c803fc1"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="primary__censored__dist__analytical__cdf_8stan.html#a547a182bb4658716bb0f0e545c803fc1">primary_censored_dist_analytical_cdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_dist_id, array[] real primary_params)</td></tr>
@@ -154,6 +158,53 @@ Functions</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd>1 if an analytical solution exists, 0 otherwise </dd></dl>
 
 <p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00010">10</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
+
+</div>
+</div>
+<a id="a2cc78a10c9ffbc81af20655c206acfc4" name="a2cc78a10c9ffbc81af20655c206acfc4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2cc78a10c9ffbc81af20655c206acfc4">&#9670;&#160;</a></span>log_weibull_g()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real log_weibull_g </td>
+          <td>(</td>
+          <td class="paramtype">real&#160;</td>
+          <td class="paramname"><em>t</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real&#160;</td>
+          <td class="paramname"><em>shape</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real&#160;</td>
+          <td class="paramname"><em>scale</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Compute the log of the lower incomplete gamma function</p>
+<p>This function is used in the analytical solution for the primary censored Weibull distribution with uniform primary censoring. It corresponds to the g(t; λ, k) function described in the analytic solutions document.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">t</td><td>Upper bound of integration </td></tr>
+    <tr><td class="paramname">shape</td><td>Shape parameter (k) of the Weibull distribution </td></tr>
+    <tr><td class="paramname">scale</td><td>Scale parameter (λ) of the Weibull distribution</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k) </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00142">142</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
 
 </div>
 </div>
@@ -227,7 +278,7 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Primary event censored CDF, normalized by D if finite (truncation adjustment) </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00189">189</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00266">266</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
 
 </div>
 </div>
@@ -301,7 +352,7 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Primary event censored log CDF, normalized by D if finite (truncation adjustment) </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00141">141</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00215">215</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
 
 </div>
 </div>
@@ -354,7 +405,7 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Log of the primary event censored CDF for Gamma delay with Uniform primary </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00027">27</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00028">28</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
 
 </div>
 </div>
@@ -407,7 +458,60 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Log of the primary event censored CDF for Lognormal delay with Uniform primary </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00082">82</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00083">83</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
+
+</div>
+</div>
+<a id="addf4bd455d4fe509c91c9a59b52a781d" name="addf4bd455d4fe509c91c9a59b52a781d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#addf4bd455d4fe509c91c9a59b52a781d">&#9670;&#160;</a></span>primary_censored_weibull_uniform_lcdf()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real primary_censored_weibull_uniform_lcdf </td>
+          <td>(</td>
+          <td class="paramtype">data real&#160;</td>
+          <td class="paramname"><em>d</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real&#160;</td>
+          <td class="paramname"><em>q</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">array[]real&#160;</td>
+          <td class="paramname"><em>params</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">data real&#160;</td>
+          <td class="paramname"><em>pwindow</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Compute the primary event censored log CDF analytically for Weibull delay with Uniform primary</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">d</td><td>Delay time </td></tr>
+    <tr><td class="paramname">q</td><td>Lower bound of integration (max(d - pwindow, 0)) </td></tr>
+    <tr><td class="paramname">params</td><td>Array of Weibull distribution parameters [shape, scale] </td></tr>
+    <tr><td class="paramname">pwindow</td><td>Primary event window</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Log of the primary event censored CDF for Weibull delay with Uniform primary </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html#l00159">159</a> of file <a class="el" href="primary__censored__dist__analytical__cdf_8stan_source.html">primary_censored_dist_analytical_cdf.stan</a>.</p>
 
 </div>
 </div>
