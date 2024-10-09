@@ -10,7 +10,7 @@ test_that("Stan primarycensored_ode produces expected output", {
   y <- 0.5
   theta <- c(1.0, 0.5) # Example parameters for lognormal distribution
   x_r <- c(5.0, 1.0) # d and pwindow
-  # dist_id, primray_id, dist_params_len, primary_params_len
+  # dist_id, primary_id, dist_params_len, primary_params_len
   x_i <- c(1, 1, 2, 0)
 
   result <- primarycensored_ode(t, y, theta, x_r, x_i)
@@ -25,7 +25,7 @@ test_that("Stan primarycensored_ode produces expected output", {
 test_that("Stan primarycensored_ode handles edge cases", {
   theta <- c(1.0, 0.5) # Example parameters for lognormal distribution
   x_r <- c(1.0, 1.0) # d and pwindow
-  # dist_id, primray_id, dist_params_len, primary_params_len
+  # dist_id, primary_id, dist_params_len, primary_params_len
   x_i <- c(1, 1, 2, 0)
 
   result_near_zero <- primarycensored_ode(1e-10, 1e-10, theta, x_r, x_i)
@@ -45,7 +45,7 @@ test_that("Stan primarycensored_ode handles edge cases", {
 test_that("Stan primarycensored_ode is continuous", {
   theta <- c(1.5, 0.75) # Example parameters for lognormal distribution
   x_r <- c(5.0, 5.0) # d and pwindow
-  # dist_id, primray_id, dist_params_len, primary_params_len
+  # dist_id, primary_id, dist_params_len, primary_params_len
   x_i <- c(1, 1, 2, 0)
 
   t_values <- seq(0.1, 4.9, by = 0.1)
@@ -94,7 +94,7 @@ test_that("Stan primarycensored_ode handles extreme parameter values", {
   t <- 4.5
   y <- 0.5
   x_r <- c(5.0, 1.0) # d and pwindow
-  # dist_id, primray_id, dist_params_len, primary_params_len
+  # dist_id, primary_id, dist_params_len, primary_params_len
   x_i <- c(1, 1, 2, 0)
   # Test with very small scale parameter
   theta_small_scale <- c(1.0, 1e-10)

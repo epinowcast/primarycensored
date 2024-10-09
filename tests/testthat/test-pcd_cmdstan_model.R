@@ -67,7 +67,7 @@ test_that("pcd_cmdstan_model recovers true values for simple lognormal data", {
   stan_data <- pcd_as_stan_data(
     delay_counts,
     dist_id = 1, # Lognormal
-    primray_id = 1, # Uniform
+    primary_id = 1, # Uniform
     param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
     primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
     priors = list(location = c(0, 1), scale = c(1, 1)),
@@ -142,7 +142,7 @@ test_that(
     stan_data <- pcd_as_stan_data(
       delay_counts,
       dist_id = 2, # Gamma
-      primray_id = 2, # Exponential growth
+      primary_id = 2, # Exponential growth
       param_bounds = list(lower = c(0, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = 0, upper = Inf),
       priors = list(location = c(2, 1), scale = c(0.5, 0.5)),
@@ -221,7 +221,7 @@ test_that(
     stan_data <- pcd_as_stan_data(
       delay_counts,
       dist_id = 1, # Lognormal
-      primray_id = 1, # Uniform
+      primary_id = 1, # Uniform
       param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 0.5), scale = c(1, 1)),
@@ -302,7 +302,7 @@ test_that(
     stan_data <- pcd_as_stan_data(
       delay_counts,
       dist_id = 1, # Lognormal
-      primray_id = 1, # Uniform
+      primary_id = 1, # Uniform
       param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(0, 1), scale = c(1, 1)),

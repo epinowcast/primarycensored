@@ -48,7 +48,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * Compute the log PDF of the primary distribution
   *
   * @param x Value
-  * @param primray_id Primary distribution identifier
+  * @param primary_id Primary distribution identifier
   * @param params Distribution parameters
   * @param min Minimum value
   * @param max Maximum value
@@ -58,17 +58,17 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * @code
   * // Example: Uniform distribution
   * real x = 0.5;
-  * int primray_id = 1; // Uniform
+  * int primary_id = 1; // Uniform
   * array[0] real params = {}; // No additional parameters for uniform
   * real min = 0;
   * real max = 1;
-  * real log_pdf = primray_lpdf(x, primray_id, params, min, max);
+  * real log_pdf = primray_lpdf(x, primary_id, params, min, max);
   * @endcode
   */
-real primray_lpdf(real x, int primray_id, array[] real params, real min, real max) {
+real primray_lpdf(real x, int primary_id, array[] real params, real min, real max) {
   // Implement switch for different primary distributions
-  if (primray_id == 1) return uniform_lpdf(x | min, max);
-  if (primray_id == 2) return expgrowth_lpdf(x | min, max, params[1]);
+  if (primary_id == 1) return uniform_lpdf(x | min, max);
+  if (primary_id == 2) return expgrowth_lpdf(x | min, max, params[1]);
   // Add more primary distributions as needed
   reject("Invalid primary distribution identifier");
 }
@@ -88,7 +88,7 @@ vector primarycensored_ode(real t, vector y, array[] real theta,
                             array[] real x_r, array[] int x_i) {
   real d = x_r[1];
   int dist_id = x_i[1];
-  int primray_id = x_i[2];
+  int primary_id = x_i[2];
   real pwindow = x_r[2];
   int dist_params_len = x_i[3];
   int primary_params_len = x_i[4];
@@ -105,7 +105,7 @@ vector primarycensored_ode(real t, vector y, array[] real theta,
   }
 
   real log_cdf = dist_lcdf(t | params, dist_id);
-  real log_primary_pdf = primray_lpdf(d - t | primray_id, primary_params, 0, pwindow);
+  real log_primary_pdf = primray_lpdf(d - t | primary_id, primary_params, 0, pwindow);
 
   return rep_vector(exp(log_cdf + log_primary_pdf), 1);
 }

@@ -8,13 +8,13 @@ functions {
                    array[] int d, array[] int d_upper, array[] int n,
                    array[] int pwindow, array[] int D,
                    int dist_id, array[] real params,
-                   int primray_id, array[] real primary_params) {
+                   int primary_id, array[] real primary_params) {
     real partial_target = 0;
     for (i in start:end) {
       partial_target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, params,
         pwindow[i], d_upper[i], D[i],
-        primray_id, primary_params
+        primary_id, primary_params
       );
     }
     return partial_target;
@@ -29,7 +29,7 @@ data {
   array[N] int<lower=0> pwindow; // primary censoring window
   array[N] int<lower=0> D; // maximum delay
   int<lower=1, upper=17> dist_id; // distribution identifier
-  int<lower=1, upper=2> primray_id; // primary distribution identifier
+  int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters
   int<lower=0, upper=1> compute_log_lik; // whether to compute log likelihood
@@ -72,13 +72,13 @@ model {
   if (use_reduce_sum) {
     target += reduce_sum(partial_sum, indexes, 1, d,
                          d_upper, n, pwindow, D, dist_id, to_array_1d(params),
-                         primray_id, to_array_1d(primary_params));
+                         primary_id, to_array_1d(primary_params));
   } else {
     for (i in 1:N) {
       target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, to_array_1d(params),
         pwindow[i], d_upper[i], D[i],
-        primray_id, to_array_1d(primary_params)
+        primary_id, to_array_1d(primary_params)
       );
     }
   }
@@ -91,7 +91,7 @@ generated quantities {
       log_lik[i] = primarycensored_lpmf(
         d[i] | dist_id, to_array_1d(params),
         pwindow[i], d_upper[i], D[i],
-        primray_id, to_array_1d(primary_params)
+        primary_id, to_array_1d(primary_params)
       );
     }
   }

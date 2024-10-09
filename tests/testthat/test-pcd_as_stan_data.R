@@ -8,7 +8,7 @@ test_that("pcd_as_stan_data correctly formats data", {
   )
 
   dist_id <- 1
-  primray_id <- 1
+  primary_id <- 1
   param_bounds <- list(lower = c(0, 0), upper = c(10, 10))
   primary_param_bounds <- list(lower = numeric(0), upper = numeric(0))
   priors <- list(location = c(1, 1), scale = c(1, 1))
@@ -18,7 +18,7 @@ test_that("pcd_as_stan_data correctly formats data", {
     result <- pcd_as_stan_data( # nolint
       data,
       dist_id = dist_id,
-      primray_id = primray_id,
+      primary_id = primary_id,
       param_bounds = param_bounds,
       primary_param_bounds = primary_param_bounds,
       priors = priors,
@@ -34,7 +34,7 @@ test_that("pcd_as_stan_data correctly formats data", {
   expect_identical(result$pwindow, data$pwindow)
   expect_identical(result$D, data$relative_obs_time)
   expect_identical(result$dist_id, dist_id)
-  expect_identical(result$primray_id, primray_id)
+  expect_identical(result$primary_id, primary_id)
   expect_identical(result$n_params, length(param_bounds$lower))
   expect_identical(result$n_primary_params, length(primary_param_bounds$lower))
   expect_identical(result$compute_log_lik, 0L)
@@ -64,7 +64,7 @@ test_that("pcd_as_stan_data handles missing columns correctly", {
     pcd_as_stan_data(
       data,
       dist_id = 1,
-      primray_id = 1,
+      primary_id = 1,
       param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 1), scale = c(1, 1)),
@@ -87,7 +87,7 @@ test_that("pcd_as_stan_data handles optional parameters correctly", {
     result <- pcd_as_stan_data( # nolint
       data,
       dist_id = 1,
-      primray_id = 1,
+      primary_id = 1,
       param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 1), scale = c(1, 1)),
@@ -119,7 +119,7 @@ test_that("pcd_as_stan_data handles custom column names correctly", {
       pwindow = "primary_window",
       relative_obs_time = "obs_time",
       dist_id = 1,
-      primray_id = 1,
+      primary_id = 1,
       param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 1), scale = c(1, 1)),

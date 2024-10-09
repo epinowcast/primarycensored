@@ -3,14 +3,14 @@
   * Check if an analytical solution exists for the given distribution combination
   *
   * @param dist_id Distribution identifier for the delay distribution
-  * @param primray_id Distribution identifier for the primary distribution
+  * @param primary_id Distribution identifier for the primary distribution
   *
   * @return 1 if an analytical solution exists, 0 otherwise
   */
-int check_for_analytical(int dist_id, int primray_id) {
-  if (dist_id == 2 && primray_id == 1) return 1; // Gamma delay with Uniform primary
-  if (dist_id == 1 && primray_id == 1) return 1; // Lognormal delay with Uniform primary
-  if (dist_id == 3 && primray_id == 1) return 1; // Weibull delay with Uniform primary
+int check_for_analytical(int dist_id, int primary_id) {
+  if (dist_id == 2 && primary_id == 1) return 1; // Gamma delay with Uniform primary
+  if (dist_id == 1 && primary_id == 1) return 1; // Lognormal delay with Uniform primary
+  if (dist_id == 3 && primary_id == 1) return 1; // Weibull delay with Uniform primary
   return 0; // No analytical solution for other combinations
 }
 
@@ -207,7 +207,7 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q, array[] real para
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param D Maximum delay (truncation point)
-  * @param primray_id Primary distribution identifier
+  * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
   * @return Primary event censored log CDF, normalized by D if finite (truncation adjustment)
@@ -215,7 +215,7 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q, array[] real para
 real primarycensored_analytical_lcdf(data real d, int dist_id,
                                            array[] real params,
                                            data real pwindow, data real D,
-                                           int primray_id,
+                                           int primary_id,
                                            array[] real primary_params) {
   real result;
   real log_cdf_D;
@@ -225,13 +225,13 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
 
   real q = max({d - pwindow, 0});
 
-  if (dist_id == 2 && primray_id == 1) {
+  if (dist_id == 2 && primary_id == 1) {
     // Gamma delay with Uniform primary
     result = primarycensored_gamma_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 1 && primray_id == 1) {
+  } else if (dist_id == 1 && primary_id == 1) {
     // Lognormal delay with Uniform primary
     result = primarycensored_lognormal_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 3 && primray_id == 1) {
+  } else if (dist_id == 3 && primary_id == 1) {
     // Weibull delay with Uniform primary
     result = primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
   } else {
@@ -242,7 +242,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
   if (!is_inf(D)) {
     log_cdf_D = primarycensored_lcdf(
       D | dist_id, params, pwindow, positive_infinity(),
-      primray_id, primary_params
+      primary_id, primary_params
     );
     result = result - log_cdf_D;
   }
@@ -258,7 +258,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param D Maximum delay (truncation point)
-  * @param primray_id Primary distribution identifier
+  * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
   * @return Primary event censored CDF, normalized by D if finite (truncation adjustment)
@@ -266,7 +266,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
 real primarycensored_analytical_cdf(data real d, int dist_id,
                                           array[] real params,
                                           data real pwindow, data real D,
-                                          int primray_id,
+                                          int primary_id,
                                           array[] real primary_params) {
-  return exp(primarycensored_analytical_lcdf(d | dist_id, params, pwindow, D, primray_id, primary_params));
+  return exp(primarycensored_analytical_lcdf(d | dist_id, params, pwindow, D, primary_id, primary_params));
 }

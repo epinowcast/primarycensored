@@ -12,7 +12,7 @@ pcd_as_stan_data(
   pwindow = "pwindow",
   relative_obs_time = "relative_obs_time",
   dist_id,
-  primray_id,
+  primary_id,
   param_bounds,
   primary_param_bounds,
   priors,
@@ -44,7 +44,7 @@ pcd_as_stan_data(
 13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
 17 = Logistic}
 
-\item{primray_id}{Integer identifying the primary distribution:
+\item{primary_id}{Integer identifying the primary distribution:
 1 = Uniform, 2 = Exponential growth}
 
 \item{param_bounds}{A list with elements \code{lower} and \code{upper}, each a numeric
@@ -88,7 +88,7 @@ data <- data.frame(
 stan_data <- pcd_as_stan_data(
   data,
   dist_id = 1,
-  primray_id = 1,
+  primary_id = 1,
   param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
   priors = list(location = c(1, 1), scale = c(1, 1)),

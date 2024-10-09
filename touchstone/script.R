@@ -170,7 +170,7 @@ touchstone::benchmark_run(
     stan_data1 <- pcd_as_stan_data(
       delay_counts1,
       dist_id = 1,
-      primray_id = 1,
+      primary_id = 1,
       param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(0, 1), scale = c(1, 1)),
@@ -237,7 +237,7 @@ touchstone::benchmark_run(
     stan_data2 <- pcd_as_stan_data(
       delay_counts2,
       dist_id = 2,
-      primray_id = 2,
+      primary_id = 2,
       param_bounds = list(lower = c(0, 0), upper = c(Inf, Inf)),
       primary_param_bounds = list(lower = 0, upper = Inf),
       priors = list(location = c(2, 1), scale = c(0.5, 0.5)),

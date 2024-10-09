@@ -200,7 +200,7 @@ We see that the model has converged and the diagnostics look good. However, just
 
 # Fitting an improved model using primarycensored
 
-We'll now fit an improved model using the `primarycensored` package. The main improvement is that we will use the `primarycensored_lpdf` function to fit the model. This is the Stan version of the `pcens()` function and accounts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the `dist_id` parameter and that our primary event distribution is uniform by passing 1 as the `primray_id` parameter. See the [Stan documentation](https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d) for more details on the `primarycensored_lpdf` function.
+We'll now fit an improved model using the `primarycensored` package. The main improvement is that we will use the `primarycensored_lpdf` function to fit the model. This is the Stan version of the `pcens()` function and accounts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the `dist_id` parameter and that our primary event distribution is uniform by passing 1 as the `primary_id` parameter. See the [Stan documentation](https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d) for more details on the `primarycensored_lpdf` function.
 
 ```{r pimarycensoreddist-model}
 writeLines(
@@ -293,7 +293,7 @@ pcd_data <- pcd_as_stan_data(
   delay_upper = "observed_delay_upper",
   relative_obs_time = "obs_time",
   dist_id = 1, # Lognormal distribution
-  primray_id = 1, # Uniform primary distribution
+  primary_id = 1, # Uniform primary distribution
   param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
   priors = list(location = c(1, 0.5), scale = c(1, 0.5)),
