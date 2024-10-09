@@ -135,7 +135,7 @@ test_that("pcd_stan_files returns correct files", {
   expect_type(mixed_files, "character")
   expect_gt(length(mixed_files), 1)
   expect_true(any(grepl("expgrowth", mixed_files, fixed = TRUE)))
-  expect_true(any(grepl("primary_censored", mixed_files, fixed = TRUE)))
+  expect_true(any(grepl("primarycensored", mixed_files, fixed = TRUE)))
 
   # Test with non-existent function
   non_existent <- pcd_stan_files(functions = "non_existent_function")
