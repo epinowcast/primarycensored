@@ -1,6 +1,6 @@
-# primarycensored 0.7.0
+# primarycensored 1.0.0
 
-This is a minor release of `primarycensored` to prepare for CRAN submission.
+This is the first major release of `primarycensored` and has been submitted to CRAN.
 
 ## Package
 
