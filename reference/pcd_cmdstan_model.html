@@ -102,10 +102,108 @@ within chain parallelism).</p></li>
 
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span> <span class="op">{</span> <span class="co"># \dontrun{</span></span></span>
-<span class="r-in"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">pcd_cmdstan_model</span><span class="op">(</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span>data <span class="op">=</span> <span class="va">stan_data</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="op">}</span> <span class="co"># }</span></span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="fu">cmdstanr</span><span class="fu">::</span><span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/set_cmdstan_path.html" class="external-link">cmdstan_version</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">model</span> <span class="op">&lt;-</span> <span class="fu">pcd_cmdstan_model</span><span class="op">(</span>compile <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">model</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> functions {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_ode.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_analytical_cdf.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include expgrowth.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real partial_sum(array[] int dummy, int start, int end,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int d, array[] int d_upper, array[] int n,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int pwindow, array[] int D,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    int dist_id, array[] real params,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    int primary_id, array[] real primary_params) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     real partial_target = 0;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in start:end) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       partial_target += n[i] * primarycensored_lpmf(</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, params,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], D[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, primary_params</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     return partial_target;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> data {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; N;  // number of observations</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; d;     // observed delays</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; d_upper;     // observed delays upper bound</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; n;     // number of occurrences for each delay</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; pwindow; // primary censoring window</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; D; // maximum delay</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=17&gt; dist_id; // distribution identifier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=2&gt; primary_id; // primary distribution identifier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_params; // number of distribution parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_primary_params; // number of primary distribution parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0, upper=1&gt; compute_log_lik; // whether to compute log likelihood</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0, upper=1&gt; use_reduce_sum; // whether to use reduce_sum</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_params] param_lower_bounds; // lower bounds for parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_params] param_upper_bounds; // upper bounds for parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_primary_params] primary_param_lower_bounds; // lower bounds for primary parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_primary_params] primary_param_upper_bounds; // upper bounds for primary parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_params] real prior_location; // location parameters for priors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_params] real prior_scale; // scale parameters for priors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_primary_params] real primary_prior_location; // location parameters for primary priors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_primary_params] real primary_prior_scale; // scale parameters for primary priors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> transformed data {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int indexes = linspaced_int_array(N, 1, N);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> parameters {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=param_lower_bounds, upper=param_upper_bounds&gt;[n_params] params; // distribution parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=primary_param_lower_bounds, upper=primary_param_upper_bounds&gt;[n_primary_params] primary_params; // primary distribution parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> model {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Priors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   for (i in 1:n_params) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     params[i] ~ normal(prior_location[i], prior_scale[i]);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   if (n_primary_params) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:n_primary_params) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       primary_params[i] ~ normal(</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         primary_prior_location[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         primary_prior_scale[i]</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Likelihood</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   if (use_reduce_sum) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     target += reduce_sum(partial_sum, indexes, 1, d,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          d_upper, n, pwindow, D, dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          primary_id, to_array_1d(primary_params));</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   } else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:N) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       target += n[i] * primarycensored_lpmf(</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], D[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, to_array_1d(primary_params)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> generated quantities {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[compute_log_lik ? N : 0] log_lik;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   if (compute_log_lik) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:N) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       log_lik[i] = primarycensored_lpmf(</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], D[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, to_array_1d(primary_params)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
