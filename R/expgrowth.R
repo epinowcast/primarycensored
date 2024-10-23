@@ -10,7 +10,7 @@
 #' @param max Maximum value of the distribution range. Default is 1.
 #' @param r Rate parameter for the exponential growth.
 #' @param log,log.p Logical; if TRUE, probabilities p are given as log(p).
-#' @param lower.tail Logical; if TRUE (default), probabilities are P\[X ≤ x\],
+#' @param lower.tail Logical; if TRUE (default), probabilities are P\[X <= x\],
 #' otherwise, P\[X > x\].
 #'
 #' @return `dexpgrowth` gives the density, `pexpgrowth` gives the distribution
