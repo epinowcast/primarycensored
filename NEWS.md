@@ -6,7 +6,9 @@ This is the first major release of `primarycensored` and has been submitted to C
 
 - Fix internal package misspelling of `primary_lpdf`.
 - Move to "stable" lifecycle status.
-- Add `rhub` checks to the `Github Actions` workflow.
+- Added `rhub` checks to the `Github Actions` workflow.
+- Added `dependencies: "hard"` to the `R-CMD-check` workflow to ensure checks pass without optional dependencies.
+- Improved handling of examples that use optional dependencies.
 
 # primarycensored 0.6.0
 
