@@ -1,6 +1,6 @@
-# primarycensored 0.6.0.1000
+# primarycensored 0.7.0
 
-This is the development version of `primarycensored` and is not yet ready for release.
+This is a minor release of `primarycensored` to prepare for CRAN submission.
 
 ## Package
 
