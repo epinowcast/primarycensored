@@ -22,7 +22,7 @@ contributors](https://img.shields.io/github/contributors/epinowcast/primarycenso
 ## Summary
 
 This package provides functions for working with primary event censored
-distributions and Stan implementations for use in Bayesian modeling.
+distributions and ‘Stan’ implementations for use in Bayesian modeling.
 Primary event censored distributions are useful for modeling delayed
 reporting scenarios in epidemiology and other fields. It also provides
 support for arbitrary delay distributions, a range of common primary
@@ -215,10 +215,9 @@ with `citation("primarycensored")`.
 <!-- markdownlint-disable -->
 
 All contributions to this project are gratefully acknowledged using the
-[`allcontributors`
-package](https://github.com/ropensci/allcontributors) following the
-[all-contributors](https://allcontributors.org) specification.
-Contributions of any kind are welcome!
+[`allcontributors` package](https://github.com/ropensci/allcontributors)
+following the [all-contributors](https://allcontributors.org)
+specification. Contributions of any kind are welcome!
 
 ### Code
 
