@@ -21,16 +21,16 @@ contributors](https://img.shields.io/github/contributors/epinowcast/primarycenso
 
 ## Summary
 
-This package provides functions for working with primary event censored
-distributions and ‘Stan’ implementations for use in Bayesian modeling.
-Primary event censored distributions are useful for modeling delayed
-reporting scenarios in epidemiology and other fields. It also provides
-support for arbitrary delay distributions, a range of common primary
-distributions, and allows for truncation and secondary event censoring
-to be accounted for. A subset of common distributions also include
-analytical solutions, allowing for faster computation. In addition, it
-provides both frequentist and Bayesian methods for fitting primary event
-censored distributions to data via optional dependencies.
+Provides functions for working with primary event censored distributions
+and ‘Stan’ implementations for use in Bayesian modeling. Primary event
+censored distributions are useful for modeling delayed reporting
+scenarios in epidemiology and other fields. It also provides support for
+arbitrary delay distributions, a range of common primary distributions,
+and allows for truncation and secondary event censoring to be accounted
+for. A subset of common distributions also include analytical solutions,
+allowing for faster computation. In addition, it provides multiple
+methods for fitting primary event censored distributions to data via
+optional dependencies.
 
 ## Installation
 
