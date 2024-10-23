@@ -5,6 +5,7 @@ This is the development version of `primarycensored` and is not yet ready for re
 ## Package
 
 - Fix internal package misspelling of `primary_lpdf`.
+- Move to "stable" lifecycle status.
 
 # primarycensored 0.6.0
 
