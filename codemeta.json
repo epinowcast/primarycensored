@@ -2,13 +2,13 @@
   "@context": "https://doi.org/10.5063/schema/codemeta-2.0",
   "@type": "SoftwareSourceCode",
   "identifier": "primarycensored",
-  "description": "This package provides R functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for. In addition, it provides both frequentist and Bayesian methods for fitting primary event censored distributions to data.",
+  "description": "This package provides functions for working with primary event censored distributions and 'stan' implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields. It also provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for. A subset of common distributions also include analytical solutions, allowing for faster computation. In addition, it provides both frequentist and Bayesian methods for fitting primary event censored distributions to data via optional dependencies.",
   "name": "primarycensored: Primary Event Censored Distributions in R and Stan",
   "relatedLink": "https://primarycensored.epinowcast.org",
   "codeRepository": "https://github.com/epinowcast/primarycensored/",
   "issueTracker": "https://github.com/epinowcast/primarycensored/issues/",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "0.7.0",
+  "version": "1.0.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -45,6 +45,15 @@
       "familyName": "Funk",
       "email": "sebastian.funk@lshtm.ac.uk",
       "@id": "https://orcid.org/0000-0002-2842-3406"
+    }
+  ],
+  "copyrightHolder": [
+    {
+      "@type": "Person",
+      "givenName": "Sam",
+      "familyName": "Abbott",
+      "email": "contact@samabbott.co.uk",
+      "@id": "https://orcid.org/0000-0001-8057-8037"
     }
   ],
   "maintainer": [
@@ -205,7 +214,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "436.304KB",
+  "fileSize": "430.041KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
