@@ -6,6 +6,7 @@ This is a minor release of `primarycensored` to prepare for CRAN submission.
 
 - Fix internal package misspelling of `primary_lpdf`.
 - Move to "stable" lifecycle status.
+- Add `rhub` checks to the `Github Actions` workflow.
 
 # primarycensored 0.6.0
 
