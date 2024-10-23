@@ -6,7 +6,7 @@
 <!-- badges: start -->
 
 [![Lifecycle:
-experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://www.tidyverse.org/lifecycle/#experimental)
+stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![R-CMD-check](https://github.com/epinowcast/primarycensored/workflows/R-CMD-check/badge.svg)](https://github.com/epinowcast/primarycensored/actions/workflows/R-CMD-check.yaml)
 [![Codecov test
 coverage](https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/badge.svg)](https://app.codecov.io/gh/epinowcast/primarycensored)
@@ -16,7 +16,6 @@ coverage](https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/bad
 license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/)
 [![GitHub
 contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
-
 [![DOI](https://zenodo.org/badge/845633278.svg)](https://zenodo.org/doi/10.5281/zenodo.13632838)
 <!-- badges: end -->
 
