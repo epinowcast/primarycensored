@@ -38,42 +38,39 @@ data.
 Installing the package
 </summary>
 
-You can install the latest released version using the normal `R`
-function, though you need to point to `r-universe` instead of CRAN:
+You can install the latest released version from CRAN using the standard
+`install.packages` function:
 
 ``` r
-install.packages(
-  "primarycensored",
-  repos = "https://epinowcast.r-universe.dev"
-)
+install.packages("primarycensored")
 ```
 
-Alternatively, you can use the [`remotes`
-package](https://remotes.r-lib.org/) to install the development version
-from Github (warning! this version may contain breaking changes and/or
-bugs):
+Alternatively, you can install the latest release from our r-universe
+repository:
 
 ``` r
-remotes::install_github(
-  "epinowcast/primarycensored",
-  dependencies = TRUE
-)
+install.packages("primarycensored", repos = "https://epinowcast.r-universe.dev")
+```
+
+To install the development version from GitHub (warning! this version
+may contain breaking changes and/or bugs), use the [`pak`
+package](https://pak.r-lib.org/):
+
+``` r
+pak::pak("epinowcast/primarycensored")
 ```
 
 Similarly, you can install historical versions by specifying the release
-tag (e.g. this installs
-[`0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
+tag (e.g.,
+[`v0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
 
 ``` r
-remotes::install_github(
-  "epinowcast/primarycensored",
-  dependencies = TRUE, ref = "v0.2.0"
-)
+pak::pak("epinowcast/primarycensored@v0.2.0")
 ```
 
-*Note: You can also use that last approach to install a specific commit
-if needed, e.g. if you want to try out a specific unreleased feature,
-but not the absolute latest developmental version.*
+*Note: You can also use the above approach to install a specific commit
+if needed, for example, if you want to try out a specific unreleased
+feature, but not the absolute latest developmental version.*
 
 </details>
 <details>
