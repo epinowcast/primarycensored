@@ -1,5 +1,5 @@
 Package: primarycensored
-Title: Primary Event Censored Distributions in R and Stan
+Title: Primary Event Censored Distributions
 Version: 1.0.0
 Authors@R:
   c(person(given = "Sam",
