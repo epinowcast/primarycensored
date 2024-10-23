@@ -2,7 +2,7 @@
 #'
 #' @inheritParams pprimarycensored
 #'
-#' @return An object of class pcens_{pdist_name}_{dprimary_name}
+#' @return An object of class `pcens_{pdist_name}_{dprimary_name}`
 #'
 #' @family pcens
 #'

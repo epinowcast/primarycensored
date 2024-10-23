@@ -25,8 +25,10 @@
 #' @family modelhelpers
 #'
 #' @examplesIf requireNamespace("cmdstanr", quietly = TRUE)
-#' model <- pcd_cmdstan_model(compile = FALSE)
-#' model
+#' if (!is.null(cmdstanr::cmdstan_version())) {
+#'   model <- pcd_cmdstan_model(compile = FALSE)
+#'   model
+#' }
 pcd_cmdstan_model <- function(
     include_paths = primarycensored::pcd_stan_path(),
     ...) {

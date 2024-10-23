@@ -44,7 +44,7 @@ passed a pre-assigned variable rather than a function name.}
 \item{...}{Additional arguments to be passed to pdist}
 }
 \value{
-An object of class pcens_{pdist_name}_{dprimary_name}
+An object of class \verb{pcens_\{pdist_name\}_\{dprimary_name\}}
 }
 \description{
 S3 class for primary event censored distribution computation

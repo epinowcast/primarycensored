@@ -34,8 +34,10 @@ within chain parallelism).
 }
 \examples{
 \dontshow{if (requireNamespace("cmdstanr", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-model <- pcd_cmdstan_model(compile = FALSE)
-model
+if (!is.null(cmdstanr::cmdstan_version())) {
+  model <- pcd_cmdstan_model(compile = FALSE)
+  model
+}
 \dontshow{\}) # examplesIf}
 }
 \seealso{
