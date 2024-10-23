@@ -6,7 +6,7 @@
   "name": "primarycensored: Primary Event Censored Distributions",
   "relatedLink": "https://primarycensored.epinowcast.org",
   "codeRepository": "https://github.com/epinowcast/primarycensored/",
-  "issueTracker": "https://github.com/epinowcast/primarycensored/issues/",
+  "issueTracker": "https://github.com/epinowcast/primarycensored/issues",
   "license": "https://spdx.org/licenses/MIT",
   "version": "1.0.0",
   "programmingLanguage": {
@@ -214,7 +214,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "430.269KB",
+  "fileSize": "430.23KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
