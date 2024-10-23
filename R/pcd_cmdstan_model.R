@@ -25,7 +25,7 @@
 #' @family modelhelpers
 #'
 #' @examplesIf requireNamespace("cmdstanr", quietly = TRUE)
-#' if (!is.null(cmdstanr::cmdstan_version())) {
+#' if (!is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))) {
 #'   model <- pcd_cmdstan_model(compile = FALSE)
 #'   model
 #' }
