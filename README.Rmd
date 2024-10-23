@@ -73,7 +73,7 @@ The [`primarycensored` website](https://primarycensored.epinowcast.org/) include
 
 <details><summary>Vignettes</summary>
 
-We have created [package vignettes](https://primarycensored.epinowcast.org/articles) to help you get started with primarycensored and to highlight other features with case studies.
+We have created [package vignettes](https://primarycensored.epinowcast.org/articles/) to help you get started with primarycensored and to highlight other features with case studies.
 
 </details>
 
@@ -105,7 +105,7 @@ Please note that the `primarycensored` project is released with a [Contributor C
 
 ## Citation
 
-If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our [methods outline](https://primarycensored.epinowcast.org/articles/primarycensored.html). If you use `primarycensored` in your work, please consider citing it with `citation("primarycensored")`.
+If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our [methods outline](https://primarycensored.epinowcast.org/articles//primarycensored.html). If you use `primarycensored` in your work, please consider citing it with `citation("primarycensored")`.
 
 ## Contributors
 
@@ -124,7 +124,7 @@ If making use of our methodology or the methodology on which ours is based, plea
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
 
-All contributions to this project are gratefully acknowledged using the [`allcontributors` package](https://github.com/ropenscilabs/allcontributors) following the [all-contributors](https://allcontributors.org) specification. Contributions of any kind are welcome!
+All contributions to this project are gratefully acknowledged using the [`allcontributors` package](https://github.com/ropensci/allcontributors) following the [all-contributors](https://allcontributors.org) specification. Contributions of any kind are welcome!
 
 ### Code
 

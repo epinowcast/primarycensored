@@ -132,7 +132,7 @@ Vignettes
 </summary>
 
 We have created [package
-vignettes](https://primarycensored.epinowcast.org/articles) to help you
+vignettes](https://primarycensored.epinowcast.org/articles/) to help you
 get started with primarycensored and to highlight other features with
 case studies.
 
@@ -204,7 +204,7 @@ By contributing to this project, you agree to abide by its terms.
 
 If making use of our methodology or the methodology on which ours is
 based, please cite the relevant papers from our [methods
-outline](https://primarycensored.epinowcast.org/articles/primarycensored.html).
+outline](https://primarycensored.epinowcast.org/articles//primarycensored.html).
 If you use `primarycensored` in your work, please consider citing it
 with `citation("primarycensored")`.
 
@@ -216,7 +216,7 @@ with `citation("primarycensored")`.
 
 All contributions to this project are gratefully acknowledged using the
 [`allcontributors`
-package](https://github.com/ropenscilabs/allcontributors) following the
+package](https://github.com/ropensci/allcontributors) following the
 [all-contributors](https://allcontributors.org) specification.
 Contributions of any kind are welcome!
 
