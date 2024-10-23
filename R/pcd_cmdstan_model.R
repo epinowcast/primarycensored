@@ -24,11 +24,9 @@
 #' @export
 #' @family modelhelpers
 #'
-#' @examples
-#' \dontrun{
-#' model <- pcd_cmdstan_model()
-#' fit <- model$sample(data = stan_data)
-#' }
+#' @examplesIf requireNamespace("cmdstanr", quietly = TRUE)
+#' model <- pcd_cmdstan_model(compile = FALSE)
+#' model
 pcd_cmdstan_model <- function(
     include_paths = primarycensored::pcd_stan_path(),
     ...) {
@@ -105,7 +103,6 @@ pcd_cmdstan_model <- function(
 #' @family modelhelpers
 #'
 #' @examples
-#' \dontrun{
 #' data <- data.frame(
 #'   delay = c(1, 2, 3),
 #'   delay_upper = c(2, 3, 4),
@@ -122,7 +119,6 @@ pcd_cmdstan_model <- function(
 #'   priors = list(location = c(1, 1), scale = c(1, 1)),
 #'   primary_priors = list(location = numeric(0), scale = numeric(0))
 #' )
-#' }
 pcd_as_stan_data <- function(
     data, delay = "delay", delay_upper = "delay_upper",
     n = "n", pwindow = "pwindow",

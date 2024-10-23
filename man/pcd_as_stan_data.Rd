@@ -77,7 +77,6 @@ This function takes in delay data and prepares it for use with the
 primarycensored Stan model.
 }
 \examples{
-\dontrun{
 data <- data.frame(
   delay = c(1, 2, 3),
   delay_upper = c(2, 3, 4),
@@ -94,7 +93,6 @@ stan_data <- pcd_as_stan_data(
   priors = list(location = c(1, 1), scale = c(1, 1)),
   primary_priors = list(location = numeric(0), scale = numeric(0))
 )
-}
 }
 \seealso{
 Modelling wrappers for external fitting packages

@@ -68,6 +68,7 @@ behaviour, especially if they have existing functions with the same names in
 their global environment.
 }
 \examples{
+\dontshow{if (requireNamespace("fitdistrplus", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 # Example with normal distribution
 set.seed(123)
 n <- 1000
@@ -95,6 +96,7 @@ fit_norm <- fitdistdoublecens(
 )
 
 summary(fit_norm)
+\dontshow{\}) # examplesIf}
 }
 \seealso{
 Modelling wrappers for external fitting packages

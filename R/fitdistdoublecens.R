@@ -28,7 +28,7 @@
 #'
 #' @export
 #' @family modelhelpers
-#' @examples
+#' @examplesIf requireNamespace("fitdistrplus", quietly = TRUE)
 #' # Example with normal distribution
 #' set.seed(123)
 #' n <- 1000
