@@ -6,7 +6,6 @@ Codecov
 Cori
 Dirichlet
 EpiEstim
-Github
 Gumbel
 Inf
 Lifecycle
@@ -76,6 +75,7 @@ sim
 speedups
 stan
 stantools
+stan’
 startpoint
 survgammaunifprim
 survivalfunc
