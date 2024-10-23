@@ -27,3 +27,4 @@
 ^inst/pcens_model$
 ^inst/stan/pcens_model$
 ^touchstone$
+^cran-comments\.md$
