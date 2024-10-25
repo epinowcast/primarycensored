@@ -2,7 +2,11 @@
 #'
 #' @inheritParams pprimarycensored
 #'
-#' @return An object of class `pcens_{pdist_name}_{dprimary_name}`
+#' @return An object of class `pcens_{pdist_name}_{dprimary_name}`. This
+#' contains the primary event distribution, the delay distribution, the
+#' delay distribution arguments, and any additional arguments. It can be
+#' used with the `pcens_cdf()` function to compute the primary event censored
+#' cdf.
 #'
 #' @family pcens
 #'
@@ -47,7 +51,7 @@ new_pcens <- function(
 #' useful for testing purposes or for settings where the analytical solution
 #' breaks down.
 #'
-#' @return Vector of primary event censored CDFs
+#' @return Vector of computed primary event censored CDFs
 #'
 #' @family pcens
 #'
@@ -76,6 +80,8 @@ pcens_cdf <- function(
 #' primary event censored CDF computation.
 #'
 #' @family pcens
+#'
+#' @inherit pcens_cdf return
 #'
 #' @export
 pcens_cdf.default <- function(
@@ -108,6 +114,8 @@ pcens_cdf.default <- function(
 #' @inheritParams pcens_cdf
 #'
 #' @family pcens
+#'
+#' @inherit pcens_cdf return
 #'
 #' @export
 pcens_cdf.pcens_pgamma_dunif <- function(
@@ -182,6 +190,8 @@ pcens_cdf.pcens_pgamma_dunif <- function(
 #'
 #' @family pcens
 #'
+#' @inherit pcens_cdf return
+#'
 #' @export
 pcens_cdf.pcens_plnorm_dunif <- function(
     object, q, pwindow, use_numeric = FALSE) {
@@ -252,7 +262,7 @@ pcens_cdf.pcens_plnorm_dunif <- function(
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @family pcens
+#' @inherit pcens_cdf return
 #'
 #' @export
 pcens_cdf.pcens_pweibull_dunif <- function(

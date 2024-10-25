@@ -20,7 +20,7 @@ useful for testing purposes or for settings where the analytical solution
 breaks down.}
 }
 \value{
-Vector of primary event censored CDFs
+Vector of computed primary event censored CDFs
 }
 \description{
 Compute primary event censored CDF
@@ -30,7 +30,6 @@ Low level primary event censored distribution objects and methods
 \code{\link{new_pcens}()},
 \code{\link{pcens_cdf.default}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()}
+\code{\link{pcens_cdf.pcens_plnorm_dunif}()}
 }
 \concept{pcens}

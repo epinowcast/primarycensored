@@ -44,7 +44,11 @@ passed a pre-assigned variable rather than a function name.}
 \item{...}{Additional arguments to be passed to pdist}
 }
 \value{
-An object of class \verb{pcens_\{pdist_name\}_\{dprimary_name\}}
+An object of class \verb{pcens_\{pdist_name\}_\{dprimary_name\}}. This
+contains the primary event distribution, the delay distribution, the
+delay distribution arguments, and any additional arguments. It can be
+used with the \code{pcens_cdf()} function to compute the primary event censored
+cdf.
 }
 \description{
 S3 class for primary event censored distribution computation
@@ -54,7 +58,6 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf}()},
 \code{\link{pcens_cdf.default}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()}
+\code{\link{pcens_cdf.pcens_plnorm_dunif}()}
 }
 \concept{pcens}

@@ -19,6 +19,9 @@ even for distributions with analytical solutions. This is primarily
 useful for testing purposes or for settings where the analytical solution
 breaks down.}
 }
+\value{
+Vector of computed primary event censored CDFs
+}
 \description{
 This method serves as a fallback for combinations of delay and primary
 event distributions that don't have specific implementations. It uses
@@ -38,7 +41,6 @@ Low level primary event censored distribution objects and methods
 \code{\link{new_pcens}()},
 \code{\link{pcens_cdf}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()}
+\code{\link{pcens_cdf.pcens_plnorm_dunif}()}
 }
 \concept{pcens}
