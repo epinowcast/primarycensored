@@ -8,13 +8,19 @@
   "codeRepository": "https://github.com/epinowcast/primarycensored/",
   "issueTracker": "https://github.com/epinowcast/primarycensored/issues",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "1.0.0",
+  "version": "1.0.0.1000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.4.1 (2024-06-14)",
+  "runtimePlatform": "R version 4.4.2 (2024-10-31)",
+  "provider": {
+    "@id": "https://cran.r-project.org",
+    "@type": "Organization",
+    "name": "Comprehensive R Archive Network (CRAN)",
+    "url": "https://cran.r-project.org"
+  },
   "author": [
     {
       "@type": "Person",
@@ -214,7 +220,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "430.359KB",
+  "fileSize": "431.056KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
