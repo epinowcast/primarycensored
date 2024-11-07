@@ -14,8 +14,9 @@ coverage](https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/bad
 [![Universe](https://epinowcast.r-universe.dev/badges/primarycensored)](https://epinowcast.r-universe.dev/primarycensored)
 [![MIT
 license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/)
-[![CRAN badge](https://cranlogs.r-pkg.org/badges/primarycensored)](https://cran.r-project.org/package=primarycensored)
-[![GitHub contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/primarycensored)](https://cran.r-project.org/web/packages/primarycensored/index.html)
+[![GitHub
+contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
 [![DOI](https://zenodo.org/badge/845633278.svg)](https://zenodo.org/doi/10.5281/zenodo.13632838)
 <!-- badges: end -->
 
