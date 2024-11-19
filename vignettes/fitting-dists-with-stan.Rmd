@@ -87,7 +87,6 @@ delay_data <- data.frame(
 head(delay_data)
 
 # Aggregate to unique combinations and count occurrences
-# Aggregate to unique combinations and count occurrences
 delay_counts <- delay_data |>
   summarise(
     n = n(),
