@@ -1,3 +1,17 @@
+# primarycensored 1.0.0.1000
+
+Development release.
+
+## Package
+
+## Documentation
+
+- Added a CRAN downloads badge to the README.
+
+## Bug fixes
+
+- Added a missing `@family` tag to the `pcens` functions. This omission resulted in the Weibull analytical solution not being visible in the package documentation.
+
 # primarycensored 1.0.0
 
 This is the first major release of `primarycensored` and has been submitted to CRAN.

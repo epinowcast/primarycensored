@@ -262,6 +262,8 @@ pcens_cdf.pcens_plnorm_dunif <- function(
 #'
 #' @inheritParams pcens_cdf
 #'
+#' @family pcens
+#'
 #' @inherit pcens_cdf return
 #'
 #' @export

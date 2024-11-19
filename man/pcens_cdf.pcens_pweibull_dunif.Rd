@@ -25,3 +25,12 @@ Vector of computed primary event censored CDFs
 \description{
 Method for Weibull delay with uniform primary
 }
+\seealso{
+Low level primary event censored distribution objects and methods
+\code{\link{new_pcens}()},
+\code{\link{pcens_cdf}()},
+\code{\link{pcens_cdf.default}()},
+\code{\link{pcens_cdf.pcens_pgamma_dunif}()},
+\code{\link{pcens_cdf.pcens_plnorm_dunif}()}
+}
+\concept{pcens}
