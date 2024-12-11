@@ -35,6 +35,13 @@
       "familyName": "Brand",
       "email": "usi1@cdc.gov",
       "@id": "https://orcid.org/0000-0003-0645-5367"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Sebastian",
+      "familyName": "Funk",
+      "email": "sebastian.funk@lshtm.ac.uk",
+      "@id": "https://orcid.org/0000-0002-2842-3406"
     }
   ],
   "contributor": [
@@ -44,13 +51,6 @@
       "familyName": "Howes",
       "email": "adamthowes@gmail.com",
       "@id": "https://orcid.org/0000-0003-2386-4031"
-    },
-    {
-      "@type": "Person",
-      "givenName": "Sebastian",
-      "familyName": "Funk",
-      "email": "sebastian.funk@lshtm.ac.uk",
-      "@id": "https://orcid.org/0000-0002-2842-3406"
     }
   ],
   "copyrightHolder": [
@@ -220,7 +220,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "431.056KB",
+  "fileSize": "434.303KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -239,6 +239,13 @@
           "familyName": "Brand",
           "email": "usi1@cdc.gov",
           "@id": "https://orcid.org/0000-0003-0645-5367"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Sebastian",
+          "familyName": "Funk",
+          "email": "sebastian.funk@lshtm.ac.uk",
+          "@id": "https://orcid.org/0000-0002-2842-3406"
         }
       ],
       "name": "primarycensored: Primary Event Censored Distributions",
