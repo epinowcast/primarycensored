@@ -37,8 +37,10 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   } else {
     // Use numerical integration for other cases
     real lower_bound = max({d - pwindow, 1e-6});
-    array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);
-    array[4] int ids = {dist_id, primary_id, size(params), size(primary_params)};
+    int params_size = size(params);
+    int primary_params_size = size(primary_params);
+    array[params_size + primary_params_size] real theta = append_array(params, primary_params);
+    array[4] int ids = {dist_id, primary_id, params_size, primary_params_size};
 
     vector[1] y0 = rep_vector(0.0, 1);
     result = ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
