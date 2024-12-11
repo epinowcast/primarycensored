@@ -114,7 +114,7 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   real partial_sum(array[] int dummy, int start, int end,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int d, array[] int d_upper, array[] int n,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int pwindow, array[] int D,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int pwindow, data array[] real D,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    int dist_id, array[] real params,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    int primary_id, array[] real primary_params) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     real partial_target = 0;</span>
@@ -135,7 +135,7 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; d_upper;     // observed delays upper bound</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; n;     // number of occurrences for each delay</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; pwindow; // primary censoring window</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; D; // maximum delay</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real&lt;lower=0&gt; D; // maximum delay</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=17&gt; dist_id; // distribution identifier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=2&gt; primary_id; // primary distribution identifier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_params; // number of distribution parameters</span>

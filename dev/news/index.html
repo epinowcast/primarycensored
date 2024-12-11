@@ -64,6 +64,7 @@
 <h3 id="bug-fixes-1-0-0-1000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-0-1000"></a></h3>
 <ul><li>Added a missing <code>@family</code> tag to the <code>pcens</code> functions. This omission resulted in the Weibull analytical solution not being visible in the package documentation.</li>
 <li>Changed a call to <code>size()</code> to use <code>num_elements()</code> instead as an underlying type conversion was causing issues on some platforms.</li>
+<li>Changed <code>D</code> to be of type real in <code>pcens_model.stan</code> in order to support infinite <code>relative_obs_time</code>.</li>
 </ul></div>
 </div>
     <div class="section level2">
