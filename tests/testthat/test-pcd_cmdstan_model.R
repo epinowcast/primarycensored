@@ -342,3 +342,72 @@ test_that(
     )
   }
 )
+
+test_that("pcd_cmdstan_model recovers true values with no bound on D", {
+  # Simulate data
+  set.seed(123)
+  n <- 2000
+  true_meanlog <- 1.5
+  true_sdlog <- 0.5
+
+  simulated_delays <- rprimarycensored(
+    n = n,
+    rdist = rlnorm,
+    meanlog = true_meanlog,
+    sdlog = true_sdlog,
+    pwindow = 1,
+    D = Inf
+  )
+
+  simulated_data <- data.frame(
+    delay = simulated_delays,
+    delay_upper = simulated_delays + 1,
+    pwindow = 1,
+    relative_obs_time = Inf
+  )
+
+  delay_counts <- simulated_data |>
+    dplyr::summarise(
+      n = dplyr::n(),
+      .by = c(pwindow, relative_obs_time, delay, delay_upper)
+    )
+
+  # Prepare data for Stan
+  stan_data <- pcd_as_stan_data(
+    delay_counts,
+    dist_id = 1, # Lognormal
+    primary_id = 1, # Uniform
+    param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = c(0, 1), scale = c(1, 1)),
+    primary_priors = list(location = numeric(0), scale = numeric(0))
+  )
+
+  # Fit model
+  model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+  fit <- suppressMessages(suppressWarnings(model$sample(
+    data = stan_data,
+    seed = 123,
+    chains = 4,
+    parallel_chains = 4,
+    refresh = 0,
+    show_messages = FALSE,
+    iter_warmup = 500
+  )))
+
+  # Extract posterior
+  posterior <- fit$draws(c("params[1]", "params[2]"), format = "df")
+
+  # Check mean estimates
+  expect_equal(mean(posterior$`params[1]`), true_meanlog, tolerance = 0.05)
+  expect_equal(mean(posterior$`params[2]`), true_sdlog, tolerance = 0.05)
+
+  # Check credible intervals
+  ci_meanlog <- quantile(posterior$`params[1]`, c(0.05, 0.95))
+  ci_sdlog <- quantile(posterior$`params[2]`, c(0.05, 0.95))
+
+  expect_gt(true_meanlog, ci_meanlog[1])
+  expect_lt(true_meanlog, ci_meanlog[2])
+  expect_gt(true_sdlog, ci_sdlog[1])
+  expect_lt(true_sdlog, ci_sdlog[2])
+})
