@@ -11,6 +11,7 @@ Development release.
 ## Bug fixes
 
 - Added a missing `@family` tag to the `pcens` functions. This omission resulted in the Weibull analytical solution not being visible in the package documentation.
+- Changed `D` to be of type real in order to support infinite `relative_obs_time`.
 
 # primarycensored 1.0.0
 
