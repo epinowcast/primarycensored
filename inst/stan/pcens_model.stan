@@ -6,7 +6,7 @@ functions {
 
   real partial_sum(array[] int dummy, int start, int end,
                    array[] int d, array[] int d_upper, array[] int n,
-                   array[] int pwindow, array[] int D,
+                   array[] int pwindow, data array[] real D,
                    int dist_id, array[] real params,
                    int primary_id, array[] real primary_params) {
     real partial_target = 0;
@@ -27,7 +27,7 @@ data {
   array[N] int<lower=0> d_upper;     // observed delays upper bound
   array[N] int<lower=0> n;     // number of occurrences for each delay
   array[N] int<lower=0> pwindow; // primary censoring window
-  array[N] int<lower=0> D; // maximum delay
+  array[N] real<lower=0> D; // maximum delay
   int<lower=1, upper=17> dist_id; // distribution identifier
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
