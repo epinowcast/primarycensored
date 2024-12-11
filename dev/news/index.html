@@ -63,7 +63,7 @@
 <div class="section level3">
 <h3 id="bug-fixes-1-0-0-1000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-0-0-1000"></a></h3>
 <ul><li>Added a missing <code>@family</code> tag to the <code>pcens</code> functions. This omission resulted in the Weibull analytical solution not being visible in the package documentation.</li>
-<li>Changed a call to <code>size()</code> to use <code>num_elements()</code> instead as an underlying type conversion was causing issues on some platforms.</li>
+<li>Added precalculation of vector sizes to the <code>primarycensored_cdf()</code> stan function, avoiding errors on some platforms due to narrowing conversions in aggregate initialisation.</li>
 <li>Changed <code>D</code> to be of type real in <code>pcens_model.stan</code> in order to support infinite <code>relative_obs_time</code>.</li>
 </ul></div>
 </div>
@@ -186,7 +186,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Sebastian Funk.</p>
 </div>
 
 <div class="pkgdown-footer-right">
