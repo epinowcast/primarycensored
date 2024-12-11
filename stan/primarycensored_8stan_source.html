@@ -128,8 +128,8 @@ $(document).ready(function(){initNavTree('primarycensored_8stan_source.html','')
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>  } <span class="keywordflow">else</span> {</div>
 <div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>    <span class="comment">// Use numerical integration for other cases</span></div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    real lower_bound = max({d - pwindow, 1e-6});</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    array[size(params) + size(primary_params)] real theta = append_array(params, primary_params);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    array[4] <span class="keywordtype">int</span> ids = {dist_id, primary_id, size(params), size(primary_params)};</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>    array[num_elements(params) + num_elements(primary_params)] real theta = append_array(params, primary_params);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    array[4] <span class="keywordtype">int</span> ids = {dist_id, primary_id, num_elements(params), num_elements(primary_params)};</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
 <div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    vector[1] y0 = rep_vector(0.0, 1);</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    result = ode_rk45(<a class="code hl_function" href="primarycensored__ode_8stan.html#a36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a>, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];</div>
