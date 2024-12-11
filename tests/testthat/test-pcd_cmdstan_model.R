@@ -389,7 +389,7 @@ test_that("pcd_cmdstan_model recovers true values with no bound on D", {
     data = stan_data,
     seed = 123,
     chains = 2,
-    parallel_chains = 2
+    parallel_chains = 2,
     refresh = 0,
     show_messages = FALSE,
     iter_warmup = 500
