@@ -51,6 +51,13 @@
       "familyName": "Howes",
       "email": "adamthowes@gmail.com",
       "@id": "https://orcid.org/0000-0003-2386-4031"
+    },
+    {
+      "@type": "Person",
+      "givenName": "James Mba",
+      "familyName": "Azam",
+      "email": "james.azam@lshtm.ac.uk",
+      "@id": "https://orcid.org/0000-0001-5782-7330"
     }
   ],
   "copyrightHolder": [
@@ -220,7 +227,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "434.303KB",
+  "fileSize": "434.719KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
