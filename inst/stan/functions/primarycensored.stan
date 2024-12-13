@@ -77,7 +77,7 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   * real pwindow = 1.0;
   * real D = positive_infinity();
   * int primary_id = 1; // Uniform
-  * array[0] real primary_params = {};
+  * array[0] real primary_params = rep_array(0.0, 0);
   * real log_cdf = primarycensored_lcdf(
   *   d, dist_id, params, pwindow, D, primary_id, primary_params
   * );
