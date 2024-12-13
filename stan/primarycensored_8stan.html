@@ -270,7 +270,7 @@ Functions</h2></td></tr>
 <div class="line">real pwindow = 1.0;</div>
 <div class="line">real D = positive_infinity();</div>
 <div class="line"><span class="keywordtype">int</span> primary_id = 1; <span class="comment">// Uniform</span></div>
-<div class="line">array[0] real primary_params = {};</div>
+<div class="line">array[0] real primary_params = rep_array(0.0, 0);</div>
 <div class="line">real log_cdf = <a class="code hl_function" href="primarycensored_8stan.html#a544ec14a8fd8445357372b3072c2f9e1">primarycensored_lcdf</a>(</div>
 <div class="line">  d, dist_id, params, pwindow, D, primary_id, primary_params</div>
 <div class="line">);</div>
