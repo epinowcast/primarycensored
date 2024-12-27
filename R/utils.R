@@ -9,16 +9,6 @@
 #'
 #' @keywords internal
 .extract_function_name <- function(func) {
-  browser()
-  my_call <- quote(substitute(func))
-  func_name <- eval(my_call)
-  
-  for(i in rev(head(sys.frames(), 1L))) {
-    my_call[[2]] <- func_name
-    func_name <- eval(my_call, i)
-  }
-  
-  func_name <- deparse(func_name)
-  base_name <- sub("^.*::", "", func_name)
-  return(base_name)
+  bd <- grep(".Call", deparse(body(func)), value = TRUE, fixed = TRUE)
+  return(sub("^.*\\.Call\\(C_(\\w+),.+$", "\\1", x = bd))
 }
