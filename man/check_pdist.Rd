@@ -7,7 +7,11 @@
 check_pdist(pdist, D, ...)
 }
 \arguments{
-\item{pdist}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF). \code{pdist} will be inspected for a
+"name" attribute which may be a string specifying the name of the delay
+distribution function. If \code{NULL}, the function name is extracted using
+\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
+exists for the primary censored distribution.}
 
 \item{D}{Maximum delay (truncation point). If finite, the distribution is
 truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}

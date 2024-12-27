@@ -10,7 +10,6 @@ fitdistdoublecens(
   pwindow = 1,
   D = Inf,
   dprimary = stats::dunif,
-  dprimary_name = NULL,
   dprimary_args = list(),
   truncation_check_multiplier = 2,
   ...
@@ -35,13 +34,11 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples.}
-
-\item{dprimary_name}{A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
+See \code{primary_dists.R} for examples. \code{dprimary} will be inspected for a
+"name" attribute which may be a string specifying the name of the  primary
+event distribution function. If \code{NULL}, the function name is extracted using
 \code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{dprimary} is
-passed a pre-assigned variable rather than a function name.}
+exists for the primary censored distribution.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would

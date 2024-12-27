@@ -14,8 +14,6 @@ dprimarycensored(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  pdist_name = NULL,
-  dprimary_name = NULL,
   ...
 )
 
@@ -28,15 +26,17 @@ dpcens(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  pdist_name = NULL,
-  dprimary_name = NULL,
   ...
 )
 }
 \arguments{
 \item{x}{Vector of quantiles}
 
-\item{pdist}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF). \code{pdist} will be inspected for a
+"name" attribute which may be a string specifying the name of the delay
+distribution function. If \code{NULL}, the function name is extracted using
+\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
+exists for the primary censored distribution.}
 
 \item{pwindow}{Primary event window}
 
@@ -51,7 +51,11 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples.}
+See \code{primary_dists.R} for examples. \code{dprimary} will be inspected for a
+"name" attribute which may be a string specifying the name of the  primary
+event distribution function. If \code{NULL}, the function name is extracted using
+\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
+exists for the primary censored distribution.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
@@ -59,18 +63,6 @@ pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
 
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
-
-\item{pdist_name}{A string specifying the name of the delay distribution
-function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{pdist} is
-passed a pre-assigned variable rather than a function name.}
-
-\item{dprimary_name}{A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{dprimary} is
-passed a pre-assigned variable rather than a function name.}
 
 \item{...}{Additional arguments to be passed to the distribution function}
 }

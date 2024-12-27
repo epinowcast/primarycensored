@@ -13,7 +13,11 @@ check_dprimary(dprimary, pwindow, dprimary_args = list(), tolerance = 0.001)
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples.}
+See \code{primary_dists.R} for examples. \code{dprimary} will be inspected for a
+"name" attribute which may be a string specifying the name of the  primary
+event distribution function. If \code{NULL}, the function name is extracted using
+\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
+exists for the primary censored distribution.}
 
 \item{pwindow}{Primary event window}
 

@@ -8,7 +8,11 @@
 #'
 #' @param q Vector of quantiles
 #'
-#' @param pdist Distribution function (CDF)
+#' @param pdist Distribution function (CDF). `pdist` will be inspected for a
+#' "name" attribute which may be a string specifying the name of the delay
+#' distribution function. If `NULL`, the function name is extracted using
+#' [.extract_function_name()]. Used to determine if a analytical solution
+#' exists for the primary censored distribution.
 #'
 #' @param pwindow Primary event window
 #'
@@ -21,24 +25,16 @@
 #' normalized to integrate to 1 over \[0, pwindow\]. Defaults to a uniform
 #' distribution over \[0, pwindow\]. Users can provide custom functions or use
 #' helper functions like `dexpgrowth` for an exponential growth distribution.
-#' See `primary_dists.R` for examples.
+#' See `primary_dists.R` for examples. `dprimary` will be inspected for a
+#' "name" attribute which may be a string specifying the name of the  primary
+#' event distribution function. If `NULL`, the function name is extracted using
+#' [.extract_function_name()]. Used to determine if a analytical solution
+#' exists for the primary censored distribution.
 #'
 #' @param dprimary_args List of additional arguments to be passed to
 #' dprimary. For example, when using `dexpgrowth`, you would
 #' pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
 #' and rate parameters
-#'
-#' @param pdist_name A string specifying the name of the delay distribution
-#' function. If NULL, the function name is extracted using
-#' [.extract_function_name()]. Used to determine if a analytical solution
-#' exists for the primary censored distribution. Must be set if `pdist` is
-#' passed a pre-assigned variable rather than a function name.
-#'
-#' @param dprimary_name A string specifying the name of the primary event
-#' distribution function. If NULL, the function name is extracted using
-#' [.extract_function_name()]. Used to determine if a analytical solution
-#' exists for the primary censored distribution. Must be set if `dprimary` is
-#' passed a pre-assigned variable rather than a function name.
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
