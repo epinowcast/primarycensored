@@ -13,13 +13,13 @@
 #' @export
 new_pcens <- function(
     pdist, dprimary, dprimary_args,
-    pdist_name = NULL,
-    dprimary_name = NULL, ...) {
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(substitute(pdist))
+    ...) {
+
+  if (is.null(attr(pdist, "name"))) {
+    attr(pdist, "name") <- .extract_function_name(pdist)
   }
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(substitute(dprimary))
+  if (is.null(attr(dprimary, "name"))) {
+    attr(dprimary, "name") <- .extract_function_name(dprimary)
   }
 
   structure(
@@ -30,11 +30,7 @@ new_pcens <- function(
       args = list(...)
     ),
     class = c(
-      paste0(
-        "pcens_",
-        pdist_name, "_",
-        dprimary_name
-      )
+      sprintf("pcens_%s_%s", attr(pdist, "name"), attr(dprimary, "name"))
     )
   )
 }

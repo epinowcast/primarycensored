@@ -99,15 +99,15 @@
 #' )
 pprimarycensored <- function(
     q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
-    dprimary_args = list(), pdist_name = NULL, dprimary_name = NULL, ...) {
+    dprimary_args = list(), ...) {
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(substitute(pdist))
+  if (is.null(attr(pdist, "name"))) {
+    attr(pdist, "name") <- .extract_function_name(pdist)
   }
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(substitute(dprimary))
+  if (is.null(attr(dprimary, "name"))) {
+    attr(dprimary, "name") <- .extract_function_name(dprimary)
   }
 
   # Create a new primarycensored object
@@ -115,8 +115,6 @@ pprimarycensored <- function(
     pdist,
     dprimary,
     dprimary_args,
-    pdist_name = pdist_name,
-    dprimary_name = dprimary_name,
     ...
   )
 

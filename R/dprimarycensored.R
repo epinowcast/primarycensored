@@ -71,7 +71,7 @@ dprimarycensored <- function(
     x, pdist, pwindow = 1, swindow = 1,
     D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), log = FALSE,
-    pdist_name = NULL, dprimary_name = NULL, ...) {
+    ...) {
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
@@ -83,11 +83,11 @@ dprimarycensored <- function(
     )
   }
 
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(substitute(pdist))
+  if (is.null(attr(pdist, "name"))) {
+    attr(pdist, "name") <- .extract_function_name(pdist)
   }
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(substitute(dprimary))
+  if (is.null(attr(dprimary, "name"))) {
+    attr(dprimary, "name") <- .extract_function_name(dprimary)
   }
 
   # Compute CDFs for all unique points
@@ -98,8 +98,7 @@ dprimarycensored <- function(
   }
 
   cdfs <- pprimarycensored(
-    unique_points, pdist, pwindow, Inf, dprimary, dprimary_args,
-    pdist_name = pdist_name, dprimary_name = dprimary_name, ...
+    unique_points, pdist, pwindow, Inf, dprimary, dprimary_args, ...
   )
 
   # Create a lookup table for CDFs

@@ -59,7 +59,6 @@
 fitdistdoublecens <- function(censdata, distr,
                               pwindow = 1, D = Inf,
                               dprimary = stats::dunif,
-                              dprimary_name = NULL,
                               dprimary_args = list(),
                               truncation_check_multiplier = 2,
                               ...) {
@@ -80,8 +79,8 @@ fitdistdoublecens <- function(censdata, distr,
     stop("censdata must contain 'left' and 'right' columns")
   }
 
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(dprimary)
+  if (is.null(attr(dprimary, "name"))) {
+    attr(dprimary, "name") <- .extract_function_name(dprimary)
   }
 
   if (!is.null(truncation_check_multiplier)) {
@@ -108,9 +107,7 @@ fitdistdoublecens <- function(censdata, distr,
         pwindow = pwindow,
         D = D,
         dprimary = dprimary,
-        dprimary_args = dprimary_args,
-        pdist_name = pdist_name,
-        dprimary_name = dprimary_name
+        dprimary_args = dprimary_args
       )
     ))
   }
@@ -126,9 +123,7 @@ fitdistdoublecens <- function(censdata, distr,
         pwindow = pwindow,
         D = D,
         dprimary = dprimary,
-        dprimary_args = dprimary_args,
-        pdist_name = pdist_name,
-        dprimary_name = dprimary_name
+        dprimary_args = dprimary_args
       )
     ))
   }
@@ -150,15 +145,14 @@ fitdistdoublecens <- function(censdata, distr,
 #' each element in x
 #' @keywords internal
 .dpcens <- function(x, swindows, pdist, pwindow, D, dprimary,
-                    dprimary_args, pdist_name, dprimary_name, ...) {
+                    dprimary_args, ...) {
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {
         dprimarycensored(
           x, pdist,
           pwindow = pwindow, swindow = swindows[1], D = D, dprimary = dprimary,
-          dprimary_args = dprimary_args, pdist_name = pdist_name,
-          dprimary_name = dprimary_name, ...
+          dprimary_args = dprimary_args, ...
         )
       } else {
         # Group x and swindows by unique swindow values
@@ -171,7 +165,7 @@ fitdistdoublecens <- function(censdata, distr,
             x[mask], pdist,
             pwindow = pwindow, swindow = sw, D = D,
             dprimary = dprimary, dprimary_args = dprimary_args,
-            pdist_name = pdist_name, dprimary_name = dprimary_name, ...
+            ...
           )
         }
 
@@ -188,14 +182,14 @@ fitdistdoublecens <- function(censdata, distr,
 #' @inheritParams pprimarycensored
 #' @keywords internal
 .ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args,
-                    pdist_name, dprimary_name, ...) {
+                    ...) {
   tryCatch(
     {
       pprimarycensored(
         q, pdist,
         pwindow = pwindow,
         D = D, dprimary = dprimary, dprimary_args = dprimary_args,
-        pdist_name = pdist_name, dprimary_name = dprimary_name, ...
+        ...
       )
     },
     error = function(e) {
