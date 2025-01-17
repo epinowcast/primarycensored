@@ -22,9 +22,7 @@ new_pcens <- function(
       dprimary_args = dprimary_args,
       args = list(...)
     ),
-    class = c(
-      sprintf("pcens_%s_%s", attr(pdist, "name"), attr(dprimary, "name"))
-    )
+    class = .format_class(pdist, dprimary)
   )
 }
 
