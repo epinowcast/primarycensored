@@ -7,7 +7,7 @@
 .extract_function_name(func)
 }
 \arguments{
-\item{func}{The output of \code{substitute} on a function.}
+\item{func}{a density or distribution function}
 }
 \value{
 A character string representing the base name of the function.

@@ -15,13 +15,6 @@ new_pcens <- function(
     pdist, dprimary, dprimary_args,
     ...) {
 
-  if (is.null(attr(pdist, "name"))) {
-    attr(pdist, "name") <- .extract_function_name(pdist)
-  }
-  if (is.null(attr(dprimary, "name"))) {
-    attr(dprimary, "name") <- .extract_function_name(dprimary)
-  }
-
   structure(
     list(
       pdist = pdist,

@@ -83,13 +83,6 @@ dprimarycensored <- function(
     )
   }
 
-  if (is.null(attr(pdist, "name"))) {
-    attr(pdist, "name") <- .extract_function_name(pdist)
-  }
-  if (is.null(attr(dprimary, "name"))) {
-    attr(dprimary, "name") <- .extract_function_name(dprimary)
-  }
-
   # Compute CDFs for all unique points
   unique_points <- sort(unique(c(x, x + swindow)))
   unique_points <- unique_points[unique_points > 0]

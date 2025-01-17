@@ -9,11 +9,10 @@
 \arguments{
 \item{q}{Vector of quantiles}
 
-\item{pdist}{Distribution function (CDF). \code{pdist} will be inspected for a
-"name" attribute which may be a string specifying the name of the delay
-distribution function. If \code{NULL}, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution.}
+\item{pdist}{Distribution function (CDF). The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
+functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
@@ -26,11 +25,10 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples. \code{dprimary} will be inspected for a
-"name" attribute which may be a string specifying the name of the  primary
-event distribution function. If \code{NULL}, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution.}
+See \code{primary_dists.R} for examples. The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
+functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would

@@ -79,10 +79,6 @@ fitdistdoublecens <- function(censdata, distr,
     stop("censdata must contain 'left' and 'right' columns")
   }
 
-  if (is.null(attr(dprimary, "name"))) {
-    attr(dprimary, "name") <- .extract_function_name(dprimary)
-  }
-
   if (!is.null(truncation_check_multiplier)) {
     check_truncation(
       delays = censdata$left,

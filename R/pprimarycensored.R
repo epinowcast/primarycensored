@@ -8,11 +8,10 @@
 #'
 #' @param q Vector of quantiles
 #'
-#' @param pdist Distribution function (CDF). `pdist` will be inspected for a
-#' "name" attribute which may be a string specifying the name of the delay
-#' distribution function. If `NULL`, the function name is extracted using
-#' [.extract_function_name()]. Used to determine if a analytical solution
-#' exists for the primary censored distribution.
+#' @param pdist Distribution function (CDF). The package can identify base R
+#' distributions for potential analytical solutions. For non-base R functions,
+#' users can apply [attach_distribution_name()] to yield properly tagged
+#' functions if they wish to leverage the analytical solutions. 
 #'
 #' @param pwindow Primary event window
 #'
@@ -25,11 +24,10 @@
 #' normalized to integrate to 1 over \[0, pwindow\]. Defaults to a uniform
 #' distribution over \[0, pwindow\]. Users can provide custom functions or use
 #' helper functions like `dexpgrowth` for an exponential growth distribution.
-#' See `primary_dists.R` for examples. `dprimary` will be inspected for a
-#' "name" attribute which may be a string specifying the name of the  primary
-#' event distribution function. If `NULL`, the function name is extracted using
-#' [.extract_function_name()]. Used to determine if a analytical solution
-#' exists for the primary censored distribution.
+#' See `primary_dists.R` for examples. The package can identify base R
+#' distributions for potential analytical solutions. For non-base R functions,
+#' users can apply [attach_distribution_name()] to yield properly tagged
+#' functions if they wish to leverage analytical solutions.
 #'
 #' @param dprimary_args List of additional arguments to be passed to
 #' dprimary. For example, when using `dexpgrowth`, you would
@@ -98,13 +96,6 @@ pprimarycensored <- function(
     dprimary_args = list(), ...) {
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
-
-  if (is.null(attr(pdist, "name"))) {
-    attr(pdist, "name") <- .extract_function_name(pdist)
-  }
-  if (is.null(attr(dprimary, "name"))) {
-    attr(dprimary, "name") <- .extract_function_name(dprimary)
-  }
 
   # Create a new primarycensored object
   pcens_obj <- new_pcens(
