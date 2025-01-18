@@ -11,7 +11,7 @@
 #' @param pdist Distribution function (CDF). The package can identify base R
 #' distributions for potential analytical solutions. For non-base R functions,
 #' users can apply [attach_distribution_name()] to yield properly tagged
-#' functions if they wish to leverage the analytical solutions. 
+#' functions if they wish to leverage the analytical solutions.
 #'
 #' @param pwindow Primary event window
 #'
