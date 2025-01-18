@@ -63,7 +63,7 @@ fitdistdoublecens <- function(censdata, distr,
                               dprimary_args = list(),
                               truncation_check_multiplier = 2,
                               ...) {
-  .name_deprecation(pdist_name, dprimary_name)
+  .name_deprecation(deprecated(), dprimary_name)
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
