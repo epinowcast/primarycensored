@@ -59,9 +59,11 @@
 fitdistdoublecens <- function(censdata, distr,
                               pwindow = 1, D = Inf,
                               dprimary = stats::dunif,
+                              dprimary_name = deprecated(),
                               dprimary_args = list(),
                               truncation_check_multiplier = 2,
                               ...) {
+  .name_deprecation(pdist_name, dprimary_name)
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -141,7 +143,8 @@ fitdistdoublecens <- function(censdata, distr,
 #' each element in x
 #' @keywords internal
 .dpcens <- function(x, swindows, pdist, pwindow, D, dprimary,
-                    dprimary_args, ...) {
+                    dprimary_args, pdist_name, dprimary_name, ...) {
+  .name_deprecation(pdist_name, dprimary_name)
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {

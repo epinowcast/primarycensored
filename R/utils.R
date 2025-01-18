@@ -57,3 +57,17 @@ attach_distribution_name <- function(func, name) {
   }
   sprintf("pcens_%s_%s", pdist_name, dprim_name)
 }
+
+#' Deprecation helper
+#' 
+#' @keywords internal
+.name_deprecation <- function(pdist_name, dprimary_name) {
+  if (lifecycle::is_present(pdist_name) || lifecycle::is_present(dprimary_name)) {
+    lifecycle::deprecate_warn(
+      when = "1.0.1", 
+      what = I("`pdist_name` and `dprimary_name` are deprecated across primarycensored functions."),
+      details = "Use `attach_distribution_name()` instead.",
+      env = caller_env(), user_env = caller_env(2)
+    )
+  }
+}

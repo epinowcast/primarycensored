@@ -93,7 +93,9 @@
 #' )
 pprimarycensored <- function(
     q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
-    dprimary_args = list(), ...) {
+    dprimary_args = list(),
+    pdist_name = deprecated(), dprimary_name = deprecated(), ...) {
+  .name_deprecation(pdist_name, dprimary_name)
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 

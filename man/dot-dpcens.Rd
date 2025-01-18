@@ -4,7 +4,18 @@
 \alias{.dpcens}
 \title{Define a fitdistrplus compatible wrapper around dprimarycensored}
 \usage{
-.dpcens(x, swindows, pdist, pwindow, D, dprimary, dprimary_args, ...)
+.dpcens(
+  x,
+  swindows,
+  pdist,
+  pwindow,
+  D,
+  dprimary,
+  dprimary_args,
+  pdist_name,
+  dprimary_name,
+  ...
+)
 }
 \arguments{
 \item{x}{Vector of quantiles}

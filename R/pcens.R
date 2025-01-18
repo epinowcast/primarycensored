@@ -13,8 +13,10 @@
 #' @export
 new_pcens <- function(
     pdist, dprimary, dprimary_args,
+    pdist_name = deprecated(), dprimary_name = deprecated(),
     ...) {
-
+  
+  .name_deprecation(pdist_name, dprimary_name)
   structure(
     list(
       pdist = pdist,

@@ -4,7 +4,14 @@
 \alias{new_pcens}
 \title{S3 class for primary event censored distribution computation}
 \usage{
-new_pcens(pdist, dprimary, dprimary_args, ...)
+new_pcens(
+  pdist,
+  dprimary,
+  dprimary_args,
+  pdist_name = deprecated(),
+  dprimary_name = deprecated(),
+  ...
+)
 }
 \arguments{
 \item{pdist}{Distribution function (CDF). The package can identify base R
