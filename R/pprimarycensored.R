@@ -34,6 +34,12 @@
 #' pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
 #' and rate parameters
 #'
+#' @param pdist_name `r lifecycle::badge("deprecated")` this argument will be
+#' ignored; use [attach_distribution_name()] on `pdist` instead
+#'
+#' @param dprimary_name `r lifecycle::badge("deprecated")` this argument will be
+#' ignored; use [attach_distribution_name()] on `dprimary` instead
+#'
 #' @param ... Additional arguments to be passed to pdist
 #'
 #' @return Vector of primary event censored CDFs, normalized by D if finite

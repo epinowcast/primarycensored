@@ -40,6 +40,9 @@ distributions for potential analytical solutions. For non-base R functions,
 users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
+\item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
+ignored; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{dprimary} instead}
+
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,

@@ -51,7 +51,8 @@ Depends:
     R (>= 4.0.0)
 Imports:
     lifecycle,
-    pracma
+    pracma,
+    rlang
 Suggests:
     bookdown,
     cmdstanr,

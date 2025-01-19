@@ -66,6 +66,12 @@ and rate parameters}
 
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
 
+\item{pdist_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
+ignored; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{pdist} instead}
+
+\item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
+ignored; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{dprimary} instead}
+
 \item{...}{Additional arguments to be passed to the distribution function}
 }
 \value{

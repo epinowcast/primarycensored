@@ -4,7 +4,26 @@
 \alias{.name_deprecation}
 \title{Deprecation helper}
 \usage{
-.name_deprecation(pdist_name, dprimary_name)
+.name_deprecation(
+  pdist_name,
+  dprimary_name,
+  env = rlang::caller_env(),
+  user_env = rlang::caller_env(2)
+)
+}
+\arguments{
+\item{pdist_name}{the deprecated variable to check}
+
+\item{dprimary_name}{the deprecated variable to check}
+
+\item{env, user_env}{Pair of environments that define where \verb{deprecate_*()}
+was called (used to determine the package name) and where the function
+called the deprecating function was called (used to determine if
+\code{deprecate_soft()} should message).
+
+These are only needed if you're calling \verb{deprecate_*()} from an internal
+helper, in which case you should forward \code{env = caller_env()} and
+\code{user_env = caller_env(2)}.}
 }
 \description{
 Deprecation helper

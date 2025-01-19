@@ -32,6 +32,7 @@ Other contributors:
 \itemize{
   \item Adam Howes \email{adamthowes@gmail.com} (\href{https://orcid.org/0000-0003-2386-4031}{ORCID}) [contributor]
   \item James Mba Azam \email{james.azam@lshtm.ac.uk} (\href{https://orcid.org/0000-0001-5782-7330}{ORCID}) [contributor]
+  \item Carl Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID}) [contributor]
 }
 
 }
