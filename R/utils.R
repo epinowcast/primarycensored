@@ -59,11 +59,11 @@ attach_distribution_name <- function(func, name) {
 }
 
 #' Deprecation helper
-#' 
+#'
 #' @param pdist_name the deprecated variable to check
 #' @param dprimary_name the deprecated variable to check
 #' @inheritParams lifecycle::deprecate_warn
-#' 
+#'
 #' @keywords internal
 .name_deprecation <- function(
   pdist_name, dprimary_name,
