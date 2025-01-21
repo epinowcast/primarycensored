@@ -298,3 +298,46 @@ test_that(
     }
   }
 )
+
+test_that("new_pcens *_name deprecation is soft.", {
+  pdist <- function(...) pgamma(...)
+  dprimary <- function(...) dunif(...)
+  shape <- 2
+  rate <- 1
+
+  neg_obj <- new_pcens(
+    pdist,
+    dprimary, list(),
+    shape = shape, rate = rate
+  )
+
+  expect_equal(class(neg_obj), "pcens_unknown_unknown")
+
+  ref_obj <- new_pcens(
+    attach_distribution_name(pdist, "pgamma"),
+    attach_distribution_name(dprimary, "dunif"), list(),
+    shape = shape, rate = rate
+  )
+
+  lifecycle::expect_deprecated(obj <- new_pcens(
+    pdist,
+    attach_distribution_name(dprimary, "dunif"), list(), pdist_name = "pgamma",
+    shape = shape, rate = rate
+  ))
+
+  lifecycle::expect_deprecated(new_obj <- new_pcens(
+    attach_distribution_name(pdist, "pgamma"),
+    dprimary, list(), dprimary_name = "dunif",
+    shape = shape, rate = rate
+  ))
+
+  expect_identical(body(obj$pdist), body(ref_obj$pdist))
+  expect_identical(body(new_obj$pdist), body(ref_obj$pdist))
+  expect_identical(formals(obj$pdist), formals(ref_obj$pdist))
+  expect_identical(formals(new_obj$pdist), formals(ref_obj$pdist))
+  expect_identical(body(obj$dprimary), body(ref_obj$dprimary))
+  expect_identical(body(new_obj$dprimary), body(ref_obj$dprimary))
+  expect_identical(formals(obj$dprimary), formals(new_obj$dprimary))
+  expect_identical(formals(new_obj$dprimary), formals(ref_obj$dprimary))
+
+})
