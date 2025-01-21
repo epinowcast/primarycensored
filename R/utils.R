@@ -10,7 +10,11 @@
 #' @keywords internal
 .extract_function_name <- function(func) {
   bd <- grep(".Call", deparse(body(func)), value = TRUE, fixed = TRUE)
-  return(sub("^.*\\.Call\\(C_(\\w+),.+$", "\\1", x = bd))
+  if (length(bd) == 1) {
+    return(sub("^.*\\.Call\\(C_(\\w+),.+$", "\\1", x = bd))
+  } else {
+    return("unknown")
+  }
 }
 
 #' @title Helper Method for Custom Distributions
@@ -94,7 +98,6 @@ attach_distribution_name <- function(func, name) {
     )
     if (test_use[1]) res$pdist <- pdist_name
     if (test_use[2]) res$dprimary <- dprimary_name
-  } else {
-    return(res)
   }
+  return(res)
 }
