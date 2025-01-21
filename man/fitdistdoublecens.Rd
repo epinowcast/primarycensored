@@ -41,7 +41,8 @@ users can apply \code{\link[=attach_distribution_name]{attach_distribution_name(
 functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
-ignored; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{dprimary} instead}
+ignored in future versions; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{dprimary}
+instead}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would

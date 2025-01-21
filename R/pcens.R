@@ -16,7 +16,14 @@ new_pcens <- function(
     pdist_name = deprecated(), dprimary_name = deprecated(),
     ...) {
 
-  .name_deprecation(pdist_name, dprimary_name)
+  nms <- .name_deprecation(pdist_name, dprimary_name)
+  if (!is.null(nms$pdist)) {
+    pdist <- attach_distribution_name(pdist, nms$pdist)
+  }
+  if (!is.null(nms$dprimary)) {
+    dprimary <- attach_distribution_name(dprimary, nms$dprimary)
+  }
+
   structure(
     list(
       pdist = pdist,

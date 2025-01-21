@@ -82,7 +82,7 @@ attach_distribution_name <- function(func, name) {
     lifecycle::is_present(pdist_name),
     lifecycle::is_present(dprimary_name)
   )
-  res <- list(NULL, NULL)
+  res <- list(pdist = NULL, dprimary = NULL)
   if (any(test_use)) {
     lifecycle::deprecate_soft(
       when = "1.0.0",
@@ -92,8 +92,8 @@ attach_distribution_name <- function(func, name) {
       details = "Use `attach_distribution_name()` instead.",
       env = env, user_env = user_env
     )
-    if (test_use[1]) res[[1]] <- pdist_name
-    if (test_use[2]) res[[2]] <- dprimary_name
+    if (test_use[1]) res$pdist <- pdist_name
+    if (test_use[2]) res$dprimary <- dprimary_name
   } else {
     return(res)
   }

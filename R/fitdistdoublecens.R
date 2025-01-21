@@ -63,7 +63,12 @@ fitdistdoublecens <- function(censdata, distr,
                               dprimary_args = list(),
                               truncation_check_multiplier = 2,
                               ...) {
-  .name_deprecation(deprecated(), dprimary_name)
+
+  nms <- .name_deprecation(deprecated(), dprimary_name)
+  if (!is.null(nms$dprimary)) {
+    dprimary <- attach_distribution_name(dprimary, nms$dprimary)
+  }
+
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -91,7 +96,7 @@ fitdistdoublecens <- function(censdata, distr,
 
   # Get the distribution functions
   pdist_name <- paste0("p", distr)
-  pdist <- get(pdist_name)
+  pdist <- attach_distribution_name(get(pdist_name), pdist_name)
   swindows <- censdata$right - censdata$left
 
   # Create the function definition with named arguments for dpcens
@@ -143,8 +148,8 @@ fitdistdoublecens <- function(censdata, distr,
 #' each element in x
 #' @keywords internal
 .dpcens <- function(x, swindows, pdist, pwindow, D, dprimary,
-                    dprimary_args, pdist_name, dprimary_name, ...) {
-  .name_deprecation(pdist_name, dprimary_name)
+                    dprimary_args, ...) {
+
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {

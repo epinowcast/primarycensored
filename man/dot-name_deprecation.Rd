@@ -26,6 +26,11 @@ helper, in which case you should forward \code{env = caller_env()} and
 \code{user_env = caller_env(2)}.}
 }
 \description{
-Deprecation helper
+Provides lifecycle management consistently across several functions.
+Currently uses \code{\link[lifecycle:deprecate_soft]{lifecycle::deprecate_soft()}} - i.e. warns only when used
+directly. In future versions, this will switch to warning unconditionally
+with \code{\link[lifecycle:deprecate_soft]{lifecycle::deprecate_warn()}}, then throwing via
+\code{\link[lifecycle:deprecate_soft]{lifecycle::deprecate_warn()}}, and finally be deleted along with the subject
+arguments.
 }
 \keyword{internal}
