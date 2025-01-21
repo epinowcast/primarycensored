@@ -35,10 +35,12 @@
 #' and rate parameters
 #'
 #' @param pdist_name `r lifecycle::badge("deprecated")` this argument will be
-#' ignored; use [attach_distribution_name()] on `pdist` instead
+#' ignored in future versions; use [attach_distribution_name()] on `pdist`
+#' instead
 #'
 #' @param dprimary_name `r lifecycle::badge("deprecated")` this argument will be
-#' ignored; use [attach_distribution_name()] on `dprimary` instead
+#' ignored in future versions; use [attach_distribution_name()] on `dprimary`
+#' instead
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
