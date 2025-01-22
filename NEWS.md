@@ -4,6 +4,8 @@ Development release.
 
 ## Package
 
+- Updated the CI so that stan code is also tested on Windows and Mac. This is to ensure that the stan code is compatible with these platforms and in response to a CI bug in `epidist`.
+
 ## Documentation
 
 - Added a CRAN downloads badge to the README.
