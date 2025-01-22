@@ -3,7 +3,7 @@ options(datatable.print.class = FALSE)
 options(datatable.print.keys = FALSE)
 
 if (
-  !on_ci() || (on_ci() && Sys.info()["sysname"] == "Linux" && not_on_cran())
+  !on_ci() || not_on_cran()
 ) {
   if (requireNamespace("cmdstanr", quietly = TRUE)) { # nolint
     if (!is.null(cmdstanr::cmdstan_version())) { # nolint
