@@ -191,7 +191,7 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpA31jP4/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/Rtmpmz5fGD/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
@@ -260,7 +260,7 @@
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">samples</span></span></code></pre></div>
 <pre><code><span><span class="co">##  variable mean median   sd  mad   q5  q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##         y 0.51   0.52 0.29 0.38 0.06 0.95 1.00     1065      983</span></span></code></pre>
+<span><span class="co">##         y 0.52   0.54 0.29 0.37 0.06 0.95 1.00      979      802</span></span></code></pre>
 </div>
 </div>
 <div class="section level3" number="2.4">
@@ -273,7 +273,7 @@
 <p>We can now use the function in R. Note that this may get slightly more complicated if our stan function depends on other stan functions (i.e. you need to have those included in your compiled model as well).</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">expgrowth_rng</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] 0.6524848</span></span></code></pre>
+<pre><code><span><span class="co">## [1] 0.1772395</span></span></code></pre>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
