@@ -68,7 +68,10 @@ checking if it's monotonically increasing and bounded between 0 and 1.</p>
 
 
 <dl><dt id="arg-pdist">pdist<a class="anchor" aria-label="anchor" href="#arg-pdist"></a></dt>
-<dd><p>Distribution function (CDF)</p></dd>
+<dd><p>Distribution function (CDF). The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+functions if they wish to leverage the analytical solutions.</p></dd>
 
 
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
@@ -102,7 +105,7 @@ pdist is not a valid CDF.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
 </div>
 
 <div class="pkgdown-footer-right">

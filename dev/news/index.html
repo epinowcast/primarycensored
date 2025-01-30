@@ -56,6 +56,7 @@
 <div class="section level3">
 <h3 id="package-1-0-0-1000">Package<a class="anchor" aria-label="anchor" href="#package-1-0-0-1000"></a></h3>
 <ul><li>Updated the CI so that stan code is also tested on Windows and Mac. This is to ensure that the stan code is compatible with these platforms and in response to a CI bug in <code>epidist</code>.</li>
+<li>Revised approach to automatic discovery of distribution functions. This soft deprecates the <code>pdist_name</code> and <code>dprimary_name</code> arguments throughout. Users wishing to pass distribution names (i.e. to potentially leverage analytical solutions) are advised to use the newly introduced <code><a href="../reference/add_name_attribute.html">add_name_attribute()</a></code> function. Adds transient dependency on <code>lifecycle</code> and <code>rlang</code> packages. See <a href="https://github.com/epinowcast/primarycensored/issues/188" class="external-link">#188</a> by <a href="https://github.com/pearsonca" class="external-link">@pearsonca</a>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="documentation-1-0-0-1000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-0-0-1000"></a></h3>
@@ -188,7 +189,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
 </div>
 
 <div class="pkgdown-footer-right">

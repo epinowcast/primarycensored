@@ -77,7 +77,10 @@ and if it takes the arguments min and max.</p>
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like <code>dexpgrowth</code> for an exponential growth distribution.
-See <code>primary_dists.R</code> for examples.</p></dd>
+See <code>primary_dists.R</code> for examples. The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+functions if they wish to leverage analytical solutions.</p></dd>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
@@ -117,7 +120,7 @@ dprimary is not a valid PDF.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
 </div>
 
 <div class="pkgdown-footer-right">

@@ -11,12 +11,15 @@
 <url><loc>https://primarycensored.epinowcast.org/dev/authors.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/index.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/news/index.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/check_dprimary.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/check_pdist.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/check_truncation.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-dpcens.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-extract_function_name.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-extract_stan_functions.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-format_class.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-name_deprecation.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-ppcens.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/expgrowth.html</loc></url>
@@ -35,6 +38,7 @@
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_plnorm_dunif.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pweibull_dunif.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/dev/reference/primarycensored-package.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/rprimarycensored.html</loc></url>
 </urlset>
 

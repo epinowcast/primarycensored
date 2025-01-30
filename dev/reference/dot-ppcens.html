@@ -57,17 +57,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.ppcens</span><span class="op">(</span></span>
-<span>  <span class="va">q</span>,</span>
-<span>  <span class="va">pdist</span>,</span>
-<span>  <span class="va">pwindow</span>,</span>
-<span>  <span class="va">D</span>,</span>
-<span>  <span class="va">dprimary</span>,</span>
-<span>  <span class="va">dprimary_args</span>,</span>
-<span>  <span class="va">pdist_name</span>,</span>
-<span>  <span class="va">dprimary_name</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.ppcens</span><span class="op">(</span><span class="va">q</span>, <span class="va">pdist</span>, <span class="va">pwindow</span>, <span class="va">D</span>, <span class="va">dprimary</span>, <span class="va">dprimary_args</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -79,7 +69,10 @@
 
 
 <dt id="arg-pdist">pdist<a class="anchor" aria-label="anchor" href="#arg-pdist"></a></dt>
-<dd><p>Distribution function (CDF)</p></dd>
+<dd><p>Distribution function (CDF). The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+functions if they wish to leverage the analytical solutions.</p></dd>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
@@ -98,7 +91,10 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.</p></d
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like <code>dexpgrowth</code> for an exponential growth distribution.
-See <code>primary_dists.R</code> for examples.</p></dd>
+See <code>primary_dists.R</code> for examples. The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+functions if they wish to leverage analytical solutions.</p></dd>
 
 
 <dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
@@ -106,22 +102,6 @@ See <code>primary_dists.R</code> for examples.</p></dd>
 dprimary. For example, when using <code>dexpgrowth</code>, you would
 pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
 and rate parameters</p></dd>
-
-
-<dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
-<dd><p>A string specifying the name of the delay distribution
-function. If NULL, the function name is extracted using
-<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if <code>pdist</code> is
-passed a pre-assigned variable rather than a function name.</p></dd>
-
-
-<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
-<dd><p>A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
-<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if <code>dprimary</code> is
-passed a pre-assigned variable rather than a function name.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -134,7 +114,7 @@ passed a pre-assigned variable rather than a function name.</p></dd>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
 </div>
 
 <div class="pkgdown-footer-right">

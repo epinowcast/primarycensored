@@ -61,8 +61,8 @@
 <span>  <span class="va">pdist</span>,</span>
 <span>  <span class="va">dprimary</span>,</span>
 <span>  <span class="va">dprimary_args</span>,</span>
-<span>  pdist_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  dprimary_name <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  dprimary_name <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -72,7 +72,10 @@
 
 
 <dl><dt id="arg-pdist">pdist<a class="anchor" aria-label="anchor" href="#arg-pdist"></a></dt>
-<dd><p>Distribution function (CDF)</p></dd>
+<dd><p>Distribution function (CDF). The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+functions if they wish to leverage the analytical solutions.</p></dd>
 
 
 <dt id="arg-dprimary">dprimary<a class="anchor" aria-label="anchor" href="#arg-dprimary"></a></dt>
@@ -82,7 +85,10 @@
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like <code>dexpgrowth</code> for an exponential growth distribution.
-See <code>primary_dists.R</code> for examples.</p></dd>
+See <code>primary_dists.R</code> for examples. The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+functions if they wish to leverage analytical solutions.</p></dd>
 
 
 <dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
@@ -93,19 +99,15 @@ and rate parameters</p></dd>
 
 
 <dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
-<dd><p>A string specifying the name of the delay distribution
-function. If NULL, the function name is extracted using
-<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if <code>pdist</code> is
-passed a pre-assigned variable rather than a function name.</p></dd>
+<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> this argument will be
+ignored in future versions; use <code><a href="add_name_attribute.html">add_name_attribute()</a></code> on <code>pdist</code>
+instead</p></dd>
 
 
 <dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
-<dd><p>A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
-<code><a href="dot-extract_function_name.html">.extract_function_name()</a></code>. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if <code>dprimary</code> is
-passed a pre-assigned variable rather than a function name.</p></dd>
+<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> this argument will be
+ignored in future versions; use <code><a href="add_name_attribute.html">add_name_attribute()</a></code> on <code>dprimary</code>
+instead</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -135,7 +137,7 @@ cdf.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
 </div>
 
 <div class="pkgdown-footer-right">
