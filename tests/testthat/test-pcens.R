@@ -311,7 +311,7 @@ test_that("new_pcens *_name deprecation is soft.", {
     shape = shape, rate = rate
   )
 
-  expect_equal(class(neg_obj), "pcens_unknown_unknown")
+  expect_s3_class(neg_obj, "pcens_unknown_unknown")
 
   ref_obj <- new_pcens(
     add_name_attribute(pdist, "pgamma"),
@@ -319,15 +319,17 @@ test_that("new_pcens *_name deprecation is soft.", {
     shape = shape, rate = rate
   )
 
-  lifecycle::expect_deprecated(obj <- new_pcens(
+  lifecycle::expect_deprecated(obj <- new_pcens( # nolint
     pdist,
-    add_name_attribute(dprimary, "dunif"), list(), pdist_name = "pgamma",
+    add_name_attribute(dprimary, "dunif"), list(),
+    pdist_name = "pgamma",
     shape = shape, rate = rate
   ))
 
-  lifecycle::expect_deprecated(new_obj <- new_pcens(
+  lifecycle::expect_deprecated(new_obj <- new_pcens( # nolint
     add_name_attribute(pdist, "pgamma"),
-    dprimary, list(), dprimary_name = "dunif",
+    dprimary, list(),
+    dprimary_name = "dunif",
     shape = shape, rate = rate
   ))
 
@@ -339,5 +341,34 @@ test_that("new_pcens *_name deprecation is soft.", {
   expect_identical(body(new_obj$dprimary), body(ref_obj$dprimary))
   expect_identical(formals(obj$dprimary), formals(new_obj$dprimary))
   expect_identical(formals(new_obj$dprimary), formals(ref_obj$dprimary))
+})
 
+test_that("new_pcens works with custom function with name attribute", {
+  # Create custom functions with name attributes
+  custom_pdist <- function(x, shape, rate) pgamma(x, shape, rate)
+  custom_dprimary <- function(x, min = 0, max = 1) dunif(x, min, max)
+
+  named_pdist <- add_name_attribute(custom_pdist, "pgamma")
+  named_dprimary <- add_name_attribute(custom_dprimary, "dunif")
+
+  # Create pcens object with custom named functions
+  obj <- new_pcens(
+    named_pdist,
+    named_dprimary,
+    list(),
+    shape = 2,
+    rate = 1
+  )
+
+  # Check class is set correctly using function names
+  expect_s3_class(obj, "pcens_pgamma_dunif")
+
+  # Check functions are preserved correctly
+  expect_identical(body(obj$pdist), body(custom_pdist))
+  expect_identical(formals(obj$pdist), formals(custom_pdist))
+  expect_identical(body(obj$dprimary), body(custom_dprimary))
+  expect_identical(formals(obj$dprimary), formals(custom_dprimary))
+
+  # Check arguments are preserved
+  expect_identical(obj$args, list(shape = 2, rate = 1))
 })
