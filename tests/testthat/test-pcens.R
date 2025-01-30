@@ -314,19 +314,19 @@ test_that("new_pcens *_name deprecation is soft.", {
   expect_equal(class(neg_obj), "pcens_unknown_unknown")
 
   ref_obj <- new_pcens(
-    attach_distribution_name(pdist, "pgamma"),
-    attach_distribution_name(dprimary, "dunif"), list(),
+    add_name_attribute(pdist, "pgamma"),
+    add_name_attribute(dprimary, "dunif"), list(),
     shape = shape, rate = rate
   )
 
   lifecycle::expect_deprecated(obj <- new_pcens(
     pdist,
-    attach_distribution_name(dprimary, "dunif"), list(), pdist_name = "pgamma",
+    add_name_attribute(dprimary, "dunif"), list(), pdist_name = "pgamma",
     shape = shape, rate = rate
   ))
 
   lifecycle::expect_deprecated(new_obj <- new_pcens(
-    attach_distribution_name(pdist, "pgamma"),
+    add_name_attribute(pdist, "pgamma"),
     dprimary, list(), dprimary_name = "dunif",
     shape = shape, rate = rate
   ))

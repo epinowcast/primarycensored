@@ -10,7 +10,7 @@
 #'
 #' @param pdist Distribution function (CDF). The package can identify base R
 #' distributions for potential analytical solutions. For non-base R functions,
-#' users can apply [attach_distribution_name()] to yield properly tagged
+#' users can apply [add_name_attribute()] to yield properly tagged
 #' functions if they wish to leverage the analytical solutions.
 #'
 #' @param pwindow Primary event window
@@ -26,7 +26,7 @@
 #' helper functions like `dexpgrowth` for an exponential growth distribution.
 #' See `primary_dists.R` for examples. The package can identify base R
 #' distributions for potential analytical solutions. For non-base R functions,
-#' users can apply [attach_distribution_name()] to yield properly tagged
+#' users can apply [add_name_attribute()] to yield properly tagged
 #' functions if they wish to leverage analytical solutions.
 #'
 #' @param dprimary_args List of additional arguments to be passed to
@@ -35,11 +35,11 @@
 #' and rate parameters
 #'
 #' @param pdist_name `r lifecycle::badge("deprecated")` this argument will be
-#' ignored in future versions; use [attach_distribution_name()] on `pdist`
+#' ignored in future versions; use [add_name_attribute()] on `pdist`
 #' instead
 #'
 #' @param dprimary_name `r lifecycle::badge("deprecated")` this argument will be
-#' ignored in future versions; use [attach_distribution_name()] on `dprimary`
+#' ignored in future versions; use [add_name_attribute()] on `dprimary`
 #' instead
 #'
 #' @param ... Additional arguments to be passed to pdist
@@ -106,10 +106,10 @@ pprimarycensored <- function(
 
   nms <- .name_deprecation(pdist_name, dprimary_name)
   if (!is.null(nms$pdist)) {
-    pdist <- attach_distribution_name(pdist, nms$pdist)
+    pdist <- add_name_attribute(pdist, nms$pdist)
   }
   if (!is.null(nms$dprimary)) {
-    dprimary <- attach_distribution_name(dprimary, nms$dprimary)
+    dprimary <- add_name_attribute(dprimary, nms$dprimary)
   }
 
   check_pdist(pdist, D, ...)

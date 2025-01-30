@@ -2,18 +2,19 @@
 % Please edit documentation in R/utils.R
 \name{.extract_function_name}
 \alias{.extract_function_name}
-\title{Extract Base Function Name}
+\title{Extract base function name}
 \usage{
 .extract_function_name(func)
 }
 \arguments{
-\item{func}{a density or distribution function}
+\item{func}{Function, for example the \code{p}- or \code{d}- form of a distribution
+function.}
 }
 \value{
-A character string representing the base name of the function.
+Character string representing the base name of the function.
 }
 \description{
-This helper function extracts the base name of a function, removing an
+This helper function extracts the base name of a function, removing
 namespace prefixes.
 }
 \keyword{internal}

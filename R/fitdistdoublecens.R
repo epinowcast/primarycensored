@@ -66,7 +66,7 @@ fitdistdoublecens <- function(censdata, distr,
 
   nms <- .name_deprecation(deprecated(), dprimary_name)
   if (!is.null(nms$dprimary)) {
-    dprimary <- attach_distribution_name(dprimary, nms$dprimary)
+    dprimary <- add_name_attribute(dprimary, nms$dprimary)
   }
 
   # Check if fitdistrplus is available
@@ -96,7 +96,7 @@ fitdistdoublecens <- function(censdata, distr,
 
   # Get the distribution functions
   pdist_name <- paste0("p", distr)
-  pdist <- attach_distribution_name(get(pdist_name), pdist_name)
+  pdist <- add_name_attribute(get(pdist_name), pdist_name)
   swindows <- censdata$right - censdata$left
 
   # Create the function definition with named arguments for dpcens

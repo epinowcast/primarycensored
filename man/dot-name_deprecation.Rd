@@ -2,7 +2,7 @@
 % Please edit documentation in R/utils.R
 \name{.name_deprecation}
 \alias{.name_deprecation}
-\title{Deprecation helper}
+\title{Deprecation name helper}
 \usage{
 .name_deprecation(
   pdist_name,

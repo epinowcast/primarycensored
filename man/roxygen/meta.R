@@ -4,6 +4,7 @@ list( # nolint
     pcens =
       "Low level primary event censored distribution objects and methods",
     primaryeventdistributions = "Primary event distributions",
+    utils = "Utility functions for working with distributions",
     check = "Distribution checking functions",
     stantools = "Tools for working with package Stan functions",
     modelhelpers = "Modelling wrappers for external fitting packages"

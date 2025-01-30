@@ -14,7 +14,7 @@ each element in x}
 
 \item{pdist}{Distribution function (CDF). The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,
-users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
@@ -30,7 +30,7 @@ distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
 See \code{primary_dists.R} for examples. The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,
-users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to

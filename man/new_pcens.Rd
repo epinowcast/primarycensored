@@ -16,7 +16,7 @@ new_pcens(
 \arguments{
 \item{pdist}{Distribution function (CDF). The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,
-users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage the analytical solutions.}
 
 \item{dprimary}{Function to generate the probability density function
@@ -27,7 +27,7 @@ distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
 See \code{primary_dists.R} for examples. The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,
-users can apply \code{\link[=attach_distribution_name]{attach_distribution_name()}} to yield properly tagged
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
@@ -36,11 +36,11 @@ pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
 
 \item{pdist_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
-ignored in future versions; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{pdist}
+ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{pdist}
 instead}
 
 \item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
-ignored in future versions; use \code{\link[=attach_distribution_name]{attach_distribution_name()}} on \code{dprimary}
+ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{dprimary}
 instead}
 
 \item{...}{Additional arguments to be passed to pdist}

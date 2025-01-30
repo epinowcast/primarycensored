@@ -18,10 +18,10 @@ new_pcens <- function(
 
   nms <- .name_deprecation(pdist_name, dprimary_name)
   if (!is.null(nms$pdist)) {
-    pdist <- attach_distribution_name(pdist, nms$pdist)
+    pdist <- add_name_attribute(pdist, nms$pdist)
   }
   if (!is.null(nms$dprimary)) {
-    dprimary <- attach_distribution_name(dprimary, nms$dprimary)
+    dprimary <- add_name_attribute(dprimary, nms$dprimary)
   }
 
   structure(

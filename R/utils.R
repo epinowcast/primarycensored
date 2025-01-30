@@ -1,11 +1,11 @@
-#' Extract Base Function Name
+#' Extract base function name
 #'
-#' This helper function extracts the base name of a function, removing an
+#' This helper function extracts the base name of a function, removing
 #' namespace prefixes.
 #'
-#' @param func a density or distribution function
+#' @inheritParams add_name_attribute
 #'
-#' @return A character string representing the base name of the function.
+#' @return Character string representing the base name of the function.
 #'
 #' @keywords internal
 .extract_function_name <- function(func) {
@@ -17,25 +17,32 @@
   }
 }
 
-#' @title Helper Method for Custom Distributions
+#' Helper method for custom distributions
 #'
-#' @description
 #' [pprimarycensored()] and related functions can identify which distributions
 #' are provided via the `pdist` and `dprimary` arguments when those are base R
-#' functions (e.g. `punif`, `dexp`).
+#' functions (e.g. `punif`, `dexp`) via the `name` attribute.
 #'
 #' If you need to use a non-base R implementation, but know the distribution
 #' name, you can use this helper function to set it in a way that will be
-#' detected.
+#' detected by [pprimarycensored()] and related functions.
 #'
-#' @param func a function, the `p`- or `d`- form of a distribution function
+#' This is useful as it enables the automatic use of analytical solutions for
+#' distributions where they exist.
 #'
-#' @param name a string, starting with "p" or "d" indicating the underlying
-#' distribution
+#' @param func Function, for example the `p`- or `d`- form of a distribution
+#' function.
 #'
-#' @return the function, with a "name" attribute added
+#' @param name Character string, starting with "p" or "d" indicating the
+#' underlying distribution.
 #'
-attach_distribution_name <- function(func, name) {
+#' @return Function, with a "name" attribute added
+#' @family utils
+#' @export
+#' @examples
+#' dist <- add_name_attribute(pnorm, "hello")
+#' attr(dist, "name")
+add_name_attribute <- function(func, name) {
   attr(func, "name") <- name
   func
 }
@@ -62,9 +69,8 @@ attach_distribution_name <- function(func, name) {
   sprintf("pcens_%s_%s", pdist_name, dprim_name)
 }
 
-#' @title Deprecation helper
+#' Deprecation name helper
 #'
-#' @description
 #' Provides lifecycle management consistently across several functions.
 #' Currently uses [lifecycle::deprecate_soft()] - i.e. warns only when used
 #' directly. In future versions, this will switch to warning unconditionally
@@ -93,7 +99,7 @@ attach_distribution_name <- function(func, name) {
       what = I("`pdist_name` and `dprimary_name` are deprecated across all
         functions and will be ignored in future versions;"
       ),
-      details = "Use `attach_distribution_name()` instead.",
+      details = "Use `add_name_attribute()` instead.",
       env = env, user_env = user_env
     )
     if (test_use[1]) res$pdist <- pdist_name
