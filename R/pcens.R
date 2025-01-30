@@ -13,13 +13,15 @@
 #' @export
 new_pcens <- function(
     pdist, dprimary, dprimary_args,
-    pdist_name = NULL,
-    dprimary_name = NULL, ...) {
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(substitute(pdist))
+    pdist_name = lifecycle::deprecated(),
+    dprimary_name = lifecycle::deprecated(),
+    ...) {
+  nms <- .name_deprecation(pdist_name, dprimary_name)
+  if (!is.null(nms$pdist)) {
+    pdist <- add_name_attribute(pdist, nms$pdist)
   }
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(substitute(dprimary))
+  if (!is.null(nms$dprimary)) {
+    dprimary <- add_name_attribute(dprimary, nms$dprimary)
   }
 
   structure(
@@ -29,13 +31,7 @@ new_pcens <- function(
       dprimary_args = dprimary_args,
       args = list(...)
     ),
-    class = c(
-      paste0(
-        "pcens_",
-        pdist_name, "_",
-        dprimary_name
-      )
-    )
+    class = .format_class(pdist, dprimary)
   )
 }
 

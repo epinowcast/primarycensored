@@ -4,18 +4,7 @@
 \alias{.dpcens}
 \title{Define a fitdistrplus compatible wrapper around dprimarycensored}
 \usage{
-.dpcens(
-  x,
-  swindows,
-  pdist,
-  pwindow,
-  D,
-  dprimary,
-  dprimary_args,
-  pdist_name,
-  dprimary_name,
-  ...
-)
+.dpcens(x, swindows, pdist, pwindow, D, dprimary, dprimary_args, ...)
 }
 \arguments{
 \item{x}{Vector of quantiles}
@@ -23,7 +12,10 @@
 \item{swindows}{A numeric vector of secondary window sizes corresponding to
 each element in x}
 
-\item{pdist}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF). The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
@@ -36,24 +28,15 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples.}
+See \code{primary_dists.R} for examples. The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
-
-\item{pdist_name}{A string specifying the name of the delay distribution
-function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{pdist} is
-passed a pre-assigned variable rather than a function name.}
-
-\item{dprimary_name}{A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{dprimary} is
-passed a pre-assigned variable rather than a function name.}
 
 \item{...}{Additional arguments to be passed to the distribution function}
 }

@@ -1,7 +1,5 @@
 test_that("new_pcens creates object with correct structure", {
-  pdist_name <- "pgamma"
   pdist <- pgamma
-  dprimary_name <- "dunif"
   dprimary <- dunif
   shape <- 2
   rate <- 1
@@ -9,13 +7,14 @@ test_that("new_pcens creates object with correct structure", {
   obj <- new_pcens(
     pdist,
     dprimary, list(),
-    pdist_name, dprimary_name,
     shape = shape, rate = rate
   )
 
   expect_s3_class(obj, "pcens_pgamma_dunif")
-  expect_identical(obj$pdist, pgamma)
-  expect_identical(obj$dprimary, dunif)
+  expect_identical(body(obj$pdist), body(pgamma))
+  expect_identical(formals(obj$pdist), formals(pgamma))
+  expect_identical(body(obj$dprimary), body(dunif))
+  expect_identical(formals(obj$dprimary), formals(dunif))
   expect_identical(obj$args, list(shape = shape, rate = rate))
 
   new_obj <- new_pcens(
@@ -29,36 +28,27 @@ test_that(
   "pcens_cdf methods dispatch correctly to existing
    analytical solutions",
   {
-    pdist_name <- "pgamma"
     pdist <- pgamma
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     obj_gamma <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       shape = 2, rate = 1
     )
 
-    pdist_name <- "plnorm"
     pdist <- plnorm
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     obj_lnorm <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       meanlog = 0, sdlog = 1
     )
 
-    pdist_name <- "pweibull"
     pdist <- pweibull
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     obj_weibull <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       shape = 2, scale = 1
     )
 
@@ -85,14 +75,11 @@ test_that(
   "pcens_cdf errors as expected when the wrong distributional
    parameters are supplied",
   {
-    pdist_name <- "pgamma"
     pdist <- pgamma
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     obj_gamma <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       rate = 1
     )
 
@@ -103,7 +90,6 @@ test_that(
 
     obj_gamma_no_rate <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       shape = 2
     )
 
@@ -112,12 +98,10 @@ test_that(
       "scale or rate parameter is required for Gamma distribution"
     )
 
-    pdist_name <- "plnorm"
     pdist <- plnorm
 
     obj_lnorm_no_meanlog <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       sdlog = 1
     )
 
@@ -128,7 +112,6 @@ test_that(
 
     obj_lnorm_no_sdlog <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       meanlog = 0
     )
 
@@ -137,12 +120,10 @@ test_that(
       "sdlog parameter is required for Log-Normal distribution"
     )
 
-    pdist_name <- "pweibull"
     pdist <- pweibull
 
     obj_weibull_no_shape <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       scale = 1
     )
 
@@ -153,7 +134,6 @@ test_that(
 
     obj_weibull_no_scale <- new_pcens(
       pdist, dprimary, list(),
-      pdist_name, dprimary_name,
       shape = 2
     )
 
@@ -168,9 +148,7 @@ test_that(
   "pcens_cdf.default computes the same values as
    pcens_cdf.pcens_pgamma_dunif",
   {
-    pdist_name <- "pgamma"
     pdist <- pgamma
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     shapes <- c(0.5, 1, 2, 5)
@@ -183,7 +161,6 @@ test_that(
           obj <- new_pcens(
             pdist,
             dprimary, list(),
-            pdist_name, dprimary_name,
             shape = shape, rate = rate
           )
 
@@ -223,9 +200,7 @@ test_that(
   "pcens_cdf.default computes the same values as
    pcens_cdf.pcens_plnorm_dunif",
   {
-    pdist_name <- "plnorm"
     pdist <- plnorm
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     meanlogs <- c(-1, 0, 1, 2)
@@ -238,7 +213,6 @@ test_that(
           obj <- new_pcens(
             pdist,
             dprimary, list(),
-            pdist_name, dprimary_name,
             meanlog = meanlog, sdlog = sdlog
           )
 
@@ -277,9 +251,7 @@ test_that(
   "pcens_cdf.default computes the same values as
    pcens_cdf.pcens_pweibull_dunif",
   {
-    pdist_name <- "pweibull"
     pdist <- pweibull
-    dprimary_name <- "dunif"
     dprimary <- dunif
 
     shapes <- c(0.5, 1, 2)
@@ -292,7 +264,6 @@ test_that(
           obj <- new_pcens(
             pdist,
             dprimary, list(),
-            pdist_name, dprimary_name,
             shape = shape, scale = scale
           )
 
@@ -327,3 +298,77 @@ test_that(
     }
   }
 )
+
+test_that("new_pcens *_name deprecation is soft.", {
+  pdist <- function(...) pgamma(...)
+  dprimary <- function(...) dunif(...)
+  shape <- 2
+  rate <- 1
+
+  neg_obj <- new_pcens(
+    pdist,
+    dprimary, list(),
+    shape = shape, rate = rate
+  )
+
+  expect_s3_class(neg_obj, "pcens_unknown_unknown")
+
+  ref_obj <- new_pcens(
+    add_name_attribute(pdist, "pgamma"),
+    add_name_attribute(dprimary, "dunif"), list(),
+    shape = shape, rate = rate
+  )
+
+  lifecycle::expect_deprecated(obj <- new_pcens( # nolint
+    pdist,
+    add_name_attribute(dprimary, "dunif"), list(),
+    pdist_name = "pgamma",
+    shape = shape, rate = rate
+  ))
+
+  lifecycle::expect_deprecated(new_obj <- new_pcens( # nolint
+    add_name_attribute(pdist, "pgamma"),
+    dprimary, list(),
+    dprimary_name = "dunif",
+    shape = shape, rate = rate
+  ))
+
+  expect_identical(body(obj$pdist), body(ref_obj$pdist))
+  expect_identical(body(new_obj$pdist), body(ref_obj$pdist))
+  expect_identical(formals(obj$pdist), formals(ref_obj$pdist))
+  expect_identical(formals(new_obj$pdist), formals(ref_obj$pdist))
+  expect_identical(body(obj$dprimary), body(ref_obj$dprimary))
+  expect_identical(body(new_obj$dprimary), body(ref_obj$dprimary))
+  expect_identical(formals(obj$dprimary), formals(new_obj$dprimary))
+  expect_identical(formals(new_obj$dprimary), formals(ref_obj$dprimary))
+})
+
+test_that("new_pcens works with custom function with name attribute", {
+  # Create custom functions with name attributes
+  custom_pdist <- function(x, shape, rate) pgamma(x, shape, rate)
+  custom_dprimary <- function(x, min = 0, max = 1) dunif(x, min, max)
+
+  named_pdist <- add_name_attribute(custom_pdist, "pgamma")
+  named_dprimary <- add_name_attribute(custom_dprimary, "dunif")
+
+  # Create pcens object with custom named functions
+  obj <- new_pcens(
+    named_pdist,
+    named_dprimary,
+    list(),
+    shape = 2,
+    rate = 1
+  )
+
+  # Check class is set correctly using function names
+  expect_s3_class(obj, "pcens_pgamma_dunif")
+
+  # Check functions are preserved correctly
+  expect_identical(body(obj$pdist), body(custom_pdist))
+  expect_identical(formals(obj$pdist), formals(custom_pdist))
+  expect_identical(body(obj$dprimary), body(custom_dprimary))
+  expect_identical(formals(obj$dprimary), formals(custom_dprimary))
+
+  # Check arguments are preserved
+  expect_identical(obj$args, list(shape = 2, rate = 1))
+})

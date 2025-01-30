@@ -12,8 +12,8 @@ pprimarycensored(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  pdist_name = NULL,
-  dprimary_name = NULL,
+  pdist_name = lifecycle::deprecated(),
+  dprimary_name = lifecycle::deprecated(),
   ...
 )
 
@@ -24,15 +24,18 @@ ppcens(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  pdist_name = NULL,
-  dprimary_name = NULL,
+  pdist_name = lifecycle::deprecated(),
+  dprimary_name = lifecycle::deprecated(),
   ...
 )
 }
 \arguments{
 \item{q}{Vector of quantiles}
 
-\item{pdist}{Distribution function (CDF)}
+\item{pdist}{Distribution function (CDF). The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
@@ -45,24 +48,23 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples.}
+See \code{primary_dists.R} for examples. The package can identify base R
+distributions for potential analytical solutions. For non-base R functions,
+users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
 
-\item{pdist_name}{A string specifying the name of the delay distribution
-function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{pdist} is
-passed a pre-assigned variable rather than a function name.}
+\item{pdist_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
+ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{pdist}
+instead}
 
-\item{dprimary_name}{A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{dprimary} is
-passed a pre-assigned variable rather than a function name.}
+\item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
+ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{dprimary}
+instead}
 
 \item{...}{Additional arguments to be passed to pdist}
 }

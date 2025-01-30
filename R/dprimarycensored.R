@@ -71,7 +71,17 @@ dprimarycensored <- function(
     x, pdist, pwindow = 1, swindow = 1,
     D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), log = FALSE,
-    pdist_name = NULL, dprimary_name = NULL, ...) {
+    pdist_name = lifecycle::deprecated(),
+    dprimary_name = lifecycle::deprecated(),
+    ...) {
+  nms <- .name_deprecation(pdist_name, dprimary_name)
+  if (!is.null(nms$pdist)) {
+    pdist <- add_name_attribute(pdist, nms$pdist)
+  }
+  if (!is.null(nms$dprimary)) {
+    dprimary <- add_name_attribute(dprimary, nms$dprimary)
+  }
+
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
@@ -83,13 +93,6 @@ dprimarycensored <- function(
     )
   }
 
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(substitute(pdist))
-  }
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(substitute(dprimary))
-  }
-
   # Compute CDFs for all unique points
   unique_points <- sort(unique(c(x, x + swindow)))
   unique_points <- unique_points[unique_points > 0]
@@ -98,8 +101,7 @@ dprimarycensored <- function(
   }
 
   cdfs <- pprimarycensored(
-    unique_points, pdist, pwindow, Inf, dprimary, dprimary_args,
-    pdist_name = pdist_name, dprimary_name = dprimary_name, ...
+    unique_points, pdist, pwindow, Inf, dprimary, dprimary_args, ...
   )
 
   # Create a lookup table for CDFs
