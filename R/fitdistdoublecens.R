@@ -59,12 +59,11 @@
 fitdistdoublecens <- function(censdata, distr,
                               pwindow = 1, D = Inf,
                               dprimary = stats::dunif,
-                              dprimary_name = deprecated(),
+                              dprimary_name = lifecycle::deprecated(),
                               dprimary_args = list(),
                               truncation_check_multiplier = 2,
                               ...) {
-
-  nms <- .name_deprecation(deprecated(), dprimary_name)
+  nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
   if (!is.null(nms$dprimary)) {
     dprimary <- add_name_attribute(dprimary, nms$dprimary)
   }
@@ -149,7 +148,6 @@ fitdistdoublecens <- function(censdata, distr,
 #' @keywords internal
 .dpcens <- function(x, swindows, pdist, pwindow, D, dprimary,
                     dprimary_args, ...) {
-
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {

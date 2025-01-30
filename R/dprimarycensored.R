@@ -71,9 +71,9 @@ dprimarycensored <- function(
     x, pdist, pwindow = 1, swindow = 1,
     D = Inf, dprimary = stats::dunif,
     dprimary_args = list(), log = FALSE,
-    pdist_name = deprecated(), dprimary_name = deprecated(),
+    pdist_name = lifecycle::deprecated(),
+    dprimary_name = lifecycle::deprecated(),
     ...) {
-
   nms <- .name_deprecation(pdist_name, dprimary_name)
   if (!is.null(nms$pdist)) {
     pdist <- add_name_attribute(pdist, nms$pdist)

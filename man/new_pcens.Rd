@@ -8,8 +8,8 @@ new_pcens(
   pdist,
   dprimary,
   dprimary_args,
-  pdist_name = deprecated(),
-  dprimary_name = deprecated(),
+  pdist_name = lifecycle::deprecated(),
+  dprimary_name = lifecycle::deprecated(),
   ...
 )
 }

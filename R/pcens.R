@@ -13,9 +13,9 @@
 #' @export
 new_pcens <- function(
     pdist, dprimary, dprimary_args,
-    pdist_name = deprecated(), dprimary_name = deprecated(),
+    pdist_name = lifecycle::deprecated(),
+    dprimary_name = lifecycle::deprecated(),
     ...) {
-
   nms <- .name_deprecation(pdist_name, dprimary_name)
   if (!is.null(nms$pdist)) {
     pdist <- add_name_attribute(pdist, nms$pdist)

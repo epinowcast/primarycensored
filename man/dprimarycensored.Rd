@@ -14,8 +14,8 @@ dprimarycensored(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  pdist_name = deprecated(),
-  dprimary_name = deprecated(),
+  pdist_name = lifecycle::deprecated(),
+  dprimary_name = lifecycle::deprecated(),
   ...
 )
 
@@ -28,8 +28,8 @@ dpcens(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  pdist_name = deprecated(),
-  dprimary_name = deprecated(),
+  pdist_name = lifecycle::deprecated(),
+  dprimary_name = lifecycle::deprecated(),
   ...
 )
 }

@@ -10,7 +10,7 @@ fitdistdoublecens(
   pwindow = 1,
   D = Inf,
   dprimary = stats::dunif,
-  dprimary_name = deprecated(),
+  dprimary_name = lifecycle::deprecated(),
   dprimary_args = list(),
   truncation_check_multiplier = 2,
   ...
