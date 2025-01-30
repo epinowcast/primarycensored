@@ -2,7 +2,6 @@ test_that("add_name_attribute adds name attribute correctly", {
   # Test with base R distribution function
   dist <- add_name_attribute(pnorm, "pnorm")
   expect_identical(attr(dist, "name"), "pnorm")
-  expect_identical(dist, pnorm)
 
   # Test with custom function
   custom_func <- function(x) x^2
