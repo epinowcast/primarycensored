@@ -227,13 +227,14 @@ specification. Contributions of any kind are welcome!
 <a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>,
-<a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>
+<a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam">jamesmbaazam</a>
 
 ### Issue Authors
 
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>,
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajamesmbaazam">jamesmbaazam</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
 
 ### Issue Contributors
 
