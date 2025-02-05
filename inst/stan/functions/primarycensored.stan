@@ -37,8 +37,8 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   } else {
     // Use numerical integration for other cases
     real lower_bound = max({d - pwindow, 1e-6});
-    int n_params = size(params);
-    int n_primary_params = size(primary_params);
+    int n_params = num_elements(params);
+    int n_primary_params = num_elements(primary_params);
     array[n_params + n_primary_params] real theta = append_array(params, primary_params);
     array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
 
