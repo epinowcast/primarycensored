@@ -16,8 +16,9 @@ Development release.
 ## Bug fixes
 
 - Added a missing `@family` tag to the `pcens` functions. This omission resulted in the Weibull analytical solution not being visible in the package documentation.
-- Added precalculation of vector sizes to the `primarycensored_cdf()` stan function, avoiding errors on some platforms due to narrowing conversions in aggregate initialisation. 
+- Added precalculation of vector sizes to the `primarycensored_cdf()` stan function, avoiding errors on some platforms due to narrowing conversions in aggregate initialisation.
 - Changed `D` to be of type real in `pcens_model.stan` in order to support infinite `relative_obs_time`.
+- Switched to using `num_elements()` over `size()` in all stan code to resolve compilation issues on some platforms as reported by @sbfnk.
 
 # primarycensored 1.0.0
 
