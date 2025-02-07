@@ -38,6 +38,7 @@ attr(dist, "name")
 \seealso{
 Utility functions for working with distributions
 \code{\link{pcd_dist_name}()},
-\code{\link{pcd_distributions}}
+\code{\link{pcd_distributions}},
+\code{\link{pcd_primary_distributions}}
 }
 \concept{utils}

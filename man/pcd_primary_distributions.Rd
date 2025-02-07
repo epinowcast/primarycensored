@@ -21,5 +21,11 @@ A dataset containing information about the supported primary event
 distributions in primarycensored. Distributions beyond these are not
 supported in the stan code but any user functions can be used in the R code.
 }
-\concept{distribution data}
+\seealso{
+Utility functions for working with distributions
+\code{\link{add_name_attribute}()},
+\code{\link{pcd_dist_name}()},
+\code{\link{pcd_distributions}}
+}
+\concept{utils}
 \keyword{datasets}

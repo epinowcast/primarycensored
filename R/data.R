@@ -29,5 +29,5 @@
 #'   \item{aliases}{Alternative names/identifiers}
 #'   \item{stan_id}{Stan distribution ID used in the stan code}
 #' }
-#' @family distribution data
+#' @family utils
 "pcd_primary_distributions"

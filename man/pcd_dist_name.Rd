@@ -31,6 +31,7 @@ pcd_dist_name("expgrowth", type = "primary")
 \seealso{
 Utility functions for working with distributions
 \code{\link{add_name_attribute}()},
-\code{\link{pcd_distributions}}
+\code{\link{pcd_distributions}},
+\code{\link{pcd_primary_distributions}}
 }
 \concept{utils}
