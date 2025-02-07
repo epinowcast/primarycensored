@@ -37,6 +37,12 @@ new_pcens <- function(
 
 #' Compute primary event censored CDF
 #'
+#' This function dispatches to either analytical solutions (if available) or
+#' numerical integration via the default method. To see which combinations have
+#' analytical solutions implemented, use `methods(pcens_cdf)`. For example,
+#' `pcens_cdf.gamma_unif` indicates an analytical solution exists for gamma
+#' delay with uniform primary event distributions.
+#'
 #' @inheritParams pprimarycensored
 #'
 #' @param object A `primarycensored` object as created by
@@ -61,7 +67,7 @@ pcens_cdf <- function(
 #'
 #' This method serves as a fallback for combinations of delay and primary
 #' event distributions that don't have specific implementations. It uses
-#' the numeric integration method.
+#' a numeric integration method.
 #'
 #' @inheritParams pcens_cdf
 #' @inheritParams pprimarycensored

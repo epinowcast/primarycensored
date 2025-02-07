@@ -72,10 +72,12 @@ pcd_cmdstan_model <- function(
 #'   5 = Generalized Gamma, 6 = Negative Binomial, 7 = Poisson,
 #'   8 = Bernoulli, 9 = Beta, 10 = Binomial, 11 = Categorical, 12 = Cauchy,
 #'   13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
-#'   17 = Logistic
+#'   17 = Logistic. You can use [pcd_stan_dist_id(dis)] to get the stan_id for a
+#'   distribution.
 #'
 #' @param primary_id Integer identifying the primary distribution:
-#'   1 = Uniform, 2 = Exponential growth
+#'   1 = Uniform, 2 = Exponential growth. You can use [pcd_stan_dist_id()] to
+#'   get the stan_id for a distribution.
 #'
 #' @param param_bounds A list with elements `lower` and `upper`, each a numeric
 #'   vector specifying bounds for the delay distribution parameters.

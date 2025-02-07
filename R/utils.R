@@ -28,7 +28,9 @@
 #' detected by [pprimarycensored()] and related functions.
 #'
 #' This is useful as it enables the automatic use of analytical solutions for
-#' distributions where they exist.
+#' distributions where they exist. You can check which analytical solutions are
+#' available using `methods(pcens_cdf)` and check distribution names using
+#' [pcd_dist_name()].
 #'
 #' @param func Function, for example the `p`- or `d`- form of a distribution
 #' function.
@@ -84,10 +86,9 @@ add_name_attribute <- function(func, name) {
 #'
 #' @keywords internal
 .name_deprecation <- function(
-  pdist_name, dprimary_name,
-  env = rlang::caller_env(),
-  user_env = rlang::caller_env(2)
-) {
+    pdist_name, dprimary_name,
+    env = rlang::caller_env(),
+    user_env = rlang::caller_env(2)) {
   test_use <- c(
     lifecycle::is_present(pdist_name),
     lifecycle::is_present(dprimary_name)
@@ -97,8 +98,7 @@ add_name_attribute <- function(func, name) {
     lifecycle::deprecate_soft(
       when = "1.0.0",
       what = I("`pdist_name` and `dprimary_name` are deprecated across all
-        functions and will be ignored in future versions;"
-      ),
+        functions and will be ignored in future versions;"),
       details = "Use `add_name_attribute()` instead.",
       env = env, user_env = user_env
     )
@@ -106,4 +106,72 @@ add_name_attribute <- function(func, name) {
     if (test_use[2]) res$dprimary <- dprimary_name
   }
   return(res)
+}
+
+#' Get distribution function cdf or pdf name
+#'
+#' @param name String. Distribution name or alias
+#' @param type String. "delay" or "primary" corresponding to the type of
+#'  distribution to use as the look up. If delay then [pcd_distributions()]
+#'  is used, if primary then [pcd_primary_distributions()] is used.
+#'
+#' @return String distribution function name or NA if no base R implementation
+#' @export
+#' @family utils
+#' @examples
+#' pcd_dist_name("lnorm")
+#' pcd_dist_name("lognormal")
+#' pcd_dist_name("gamma")
+#' pcd_dist_name("weibull")
+#' pcd_dist_name("exp")
+#' pcd_dist_name("unif", type = "primary")
+#' pcd_dist_name("expgrowth", type = "primary")
+pcd_dist_name <- function(name, type = c("delay", "primary")) {
+  type <- match.arg(type)
+  df <- switch(type,
+    delay = primarycensored::pcd_distributions,
+    primary = primarycensored::pcd_primary_distributions
+  )
+
+  match_idx <- which(df$name == name | df$aliases == name)
+
+  if (length(match_idx) == 0) {
+    stop(
+      "No ", type, " distribution found matching: ", name, "\n",
+      .suggest_dist_name(name, type)
+    )
+  }
+
+  if (type == "delay") {
+    df$pdist[match_idx]
+  } else {
+    df$dprimary[match_idx]
+  }
+}
+
+#' @keywords internal
+.suggest_dist_name <- function(input, type = "delay") {
+  dist_names <- switch(type,
+    delay = pcd_distributions$name,
+    primary = pcd_primary_distributions$name
+  )
+
+  distances <- utils::adist(input, dist_names)
+  min_dist <- min(distances)
+  candidates <- dist_names[which(distances == min_dist)]
+
+  if (min_dist <= 2 && length(candidates) > 0) {
+    suggestions <- paste0(
+      "Did you mean: ",
+      toString(unique(candidates)),
+      "?"
+    )
+  } else {
+    suggestions <- paste0(
+      "Available distributions:",
+      toString(unique(dist_names))
+    )
+  }
+
+  return(suggestions)
 }

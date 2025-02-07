@@ -291,8 +291,8 @@ pcd_data <- pcd_as_stan_data(
   delay = "observed_delay",
   delay_upper = "observed_delay_upper",
   relative_obs_time = "obs_time",
-  dist_id = 1, # Lognormal distribution
-  primary_id = 1, # Uniform primary distribution
+  dist_id = pcd_stan_dist_id("lognormal", "delay"),
+  primary_id = pcd_stan_dist_id("uniform", "primary"),
   param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
   priors = list(location = c(1, 0.5), scale = c(1, 0.5)),

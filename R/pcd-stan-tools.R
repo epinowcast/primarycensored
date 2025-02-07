@@ -227,3 +227,40 @@ pcd_load_stan_functions <- function(
 
   return(result)
 }
+
+#' Get distribution stan ID by name
+#'
+#' @param name String. Distribution name or alias
+#' @param type String. "delay" or "primary" corresponding to the type of
+#'  distribution to use as the look up. If delay then [pcd_distributions()]
+#'  is used, if primary then [pcd_primary_distributions()] is used.
+#'
+#' @return Numeric distribution ID
+#' @export
+#' @family stantools
+#' @examples
+#' pcd_stan_dist_id("lnorm")
+#' pcd_stan_dist_id("lognormal")
+#' pcd_stan_dist_id("gamma")
+#' pcd_stan_dist_id("weibull")
+#' pcd_stan_dist_id("exp")
+#' pcd_stan_dist_id("unif")
+#' pcd_stan_dist_id("expgrowth")
+pcd_stan_dist_id <- function(name, type = c("delay", "primary")) {
+  type <- match.arg(type)
+  df <- switch(type,
+    delay = primarycensored::pcd_distributions,
+    primary = primarycensored::pcd_primary_distributions
+  )
+
+  match_idx <- which(df$name == name | df$aliases == name)
+
+  if (length(match_idx) == 0) {
+    stop(
+      "No ", type, " distribution found matching: ", name, "\n",
+      .suggest_dist_name(name, type)
+    )
+  }
+
+  df$stan_id[match_idx]
+}

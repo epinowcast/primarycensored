@@ -33,4 +33,9 @@ distributions where they exist.
 dist <- add_name_attribute(pnorm, "hello")
 attr(dist, "name")
 }
+\seealso{
+Utility functions for working with distributions
+\code{\link{pcd_dist_fn}()},
+\code{\link{pcd_distributions}}
+}
 \concept{utils}
