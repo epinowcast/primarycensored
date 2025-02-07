@@ -38,12 +38,13 @@ pcd_as_stan_data(
 (default: "relative_obs_time")}
 
 \item{dist_id}{Integer identifying the delay distribution:
-You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the stan_id for a
+You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the dist ID for a
 distribution or look at the \link{pcd_distributions} data set.}
 
 \item{primary_id}{Integer identifying the primary distribution:
-You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the stan_id for a
-distribution or look at the \link{pcd_primary_distributions} data set.}
+You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the primary dist ID for a
+distribution (make sure to select the "primary" type) or look at the
+\link{pcd_primary_distributions} data set.}
 
 \item{param_bounds}{A list with elements \code{lower} and \code{upper}, each a numeric
 vector specifying bounds for the delay distribution parameters.}

@@ -68,12 +68,13 @@ pcd_cmdstan_model <- function(
 #'  (default: "relative_obs_time")
 #'
 #' @param dist_id Integer identifying the delay distribution:
-#'   You can use [pcd_stan_dist_id()] to get the stan_id for a
+#'   You can use [pcd_stan_dist_id()] to get the dist ID for a
 #'   distribution or look at the [pcd_distributions] data set.
 #'
 #' @param primary_id Integer identifying the primary distribution:
-#'   You can use [pcd_stan_dist_id()] to get the stan_id for a
-#'   distribution or look at the [pcd_primary_distributions] data set.
+#'   You can use [pcd_stan_dist_id()] to get the primary dist ID for a
+#'   distribution (make sure to select the "primary" type) or look at the
+#'   [pcd_primary_distributions] data set.
 #'
 #' @param param_bounds A list with elements `lower` and `upper`, each a numeric
 #'   vector specifying bounds for the delay distribution parameters.
