@@ -184,10 +184,8 @@ where \(F_{\text{cens,norm}}(q)\) is the normalized CDF.</p>
 censored CDF using <code><a href="pcens_cdf.html">pcens_cdf()</a></code>. This abstraction allows
 for automatic use of analytical solutions when available, while
 seamlessly falling back to numerical integration when necessary.</p>
-<p>Note: For analytical detection to work correctly, <code>pdist</code> and <code>dprimary</code>
-must be directly passed as distribution functions, not via assignment or
-<code>pdist_name</code> and <code>dprimary_name</code> must be used to override the default
-extraction of the function name.</p>
+<p>See <code>methods(pcens_cdf)</code> for which combinations have analytical
+solutions implemented.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
