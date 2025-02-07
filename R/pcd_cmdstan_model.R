@@ -65,19 +65,15 @@ pcd_cmdstan_model <- function(
 #' @param pwindow Column name for primary window (default: "pwindow")
 #'
 #' @param relative_obs_time Column name for relative observation time
-#' (default: "relative_obs_time")
+#'  (default: "relative_obs_time")
 #'
 #' @param dist_id Integer identifying the delay distribution:
-#'   1 = Lognormal, 2 = Gamma, 3 = Weibull, 4 = Exponential,
-#'   5 = Generalized Gamma, 6 = Negative Binomial, 7 = Poisson,
-#'   8 = Bernoulli, 9 = Beta, 10 = Binomial, 11 = Categorical, 12 = Cauchy,
-#'   13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
-#'   17 = Logistic. You can use [pcd_stan_dist_id(dis)] to get the stan_id for a
-#'   distribution.
+#'   You can use [pcd_stan_dist_id()] to get the stan_id for a
+#'   distribution or look at the [pcd_distributions] data set.
 #'
 #' @param primary_id Integer identifying the primary distribution:
-#'   1 = Uniform, 2 = Exponential growth. You can use [pcd_stan_dist_id()] to
-#'   get the stan_id for a distribution.
+#'   You can use [pcd_stan_dist_id()] to get the stan_id for a
+#'   distribution or look at the [pcd_primary_distributions] data set.
 #'
 #' @param param_bounds A list with elements `lower` and `upper`, each a numeric
 #'   vector specifying bounds for the delay distribution parameters.
@@ -94,14 +90,14 @@ pcd_cmdstan_model <- function(
 #' @param compute_log_lik Logical; compute log likelihood? (default: FALSE)
 #'
 #' @param use_reduce_sum Logical; use reduce_sum for performance?
-#'  (default: FALSE)
+#'   (default: FALSE)
 #'
 #' @param truncation_check_multiplier Numeric multiplier to use for checking
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
 #' @return A list containing the data formatted for use with
-#' [pcd_cmdstan_model()]
+#'   [pcd_cmdstan_model()]
 #'
 #' @export
 #' @family modelhelpers

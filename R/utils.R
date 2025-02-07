@@ -152,8 +152,8 @@ pcd_dist_name <- function(name, type = c("delay", "primary")) {
 #' @keywords internal
 .suggest_dist_name <- function(input, type = "delay") {
   dist_names <- switch(type,
-    delay = pcd_distributions$name,
-    primary = pcd_primary_distributions$name
+    delay = primarycensored::pcd_distributions$name,
+    primary = primarycensored::pcd_primary_distributions$name
   )
 
   distances <- utils::adist(input, dist_names)

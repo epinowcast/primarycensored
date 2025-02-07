@@ -244,8 +244,8 @@ pcd_load_stan_functions <- function(
 #' pcd_stan_dist_id("gamma")
 #' pcd_stan_dist_id("weibull")
 #' pcd_stan_dist_id("exp")
-#' pcd_stan_dist_id("unif")
-#' pcd_stan_dist_id("expgrowth")
+#' pcd_stan_dist_id("unif", type = "primary")
+#' pcd_stan_dist_id("expgrowth", type = "primary")
 pcd_stan_dist_id <- function(name, type = c("delay", "primary")) {
   type <- match.arg(type)
   df <- switch(type,

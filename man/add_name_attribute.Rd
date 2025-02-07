@@ -27,7 +27,9 @@ name, you can use this helper function to set it in a way that will be
 detected by \code{\link[=pprimarycensored]{pprimarycensored()}} and related functions.
 
 This is useful as it enables the automatic use of analytical solutions for
-distributions where they exist.
+distributions where they exist. You can check which analytical solutions are
+available using \code{methods(pcens_cdf)} and check distribution names using
+\code{\link[=pcd_dist_name]{pcd_dist_name()}}.
 }
 \examples{
 dist <- add_name_attribute(pnorm, "hello")
@@ -35,7 +37,7 @@ attr(dist, "name")
 }
 \seealso{
 Utility functions for working with distributions
-\code{\link{pcd_dist_fn}()},
+\code{\link{pcd_dist_name}()},
 \code{\link{pcd_distributions}}
 }
 \concept{utils}
