@@ -7,6 +7,10 @@ Development release.
 
 - Updated the CI so that stan code is also tested on Windows and Mac. This is to ensure that the stan code is compatible with these platforms and in response to a CI bug in `epidist`.
 - Revised approach to automatic discovery of distribution functions. This soft deprecates the `pdist_name` and `dprimary_name` arguments throughout. Users wishing to pass distribution names (i.e. to potentially leverage analytical solutions) are advised to use the newly introduced `add_name_attribute()` function. Adds transient dependency on `lifecycle` and `rlang` packages. See #188 by @pearsonca.
+- Added `pcd_stan_dist_id()` to allow for discovery of distribution IDs for Stan models.
+- Added `pcd_dist_name()` to allow for discovery of distribution names for R functions as needed for `add_name_attribute()`.
+- Added documentation to suggest the use of `methods(pcens_cdf)` to find analytical solutions.
+- Added new data sets `pcd_distributions` and `pcd_primary_distributions` to document the distributions supported by `primarycensored`.
 
 ## Documentation
 

@@ -38,14 +38,13 @@ pcd_as_stan_data(
 (default: "relative_obs_time")}
 
 \item{dist_id}{Integer identifying the delay distribution:
-1 = Lognormal, 2 = Gamma, 3 = Weibull, 4 = Exponential,
-5 = Generalized Gamma, 6 = Negative Binomial, 7 = Poisson,
-8 = Bernoulli, 9 = Beta, 10 = Binomial, 11 = Categorical, 12 = Cauchy,
-13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
-17 = Logistic}
+You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the dist ID for a
+distribution or look at the \link{pcd_distributions} data set.}
 
 \item{primary_id}{Integer identifying the primary distribution:
-1 = Uniform, 2 = Exponential growth}
+You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the primary dist ID for a
+distribution (make sure to select the "primary" type) or look at the
+\link{pcd_primary_distributions} data set.}
 
 \item{param_bounds}{A list with elements \code{lower} and \code{upper}, each a numeric
 vector specifying bounds for the delay distribution parameters.}

@@ -107,10 +107,8 @@ censored CDF using \code{\link[=pcens_cdf]{pcens_cdf()}}. This abstraction allow
 for automatic use of analytical solutions when available, while
 seamlessly falling back to numerical integration when necessary.
 
-Note: For analytical detection to work correctly, \code{pdist} and \code{dprimary}
-must be directly passed as distribution functions, not via assignment or
-\code{pdist_name} and \code{dprimary_name} must be used to override the default
-extraction of the function name.
+See \code{methods(pcens_cdf)} for which combinations have analytical
+solutions implemented.
 }
 \examples{
 # Example: Lognormal distribution with uniform primary events

@@ -25,7 +25,7 @@ Vector of computed primary event censored CDFs
 \description{
 This method serves as a fallback for combinations of delay and primary
 event distributions that don't have specific implementations. It uses
-the numeric integration method.
+a numeric integration method.
 }
 \details{
 This method implements the numerical integration approach for computing

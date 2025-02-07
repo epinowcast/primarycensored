@@ -81,10 +81,8 @@
 #' for automatic use of analytical solutions when available, while
 #' seamlessly falling back to numerical integration when necessary.
 #'
-#' Note: For analytical detection to work correctly, `pdist` and `dprimary`
-#' must be directly passed as distribution functions, not via assignment or
-#' `pdist_name` and `dprimary_name` must be used to override the default
-#' extraction of the function name.
+#' See `methods(pcens_cdf)` for which combinations have analytical
+#' solutions implemented.
 #'
 #' @family primarycensored
 #' @seealso [new_pcens()] and [pcens_cdf()]

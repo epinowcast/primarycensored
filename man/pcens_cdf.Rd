@@ -23,7 +23,11 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Compute primary event censored CDF
+This function dispatches to either analytical solutions (if available) or
+numerical integration via the default method. To see which combinations have
+analytical solutions implemented, use \code{methods(pcens_cdf)}. For example,
+\code{pcens_cdf.gamma_unif} indicates an analytical solution exists for gamma
+delay with uniform primary event distributions.
 }
 \seealso{
 Low level primary event censored distribution objects and methods

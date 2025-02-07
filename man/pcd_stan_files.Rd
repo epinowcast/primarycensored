@@ -24,6 +24,7 @@ filtering for files that contain specific functions.
 \seealso{
 Tools for working with package Stan functions
 \code{\link{pcd_load_stan_functions}()},
+\code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_functions}()},
 \code{\link{pcd_stan_path}()}
 }
