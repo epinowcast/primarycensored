@@ -1,10 +1,8 @@
 CMD
-Charniga
 CmdStan
 CmdStanModel
 Codecov
 Cori
-EpiEstim
 Inf
 Lifecycle
 Mba
@@ -20,7 +18,6 @@ cdot
 cens
 cmdstan
 cmdstanr
-disccensprob
 disccensunifprim
 discretisation
 discretising
@@ -53,6 +50,7 @@ ln
 lognormpartexp
 mathbb
 mathrm
+meanlog
 modelhelpers
 modeling
 nF
@@ -75,6 +73,7 @@ rfloor
 rightarrow
 rprimary
 sbfnk
+sdlog
 seabbs
 seccensorprob
 sim
