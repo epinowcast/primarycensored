@@ -50,7 +50,7 @@ Description: Provides functions for working with primary
     fitting primary event censored distributions to data via optional
     dependencies.
 License: MIT + file LICENSE
-URL: https://primarycensored.epinowcast.org, https://github.com/epinowcast/primarycensored/
+URL: https://primarycensored.epinowcast.org, https://github.com/epinowcast/primarycensored
 BugReports: https://github.com/epinowcast/primarycensored/issues
 Depends:
     R (>= 4.0.0)

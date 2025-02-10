@@ -14,7 +14,7 @@ coverage](https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/bad
 [![Universe](https://epinowcast.r-universe.dev/badges/primarycensored)](https://epinowcast.r-universe.dev/primarycensored)
 [![MIT
 license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/)
-[![](https://cranlogs.r-pkg.org/badges/grand-total/primarycensored)](https://cran.r-project.org/web/packages/primarycensored/index.html)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/primarycensored)](https://CRAN.R-project.org/package=primarycensored)
 [![GitHub
 contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
 [![DOI](https://zenodo.org/badge/845633278.svg)](https://zenodo.org/doi/10.5281/zenodo.13632838)
@@ -38,7 +38,9 @@ dependencies.
 ## Installation
 
 <details>
+
 <summary>
+
 Installing the package
 </summary>
 
@@ -77,8 +79,11 @@ if needed, for example, if you want to try out a specific unreleased
 feature, but not the absolute latest developmental version.*
 
 </details>
+
 <details>
+
 <summary>
+
 Installing CmdStan (optional for Stan functionality)
 </summary>
 
@@ -118,7 +123,9 @@ We provide a range of other documentation, case studies, and community
 spaces to ask (and answer!) questions:
 
 <details>
+
 <summary>
+
 Package Website
 </summary>
 
@@ -129,8 +136,11 @@ find documentation for [the latest development
 version](https://primarycensored.epinowcast.org/dev/).
 
 </details>
+
 <details>
+
 <summary>
+
 Vignettes
 </summary>
 
@@ -140,8 +150,11 @@ get started with primarycensored and to highlight other features with
 case studies.
 
 </details>
+
 <details>
+
 <summary>
+
 Organisation Website
 </summary>
 
@@ -151,8 +164,11 @@ and [seminar schedule](https://www.epinowcast.org/seminars.html) for
 both upcoming and past recordings.
 
 </details>
+
 <details>
+
 <summary>
+
 Community Forum
 </summary>
 
@@ -214,7 +230,9 @@ with `citation("primarycensored")`.
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+
 <!-- prettier-ignore-start -->
+
 <!-- markdownlint-disable -->
 
 All contributions to this project are gratefully acknowledged using the
@@ -241,5 +259,7 @@ specification. Contributions of any kind are welcome!
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
 
 <!-- markdownlint-enable -->
+
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
