@@ -125,7 +125,7 @@ In this section, we discuss how the approach taken in `primarycensored` relates 
 
 ## Connection to Park et al 2024
 
-Using the notation from Park et al[@Park2024], we write the conditional probability of the secondary event time $S\in (S_L,S_R)$ given the primary event time $P \in (P_L,P_R)$ as:
+Using the notation from the methods overview given in Park et al[@Park2024], we write the conditional probability of the secondary event time $S\in (S_L,S_R)$ given the primary event time $P \in (P_L,P_R)$ as:
 
 $$
 \begin{aligned}

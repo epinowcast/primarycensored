@@ -51,8 +51,10 @@ We'll start by simulating some censored and truncated delay distribution data. W
 ```{r sample-lognormal}
 set.seed(123) # For reproducibility
 
-# Define the true distribution parameters
+# Define the number of samples to generate
 n <- 1000
+
+# Define the true distribution parameters
 shape <- 1.77 # This gives a mean of 4 and sd of 3 for a gamma distribution
 rate <- 0.44
 
