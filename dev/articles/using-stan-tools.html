@@ -50,7 +50,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><h6 class="dropdown-header" data-toc-skip>──── First steps ────</h6></li>
-    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
+    <li><a class="dropdown-item" href="../articles/primarycensored.html">Getting started</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Methodology ────</h6></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
@@ -102,7 +102,7 @@
 </h2>
 <div class="section level3" number="1.1">
 <h3 id="what-are-we-going-to-do-in-this-vignette">
-<span class="header-section-number">1.1</span> What are we going to do in this Vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
+<span class="header-section-number">1.1</span> What are we going to do in this vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
 </h3>
 <p>In this vignette, we’ll explore how to use the <code>primarycensored</code> package in your Stan modelling workflow. We’ll cover the following key points:</p>
 <ol style="list-style-type: decimal">
@@ -197,7 +197,7 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpICwRLh/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpumxriL/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
