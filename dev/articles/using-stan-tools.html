@@ -49,11 +49,16 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>──── First steps ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Methodology ────</h6></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -99,7 +104,7 @@
 <h3 id="what-are-we-going-to-do-in-this-vignette">
 <span class="header-section-number">1.1</span> What are we going to do in this Vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
 </h3>
-<p>In this vignette, we’ll explore how to use the <code>primarycensored</code> package in conjunction with Stan. We’ll cover the following key points:</p>
+<p>In this vignette, we’ll explore how to use the <code>primarycensored</code> package in your Stan modelling workflow. We’ll cover the following key points:</p>
 <ol style="list-style-type: decimal">
 <li>Introduction to Stan and its relevance for our analysis</li>
 <li>Overview of the packages we’ll be using</li>
@@ -107,6 +112,7 @@
 </li>
 <li>Methods for integrating these Stan functions into your workflow</li>
 </ol>
+<p>If you are instead interested in fitting a delay distribution using <code>primarycensored</code> in R see the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette or <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
 </div>
 <div class="section level3" number="1.2">
 <h3 id="what-is-stan-and-why-are-we-using-it">
@@ -191,7 +197,7 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/Rtmp5OiPDS/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpICwRLh/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
@@ -267,13 +273,19 @@
 <h3 id="using-stan-functions-directly-in-r">
 <span class="header-section-number">2.4</span> Using Stan functions directly in R<a class="anchor" aria-label="anchor" href="#using-stan-functions-directly-in-r"></a>
 </h3>
-<p>Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in <code>primarycensored</code> instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in <code>primarycensored</code> to check our functions against the R implementations). To do this we use the <code>expose_functions()</code> method on our already compiled model.</p>
+<p>Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in <code>primarycensored</code> instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in <code>primarycensored</code> to check our functions against the R implementations). To do this we use the <code>expose_functions()</code> method on our already compiled model. <strong>This can take some time (~30 seconds) to compile all of the functions.</strong></p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span><span class="op">$</span><span class="fu">expose_functions</span><span class="op">(</span>global <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p>We can now use the function in R. Note that this may get slightly more complicated if our stan function depends on other stan functions (i.e. you need to have those included in your compiled model as well).</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">expgrowth_rng</span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1</span>, <span class="fl">0.4</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## [1] 0.1772395</span></span></code></pre>
+</div>
+<div class="section level3" number="2.5">
+<h3 id="summary">
+<span class="header-section-number">2.5</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h3>
+<p>In this vignette we have shown approaches for using the Stan functions provided by <code>primarycensored</code> in your Stan modelling workflow. We have also shown how to use the <code>expose_functions()</code> method to access the Stan functions directly in R for exploration and testing.</p>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
@@ -283,7 +295,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">

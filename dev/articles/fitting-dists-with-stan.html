@@ -49,11 +49,16 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>──── First steps ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Methodology ────</h6></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -105,6 +110,7 @@
 <li>Fitting a naive model using cmdstan</li>
 <li>Evaluating the naive model’s performance</li>
 <li>Fitting an improved model using <code>primarycensored</code> functionality</li>
+<li>Fitting the same model using <code>primarycensored</code>’s built in cmdstan model.</li>
 <li>Comparing the <code>primarycensored</code> model’s performance to the naive model</li>
 </ol>
 </div>
@@ -134,8 +140,10 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span> <span class="co"># For reproducibility</span></span>
 <span></span>
-<span><span class="co"># Define the true distribution parameters</span></span>
+<span><span class="co"># Define the number of samples to generate</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">2000</span></span>
+<span></span>
+<span><span class="co"># Define the true distribution parameters</span></span>
 <span><span class="va">meanlog</span> <span class="op">&lt;-</span> <span class="fl">1.5</span></span>
 <span><span class="va">sdlog</span> <span class="op">&lt;-</span> <span class="fl">0.75</span></span>
 <span></span>
@@ -160,8 +168,9 @@
 <span><span class="va">delay_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  pwindow <span class="op">=</span> <span class="va">pwindows</span>,</span>
 <span>  obs_time <span class="op">=</span> <span class="va">obs_times</span>,</span>
-<span>  observed_delay <span class="op">=</span> <span class="va">samples</span>,</span>
-<span>  observed_delay_upper <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="va">swindows</span></span>
+<span>  observed_delay <span class="op">=</span> <span class="va">samples</span>, <span class="co"># this is the observed i.e. censored delay</span></span>
+<span>  observed_delay_upper <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="va">swindows</span> <span class="co"># The upper bound of the delay3</span></span>
+<span>  <span class="co"># (i.e. the true delay is between the observed and the upper bound)</span></span>
 <span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://dplyr.tidyverse.org/reference/mutate.html" class="external-link">mutate</a></span><span class="op">(</span></span>
 <span>    observed_delay_upper <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">pmin</a></span><span class="op">(</span><span class="va">obs_time</span>, <span class="va">observed_delay_upper</span><span class="op">)</span></span>
@@ -192,7 +201,7 @@
 <span><span class="co">## 5       1       10              8                   10 22</span></span>
 <span><span class="co">## 6       2        8              4                    5 43</span></span></code></pre>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Compare the samples with and without secondary censoring to the true</span></span>
+<code class="sourceCode R"><span><span class="co"># Compare the samples with and without secondary event censoring to the true</span></span>
 <span><span class="co"># distribution</span></span>
 <span><span class="co"># Calculate empirical CDF</span></span>
 <span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
@@ -238,6 +247,7 @@
 <span>    legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
 <p><img src="fitting-dists-with-stan_files/figure-html/sample-lognormal-1.png" width="672"></p>
+<p>In this figure you can see the impact of truncation and censoring as the observed distribution has a much lower mean (the vertical dashed blue line) than the true/theoretical distribution (the vertical dashed black line). Our modelling aim is to recover the true parameters of the theoretical distribution from the observed distribution (i.e. recover the black lines from the blue lines).</p>
 <p>We’ve aggregated the data to unique combinations of <code>pwindow</code>, <code>swindow</code>, and <code>obs_time</code> and counted the number of occurrences of each <code>observed_delay</code> for each combination. This is the data we will use to fit our model.</p>
 </div>
 <div class="section level2" number="3">
@@ -293,13 +303,14 @@
 <span><span class="co">##        NA</span></span>
 <span><span class="co">##      1882</span></span>
 <span><span class="co">##      2752</span></span></code></pre>
-<p>We see that the model has converged and the diagnostics look good. However, just from the model posterior summary we see that we might not be very happy with the fit. <code>mu</code> is smaller than the target 1.5 and <code>sigma</code> is larger than the target 0.75.</p>
+<p>You may see a warning that <code>NAs introduced by coercion</code> this can be ignored as it is an artefact of this simple example model.</p>
+<p>We see that the model has converged and the diagnostics look good. However, just from the model posterior summary we see that we might not be very happy with the fit. <code>mu</code> is smaller than the target 1.5 and <code>sigma</code> is larger than the target 0.75. <strong>Note that the <code>mu</code> and <code>sigma</code> parameters are the meanlog and sdlog parameters of the lognormal distribution.</strong></p>
 </div>
 <div class="section level2" number="4">
 <h2 id="fitting-an-improved-model-using-primarycensored">
 <span class="header-section-number">4</span> Fitting an improved model using primarycensored<a class="anchor" aria-label="anchor" href="#fitting-an-improved-model-using-primarycensored"></a>
 </h2>
-<p>We’ll now fit an improved model using the <code>primarycensored</code> package. The main improvement is that we will use the <code>primarycensored_lpdf</code> function to fit the model. This is the Stan version of the <code>pcens()</code> function and accounts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the <code>dist_id</code> parameter and that our primary event distribution is uniform by passing 1 as the <code>primary_id</code> parameter. See the <a href="https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d">Stan documentation</a> for more details on the <code>primarycensored_lpdf</code> function.</p>
+<p>We’ll now fit an improved model using the <code>primarycensored</code> package. The main improvement is that we will use the <code>primarycensored_lpdf</code> function to fit the model. This is the Stan version of the <code>pcens()</code> function and adjusts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the <code>dist_id</code> parameter and that our primary event distribution is uniform by passing 1 as the <code>primary_id</code> parameter. See the <a href="https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d">Stan documentation</a> for more details on the <code>primarycensored_lpdf</code> function.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span></span>
 <span>  <span class="st">"</span></span>
@@ -405,11 +416,18 @@
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.76 -3422.47 1.00 0.74 -3424.69 -3421.79 1.01     1255     1903</span></span>
-<span><span class="co">##  params[1]     1.55     1.54 0.05 0.04     1.48     1.62 1.00     1152     1091</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1088     1110</span></span></code></pre>
-<p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example. We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
+<span><span class="co">##  lp__      -3422.74 -3422.44 0.98 0.71 -3424.69 -3421.79 1.00     1478     1984</span></span>
+<span><span class="co">##  params[1]     1.55     1.54 0.05 0.05     1.47     1.62 1.00     1075     1470</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1085     1477</span></span></code></pre>
+<p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example (i.e. the meanlog and sdlog parameters of the lognormal distribution). We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
+<div class="section level3" number="5.1">
+<h3 id="summary">
+<span class="header-section-number">5.1</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h3>
+<p>In this vignette we have shown how to fit a delay distribution using <code>primarycensored</code> in conjunction with <code>cmdstan</code> and compared this estimate with both the known distribution parameters and a naive approach. We have also shown how to use the <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code> function to compile the model and <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to convert our data into a format that can be used to fit the model rather than manually writing the model and formatting the data.</p>
+<p>If you are instead interested in fitting a delay distribution more flexibly see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -418,7 +436,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">

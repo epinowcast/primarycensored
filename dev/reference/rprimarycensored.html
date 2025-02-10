@@ -31,11 +31,16 @@ distributions."><meta property="og:image" content="https://primarycensored.epino
   </ul></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
-  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><h6 class="dropdown-header" data-toc-skip>──── First steps ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Methodology ────</h6></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><form class="form-inline" role="search">
@@ -148,16 +153,18 @@ distribution censored by the secondary event window.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The mathematical formulation for generating random samples from a primary
 event censored distribution is as follows:</p><ol><li><p>Generate primary event times (p) from the specified primary event
-distribution (f_p) within the primary event window (pwindow):
-$$p \sim f_p(x), \quad 0 \leq x \leq pwindow$$</p></li>
+distribution (f_p) with parameters phi, defined between 0 and the primary
+event window (pwindow):
+$$p \sim f_p(\phi), \quad p \in [0, pwindow]$$</p></li>
 <li><p>Generate delays (d) from the specified delay distribution (f_d) with
 parameters theta:
-$$d \sim f_d(x; \theta)$$</p></li>
+$$d \sim f_d(\theta)$$</p></li>
 <li><p>Calculate the total delays (t) by adding the primary event times and
 the delays:
 $$t = p + d$$</p></li>
-<li><p>Apply truncation to ensure that the delays are within the specified
-range [0, D]:
+<li><p>Apply truncation (i.e. remove any delays that fall outside the observation
+window) to ensure that the delays are within the specified range [0, D],
+where D is the maximum observable delay:
 $$t_{truncated} = \{t \mid 0 \leq t &lt; D\}$$</p></li>
 <li><p>Round the truncated delays to the nearest secondary event window
 (swindow):
@@ -193,7 +200,7 @@ additional samples if needed to reach the desired number of valid samples.</p>
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">

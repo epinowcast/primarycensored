@@ -49,11 +49,16 @@
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>──── First steps ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Methodology ────</h6></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -102,14 +107,14 @@
 <li><p><strong>Truncation</strong>: The observation of delay distributions is often conditioned on the occurrence of the secondary event. This leads to a truncation of the observed distribution, as delays longer than the observation time are not captured in the data. Consequently, the observed distribution is a combination of the underlying true distribution, the censoring distribution, and the observation time.</p></li>
 <li><p><strong>Secondary event censoring</strong>: The secondary event (e.g., symptom onset or the end of a process) is also frequently observed with interval censoring. This additional layer of censoring further complicates the estimation of the delay distribution.</p></li>
 </ul>
-<p>The <code>primarycensored</code> package aims to address these challenges by providing tools to manipulate primary censored delay distributions. By accounting for the censoring and truncation present in the data, the package enables more accurate estimation and use of the underlying true distribution.</p>
+<p>The <code>primarycensored</code> package aims to address these challenges by providing tools to manipulate primary censored delay distributions and to extend these distributions to account for both truncation and secondary event censoring. By accounting for the censoring and truncation present in the data, the package enables more accurate estimation and use of the underlying true distribution.</p>
 <p>In this vignette, we will provide a quick introduction to the main functions and concepts in the <code>primarycensored</code> package. We will cover the mathematical formulation of the problem, demonstrate the usage of the key functions, and provide signposting on how to learn more.</p>
 </div>
 <div class="section level2" number="2">
 <h2 id="packages-in-this-getting-started-vignette-">
 <span class="header-section-number">2</span> Packages in this getting started vignette.<a class="anchor" aria-label="anchor" href="#packages-in-this-getting-started-vignette-"></a>
 </h2>
-<p>As well as the <code>primarycensored</code> package this vignette also uses <code>ggplot2</code>.</p>
+<p>As well as the <code>primarycensored</code> package this vignette also uses <code>ggplot2</code> for plotting.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Load packages</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://primarycensored.epinowcast.org">primarycensored</a></span><span class="op">)</span></span>
@@ -121,29 +126,29 @@
 <h2 id="generating-random-samples-with-rprimarycensored">
 <span class="header-section-number">3</span> Generating random samples with <code>rprimarycensored()</code><a class="anchor" aria-label="anchor" href="#generating-random-samples-with-rprimarycensored"></a>
 </h2>
-<p>This function generates random samples from a primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay (<span class="math inline">\(D\)</span>), and secondary event censoring.</p>
+<p>This function generates random samples from a, potentially truncated, primary event censored distribution. It adjusts the distribution by accounting for the primary event distribution, potential truncation at a maximum delay (<span class="math inline">\(D\)</span>), and secondary event censoring.</p>
 <p>The mathematical formulation for generating random samples from a primary event censored distribution is as follows:</p>
 <ol style="list-style-type: decimal">
-<li>Generate primary event times (<span class="math inline">\(p\)</span>) from the specified primary event distribution (<span class="math inline">\(f_p\)</span>) within the primary event window (<span class="math inline">\(pwindow\)</span>):</li>
+<li>Generate primary event times (<span class="math inline">\(p\)</span>) from the specified primary event distribution (<span class="math inline">\(f_p\)</span>) with parameters <span class="math inline">\(\phi\)</span>, defined between 0 and the primary event window (<span class="math inline">\(pwindow\)</span>):</li>
 </ol>
-<p><span class="math display">\[p \sim f_p(x), \quad 0 \leq x \leq pwindow\]</span></p>
+<p><span class="math display">\[p \sim f_p(\phi), \quad p \in [0, pwindow]\]</span></p>
 <ol start="2" style="list-style-type: decimal">
 <li>Generate delays (<span class="math inline">\(d\)</span>) from the specified delay distribution (<span class="math inline">\(f_d\)</span>) with parameters <span class="math inline">\(\theta\)</span>:</li>
 </ol>
-<p><span class="math display">\[d \sim f_d(x; \theta)\]</span></p>
+<p><span class="math display">\[d \sim f_d(\theta), \quad d \geq 0\]</span></p>
 <ol start="3" style="list-style-type: decimal">
 <li>Calculate the total delays (<span class="math inline">\(t\)</span>) by adding the primary event times and the delays:</li>
 </ol>
 <p><span class="math display">\[t = p + d\]</span></p>
 <ol start="4" style="list-style-type: decimal">
-<li>Apply truncation to ensure that the delays are within the specified range <span class="math inline">\([0, D]\)</span>:</li>
+<li>Apply truncation (i.e. remove any delays that fall outside the observation window) to ensure that the delays are within the specified range <span class="math inline">\([0, D]\)</span>, where <span class="math inline">\(D\)</span> is the maximum observable delay:</li>
 </ol>
 <p><span class="math display">\[t_{truncated} = \{t \mid 0 \leq t &lt; D\}\]</span></p>
 <ol start="5" style="list-style-type: decimal">
 <li>Round the truncated delays to the nearest secondary event window (<span class="math inline">\(swindow\)</span>):</li>
 </ol>
 <p><span class="math display">\[t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor \times swindow\]</span></p>
-<p>Here’s an example of how to use <code><a href="../reference/rprimarycensored.html">rprimarycensored()</a></code> to sample from a log-normal distribution with and without secondary interval censoring. For simplicity we will use a daily censoring window for both events.</p>
+<p>Here’s an example of how to use <code><a href="../reference/rprimarycensored.html">rprimarycensored()</a></code> to sample from a log-normal distribution with and without secondary event interval censoring. For simplicity we will use a daily censoring window for both events and assume a uniform primary event distribution. However, the package supports any mix of censoring intervals and a wide range of primary and delay distributions.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1e4</span></span>
 <span><span class="va">meanlog</span> <span class="op">&lt;-</span> <span class="fl">1.5</span></span>
@@ -151,28 +156,28 @@
 <span><span class="va">obs_time</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
 <span><span class="va">pwindow</span> <span class="op">&lt;-</span> <span class="fl">1</span></span>
 <span></span>
-<span><span class="co"># Random samples without secondary censoring</span></span>
+<span><span class="co"># Random samples without secondary event censoring</span></span>
 <span><span class="va">samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rprimarycensored.html">rprimarycensored</a></span><span class="op">(</span></span>
 <span>  <span class="va">n</span>,</span>
 <span>  rdist <span class="op">=</span> <span class="va">rlnorm</span>, rprimary <span class="op">=</span> <span class="va">runif</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">0</span>, D <span class="op">=</span> <span class="va">obs_time</span>,</span>
 <span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># Random samples with secondary censoring</span></span>
+<span><span class="co"># Random samples with secondary event censoring</span></span>
 <span><span class="va">samples_sc</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/rprimarycensored.html">rprimarycensored</a></span><span class="op">(</span></span>
 <span>  <span class="va">n</span>,</span>
 <span>  rdist <span class="op">=</span> <span class="va">rlnorm</span>, rprimary <span class="op">=</span> <span class="va">runif</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="va">pwindow</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="va">obs_time</span>,</span>
 <span>  meanlog <span class="op">=</span> <span class="va">meanlog</span>, sdlog <span class="op">=</span> <span class="va">sdlog</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># Calculate the PMF for the samples with secondary censoring</span></span>
+<span><span class="co"># Calculate the PMF for the samples with secondary event censoring</span></span>
 <span><span class="va">samples_sc_pmf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
 <span>  pmf <span class="op">=</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">samples_sc</span><span class="op">)</span> <span class="op">/</span></span>
 <span>      <span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/table.html" class="external-link">table</a></span><span class="op">(</span><span class="va">samples_sc</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co"># Compare the samples with and without secondary censoring to the true</span></span>
-<span><span class="co"># distribution</span></span>
+<span><span class="co"># Compare the samples with and without secondary event censoring</span></span>
+<span><span class="co"># to the true distribution</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_density.html" class="external-link">geom_density</a></span><span class="op">(</span></span>
 <span>    data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>samples <span class="op">=</span> <span class="va">samples</span><span class="op">)</span>,</span>
@@ -201,15 +206,18 @@
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    title <span class="op">=</span> <span class="st">"Comparison of Samples from Log-Normal Distribution"</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"Samples"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">"Delay"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"Density"</span>,</span>
 <span>    caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
-<span>      <span class="st">"Blue density: Samples without secondary censoring\n"</span>,</span>
-<span>      <span class="st">"Green bars: Samples with secondary censoring\n"</span>,</span>
+<span>      <span class="st">"Blue density: Truncated samples without secondary event censoring\n"</span>,</span>
+<span>      <span class="st">"Green bars: Truncated samples with secondary event censoring\n"</span>,</span>
 <span>      <span class="st">"Black line: True log-normal distribution without truncation"</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>expand <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/expansion.html" class="external-link">expansion</a></span><span class="op">(</span>mult <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_x_continuous</a></span><span class="op">(</span>limits <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">15</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span></span>
+<span>    expand <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/expansion.html" class="external-link">expansion</a></span><span class="op">(</span>mult <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">0.05</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_minimal</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/theme.html" class="external-link">theme</a></span><span class="op">(</span></span>
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -222,7 +230,7 @@
 <h2 id="compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored">
 <span class="header-section-number">4</span> Compute the primary event censored cumulative distribution function (CDF) for delays with <code>pprimarycensored()</code><a class="anchor" aria-label="anchor" href="#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored"></a>
 </h2>
-<p>This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution by accounting for the primary event distribution and potential truncation at a maximum delay (<span class="math inline">\(D\)</span>).</p>
+<p>This function computes the primary event censored cumulative distribution function (CDF) for a given set of quantiles. It adjusts the CDF of delay distribution by accounting for the primary event distribution and potential truncation at a maximum delay (<span class="math inline">\(D\)</span>). This is useful when we want to understand the probability that a delay will be less than or equal to a certain value, taking into account both the primary event distribution and any truncation in our data.</p>
 <p>The primary event censored CDF, (<span class="math inline">\(F_{\text{cens}}(q)\)</span>), is given by:</p>
 <p><span class="math display">\[
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, dp
@@ -233,7 +241,7 @@ F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, 
 F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 \]</span></p>
 <p>where <span class="math inline">\(F_{\text{cens,norm}}(q)\)</span> is the normalized CDF.</p>
-<p>Let’s compare the empirical CDF of our samples without secondary censoring to the theoretical CDF computed using <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>:</p>
+<p>Let’s compare the empirical CDF of our samples without secondary event censoring to the theoretical CDF computed using <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
 <span><span class="va">theoretical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pprimarycensored.html">pprimarycensored</a></span><span class="op">(</span></span>
@@ -259,7 +267,8 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 <span>    x <span class="op">=</span> <span class="st">"Delay"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"Cumulative Probability"</span>,</span>
 <span>    caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
-<span>      <span class="st">"Blue line: Empirical CDF from samples without secondary censoring\n"</span>,</span>
+<span>      <span class="st">"Blue line: Empirical CDF from samples without secondary</span></span>
+<span><span class="st">       event  censoring\n"</span>,</span>
 <span>      <span class="st">"Black line: Theoretical CDF computed using pprimarycensored()"</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
@@ -276,13 +285,13 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 <h2 id="compute-the-primary-event-censored-probability-mass-function-pmf-with-dprimarycensored">
 <span class="header-section-number">5</span> Compute the primary event censored probability mass function (PMF) with <code>dprimarycensored()</code><a class="anchor" aria-label="anchor" href="#compute-the-primary-event-censored-probability-mass-function-pmf-with-dprimarycensored"></a>
 </h2>
-<p>This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation, it also accounts for secondary event censoring.</p>
+<p>This function computes the primary event censored probability mass function (PMF) for a given set of quantiles using the CDF. On top of accounting for the primary event distribution and truncation, it also adjusts for secondary event censoring. This is particularly useful when working with discrete data or when we want to understand the probability of observing delays in specific time windows, such as daily reporting delays.</p>
 <p>The primary event censored PMF, (<span class="math inline">\(f_{\text{cens}}(d)\)</span>), is given by:</p>
 <p><span class="math display">\[
 f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 \]</span></p>
 <p>where (<span class="math inline">\(F_{\text{cens}}\)</span>) is the potentially right truncated primary event censored CDF and (<span class="math inline">\(\text{swindow}\)</span>) is the secondary event window.</p>
-<p>Let’s compare the empirical PMF of our samples with secondary censoring to the theoretical PMF computed using <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>:</p>
+<p>Let’s compare the empirical PMF of our samples with secondary event censoring to the theoretical PMF computed using <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Calculate the theoretical PMF using dprimarycensored</span></span>
 <span><span class="va">theoretical_pmf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/dprimarycensored.html">dprimarycensored</a></span><span class="op">(</span></span>
@@ -319,10 +328,10 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span></span>
 <span>    title <span class="op">=</span> <span class="st">"Comparison of Samples from Log-Normal Distribution"</span>,</span>
-<span>    x <span class="op">=</span> <span class="st">"Samples"</span>,</span>
+<span>    x <span class="op">=</span> <span class="st">"Delay"</span>,</span>
 <span>    y <span class="op">=</span> <span class="st">"Density"</span>,</span>
 <span>    caption <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span></span>
-<span>      <span class="st">"Green bars: Empirical PMF from samples with secondary censoring\n"</span>,</span>
+<span>      <span class="st">"Green bars: Empirical PMF from samples with secondary event censoring\n"</span>,</span>
 <span>      <span class="st">"Black line: Theoretical PMF computed using dprimarycensored()"</span></span>
 <span>    <span class="op">)</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
@@ -342,6 +351,8 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 <p>In addition to these main functions, the package also includes:</p>
 <ul>
 <li><p><strong>Primary event distributions:</strong> The package includes commonly used primary event distributions such as exponential growth.</p></li>
+<li><p><strong>Built-in estimation tools:</strong> The package provides functionality to estimate delay distributions from censored and truncated data using both Stan and <code>fitdistrplus</code>. These tools make it easy to fit models without having to implement the likelihood functions yourself.</p></li>
+<li><p><strong>Analytical solutions:</strong> For common combinations of primary event and delay distributions (e.g., uniform primary events with gamma, lognormal, or Weibull delays), the package includes analytical solutions that provide significant computational speedups compared to numerical integration.</p></li>
 <li><p><strong>Stan versions of all functions and R functions to interface with Stan:</strong> All R functions have a corresponding Stan function. These Stan functions are used in the estimation of delay distributions using the Stan software. The package also includes tools to manipulate the Stan code in R.</p></li>
 </ul>
 </div>
@@ -358,7 +369,7 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 </ul>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
 <div id="ref-Charniga2024" class="csl-entry">
-1. Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E., Pulliam, J. R. C., Ward, T., Cauchemez, S., &amp; Abbott, S. (2024). Best practices for estimating and reporting epidemiological delay distributions of infectious diseases using public health surveillance and healthcare data. <em>arXiv [Stat.ME]</em>. <a href="https://arxiv.org/abs/2405.08841" class="external-link">https://arxiv.org/abs/2405.08841</a>
+1. Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E., Pulliam, J. R. C., Ward, T., Cauchemez, S., &amp; Abbott, S. (2024). Best practices for estimating and reporting epidemiological delay distributions of infectious diseases. <em>PLoS Comput. Biol.</em>, <em>20</em>(10), e1012520. <a href="https://doi.org/10.1371/journal.pcbi.1012520" class="external-link">https://doi.org/10.1371/journal.pcbi.1012520</a>
 </div>
 <div id="ref-Park2024" class="csl-entry">
 2. Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M., Lipsitch, M., Lison, A., Overton, C. E., Ward, T., &amp; Abbott, S. (2024). Estimating epidemiological delay distributions for infectious diseases. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2024.01.12.24301247" class="external-link">https://doi.org/10.1101/2024.01.12.24301247</a>
@@ -372,7 +383,7 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">

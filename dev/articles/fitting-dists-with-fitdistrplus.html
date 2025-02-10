@@ -49,11 +49,16 @@
 <li class="active nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
-<li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
-    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+<li><h6 class="dropdown-header" data-toc-skip>──── First steps ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/getting-started.html">Getting started</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Methodology ────</h6></li>
     <li><a class="dropdown-item" href="../articles/why-it-works.html">Why it works</a></li>
     <li><a class="dropdown-item" href="../articles/analytic-solutions.html">Analytic solutions for censored delay distributions</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
+    <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -116,8 +121,14 @@
 <p>This vignette assumes some familiarity with the <code>fitdistrplus</code> package. If you are not familiar with it then you might want to start with the <a href="https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html" class="external-link">Introduction to <code>fitdistrplus</code></a> vignette.</p>
 </div>
 <div class="section level3" number="1.3">
+<h3 id="how-does-this-vignette-differ-from-the-vignettefitting-dists-with-stan">
+<span class="header-section-number">1.3</span> How does this vignette differ from the <code>vignette("fitting-dists-with-stan")</code><a class="anchor" aria-label="anchor" href="#how-does-this-vignette-differ-from-the-vignettefitting-dists-with-stan"></a>
+</h3>
+<p>This vignette is similar to the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette in that it shows how to fit a distribution using <code>primarycensored</code>. However, here we use maximum likelihood estimation (MLE) to fit the distribution, rather than MCMC. In some settings this may result in a faster fit, but in other settings especially when the data is complex, MCMC may be more reliable. The major benefit of the <code>fitdistrplus</code> approach is that we don’t need to install additional software (Stan) to fit the distribution. <strong>Note that rather than returning credible intervals, the <code>fitdistrplus</code> package returns standard errors and confidence intervals.</strong></p>
+</div>
+<div class="section level3" number="1.4">
 <h3 id="packages-used-in-this-vignette">
-<span class="header-section-number">1.3</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
+<span class="header-section-number">1.4</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
 </h3>
 <p>Alongside the <code>primarycensored</code> package we will use the <code>fitdistrplus</code> package for fitting distributions. We will also use the <code>ggplot2</code> package for plotting and <code>dplyr</code> for data manipulation.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -135,8 +146,10 @@
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">123</span><span class="op">)</span> <span class="co"># For reproducibility</span></span>
 <span></span>
-<span><span class="co"># Define the true distribution parameters</span></span>
+<span><span class="co"># Define the number of samples to generate</span></span>
 <span><span class="va">n</span> <span class="op">&lt;-</span> <span class="fl">1000</span></span>
+<span></span>
+<span><span class="co"># Define the true distribution parameters</span></span>
 <span><span class="va">shape</span> <span class="op">&lt;-</span> <span class="fl">1.77</span> <span class="co"># This gives a mean of 4 and sd of 3 for a gamma distribution</span></span>
 <span><span class="va">rate</span> <span class="op">&lt;-</span> <span class="fl">0.44</span></span>
 <span></span>
@@ -222,6 +235,7 @@
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span> <span class="co"># Set x-axis limit to match truncation</span></span></code></pre></div>
 <p><img src="fitting-dists-with-fitdistrplus_files/figure-html/sample-lognormal-1.png" width="672"></p>
+<p>In this figure you can see the impact of truncation and censoring as the observed distribution has a much lower mean (the vertical dashed blue line) than the true/theoretical distribution (the vertical dashed black line). Our modelling aim is to recover the true parameters of the theoretical distribution from the observed distribution (i.e. recover the black lines from the blue lines).</p>
 </div>
 <div class="section level2" number="3">
 <h2 id="fitting-a-naive-model-using-fitdistrplus">
@@ -330,6 +344,13 @@
 <span><span class="co">## shape 1.00000 0.92969</span></span>
 <span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
 <p><strong>Note</strong> Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the <code>primarycensored</code> GitHub page.</p>
+<div class="section level3" number="4.1">
+<h3 id="summary">
+<span class="header-section-number">4.1</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+</h3>
+<p>In this vignette we have shown how to fit a distribution using <code>primarycensored</code> in conjunction with <code>fitdistrplus</code> both from scratch and using the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> function. We have also shown how to compare the performance of the <code>primarycensored</code> model to a naive model.</p>
+<p>If interested in a more robust approach to fitting distributions see the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette. If you are instead interested in fitting a delay distribution more flexibly see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+</div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>
@@ -338,7 +359,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">
