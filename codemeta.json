@@ -49,6 +49,13 @@
       "familyName": "Funk",
       "email": "sebastian.funk@lshtm.ac.uk",
       "@id": "https://orcid.org/0000-0002-2842-3406"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Kelly",
+      "familyName": "Charniga",
+      "email": "kelly.charniga@gmail.com",
+      "@id": "https://orcid.org/0000-0002-7648-7041"
     }
   ],
   "contributor": [
@@ -258,7 +265,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "452.672KB",
+  "fileSize": "468.381KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -291,6 +298,13 @@
           "familyName": "Funk",
           "email": "sebastian.funk@lshtm.ac.uk",
           "@id": "https://orcid.org/0000-0002-2842-3406"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Kelly",
+          "familyName": "Charniga",
+          "email": "kelly.charniga@gmail.com",
+          "@id": "https://orcid.org/0000-0002-7648-7041"
         }
       ],
       "name": "primarycensored: Primary Event Censored Distributions",
