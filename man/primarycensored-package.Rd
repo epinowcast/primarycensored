@@ -14,7 +14,7 @@ Provides functions for working with primary event censored distributions and 'St
 Useful links:
 \itemize{
   \item \url{https://primarycensored.epinowcast.org}
-  \item \url{https://github.com/epinowcast/primarycensored/}
+  \item \url{https://github.com/epinowcast/primarycensored}
   \item Report bugs at \url{https://github.com/epinowcast/primarycensored/issues}
 }
 
