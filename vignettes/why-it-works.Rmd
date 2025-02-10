@@ -20,7 +20,7 @@ vignette: >
 
 ## What are we going to do in this Vignette
 
-In this vignette, we'll explain the underlying statistical model that the `primarycensored` package. We'll cover the following key points:
+In this vignette, we'll explain the statistical model that the `primarycensored` package is based on. We'll cover the following key points:
 
 1. Introduction to the censored data problems in time to event analysis.
 2. Discuss the relevant issues from censoring in epidemiological data.
@@ -31,7 +31,7 @@ If you are new to the package, we recommend that you start with the `vignette("p
 
 # Censoring and right truncation problems in time to event analysis
 
-Time to event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensored` we focus on two particular missing data problems:
+Time-to-event analysis, also known as survival analysis, concerns estimating the distribution of delay times between events. A distinctive feature of the field are the methodological techniques used to deal with the missing data problems common in data sets of delay times [@leung1997censoring]. In `primarycensored` we focus on two particular missing data problems:
 
 -   **Interval censoring**. The primary (start) time and/or the secondary (end) time of the delay are unobserved but both are known to be within intervals.
 -   **Right truncation**. Truncated delay data items are only reported if their secondary events are less than a known time, for example the current data collection time.
@@ -40,11 +40,11 @@ In statistical epidemiology, these missing data problems occur frequently in bot
 
 In data analysis, events in epidemiology are commonly reported as occurring on a particular day or week (*interval censoring*). In an emerging outbreak, datasets can be incompletely observed (*right truncation*) and their can be a great deal of uncertainty around the precise timing of events (*interval censoring*).
 
-In theoretical epidemiological modelling, it is often appropriate to model the evolution of an infectious disease as occurring in discrete time, for example in the [`EpiNow2`](https://epiforecasts.io/EpiNow2/) and [EpiEstim](https://mrc-ide.github.io/EpiEstim/index.html) modelling packages. This means appropriately discretising continuous distributions, such as the generation interval distribution. In `primarycensored` we treat the discretisation of intrinsically continuous distributions as an *interval censoring* problem which allows us to simultaneously provide methods for both applied and theoretical contexts.
+In theoretical epidemiological modelling, it is often appropriate to model the evolution of an infectious disease as occurring in discrete time, for example in the [`EpiNow2`](https://epiforecasts.io/EpiNow2/) and [`EpiEstim`](https://mrc-ide.github.io/EpiEstim/index.html) modelling packages. This means appropriately discretising continuous distributions, such as the generation interval distribution. In `primarycensored` we treat the discretisation of intrinsically continuous distributions as an *interval censoring* problem which allows us to simultaneously provide methods for both applied and theoretical contexts.
 
 # Statistical model used in `primarycensored`
 
-As described in [Getting Started with `primarycensored`](primarycensored.html), `primarycensored` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, a key assumption we make is that the censoring window for events is known and independent of the event time. This is known as non-informative censoring.
+As described in [Getting Started with `primarycensored`](primarycensored.html), `primarycensored` focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, all of the methods in `primarycensored` start by assuming no secondary event censoring and solving the primary censoring problem. This is the reason for the packages name despite the most common use case being when there is double censoring. A key assumption we make throughout is that the censoring window for events are known and independent of the event time within the censoring interval. This is known as non-informative censoring.
 
 The target for inference is the distribution of the delay time between the primary and secondary events. We assume that the delay time is a random variable $T = S - P_{u}$ with distribution function $F_T(t) = Pr(T < t)$ and density function $f_T(t)$. In this treatment we assume that the delay time is shift-invariant, that is, the distribution of the delay time is the same regardless of the primary event time.
 
@@ -69,7 +69,7 @@ In this section, we explain how to derive the distribution of the censored delay
 
 ### Survival function of time from the end of the primary censoring window to the secondary event time
 
-In order to reason upon the distribution of the censored delay time $T_c$, it is useful to consider the time from the end (right) point of the primary censoring interval to the secondary time as a random variable,
+When reasoning about the distribution of the censored delay time $T_c$, it is useful to consider the time from the end (right) point of the primary censoring interval to the secondary time as a random variable,
 
 $$
 S_+ = S - (t_P + w_P) = T - ((t_P + w_P) - P) = T - C_P.
@@ -100,9 +100,9 @@ Where we have used that $Q^{'}_{T} = - f_T$, $Q_T$ is the survival function of t
 Equation \@ref(eq:survivalfunc) is the key equation in this note and is used to derive the distribution of the censored delay time $T_c$. It has the interpretation that the probability that the secondary event time is greater than $t$ after the end of the primary censoring window is the sum of two disjoint event probabilities:
 
 1. The probability that the _actual_ delay time $T$ is greater than $t + w_P$.
-2. The probability that the _actual_ delay time $T$ is between $t$ and $t + w_P$, and the primary event time $P$ occurred sufficiently close to the end of the primary censor window that the secondary even occurred more than time $t$ after the end of the primary window.
+2. The probability that the _actual_ delay time $T$ is between $t$ and $t + w_P$, and the primary event time $P$ occurred sufficiently close to the end of the primary censoring window that the secondary even occurred more than time $t$ after the end of the primary window.
 
-Note that in ["Getting started"](primarycensored.html#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored) the target for numerical quadrature is the cumulative distribution function of the sum of the primary time within the primary censor window and the delay time.
+Note that in ["Getting started"](primarycensored.html#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored) the target for numerical quadrature is the cumulative distribution function of the sum of the primary time within the primary censoring window and the delay time.
 
 ### Probability of secondary event time within a secondary censoring window
 
@@ -119,25 +119,13 @@ $$
 Q_{S_+}(-w_P) - Q_{S_+}(0) = 1 - Q_T(w_P) - \int_0^{w_P} f_T(p) F_{C_P}(p) dp = Pr(T< C).
 $$
 
-### Discrete censored delay distribution
-
-A common situation is when every primary and secondary event window is a single time unit, $w_P = w_S = 1$, and data arrives in non-overlapping intervals. For example, in the context of infectious disease modelling, we might have a data set of symptom onsets (primary event) and time of seeking health care (secondary event) which are both reported in days.
-
-In this situation, we are interested in the probability of censored delays $T_c$ in units of the event window. In this case equation \@ref(eq:seccensorprob) is:
-
-$$
-f_n = Pr(T_c = n) = Pr(S_+ \in [n - 1, n)) = Q_{S_+}(n-1) - Q_{S_+}(n)\qquad n = 0, 1, \dots. (\#eq:disccensprob)
-$$
-
-Which is a discrete probability mass function of the secondary event time relative to the primary event time in units of the event window.
-
 # Connections to other approaches
 
 In this section, we discuss how the approach taken in `primarycensored` relates to some other approaches to the censored data problems in time to event analysis.
 
-## Connection to Park et al 2014
+## Connection to Park et al 2024
 
-Using the notation from Park et al[@Park2024], we write the conditional probability of the secondary event time $S\in (S_L,S_R)$ given the primary event time $P \in (P_L,P_R)$ as:
+Using the notation from the methods overview given in Park et al[@Park2024], we write the conditional probability of the secondary event time $S\in (S_L,S_R)$ given the primary event time $P \in (P_L,P_R)$ as:
 
 $$
 \begin{aligned}

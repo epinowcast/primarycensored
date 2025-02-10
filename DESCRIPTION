@@ -31,7 +31,12 @@ Authors@R:
            family = "Funk",
            role = c("aut"),
            email = "sebastian.funk@lshtm.ac.uk",
-           comment = c(ORCID = "0000-0002-2842-3406")))
+           comment = c(ORCID = "0000-0002-2842-3406")),
+    person(given = "Kelly",
+           family = "Charniga",
+           role = c("aut"),
+           email = " kelly.charniga@gmail.com",
+           comment = c(ORCID = "0000-0002-7648-7041")))
 Description: Provides functions for working with primary
     event censored distributions and 'Stan' implementations for use in Bayesian
     modeling. Primary event censored distributions are useful for modeling

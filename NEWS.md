@@ -16,6 +16,7 @@ Development release.
 
 - Added a CRAN downloads badge to the README.
 - Corrected how to specify an empty array in the docs of `primarycensored_lcdf()`.
+- All documentation was reviewed and updated to enhance readability and clarity.
 
 ## Bug fixes
 
