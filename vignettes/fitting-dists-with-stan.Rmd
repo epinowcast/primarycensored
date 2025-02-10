@@ -99,7 +99,7 @@ delay_counts <- delay_data |>
 
 head(delay_counts)
 
-# Compare the samples with and without secondary censoring to the true
+# Compare the samples with and without secondary event censoring to the true
 # distribution
 # Calculate empirical CDF
 empirical_cdf <- ecdf(samples)
@@ -207,7 +207,7 @@ We see that the model has converged and the diagnostics look good. However, just
 
 # Fitting an improved model using primarycensored
 
-We'll now fit an improved model using the `primarycensored` package. The main improvement is that we will use the `primarycensored_lpdf` function to fit the model. This is the Stan version of the `pcens()` function and accounts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the `dist_id` parameter and that our primary event distribution is uniform by passing 1 as the `primary_id` parameter. See the [Stan documentation](https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d) for more details on the `primarycensored_lpdf` function.
+We'll now fit an improved model using the `primarycensored` package. The main improvement is that we will use the `primarycensored_lpdf` function to fit the model. This is the Stan version of the `pcens()` function and adjusts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the `dist_id` parameter and that our primary event distribution is uniform by passing 1 as the `primary_id` parameter. See the [Stan documentation](https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d) for more details on the `primarycensored_lpdf` function.
 
 ```{r pimarycensoreddist-model}
 writeLines(
