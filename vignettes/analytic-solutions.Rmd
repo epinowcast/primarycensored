@@ -17,6 +17,7 @@ vignette: >
 ---
 
 # Introduction
+
 ## What are we going to do in this Vignette
 
 In this vignette, we'll derive the analytic solutions for the primary censored delay distributions for a range of commonly used distributions.
