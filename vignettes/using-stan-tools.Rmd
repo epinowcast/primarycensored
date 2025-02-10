@@ -22,7 +22,7 @@ vignette: >
 
 ## What are we going to do in this Vignette
 
-In this vignette, we'll explore how to use the `primarycensored` package in your stan modelling workflow. We'll cover the following key points:
+In this vignette, we'll explore how to use the `primarycensored` package in your Stan modelling workflow. We'll cover the following key points:
 
 1. Introduction to Stan and its relevance for our analysis
 2. Overview of the packages we'll be using
