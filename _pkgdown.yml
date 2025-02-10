@@ -21,16 +21,26 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: How to use primarycensored with Stan
-        href: articles/using-stan-tools.html
-      - text: Fitting distributions using primarycensored and cmdstan
-        href: articles/fitting-dists-with-stan.html
-      - text: Fitting distributions using primarycensored and fitdistrplus
-        href: articles/fitting-dists-with-fitdistrplus.html
-      - text: Why it works
-        href: articles/why-it-works.html
-      - text: Analytic solutions for censored delay distributions
-        href: articles/analytic-solutions.html
+      - text: First steps
+        menu:
+        - text: Getting started
+          href: articles/getting-started.html
+        - text: Methodology
+          menu:
+          - text: Why it works
+          href: articles/why-it-works.html
+        - text: Analytic solutions for censored delay distributions
+          href: articles/analytic-solutions.html
+      - text: Fitting delay distributions
+        menu:
+        - text: Fitting distributions using primarycensored and cmdstan
+          href: articles/fitting-dists-with-stan.html
+        - text: Fitting distributions using primarycensored and fitdistrplus
+          href: articles/fitting-dists-with-fitdistrplus.html
+      - text: Stan development
+        menu:
+        - text: How to use primarycensored with Stan
+          href: articles/using-stan-tools.html
 
 authors:
   Sam Abbott:
