@@ -1,7 +1,7 @@
 
-# primarycensored 1.0.0.1000
+# primarycensored 1.1.0
 
-Development release.
+This minor release improves the documentation and the internal system used to automatically discover analytical solutions. It also adds lookups for supported supported distributions and tooling for working with these lookups. This makes it easier for package developers using `primarycensored` and also makes it easier to work with the Stan likelihood functions by improving the discoverability of the distribution functions. Minor bugs were also fixed.
 
 ## Package
 
