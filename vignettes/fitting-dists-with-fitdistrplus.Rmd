@@ -33,6 +33,10 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 
 This vignette assumes some familiarity with the `fitdistrplus` package. If you are not familiar with it then you might want to start with the [Introduction to `fitdistrplus`](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html) vignette.
 
+## How does this vignette differ from the `vignette("fitting-dists-with-stan")`
+
+This vignette is similar to the `vignette("fitting-dists-with-stan")` vignette in that it shows how to fit a distribution using `primarycensored`. However, here we use maximum likelihood estimation (MLE) to fit the distribution, rather than MCMC. In some settings this may result in a faster fit, but in other settings especially when the data is complex, MCMC may be more reliable. The major benefit of the `fitdistrplus` approach is that we don't need to install additional software (Stan) to fit the distribution. **Note that rather than returning credible intervals, the `fitdistrplus` package returns standard errors and confidence intervals.**
+
 ## Packages used in this vignette
 
 Alongside the `primarycensored` package we will use the `fitdistrplus` package for fitting distributions. We will also use the `ggplot2` package for plotting and `dplyr` for data manipulation.
@@ -134,6 +138,8 @@ ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
   coord_cartesian(xlim = c(0, 8)) # Set x-axis limit to match truncation
 ```
 
+In this figure you can see the impact of truncation and censoring as the observed distribution has a much lower mean (the vertical dashed blue line) than the true/theoretical distribution (the vertical dashed black line). Our modelling aim is to recover the true parameters of the theoretical distribution from the observed distribution (i.e. recover the black lines from the blue lines).
+
 # Fitting a naive model using `fitdistrplus`
 
 We first fit a naive model using the `fitdistcens()` function. This function is designed to handle secondary censored data but does not handle primary censoring or truncation without extension.
@@ -218,3 +224,9 @@ summary(fitdistdoublecens_fit)
 
 
 **Note** Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the `primarycensored` GitHub page.
+
+## Summary
+
+In this vignette we have shown how to fit a distribution using `primarycensored` in conjunction with `fitdistrplus` both from scratch and using the `fitdistdoublecens()` function. We have also shown how to compare the performance of the `primarycensored` model to a naive model.
+
+If interested in a more robust approach to fitting distributions see the `vignette("fitting-dists-with-stan")` vignette. If you are instead interested in fitting a delay distribution more flexibly see the [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).
