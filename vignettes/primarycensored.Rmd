@@ -35,7 +35,7 @@ In this vignette, we will provide a quick introduction to the main functions and
 
 # Packages in this getting started vignette.
 
-As well as the `primarycensored` package this vignette also uses `ggplot2`.
+As well as the `primarycensored` package this vignette also uses `ggplot2` for plotting.
 
 ```{r setup, message = FALSE}
 # Load packages
@@ -51,19 +51,19 @@ This function generates random samples from a primary event censored distributio
 
 The mathematical formulation for generating random samples from a primary event censored distribution is as follows:
 
-1. Generate primary event times ($p$) from the specified primary event distribution ($f_p$) within the primary event window ($pwindow$):
+1. Generate primary event times ($p$) from the specified primary event distribution ($f_p$) with parameters $\phi$, defined between 0 and the primary event window ($pwindow$):
 
-$$p \sim f_p(x), \quad 0 \leq x \leq pwindow$$
+$$p \sim f_p(\phi), \quad p \in [0, pwindow]$$
 
 2. Generate delays ($d$) from the specified delay distribution ($f_d$) with parameters $\theta$:
 
-$$d \sim f_d(x; \theta)$$
+$$d \sim f_d(\theta), \quad d \geq 0$$
 
 3. Calculate the total delays ($t$) by adding the primary event times and the delays:
 
 $$t = p + d$$
 
-4. Apply truncation to ensure that the delays are within the specified range $[0, D]$:
+4. Apply truncation (i.e. remove any delays that fall outside the observation window) to ensure that the delays are within the specified range $[0, D]$, where $D$ is the maximum observable delay:
 
 $$t_{truncated} = \{t \mid 0 \leq t < D\}$$
 
@@ -133,12 +133,15 @@ ggplot() +
     x = "Samples",
     y = "Density",
     caption = paste0(
-      "Blue density: Samples without secondary censoring\n",
-      "Green bars: Samples with secondary censoring\n",
+      "Blue density: Truncated samples without secondary censoring\n",
+      "Green bars: Truncated samples with secondary censoring\n",
       "Black line: True log-normal distribution without truncation"
     )
   ) +
-  scale_y_continuous(expand = expansion(mult = c(0, 0.05))) +
+  scale_x_continuous(limits = c(0, 15)) +
+  scale_y_continuous(
+    expand = expansion(mult = c(0, 0.05))
+  ) +
   theme_minimal() +
   theme(
     panel.grid.minor = element_blank(),
