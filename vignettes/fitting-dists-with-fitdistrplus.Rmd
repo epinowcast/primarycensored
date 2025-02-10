@@ -19,7 +19,7 @@ vignette: >
 
 # Introduction
 
-## What are we going to do in this Vignette
+## What are we going to do in this vignette
 
 In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with `fitdistrplus` for fitting distributions. We'll cover the following key points:
 
@@ -33,7 +33,7 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 
 This vignette assumes some familiarity with the `fitdistrplus` package. If you are not familiar with it then you might want to start with the [Introduction to `fitdistrplus`](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html) vignette.
 
-## How does this vignette differ from the `vignette("fitting-dists-with-stan")`
+## How does this vignette differ from fitting distributions with Stan vignette
 
 This vignette is similar to the `vignette("fitting-dists-with-stan")` vignette in that it shows how to fit a distribution using `primarycensored`. However, here we use maximum likelihood estimation (MLE) to fit the distribution, rather than MCMC. In some settings this may result in a faster fit, but in other settings especially when the data is complex, MCMC may be more reliable. The major benefit of the `fitdistrplus` approach is that we don't need to install additional software (Stan) to fit the distribution. **Note that rather than returning credible intervals, the `fitdistrplus` package returns standard errors and confidence intervals.**
 

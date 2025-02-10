@@ -19,7 +19,7 @@ vignette: >
 
 # Introduction
 
-## What are we going to do in this Vignette
+## What are we going to do in this vignette
 
 In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with Stan for Bayesian inference of epidemiological delay distributions. We'll cover the following key points:
 

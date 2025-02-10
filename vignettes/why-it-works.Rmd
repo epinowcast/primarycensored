@@ -18,7 +18,7 @@ vignette: >
 
 # Introduction
 
-## What are we going to do in this Vignette
+## What are we going to do in this vignette
 
 In this vignette, we'll explain the statistical model that the `primarycensored` package is based on. We'll cover the following key points:
 

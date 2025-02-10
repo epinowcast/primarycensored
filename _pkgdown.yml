@@ -24,7 +24,7 @@ navbar:
       - text: "──── First steps ────"
         href: null
       - text: "Getting started"
-        href: articles/getting-started.html
+        href: articles/primarycensored.html
       - text: "──── Methodology ────"
         href: null
       - text: "Why it works"
