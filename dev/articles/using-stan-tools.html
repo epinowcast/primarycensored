@@ -29,7 +29,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.0.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.1.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -178,7 +178,7 @@
 <p>Stan functions are accessed using the <code><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions()</a></code> function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a <code>functions{}</code> block.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions</a></span><span class="op">(</span><span class="st">"primarycensored_lpmf"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "// Stan functions from primarycensored version 1.0.0.1000\nreal primarycensored_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_id,\n                                array[] real primary_params) {\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper &lt;= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primarycensored_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  real log_cdf_lower = primarycensored_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primarycensored_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "// Stan functions from primarycensored version 1.1.0.1000\nreal primarycensored_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_id,\n                                array[] real primary_params) {\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper &lt;= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primarycensored_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  real log_cdf_lower = primarycensored_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primarycensored_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"</span></span></code></pre>
 </div>
 <div class="section level3" number="2.3">
 <h3 id="linking-the-stan-functions-to-your-workflow">
@@ -197,13 +197,13 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpumxriL/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpfmVsle/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
 <span><span class="va">model</span></span></code></pre></div>
 <pre><code><span><span class="co">## functions {</span></span>
-<span><span class="co">## // Stan functions from primarycensored version 1.0.0.1000</span></span>
+<span><span class="co">## // Stan functions from primarycensored version 1.1.0.1000</span></span>
 <span><span class="co">## real expgrowth_rng(real min, real max, real r) {</span></span>
 <span><span class="co">##   real u = uniform_rng(0, 1);</span></span>
 <span><span class="co">##   if (abs(r) &lt; 1e-10) {</span></span>
