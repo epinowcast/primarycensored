@@ -25,9 +25,9 @@ functions if they wish to leverage the analytical solutions.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples. The package can identify base R
-distributions for potential analytical solutions. For non-base R functions,
-users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+See \code{\link[=pcd_primary_distributions]{pcd_primary_distributions()}} for examples. The package can identify
+base R distributions for potential analytical solutions. For non-base R
+functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to
@@ -55,12 +55,20 @@ cdf.
 \description{
 S3 class for primary event censored distribution computation
 }
+\examples{
+new_pcens(
+  pdist = pgamma, dprimary = dunif, dprimary_args = list(min = 0, max = 1),
+  shape = 1, scale = 1
+)
+}
 \seealso{
 Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf}()},
 \code{\link{pcens_cdf.default}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()}
+\code{\link{pcens_cdf.pcens_pweibull_dunif}()},
+\code{\link{pcens_quantile}()},
+\code{\link{pcens_quantile.default}()}
 }
 \concept{pcens}

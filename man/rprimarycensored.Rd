@@ -105,6 +105,7 @@ rprimarycensored(
 \seealso{
 Primary event censored distribution functions
 \code{\link{dprimarycensored}()},
-\code{\link{pprimarycensored}()}
+\code{\link{pprimarycensored}()},
+\code{\link{qprimarycensored}()}
 }
 \concept{primarycensored}

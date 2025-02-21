@@ -86,7 +86,8 @@ add_name_attribute <- function(func, name) {
 #'
 #' @keywords internal
 .name_deprecation <- function(
-    pdist_name, dprimary_name,
+    pdist_name,
+    dprimary_name,
     env = rlang::caller_env(),
     user_env = rlang::caller_env(2)) {
   test_use <- c(
@@ -97,10 +98,13 @@ add_name_attribute <- function(func, name) {
   if (any(test_use)) {
     lifecycle::deprecate_soft(
       when = "1.0.0",
-      what = I("`pdist_name` and `dprimary_name` are deprecated across all
-        functions and will be ignored in future versions;"),
+      what = I(
+        "`pdist_name` and `dprimary_name` are deprecated across all
+        functions and will be ignored in future versions;"
+      ),
       details = "Use `add_name_attribute()` instead.",
-      env = env, user_env = user_env
+      env = env,
+      user_env = user_env
     )
     if (test_use[1]) res$pdist <- pdist_name
     if (test_use[2]) res$dprimary <- dprimary_name
@@ -137,7 +141,11 @@ pcd_dist_name <- function(name, type = c("delay", "primary")) {
 
   if (length(match_idx) == 0) {
     stop(
-      "No ", type, " distribution found matching: ", name, "\n",
+      "No ",
+      type,
+      " distribution found matching: ",
+      name,
+      "\n",
       .suggest_dist_name(name, type)
     )
   }

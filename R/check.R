@@ -19,14 +19,19 @@ check_pdist <- function(pdist, D, ...) {
   test_values <- sort(runif(4, 0, D))
   test_results <- pdist(test_values, ...)
 
-  if (!all(diff(test_results) >= 0) ||
-    !all(test_results >= 0 & test_results <= 1)) {
+  if (
+    !all(diff(test_results) >= 0) ||
+      !all(test_results >= 0 & test_results <= 1)
+  ) {
     stop(
       "pdist is not a valid cumulative distribution function (CDF). ",
       "Please ensure you're using a p-function (e.g., pnorm, punif) and not ",
       "a d-function (e.g., dnorm, dbinom).",
-      "For values ", toString(test_values),
-      " the results were ", toString(round(test_results, 3)), ". ",
+      "For values ",
+      toString(test_values),
+      " the results were ",
+      toString(round(test_results, 3)),
+      ". ",
       "You can use the `check_pdist` function to check if your p-function ",
       "is correct."
     )
@@ -51,8 +56,11 @@ check_pdist <- function(pdist, D, ...) {
 #'
 #' @examples
 #' check_dprimary(dunif, pwindow = 1)
-check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
-                           tolerance = 1e-3) {
+check_dprimary <- function(
+    dprimary,
+    pwindow,
+    dprimary_args = list(),
+    tolerance = 1e-3) {
   # check if dprimary takes min and max as arguments
   if (!all(c("min", "max") %in% names(formals(dprimary)))) {
     stop("dprimary must take min and max as arguments")
@@ -67,7 +75,8 @@ check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
     stop(
       "dprimary is not a valid probability density function (PDF). ",
       "It should integrate to approximately 1 over the range [0, pwindow]. ",
-      "Calculated integral: ", round(integral, 4),
+      "Calculated integral: ",
+      round(integral, 4),
       "You can use the `check_dprimary` function to check if your d-function ",
       "is correct."
     )
@@ -132,7 +141,9 @@ check_truncation <- function(delays, D, multiplier = 2) {
           "observed delay (%g). Consider setting D to Inf for better ",
           "efficiency with minimal accuracy cost for this case."
         ),
-        D, multiplier, max_delay
+        D,
+        multiplier,
+        max_delay
       )
     )
   }

@@ -37,7 +37,8 @@ pcd_cmdstan_model <- function(
   }
 
   pcd_stan_model <- system.file(
-    "stan", "pcens_model.stan",
+    "stan",
+    "pcens_model.stan",
     package = "primarycensored"
   )
 
@@ -121,12 +122,18 @@ pcd_cmdstan_model <- function(
 #'   primary_priors = list(location = numeric(0), scale = numeric(0))
 #' )
 pcd_as_stan_data <- function(
-    data, delay = "delay", delay_upper = "delay_upper",
-    n = "n", pwindow = "pwindow",
+    data,
+    delay = "delay",
+    delay_upper = "delay_upper",
+    n = "n",
+    pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",
-    dist_id, primary_id,
-    param_bounds, primary_param_bounds,
-    priors, primary_priors,
+    dist_id,
+    primary_id,
+    param_bounds,
+    primary_param_bounds,
+    priors,
+    primary_priors,
     compute_log_lik = FALSE,
     use_reduce_sum = FALSE,
     truncation_check_multiplier = 2) {
@@ -134,14 +141,26 @@ pcd_as_stan_data <- function(
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
     stop(
-      "Missing required columns: ", toString(missing_cols), "\n",
+      "Missing required columns: ",
+      toString(missing_cols),
+      "\n",
       "Please ensure your data frame contains these columns or set the",
       " corresponding arguments:\n",
-      "delay = '", delay, "'\n",
-      "delay_upper = '", delay_upper, "'\n",
-      "n = '", n, "'\n",
-      "pwindow = '", pwindow, "'\n",
-      "relative_obs_time = '", relative_obs_time, "'"
+      "delay = '",
+      delay,
+      "'\n",
+      "delay_upper = '",
+      delay_upper,
+      "'\n",
+      "n = '",
+      n,
+      "'\n",
+      "pwindow = '",
+      pwindow,
+      "'\n",
+      "relative_obs_time = '",
+      relative_obs_time,
+      "'"
     )
   }
 
