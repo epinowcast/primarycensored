@@ -56,13 +56,16 @@
 #' )
 #'
 #' summary(fit_norm)
-fitdistdoublecens <- function(censdata, distr,
-                              pwindow = 1, D = Inf,
-                              dprimary = stats::dunif,
-                              dprimary_name = lifecycle::deprecated(),
-                              dprimary_args = list(),
-                              truncation_check_multiplier = 2,
-                              ...) {
+fitdistdoublecens <- function(
+    censdata,
+    distr,
+    pwindow = 1,
+    D = Inf,
+    dprimary = stats::dunif,
+    dprimary_name = lifecycle::deprecated(),
+    dprimary_args = list(),
+    truncation_check_multiplier = 2,
+    ...) {
   nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
   if (!is.null(nms$dprimary)) {
     dprimary <- add_name_attribute(dprimary, nms$dprimary)
@@ -101,42 +104,51 @@ fitdistdoublecens <- function(censdata, distr,
   # Create the function definition with named arguments for dpcens
   dpcens_dist <- function() {
     args <- as.list(environment())
-    do.call(.dpcens, c(
-      args,
-      list(
-        swindows = swindows,
-        pdist = pdist,
-        pwindow = pwindow,
-        D = D,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args
+    do.call(
+      .dpcens,
+      c(
+        args,
+        list(
+          swindows = swindows,
+          pdist = pdist,
+          pwindow = pwindow,
+          D = D,
+          dprimary = dprimary,
+          dprimary_args = dprimary_args
+        )
       )
-    ))
+    )
   }
   formals(dpcens_dist) <- formals(get(paste0("d", distr)))
 
   # Create the function definition with named arguments for ppcens
   ppcens_dist <- function() {
     args <- as.list(environment())
-    do.call(.ppcens, c(
-      args,
-      list(
-        pdist = pdist,
-        pwindow = pwindow,
-        D = D,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args
+    do.call(
+      .ppcens,
+      c(
+        args,
+        list(
+          pdist = pdist,
+          pwindow = pwindow,
+          D = D,
+          dprimary = dprimary,
+          dprimary_args = dprimary_args
+        )
       )
-    ))
+    )
   }
   formals(ppcens_dist) <- formals(pdist)
 
   # Fit the distribution
-  fit <- withr::with_environment(environment(), fitdistrplus::fitdist(
-    censdata$left,
-    distr = "pcens_dist",
-    ...
-  ))
+  fit <- withr::with_environment(
+    environment(),
+    fitdistrplus::fitdist(
+      censdata$left,
+      distr = "pcens_dist",
+      ...
+    )
+  )
   return(fit)
 }
 
@@ -146,15 +158,27 @@ fitdistdoublecens <- function(censdata, distr,
 #' @param swindows A numeric vector of secondary window sizes corresponding to
 #' each element in x
 #' @keywords internal
-.dpcens <- function(x, swindows, pdist, pwindow, D, dprimary,
-                    dprimary_args, ...) {
+.dpcens <- function(
+    x,
+    swindows,
+    pdist,
+    pwindow,
+    D,
+    dprimary,
+    dprimary_args,
+    ...) {
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {
         dprimarycensored(
-          x, pdist,
-          pwindow = pwindow, swindow = swindows[1], D = D, dprimary = dprimary,
-          dprimary_args = dprimary_args, ...
+          x,
+          pdist,
+          pwindow = pwindow,
+          swindow = swindows[1],
+          D = D,
+          dprimary = dprimary,
+          dprimary_args = dprimary_args,
+          ...
         )
       } else {
         # Group x and swindows by unique swindow values
@@ -164,9 +188,13 @@ fitdistdoublecens <- function(censdata, distr,
         for (sw in unique_swindows) {
           mask <- swindows == sw
           result[mask] <- dprimarycensored(
-            x[mask], pdist,
-            pwindow = pwindow, swindow = sw, D = D,
-            dprimary = dprimary, dprimary_args = dprimary_args,
+            x[mask],
+            pdist,
+            pwindow = pwindow,
+            swindow = sw,
+            D = D,
+            dprimary = dprimary,
+            dprimary_args = dprimary_args,
             ...
           )
         }
@@ -183,14 +211,16 @@ fitdistdoublecens <- function(censdata, distr,
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @keywords internal
-.ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args,
-                    ...) {
+.ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args, ...) {
   tryCatch(
     {
       pprimarycensored(
-        q, pdist,
+        q,
+        pdist,
         pwindow = pwindow,
-        D = D, dprimary = dprimary, dprimary_args = dprimary_args,
+        D = D,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args,
         ...
       )
     },

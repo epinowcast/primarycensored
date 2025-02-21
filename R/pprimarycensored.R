@@ -98,7 +98,11 @@
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
 pprimarycensored <- function(
-    q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
+    q,
+    pdist,
+    pwindow = 1,
+    D = Inf,
+    dprimary = stats::dunif,
     dprimary_args = list(),
     pdist_name = lifecycle::deprecated(),
     dprimary_name = lifecycle::deprecated(),

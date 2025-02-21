@@ -77,16 +77,23 @@
 #'   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
 #'   meanlog = 0, sdlog = 1
 #' )
-rprimarycensored <- function(n, rdist, pwindow = 1, swindow = 1,
-                             D = Inf, rprimary = stats::runif,
-                             rprimary_args = list(),
-                             oversampling_factor = 1.2, ...) {
+rprimarycensored <- function(
+    n,
+    rdist,
+    pwindow = 1,
+    swindow = 1,
+    D = Inf,
+    rprimary = stats::runif,
+    rprimary_args = list(),
+    oversampling_factor = 1.2,
+    ...) {
   # Generate more samples than needed to account for truncation
   n_generate <- ceiling(n * oversampling_factor)
 
   # Generate primary event times
   p <- do.call(
-    rprimary, c(list(n_generate), rprimary_args, list(min = 0, max = pwindow))
+    rprimary,
+    c(list(n_generate), rprimary_args, list(min = 0, max = pwindow))
   )
 
   # Generate delays from the specified distribution
@@ -101,8 +108,14 @@ rprimarycensored <- function(n, rdist, pwindow = 1, swindow = 1,
   # If we don't have enough samples, generate more
   while (length(valid_samples) < n) {
     additional_samples <- rprimarycensored(
-      n - length(valid_samples), rdist, pwindow, swindow, D, rprimary,
-      rprimary_args, ...
+      n - length(valid_samples),
+      rdist,
+      pwindow,
+      swindow,
+      D,
+      rprimary,
+      rprimary_args,
+      ...
     )
     valid_samples <- c(valid_samples, additional_samples)
   }

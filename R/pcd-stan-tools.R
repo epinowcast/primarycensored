@@ -14,11 +14,13 @@ pcd_stan_path <- function() {
 .unmatched_braces <- function(line) {
   ifelse(
     grepl("{", line, fixed = TRUE),
-    length(gregexpr("{", line, fixed = TRUE)), 0
+    length(gregexpr("{", line, fixed = TRUE)),
+    0
   ) -
     ifelse(
       grepl("}", line, fixed = TRUE),
-      length(gregexpr("}", line, fixed = TRUE)), 0
+      length(gregexpr("}", line, fixed = TRUE)),
+      0
     )
 }
 
@@ -34,10 +36,13 @@ pcd_stan_path <- function() {
 #' @return Character vector of function names or content
 #' @keywords internal
 .extract_stan_functions <- function(
-    content, names_only = FALSE, functions = NULL) {
+    content,
+    names_only = FALSE,
+    functions = NULL) {
   def_pattern <- "^(real|vector|matrix|void|int|array\\s*<\\s*(real|vector|matrix|int)\\s*>|tuple\\s*<\\s*.*\\s*>)\\s+" # nolint
   func_pattern <- paste0(
-    def_pattern, "(\\w+)\\s*\\("
+    def_pattern,
+    "(\\w+)\\s*\\("
   )
   func_lines <- grep(func_pattern, content, value = TRUE)
   # remove the func_pattern
@@ -71,7 +76,8 @@ pcd_stan_path <- function() {
         end_line <- end_line + 1
       }
       func_content <- c(
-        func_content, paste(content[start_line:end_line], collapse = "\n")
+        func_content,
+        paste(content[start_line:end_line], collapse = "\n")
       )
     }
     return(func_content)
@@ -97,14 +103,16 @@ pcd_stan_functions <- function(
     stan_path = primarycensored::pcd_stan_path()) {
   stan_files <- list.files(
     stan_path,
-    pattern = "\\.stan$", full.names = TRUE,
+    pattern = "\\.stan$",
+    full.names = TRUE,
     recursive = TRUE
   )
   functions <- character(0)
   for (file in stan_files) {
     content <- readLines(file)
     functions <- c(
-      functions, .extract_stan_functions(content, names_only = TRUE)
+      functions,
+      .extract_stan_functions(content, names_only = TRUE)
     )
   }
   unique(functions)
@@ -152,7 +160,9 @@ pcd_stan_files <- function(
 
     # remove the path from the file names
     matching_files <- sub(
-      paste0(stan_path, "/"), "", matching_files
+      paste0(stan_path, "/"),
+      "",
+      matching_files
     )
     return(matching_files)
   }
@@ -181,12 +191,15 @@ pcd_stan_files <- function(
 #'
 #' @export
 pcd_load_stan_functions <- function(
-    functions = NULL, stan_path = primarycensored::pcd_stan_path(),
-    wrap_in_block = FALSE, write_to_file = FALSE,
+    functions = NULL,
+    stan_path = primarycensored::pcd_stan_path(),
+    wrap_in_block = FALSE,
+    write_to_file = FALSE,
     output_file = "pcd_functions.stan") {
   stan_files <- list.files(
     stan_path,
-    pattern = "\\.stan$", full.names = TRUE,
+    pattern = "\\.stan$",
+    full.names = TRUE,
     recursive = TRUE
   )
   all_content <- character(0)
@@ -256,7 +269,11 @@ pcd_stan_dist_id <- function(name, type = c("delay", "primary")) {
 
   if (length(match_idx) == 0) {
     stop(
-      "No ", type, " distribution found matching: ", name, "\n",
+      "No ",
+      type,
+      " distribution found matching: ",
+      name,
+      "\n",
       .suggest_dist_name(name, type)
     )
   }

@@ -89,8 +89,13 @@ dexpgrowth <- function(x, min = 0, max = 1, r, log = FALSE) {
 
 #' @rdname expgrowth
 #' @export
-pexpgrowth <- function(q, min = 0, max = 1, r, lower.tail = TRUE,
-                       log.p = FALSE) {
+pexpgrowth <- function(
+    q,
+    min = 0,
+    max = 1,
+    r,
+    lower.tail = TRUE,
+    log.p = FALSE) {
   cdf <- numeric(length(q))
   in_range <- q >= min & q <= max
 

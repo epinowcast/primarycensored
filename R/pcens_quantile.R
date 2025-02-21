@@ -1,0 +1,105 @@
+#' Compute primary event censored quantiles
+#'
+#' This function inverts the primary event censored CDF to compute quantiles.
+#' It uses numerical optimisation via optim to find the value q such that
+#' [pcens_cdf()] is close to the specified probability. Currently, only the
+#' default numerical inversion method is implemented. Future analytical
+#' solutions may be added.
+#'
+#' @inheritParams pprimarycensored
+#'
+#' @param object A `primarycensored` object as created by [new_pcens()].
+#'
+#' @param p A vector of probabilities at which to compute the quantiles.
+#'
+#' @param pwindow Secondary event window.
+#'
+#' @param use_numeric Logical; if TRUE forces the use of numeric inversion even
+#' if an analytical solution is available (not yet implemented).
+#'
+#' @return Vector of primary event censored quantiles.
+#'
+#' @family pcens
+#'
+#' @export
+pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
+  UseMethod("pcens_quantile")
+}
+
+#' Default method for computing primary event censored quantiles
+#'
+#' This method inverts the primary event censored CDF using numerical
+#' optimisation via optim. For each probability value, it searches for the
+#' delay such that the CDF computed by [pcens_cdf()] approximates the target
+#' probability.
+#'
+#' @param tol Numeric tolerance for the convergence criterion in the
+#'   optimisation routine.
+#'
+#' @param max_iter Integer specifying the maximum number of iterations allowed
+#'   during optimisation.
+#'
+#' @param ... Additional arguments passed to underlying functions.
+#'
+#' @details
+#' The quantile is computed by minimising the squared difference between the
+#' computed CDF and the target probability.
+#'
+#' @family pcens
+#'
+#' @return A numeric vector containing the computed primary event censored
+#'   quantiles.
+#'
+#' @export
+#' @examples
+#' @examples
+#' pcens_quantile(
+#'   new_pcens(
+#'     pdist = pgamma,
+#'     dprimary = dunif,
+#'     dprimary_args = list(min = 0, max = 1),
+#'     shape = 3,
+#'     scale = 2
+#'   ),
+#'   p = 0.8,
+#'   pwindow = 1
+#' )
+pcens_quantile.default <- function(
+    object,
+    p,
+    pwindow,
+    use_numeric = FALSE,
+    tol = 1e-8,
+    max_iter = 10000,
+    ...) {
+  sapply(p, function(prob) {
+    # Handle boundary cases.
+    if (prob <= 0) {
+      return(0)
+    }
+    if (prob >= 1) {
+      return(NA_real_)
+    }
+
+    # Objective function: squared difference between the CDF value and prob.
+    objective <- function(q) {
+      cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
+      (cdf_val - prob)^2
+    }
+
+    lower_bound <- 0
+    upper_bound <- 100
+
+    init_guess <- (lower_bound + upper_bound) / 2
+    opt_result <- optim(
+      par = init_guess,
+      fn = objective,
+      method = "L-BFGS-B",
+      lower = lower_bound,
+      upper = upper_bound,
+      control = list(fnscale = 1, maxit = max_iter, factr = tol)
+    )
+
+    opt_result$value
+  })
+}
