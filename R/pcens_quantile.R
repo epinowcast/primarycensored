@@ -33,6 +33,11 @@ pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
 #' delay such that the CDF computed by [pcens_cdf()] approximates the target
 #' probability.
 #'
+#' @param init Initial guess for the delay. By default, 5.
+#'
+#' @param upper Upper bound for the delay. By default, 100 times the initial
+#'   guess.
+#'
 #' @param tol Numeric tolerance for the convergence criterion in the
 #'   optimisation routine.
 #'
@@ -52,23 +57,27 @@ pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
 #'
 #' @export
 #' @examples
-#' @examples
-#' pcens_quantile(
-#'   new_pcens(
-#'     pdist = pgamma,
-#'     dprimary = dunif,
-#'     dprimary_args = list(min = 0, max = 1),
-#'     shape = 3,
-#'     scale = 2
-#'   ),
-#'   p = 0.8,
-#'   pwindow = 1
+#' # Create a primarycensored object with gamma delay and uniform primary
+#' pcens_obj <- new_pcens(
+#'   pdist = pgamma,
+#'   dprimary = dunif,
+#'   dprimary_args = list(min = 0, max = 1),
+#'   shape = 3,
+#'   scale = 2
 #' )
+#'
+#' # Compute quantile for a single probability
+#' pcens_quantile(pcens_obj, p = 0.8, pwindow = 1)
+#'
+#' # Compute quantiles for multiple probabilities
+#' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1)
 pcens_quantile.default <- function(
     object,
     p,
     pwindow,
     use_numeric = FALSE,
+    init = 5,
+    upper = init * 100,
     tol = 1e-8,
     max_iter = 10000,
     ...) {
@@ -88,18 +97,16 @@ pcens_quantile.default <- function(
     }
 
     lower_bound <- 0
-    upper_bound <- 100
 
-    init_guess <- (lower_bound + upper_bound) / 2
     opt_result <- optim(
-      par = init_guess,
+      par = init,
       fn = objective,
       method = "L-BFGS-B",
       lower = lower_bound,
-      upper = upper_bound,
+      upper = upper,
       control = list(fnscale = 1, maxit = max_iter, factr = tol)
     )
 
-    opt_result$value
+    opt_result$par
   })
 }

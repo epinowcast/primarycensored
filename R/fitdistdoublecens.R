@@ -10,9 +10,9 @@
 #' their global environment.
 #'
 #' @param censdata A data frame with columns 'left' and 'right' representing
-#' the lower and upper bounds of the censored observations. Unlike
-#' [fitdistrplus::fitdistcens()] `NA` is not supported for either the
-#' upper or lower bounds.
+#'  the lower and upper bounds of the censored observations. Unlike
+#'  [fitdistrplus::fitdistcens()] `NA` is not supported for either the
+#'  upper or lower bounds.
 #'
 #' @param distr A character string naming the distribution to be fitted.
 #'

@@ -3,10 +3,10 @@
 #' @inheritParams pprimarycensored
 #'
 #' @return An object of class `pcens_{pdist_name}_{dprimary_name}`. This
-#' contains the primary event distribution, the delay distribution, the
-#' delay distribution arguments, and any additional arguments. It can be
-#' used with the `pcens_cdf()` function to compute the primary event censored
-#' cdf.
+#'  contains the primary event distribution, the delay distribution, the
+#'  delay distribution arguments, and any additional arguments. It can be
+#'  used with the `pcens_cdf()` function to compute the primary event censored
+#'  cdf.
 #'
 #' @family pcens
 #'

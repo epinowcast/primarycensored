@@ -9,25 +9,25 @@
 #' @inheritParams dprimarycensored
 #'
 #' @param rdist Function to generate random samples from the delay distribution
-#' for example [stats::rlnorm()] for lognormal distribution.
+#'  for example [stats::rlnorm()] for lognormal distribution.
 #'
 #' @param swindow Integer specifying the window size for rounding the delay
-#' (default is 1). If `swindow = 0` then no rounding is applied.
+#'  (default is 1). If `swindow = 0` then no rounding is applied.
 #'
 #' @param n Number of random samples to generate.
 #'
 #' @param rprimary Function to generate random samples from the primary
-#' distribution (default is [stats::runif()]).
+#'  distribution (default is [stats::runif()]).
 #'
 #' @param rprimary_args List of additional arguments to be passed to rprimary.
 #'
 #' @param oversampling_factor Factor by which to oversample the number of
-#' samples to account for truncation (default is 1.2).
+#'  samples to account for truncation (default is 1.2).
 #'
 #' @param ... Additional arguments to be passed to the distribution function.
 #'
 #' @return Vector of random samples from the primary event censored
-#' distribution censored by the secondary event window.
+#'  distribution censored by the secondary event window.
 #'
 #' @aliases rpcens
 #'

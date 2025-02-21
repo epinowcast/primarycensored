@@ -4,14 +4,20 @@
 #' growth distribution.
 #'
 #' @param x,q Vector of quantiles.
+#'
 #' @param n Number of observations. If `length(n) > 1`, the length is taken to
-#' be the number required.
+#'  be the number required.
+#'
 #' @param min Minimum value of the distribution range. Default is 0.
+#'
 #' @param max Maximum value of the distribution range. Default is 1.
+#'
 #' @param r Rate parameter for the exponential growth.
+#'
 #' @param log,log.p Logical; if TRUE, probabilities p are given as log(p).
+#'
 #' @param lower.tail Logical; if TRUE (default), probabilities are P\[X <= x\],
-#' otherwise, P\[X > x\].
+#'  otherwise, P\[X > x\].
 #'
 #' @return `dexpgrowth` gives the density, `pexpgrowth` gives the distribution
 #' function, and `rexpgrowth` generates random deviates.

@@ -28,9 +28,9 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples. The package can identify base R
-distributions for potential analytical solutions. For non-base R functions,
-users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+See \code{\link[=pcd_primary_distributions]{pcd_primary_distributions()}} for examples. The package can identify
+base R distributions for potential analytical solutions. For non-base R
+functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
 \item{dprimary_args}{List of additional arguments to be passed to

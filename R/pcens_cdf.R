@@ -45,7 +45,7 @@ pcens_cdf <- function(
 #' applies numerical integration instead of analytical solutions.
 #'
 #' @seealso [pprimarycensored()] for the mathematical details of the
-#' primary event censored CDF computation.
+#'  primary event censored CDF computation.
 #'
 #' @family pcens
 #'
@@ -53,17 +53,20 @@ pcens_cdf <- function(
 #'
 #' @export
 #' @examples
-#' pcens_cdf(
-#'   new_pcens(
-#'     pdist = pgamma,
-#'     dprimary = dunif,
-#'     dprimary_args = list(min = 0, max = 1),
-#'     shape = 3,
-#'     scale = 2
-#'   ),
-#'   q = 2,
-#'   pwindow = 1
+#' # Create a primarycensored object with gamma delay and uniform primary
+#' pcens_obj <- new_pcens(
+#'   pdist = pgamma,
+#'   dprimary = dunif,
+#'   dprimary_args = list(min = 0, max = 1),
+#'   shape = 3,
+#'   scale = 2
 #' )
+#'
+#' # Compute CDF for a single value
+#' pcens_cdf(pcens_obj, q = 9, pwindow = 1)
+#'
+#' # Compute CDF for multiple values
+#' pcens_cdf(pcens_obj, q = c(4, 6, 8), pwindow = 1)
 pcens_cdf.default <- function(
     object,
     q,

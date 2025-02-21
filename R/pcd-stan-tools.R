@@ -29,11 +29,13 @@ pcd_stan_path <- function() {
 #' @param content Character vector containing Stan code
 #'
 #' @param names_only Logical, if TRUE extract function names, otherwise
-#' extract function content.
+#'  extract function content.
 #'
 #' @param functions Optional, character vector of function names to extract
-#' content for.
+#'   content for.
+#'
 #' @return Character vector of function names or content
+#'
 #' @keywords internal
 .extract_stan_functions <- function(
     content,
@@ -90,11 +92,11 @@ pcd_stan_path <- function() {
 #' the names of all functions defined in those files.
 #'
 #' @param stan_path Character string specifying the path to the directory
-#' containing Stan files. Defaults to the Stan path of the primarycensored
-#' package.
+#'  containing Stan files. Defaults to the Stan path of the primarycensored
+#'  package.
 #'
 #' @return A character vector containing unique names of all functions found in
-#' the Stan files.
+#'  the Stan files.
 #'
 #' @export
 #'
