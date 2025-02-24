@@ -90,9 +90,9 @@ functions if they wish to leverage the analytical solutions.</p></dd>
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like <code>dexpgrowth</code> for an exponential growth distribution.
-See <code>primary_dists.R</code> for examples. The package can identify base R
-distributions for potential analytical solutions. For non-base R functions,
-users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+See <code><a href="pcd_primary_distributions.html">pcd_primary_distributions()</a></code> for examples. The package can identify
+base R distributions for potential analytical solutions. For non-base R
+functions, users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
 functions if they wish to leverage analytical solutions.</p></dd>
 
 
@@ -134,9 +134,57 @@ cdf.</p>
 <code><a href="pcens_cdf.default.html">pcens_cdf.default</a>()</code>,
 <code><a href="pcens_cdf.pcens_pgamma_dunif.html">pcens_cdf.pcens_pgamma_dunif</a>()</code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif</a>()</code>,
-<code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif</a>()</code></p></div>
+<code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif</a>()</code>,
+<code><a href="pcens_quantile.html">pcens_quantile</a>()</code>,
+<code><a href="pcens_quantile.default.html">pcens_quantile.default</a>()</code></p></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu">new_pcens</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  pdist <span class="op">=</span> <span class="va">pgamma</span>, dprimary <span class="op">=</span> <span class="va">dunif</span>, dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>min <span class="op">=</span> <span class="fl">0</span>, max <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  shape <span class="op">=</span> <span class="fl">1</span>, scale <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $pdist</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (q, shape, rate = 1, scale = 1/rate, lower.tail = TRUE, </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     log.p = FALSE) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     if (!missing(rate) &amp;&amp; !missing(scale)) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         if (abs(rate * scale - 1) &lt; 1e-15) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             warning("specify 'rate' or 'scale' but not both")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         else stop("specify 'rate' or 'scale' but not both")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x5610a03c46f8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> function (x, min = 0, max = 1, log = FALSE) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> .Call(C_dunif, x, min, max, log)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x561099127ca8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary_args</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary_args$min</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary_args$max</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $args</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $args$shape</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> $args$scale</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> attr(,"class")</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "pcens_pgamma_dunif"</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

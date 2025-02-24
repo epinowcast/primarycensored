@@ -138,9 +138,9 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.</p></d
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like <code>dexpgrowth</code> for an exponential growth distribution.
-See <code>primary_dists.R</code> for examples. The package can identify base R
-distributions for potential analytical solutions. For non-base R functions,
-users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
+See <code><a href="pcd_primary_distributions.html">pcd_primary_distributions()</a></code> for examples. The package can identify
+base R distributions for potential analytical solutions. For non-base R
+functions, users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
 functions if they wish to leverage analytical solutions.</p></dd>
 
 
@@ -206,6 +206,7 @@ mathematical details of the CDF, refer to the documentation of
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Primary event censored distribution functions
 <code><a href="pprimarycensored.html">pprimarycensored</a>()</code>,
+<code><a href="qprimarycensored.html">qprimarycensored</a>()</code>,
 <code><a href="rprimarycensored.html">rprimarycensored</a>()</code></p></div>
     </div>
 
