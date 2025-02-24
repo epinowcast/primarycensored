@@ -33,7 +33,10 @@ pcd_cmdstan_model <- function(
     include_paths = primarycensored::pcd_stan_path(),
     ...) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
-    stop("Package 'cmdstanr' is required but not installed for this function.")
+    stop(
+      "Package 'cmdstanr' is required but not installed for this function.",
+      call. = FALSE
+    )
   }
 
   pcd_stan_model <- system.file(
