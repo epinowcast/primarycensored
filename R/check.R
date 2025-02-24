@@ -33,7 +33,8 @@ check_pdist <- function(pdist, D, ...) {
       toString(round(test_results, 3)),
       ". ",
       "You can use the `check_pdist` function to check if your p-function ",
-      "is correct."
+      "is correct.",
+      call. = FALSE
     )
   }
   return(invisible(NULL))
@@ -57,10 +58,11 @@ check_pdist <- function(pdist, D, ...) {
 #' @examples
 #' check_dprimary(dunif, pwindow = 1)
 check_dprimary <- function(
-    dprimary,
-    pwindow,
-    dprimary_args = list(),
-    tolerance = 1e-3) {
+  dprimary,
+  pwindow,
+  dprimary_args = list(),
+  tolerance = 1e-3
+) {
   # check if dprimary takes min and max as arguments
   if (!all(c("min", "max") %in% names(formals(dprimary)))) {
     stop("dprimary must take min and max as arguments", call. = FALSE)
@@ -114,7 +116,8 @@ check_truncation <- function(delays, D, multiplier = 2) {
   if (D <= 0 || multiplier <= 1) {
     stop(
       "Invalid argument values. D must be positive and multiplier must be ",
-      "greater than 1."
+      "greater than 1.",
+      call. = FALSE
     )
   }
 
@@ -126,7 +129,7 @@ check_truncation <- function(delays, D, multiplier = 2) {
   delays <- delays[!is.na(delays)]
 
   if (length(delays) == 0) {
-    warning("No finite observed delays to check.")
+    warning("No finite observed delays to check.", call. = FALSE)
     return(invisible(NULL))
   }
 
