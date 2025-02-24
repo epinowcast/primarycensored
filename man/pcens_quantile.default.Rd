@@ -17,6 +17,15 @@
 )
 }
 \arguments{
+\item{object}{A \code{primarycensored} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
+
+\item{p}{A vector of probabilities at which to compute the quantiles.}
+
+\item{pwindow}{Secondary event window.}
+
+\item{use_numeric}{Logical; if TRUE forces the use of numeric inversion even
+if an analytical solution is available (not yet implemented).}
+
 \item{init}{Initial guess for the delay. By default, 5.}
 
 \item{upper}{Upper bound for the delay. By default, 100 times the initial

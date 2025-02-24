@@ -19,7 +19,7 @@ test_that("pcens_quantile and pcens_cdf are consistent", {
 
   shapes <- c(2, 4)
   rates <- c(2, 3)
-  pwindows <- c(1)
+  pwindows <- 1
   probs <- c(0.25, 0.5, 0.75)
 
   for (shape in shapes) {

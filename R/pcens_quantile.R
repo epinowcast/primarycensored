@@ -46,6 +46,8 @@ pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
 #'
 #' @param ... Additional arguments passed to underlying functions.
 #'
+#' @inheritParams pcens_quantile
+#'
 #' @details
 #' The quantile is computed by minimising the squared difference between the
 #' computed CDF and the target probability.
@@ -98,7 +100,7 @@ pcens_quantile.default <- function(
 
     lower_bound <- 0
 
-    opt_result <- optim(
+    opt_result <- stats::optim(
       par = init,
       fn = objective,
       method = "L-BFGS-B",

@@ -55,6 +55,7 @@ modelhelpers
 modeling
 nF
 obs
+optim
 parksw
 partexp
 pcd
