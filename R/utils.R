@@ -152,9 +152,9 @@ pcd_dist_name <- function(name, type = c("delay", "primary")) {
   }
 
   if (type == "delay") {
-    lookup$name[match_idx]
+    lookup$pdist[match_idx]
   } else {
-    lookup$name[match_idx]
+    lookup$dprimary[match_idx]
   }
 }
 

@@ -314,9 +314,8 @@ pcens_cdf.pcens_pweibull_dunif <- function(
         a <- 1 + inv_shape
         if (abs(-x + a * log(x)) > 700 || abs(a) > 170) {
           return(0)
-        } else {
-          result <- pracma::gammainc(x, a)["lowinc"]
         }
+        result <- pracma::gammainc(x, a)["lowinc"]
         return(result)
       },
       numeric(1)

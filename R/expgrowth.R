@@ -81,15 +81,15 @@ NULL
 #' @export
 dexpgrowth <- function(x, min = 0, max = 1, r, log = FALSE) {
   if (abs(r) < 1e-10) {
-    density <- rep(1 / (max - min), length(x))
+    result <- rep(1 / (max - min), length(x))
   } else {
-    density <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
+    result <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
   }
-  density[x < min | x > max] <- 0
+  result[x < min | x > max] <- 0
   if (log) {
-    return(log(density))
+    return(log(result))
   } else {
-    return(density)
+    return(result)
   }
 }
 

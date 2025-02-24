@@ -74,18 +74,20 @@ fitdistdoublecens <- function(
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
-      "Package 'fitdistrplus' is required but not installed for this function."
+      "Package 'fitdistrplus' is required but not installed for this function.",
+      call. = FALSE
     )
   }
 
   if (!requireNamespace("withr", quietly = TRUE)) {
     stop(
-      "Package 'withr' is required but not installed for this function."
+      "Package 'withr' is required but not installed for this function.",
+      call. = FALSE
     )
   }
 
   if (!all(c("left", "right") %in% names(censdata))) {
-    stop("censdata must contain 'left' and 'right' columns")
+    stop("censdata must contain 'left' and 'right' columns", call. = FALSE)
   }
 
   if (!is.null(truncation_check_multiplier)) {
@@ -103,11 +105,11 @@ fitdistdoublecens <- function(
 
   # Create the function definition with named arguments for dpcens
   dpcens_dist <- function() {
-    args <- as.list(environment())
+    env_args <- as.list(environment())
     do.call(
       .dpcens,
       c(
-        args,
+        env_args,
         list(
           swindows = swindows,
           pdist = pdist,
@@ -123,11 +125,11 @@ fitdistdoublecens <- function(
 
   # Create the function definition with named arguments for ppcens
   ppcens_dist <- function() {
-    args <- as.list(environment())
+    env_args <- as.list(environment())
     do.call(
       .ppcens,
       c(
-        args,
+        env_args,
         list(
           pdist = pdist,
           pwindow = pwindow,
