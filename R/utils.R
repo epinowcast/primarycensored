@@ -146,7 +146,8 @@ pcd_dist_name <- function(name, type = c("delay", "primary")) {
       " distribution found matching: ",
       name,
       "\n",
-      .suggest_dist_name(name, type)
+      .suggest_dist_name(name, type),
+      call. = FALSE
     )
   }
 
