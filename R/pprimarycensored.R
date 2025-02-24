@@ -138,7 +138,6 @@ pprimarycensored <- function(
 
 #' Normalise a primary event censored CDF
 #'
-#'
 #' Internal function to normalise a primary event censored CDF when truncation
 #' is applied. The CDF is normalised by dividing by its value at the truncation
 #' point D and setting all values beyond D to 1.
