@@ -160,7 +160,8 @@ pcd_as_stan_data <- function(
       "'\n",
       "relative_obs_time = '",
       relative_obs_time,
-      "'"
+      "'",
+      call. = FALSE
     )
   }
 

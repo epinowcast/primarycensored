@@ -64,19 +64,20 @@ pcd_stan_path <- function() {
       end_line <- start_line
       brace_count <- 0
       # Ensure we find the first opening brace
+      # Find first opening brace
       repeat {
-        line <- content[end_line]
-        brace_count <- brace_count + .unmatched_braces(line)
+        brace_count <- brace_count + .unmatched_braces(content[end_line])
         end_line <- end_line + 1
         if (brace_count > 0) break
       }
+
       # Continue until all braces are closed
       repeat {
-        line <- content[end_line]
-        brace_count <- brace_count + .unmatched_braces(line)
+        brace_count <- brace_count + .unmatched_braces(content[end_line])
         if (brace_count == 0) break
         end_line <- end_line + 1
       }
+
       func_content <- c(
         func_content,
         paste(content[start_line:end_line], collapse = "\n")
@@ -262,12 +263,12 @@ pcd_load_stan_functions <- function(
 #' pcd_stan_dist_id("unif", type = "primary")
 pcd_stan_dist_id <- function(name, type = c("delay", "primary")) {
   type <- match.arg(type)
-  df <- switch(type,
+  lookup <- switch(type,
     delay = primarycensored::pcd_distributions,
     primary = primarycensored::pcd_primary_distributions
   )
 
-  match_idx <- which(df$name == name | df$aliases == name)
+  match_idx <- which(lookup$name == name | lookup$aliases == name)
 
   if (length(match_idx) == 0) {
     stop(
@@ -280,5 +281,5 @@ pcd_stan_dist_id <- function(name, type = c("delay", "primary")) {
     )
   }
 
-  df$stan_id[match_idx]
+  lookup$stan_id[match_idx]
 }

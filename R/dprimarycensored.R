@@ -97,7 +97,8 @@ dprimarycensored <- function(
       " and D is ",
       D,
       ". Resolve this by increasing D to be the maximum",
-      " of x + swindow."
+      " of x + swindow.",
+      call. = FALSE
     )
   }
 

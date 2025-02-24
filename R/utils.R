@@ -132,12 +132,12 @@ add_name_attribute <- function(func, name) {
 #' pcd_dist_name("expgrowth", type = "primary")
 pcd_dist_name <- function(name, type = c("delay", "primary")) {
   type <- match.arg(type)
-  df <- switch(type,
+  lookup <- switch(type,
     delay = primarycensored::pcd_distributions,
     primary = primarycensored::pcd_primary_distributions
   )
 
-  match_idx <- which(df$name == name | df$aliases == name)
+  match_idx <- which(lookup$name == name | lookup$aliases == name)
 
   if (length(match_idx) == 0) {
     stop(
@@ -151,9 +151,9 @@ pcd_dist_name <- function(name, type = c("delay", "primary")) {
   }
 
   if (type == "delay") {
-    df$pdist[match_idx]
+    lookup$name[match_idx]
   } else {
-    df$dprimary[match_idx]
+    lookup$name[match_idx]
   }
 }
 

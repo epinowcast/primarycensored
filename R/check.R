@@ -63,7 +63,7 @@ check_dprimary <- function(
     tolerance = 1e-3) {
   # check if dprimary takes min and max as arguments
   if (!all(c("min", "max") %in% names(formals(dprimary)))) {
-    stop("dprimary must take min and max as arguments")
+    stop("dprimary must take min and max as arguments", call. = FALSE)
   }
 
   integrand <- function(x) {
@@ -78,7 +78,8 @@ check_dprimary <- function(
       "Calculated integral: ",
       round(integral, 4),
       "You can use the `check_dprimary` function to check if your d-function ",
-      "is correct."
+      "is correct.",
+      call. = FALSE
     )
   }
   return(invisible(NULL))
@@ -107,7 +108,7 @@ check_dprimary <- function(
 #' check_truncation(delays = c(1, 2, 3, 4), D = 10, multiplier = 2)
 check_truncation <- function(delays, D, multiplier = 2) {
   if (!is.numeric(delays) || !is.numeric(D) || !is.numeric(multiplier)) {
-    stop("All arguments must be numeric.")
+    stop("All arguments must be numeric.", call. = FALSE)
   }
 
   if (D <= 0 || multiplier <= 1) {

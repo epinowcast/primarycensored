@@ -81,15 +81,15 @@ NULL
 #' @export
 dexpgrowth <- function(x, min = 0, max = 1, r, log = FALSE) {
   if (abs(r) < 1e-10) {
-    pdf <- rep(1 / (max - min), length(x))
+    density <- rep(1 / (max - min), length(x))
   } else {
-    pdf <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
+    density <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
   }
-  pdf[x < min | x > max] <- 0
+  density[x < min | x > max] <- 0
   if (log) {
-    return(log(pdf))
+    return(log(density))
   } else {
-    return(pdf)
+    return(density)
   }
 }
 
@@ -102,24 +102,24 @@ pexpgrowth <- function(
     r,
     lower.tail = TRUE,
     log.p = FALSE) {
-  cdf <- numeric(length(q))
+  cumulative <- numeric(length(q))
   in_range <- q >= min & q <= max
 
   if (abs(r) < 1e-10) {
-    cdf[in_range] <- (q[in_range] - min) / (max - min)
+    cumulative[in_range] <- (q[in_range] - min) / (max - min)
   } else {
-    cdf[in_range] <- (exp(r * (q[in_range] - min)) - exp(r * min)) /
+    cumulative[in_range] <- (exp(r * (q[in_range] - min)) - exp(r * min)) /
       (exp(r * max) - exp(r * min))
   }
 
-  cdf[q > max] <- 1
-  cdf[q < min] <- 0
+  cumulative[q > max] <- 1
+  cumulative[q < min] <- 0
 
-  if (!lower.tail) cdf <- 1 - cdf
+  if (!lower.tail) cumulative <- 1 - cumulative
   if (log.p) {
-    return(log(cdf))
+    return(log(cumulative))
   } else {
-    return(cdf)
+    return(cumulative)
   }
 }
 

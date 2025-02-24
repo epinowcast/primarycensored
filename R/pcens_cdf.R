@@ -77,18 +77,16 @@ pcens_cdf.default <- function(
     function(d) {
       if (d <= 0) {
         return(0) # Return 0 for non-positive delays
-      } else {
-        integrand <- function(p) {
-          d_adj <- d - p
-          do.call(object$pdist, c(list(q = d_adj), object$args)) *
-            do.call(
-              object$dprimary,
-              c(list(x = p, min = 0, max = pwindow), object$dprimary_args)
-            )
-        }
-
-        stats::integrate(integrand, lower = 0, upper = pwindow)$value
       }
+      integrand <- function(p) {
+        d_adj <- d - p
+        do.call(object$pdist, c(list(q = d_adj), object$args)) *
+          do.call(
+            object$dprimary,
+            c(list(x = p, min = 0, max = pwindow), object$dprimary_args)
+          )
+      }
+      return(stats::integrate(integrand, lower = 0, upper = pwindow)$value)
     },
     numeric(1)
   )
@@ -127,10 +125,13 @@ pcens_cdf.pcens_pgamma_dunif <- function(
     scale <- 1 / rate
   }
   if (is.null(shape)) {
-    stop("shape parameter is required for Gamma distribution")
+    stop("shape parameter is required for Gamma distribution", call. = FALSE)
   }
   if (is.null(scale)) {
-    stop("scale or rate parameter is required for Gamma distribution")
+    stop(
+      "scale or rate parameter is required for Gamma distribution",
+      call. = FALSE
+    )
   }
 
   partial_pgamma <- function(q) {
@@ -201,10 +202,16 @@ pcens_cdf.pcens_plnorm_dunif <- function(
   mu <- object$args$meanlog
   sigma <- object$args$sdlog
   if (is.null(mu)) {
-    stop("meanlog parameter is required for Log-Normal distribution")
+    stop(
+      "meanlog parameter is required for Log-Normal distribution",
+      call. = FALSE
+    )
   }
   if (is.null(sigma)) {
-    stop("sdlog parameter is required for Log-Normal distribution")
+    stop(
+      "sdlog parameter is required for Log-Normal distribution",
+      call. = FALSE
+    )
   }
 
   partial_plnorm <- function(q) {
@@ -284,10 +291,10 @@ pcens_cdf.pcens_pweibull_dunif <- function(
   shape <- object$args$shape
   scale <- object$args$scale
   if (is.null(shape)) {
-    stop("shape parameter is required for Weibull distribution")
+    stop("shape parameter is required for Weibull distribution", call. = FALSE)
   }
   if (is.null(scale)) {
-    stop("scale parameter is required for Weibull distribution")
+    stop("scale parameter is required for Weibull distribution", call. = FALSE)
   }
 
   partial_pweibull <- function(q) {
