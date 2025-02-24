@@ -130,17 +130,40 @@ pprimarycensored <- function(
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
   if (!is.infinite(D)) {
-    # Compute normalization factor for finite D
-    normalizer <- if (max(q) == D) {
-      result[length(result)]
-    } else {
-      pprimarycensored(D, pdist, pwindow, Inf, dprimary, dprimary_args, ...)
-    }
-    result <- result / normalizer
-
-    result <- ifelse(q > D, 1, result)
+    result <- .normalise_cdf(result, q, D, pcens_obj, pwindow)
   }
 
+  return(result)
+}
+
+#' Normalise a primary event censored CDF
+#'
+#'
+#' Internal function to normalise a primary event censored CDF when truncation
+#' is applied. The CDF is normalised by dividing by its value at the truncation
+#' point D and setting all values beyond D to 1.
+#'
+#' @param result Numeric vector of CDF values to normalise.
+#'
+#' @param q Numeric vector of quantiles at which CDF was evaluated.
+#'
+#' @param D Numeric truncation point
+#'
+#' @param pcens_obj A primarycensored object as created by [new_pcens()].
+#'
+#' @param pwindow Secondary event window
+#'
+#' @return Normalised CDF values as a numeric vector
+#'
+#' @keywords internal
+.normalise_cdf <- function(result, q, D, pcens_obj, pwindow) {
+  if (max(q) == D) {
+    adj <- result[which.max(q == D)]
+  } else {
+    adj <- pcens_cdf(pcens_obj, D, pwindow)
+  }
+  result <- result / adj
+  result <- ifelse(q > D, 1, result)
   return(result)
 }
 

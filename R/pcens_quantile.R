@@ -12,8 +12,6 @@
 #'
 #' @param p A vector of probabilities at which to compute the quantiles.
 #'
-#' @param pwindow Secondary event window.
-#'
 #' @param use_numeric Logical; if TRUE forces the use of numeric inversion even
 #' if an analytical solution is available (not yet implemented).
 #'
@@ -22,7 +20,13 @@
 #' @family pcens
 #'
 #' @export
-pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
+pcens_quantile <- function(
+    object,
+    p,
+    pwindow,
+    D = Inf,
+    use_numeric = FALSE,
+    ...) {
   UseMethod("pcens_quantile")
 }
 
@@ -70,10 +74,14 @@ pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
 #'
 #' # Compute quantiles for multiple probabilities
 #' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1)
+#'
+#' # Compute quantiles for multiple probabilities with truncation
+#' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
 pcens_quantile.default <- function(
     object,
     p,
     pwindow,
+    D = Inf,
     use_numeric = FALSE,
     init = 5,
     tol = 1e-8,
@@ -91,6 +99,9 @@ pcens_quantile.default <- function(
     # Objective function: squared difference between the CDF value and prob.
     objective <- function(q) {
       cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
+      if (!is.infinite(D)) {
+        cdf_val <- .normalise_cdf(cdf_val, q, D, object, pwindow)
+      }
       (cdf_val - prob)^2
     }
 

@@ -8,6 +8,7 @@
   object,
   p,
   pwindow,
+  D = Inf,
   use_numeric = FALSE,
   init = 5,
   tol = 1e-08,
@@ -20,7 +21,10 @@
 
 \item{p}{A vector of probabilities at which to compute the quantiles.}
 
-\item{pwindow}{Secondary event window.}
+\item{pwindow}{Primary event window}
+
+\item{D}{Maximum delay (truncation point). If finite, the distribution is
+truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
 \item{use_numeric}{Logical; if TRUE forces the use of numeric inversion even
 if an analytical solution is available (not yet implemented).}
@@ -64,6 +68,9 @@ pcens_quantile(pcens_obj, p = 0.8, pwindow = 1)
 
 # Compute quantiles for multiple probabilities
 pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1)
+
+# Compute quantiles for multiple probabilities with truncation
+pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
 }
 \seealso{
 Low level primary event censored distribution objects and methods

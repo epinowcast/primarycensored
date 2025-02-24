@@ -4,14 +4,17 @@
 \alias{pcens_quantile}
 \title{Compute primary event censored quantiles}
 \usage{
-pcens_quantile(object, p, pwindow, use_numeric = FALSE, ...)
+pcens_quantile(object, p, pwindow, D = Inf, use_numeric = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
 
 \item{p}{A vector of probabilities at which to compute the quantiles.}
 
-\item{pwindow}{Secondary event window.}
+\item{pwindow}{Primary event window}
+
+\item{D}{Maximum delay (truncation point). If finite, the distribution is
+truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
 \item{use_numeric}{Logical; if TRUE forces the use of numeric inversion even
 if an analytical solution is available (not yet implemented).}

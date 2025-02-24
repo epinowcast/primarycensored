@@ -52,10 +52,18 @@
 #'   dprimary = dexpgrowth,
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
+#'
+#' # Same quartiles but with truncation at 10
+#' qprimarycensored(
+#'   c(0.25, 0.5, 0.75), plnorm,
+#'   dprimary = dexpgrowth,
+#'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
+#' )
 qprimarycensored <- function(
     p,
     pdist,
     pwindow = 1,
+    D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
     ...) {
@@ -71,7 +79,7 @@ qprimarycensored <- function(
   )
 
   # Compute the quantiles using the S3 method
-  pcens_quantile(pcens_obj, p, pwindow)
+  pcens_quantile(pcens_obj, p, pwindow, D)
 }
 
 #' @rdname qprimarycensored

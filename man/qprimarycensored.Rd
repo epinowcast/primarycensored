@@ -10,6 +10,7 @@ qprimarycensored(
   p,
   pdist,
   pwindow = 1,
+  D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
   ...
@@ -19,6 +20,7 @@ qpcens(
   p,
   pdist,
   pwindow = 1,
+  D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
   ...
@@ -34,6 +36,9 @@ users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield
 functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
+
+\item{D}{Maximum delay (truncation point). If finite, the distribution is
+truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -91,6 +96,13 @@ qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   dprimary = dexpgrowth,
   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+)
+
+# Same quartiles but with truncation at 10
+qprimarycensored(
+  c(0.25, 0.5, 0.75), plnorm,
+  dprimary = dexpgrowth,
+  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 )
 }
 \seealso{

@@ -41,3 +41,43 @@ test_that("qprimarycensored works with custom primary distributions", {
 
   expect_false(all(q_uniform == q_expgrowth))
 })
+
+test_that("qprimarycensored handles truncation correctly", {
+  probs <- c(0.25, 0.5, 0.75)
+  D <- 10
+
+  # Get quantiles with and without truncation
+  q_untruncated <- qpcens(
+    probs,
+    plnorm,
+    pwindow = 1,
+    meanlog = 2,
+    sdlog = 1
+  )
+
+  q_truncated <- qpcens(
+    probs,
+    plnorm,
+    pwindow = 1,
+    D = D,
+    meanlog = 2,
+    sdlog = 1
+  )
+
+  # Truncated quantiles should be less than or equal to D
+  expect_true(all(q_truncated <= D))
+
+  # Truncated quantiles should be less than or equal to untruncated
+  expect_true(all(q_truncated <= q_untruncated))
+
+  # Check consistency with pprimarycensored
+  p_truncated <- ppcens(
+    q_truncated,
+    plnorm,
+    pwindow = 1,
+    D = D,
+    meanlog = 2,
+    sdlog = 1
+  )
+  expect_equal(p_truncated, probs, tolerance = 1e-4)
+})
