@@ -31,15 +31,22 @@ test_that("pprimarycensored handles custom primary distributions", {
   pwindow <- 5
   D <- 20
   cdf_uniform <- ppcens(
-    c(1, 5, 10), plnorm, pwindow,
+    c(1, 5, 10),
+    plnorm,
+    pwindow,
     D = D,
-    meanlog = 1, sdlog = 1
+    meanlog = 1,
+    sdlog = 1
   )
   cdf_expgrowth <- ppcens(
-    c(1, 5, 10), plnorm, pwindow,
+    c(1, 5, 10),
+    plnorm,
+    pwindow,
     D = D,
-    dprimary = dexpgrowth, dprimary_args = list(r = 0.2),
-    meanlog = 1, sdlog = 1
+    dprimary = dexpgrowth,
+    dprimary_args = list(r = 0.2),
+    meanlog = 1,
+    sdlog = 1
   )
   expect_false(all(cdf_uniform == cdf_expgrowth))
 })

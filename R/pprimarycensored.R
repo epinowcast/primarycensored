@@ -9,43 +9,43 @@
 #' @param q Vector of quantiles
 #'
 #' @param pdist Distribution function (CDF). The package can identify base R
-#' distributions for potential analytical solutions. For non-base R functions,
-#' users can apply [add_name_attribute()] to yield properly tagged
-#' functions if they wish to leverage the analytical solutions.
+#'  distributions for potential analytical solutions. For non-base R functions,
+#'  users can apply [add_name_attribute()] to yield properly tagged
+#'  functions if they wish to leverage the analytical solutions.
 #'
 #' @param pwindow Primary event window
 #'
 #' @param D Maximum delay (truncation point). If finite, the distribution is
-#' truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.
+#'  truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.
 #'
 #' @param dprimary Function to generate the probability density function
-#' (PDF) of primary event times. This function should take a value `x` and a
-#' `pwindow` parameter, and return a probability density. It should be
-#' normalized to integrate to 1 over \[0, pwindow\]. Defaults to a uniform
-#' distribution over \[0, pwindow\]. Users can provide custom functions or use
-#' helper functions like `dexpgrowth` for an exponential growth distribution.
-#' See `primary_dists.R` for examples. The package can identify base R
-#' distributions for potential analytical solutions. For non-base R functions,
-#' users can apply [add_name_attribute()] to yield properly tagged
-#' functions if they wish to leverage analytical solutions.
+#'  (PDF) of primary event times. This function should take a value `x` and a
+#'  `pwindow` parameter, and return a probability density. It should be
+#'  normalized to integrate to 1 over \[0, pwindow\]. Defaults to a uniform
+#'  distribution over \[0, pwindow\]. Users can provide custom functions or use
+#'  helper functions like `dexpgrowth` for an exponential growth distribution.
+#'  See [pcd_primary_distributions()] for examples. The package can identify
+#'  base R distributions for potential analytical solutions. For non-base R
+#'  functions, users can apply [add_name_attribute()] to yield properly tagged
+#'  functions if they wish to leverage analytical solutions.
 #'
 #' @param dprimary_args List of additional arguments to be passed to
-#' dprimary. For example, when using `dexpgrowth`, you would
-#' pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
-#' and rate parameters
+#'  dprimary. For example, when using `dexpgrowth`, you would
+#'  pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
+#'  and rate parameters
 #'
 #' @param pdist_name `r lifecycle::badge("deprecated")` this argument will be
-#' ignored in future versions; use [add_name_attribute()] on `pdist`
-#' instead
+#'  ignored in future versions; use [add_name_attribute()] on `pdist`
+#'  instead
 #'
 #' @param dprimary_name `r lifecycle::badge("deprecated")` this argument will be
-#' ignored in future versions; use [add_name_attribute()] on `dprimary`
-#' instead
+#'  ignored in future versions; use [add_name_attribute()] on `dprimary`
+#'  instead
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
 #' @return Vector of primary event censored CDFs, normalized by D if finite
-#' (truncation adjustment)
+#'  (truncation adjustment)
 #'
 #' @aliases ppcens
 #'
@@ -98,7 +98,11 @@
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
 pprimarycensored <- function(
-    q, pdist, pwindow = 1, D = Inf, dprimary = stats::dunif,
+    q,
+    pdist,
+    pwindow = 1,
+    D = Inf,
+    dprimary = stats::dunif,
     dprimary_args = list(),
     pdist_name = lifecycle::deprecated(),
     dprimary_name = lifecycle::deprecated(),
@@ -126,17 +130,39 @@ pprimarycensored <- function(
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
   if (!is.infinite(D)) {
-    # Compute normalization factor for finite D
-    normalizer <- if (max(q) == D) {
-      result[length(result)]
-    } else {
-      pprimarycensored(D, pdist, pwindow, Inf, dprimary, dprimary_args, ...)
-    }
-    result <- result / normalizer
-
-    result <- ifelse(q > D, 1, result)
+    result <- .normalise_cdf(result, q, D, pcens_obj, pwindow)
   }
 
+  return(result)
+}
+
+#' Normalise a primary event censored CDF
+#'
+#' Internal function to normalise a primary event censored CDF when truncation
+#' is applied. The CDF is normalised by dividing by its value at the truncation
+#' point D and setting all values beyond D to 1.
+#'
+#' @param result Numeric vector of CDF values to normalise.
+#'
+#' @param q Numeric vector of quantiles at which CDF was evaluated.
+#'
+#' @param D Numeric truncation point
+#'
+#' @param pcens_obj A primarycensored object as created by [new_pcens()].
+#'
+#' @param pwindow Secondary event window
+#'
+#' @return Normalised CDF values as a numeric vector
+#'
+#' @keywords internal
+.normalise_cdf <- function(result, q, D, pcens_obj, pwindow) {
+  if (max(q) == D) {
+    adj <- result[which.max(q == D)]
+  } else {
+    adj <- pcens_cdf(pcens_obj, D, pwindow)
+  }
+  result <- result / adj
+  result <- ifelse(q > D, 1, result)
   return(result)
 }
 

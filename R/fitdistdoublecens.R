@@ -10,9 +10,9 @@
 #' their global environment.
 #'
 #' @param censdata A data frame with columns 'left' and 'right' representing
-#' the lower and upper bounds of the censored observations. Unlike
-#' [fitdistrplus::fitdistcens()] `NA` is not supported for either the
-#' upper or lower bounds.
+#'  the lower and upper bounds of the censored observations. Unlike
+#'  [fitdistrplus::fitdistcens()] `NA` is not supported for either the
+#'  upper or lower bounds.
 #'
 #' @param distr A character string naming the distribution to be fitted.
 #'
@@ -56,13 +56,16 @@
 #' )
 #'
 #' summary(fit_norm)
-fitdistdoublecens <- function(censdata, distr,
-                              pwindow = 1, D = Inf,
-                              dprimary = stats::dunif,
-                              dprimary_name = lifecycle::deprecated(),
-                              dprimary_args = list(),
-                              truncation_check_multiplier = 2,
-                              ...) {
+fitdistdoublecens <- function(
+    censdata,
+    distr,
+    pwindow = 1,
+    D = Inf,
+    dprimary = stats::dunif,
+    dprimary_name = lifecycle::deprecated(),
+    dprimary_args = list(),
+    truncation_check_multiplier = 2,
+    ...) {
   nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
   if (!is.null(nms$dprimary)) {
     dprimary <- add_name_attribute(dprimary, nms$dprimary)
@@ -71,18 +74,20 @@ fitdistdoublecens <- function(censdata, distr,
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
-      "Package 'fitdistrplus' is required but not installed for this function."
+      "Package 'fitdistrplus' is required but not installed for this function.",
+      call. = FALSE
     )
   }
 
   if (!requireNamespace("withr", quietly = TRUE)) {
     stop(
-      "Package 'withr' is required but not installed for this function."
+      "Package 'withr' is required but not installed for this function.",
+      call. = FALSE
     )
   }
 
   if (!all(c("left", "right") %in% names(censdata))) {
-    stop("censdata must contain 'left' and 'right' columns")
+    stop("censdata must contain 'left' and 'right' columns", call. = FALSE)
   }
 
   if (!is.null(truncation_check_multiplier)) {
@@ -100,43 +105,52 @@ fitdistdoublecens <- function(censdata, distr,
 
   # Create the function definition with named arguments for dpcens
   dpcens_dist <- function() {
-    args <- as.list(environment())
-    do.call(.dpcens, c(
-      args,
-      list(
-        swindows = swindows,
-        pdist = pdist,
-        pwindow = pwindow,
-        D = D,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args
+    env_args <- as.list(environment())
+    do.call(
+      .dpcens,
+      c(
+        env_args,
+        list(
+          swindows = swindows,
+          pdist = pdist,
+          pwindow = pwindow,
+          D = D,
+          dprimary = dprimary,
+          dprimary_args = dprimary_args
+        )
       )
-    ))
+    )
   }
   formals(dpcens_dist) <- formals(get(paste0("d", distr)))
 
   # Create the function definition with named arguments for ppcens
   ppcens_dist <- function() {
-    args <- as.list(environment())
-    do.call(.ppcens, c(
-      args,
-      list(
-        pdist = pdist,
-        pwindow = pwindow,
-        D = D,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args
+    env_args <- as.list(environment())
+    do.call(
+      .ppcens,
+      c(
+        env_args,
+        list(
+          pdist = pdist,
+          pwindow = pwindow,
+          D = D,
+          dprimary = dprimary,
+          dprimary_args = dprimary_args
+        )
       )
-    ))
+    )
   }
   formals(ppcens_dist) <- formals(pdist)
 
   # Fit the distribution
-  fit <- withr::with_environment(environment(), fitdistrplus::fitdist(
-    censdata$left,
-    distr = "pcens_dist",
-    ...
-  ))
+  fit <- withr::with_environment(
+    environment(),
+    fitdistrplus::fitdist(
+      censdata$left,
+      distr = "pcens_dist",
+      ...
+    )
+  )
   return(fit)
 }
 
@@ -146,15 +160,27 @@ fitdistdoublecens <- function(censdata, distr,
 #' @param swindows A numeric vector of secondary window sizes corresponding to
 #' each element in x
 #' @keywords internal
-.dpcens <- function(x, swindows, pdist, pwindow, D, dprimary,
-                    dprimary_args, ...) {
+.dpcens <- function(
+    x,
+    swindows,
+    pdist,
+    pwindow,
+    D,
+    dprimary,
+    dprimary_args,
+    ...) {
   tryCatch(
     {
       if (length(unique(swindows)) == 1) {
         dprimarycensored(
-          x, pdist,
-          pwindow = pwindow, swindow = swindows[1], D = D, dprimary = dprimary,
-          dprimary_args = dprimary_args, ...
+          x,
+          pdist,
+          pwindow = pwindow,
+          swindow = swindows[1],
+          D = D,
+          dprimary = dprimary,
+          dprimary_args = dprimary_args,
+          ...
         )
       } else {
         # Group x and swindows by unique swindow values
@@ -164,9 +190,13 @@ fitdistdoublecens <- function(censdata, distr,
         for (sw in unique_swindows) {
           mask <- swindows == sw
           result[mask] <- dprimarycensored(
-            x[mask], pdist,
-            pwindow = pwindow, swindow = sw, D = D,
-            dprimary = dprimary, dprimary_args = dprimary_args,
+            x[mask],
+            pdist,
+            pwindow = pwindow,
+            swindow = sw,
+            D = D,
+            dprimary = dprimary,
+            dprimary_args = dprimary_args,
             ...
           )
         }
@@ -183,14 +213,16 @@ fitdistdoublecens <- function(censdata, distr,
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @keywords internal
-.ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args,
-                    ...) {
+.ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args, ...) {
   tryCatch(
     {
       pprimarycensored(
-        q, pdist,
+        q,
+        pdist,
         pwindow = pwindow,
-        D = D, dprimary = dprimary, dprimary_args = dprimary_args,
+        D = D,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args,
         ...
       )
     },

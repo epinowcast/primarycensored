@@ -86,7 +86,8 @@ add_name_attribute <- function(func, name) {
 #'
 #' @keywords internal
 .name_deprecation <- function(
-    pdist_name, dprimary_name,
+    pdist_name,
+    dprimary_name,
     env = rlang::caller_env(),
     user_env = rlang::caller_env(2)) {
   test_use <- c(
@@ -97,10 +98,13 @@ add_name_attribute <- function(func, name) {
   if (any(test_use)) {
     lifecycle::deprecate_soft(
       when = "1.0.0",
-      what = I("`pdist_name` and `dprimary_name` are deprecated across all
-        functions and will be ignored in future versions;"),
+      what = I(
+        "`pdist_name` and `dprimary_name` are deprecated across all
+        functions and will be ignored in future versions;"
+      ),
       details = "Use `add_name_attribute()` instead.",
-      env = env, user_env = user_env
+      env = env,
+      user_env = user_env
     )
     if (test_use[1]) res$pdist <- pdist_name
     if (test_use[2]) res$dprimary <- dprimary_name
@@ -128,24 +132,29 @@ add_name_attribute <- function(func, name) {
 #' pcd_dist_name("expgrowth", type = "primary")
 pcd_dist_name <- function(name, type = c("delay", "primary")) {
   type <- match.arg(type)
-  df <- switch(type,
+  lookup <- switch(type,
     delay = primarycensored::pcd_distributions,
     primary = primarycensored::pcd_primary_distributions
   )
 
-  match_idx <- which(df$name == name | df$aliases == name)
+  match_idx <- which(lookup$name == name | lookup$aliases == name)
 
   if (length(match_idx) == 0) {
     stop(
-      "No ", type, " distribution found matching: ", name, "\n",
-      .suggest_dist_name(name, type)
+      "No ",
+      type,
+      " distribution found matching: ",
+      name,
+      "\n",
+      .suggest_dist_name(name, type),
+      call. = FALSE
     )
   }
 
   if (type == "delay") {
-    df$pdist[match_idx]
+    lookup$pdist[match_idx]
   } else {
-    df$dprimary[match_idx]
+    lookup$dprimary[match_idx]
   }
 }
 
