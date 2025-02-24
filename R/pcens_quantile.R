@@ -35,9 +35,6 @@ pcens_quantile <- function(object, p, pwindow, use_numeric = FALSE, ...) {
 #'
 #' @param init Initial guess for the delay. By default, 5.
 #'
-#' @param upper Upper bound for the delay. By default, 100 times the initial
-#'   guess.
-#'
 #' @param tol Numeric tolerance for the convergence criterion in the
 #'   optimisation routine.
 #'
@@ -79,7 +76,6 @@ pcens_quantile.default <- function(
     pwindow,
     use_numeric = FALSE,
     init = 5,
-    upper = init * 100,
     tol = 1e-8,
     max_iter = 10000,
     ...) {
@@ -105,7 +101,6 @@ pcens_quantile.default <- function(
       fn = objective,
       method = "L-BFGS-B",
       lower = lower_bound,
-      upper = upper,
       control = list(fnscale = 1, maxit = max_iter, factr = tol)
     )
 

@@ -7,7 +7,7 @@ This the development version
 - Added new functions to compute quantiles of the primary censored distribution:
   - `pcens_quantile()`: Core implementation using numerical optimisation to find
     quantiles by inverting the CDF. The implementation allows for analytical
-    solutions to be added in future versions.
+    solutions to be added in future versions using the same interface as `pcens_cdf()`.
   - `qpcens()` and `qprimarycensored()`: Convenient wrapper functions that provide
     alternative interfaces to `pcens_quantile()`.
 

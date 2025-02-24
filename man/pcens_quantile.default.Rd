@@ -10,7 +10,6 @@
   pwindow,
   use_numeric = FALSE,
   init = 5,
-  upper = init * 100,
   tol = 1e-08,
   max_iter = 10000,
   ...
@@ -27,9 +26,6 @@
 if an analytical solution is available (not yet implemented).}
 
 \item{init}{Initial guess for the delay. By default, 5.}
-
-\item{upper}{Upper bound for the delay. By default, 100 times the initial
-guess.}
 
 \item{tol}{Numeric tolerance for the convergence criterion in the
 optimisation routine.}
