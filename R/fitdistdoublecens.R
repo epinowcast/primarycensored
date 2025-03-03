@@ -56,29 +56,31 @@
 #'
 #' delay_data <- data.frame(
 #'   left = samples,
-#'   right = samples + swindow
+#'   right = samples + swindow,
+#'   pwindow = rep(pwindow, n),
+#'   D = rep(D, n)
 #' )
 #'
 #' fit_norm <- fitdistdoublecens(
 #'   delay_data,
 #'   distr = "norm",
-#'   start = list(mean = 0, sd = 1),
-#'   D = D, pwindow = pwindow
+#'   start = list(mean = 0, sd = 1)
 #' )
 #'
 #' summary(fit_norm)
 fitdistdoublecens <- function(
-    censdata,
-    distr,
-    left = "left",
-    right = "right",
-    pwindow = "pwindow",
-    D = "D",
-    dprimary = stats::dunif,
-    dprimary_name = lifecycle::deprecated(),
-    dprimary_args = list(),
-    truncation_check_multiplier = 2,
-    ...) {
+  censdata,
+  distr,
+  left = "left",
+  right = "right",
+  pwindow = "pwindow",
+  D = "D",
+  dprimary = stats::dunif,
+  dprimary_name = lifecycle::deprecated(),
+  dprimary_args = list(),
+  truncation_check_multiplier = 2,
+  ...
+) {
   nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
   if (!is.null(nms$dprimary)) {
     dprimary <- add_name_attribute(dprimary, nms$dprimary)
@@ -187,10 +189,12 @@ fitdistdoublecens <- function(
   formals(ppcens_dist) <- formals(pdist)
 
   # Fit the distribution
+  delays <- censdata[[left]]
+
   fit <- withr::with_environment(
     environment(),
     fitdistrplus::fitdist(
-      censdata[[left]],
+      delays,
       distr = "pcens_dist",
       ...
     )
@@ -206,12 +210,13 @@ fitdistdoublecens <- function(
 #' truncation times for each element in x.
 #' @keywords internal
 .dpcens <- function(
-    x,
-    params,
-    pdist,
-    dprimary,
-    dprimary_args,
-    ...) {
+  x,
+  params,
+  pdist,
+  dprimary,
+  dprimary_args,
+  ...
+) {
   tryCatch(
     {
       unique_params <- unique(params)

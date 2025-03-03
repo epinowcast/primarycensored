@@ -94,14 +94,15 @@ samples <- rprimarycensored(
 
 delay_data <- data.frame(
   left = samples,
-  right = samples + swindow
+  right = samples + swindow,
+  pwindow = rep(pwindow, n),
+  D = rep(D, n)
 )
 
 fit_norm <- fitdistdoublecens(
   delay_data,
   distr = "norm",
-  start = list(mean = 0, sd = 1),
-  D = D, pwindow = pwindow
+  start = list(mean = 0, sd = 1)
 )
 
 summary(fit_norm)
