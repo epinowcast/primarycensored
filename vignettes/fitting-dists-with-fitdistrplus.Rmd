@@ -81,11 +81,10 @@ samples <- mapply(generate_sample, pwindows, swindows, obs_times)
 
 # Create initial data frame
 delay_data <- data.frame(
+  delay = samples,
+  delay_upper = samples + swindows,
   pwindow = pwindows,
-  swindow = swindows,
-  obs_time = obs_times,
-  observed_delay = samples,
-  observed_delay_upper = samples + swindows
+  relative_obs_time = obs_times
 )
 
 head(delay_data)
@@ -146,7 +145,7 @@ We first fit a naive model using the `fitdistcens()` function. This function is 
 
 ```{r fit-naive-model}
 fit <- delay_data |>
-  dplyr::select(left = observed_delay, right = observed_delay_upper) |>
+  dplyr::select(left = delay, right = delay_upper) |>
   fitdistcens(
     distr = "gamma",
     start = list(shape = 1, rate = 1)
@@ -202,8 +201,8 @@ ppcens_gamma <- function(q, shape, rate) {
 
 # Fit the model using fitdistcens with custom gamma distribution
 pcens_fit <- delay_data |>
-  dplyr::filter(obs_time == 8) |>
-  dplyr::pull(observed_delay) |>
+  dplyr::filter(relative_obs_time == 8) |>
+  dplyr::pull(delay) |>
   fitdist(
     distr = "pcens_gamma",
     start = list(shape = 1, rate = 1)
@@ -215,23 +214,23 @@ summary(pcens_fit)
 We see good agreement between the true and estimated parameters but with higher standard errors due to using a subset of the data.
 
 Rather than using `fitdist()` directly `primarycensored` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data.
-A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
+A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed censoring intervals.
 Another bonus of this approach is that it supports a mixture of observation times so we can fit to all the available data rather than the subset we used in the custom implementation above.
 
 ```{r primarycensored-fitdistdoublecens}
-fitdistdoublecens_fit <- delay_data |>
-  dplyr::select(left = observed_delay, right = observed_delay_upper) |>
-  fitdistdoublecens(
-    distr = "gamma",
-    start = list(shape = 1, rate = 1),
-    pwindow = 1
-  )
+# Using Stan-like interface but with fitdistrplus
+fitdistdoublecens_fit <- fitdistdoublecens(
+  delay_data,
+  distr = "gamma",
+  start = list(shape = 1, rate = 1),
+  left = "delay",
+  right = "delay_upper",
+  pwindow = "pwindow",
+  D = "relative_obs_time"
+)
 
 summary(fitdistdoublecens_fit)
 ```
-
-
-**Note** Currently this functionality is limited to a single pwindow. If this functionality is of interest then please open an issue on the `primarycensored` GitHub page.
 
 ## Summary
 

@@ -7,8 +7,10 @@
 fitdistdoublecens(
   censdata,
   distr,
-  pwindow = 1,
-  D = Inf,
+  left = "left",
+  right = "right",
+  pwindow = "pwindow",
+  D = "D",
   dprimary = stats::dunif,
   dprimary_name = lifecycle::deprecated(),
   dprimary_args = list(),
@@ -24,10 +26,16 @@ upper or lower bounds.}
 
 \item{distr}{A character string naming the distribution to be fitted.}
 
-\item{pwindow}{Primary event window}
+\item{left}{Column name for lower bound of observed values (default: "left").}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{right}{Column name for upper bound of observed values (default:
+"right").}
+
+\item{pwindow}{Column name for primary window (default: "pwindow").}
+
+\item{D}{Column name for maximum delay (truncation point). If finite, the
+distribution is truncated at D. If set to Inf, no truncation is applied.
+(default: "D").}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a

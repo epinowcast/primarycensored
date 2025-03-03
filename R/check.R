@@ -58,11 +58,10 @@ check_pdist <- function(pdist, D, ...) {
 #' @examples
 #' check_dprimary(dunif, pwindow = 1)
 check_dprimary <- function(
-  dprimary,
-  pwindow,
-  dprimary_args = list(),
-  tolerance = 1e-3
-) {
+    dprimary,
+    pwindow,
+    dprimary_args = list(),
+    tolerance = 1e-3) {
   # check if dprimary takes min and max as arguments
   if (!all(c("min", "max") %in% names(formals(dprimary)))) {
     stop("dprimary must take min and max as arguments", call. = FALSE)
@@ -113,6 +112,10 @@ check_truncation <- function(delays, D, multiplier = 2) {
     stop("All arguments must be numeric.", call. = FALSE)
   }
 
+  if (length(D) > 1) {
+    stop("D must be a single value for check_truncation", call. = FALSE)
+  }
+
   if (D <= 0 || multiplier <= 1) {
     stop(
       "Invalid argument values. D must be positive and multiplier must be ",
@@ -151,6 +154,5 @@ check_truncation <- function(delays, D, multiplier = 2) {
       )
     )
   }
-
   invisible(NULL)
 }
