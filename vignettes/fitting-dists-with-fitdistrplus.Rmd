@@ -65,7 +65,7 @@ rate <- 0.44
 # Generate fixed pwindow, swindow, and obs_time
 pwindows <- rep(1, n)
 swindows <- rep(1, n)
-obs_times <- rep(8, n) # Truncation at 8
+obs_times <- sample(8:10, n, replace = TRUE)
 
 # Function to generate a single sample
 generate_sample <- function(pwindow, swindow, obs_time) {
@@ -96,7 +96,7 @@ head(delay_data)
 empirical_cdf <- ecdf(samples)
 
 # Create a sequence of x values for the theoretical CDF
-x_seq <- seq(0, 8, length.out = 100)
+x_seq <- seq(0, 10, length.out = 100)
 
 # Calculate theoretical CDF
 theoretical_cdf <- pgamma(x_seq, shape = shape, rate = rate)
@@ -135,7 +135,7 @@ ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
     plot.title = element_text(hjust = 0.5),
     legend.position = "bottom"
   ) +
-  coord_cartesian(xlim = c(0, 8)) # Set x-axis limit to match truncation
+  coord_cartesian(xlim = c(0, 10)) # Set x-axis limit to match truncation
 ```
 
 In this figure you can see the impact of truncation and censoring as the observed distribution has a much lower mean (the vertical dashed blue line) than the true/theoretical distribution (the vertical dashed black line). Our modelling aim is to recover the true parameters of the theoretical distribution from the observed distribution (i.e. recover the black lines from the blue lines).
@@ -159,7 +159,11 @@ We see that the naive model has fit poorly due to the primary censoring and righ
 
 # Fitting an improved model using `primarycensored` and `fitdistrplus`
 
-We'll now fit an improved model using the `primarycensored` package. To do this we need to define the custom distribution functions using the `primarycensored` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+We'll now fit an improved model using the `primarycensored` package.
+To do this we need to define the custom distribution functions using the `primarycensored` package that are required by `fitdistrplus`.
+Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+Note that in this custom implementation for simplicity we are filtering to use only data with the same `obs_time` rather than handling varying observation times.
+This means we're using a subset of our simulated data for the estimation.
 
 ```{r fit-improved-model}
 # Define custom distribution functions using primarycensored
@@ -186,7 +190,7 @@ ppcens_gamma <- function(q, shape, rate) {
       pprimarycensored(
         q, pgamma,
         shape = shape, rate = rate,
-        pwindow = 1, D = 8
+        dpwindow = 1, D = 8
       )
     },
     error = function(e) {
@@ -197,7 +201,9 @@ ppcens_gamma <- function(q, shape, rate) {
 }
 
 # Fit the model using fitdistcens with custom gamma distribution
-pcens_fit <- samples |>
+pcens_fit <- delay_data |>
+  dplyr::filter(obs_time == 8) |>
+  dplyr::pull(observed_delay) |>
   fitdist(
     distr = "pcens_gamma",
     start = list(shape = 1, rate = 1)
@@ -206,9 +212,11 @@ pcens_fit <- samples |>
 summary(pcens_fit)
 ```
 
-We see very good agreement between the true and estimated parameters.
+We see good agreement between the true and estimated parameters but with higher standard errors due to using a subset of the data.
 
-Rather than using `fitdist()` directly `primarycensored` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
+Rather than using `fitdist()` directly `primarycensored` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data.
+A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
+Another bonus of this approach is that it supports a mixture of observation times so we can fit to all the available data rather than the subset we used in the custom implementation above.
 
 ```{r primarycensored-fitdistdoublecens}
 fitdistdoublecens_fit <- delay_data |>
@@ -216,14 +224,14 @@ fitdistdoublecens_fit <- delay_data |>
   fitdistdoublecens(
     distr = "gamma",
     start = list(shape = 1, rate = 1),
-    D = 8, pwindow = 1
+    pwindow = 1
   )
 
 summary(fitdistdoublecens_fit)
 ```
 
 
-**Note** Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the `primarycensored` GitHub page.
+**Note** Currently this functionality is limited to a single pwindow. If this functionality is of interest then please open an issue on the `primarycensored` GitHub page.
 
 ## Summary
 
