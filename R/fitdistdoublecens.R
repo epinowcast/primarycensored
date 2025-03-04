@@ -16,6 +16,17 @@
 #'
 #' @param distr A character string naming the distribution to be fitted.
 #'
+#' @param left Column name for lower bound of observed values (default: "left").
+#'
+#' @param right Column name for upper bound of observed values (default:
+#'  "right").
+#'
+#' @param pwindow Column name for primary window (default: "pwindow").
+#'
+#' @param D Column name for maximum delay (truncation point). If finite, the
+#'  distribution is truncated at D. If set to Inf, no truncation is applied.
+#'  (default: "D").
+#'
 #' @inheritParams pprimarycensored
 #'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
@@ -45,27 +56,31 @@
 #'
 #' delay_data <- data.frame(
 #'   left = samples,
-#'   right = samples + swindow
+#'   right = samples + swindow,
+#'   pwindow = rep(pwindow, n),
+#'   D = rep(D, n)
 #' )
 #'
 #' fit_norm <- fitdistdoublecens(
 #'   delay_data,
 #'   distr = "norm",
-#'   start = list(mean = 0, sd = 1),
-#'   D = D, pwindow = pwindow
+#'   start = list(mean = 0, sd = 1)
 #' )
 #'
 #' summary(fit_norm)
 fitdistdoublecens <- function(
-    censdata,
-    distr,
-    pwindow = 1,
-    D = Inf,
-    dprimary = stats::dunif,
-    dprimary_name = lifecycle::deprecated(),
-    dprimary_args = list(),
-    truncation_check_multiplier = 2,
-    ...) {
+  censdata,
+  distr,
+  left = "left",
+  right = "right",
+  pwindow = "pwindow",
+  D = "D",
+  dprimary = stats::dunif,
+  dprimary_name = lifecycle::deprecated(),
+  dprimary_args = list(),
+  truncation_check_multiplier = 2,
+  ...
+) {
   nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
   if (!is.null(nms$dprimary)) {
     dprimary <- add_name_attribute(dprimary, nms$dprimary)
@@ -86,22 +101,56 @@ fitdistdoublecens <- function(
     )
   }
 
-  if (!all(c("left", "right") %in% names(censdata))) {
-    stop("censdata must contain 'left' and 'right' columns", call. = FALSE)
+  # Deprecation handling for pwindow and D
+  if (is.numeric(pwindow)) {
+    lifecycle::deprecate_warn(
+      "1.1.0",
+      "fitdistdoublecens(pwindow)",
+      details = "Use pwindow column in censdata instead."
+    )
+    censdata[["pwindow"]] <- pwindow
+    pwindow <- "pwindow"
+  }
+  if (is.numeric(D)) {
+    lifecycle::deprecate_warn(
+      "1.1.0",
+      "fitdistdoublecens(D)",
+      details = "Use D column in censdata instead."
+    )
+    censdata[["D"]] <- D
+    D <- "D"
+  }
+
+  required_cols <- c(left, right, pwindow, D)
+  missing_cols <- setdiff(required_cols, names(censdata))
+  if (length(missing_cols) > 0) {
+    stop(
+      "Missing required columns: ",
+      toString(missing_cols),
+      call. = FALSE
+    )
   }
 
   if (!is.null(truncation_check_multiplier)) {
-    check_truncation(
-      delays = censdata$left,
-      D = D,
-      multiplier = truncation_check_multiplier
-    )
+    unique_D <- unique(censdata[[D]])
+    for (d in unique_D) {
+      delays_subset <- censdata[[left]][censdata[[D]] == d]
+      check_truncation(
+        delays = delays_subset,
+        D = d,
+        multiplier = truncation_check_multiplier
+      )
+    }
   }
 
   # Get the distribution functions
   pdist_name <- paste0("p", distr)
   pdist <- add_name_attribute(get(pdist_name), pdist_name)
-  swindows <- censdata$right - censdata$left
+  params <- data.frame(
+    swindow = censdata[[right]] - censdata[[left]],
+    pwindow = censdata[[pwindow]],
+    D = censdata[[D]]
+  )
 
   # Create the function definition with named arguments for dpcens
   dpcens_dist <- function() {
@@ -111,10 +160,8 @@ fitdistdoublecens <- function(
       c(
         env_args,
         list(
-          swindows = swindows,
+          params = params,
           pdist = pdist,
-          pwindow = pwindow,
-          D = D,
           dprimary = dprimary,
           dprimary_args = dprimary_args
         )
@@ -131,9 +178,8 @@ fitdistdoublecens <- function(
       c(
         env_args,
         list(
+          params = params,
           pdist = pdist,
-          pwindow = pwindow,
-          D = D,
           dprimary = dprimary,
           dprimary_args = dprimary_args
         )
@@ -142,11 +188,20 @@ fitdistdoublecens <- function(
   }
   formals(ppcens_dist) <- formals(pdist)
 
-  # Fit the distribution
+  delays <- censdata[[left]]
+  # Create a clean environment with only the necessary objects
+  fit_env <- new.env(parent = emptyenv())
+
+  # Copy only the required objects to the clean environment
+  fit_env$delays <- delays
+  fit_env$ppcens_dist <- ppcens_dist
+  fit_env$dpcens_dist <- dpcens_dist
+
+  # Perform the fitting in the clean environment
   fit <- withr::with_environment(
-    environment(),
+    fit_env,
     fitdistrplus::fitdist(
-      censdata$left,
+      delays,
       distr = "pcens_dist",
       ...
     )
@@ -157,50 +212,56 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around dprimarycensored
 #' @inheritParams dprimarycensored
 #'
-#' @param swindows A numeric vector of secondary window sizes corresponding to
-#' each element in x
+#' @param params A data frame with columns 'swindow', 'pwindow', and 'D'
+#' corresponding to the secondary window sizes, primary window sizes, and
+#' truncation times for each element in x.
 #' @keywords internal
 .dpcens <- function(
-    x,
-    swindows,
-    pdist,
-    pwindow,
-    D,
-    dprimary,
-    dprimary_args,
-    ...) {
+  x,
+  params,
+  pdist,
+  dprimary,
+  dprimary_args,
+  ...
+) {
   tryCatch(
     {
-      if (length(unique(swindows)) == 1) {
+      unique_params <- unique(params)
+      # Check if all parameters are constant
+      if (nrow(unique_params) == 1) {
         dprimarycensored(
           x,
           pdist,
-          pwindow = pwindow,
-          swindow = swindows[1],
-          D = D,
+          pwindow = unique_params$pwindow[1],
+          swindow = unique_params$swindow[1],
+          D = unique_params$D[1],
           dprimary = dprimary,
           dprimary_args = dprimary_args,
           ...
         )
       } else {
-        # Group x and swindows by unique swindow values
-        unique_swindows <- unique(swindows)
+        # Group by unique combinations of parameters
         result <- numeric(length(x))
 
-        for (sw in unique_swindows) {
-          mask <- swindows == sw
+        for (i in seq_len(nrow(unique_params))) {
+          sw <- unique_params$swindow[i]
+          pw <- unique_params$pwindow[i]
+          Ds <- unique_params$D[i] # nolint
+          mask <- params$swindow == sw &
+            params$pwindow == pw &
+            params$D == Ds
+
           result[mask] <- dprimarycensored(
             x[mask],
             pdist,
-            pwindow = pwindow,
+            pwindow = pw,
             swindow = sw,
-            D = D,
+            D = Ds,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
             ...
           )
         }
-
         result
       }
     },
@@ -213,17 +274,26 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @keywords internal
-.ppcens <- function(q, pdist, pwindow, D, dprimary, dprimary_args, ...) {
+.ppcens <- function(q, params, pdist, dprimary, dprimary_args, ...) {
   tryCatch(
     {
-      pprimarycensored(
+      # Vectorize the CDF calculation
+      mapply(
+        function(q_i, pw, D_i) {
+          pprimarycensored(
+            q_i,
+            pdist,
+            pwindow = pw,
+            D = D_i,
+            dprimary = dprimary,
+            dprimary_args = dprimary_args,
+            ...
+          )
+        },
         q,
-        pdist,
-        pwindow = pwindow,
-        D = D,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args,
-        ...
+        params$pwindow,
+        params$D,
+        SIMPLIFY = TRUE
       )
     },
     error = function(e) {

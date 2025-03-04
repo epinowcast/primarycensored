@@ -4,23 +4,19 @@
 \alias{.dpcens}
 \title{Define a fitdistrplus compatible wrapper around dprimarycensored}
 \usage{
-.dpcens(x, swindows, pdist, pwindow, D, dprimary, dprimary_args, ...)
+.dpcens(x, params, pdist, dprimary, dprimary_args, ...)
 }
 \arguments{
 \item{x}{Vector of quantiles}
 
-\item{swindows}{A numeric vector of secondary window sizes corresponding to
-each element in x}
+\item{params}{A data frame with columns 'swindow', 'pwindow', and 'D'
+corresponding to the secondary window sizes, primary window sizes, and
+truncation times for each element in x.}
 
 \item{pdist}{Distribution function (CDF). The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,
 users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage the analytical solutions.}
-
-\item{pwindow}{Primary event window}
-
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
