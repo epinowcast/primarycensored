@@ -6,16 +6,22 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Fitting distributions using primarycensored and fitdistrplus • primarycensored</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="48x48" href="../favicon-48x48.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="../deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fitting distributions using primarycensored and fitdistrplus">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fitting distributions using primarycensored and fitdistrplus">
 <meta name="description" content="A guide on how to fit distributions using primarycensored and fitdistrplus.">
 <meta property="og:description" content="A guide on how to fit distributions using primarycensored and fitdistrplus.">
 <meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png">
@@ -156,7 +162,7 @@
 <span><span class="co"># Generate fixed pwindow, swindow, and obs_time</span></span>
 <span><span class="va">pwindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span><span class="op">)</span></span>
 <span><span class="va">swindows</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="va">n</span><span class="op">)</span></span>
-<span><span class="va">obs_times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">8</span>, <span class="va">n</span><span class="op">)</span> <span class="co"># Truncation at 8</span></span>
+<span><span class="va">obs_times</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/sample.html" class="external-link">sample</a></span><span class="op">(</span><span class="fl">8</span><span class="op">:</span><span class="fl">10</span>, <span class="va">n</span>, replace <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Function to generate a single sample</span></span>
 <span><span class="va">generate_sample</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">pwindow</span>, <span class="va">swindow</span>, <span class="va">obs_time</span><span class="op">)</span> <span class="op">{</span></span>
@@ -172,21 +178,20 @@
 <span></span>
 <span><span class="co"># Create initial data frame</span></span>
 <span><span class="va">delay_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span>
+<span>  delay <span class="op">=</span> <span class="va">samples</span>,</span>
+<span>  delay_upper <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="va">swindows</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="va">pwindows</span>,</span>
-<span>  swindow <span class="op">=</span> <span class="va">swindows</span>,</span>
-<span>  obs_time <span class="op">=</span> <span class="va">obs_times</span>,</span>
-<span>  observed_delay <span class="op">=</span> <span class="va">samples</span>,</span>
-<span>  observed_delay_upper <span class="op">=</span> <span class="va">samples</span> <span class="op">+</span> <span class="va">swindows</span></span>
+<span>  relative_obs_time <span class="op">=</span> <span class="va">obs_times</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">delay_data</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">##   pwindow swindow obs_time observed_delay observed_delay_upper</span></span>
-<span><span class="co">## 1       1       1        8              2                    3</span></span>
-<span><span class="co">## 2       1       1        8              4                    5</span></span>
-<span><span class="co">## 3       1       1        8              1                    2</span></span>
-<span><span class="co">## 4       1       1        8              5                    6</span></span>
-<span><span class="co">## 5       1       1        8              1                    2</span></span>
-<span><span class="co">## 6       1       1        8              4                    5</span></span></code></pre>
+<pre><code><span><span class="co">##   delay delay_upper pwindow relative_obs_time</span></span>
+<span><span class="co">## 1     2           3       1                10</span></span>
+<span><span class="co">## 2     1           2       1                10</span></span>
+<span><span class="co">## 3     2           3       1                10</span></span>
+<span><span class="co">## 4     4           5       1                 9</span></span>
+<span><span class="co">## 5     3           4       1                10</span></span>
+<span><span class="co">## 6     4           5       1                 9</span></span></code></pre>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compare the samples with and without secondary censoring to the true</span></span>
 <span><span class="co"># distribution</span></span>
@@ -194,7 +199,7 @@
 <span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Create a sequence of x values for the theoretical CDF</span></span>
-<span><span class="va">x_seq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
+<span><span class="va">x_seq</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span>, length.out <span class="op">=</span> <span class="fl">100</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># Calculate theoretical CDF</span></span>
 <span><span class="va">theoretical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma</a></span><span class="op">(</span><span class="va">x_seq</span>, shape <span class="op">=</span> <span class="va">shape</span>, rate <span class="op">=</span> <span class="va">rate</span><span class="op">)</span></span>
@@ -233,7 +238,7 @@
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
 <span>    legend.position <span class="op">=</span> <span class="st">"bottom"</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">8</span><span class="op">)</span><span class="op">)</span> <span class="co"># Set x-axis limit to match truncation</span></span></code></pre></div>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/coord_cartesian.html" class="external-link">coord_cartesian</a></span><span class="op">(</span>xlim <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span> <span class="co"># Set x-axis limit to match truncation</span></span></code></pre></div>
 <p><img src="fitting-dists-with-fitdistrplus_files/figure-html/sample-lognormal-1.png" width="672"></p>
 <p>In this figure you can see the impact of truncation and censoring as the observed distribution has a much lower mean (the vertical dashed blue line) than the true/theoretical distribution (the vertical dashed black line). Our modelling aim is to recover the true parameters of the theoretical distribution from the observed distribution (i.e. recover the black lines from the blue lines).</p>
 </div>
@@ -244,7 +249,7 @@
 <p>We first fit a naive model using the <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html" class="external-link">fitdistcens()</a></code> function. This function is designed to handle secondary censored data but does not handle primary censoring or truncation without extension.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>left <span class="op">=</span> <span class="va">observed_delay</span>, right <span class="op">=</span> <span class="va">observed_delay_upper</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>left <span class="op">=</span> <span class="va">delay</span>, right <span class="op">=</span> <span class="va">delay_upper</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html" class="external-link">fitdistcens</a></span><span class="op">(</span></span>
 <span>    distr <span class="op">=</span> <span class="st">"gamma"</span>,</span>
 <span>    start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -254,20 +259,24 @@
 <pre><code><span><span class="co">## Fitting of the distribution ' gamma ' By maximum likelihood on censored data </span></span>
 <span><span class="co">## Parameters</span></span>
 <span><span class="co">##        estimate Std. Error</span></span>
-<span><span class="co">## shape 3.3072925  0.1522836</span></span>
-<span><span class="co">## rate  0.9198016  0.0450446</span></span>
-<span><span class="co">## Loglikelihood:  -2019.371   AIC:  4042.742   BIC:  4052.558 </span></span>
+<span><span class="co">## shape 2.9607131 0.13487956</span></span>
+<span><span class="co">## rate  0.7788964 0.03808087</span></span>
+<span><span class="co">## Loglikelihood:  -2111.847   AIC:  4227.693   BIC:  4237.509 </span></span>
 <span><span class="co">## Correlation matrix:</span></span>
 <span><span class="co">##           shape      rate</span></span>
-<span><span class="co">## shape 1.0000000 0.9334401</span></span>
-<span><span class="co">## rate  0.9334401 1.0000000</span></span></code></pre>
+<span><span class="co">## shape 1.0000000 0.9253887</span></span>
+<span><span class="co">## rate  0.9253887 1.0000000</span></span></code></pre>
 <p>We see that the naive model has fit poorly due to the primary censoring and right truncation in the data.</p>
 </div>
 <div class="section level2" number="4">
 <h2 id="fitting-an-improved-model-using-primarycensored-and-fitdistrplus">
 <span class="header-section-number">4</span> Fitting an improved model using <code>primarycensored</code> and <code>fitdistrplus</code><a class="anchor" aria-label="anchor" href="#fitting-an-improved-model-using-primarycensored-and-fitdistrplus"></a>
 </h2>
-<p>We’ll now fit an improved model using the <code>primarycensored</code> package. To do this we need to define the custom distribution functions using the <code>primarycensored</code> package that are required by <code>fitdistrplus</code>. Rather than using <code>fitdistcens</code> we use <code>fitdist</code> because our functions are handling the censoring themselves.</p>
+<p>We’ll now fit an improved model using the <code>primarycensored</code> package.
+To do this we need to define the custom distribution functions using the <code>primarycensored</code> package that are required by <code>fitdistrplus</code>.
+Rather than using <code>fitdistcens</code> we use <code>fitdist</code> because our functions are handling the censoring themselves.
+Note that in this custom implementation for simplicity we are filtering to use only data with the same <code>obs_time</code> rather than handling varying observation times.
+This means we’re using a subset of our simulated data for the estimation.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Define custom distribution functions using primarycensored</span></span>
 <span><span class="co"># The try catch is required by fitdistrplus</span></span>
@@ -293,7 +302,7 @@
 <span>      <span class="fu"><a href="../reference/pprimarycensored.html">pprimarycensored</a></span><span class="op">(</span></span>
 <span>        <span class="va">q</span>, <span class="va">pgamma</span>,</span>
 <span>        shape <span class="op">=</span> <span class="va">shape</span>, rate <span class="op">=</span> <span class="va">rate</span>,</span>
-<span>        pwindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">8</span></span>
+<span>        dpwindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">8</span></span>
 <span>      <span class="op">)</span></span>
 <span>    <span class="op">}</span>,</span>
 <span>    error <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">e</span><span class="op">)</span> <span class="op">{</span></span>
@@ -304,7 +313,9 @@
 <span><span class="op">}</span></span>
 <span></span>
 <span><span class="co"># Fit the model using fitdistcens with custom gamma distribution</span></span>
-<span><span class="va">pcens_fit</span> <span class="op">&lt;-</span> <span class="va">samples</span> <span class="op">|&gt;</span></span>
+<span><span class="va">pcens_fit</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/filter.html" class="external-link">filter</a></span><span class="op">(</span><span class="va">relative_obs_time</span> <span class="op">==</span> <span class="fl">8</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/pull.html" class="external-link">pull</a></span><span class="op">(</span><span class="va">delay</span><span class="op">)</span> <span class="op">|&gt;</span></span>
 <span>  <span class="fu"><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist</a></span><span class="op">(</span></span>
 <span>    distr <span class="op">=</span> <span class="st">"pcens_gamma"</span>,</span>
 <span>    start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -314,36 +325,40 @@
 <pre><code><span><span class="co">## Fitting of the distribution ' pcens_gamma ' by maximum likelihood </span></span>
 <span><span class="co">## Parameters : </span></span>
 <span><span class="co">##        estimate Std. Error</span></span>
-<span><span class="co">## shape 1.7847171 0.11590733</span></span>
-<span><span class="co">## rate  0.4642622 0.04744382</span></span>
-<span><span class="co">## Loglikelihood:  -1970.286   AIC:  3944.572   BIC:  3954.388 </span></span>
+<span><span class="co">## shape 1.7522811 0.19551646</span></span>
+<span><span class="co">## rate  0.4734692 0.08187069</span></span>
+<span><span class="co">## Loglikelihood:  -639.2144   AIC:  1282.429   BIC:  1290.003 </span></span>
 <span><span class="co">## Correlation matrix:</span></span>
-<span><span class="co">##         shape    rate</span></span>
-<span><span class="co">## shape 1.00000 0.92969</span></span>
-<span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
-<p>We see very good agreement between the true and estimated parameters.</p>
-<p>Rather than using <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist()</a></code> directly <code>primarycensored</code> provides a wrapper function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation and support mixed secondary censoring intervals.</p>
+<span><span class="co">##           shape      rate</span></span>
+<span><span class="co">## shape 1.0000000 0.9266603</span></span>
+<span><span class="co">## rate  0.9266603 1.0000000</span></span></code></pre>
+<p>We see good agreement between the true and estimated parameters but with higher standard errors due to using a subset of the data.</p>
+<p>Rather than using <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist()</a></code> directly <code>primarycensored</code> provides a wrapper function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> that can be used to estimate double censored and truncated data.
+A bonus of this approach is we can specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation and support mixed censoring intervals.
+Another bonus of this approach is that it supports a mixture of observation times so we can fit to all the available data rather than the subset we used in the custom implementation above.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="va">delay_data</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu">dplyr</span><span class="fu">::</span><span class="fu"><a href="https://dplyr.tidyverse.org/reference/select.html" class="external-link">select</a></span><span class="op">(</span>left <span class="op">=</span> <span class="va">observed_delay</span>, right <span class="op">=</span> <span class="va">observed_delay_upper</span><span class="op">)</span> <span class="op">|&gt;</span></span>
-<span>  <span class="fu"><a href="../reference/fitdistdoublecens.html">fitdistdoublecens</a></span><span class="op">(</span></span>
-<span>    distr <span class="op">=</span> <span class="st">"gamma"</span>,</span>
-<span>    start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>    D <span class="op">=</span> <span class="fl">8</span>, pwindow <span class="op">=</span> <span class="fl">1</span></span>
-<span>  <span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># Using Stan-like interface but with fitdistrplus</span></span>
+<span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fitdistdoublecens.html">fitdistdoublecens</a></span><span class="op">(</span></span>
+<span>  <span class="va">delay_data</span>,</span>
+<span>  distr <span class="op">=</span> <span class="st">"gamma"</span>,</span>
+<span>  start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
+<span>  left <span class="op">=</span> <span class="st">"delay"</span>,</span>
+<span>  right <span class="op">=</span> <span class="st">"delay_upper"</span>,</span>
+<span>  pwindow <span class="op">=</span> <span class="st">"pwindow"</span>,</span>
+<span>  D <span class="op">=</span> <span class="st">"relative_obs_time"</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">fitdistdoublecens_fit</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">## Fitting of the distribution ' pcens_dist ' by maximum likelihood </span></span>
 <span><span class="co">## Parameters : </span></span>
 <span><span class="co">##        estimate Std. Error</span></span>
-<span><span class="co">## shape 1.7847171 0.11590733</span></span>
-<span><span class="co">## rate  0.4642622 0.04744382</span></span>
-<span><span class="co">## Loglikelihood:  -1970.286   AIC:  3944.572   BIC:  3954.388 </span></span>
+<span><span class="co">## shape 1.6863057 0.10294344</span></span>
+<span><span class="co">## rate  0.4213108 0.03945095</span></span>
+<span><span class="co">## Loglikelihood:  -2064.778   AIC:  4133.556   BIC:  4143.371 </span></span>
 <span><span class="co">## Correlation matrix:</span></span>
-<span><span class="co">##         shape    rate</span></span>
-<span><span class="co">## shape 1.00000 0.92969</span></span>
-<span><span class="co">## rate  0.92969 1.00000</span></span></code></pre>
-<p><strong>Note</strong> Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the <code>primarycensored</code> GitHub page.</p>
+<span><span class="co">##           shape      rate</span></span>
+<span><span class="co">## shape 1.0000000 0.9196305</span></span>
+<span><span class="co">## rate  0.9196305 1.0000000</span></span></code></pre>
 <div class="section level3" number="4.1">
 <h3 id="summary">
 <span class="header-section-number">4.1</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
