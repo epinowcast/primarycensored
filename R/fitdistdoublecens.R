@@ -104,7 +104,7 @@ fitdistdoublecens <- function(
   # Deprecation handling for pwindow and D
   if (is.numeric(pwindow)) {
     lifecycle::deprecate_warn(
-      "1.0.0",
+      "1.1.0",
       "fitdistdoublecens(pwindow)",
       details = "Use pwindow column in censdata instead."
     )
@@ -113,7 +113,7 @@ fitdistdoublecens <- function(
   }
   if (is.numeric(D)) {
     lifecycle::deprecate_warn(
-      "1.0.0",
+      "1.1.0",
       "fitdistdoublecens(D)",
       details = "Use D column in censdata instead."
     )
