@@ -83,7 +83,7 @@ test_that("fitdistdoublecens works with deprecated numeric inputs", {
 
   # Test with deprecated numeric inputs for pwindow and D
   suppressWarnings(expect_warning(
-    fit <- fitdistdoublecens(
+    fit <- fitdistdoublecens( # nolint
       # nolint
       delay_data,
       distr = "gamma",
@@ -335,7 +335,8 @@ test_that("fitdistdoublecens handles truncation_check_multiplier correctly", {
   )
 })
 
-test_that("fitdistdoublecens throws error when required packages are not installed", {
+test_that(
+  "fitdistdoublecens throws error when required packages are not installed", {
   # Create dummy data
   dummy_data <- data.frame(
     left = 1:5,
@@ -346,13 +347,11 @@ test_that("fitdistdoublecens throws error when required packages are not install
 
   # Test for fitdistrplus
   with_mocked_bindings(
-    {
-      expect_error(
-        fitdistdoublecens(dummy_data, "norm"),
-        "Package 'fitdistrplus' is required but not installed for this",
-        fixed = TRUE
-      )
-    },
+    expect_error(
+      fitdistdoublecens(dummy_data, "norm"),
+      "Package 'fitdistrplus' is required but not installed for this",
+      fixed = TRUE
+    ),
     requireNamespace = function(pkg, ...) {
       if (pkg == "fitdistrplus") {
         return(FALSE)
@@ -364,13 +363,11 @@ test_that("fitdistdoublecens throws error when required packages are not install
 
   # Test for withr
   with_mocked_bindings(
-    {
-      expect_error(
-        fitdistdoublecens(dummy_data, "norm"),
-        "Package 'withr' is required but not installed for this function.",
-        fixed = TRUE
-      )
-    },
+    expect_error(
+      fitdistdoublecens(dummy_data, "norm"),
+      "Package 'withr' is required but not installed for this function.",
+      fixed = TRUE
+    ),
     requireNamespace = function(pkg, ...) {
       if (pkg == "withr") {
         return(FALSE)
@@ -382,13 +379,11 @@ test_that("fitdistdoublecens throws error when required packages are not install
 
   # Test when both packages are missing
   with_mocked_bindings(
-    {
-      expect_error(
-        fitdistdoublecens(dummy_data, "norm"),
-        "Package 'fitdistrplus' is required but not installed",
-        fixed = TRUE
-      )
-    },
+    expect_error(
+      fitdistdoublecens(dummy_data, "norm"),
+      "Package 'fitdistrplus' is required but not installed",
+      fixed = TRUE
+    ),
     requireNamespace = function(...) FALSE,
     .package = "base"
   )
