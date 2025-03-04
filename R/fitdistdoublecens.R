@@ -188,17 +188,19 @@ fitdistdoublecens <- function(
   }
   formals(ppcens_dist) <- formals(pdist)
 
+  # Assign the density and distribution functions to global environment
+  assign("dpcens_dist", dpcens_dist, envir = globalenv())
+  assign("ppcens_dist", ppcens_dist, envir = globalenv())
+
   # Fit the distribution
   delays <- censdata[[left]]
 
-  fit <- withr::with_environment(
-    environment(),
+  fit <-
     fitdistrplus::fitdist(
       delays,
       distr = "pcens_dist",
       ...
     )
-  )
   return(fit)
 }
 
