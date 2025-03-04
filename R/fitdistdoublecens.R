@@ -188,11 +188,17 @@ fitdistdoublecens <- function(
   }
   formals(ppcens_dist) <- formals(pdist)
 
-  # Fit the distribution
-  delays <- censdata[[left]]
+  # Create a clean environment with only the necessary objects
+  fit_env <- new.env(parent = emptyenv())
 
+  # Copy only the required objects to the clean environment
+  fit_env$delays <- censdata[[left]]
+  fit_env$ppcens_dist <- ppcens_dist
+  fit_env$dpcens_dist <- dpcens_dist
+
+  # Perform the fitting in the clean environment
   fit <- withr::with_environment(
-    globalenv(),
+    fit_env,
     fitdistrplus::fitdist(
       delays,
       distr = "pcens_dist",
@@ -237,19 +243,19 @@ fitdistdoublecens <- function(
         result <- numeric(length(x))
 
         for (i in seq_len(nrow(unique_params))) {
-          swindow <- unique_params$swindow[i]
-          pwindow <- unique_params$pwindow[i]
-          D <- unique_params$D[i] # nolint
-          mask <- params$swindow == swindow &
-            params$pwindow == pwindow &
-            params$D == D
+          sw <- unique_params$swindow[i]
+          pw <- unique_params$pwindow[i]
+          Ds <- unique_params$D[i] # nolint
+          mask <- params$swindow == sw &
+            params$pwindow == pw &
+            params$D == Ds
 
           result[mask] <- dprimarycensored(
             x[mask],
             pdist,
-            pwindow = pwindow,
-            swindow = swindow,
-            D = D,
+            pwindow = pw,
+            swindow = sw,
+            D = Ds,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
             ...

@@ -1,3 +1,4 @@
+# fmt: skip file
 # Skip tests if fitdistrplus is not installed
 if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
   skip("Package 'fitdistrplus' is required for these tests")
@@ -81,16 +82,16 @@ test_that("fitdistdoublecens works with deprecated numeric inputs", {
   )
 
   # Test with deprecated numeric inputs for pwindow and D
-  suppressWarnings(
-    expect_warning(
-      fit <- fitdistdoublecens( # nolint
-        delay_data,
-        distr = "gamma",
-        start = list(shape = 1, rate = 1),
-        pwindow = 1,
-        D = 8
+  suppressWarnings(expect_warning(
+    fit <- fitdistdoublecens(
+      # nolint
+      delay_data,
+      distr = "gamma",
+      start = list(shape = 1, rate = 1),
+      pwindow = 1,
+      D = 8
     )
-  )
+  ))
 
   # Check that the function returns a fitdist object
   expect_s3_class(fit, "fitdist")
