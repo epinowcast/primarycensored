@@ -188,11 +188,12 @@ fitdistdoublecens <- function(
   }
   formals(ppcens_dist) <- formals(pdist)
 
+  delays <- censdata[[left]]
   # Create a clean environment with only the necessary objects
   fit_env <- new.env(parent = emptyenv())
 
   # Copy only the required objects to the clean environment
-  fit_env$delays <- censdata[[left]]
+  fit_env$delays <- delays
   fit_env$ppcens_dist <- ppcens_dist
   fit_env$dpcens_dist <- dpcens_dist
 
