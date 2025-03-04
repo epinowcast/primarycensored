@@ -188,19 +188,17 @@ fitdistdoublecens <- function(
   }
   formals(ppcens_dist) <- formals(pdist)
 
-  # Assign the density and distribution functions to global environment
-  assign("dpcens_dist", dpcens_dist, envir = globalenv())
-  assign("ppcens_dist", ppcens_dist, envir = globalenv())
-
   # Fit the distribution
   delays <- censdata[[left]]
 
-  fit <-
+  fit <- withr::with_environment(
+    globalenv(),
     fitdistrplus::fitdist(
       delays,
       distr = "pcens_dist",
       ...
     )
+  )
   return(fit)
 }
 
@@ -241,7 +239,7 @@ fitdistdoublecens <- function(
         for (i in seq_len(nrow(unique_params))) {
           swindow <- unique_params$swindow[i]
           pwindow <- unique_params$pwindow[i]
-          D <- unique_params$D[i]
+          D <- unique_params$D[i] # nolint
           mask <- params$swindow == swindow &
             params$pwindow == pwindow &
             params$D == D
