@@ -7,6 +7,7 @@ Development release.
 ## Documentation
 
 - Added a CRAN downloads badge to the README.
+- The [Stan Reference](https://primarycensored.epinowcast.org/stan/) has been enhanced to make it easier to navigate the Stan code.
 
 ## Bug fixes
 
