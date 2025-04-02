@@ -21,16 +21,26 @@ navbar:
     articles:
       text: Articles
       menu:
-      - text: How to use primarycensored with Stan
-        href: articles/using-stan-tools.html
-      - text: Fitting distributions using primarycensored and cmdstan
-        href: articles/fitting-dists-with-stan.html
-      - text: Fitting distributions using primarycensored and fitdistrplus
-        href: articles/fitting-dists-with-fitdistrplus.html
-      - text: Why it works
+      - text: "──── First steps ────"
+        href: null
+      - text: "Getting started"
+        href: articles/primarycensored.html
+      - text: "──── Methodology ────"
+        href: null
+      - text: "Why it works"
         href: articles/why-it-works.html
-      - text: Analytic solutions for censored delay distributions
+      - text: "Analytic solutions for censored delay distributions"
         href: articles/analytic-solutions.html
+      - text: "──── Fitting delay distributions ────"
+        href: null
+      - text: "Fitting distributions using primarycensored and cmdstan"
+        href: articles/fitting-dists-with-stan.html
+      - text: "Fitting distributions using primarycensored and fitdistrplus"
+        href: articles/fitting-dists-with-fitdistrplus.html
+      - text: "──── Stan development ────"
+        href: null
+      - text: "How to use primarycensored with Stan"
+        href: articles/using-stan-tools.html
 
 authors:
   Sam Abbott:
@@ -49,6 +59,10 @@ reference:
   desc: S3 class and methods for computing primary event censored distributions, focusing on the internal machinery used by the package. Unlike the primary event distributions section which deals with specific distribution functions, this section covers the general framework for handling censored distributions.
   contents:
   - has_concept("pcens")
+- title: Utility functions
+  desc: Utility functions for working withe package
+  contents:
+  - has_concept("utils")
 - title: Distribution checking functions
   desc: Functions to validate cumulative distribution functions (CDFs) and probability density functions (PDFs)
   contents:

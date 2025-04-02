@@ -25,7 +25,9 @@ test_that("check_truncation warns for empty delays vector", {
 test_that("check_truncation handles delays with NA and Inf values", {
   expect_silent(
     check_truncation(
-      delays = c(1, 2, NA, 4, Inf), D = 10, multiplier = 2
+      delays = c(1, 2, NA, 4, Inf),
+      D = 10,
+      multiplier = 2
     )
   )
 })
@@ -60,5 +62,12 @@ test_that("check_truncation errors on multiplier <= 1", {
 test_that("check_truncation is silent when D is infinite", {
   expect_silent(
     check_truncation(delays = c(1, 2, 3, 4), D = Inf, multiplier = 2)
+  )
+})
+
+test_that("check_truncation errors when D has length > 1", {
+  expect_error(
+    check_truncation(delays = c(1, 2, 3, 4), D = c(5, 10), multiplier = 2),
+    "D must be a single value for check_truncation"
   )
 })

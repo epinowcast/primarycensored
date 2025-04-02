@@ -19,16 +19,22 @@ check_pdist <- function(pdist, D, ...) {
   test_values <- sort(runif(4, 0, D))
   test_results <- pdist(test_values, ...)
 
-  if (!all(diff(test_results) >= 0) ||
-    !all(test_results >= 0 & test_results <= 1)) {
+  if (
+    !all(diff(test_results) >= 0) ||
+      !all(test_results >= 0 & test_results <= 1)
+  ) {
     stop(
       "pdist is not a valid cumulative distribution function (CDF). ",
       "Please ensure you're using a p-function (e.g., pnorm, punif) and not ",
       "a d-function (e.g., dnorm, dbinom).",
-      "For values ", toString(test_values),
-      " the results were ", toString(round(test_results, 3)), ". ",
+      "For values ",
+      toString(test_values),
+      " the results were ",
+      toString(round(test_results, 3)),
+      ". ",
       "You can use the `check_pdist` function to check if your p-function ",
-      "is correct."
+      "is correct.",
+      call. = FALSE
     )
   }
   return(invisible(NULL))
@@ -51,11 +57,14 @@ check_pdist <- function(pdist, D, ...) {
 #'
 #' @examples
 #' check_dprimary(dunif, pwindow = 1)
-check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
-                           tolerance = 1e-3) {
+check_dprimary <- function(
+    dprimary,
+    pwindow,
+    dprimary_args = list(),
+    tolerance = 1e-3) {
   # check if dprimary takes min and max as arguments
   if (!all(c("min", "max") %in% names(formals(dprimary)))) {
-    stop("dprimary must take min and max as arguments")
+    stop("dprimary must take min and max as arguments", call. = FALSE)
   }
 
   integrand <- function(x) {
@@ -67,9 +76,11 @@ check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
     stop(
       "dprimary is not a valid probability density function (PDF). ",
       "It should integrate to approximately 1 over the range [0, pwindow]. ",
-      "Calculated integral: ", round(integral, 4),
+      "Calculated integral: ",
+      round(integral, 4),
       "You can use the `check_dprimary` function to check if your d-function ",
-      "is correct."
+      "is correct.",
+      call. = FALSE
     )
   }
   return(invisible(NULL))
@@ -98,13 +109,18 @@ check_dprimary <- function(dprimary, pwindow, dprimary_args = list(),
 #' check_truncation(delays = c(1, 2, 3, 4), D = 10, multiplier = 2)
 check_truncation <- function(delays, D, multiplier = 2) {
   if (!is.numeric(delays) || !is.numeric(D) || !is.numeric(multiplier)) {
-    stop("All arguments must be numeric.")
+    stop("All arguments must be numeric.", call. = FALSE)
+  }
+
+  if (length(D) > 1) {
+    stop("D must be a single value for check_truncation", call. = FALSE)
   }
 
   if (D <= 0 || multiplier <= 1) {
     stop(
       "Invalid argument values. D must be positive and multiplier must be ",
-      "greater than 1."
+      "greater than 1.",
+      call. = FALSE
     )
   }
 
@@ -116,7 +132,7 @@ check_truncation <- function(delays, D, multiplier = 2) {
   delays <- delays[!is.na(delays)]
 
   if (length(delays) == 0) {
-    warning("No finite observed delays to check.")
+    warning("No finite observed delays to check.", call. = FALSE)
     return(invisible(NULL))
   }
 
@@ -132,10 +148,11 @@ check_truncation <- function(delays, D, multiplier = 2) {
           "observed delay (%g). Consider setting D to Inf for better ",
           "efficiency with minimal accuracy cost for this case."
         ),
-        D, multiplier, max_delay
+        D,
+        multiplier,
+        max_delay
       )
     )
   }
-
   invisible(NULL)
 }

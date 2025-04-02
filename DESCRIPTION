@@ -1,6 +1,6 @@
 Package: primarycensored
 Title: Primary Event Censored Distributions
-Version: 1.0.0.1000
+Version: 1.1.0.1000
 Authors@R:
   c(person(given = "Sam",
            family = "Abbott",
@@ -17,11 +17,26 @@ Authors@R:
            role = c("ctb"),
            email = "adamthowes@gmail.com",
            comment = c(ORCID = "0000-0003-2386-4031")),
+    person(given = "James Mba",
+           family = "Azam",
+           role = c("ctb"),
+           email = "james.azam@lshtm.ac.uk",
+           comment = c(ORCID = "0000-0001-5782-7330")),
+    person(given = "Carl",
+           family = "Pearson",
+           role = c("aut"),
+           email = "carl.ab.pearson@gmail.com",
+           comment = c(ORCID = "0000-0003-0701-7860")),
     person(given = "Sebastian",
            family = "Funk",
            role = c("aut"),
            email = "sebastian.funk@lshtm.ac.uk",
-           comment = c(ORCID = "0000-0002-2842-3406")))
+           comment = c(ORCID = "0000-0002-2842-3406")),
+    person(given = "Kelly",
+           family = "Charniga",
+           role = c("aut"),
+           email = " kelly.charniga@gmail.com",
+           comment = c(ORCID = "0000-0002-7648-7041")))
 Description: Provides functions for working with primary
     event censored distributions and 'Stan' implementations for use in Bayesian
     modeling. Primary event censored distributions are useful for modeling
@@ -35,12 +50,14 @@ Description: Provides functions for working with primary
     fitting primary event censored distributions to data via optional
     dependencies.
 License: MIT + file LICENSE
-URL: https://primarycensored.epinowcast.org, https://github.com/epinowcast/primarycensored/
+URL: https://primarycensored.epinowcast.org, https://github.com/epinowcast/primarycensored
 BugReports: https://github.com/epinowcast/primarycensored/issues
 Depends:
     R (>= 4.0.0)
 Imports:
-    pracma
+    lifecycle,
+    pracma,
+    rlang
 Suggests:
     bookdown,
     cmdstanr,

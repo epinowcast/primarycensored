@@ -68,26 +68,38 @@
 #'   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 #' )
 dprimarycensored <- function(
-    x, pdist, pwindow = 1, swindow = 1,
-    D = Inf, dprimary = stats::dunif,
-    dprimary_args = list(), log = FALSE,
-    pdist_name = NULL, dprimary_name = NULL, ...) {
+    x,
+    pdist,
+    pwindow = 1,
+    swindow = 1,
+    D = Inf,
+    dprimary = stats::dunif,
+    dprimary_args = list(),
+    log = FALSE,
+    pdist_name = lifecycle::deprecated(),
+    dprimary_name = lifecycle::deprecated(),
+    ...) {
+  nms <- .name_deprecation(pdist_name, dprimary_name)
+  if (!is.null(nms$pdist)) {
+    pdist <- add_name_attribute(pdist, nms$pdist)
+  }
+  if (!is.null(nms$dprimary)) {
+    dprimary <- add_name_attribute(dprimary, nms$dprimary)
+  }
+
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   if (max(x + swindow) > D) {
     stop(
-      "Upper truncation point is greater than D. It is ", max(x + swindow),
-      " and D is ", D, ". Resolve this by increasing D to be the maximum",
-      " of x + swindow."
+      "Upper truncation point is greater than D. It is ",
+      max(x + swindow),
+      " and D is ",
+      D,
+      ". Resolve this by increasing D to be the maximum",
+      " of x + swindow.",
+      call. = FALSE
     )
-  }
-
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(substitute(pdist))
-  }
-  if (is.null(dprimary_name)) {
-    dprimary_name <- .extract_function_name(substitute(dprimary))
   }
 
   # Compute CDFs for all unique points
@@ -98,33 +110,48 @@ dprimarycensored <- function(
   }
 
   cdfs <- pprimarycensored(
-    unique_points, pdist, pwindow, Inf, dprimary, dprimary_args,
-    pdist_name = pdist_name, dprimary_name = dprimary_name, ...
+    unique_points,
+    pdist,
+    pwindow,
+    Inf,
+    dprimary,
+    dprimary_args,
+    ...
   )
 
   # Create a lookup table for CDFs
   cdf_lookup <- stats::setNames(cdfs, as.character(unique_points))
 
-  result <- vapply(x, function(d) {
-    if (d < 0) {
-      return(0) # Return 0 for negative delays
-    } else if (d == 0) {
-      # Special case for d = 0
-      cdf_upper <- cdf_lookup[as.character(swindow)]
-      return(cdf_upper)
-    } else {
-      cdf_upper <- cdf_lookup[as.character(d + swindow)]
-      cdf_lower <- cdf_lookup[as.character(d)]
-      return(cdf_upper - cdf_lower)
-    }
-  }, numeric(1))
+  result <- vapply(
+    x,
+    function(d) {
+      if (d < 0) {
+        return(0) # Return 0 for negative delays
+      } else if (d == 0) {
+        # Special case for d = 0
+        cdf_upper <- cdf_lookup[as.character(swindow)]
+        return(cdf_upper)
+      } else {
+        cdf_upper <- cdf_lookup[as.character(d + swindow)]
+        cdf_lower <- cdf_lookup[as.character(d)]
+        return(cdf_upper - cdf_lower)
+      }
+    },
+    numeric(1)
+  )
 
   if (is.finite(D)) {
     if (max(unique_points) == D) {
       cdf_D <- max(cdfs)
     } else {
       cdf_D <- pprimarycensored(
-        D, pdist, pwindow, Inf, dprimary, dprimary_args, ...
+        D,
+        pdist,
+        pwindow,
+        Inf,
+        dprimary,
+        dprimary_args,
+        ...
       )
     }
     result <- result / cdf_D

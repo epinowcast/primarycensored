@@ -19,7 +19,7 @@ vignette: >
 
 # Introduction
 
-## What are we going to do in this Vignette
+## What are we going to do in this vignette
 
 In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with `fitdistrplus` for fitting distributions. We'll cover the following key points:
 
@@ -32,6 +32,10 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 ## What might I need to know before starting
 
 This vignette assumes some familiarity with the `fitdistrplus` package. If you are not familiar with it then you might want to start with the [Introduction to `fitdistrplus`](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html) vignette.
+
+## How does this vignette differ from fitting distributions with Stan vignette
+
+This vignette is similar to the `vignette("fitting-dists-with-stan")` vignette in that it shows how to fit a distribution using `primarycensored`. However, here we use maximum likelihood estimation (MLE) to fit the distribution, rather than MCMC. In some settings this may result in a faster fit, but in other settings especially when the data is complex, MCMC may be more reliable. The major benefit of the `fitdistrplus` approach is that we don't need to install additional software (Stan) to fit the distribution. **Note that rather than returning credible intervals, the `fitdistrplus` package returns standard errors and confidence intervals.**
 
 ## Packages used in this vignette
 
@@ -51,15 +55,17 @@ We'll start by simulating some censored and truncated delay distribution data. W
 ```{r sample-lognormal}
 set.seed(123) # For reproducibility
 
-# Define the true distribution parameters
+# Define the number of samples to generate
 n <- 1000
+
+# Define the true distribution parameters
 shape <- 1.77 # This gives a mean of 4 and sd of 3 for a gamma distribution
 rate <- 0.44
 
 # Generate fixed pwindow, swindow, and obs_time
 pwindows <- rep(1, n)
 swindows <- rep(1, n)
-obs_times <- rep(8, n) # Truncation at 8
+obs_times <- sample(8:10, n, replace = TRUE)
 
 # Function to generate a single sample
 generate_sample <- function(pwindow, swindow, obs_time) {
@@ -75,11 +81,10 @@ samples <- mapply(generate_sample, pwindows, swindows, obs_times)
 
 # Create initial data frame
 delay_data <- data.frame(
+  delay = samples,
+  delay_upper = samples + swindows,
   pwindow = pwindows,
-  swindow = swindows,
-  obs_time = obs_times,
-  observed_delay = samples,
-  observed_delay_upper = samples + swindows
+  relative_obs_time = obs_times
 )
 
 head(delay_data)
@@ -90,7 +95,7 @@ head(delay_data)
 empirical_cdf <- ecdf(samples)
 
 # Create a sequence of x values for the theoretical CDF
-x_seq <- seq(0, 8, length.out = 100)
+x_seq <- seq(0, 10, length.out = 100)
 
 # Calculate theoretical CDF
 theoretical_cdf <- pgamma(x_seq, shape = shape, rate = rate)
@@ -129,8 +134,10 @@ ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
     plot.title = element_text(hjust = 0.5),
     legend.position = "bottom"
   ) +
-  coord_cartesian(xlim = c(0, 8)) # Set x-axis limit to match truncation
+  coord_cartesian(xlim = c(0, 10)) # Set x-axis limit to match truncation
 ```
+
+In this figure you can see the impact of truncation and censoring as the observed distribution has a much lower mean (the vertical dashed blue line) than the true/theoretical distribution (the vertical dashed black line). Our modelling aim is to recover the true parameters of the theoretical distribution from the observed distribution (i.e. recover the black lines from the blue lines).
 
 # Fitting a naive model using `fitdistrplus`
 
@@ -138,7 +145,7 @@ We first fit a naive model using the `fitdistcens()` function. This function is 
 
 ```{r fit-naive-model}
 fit <- delay_data |>
-  dplyr::select(left = observed_delay, right = observed_delay_upper) |>
+  dplyr::select(left = delay, right = delay_upper) |>
   fitdistcens(
     distr = "gamma",
     start = list(shape = 1, rate = 1)
@@ -151,7 +158,11 @@ We see that the naive model has fit poorly due to the primary censoring and righ
 
 # Fitting an improved model using `primarycensored` and `fitdistrplus`
 
-We'll now fit an improved model using the `primarycensored` package. To do this we need to define the custom distribution functions using the `primarycensored` package that are required by `fitdistrplus`. Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+We'll now fit an improved model using the `primarycensored` package.
+To do this we need to define the custom distribution functions using the `primarycensored` package that are required by `fitdistrplus`.
+Rather than using `fitdistcens` we use `fitdist` because our functions are handling the censoring themselves.
+Note that in this custom implementation for simplicity we are filtering to use only data with the same `obs_time` rather than handling varying observation times.
+This means we're using a subset of our simulated data for the estimation.
 
 ```{r fit-improved-model}
 # Define custom distribution functions using primarycensored
@@ -178,7 +189,7 @@ ppcens_gamma <- function(q, shape, rate) {
       pprimarycensored(
         q, pgamma,
         shape = shape, rate = rate,
-        pwindow = 1, D = 8
+        dpwindow = 1, D = 8
       )
     },
     error = function(e) {
@@ -189,7 +200,9 @@ ppcens_gamma <- function(q, shape, rate) {
 }
 
 # Fit the model using fitdistcens with custom gamma distribution
-pcens_fit <- samples |>
+pcens_fit <- delay_data |>
+  dplyr::filter(relative_obs_time == 8) |>
+  dplyr::pull(delay) |>
   fitdist(
     distr = "pcens_gamma",
     start = list(shape = 1, rate = 1)
@@ -198,21 +211,29 @@ pcens_fit <- samples |>
 summary(pcens_fit)
 ```
 
-We see very good agreement between the true and estimated parameters.
+We see good agreement between the true and estimated parameters but with higher standard errors due to using a subset of the data.
 
-Rather than using `fitdist()` directly `primarycensored` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data. A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed secondary censoring intervals.
+Rather than using `fitdist()` directly `primarycensored` provides a wrapper function `fitdistdoublecens()` that can be used to estimate double censored and truncated data.
+A bonus of this approach is we can specify our data using the `fitdistcens` `left` and `right` formulation and support mixed censoring intervals.
+Another bonus of this approach is that it supports a mixture of observation times so we can fit to all the available data rather than the subset we used in the custom implementation above.
 
 ```{r primarycensored-fitdistdoublecens}
-fitdistdoublecens_fit <- delay_data |>
-  dplyr::select(left = observed_delay, right = observed_delay_upper) |>
-  fitdistdoublecens(
-    distr = "gamma",
-    start = list(shape = 1, rate = 1),
-    D = 8, pwindow = 1
-  )
+# Using Stan-like interface but with fitdistrplus
+fitdistdoublecens_fit <- fitdistdoublecens(
+  delay_data,
+  distr = "gamma",
+  start = list(shape = 1, rate = 1),
+  left = "delay",
+  right = "delay_upper",
+  pwindow = "pwindow",
+  D = "relative_obs_time"
+)
 
 summary(fitdistdoublecens_fit)
 ```
 
+## Summary
 
-**Note** Currently this functionality is limited to a single pwindow, and observation time for all data. If this functionality is of interest then please open an issue on the `primarycensored` GitHub page.
+In this vignette we have shown how to fit a distribution using `primarycensored` in conjunction with `fitdistrplus` both from scratch and using the `fitdistdoublecens()` function. We have also shown how to compare the performance of the `primarycensored` model to a naive model.
+
+If interested in a more robust approach to fitting distributions see the `vignette("fitting-dists-with-stan")` vignette. If you are instead interested in fitting a delay distribution more flexibly see the [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).

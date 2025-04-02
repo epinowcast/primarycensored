@@ -1,8 +1,4 @@
 skip_on_cran()
-if (on_ci()) {
-  skip_on_os("windows")
-  skip_on_os("mac")
-}
 
 test_that("pcd_cmdstan_model throws error when cmdstanr is not installed", {
   with_mocked_bindings(

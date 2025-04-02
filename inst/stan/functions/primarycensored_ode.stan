@@ -103,7 +103,7 @@ vector primarycensored_ode(real t, vector y, array[] real theta,
   }
   array[primary_params_len] real primary_params;
   if (primary_params_len) {
-    int primary_loc = size(theta);
+    int primary_loc = num_elements(theta);
     primary_params = theta[primary_loc - primary_params_len + 1:primary_loc];
   }
 

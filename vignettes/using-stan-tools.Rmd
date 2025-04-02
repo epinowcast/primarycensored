@@ -20,14 +20,16 @@ vignette: >
 
 # Introduction
 
-## What are we going to do in this Vignette
+## What are we going to do in this vignette
 
-In this vignette, we'll explore how to use the `primarycensored` package in conjunction with Stan. We'll cover the following key points:
+In this vignette, we'll explore how to use the `primarycensored` package in your Stan modelling workflow. We'll cover the following key points:
 
 1. Introduction to Stan and its relevance for our analysis
 2. Overview of the packages we'll be using
 3. How to access and use Stan functions provided by `primarycensored`
 4. Methods for integrating these Stan functions into your workflow
+
+If you are instead interested in fitting a delay distribution using `primarycensored` in R see the `vignette("fitting-dists-with-stan")` vignette or [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).
 
 ## What is Stan and why are we using it
 
@@ -134,7 +136,7 @@ samples
 
 ## Using Stan functions directly in R
 
-Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensored` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensored` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model.
+Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensored` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensored` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model. **This can take some time (~30 seconds) to compile all of the functions.**
 
 ```{r, message = FALSE}
 model$expose_functions(global = TRUE)
@@ -145,3 +147,7 @@ We can now use the function in R. Note that this may get slightly more complicat
 ```{r}
 expgrowth_rng(0, 1, 0.4)
 ```
+
+## Summary
+
+In this vignette we have shown approaches for using the Stan functions provided by `primarycensored` in your Stan modelling workflow. We have also shown how to use the `expose_functions()` method to access the Stan functions directly in R for exploration and testing.

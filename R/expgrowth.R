@@ -4,14 +4,20 @@
 #' growth distribution.
 #'
 #' @param x,q Vector of quantiles.
+#'
 #' @param n Number of observations. If `length(n) > 1`, the length is taken to
-#' be the number required.
+#'  be the number required.
+#'
 #' @param min Minimum value of the distribution range. Default is 0.
+#'
 #' @param max Maximum value of the distribution range. Default is 1.
+#'
 #' @param r Rate parameter for the exponential growth.
+#'
 #' @param log,log.p Logical; if TRUE, probabilities p are given as log(p).
+#'
 #' @param lower.tail Logical; if TRUE (default), probabilities are P\[X <= x\],
-#' otherwise, P\[X > x\].
+#'  otherwise, P\[X > x\].
 #'
 #' @return `dexpgrowth` gives the density, `pexpgrowth` gives the distribution
 #' function, and `rexpgrowth` generates random deviates.
@@ -75,40 +81,45 @@ NULL
 #' @export
 dexpgrowth <- function(x, min = 0, max = 1, r, log = FALSE) {
   if (abs(r) < 1e-10) {
-    pdf <- rep(1 / (max - min), length(x))
+    result <- rep(1 / (max - min), length(x))
   } else {
-    pdf <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
+    result <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
   }
-  pdf[x < min | x > max] <- 0
+  result[x < min | x > max] <- 0
   if (log) {
-    return(log(pdf))
+    return(log(result))
   } else {
-    return(pdf)
+    return(result)
   }
 }
 
 #' @rdname expgrowth
 #' @export
-pexpgrowth <- function(q, min = 0, max = 1, r, lower.tail = TRUE,
-                       log.p = FALSE) {
-  cdf <- numeric(length(q))
+pexpgrowth <- function(
+    q,
+    min = 0,
+    max = 1,
+    r,
+    lower.tail = TRUE,
+    log.p = FALSE) {
+  cumulative <- numeric(length(q))
   in_range <- q >= min & q <= max
 
   if (abs(r) < 1e-10) {
-    cdf[in_range] <- (q[in_range] - min) / (max - min)
+    cumulative[in_range] <- (q[in_range] - min) / (max - min)
   } else {
-    cdf[in_range] <- (exp(r * (q[in_range] - min)) - exp(r * min)) /
+    cumulative[in_range] <- (exp(r * (q[in_range] - min)) - exp(r * min)) /
       (exp(r * max) - exp(r * min))
   }
 
-  cdf[q > max] <- 1
-  cdf[q < min] <- 0
+  cumulative[q > max] <- 1
+  cumulative[q < min] <- 0
 
-  if (!lower.tail) cdf <- 1 - cdf
+  if (!lower.tail) cumulative <- 1 - cumulative
   if (log.p) {
-    return(log(cdf))
+    return(log(cumulative))
   } else {
-    return(cdf)
+    return(cumulative)
   }
 }
 

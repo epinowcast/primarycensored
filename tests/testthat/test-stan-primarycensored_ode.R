@@ -1,9 +1,4 @@
 skip_on_cran()
-if (on_ci()) {
-  skip_on_os("windows")
-  skip_on_os("mac")
-}
-
 
 test_that("Stan primarycensored_ode produces expected output", {
   t <- 4.5

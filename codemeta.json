@@ -5,10 +5,10 @@
   "description": "Provides functions for working with primary event censored distributions and 'Stan' implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields (Charniga et al. (2024) <doi:10.48550/arXiv.2405.08841>). It also provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for (Park et al. (2024) <doi:10.1101/2024.01.12.24301247>). A subset of common distributions also have analytical solutions implemented, allowing for faster computation. In addition, it provides multiple methods for fitting primary event censored distributions to data via optional dependencies.",
   "name": "primarycensored: Primary Event Censored Distributions",
   "relatedLink": "https://primarycensored.epinowcast.org",
-  "codeRepository": "https://github.com/epinowcast/primarycensored/",
+  "codeRepository": "https://github.com/epinowcast/primarycensored",
   "issueTracker": "https://github.com/epinowcast/primarycensored/issues",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "1.0.0.1000",
+  "version": "1.1.0.1000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
@@ -38,10 +38,24 @@
     },
     {
       "@type": "Person",
+      "givenName": "Carl",
+      "familyName": "Pearson",
+      "email": "carl.ab.pearson@gmail.com",
+      "@id": "https://orcid.org/0000-0003-0701-7860"
+    },
+    {
+      "@type": "Person",
       "givenName": "Sebastian",
       "familyName": "Funk",
       "email": "sebastian.funk@lshtm.ac.uk",
       "@id": "https://orcid.org/0000-0002-2842-3406"
+    },
+    {
+      "@type": "Person",
+      "givenName": "Kelly",
+      "familyName": "Charniga",
+      "email": "kelly.charniga@gmail.com",
+      "@id": "https://orcid.org/0000-0002-7648-7041"
     }
   ],
   "contributor": [
@@ -51,6 +65,13 @@
       "familyName": "Howes",
       "email": "adamthowes@gmail.com",
       "@id": "https://orcid.org/0000-0003-2386-4031"
+    },
+    {
+      "@type": "Person",
+      "givenName": "James Mba",
+      "familyName": "Azam",
+      "email": "james.azam@lshtm.ac.uk",
+      "@id": "https://orcid.org/0000-0001-5782-7330"
     }
   ],
   "copyrightHolder": [
@@ -208,6 +229,18 @@
     },
     "2": {
       "@type": "SoftwareApplication",
+      "identifier": "lifecycle",
+      "name": "lifecycle",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=lifecycle"
+    },
+    "3": {
+      "@type": "SoftwareApplication",
       "identifier": "pracma",
       "name": "pracma",
       "provider": {
@@ -218,13 +251,25 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=pracma"
     },
+    "4": {
+      "@type": "SoftwareApplication",
+      "identifier": "rlang",
+      "name": "rlang",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=rlang"
+    },
     "SystemRequirements": null
   },
-  "fileSize": "434.303KB",
+  "fileSize": "468.833KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
-      "datePublished": "2024",
+      "datePublished": "2025",
       "author": [
         {
           "@type": "Person",
@@ -242,10 +287,24 @@
         },
         {
           "@type": "Person",
+          "givenName": "Carl",
+          "familyName": "Pearson",
+          "email": "carl.ab.pearson@gmail.com",
+          "@id": "https://orcid.org/0000-0003-0701-7860"
+        },
+        {
+          "@type": "Person",
           "givenName": "Sebastian",
           "familyName": "Funk",
           "email": "sebastian.funk@lshtm.ac.uk",
           "@id": "https://orcid.org/0000-0002-2842-3406"
+        },
+        {
+          "@type": "Person",
+          "givenName": "Kelly",
+          "familyName": "Charniga",
+          "email": "kelly.charniga@gmail.com",
+          "@id": "https://orcid.org/0000-0002-7648-7041"
         }
       ],
       "name": "primarycensored: Primary Event Censored Distributions",

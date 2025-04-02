@@ -69,16 +69,18 @@ The mathematical formulation for generating random samples from a primary
 event censored distribution is as follows:
 \enumerate{
 \item Generate primary event times (p) from the specified primary event
-distribution (f_p) within the primary event window (pwindow):
-\deqn{p \sim f_p(x), \quad 0 \leq x \leq pwindow}
+distribution (f_p) with parameters phi, defined between 0 and the primary
+event window (pwindow):
+\deqn{p \sim f_p(\phi), \quad p \in [0, pwindow]}
 \item Generate delays (d) from the specified delay distribution (f_d) with
 parameters theta:
-\deqn{d \sim f_d(x; \theta)}
+\deqn{d \sim f_d(\theta)}
 \item Calculate the total delays (t) by adding the primary event times and
 the delays:
 \deqn{t = p + d}
-\item Apply truncation to ensure that the delays are within the specified
-range [0, D]:
+\item Apply truncation (i.e. remove any delays that fall outside the observation
+window) to ensure that the delays are within the specified range [0, D],
+where D is the maximum observable delay:
 \deqn{t_{truncated} = \{t \mid 0 \leq t < D\}}
 \item Round the truncated delays to the nearest secondary event window
 (swindow):
@@ -103,6 +105,7 @@ rprimarycensored(
 \seealso{
 Primary event censored distribution functions
 \code{\link{dprimarycensored}()},
-\code{\link{pprimarycensored}()}
+\code{\link{pprimarycensored}()},
+\code{\link{qprimarycensored}()}
 }
 \concept{primarycensored}

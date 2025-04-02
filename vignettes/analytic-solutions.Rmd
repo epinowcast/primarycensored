@@ -16,7 +16,9 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-# What are we going to do in this Vignette
+# Introduction
+
+## What are we going to do in this vignette
 
 In this vignette, we'll derive the analytic solutions for the primary censored delay distributions for a range of commonly used distributions.
 
@@ -28,7 +30,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 
 # Analytic solutions for exponentially tilted primary event times
 
-In epidemiological analysis, it is common for primary events to be arriving at exponentially increasing or decreasing rates, for example, incidence of new infections in a growing epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay. If we assume a reference uniform distribution within a primary censoring window $[k, k + w_P)$ then the distribution of the primary event time within the censoring window is the exponential tilted uniform distribution:
+In epidemiological analysis, it is common for primary events to occur at exponentially increasing or decreasing rates, for example, incidence of new infections in an epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay[@Park2024] (i.e. for exponential growth, the event time will more likely to be closer to the end of the censoring window and vice versa for decay). If we assume a reference uniform distribution within a primary censoring window $[k, k + w_P)$ then the distribution of the primary event time within the censoring window is the [exponential tilted](https://en.wikipedia.org/wiki/Exponential_tilting) uniform distribution:
 
 $$
 f_P(t) \propto \exp(r t) \mathbb{1}_{[k, k + w_P]}(t).

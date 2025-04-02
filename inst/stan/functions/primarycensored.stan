@@ -38,8 +38,8 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   } else {
     // Use numerical integration for other cases
     real lower_bound = max({d - pwindow, 1e-6});
-    int n_params = size(params);
-    int n_primary_params = size(primary_params);
+    int n_params = num_elements(params);
+    int n_primary_params = num_elements(primary_params);
     array[n_params + n_primary_params] real theta = append_array(params, primary_params);
     array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
 
@@ -79,7 +79,7 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   * real pwindow = 1.0;
   * real D = positive_infinity();
   * int primary_id = 1; // Uniform
-  * array[0] real primary_params = {};
+  * array[0] real primary_params = rep_array(0.0, 0);
   * real log_cdf = primarycensored_lcdf(
   *   d, dist_id, params, pwindow, D, primary_id, primary_params
   * );

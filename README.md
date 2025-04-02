@@ -14,7 +14,7 @@ coverage](https://codecov.io/gh/epinowcast/primarycensored/branch/main/graph/bad
 [![Universe](https://epinowcast.r-universe.dev/badges/primarycensored)](https://epinowcast.r-universe.dev/primarycensored)
 [![MIT
 license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/)
-[![](https://cranlogs.r-pkg.org/badges/grand-total/primarycensored)](https://cran.r-project.org/web/packages/primarycensored/index.html)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/primarycensored)](https://CRAN.R-project.org/package=primarycensored)
 [![GitHub
 contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
 [![DOI](https://zenodo.org/badge/845633278.svg)](https://zenodo.org/doi/10.5281/zenodo.13632838)
@@ -227,13 +227,15 @@ specification. Contributions of any kind are welcome!
 <a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>,
-<a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>
+<a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam">jamesmbaazam</a>
 
 ### Issue Authors
 
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>,
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajamesmbaazam">jamesmbaazam</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski">adamkucharski</a>
 
 ### Issue Contributors
 

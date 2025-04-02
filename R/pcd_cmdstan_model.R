@@ -33,11 +33,15 @@ pcd_cmdstan_model <- function(
     include_paths = primarycensored::pcd_stan_path(),
     ...) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
-    stop("Package 'cmdstanr' is required but not installed for this function.")
+    stop(
+      "Package 'cmdstanr' is required but not installed for this function.",
+      call. = FALSE
+    )
   }
 
   pcd_stan_model <- system.file(
-    "stan", "pcens_model.stan",
+    "stan",
+    "pcens_model.stan",
     package = "primarycensored"
   )
 
@@ -65,17 +69,16 @@ pcd_cmdstan_model <- function(
 #' @param pwindow Column name for primary window (default: "pwindow")
 #'
 #' @param relative_obs_time Column name for relative observation time
-#' (default: "relative_obs_time")
+#'  (default: "relative_obs_time")
 #'
 #' @param dist_id Integer identifying the delay distribution:
-#'   1 = Lognormal, 2 = Gamma, 3 = Weibull, 4 = Exponential,
-#'   5 = Generalized Gamma, 6 = Negative Binomial, 7 = Poisson,
-#'   8 = Bernoulli, 9 = Beta, 10 = Binomial, 11 = Categorical, 12 = Cauchy,
-#'   13 = Chi-square, 14 = Dirichlet, 15 = Gumbel, 16 = Inverse Gamma,
-#'   17 = Logistic
+#'   You can use [pcd_stan_dist_id()] to get the dist ID for a
+#'   distribution or look at the [pcd_distributions] data set.
 #'
 #' @param primary_id Integer identifying the primary distribution:
-#'   1 = Uniform, 2 = Exponential growth
+#'   You can use [pcd_stan_dist_id()] to get the primary dist ID for a
+#'   distribution (make sure to select the "primary" type) or look at the
+#'   [pcd_primary_distributions] data set.
 #'
 #' @param param_bounds A list with elements `lower` and `upper`, each a numeric
 #'   vector specifying bounds for the delay distribution parameters.
@@ -92,14 +95,14 @@ pcd_cmdstan_model <- function(
 #' @param compute_log_lik Logical; compute log likelihood? (default: FALSE)
 #'
 #' @param use_reduce_sum Logical; use reduce_sum for performance?
-#'  (default: FALSE)
+#'   (default: FALSE)
 #'
 #' @param truncation_check_multiplier Numeric multiplier to use for checking
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
 #' @return A list containing the data formatted for use with
-#' [pcd_cmdstan_model()]
+#'   [pcd_cmdstan_model()]
 #'
 #' @export
 #' @family modelhelpers
@@ -122,12 +125,18 @@ pcd_cmdstan_model <- function(
 #'   primary_priors = list(location = numeric(0), scale = numeric(0))
 #' )
 pcd_as_stan_data <- function(
-    data, delay = "delay", delay_upper = "delay_upper",
-    n = "n", pwindow = "pwindow",
+    data,
+    delay = "delay",
+    delay_upper = "delay_upper",
+    n = "n",
+    pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",
-    dist_id, primary_id,
-    param_bounds, primary_param_bounds,
-    priors, primary_priors,
+    dist_id,
+    primary_id,
+    param_bounds,
+    primary_param_bounds,
+    priors,
+    primary_priors,
     compute_log_lik = FALSE,
     use_reduce_sum = FALSE,
     truncation_check_multiplier = 2) {
@@ -135,14 +144,27 @@ pcd_as_stan_data <- function(
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
     stop(
-      "Missing required columns: ", toString(missing_cols), "\n",
+      "Missing required columns: ",
+      toString(missing_cols),
+      "\n",
       "Please ensure your data frame contains these columns or set the",
       " corresponding arguments:\n",
-      "delay = '", delay, "'\n",
-      "delay_upper = '", delay_upper, "'\n",
-      "n = '", n, "'\n",
-      "pwindow = '", pwindow, "'\n",
-      "relative_obs_time = '", relative_obs_time, "'"
+      "delay = '",
+      delay,
+      "'\n",
+      "delay_upper = '",
+      delay_upper,
+      "'\n",
+      "n = '",
+      n,
+      "'\n",
+      "pwindow = '",
+      pwindow,
+      "'\n",
+      "relative_obs_time = '",
+      relative_obs_time,
+      "'",
+      call. = FALSE
     )
   }
 

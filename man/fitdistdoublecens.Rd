@@ -7,10 +7,12 @@
 fitdistdoublecens(
   censdata,
   distr,
-  pwindow = 1,
-  D = Inf,
+  left = "left",
+  right = "right",
+  pwindow = "pwindow",
+  D = "D",
   dprimary = stats::dunif,
-  dprimary_name = NULL,
+  dprimary_name = lifecycle::deprecated(),
   dprimary_args = list(),
   truncation_check_multiplier = 2,
   ...
@@ -24,10 +26,16 @@ upper or lower bounds.}
 
 \item{distr}{A character string naming the distribution to be fitted.}
 
-\item{pwindow}{Primary event window}
+\item{left}{Column name for lower bound of observed values (default: "left").}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{right}{Column name for upper bound of observed values (default:
+"right").}
+
+\item{pwindow}{Column name for primary window (default: "pwindow").}
+
+\item{D}{Column name for maximum delay (truncation point). If finite, the
+distribution is truncated at D. If set to Inf, no truncation is applied.
+(default: "D").}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -35,13 +43,14 @@ truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
 normalized to integrate to 1 over [0, pwindow]. Defaults to a uniform
 distribution over [0, pwindow]. Users can provide custom functions or use
 helper functions like \code{dexpgrowth} for an exponential growth distribution.
-See \code{primary_dists.R} for examples.}
+See \code{\link[=pcd_primary_distributions]{pcd_primary_distributions()}} for examples. The package can identify
+base R distributions for potential analytical solutions. For non-base R
+functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
+functions if they wish to leverage analytical solutions.}
 
-\item{dprimary_name}{A string specifying the name of the primary event
-distribution function. If NULL, the function name is extracted using
-\code{\link[=.extract_function_name]{.extract_function_name()}}. Used to determine if a analytical solution
-exists for the primary censored distribution. Must be set if \code{dprimary} is
-passed a pre-assigned variable rather than a function name.}
+\item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
+ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{dprimary}
+instead}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
@@ -85,14 +94,15 @@ samples <- rprimarycensored(
 
 delay_data <- data.frame(
   left = samples,
-  right = samples + swindow
+  right = samples + swindow,
+  pwindow = rep(pwindow, n),
+  D = rep(D, n)
 )
 
 fit_norm <- fitdistdoublecens(
   delay_data,
   distr = "norm",
-  start = list(mean = 0, sd = 1),
-  D = D, pwindow = pwindow
+  start = list(mean = 0, sd = 1)
 )
 
 summary(fit_norm)
