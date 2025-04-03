@@ -50,7 +50,6 @@ SOFTWARE.
 
 ---
 
-# Package Website
+## primarycensored main website
 
-> [!note]
-> Click [here](https://primarycensored.epinowcast.org/dev/index.html) to return to the main primarycensored website.
+Click [here](https://primarycensored.epinowcast.org/dev/index.html) to return to the main website.
