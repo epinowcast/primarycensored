@@ -3,7 +3,7 @@
   <!-- Navigation index tabs -->
   <navindex>
     <!-- Keep only essential navigation elements -->
-    <tab type="mainpage" visible="yes" title="Overview"/>
+    <tab type="mainpage" visible="yes" title="Home"/>
     <tab type="topics" visible="yes" title="Functions" intro="Functions grouped by purpose:"/>
   </navindex>
 
