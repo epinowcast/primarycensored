@@ -9,10 +9,10 @@ This documentation covers the Stan functions. All the Stan functions have a corr
 ## Documentation Structure
 
 Each function page includes:
-- A brief description of the function's purpose
-- Detailed explanation of the function's behavior
-- Parameter descriptions with standardized documentation
-- Return value information
+- A brief description of each function's purpose
+- Parameter descriptions
+- Return values
+- Grouping structure
 - Example usage where applicable
 - Call and caller graphs for learning the relationships between functions
 
