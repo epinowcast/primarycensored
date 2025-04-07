@@ -1,6 +1,6 @@
-
 /**
   * Check if an analytical solution exists for the given distribution combination
+  * @ingroup analytical_solution_helpers
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -16,6 +16,7 @@ int check_for_analytical(int dist_id, int primary_id) {
 
 /**
   * Compute the primary event censored log CDF analytically for Gamma delay with Uniform primary
+  * @ingroup primary_event_analytical_distributions
   *
   * @param d Delay time
   * @param q Lower bound of integration (max(d - pwindow, 0))
@@ -71,6 +72,7 @@ real primarycensored_gamma_uniform_lcdf(data real d, real q, array[] real params
 
 /**
   * Compute the primary event censored log CDF analytically for Lognormal delay with Uniform primary
+  * @ingroup primary_event_analytical_distributions
   *
   * @param d Delay time
   * @param q Lower bound of integration (max(d - pwindow, 0))
@@ -128,6 +130,7 @@ real primarycensored_lognormal_uniform_lcdf(data real d, real q, array[] real pa
 
 /**
   * Compute the log of the lower incomplete gamma function
+  * @ingroup analytical_solution_helpers
   *
   * This function is used in the analytical solution for the primary censored
   * Weibull distribution with uniform primary censoring. It corresponds to the
@@ -147,6 +150,7 @@ real log_weibull_g(real t, real shape, real scale) {
 
 /**
   * Compute the primary event censored log CDF analytically for Weibull delay with Uniform primary
+  * @ingroup primary_event_analytical_distributions
   *
   * @param d Delay time
   * @param q Lower bound of integration (max(d - pwindow, 0))
@@ -201,6 +205,7 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q, array[] real para
 
 /**
   * Compute the primary event censored log CDF analytically for a single delay
+  * @ingroup primary_event_analytical_distributions
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -252,6 +257,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
 
 /**
   * Compute the primary event censored CDF analytically for a single delay
+  * @ingroup primary_event_analytical_distributions
   *
   * @param d Delay
   * @param dist_id Distribution identifier

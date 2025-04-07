@@ -4,6 +4,7 @@
 
 /**
   * Compute the primary event censored CDF for a single delay
+  * @ingroup primary_censored_single
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -58,6 +59,7 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
 
 /**
   * Compute the primary event censored log CDF for a single delay
+  * @ingroup primary_censored_single
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -122,6 +124,7 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
 
 /**
   * Compute the primary event censored log PMF for a single delay
+  * @ingroup primary_censored_single
   *
   * @param d Delay (integer)
   * @param dist_id Distribution identifier
@@ -185,6 +188,7 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
 
 /**
   * Compute the primary event censored PMF for a single delay
+  * @ingroup primary_censored_single
   *
   * @param d Delay (integer)
   * @param dist_id Distribution identifier
@@ -224,6 +228,7 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
 
 /**
   * Compute the primary event censored log PMF for integer delays up to max_delay
+  * @ingroup primary_censored_vectorized
   *
   * @param max_delay Maximum delay to compute PMF for
   * @param D Maximum delay (truncation point), must be at least max_delay + 1
@@ -309,6 +314,7 @@ vector primarycensored_sone_lpmf_vectorized(
 
 /**
   * Compute the primary event censored PMF for integer delays up to max_delay
+  * @ingroup primary_censored_vectorized
   *
   * @param max_delay Maximum delay to compute PMF for
   * @param D Maximum delay (truncation point), must be at least max_delay + 1

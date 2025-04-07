@@ -32,6 +32,7 @@ This minor release improves the documentation and the internal system used to au
 ## Documentation
 
 - Added a CRAN downloads badge to the README.
+- The [Stan Reference](https://primarycensored.epinowcast.org/stan/) has been enhanced to make it easier to navigate the Stan code.
 - Corrected how to specify an empty array in the docs of `primarycensored_lcdf()`.
 - All documentation was reviewed and updated to enhance readability and clarity.
 
