@@ -15,6 +15,7 @@ This the development version
 ## Documentation
 
 - Updated the `fitdistrplus` vignette to use more complex data where the relative observation time is not constant. Also removed the note that the `fitdistdoublecens()` function is limited to a single primary censoring windows and truncation time as this is no longer the case.
+- The [Stan Reference](https://primarycensored.epinowcast.org/stan/) has been enhanced to make it easier to navigate the Stan code.
 
 # primarycensored 1.1.0
 
@@ -32,7 +33,6 @@ This minor release improves the documentation and the internal system used to au
 ## Documentation
 
 - Added a CRAN downloads badge to the README.
-- The [Stan Reference](https://primarycensored.epinowcast.org/stan/) has been enhanced to make it easier to navigate the Stan code.
 - Corrected how to specify an empty array in the docs of `primarycensored_lcdf()`.
 - All documentation was reviewed and updated to enhance readability and clarity.
 
