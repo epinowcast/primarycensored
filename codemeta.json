@@ -14,7 +14,7 @@
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.4.2 (2024-10-31)",
+  "runtimePlatform": "R version 4.4.3 (2025-02-28)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -35,6 +35,13 @@
       "familyName": "Brand",
       "email": "usi1@cdc.gov",
       "@id": "https://orcid.org/0000-0003-0645-5367"
+    },
+    {
+      "@type": "Person",
+      "givenName": "James Mba",
+      "familyName": "Azam",
+      "email": "james.azam@lshtm.ac.uk",
+      "@id": "https://orcid.org/0000-0001-5782-7330"
     },
     {
       "@type": "Person",
@@ -65,13 +72,6 @@
       "familyName": "Howes",
       "email": "adamthowes@gmail.com",
       "@id": "https://orcid.org/0000-0003-2386-4031"
-    },
-    {
-      "@type": "Person",
-      "givenName": "James Mba",
-      "familyName": "Azam",
-      "email": "james.azam@lshtm.ac.uk",
-      "@id": "https://orcid.org/0000-0001-5782-7330"
     }
   ],
   "copyrightHolder": [
@@ -265,7 +265,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "468.833KB",
+  "fileSize": "600.344KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -284,6 +284,13 @@
           "familyName": "Brand",
           "email": "usi1@cdc.gov",
           "@id": "https://orcid.org/0000-0003-0645-5367"
+        },
+        {
+          "@type": "Person",
+          "givenName": "James Mba",
+          "familyName": "Azam",
+          "email": "james.azam@lshtm.ac.uk",
+          "@id": "https://orcid.org/0000-0001-5782-7330"
         },
         {
           "@type": "Person",
