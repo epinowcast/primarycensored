@@ -5,14 +5,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>epinowcast: primarycensored_analytical_cdf.stan File Reference</title>
+<title>primarycensored: primarycensored_analytical_cdf.stan File Reference</title>
+<link rel="icon" href="logo.png" type="image/x-icon" />
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
-<script type="text/javascript" src="navtreedata.js"></script>
-<script type="text/javascript" src="navtree.js"></script>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="cookie.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -26,6 +25,7 @@ MathJax.Hub.Config({
 </script>
 <script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -33,8 +33,9 @@ MathJax.Hub.Config({
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr id="projectrow">
+  <td id="projectlogo"><img alt="Logo" src="logo.png"/></td>
   <td id="projectalign">
-   <div id="projectname">epinowcast
+   <div id="projectname">primarycensored
    </div>
   </td>
  </tr>
@@ -58,29 +59,17 @@ $(function() { codefold.init(0); });
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
 $(function() {
-  initMenu('',true,false,'search.php','Search',true);
+  initMenu('',true,false,'search.php','Search',false);
   $(function() { init_search(); });
 });
 /* @license-end */
 </script>
 <div id="main-nav"></div>
-</div><!-- top -->
-<div id="side-nav" class="ui-resizable side-nav-resizable">
-  <div id="nav-tree">
-    <div id="nav-tree-contents">
-      <div id="nav-sync" class="sync"></div>
-    </div>
-  </div>
-  <div id="splitbar" style="-moz-user-select:none;" 
-       class="ui-resizable-handle">
-  </div>
-</div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('primarycensored__analytical__cdf_8stan.html',''); initResizable(true); });
+$(function(){ initResizable(false); });
 /* @license-end */
 </script>
-<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -102,368 +91,41 @@ $(function(){initNavTree('primarycensored__analytical__cdf_8stan.html',''); init
 </div>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_35baea09d55bebfe17654fdf4bf061ce.html">functions</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div id="doc-content">
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions in this File</a>  </div>
   <div class="headertitle"><div class="title">primarycensored_analytical_cdf.stan File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p><a href="primarycensored__analytical__cdf_8stan_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:afbcb39f95f9afcd6128039ece98c070a" id="r_afbcb39f95f9afcd6128039ece98c070a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#afbcb39f95f9afcd6128039ece98c070a">check_for_analytical</a> (int dist_id, int primary_id)</td></tr>
-<tr class="separator:afbcb39f95f9afcd6128039ece98c070a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acaf23c49145360658543b617ef155560" id="r_acaf23c49145360658543b617ef155560"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#acaf23c49145360658543b617ef155560">primarycensored_gamma_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
-<tr class="separator:acaf23c49145360658543b617ef155560"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa144386bb3c2a04524e4fe2e216c368d" id="r_aa144386bb3c2a04524e4fe2e216c368d"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa144386bb3c2a04524e4fe2e216c368d">primarycensored_lognormal_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
-<tr class="separator:aa144386bb3c2a04524e4fe2e216c368d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2cc78a10c9ffbc81af20655c206acfc4" id="r_a2cc78a10c9ffbc81af20655c206acfc4"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a2cc78a10c9ffbc81af20655c206acfc4">log_weibull_g</a> (real t, real shape, real scale)</td></tr>
-<tr class="separator:a2cc78a10c9ffbc81af20655c206acfc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a435887da77ef71daacacddbaf3f1113f" id="r_a435887da77ef71daacacddbaf3f1113f"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a435887da77ef71daacacddbaf3f1113f">primarycensored_weibull_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
-<tr class="separator:a435887da77ef71daacacddbaf3f1113f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a663b8b1867912da09e56b5c88b7cad31" id="r_a663b8b1867912da09e56b5c88b7cad31"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a663b8b1867912da09e56b5c88b7cad31">primarycensored_analytical_lcdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_id, array[] real primary_params)</td></tr>
-<tr class="separator:a663b8b1867912da09e56b5c88b7cad31"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1b511c5d7317add3a126cf081631ad6c" id="r_a1b511c5d7317add3a126cf081631ad6c"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a1b511c5d7317add3a126cf081631ad6c">primarycensored_analytical_cdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_id, array[] real primary_params)</td></tr>
-<tr class="separator:a1b511c5d7317add3a126cf081631ad6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+Functions in this File</h2></td></tr>
+<tr class="memitem:gafbcb39f95f9afcd6128039ece98c070a" id="r_gafbcb39f95f9afcd6128039ece98c070a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__analytical__solution__helpers.html#gafbcb39f95f9afcd6128039ece98c070a">check_for_analytical</a> (int dist_id, int primary_id)</td></tr>
+<tr class="separator:gafbcb39f95f9afcd6128039ece98c070a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacaf23c49145360658543b617ef155560" id="r_gacaf23c49145360658543b617ef155560"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560">primarycensored_gamma_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
+<tr class="separator:gacaf23c49145360658543b617ef155560"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa144386bb3c2a04524e4fe2e216c368d" id="r_gaa144386bb3c2a04524e4fe2e216c368d"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__primary__event__analytical__distributions.html#gaa144386bb3c2a04524e4fe2e216c368d">primarycensored_lognormal_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
+<tr class="separator:gaa144386bb3c2a04524e4fe2e216c368d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga2cc78a10c9ffbc81af20655c206acfc4" id="r_ga2cc78a10c9ffbc81af20655c206acfc4"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4">log_weibull_g</a> (real t, real shape, real scale)</td></tr>
+<tr class="separator:ga2cc78a10c9ffbc81af20655c206acfc4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga435887da77ef71daacacddbaf3f1113f" id="r_ga435887da77ef71daacacddbaf3f1113f"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__primary__event__analytical__distributions.html#ga435887da77ef71daacacddbaf3f1113f">primarycensored_weibull_uniform_lcdf</a> (data real d, real q, array[] real params, data real pwindow)</td></tr>
+<tr class="separator:ga435887da77ef71daacacddbaf3f1113f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga663b8b1867912da09e56b5c88b7cad31" id="r_ga663b8b1867912da09e56b5c88b7cad31"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__primary__event__analytical__distributions.html#ga663b8b1867912da09e56b5c88b7cad31">primarycensored_analytical_lcdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_id, array[] real primary_params)</td></tr>
+<tr class="separator:ga663b8b1867912da09e56b5c88b7cad31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1b511c5d7317add3a126cf081631ad6c" id="r_ga1b511c5d7317add3a126cf081631ad6c"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__primary__event__analytical__distributions.html#ga1b511c5d7317add3a126cf081631ad6c">primarycensored_analytical_cdf</a> (data real d, int dist_id, array[] real params, data real pwindow, data real D, int primary_id, array[] real primary_params)</td></tr>
+<tr class="separator:ga1b511c5d7317add3a126cf081631ad6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="afbcb39f95f9afcd6128039ece98c070a" name="afbcb39f95f9afcd6128039ece98c070a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#afbcb39f95f9afcd6128039ece98c070a">&#9670;&#160;</a></span>check_for_analytical()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">int check_for_analytical </td>
-          <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Check if an analytical solution exists for the given distribution combination</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">dist_id</td><td>Distribution identifier for the delay distribution </td></tr>
-    <tr><td class="paramname">primary_id</td><td>Distribution identifier for the primary distribution</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>1 if an analytical solution exists, 0 otherwise </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00010">10</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
-<a id="a2cc78a10c9ffbc81af20655c206acfc4" name="a2cc78a10c9ffbc81af20655c206acfc4"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a2cc78a10c9ffbc81af20655c206acfc4">&#9670;&#160;</a></span>log_weibull_g()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real log_weibull_g </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>t</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>shape</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>scale</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the log of the lower incomplete gamma function</p>
-<p>This function is used in the analytical solution for the primary censored Weibull distribution with uniform primary censoring. It corresponds to the g(t; λ, k) function described in the analytic solutions document.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">t</td><td>Upper bound of integration </td></tr>
-    <tr><td class="paramname">shape</td><td>Shape parameter (k) of the Weibull distribution </td></tr>
-    <tr><td class="paramname">scale</td><td>Scale parameter (λ) of the Weibull distribution</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k) </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00142">142</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
-<a id="a1b511c5d7317add3a126cf081631ad6c" name="a1b511c5d7317add3a126cf081631ad6c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a1b511c5d7317add3a126cf081631ad6c">&#9670;&#160;</a></span>primarycensored_analytical_cdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real primarycensored_analytical_cdf </td>
-          <td>(</td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>d</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>pwindow</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>D</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>primary_params</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the primary event censored CDF analytically for a single delay</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>Delay </td></tr>
-    <tr><td class="paramname">dist_id</td><td>Distribution identifier </td></tr>
-    <tr><td class="paramname">params</td><td>Array of distribution parameters </td></tr>
-    <tr><td class="paramname">pwindow</td><td>Primary event window </td></tr>
-    <tr><td class="paramname">D</td><td>Maximum delay (truncation point) </td></tr>
-    <tr><td class="paramname">primary_id</td><td>Primary distribution identifier </td></tr>
-    <tr><td class="paramname">primary_params</td><td>Primary distribution parameters</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Primary event censored CDF, normalized by D if finite (truncation adjustment) </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00266">266</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
-<a id="a663b8b1867912da09e56b5c88b7cad31" name="a663b8b1867912da09e56b5c88b7cad31"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a663b8b1867912da09e56b5c88b7cad31">&#9670;&#160;</a></span>primarycensored_analytical_lcdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real primarycensored_analytical_lcdf </td>
-          <td>(</td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>d</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>pwindow</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>D</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>primary_params</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the primary event censored log CDF analytically for a single delay</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>Delay </td></tr>
-    <tr><td class="paramname">dist_id</td><td>Distribution identifier </td></tr>
-    <tr><td class="paramname">params</td><td>Array of distribution parameters </td></tr>
-    <tr><td class="paramname">pwindow</td><td>Primary event window </td></tr>
-    <tr><td class="paramname">D</td><td>Maximum delay (truncation point) </td></tr>
-    <tr><td class="paramname">primary_id</td><td>Primary distribution identifier </td></tr>
-    <tr><td class="paramname">primary_params</td><td>Primary distribution parameters</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Primary event censored log CDF, normalized by D if finite (truncation adjustment) </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00215">215</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
-<a id="acaf23c49145360658543b617ef155560" name="acaf23c49145360658543b617ef155560"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#acaf23c49145360658543b617ef155560">&#9670;&#160;</a></span>primarycensored_gamma_uniform_lcdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real primarycensored_gamma_uniform_lcdf </td>
-          <td>(</td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>d</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>q</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>pwindow</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the primary event censored log CDF analytically for Gamma delay with Uniform primary</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>Delay time </td></tr>
-    <tr><td class="paramname">q</td><td>Lower bound of integration (max(d - pwindow, 0)) </td></tr>
-    <tr><td class="paramname">params</td><td>Array of Gamma distribution parameters [shape, rate] </td></tr>
-    <tr><td class="paramname">pwindow</td><td>Primary event window</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Log of the primary event censored CDF for Gamma delay with Uniform primary </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00028">28</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
-<a id="aa144386bb3c2a04524e4fe2e216c368d" name="aa144386bb3c2a04524e4fe2e216c368d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa144386bb3c2a04524e4fe2e216c368d">&#9670;&#160;</a></span>primarycensored_lognormal_uniform_lcdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real primarycensored_lognormal_uniform_lcdf </td>
-          <td>(</td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>d</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>q</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>pwindow</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the primary event censored log CDF analytically for Lognormal delay with Uniform primary</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>Delay time </td></tr>
-    <tr><td class="paramname">q</td><td>Lower bound of integration (max(d - pwindow, 0)) </td></tr>
-    <tr><td class="paramname">params</td><td>Array of Lognormal distribution parameters [mu, sigma] </td></tr>
-    <tr><td class="paramname">pwindow</td><td>Primary event window</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Log of the primary event censored CDF for Lognormal delay with Uniform primary </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00083">83</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
-<a id="a435887da77ef71daacacddbaf3f1113f" name="a435887da77ef71daacacddbaf3f1113f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a435887da77ef71daacacddbaf3f1113f">&#9670;&#160;</a></span>primarycensored_weibull_uniform_lcdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real primarycensored_weibull_uniform_lcdf </td>
-          <td>(</td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>d</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>q</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">data real</td>          <td class="paramname"><span class="paramname"><em>pwindow</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the primary event censored log CDF analytically for Weibull delay with Uniform primary</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">d</td><td>Delay time </td></tr>
-    <tr><td class="paramname">q</td><td>Lower bound of integration (max(d - pwindow, 0)) </td></tr>
-    <tr><td class="paramname">params</td><td>Array of Weibull distribution parameters [shape, scale] </td></tr>
-    <tr><td class="paramname">pwindow</td><td>Primary event window</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Log of the primary event censored CDF for Weibull delay with Uniform primary </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00159">159</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
-
-</div>
-</div>
 </div><!-- contents -->
-</div><!-- doc-content -->
 <!-- start footer part -->
-<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
-  <ul>
-    <li class="navelem"><a class="el" href="primarycensored__analytical__cdf_8stan.html">primarycensored_analytical_cdf.stan</a></li>
-    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
-  </ul>
-</div>
+<hr class="footer"/><address class="footer"><small>
+Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+</small></address>
+</div><!-- doc-content -->
 </body>
 </html>

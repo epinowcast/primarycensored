@@ -5,14 +5,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>epinowcast: primarycensored_ode.stan File Reference</title>
+<title>primarycensored: primarycensored_ode.stan File Reference</title>
+<link rel="icon" href="logo.png" type="image/x-icon" />
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
-<script type="text/javascript" src="navtreedata.js"></script>
-<script type="text/javascript" src="navtree.js"></script>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="cookie.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -26,6 +25,7 @@ MathJax.Hub.Config({
 </script>
 <script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -33,8 +33,9 @@ MathJax.Hub.Config({
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr id="projectrow">
+  <td id="projectlogo"><img alt="Logo" src="logo.png"/></td>
   <td id="projectalign">
-   <div id="projectname">epinowcast
+   <div id="projectname">primarycensored
    </div>
   </td>
  </tr>
@@ -58,29 +59,17 @@ $(function() { codefold.init(0); });
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
 $(function() {
-  initMenu('',true,false,'search.php','Search',true);
+  initMenu('',true,false,'search.php','Search',false);
   $(function() { init_search(); });
 });
 /* @license-end */
 </script>
 <div id="main-nav"></div>
-</div><!-- top -->
-<div id="side-nav" class="ui-resizable side-nav-resizable">
-  <div id="nav-tree">
-    <div id="nav-tree-contents">
-      <div id="nav-sync" class="sync"></div>
-    </div>
-  </div>
-  <div id="splitbar" style="-moz-user-select:none;" 
-       class="ui-resizable-handle">
-  </div>
-</div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('primarycensored__ode_8stan.html',''); initResizable(true); });
+$(function(){ initResizable(false); });
 /* @license-end */
 </script>
-<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -102,185 +91,33 @@ $(function(){initNavTree('primarycensored__ode_8stan.html',''); initResizable(tr
 </div>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_35baea09d55bebfe17654fdf4bf061ce.html">functions</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div id="doc-content">
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions in this File</a>  </div>
   <div class="headertitle"><div class="title">primarycensored_ode.stan File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p><a href="primarycensored__ode_8stan_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a0761ffd0ab06dc8b52d0ef30090941ce" id="r_a0761ffd0ab06dc8b52d0ef30090941ce"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a> (real delay, array[] real params, int dist_id)</td></tr>
-<tr class="separator:a0761ffd0ab06dc8b52d0ef30090941ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a8ff5fd4d60c7f181715bb62f645d8b08" id="r_a8ff5fd4d60c7f181715bb62f645d8b08"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a> (real x, int primary_id, array[] real params, real min, real max)</td></tr>
-<tr class="separator:a8ff5fd4d60c7f181715bb62f645d8b08"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a36bcf9457dc8dca5bb617405733b2d0f" id="r_a36bcf9457dc8dca5bb617405733b2d0f"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a> (real t, vector y, array[] real theta, array[] real x_r, array[] int x_i)</td></tr>
-<tr class="separator:a36bcf9457dc8dca5bb617405733b2d0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+Functions in this File</h2></td></tr>
+<tr class="memitem:ga0761ffd0ab06dc8b52d0ef30090941ce" id="r_ga0761ffd0ab06dc8b52d0ef30090941ce"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a> (real delay, array[] real params, int dist_id)</td></tr>
+<tr class="separator:ga0761ffd0ab06dc8b52d0ef30090941ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga8ff5fd4d60c7f181715bb62f645d8b08" id="r_ga8ff5fd4d60c7f181715bb62f645d8b08"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__primary__distribution__log__pdfs.html#ga8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a> (real x, int primary_id, array[] real params, real min, real max)</td></tr>
+<tr class="separator:ga8ff5fd4d60c7f181715bb62f645d8b08"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga36bcf9457dc8dca5bb617405733b2d0f" id="r_ga36bcf9457dc8dca5bb617405733b2d0f"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a> (real t, vector y, array[] real theta, array[] real x_r, array[] int x_i)</td></tr>
+<tr class="separator:ga36bcf9457dc8dca5bb617405733b2d0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="a0761ffd0ab06dc8b52d0ef30090941ce" name="a0761ffd0ab06dc8b52d0ef30090941ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0761ffd0ab06dc8b52d0ef30090941ce">&#9670;&#160;</a></span>dist_lcdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real dist_lcdf </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>delay</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the log CDF of the delay distribution</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">delay</td><td>Time delay </td></tr>
-    <tr><td class="paramname">params</td><td>Distribution parameters </td></tr>
-    <tr><td class="paramname">dist_id</td><td>Distribution identifier 1: Lognormal, 2: Gamma, 3: Normal, 4: Exponential, 5: Weibull, 6: Beta, 7: Cauchy, 8: Chi-square, 9: Inverse Chi-square, 10: Double Exponential, 11: Inverse Gamma, 12: Logistic, 13: Pareto, 14: Scaled Inverse Chi-square, 15: Student's t, 16: Uniform, 17: von Mises</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Log CDF of the delay distribution</dd></dl>
-<div class="fragment"><div class="line"><span class="comment">// Example: Lognormal distribution</span></div>
-<div class="line">real delay = 5.0;</div>
-<div class="line">array[2] real params = {0.0, 1.0}; <span class="comment">// mean and standard deviation on log scale</span></div>
-<div class="line"><span class="keywordtype">int</span> dist_id = 1; <span class="comment">// Lognormal</span></div>
-<div class="line">real log_cdf = <a class="code hl_function" href="#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(delay, params, dist_id);</div>
-<div class="ttc" id="aprimarycensored__ode_8stan_html_a0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00023">primarycensored_ode.stan:23</a></div></div>
-</div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00023">23</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
-
-</div>
-</div>
-<a id="a8ff5fd4d60c7f181715bb62f645d8b08" name="a8ff5fd4d60c7f181715bb62f645d8b08"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a8ff5fd4d60c7f181715bb62f645d8b08">&#9670;&#160;</a></span>primary_lpdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real primary_lpdf </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>x</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>max</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Compute the log PDF of the primary distribution</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>Value </td></tr>
-    <tr><td class="paramname">primary_id</td><td>Primary distribution identifier </td></tr>
-    <tr><td class="paramname">params</td><td>Distribution parameters </td></tr>
-    <tr><td class="paramname">min</td><td>Minimum value </td></tr>
-    <tr><td class="paramname">max</td><td>Maximum value</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Log PDF of the primary distribution</dd></dl>
-<div class="fragment"><div class="line"><span class="comment">// Example: Uniform distribution</span></div>
-<div class="line">real x = 0.5;</div>
-<div class="line"><span class="keywordtype">int</span> primary_id = 1; <span class="comment">// Uniform</span></div>
-<div class="line">array[0] real params = {}; <span class="comment">// No additional parameters for uniform</span></div>
-<div class="line">real min = 0;</div>
-<div class="line">real max = 1;</div>
-<div class="line">real log_pdf = <a class="code hl_function" href="#a8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a>(x, primary_id, params, min, max);</div>
-<div class="ttc" id="aprimarycensored__ode_8stan_html_a8ff5fd4d60c7f181715bb62f645d8b08"><div class="ttname"><a href="#a8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a></div><div class="ttdeci">real primary_lpdf(real x, int primary_id, array[] real params, real min, real max)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00068">primarycensored_ode.stan:68</a></div></div>
-</div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00068">68</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
-
-</div>
-</div>
-<a id="a36bcf9457dc8dca5bb617405733b2d0f" name="a36bcf9457dc8dca5bb617405733b2d0f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a36bcf9457dc8dca5bb617405733b2d0f">&#9670;&#160;</a></span>primarycensored_ode()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">vector primarycensored_ode </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>t</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">vector</td>          <td class="paramname"><span class="paramname"><em>y</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>theta</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>x_r</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">array[]int</td>          <td class="paramname"><span class="paramname"><em>x_i</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>ODE system for the primary censored distribution</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">t</td><td>Time </td></tr>
-    <tr><td class="paramname">y</td><td>State variables </td></tr>
-    <tr><td class="paramname">theta</td><td>Parameters </td></tr>
-    <tr><td class="paramname">x_r</td><td>Real data </td></tr>
-    <tr><td class="paramname">x_i</td><td>Integer data</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Derivatives of the state variables </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00087">87</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
-
-</div>
-</div>
 </div><!-- contents -->
-</div><!-- doc-content -->
 <!-- start footer part -->
-<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
-  <ul>
-    <li class="navelem"><a class="el" href="primarycensored__ode_8stan.html">primarycensored_ode.stan</a></li>
-    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
-  </ul>
-</div>
+<hr class="footer"/><address class="footer"><small>
+Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+</small></address>
+</div><!-- doc-content -->
 </body>
 </html>

@@ -1,0 +1,5 @@
+<map id="Primary Censored Distributions Functions" name="Primary Censored Distributions Functions">
+<area shape="rect" id="Node000001" title="Functions for computing primary censored distributions." alt="" coords="5,39,204,79"/>
+<area shape="rect" id="Node000002" href="$group__primary__censored__single.html" title="Functions for computing primary censored distributions for single delays." alt="" coords="252,5,450,46"/>
+<area shape="rect" id="Node000003" href="$group__primary__censored__vectorized.html" title="Functions for computing primary censored distributions for multiple integer delays." alt="" coords="252,71,450,111"/>
+</map>

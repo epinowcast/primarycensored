@@ -1,0 +1,21 @@
+<map id="primarycensored_analytical_lcdf" name="primarycensored_analytical_lcdf">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1036,68,1241,94"/>
+<area shape="rect" id="Node000002" href="$group__primary__event__analytical__distributions.html#ga1b511c5d7317add3a126cf081631ad6c" title=" " alt="" coords="786,5,988,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1068,66,941,34,942,29,1070,61"/>
+<area shape="rect" id="Node000004" href="$group__primary__censored__single.html#ga544ec14a8fd8445357372b3072c2f9e1" title=" " alt="" coords="404,37,548,63"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="1021,85,776,76,549,62,549,57,776,70,1021,80"/>
+<area shape="rect" id="Node000003" href="$group__primary__censored__single.html#ga35e43c3fedc1d431d5fce34059317864" title=" " alt="" coords="596,5,738,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="770,21,738,21,738,16,770,16"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="615,38,549,49,548,44,614,32"/>
+<area shape="poly" id="edge4_Node000004_Node000001" title=" " alt="" coords="564,45,797,53,1036,67,1036,72,797,59,564,51"/>
+<area shape="poly" id="edge5_Node000004_Node000003" title=" " alt="" coords="528,31,596,19,597,24,529,36"/>
+<area shape="poly" id="edge6_Node000004_Node000004" title=" " alt="" coords="509,24,498,18,476,16,456,18,445,23,443,28,448,35,444,38,438,29,442,19,455,13,476,11,499,13,511,20"/>
+<area shape="rect" id="Node000005" href="$group__primary__censored__single.html#ga40c8992ec6549888fdd011beddf024b0" title=" " alt="" coords="206,8,354,34"/>
+<area shape="poly" id="edge7_Node000004_Node000005" title=" " alt="" coords="388,40,354,35,355,29,389,34"/>
+<area shape="rect" id="Node000007" href="$group__primary__censored__vectorized.html#gae7ef8040b6579790727036e204a886ca" title=" " alt="" coords="205,58,356,98"/>
+<area shape="poly" id="edge9_Node000004_Node000007" title=" " alt="" coords="389,65,357,70,356,65,388,60"/>
+<area shape="rect" id="Node000006" href="$group__primary__censored__single.html#ga60d89bea8a205afcdc49387b8ec757ec" title=" " alt="" coords="8,8,154,34"/>
+<area shape="poly" id="edge8_Node000005_Node000006" title=" " alt="" coords="191,24,154,24,154,18,191,18"/>
+<area shape="rect" id="Node000008" href="$group__primary__censored__vectorized.html#ga38b3f6dfbb765ecacb646210848352cc" title=" " alt="" coords="5,58,157,98"/>
+<area shape="poly" id="edge10_Node000007_Node000008" title=" " alt="" coords="189,81,157,81,157,76,189,76"/>
+</map>

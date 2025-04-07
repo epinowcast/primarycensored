@@ -5,14 +5,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>epinowcast: primarycensored_ode.stan Source File</title>
+<title>primarycensored: primarycensored_ode.stan Source File</title>
+<link rel="icon" href="logo.png" type="image/x-icon" />
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
-<script type="text/javascript" src="navtreedata.js"></script>
-<script type="text/javascript" src="navtree.js"></script>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="cookie.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -26,6 +25,7 @@ MathJax.Hub.Config({
 </script>
 <script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -33,8 +33,9 @@ MathJax.Hub.Config({
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr id="projectrow">
+  <td id="projectlogo"><img alt="Logo" src="logo.png"/></td>
   <td id="projectalign">
-   <div id="projectname">epinowcast
+   <div id="projectname">primarycensored
    </div>
   </td>
  </tr>
@@ -58,29 +59,17 @@ $(function() { codefold.init(0); });
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
 $(function() {
-  initMenu('',true,false,'search.php','Search',true);
+  initMenu('',true,false,'search.php','Search',false);
   $(function() { init_search(); });
 });
 /* @license-end */
 </script>
 <div id="main-nav"></div>
-</div><!-- top -->
-<div id="side-nav" class="ui-resizable side-nav-resizable">
-  <div id="nav-tree">
-    <div id="nav-tree-contents">
-      <div id="nav-sync" class="sync"></div>
-    </div>
-  </div>
-  <div id="splitbar" style="-moz-user-select:none;" 
-       class="ui-resizable-handle">
-  </div>
-</div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('primarycensored__ode_8stan_source.html',''); initResizable(true); });
+$(function(){ initResizable(false); });
 /* @license-end */
 </script>
-<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -102,86 +91,89 @@ $(function(){initNavTree('primarycensored__ode_8stan_source.html',''); initResiz
 </div>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_35baea09d55bebfe17654fdf4bf061ce.html">functions</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div id="doc-content">
 <div class="header">
   <div class="headertitle"><div class="title">primarycensored_ode.stan</div></div>
 </div><!--header-->
 <div class="contents">
 <a href="primarycensored__ode_8stan.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span> </div>
-<div class="foldopen" id="foldopen00023" data-start="{" data-end="}">
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce">   23</a></span>real <a class="code hl_function" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(real delay, array[] real params, <span class="keywordtype">int</span> dist_id) {</div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span>  <span class="keywordflow">if</span> (delay &lt;= 0) <span class="keywordflow">return</span> negative_infinity();</div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span> </div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span>  <span class="comment">// Use if-else statements to handle different distribution types</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>  <span class="keywordflow">if</span> (dist_id == 1) <span class="keywordflow">return</span> lognormal_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 2) <span class="keywordflow">return</span> gamma_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 3) <span class="keywordflow">return</span> normal_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 4) <span class="keywordflow">return</span> exponential_lcdf(delay | params[1]);</div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 5) <span class="keywordflow">return</span> weibull_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 6) <span class="keywordflow">return</span> beta_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 7) <span class="keywordflow">return</span> cauchy_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 8) <span class="keywordflow">return</span> chi_square_lcdf(delay | params[1]);</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 9) <span class="keywordflow">return</span> inv_chi_square_lcdf(delay | params[1]);</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 10) <span class="keywordflow">return</span> double_exponential_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 11) <span class="keywordflow">return</span> inv_gamma_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 12) <span class="keywordflow">return</span> logistic_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 13) <span class="keywordflow">return</span> pareto_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 14) <span class="keywordflow">return</span> scaled_inv_chi_square_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 15) <span class="keywordflow">return</span> student_t_lcdf(delay | params[1], params[2], params[3]);</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 16) <span class="keywordflow">return</span> uniform_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 17) <span class="keywordflow">return</span> von_mises_lcdf(delay | params[1], params[2]);</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  <span class="keywordflow">else</span> reject(<span class="stringliteral">&quot;Invalid distribution identifier&quot;</span>);</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>}</div>
+<div class="foldopen" id="foldopen00024" data-start="{" data-end="}">
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno"><a class="line" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce">   24</a></span>real <a class="code hl_function" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(real delay, array[] real params, <span class="keywordtype">int</span> dist_id) {</div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span>  <span class="keywordflow">if</span> (delay &lt;= 0) <span class="keywordflow">return</span> negative_infinity();</div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span>  <span class="comment">// Use if-else statements to handle different distribution types</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>  <span class="keywordflow">if</span> (dist_id == 1) <span class="keywordflow">return</span> lognormal_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 2) <span class="keywordflow">return</span> gamma_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 3) <span class="keywordflow">return</span> normal_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 4) <span class="keywordflow">return</span> exponential_lcdf(delay | params[1]);</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 5) <span class="keywordflow">return</span> weibull_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 6) <span class="keywordflow">return</span> beta_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 7) <span class="keywordflow">return</span> cauchy_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 8) <span class="keywordflow">return</span> chi_square_lcdf(delay | params[1]);</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 9) <span class="keywordflow">return</span> inv_chi_square_lcdf(delay | params[1]);</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 10) <span class="keywordflow">return</span> double_exponential_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 11) <span class="keywordflow">return</span> inv_gamma_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 12) <span class="keywordflow">return</span> logistic_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 13) <span class="keywordflow">return</span> pareto_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 14) <span class="keywordflow">return</span> scaled_inv_chi_square_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 15) <span class="keywordflow">return</span> student_t_lcdf(delay | params[1], params[2], params[3]);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 16) <span class="keywordflow">return</span> uniform_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (dist_id == 17) <span class="keywordflow">return</span> von_mises_lcdf(delay | params[1], params[2]);</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>  <span class="keywordflow">else</span> reject(<span class="stringliteral">&quot;Invalid distribution identifier&quot;</span>);</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>}</div>
 </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span> </div>
-<div class="foldopen" id="foldopen00068" data-start="{" data-end="}">
-<div class="line"><a id="l00068" name="l00068"></a><span class="lineno"><a class="line" href="primarycensored__ode_8stan.html#a8ff5fd4d60c7f181715bb62f645d8b08">   68</a></span>real <a class="code hl_function" href="primarycensored__ode_8stan.html#a8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a>(real x, <span class="keywordtype">int</span> primary_id, array[] real params, real min, real max) {</div>
-<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>  <span class="comment">// Implement switch for different primary distributions</span></div>
-<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>  <span class="keywordflow">if</span> (primary_id == 1) <span class="keywordflow">return</span> uniform_lpdf(x | min, max);</div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  <span class="keywordflow">if</span> (primary_id == 2) <span class="keywordflow">return</span> <a class="code hl_function" href="expgrowth_8stan.html#a41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a>(x | min, max, params[1]);</div>
-<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>  <span class="comment">// Add more primary distributions as needed</span></div>
-<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  reject(<span class="stringliteral">&quot;Invalid primary distribution identifier&quot;</span>);</div>
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>}</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="foldopen" id="foldopen00070" data-start="{" data-end="}">
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno"><a class="line" href="group__primary__distribution__log__pdfs.html#ga8ff5fd4d60c7f181715bb62f645d8b08">   70</a></span>real <a class="code hl_function" href="group__primary__distribution__log__pdfs.html#ga8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a>(real x, <span class="keywordtype">int</span> primary_id, array[] real params, real min, real max) {</div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>  <span class="comment">// Implement switch for different primary distributions</span></div>
+<div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>  <span class="keywordflow">if</span> (primary_id == 1) <span class="keywordflow">return</span> uniform_lpdf(x | min, max);</div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span>  <span class="keywordflow">if</span> (primary_id == 2) <span class="keywordflow">return</span> <a class="code hl_function" href="group__exponential__growth__distributions.html#ga41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a>(x | min, max, params[1]);</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  <span class="comment">// Add more primary distributions as needed</span></div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>  reject(<span class="stringliteral">&quot;Invalid primary distribution identifier&quot;</span>);</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>}</div>
 </div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
-<div class="foldopen" id="foldopen00087" data-start="{" data-end="}">
-<div class="line"><a id="l00087" name="l00087"></a><span class="lineno"><a class="line" href="primarycensored__ode_8stan.html#a36bcf9457dc8dca5bb617405733b2d0f">   87</a></span>vector <a class="code hl_function" href="primarycensored__ode_8stan.html#a36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a>(real t, vector y, array[] real theta,</div>
-<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>                            array[] real x_r, array[] <span class="keywordtype">int</span> x_i) {</div>
-<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  real d = x_r[1];</div>
-<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>  <span class="keywordtype">int</span> dist_id = x_i[1];</div>
-<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>  <span class="keywordtype">int</span> primary_id = x_i[2];</div>
-<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>  real pwindow = x_r[2];</div>
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>  <span class="keywordtype">int</span> dist_params_len = x_i[3];</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>  <span class="keywordtype">int</span> primary_params_len = x_i[4];</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span> </div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  <span class="comment">// Extract distribution parameters</span></div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  array[dist_params_len] real params;</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  <span class="keywordflow">if</span> (dist_params_len) {</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    params = theta[1:dist_params_len];</div>
-<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  }</div>
-<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  array[primary_params_len] real primary_params;</div>
-<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  <span class="keywordflow">if</span> (primary_params_len) {</div>
-<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>    <span class="keywordtype">int</span> primary_loc = num_elements(theta);</div>
-<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>    primary_params = theta[primary_loc - primary_params_len + 1:primary_loc];</div>
-<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  }</div>
-<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span> </div>
-<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>  real log_cdf = <a class="code hl_function" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(t | params, dist_id);</div>
-<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  real log_primary_pdf = <a class="code hl_function" href="primarycensored__ode_8stan.html#a8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a>(d - t | primary_id, primary_params, 0, pwindow);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span> </div>
+<div class="foldopen" id="foldopen00090" data-start="{" data-end="}">
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno"><a class="line" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f">   90</a></span>vector <a class="code hl_function" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a>(real t, vector y, array[] real theta,</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>                            array[] real x_r, array[] <span class="keywordtype">int</span> x_i) {</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>  real d = x_r[1];</div>
+<div class="line"><a id="l00093" name="l00093"></a><span class="lineno">   93</span>  <span class="keywordtype">int</span> dist_id = x_i[1];</div>
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>  <span class="keywordtype">int</span> primary_id = x_i[2];</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  real pwindow = x_r[2];</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  <span class="keywordtype">int</span> dist_params_len = x_i[3];</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  <span class="keywordtype">int</span> primary_params_len = x_i[4];</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span> </div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  <span class="comment">// Extract distribution parameters</span></div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  array[dist_params_len] real params;</div>
+<div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  <span class="keywordflow">if</span> (dist_params_len) {</div>
+<div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>    params = theta[1:dist_params_len];</div>
+<div class="line"><a id="l00103" name="l00103"></a><span class="lineno">  103</span>  }</div>
+<div class="line"><a id="l00104" name="l00104"></a><span class="lineno">  104</span>  array[primary_params_len] real primary_params;</div>
+<div class="line"><a id="l00105" name="l00105"></a><span class="lineno">  105</span>  <span class="keywordflow">if</span> (primary_params_len) {</div>
+<div class="line"><a id="l00106" name="l00106"></a><span class="lineno">  106</span>    <span class="keywordtype">int</span> primary_loc = num_elements(theta);</div>
+<div class="line"><a id="l00107" name="l00107"></a><span class="lineno">  107</span>    primary_params = theta[primary_loc - primary_params_len + 1:primary_loc];</div>
+<div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  }</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span> </div>
-<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>  <span class="keywordflow">return</span> rep_vector(exp(log_cdf + log_primary_pdf), 1);</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>}</div>
+<div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>  real log_cdf = <a class="code hl_function" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(t | params, dist_id);</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>  real log_primary_pdf = <a class="code hl_function" href="group__primary__distribution__log__pdfs.html#ga8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a>(d - t | primary_id, primary_params, 0, pwindow);</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span> </div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  <span class="keywordflow">return</span> rep_vector(exp(log_cdf + log_primary_pdf), 1);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>}</div>
 </div>
-<div class="ttc" id="aexpgrowth_8stan_html_a41c0839ec1d92f74ae46bcf2a4fdeb13"><div class="ttname"><a href="expgrowth_8stan.html#a41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a></div><div class="ttdeci">real expgrowth_lpdf(real x, real min, real max, real r)</div><div class="ttdef"><b>Definition</b> <a href="expgrowth_8stan_source.html#l00029">expgrowth.stan:29</a></div></div>
-<div class="ttc" id="aprimarycensored__ode_8stan_html_a0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="#l00023">primarycensored_ode.stan:23</a></div></div>
-<div class="ttc" id="aprimarycensored__ode_8stan_html_a36bcf9457dc8dca5bb617405733b2d0f"><div class="ttname"><a href="primarycensored__ode_8stan.html#a36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a></div><div class="ttdeci">vector primarycensored_ode(real t, vector y, array[] real theta, array[] real x_r, array[] int x_i)</div><div class="ttdef"><b>Definition</b> <a href="#l00087">primarycensored_ode.stan:87</a></div></div>
-<div class="ttc" id="aprimarycensored__ode_8stan_html_a8ff5fd4d60c7f181715bb62f645d8b08"><div class="ttname"><a href="primarycensored__ode_8stan.html#a8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a></div><div class="ttdeci">real primary_lpdf(real x, int primary_id, array[] real params, real min, real max)</div><div class="ttdef"><b>Definition</b> <a href="#l00068">primarycensored_ode.stan:68</a></div></div>
+<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="#l00024">primarycensored_ode.stan:24</a></div></div>
+<div class="ttc" id="agroup__exponential__growth__distributions_html_ga41c0839ec1d92f74ae46bcf2a4fdeb13"><div class="ttname"><a href="group__exponential__growth__distributions.html#ga41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a></div><div class="ttdeci">real expgrowth_lpdf(real x, real min, real max, real r)</div><div class="ttdef"><b>Definition</b> <a href="expgrowth_8stan_source.html#l00031">expgrowth.stan:31</a></div></div>
+<div class="ttc" id="agroup__ode_html_ga36bcf9457dc8dca5bb617405733b2d0f"><div class="ttname"><a href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f">primarycensored_ode</a></div><div class="ttdeci">vector primarycensored_ode(real t, vector y, array[] real theta, array[] real x_r, array[] int x_i)</div><div class="ttdef"><b>Definition</b> <a href="#l00090">primarycensored_ode.stan:90</a></div></div>
+<div class="ttc" id="agroup__primary__distribution__log__pdfs_html_ga8ff5fd4d60c7f181715bb62f645d8b08"><div class="ttname"><a href="group__primary__distribution__log__pdfs.html#ga8ff5fd4d60c7f181715bb62f645d8b08">primary_lpdf</a></div><div class="ttdeci">real primary_lpdf(real x, int primary_id, array[] real params, real min, real max)</div><div class="ttdef"><b>Definition</b> <a href="#l00070">primarycensored_ode.stan:70</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
-</div><!-- doc-content -->
 <!-- start footer part -->
-<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
-  <ul>
-    <li class="navelem"><a class="el" href="primarycensored__ode_8stan.html">primarycensored_ode.stan</a></li>
-    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
-  </ul>
-</div>
+<hr class="footer"/><address class="footer"><small>
+Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+</small></address>
+</div><!-- doc-content -->
 </body>
 </html>

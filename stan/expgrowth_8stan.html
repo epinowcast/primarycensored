@@ -5,14 +5,13 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.12.0"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>epinowcast: expgrowth.stan File Reference</title>
+<title>primarycensored: expgrowth.stan File Reference</title>
+<link rel="icon" href="logo.png" type="image/x-icon" />
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
 <script type="text/javascript" src="clipboard.js"></script>
 <link href="navtree.css" rel="stylesheet" type="text/css"/>
-<script type="text/javascript" src="navtreedata.js"></script>
-<script type="text/javascript" src="navtree.js"></script>
 <script type="text/javascript" src="resize.js"></script>
 <script type="text/javascript" src="cookie.js"></script>
 <link href="search/search.css" rel="stylesheet" type="text/css"/>
@@ -26,6 +25,7 @@ MathJax.Hub.Config({
 </script>
 <script type="text/javascript" async="async" src="https://cdn.jsdelivr.net/npm/mathjax@2/MathJax.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -33,8 +33,9 @@ MathJax.Hub.Config({
 <table cellspacing="0" cellpadding="0">
  <tbody>
  <tr id="projectrow">
+  <td id="projectlogo"><img alt="Logo" src="logo.png"/></td>
   <td id="projectalign">
-   <div id="projectname">epinowcast
+   <div id="projectname">primarycensored
    </div>
   </td>
  </tr>
@@ -58,29 +59,17 @@ $(function() { codefold.init(0); });
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
 $(function() {
-  initMenu('',true,false,'search.php','Search',true);
+  initMenu('',true,false,'search.php','Search',false);
   $(function() { init_search(); });
 });
 /* @license-end */
 </script>
 <div id="main-nav"></div>
-</div><!-- top -->
-<div id="side-nav" class="ui-resizable side-nav-resizable">
-  <div id="nav-tree">
-    <div id="nav-tree-contents">
-      <div id="nav-sync" class="sync"></div>
-    </div>
-  </div>
-  <div id="splitbar" style="-moz-user-select:none;" 
-       class="ui-resizable-handle">
-  </div>
-</div>
 <script type="text/javascript">
 /* @license magnet:?xt=urn:btih:d3d9a9a6595521f9666a5e94cc830dab83b65699&amp;dn=expat.txt MIT */
-$(function(){initNavTree('expgrowth_8stan.html',''); initResizable(true); });
+$(function(){ initResizable(false); });
 /* @license-end */
 </script>
-<div id="doc-content">
 <!-- window showing the filter options -->
 <div id="MSearchSelectWindow"
      onmouseover="return searchBox.OnSearchSelectShow()"
@@ -102,251 +91,37 @@ $(function(){initNavTree('expgrowth_8stan.html',''); initResizable(true); });
 </div>
 </div>
 
+<div id="nav-path" class="navpath">
+  <ul>
+<li class="navelem"><a class="el" href="dir_35baea09d55bebfe17654fdf4bf061ce.html">functions</a></li>  </ul>
+</div>
+</div><!-- top -->
+<div id="doc-content">
 <div class="header">
   <div class="summary">
-<a href="#func-members">Functions</a>  </div>
+<a href="#func-members">Functions in this File</a>  </div>
   <div class="headertitle"><div class="title">expgrowth.stan File Reference</div></div>
 </div><!--header-->
 <div class="contents">
-
-<p><a href="expgrowth_8stan_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
-Functions</h2></td></tr>
-<tr class="memitem:a4219865283be037cbd750d5ac7d2be57" id="r_a4219865283be037cbd750d5ac7d2be57"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a4219865283be037cbd750d5ac7d2be57">expgrowth_pdf</a> (real x, real min, real max, real r)</td></tr>
-<tr class="separator:a4219865283be037cbd750d5ac7d2be57"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a41c0839ec1d92f74ae46bcf2a4fdeb13" id="r_a41c0839ec1d92f74ae46bcf2a4fdeb13"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#a41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a> (real x, real min, real max, real r)</td></tr>
-<tr class="separator:a41c0839ec1d92f74ae46bcf2a4fdeb13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5f53ab25391b77dd0be2cd619f6f17c" id="r_aa5f53ab25391b77dd0be2cd619f6f17c"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#aa5f53ab25391b77dd0be2cd619f6f17c">expgrowth_cdf</a> (real x, real min, real max, real r)</td></tr>
-<tr class="separator:aa5f53ab25391b77dd0be2cd619f6f17c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af07f0d21d6c4ad0cddf29d3c42ba1e70" id="r_af07f0d21d6c4ad0cddf29d3c42ba1e70"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af07f0d21d6c4ad0cddf29d3c42ba1e70">expgrowth_lcdf</a> (real x, real min, real max, real r)</td></tr>
-<tr class="separator:af07f0d21d6c4ad0cddf29d3c42ba1e70"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af59a321091f869d29932296ad4f4fba8" id="r_af59a321091f869d29932296ad4f4fba8"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#af59a321091f869d29932296ad4f4fba8">expgrowth_rng</a> (real min, real max, real r)</td></tr>
-<tr class="separator:af59a321091f869d29932296ad4f4fba8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+Functions in this File</h2></td></tr>
+<tr class="memitem:ga4219865283be037cbd750d5ac7d2be57" id="r_ga4219865283be037cbd750d5ac7d2be57"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__exponential__growth__distributions.html#ga4219865283be037cbd750d5ac7d2be57">expgrowth_pdf</a> (real x, real min, real max, real r)</td></tr>
+<tr class="separator:ga4219865283be037cbd750d5ac7d2be57"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga41c0839ec1d92f74ae46bcf2a4fdeb13" id="r_ga41c0839ec1d92f74ae46bcf2a4fdeb13"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__exponential__growth__distributions.html#ga41c0839ec1d92f74ae46bcf2a4fdeb13">expgrowth_lpdf</a> (real x, real min, real max, real r)</td></tr>
+<tr class="separator:ga41c0839ec1d92f74ae46bcf2a4fdeb13"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaa5f53ab25391b77dd0be2cd619f6f17c" id="r_gaa5f53ab25391b77dd0be2cd619f6f17c"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__exponential__growth__distributions.html#gaa5f53ab25391b77dd0be2cd619f6f17c">expgrowth_cdf</a> (real x, real min, real max, real r)</td></tr>
+<tr class="separator:gaa5f53ab25391b77dd0be2cd619f6f17c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf07f0d21d6c4ad0cddf29d3c42ba1e70" id="r_gaf07f0d21d6c4ad0cddf29d3c42ba1e70"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__exponential__growth__distributions.html#gaf07f0d21d6c4ad0cddf29d3c42ba1e70">expgrowth_lcdf</a> (real x, real min, real max, real r)</td></tr>
+<tr class="separator:gaf07f0d21d6c4ad0cddf29d3c42ba1e70"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf59a321091f869d29932296ad4f4fba8" id="r_gaf59a321091f869d29932296ad4f4fba8"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__exponential__growth__distributions.html#gaf59a321091f869d29932296ad4f4fba8">expgrowth_rng</a> (real min, real max, real r)</td></tr>
+<tr class="separator:gaf59a321091f869d29932296ad4f4fba8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Function Documentation</h2>
-<a id="aa5f53ab25391b77dd0be2cd619f6f17c" name="aa5f53ab25391b77dd0be2cd619f6f17c"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aa5f53ab25391b77dd0be2cd619f6f17c">&#9670;&#160;</a></span>expgrowth_cdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real expgrowth_cdf </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>x</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>max</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>r</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Exponential growth cumulative distribution function (CDF)</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>Value at which to evaluate the CDF </td></tr>
-    <tr><td class="paramname">min</td><td>Lower bound of the distribution </td></tr>
-    <tr><td class="paramname">max</td><td>Upper bound of the distribution </td></tr>
-    <tr><td class="paramname">r</td><td>Rate parameter for exponential growth </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>The CDF evaluated at x </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="expgrowth_8stan_source.html#l00048">48</a> of file <a class="el" href="expgrowth_8stan_source.html">expgrowth.stan</a>.</p>
-
-</div>
-</div>
-<a id="af07f0d21d6c4ad0cddf29d3c42ba1e70" name="af07f0d21d6c4ad0cddf29d3c42ba1e70"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af07f0d21d6c4ad0cddf29d3c42ba1e70">&#9670;&#160;</a></span>expgrowth_lcdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real expgrowth_lcdf </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>x</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>max</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>r</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Exponential growth log cumulative distribution function (log CDF)</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>Value at which to evaluate the log CDF </td></tr>
-    <tr><td class="paramname">min</td><td>Lower bound of the distribution </td></tr>
-    <tr><td class="paramname">max</td><td>Upper bound of the distribution </td></tr>
-    <tr><td class="paramname">r</td><td>Rate parameter for exponential growth </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>The log CDF evaluated at x </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="expgrowth_8stan_source.html#l00070">70</a> of file <a class="el" href="expgrowth_8stan_source.html">expgrowth.stan</a>.</p>
-
-</div>
-</div>
-<a id="a41c0839ec1d92f74ae46bcf2a4fdeb13" name="a41c0839ec1d92f74ae46bcf2a4fdeb13"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a41c0839ec1d92f74ae46bcf2a4fdeb13">&#9670;&#160;</a></span>expgrowth_lpdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real expgrowth_lpdf </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>x</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>max</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>r</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Exponential growth log probability density function (log PDF)</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>Value at which to evaluate the log PDF </td></tr>
-    <tr><td class="paramname">min</td><td>Lower bound of the distribution </td></tr>
-    <tr><td class="paramname">max</td><td>Upper bound of the distribution </td></tr>
-    <tr><td class="paramname">r</td><td>Rate parameter for exponential growth </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>The log PDF evaluated at x </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="expgrowth_8stan_source.html#l00029">29</a> of file <a class="el" href="expgrowth_8stan_source.html">expgrowth.stan</a>.</p>
-
-</div>
-</div>
-<a id="a4219865283be037cbd750d5ac7d2be57" name="a4219865283be037cbd750d5ac7d2be57"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a4219865283be037cbd750d5ac7d2be57">&#9670;&#160;</a></span>expgrowth_pdf()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real expgrowth_pdf </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>x</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>max</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>r</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Exponential growth probability density function (PDF)</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">x</td><td>Value at which to evaluate the PDF </td></tr>
-    <tr><td class="paramname">min</td><td>Lower bound of the distribution </td></tr>
-    <tr><td class="paramname">max</td><td>Upper bound of the distribution </td></tr>
-    <tr><td class="paramname">r</td><td>Rate parameter for exponential growth </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>The PDF evaluated at x </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="expgrowth_8stan_source.html#l00010">10</a> of file <a class="el" href="expgrowth_8stan_source.html">expgrowth.stan</a>.</p>
-
-</div>
-</div>
-<a id="af59a321091f869d29932296ad4f4fba8" name="af59a321091f869d29932296ad4f4fba8"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af59a321091f869d29932296ad4f4fba8">&#9670;&#160;</a></span>expgrowth_rng()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">real expgrowth_rng </td>
-          <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>min</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>max</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>r</em></span>&#160;)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Exponential growth random number generator</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">min</td><td>Lower bound of the distribution </td></tr>
-    <tr><td class="paramname">max</td><td>Upper bound of the distribution </td></tr>
-    <tr><td class="paramname">r</td><td>Rate parameter for exponential growth </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A random draw from the exponential growth distribution </dd></dl>
-
-<p class="definition">Definition at line <a class="el" href="expgrowth_8stan_source.html#l00088">88</a> of file <a class="el" href="expgrowth_8stan_source.html">expgrowth.stan</a>.</p>
-
-</div>
-</div>
 </div><!-- contents -->
-</div><!-- doc-content -->
 <!-- start footer part -->
-<div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
-  <ul>
-    <li class="navelem"><a class="el" href="expgrowth_8stan.html">expgrowth.stan</a></li>
-    <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0 </li>
-  </ul>
-</div>
+<hr class="footer"/><address class="footer"><small>
+Generated by&#160;<a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.12.0
+</small></address>
+</div><!-- doc-content -->
 </body>
 </html>
