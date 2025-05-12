@@ -1,7 +1,6 @@
 ---
 title: "Fitting distributions using primarycensored and cmdstan"
 description: "A guide on how to use primarycensored with Stan for Bayesian inference of epidemiological delay distributions."
-author: Sam Abbott
 output:
   bookdown::html_document2:
     fig_caption: yes

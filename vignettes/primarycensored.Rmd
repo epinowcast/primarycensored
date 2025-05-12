@@ -1,7 +1,6 @@
 ---
 title: "Getting Started with primarycensored"
 description: "A quick start example demonstrating use of primarycensored."
-author: Sam Abbott
 output:
   bookdown::html_document2:
     fig_caption: yes
