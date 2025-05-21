@@ -234,7 +234,8 @@ specification. Contributions of any kind are welcome!
 ### Issue Authors
 
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski">adamkucharski</a>
 
 ### Issue Contributors
 

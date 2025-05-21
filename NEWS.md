@@ -10,6 +10,13 @@ This the development version
     solutions to be added in future versions using the same interface as `pcens_cdf()`.
   - `qpcens()` and `qprimarycensored()`: Convenient wrapper functions that provide
     alternative interfaces to `pcens_quantile()`.
+- Added support to `fitdistdoublecens()` to allow for varying primary censoring windows and truncation times. As part of this refactor the interface has also been improved to allow for more flexible data input.
+
+## Documentation
+
+- Removed authorship from vignettes.
+- Updated the `fitdistrplus` vignette to use more complex data where the relative observation time is not constant. Also removed the note that the `fitdistdoublecens()` function is limited to a single primary censoring windows and truncation time as this is no longer the case.
+- The [Stan Reference](https://primarycensored.epinowcast.org/stan/) has been enhanced to make it easier to navigate the Stan code.
 
 # primarycensored 1.1.0
 

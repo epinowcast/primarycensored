@@ -1,5 +1,6 @@
 /**
   * Compute the log CDF of the delay distribution
+  * @ingroup delay_log_cdfs
   *
   * @param delay Time delay
   * @param params Distribution parameters
@@ -46,6 +47,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
 
 /**
   * Compute the log PDF of the primary distribution
+  * @ingroup primary_distribution_log_pdfs
   *
   * @param x Value
   * @param primary_id Primary distribution identifier
@@ -75,6 +77,7 @@ real primary_lpdf(real x, int primary_id, array[] real params, real min, real ma
 
 /**
   * ODE system for the primary censored distribution
+  * @ingroup ode
   *
   * @param t Time
   * @param y State variables

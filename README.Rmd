@@ -123,6 +123,7 @@ If making use of our methodology or the methodology on which ours is based, plea
 
 
 
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -132,7 +133,7 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 ### Code
 
 
-<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>,
@@ -145,7 +146,8 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 
 
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein">zsusswein</a>,
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai">jcblemai</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski">adamkucharski</a>
 
 
 
@@ -158,3 +160,4 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+

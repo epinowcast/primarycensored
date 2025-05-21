@@ -1,5 +1,6 @@
 /**
   * Exponential growth probability density function (PDF)
+  * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the PDF
   * @param min Lower bound of the distribution
@@ -19,6 +20,7 @@ real expgrowth_pdf(real x, real min, real max, real r) {
 
 /**
   * Exponential growth log probability density function (log PDF)
+  * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the log PDF
   * @param min Lower bound of the distribution
@@ -38,6 +40,7 @@ real expgrowth_lpdf(real x, real min, real max, real r) {
 
 /**
   * Exponential growth cumulative distribution function (CDF)
+  * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the CDF
   * @param min Lower bound of the distribution
@@ -60,6 +63,7 @@ real expgrowth_cdf(real x, real min, real max, real r) {
 
 /**
   * Exponential growth log cumulative distribution function (log CDF)
+  * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the log CDF
   * @param min Lower bound of the distribution
@@ -79,6 +83,7 @@ real expgrowth_lcdf(real x, real min, real max, real r) {
 
 /**
   * Exponential growth random number generator
+  * @ingroup exponential_growth_distributions
   *
   * @param min Lower bound of the distribution
   * @param max Upper bound of the distribution
