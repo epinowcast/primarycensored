@@ -1,7 +1,6 @@
 ---
 title: "Fitting distributions using primarycensored and fitdistrplus"
 description: "A guide on how to fit distributions using primarycensored and fitdistrplus."
-author: Sam Abbott
 output:
   bookdown::html_document2:
     fig_caption: yes
