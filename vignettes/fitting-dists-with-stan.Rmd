@@ -59,8 +59,8 @@ meanlog <- 1.5
 sdlog <- 0.75
 
 # Generate varying pwindow, swindow, and obs_time lengths
-pwindows <- sample(1:2, n, replace = TRUE)
-swindows <- sample(1:2, n, replace = TRUE)
+pwindows <- sample.int(2, n, replace = TRUE)
+swindows <- sample.int(2, n, replace = TRUE)
 obs_times <- sample(8:10, n, replace = TRUE)
 
 # Function to generate a single sample
