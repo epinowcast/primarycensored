@@ -62,10 +62,10 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.1.0.1000" id="primarycensored-1101000">primarycensored 1.1.0.1000<a class="anchor" aria-label="anchor" href="#primarycensored-1101000"></a></h2>
-<p>This the development version</p>
+<h2 class="pkg-version" data-toc-text="1.2.0" id="primarycensored-120">primarycensored 1.2.0<a class="anchor" aria-label="anchor" href="#primarycensored-120"></a></h2>
+<p>This minor release adds quantile functions for primary censored distributions and enhances the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> function to support varying primary censoring windows and truncation times. The release also improves documentation, particularly the Stan reference, making it easier for users to navigate and work with the Stan code.</p>
 <div class="section level3">
-<h3 id="package-1-1-0-1000">Package<a class="anchor" aria-label="anchor" href="#package-1-1-0-1000"></a></h3>
+<h3 id="package-1-2-0">Package<a class="anchor" aria-label="anchor" href="#package-1-2-0"></a></h3>
 <ul><li>Added new functions to compute quantiles of the primary censored distribution:
 <ul><li>
 <code><a href="../reference/pcens_quantile.html">pcens_quantile()</a></code>: Core implementation using numerical optimisation to find quantiles by inverting the CDF. The implementation allows for analytical solutions to be added in future versions using the same interface as <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code>.</li>
@@ -75,7 +75,7 @@
 <li>Added support to <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to allow for varying primary censoring windows and truncation times. As part of this refactor the interface has also been improved to allow for more flexible data input.</li>
 </ul></div>
 <div class="section level3">
-<h3 id="documentation-1-1-0-1000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-1-0-1000"></a></h3>
+<h3 id="documentation-1-2-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-2-0"></a></h3>
 <ul><li>Removed authorship from vignettes.</li>
 <li>Updated the <code>fitdistrplus</code> vignette to use more complex data where the relative observation time is not constant. Also removed the note that the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> function is limited to a single primary censoring windows and truncation time as this is no longer the case.</li>
 <li>The <a href="https://primarycensored.epinowcast.org/stan/">Stan Reference</a> has been enhanced to make it easier to navigate the Stan code.</li>
