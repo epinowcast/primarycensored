@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/epinowcast/primarycensored",
   "issueTracker": "https://github.com/epinowcast/primarycensored/issues",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "1.1.0.1000",
+  "version": "1.2.0",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.4.3 (2025-02-28)",
+  "runtimePlatform": "R version 4.5.0 (2025-04-11)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -265,7 +265,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "600.344KB",
+  "fileSize": "600.764KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
