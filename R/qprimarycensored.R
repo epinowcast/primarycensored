@@ -3,10 +3,10 @@
 #'
 #' This function computes the quantiles (delay values) that correspond to
 #' specified probabilities in the primary event censored distribution. For a
-#' given probability p, it computes the delay value q such that P(X ≤ q) = p,
-#' where X follows the primary event censored distribution. The distribution
-#' accounts for both the delay distribution and the primary event timing
-#' distribution.
+#' given probability p, it computes the delay value q such that the cumulative
+#' probability up to q equals p in the primary event censored distribution.
+#' The distribution accounts for both the delay distribution and the primary
+#' event timing distribution.
 #'
 #' @param p Vector of probabilities between 0 and 1 for which to compute
 #'  corresponding quantiles
@@ -23,9 +23,10 @@
 #' @export
 #'
 #' @details
-#' For each probability p, the function computes the delay value q such that
-#' P(X ≤ q) = p, where X follows the primary event censored distribution.
-#' This is done by inverting the primary event censored CDF.
+#' For each probability, the function finds the delay value where that
+#' proportion of events have occurred by that time in the primary event
+#' censored distribution. This is done by inverting the cumulative
+#' distribution function.
 #'
 #' The function creates a `primarycensored` object using [new_pcens()] and then
 #' computes the quantiles using [pcens_quantile()]. This approach allows for
