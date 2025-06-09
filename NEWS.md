@@ -1,6 +1,6 @@
-# primarycensored 1.1.0.1000
+# primarycensored 1.2.0
 
-This the development version
+This minor release adds quantile functions for primary censored distributions and enhances the `fitdistdoublecens()` function to support varying primary censoring windows and truncation times. The release also improves documentation, particularly the Stan reference, making it easier for users to navigate and work with the Stan code.
 
 ## Package
 
