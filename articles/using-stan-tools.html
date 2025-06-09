@@ -6,16 +6,22 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>How to use primarycensored with Stan • primarycensored</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="48x48" href="../favicon-48x48.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
 <link rel="icon" sizes="any" href="../favicon.ico">
 <link rel="manifest" href="../site.webmanifest">
-<script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><script src="../deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="How to use primarycensored with Stan">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="How to use primarycensored with Stan">
 <meta name="description" content="A guide on how to use primarycensored with Stan.">
 <meta property="og:description" content="A guide on how to use primarycensored with Stan.">
 <meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png">
@@ -28,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -86,7 +92,6 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>How to use primarycensored with Stan</h1>
-                        <h4 data-toc-skip class="author">Sam Abbott</h4>
             
       
       <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/vignettes/using-stan-tools.Rmd" class="external-link"><code>vignettes/using-stan-tools.Rmd</code></a></small>
@@ -177,7 +182,7 @@
 <p>Stan functions are accessed using the <code><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions()</a></code> function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a <code>functions{}</code> block.</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/pcd_load_stan_functions.html">pcd_load_stan_functions</a></span><span class="op">(</span><span class="st">"primarycensored_lpmf"</span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## [1] "// Stan functions from primarycensored version 1.1.0\nreal primarycensored_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_id,\n                                array[] real primary_params) {\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper &lt;= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primarycensored_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  real log_cdf_lower = primarycensored_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primarycensored_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"</span></span></code></pre>
+<pre><code><span><span class="co">## [1] "// Stan functions from primarycensored version 1.2.0\nreal primarycensored_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_id,\n                                array[] real primary_params) {\n  if (d_upper &gt; D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper &lt;= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primarycensored_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  real log_cdf_lower = primarycensored_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primarycensored_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"</span></span></code></pre>
 </div>
 <div class="section level3" number="2.3">
 <h3 id="linking-the-stan-functions-to-your-workflow">
@@ -196,13 +201,13 @@
 <span>  output_file <span class="op">=</span> <span class="va">expgrowth_rng_file</span>,</span>
 <span>  wrap_in_block <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
-<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpYFXyUy/expgrowth_rng.stan</span></span></code></pre>
+<pre><code><span><span class="co">## Stan functions written to: /tmp/RtmpOftx54/expgrowth_rng.stan</span></span></code></pre>
 <p>This can now be compiled and used in the same way as any other <code>cmdstanr</code> model.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span><span class="va">expgrowth_rng_file</span><span class="op">)</span></span>
 <span><span class="va">model</span></span></code></pre></div>
 <pre><code><span><span class="co">## functions {</span></span>
-<span><span class="co">## // Stan functions from primarycensored version 1.1.0</span></span>
+<span><span class="co">## // Stan functions from primarycensored version 1.2.0</span></span>
 <span><span class="co">## real expgrowth_rng(real min, real max, real r) {</span></span>
 <span><span class="co">##   real u = uniform_rng(0, 1);</span></span>
 <span><span class="co">##   if (abs(r) &lt; 1e-10) {</span></span>
@@ -294,11 +299,11 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, James Mba Azam, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer>

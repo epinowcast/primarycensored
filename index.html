@@ -6,16 +6,22 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Primary Event Censored Distributions • primarycensored</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="48x48" href="favicon-48x48.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
 <link rel="icon" sizes="any" href="favicon.ico">
 <link rel="manifest" href="site.webmanifest">
-<script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<!-- mathjax math --><script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-chtml.js" integrity="sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI=" crossorigin="anonymous"></script><script>
+  window.MathJax = {
+    chtml: {
+      fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
+    }
+  };
+</script><script src="lightswitch.js"></script><script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><script src="deps/MathJax-3.2.2/tex-chtml.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Primary Event Censored Distributions">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Primary Event Censored Distributions">
 <meta name="description" content="Provides functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields (Charniga et al. (2024) &lt;doi:10.48550/arXiv.2405.08841&gt;). It also provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for (Park et al. (2024) &lt;doi:10.1101/2024.01.12.24301247&gt;). A subset of common distributions also have analytical solutions implemented, allowing for faster computation. In addition, it provides multiple methods for fitting primary event censored distributions to data via optional dependencies.">
 <meta property="og:description" content="Provides functions for working with primary event censored distributions and Stan implementations for use in Bayesian modeling. Primary event censored distributions are useful for modeling delayed reporting scenarios in epidemiology and other fields (Charniga et al. (2024) &lt;doi:10.48550/arXiv.2405.08841&gt;). It also provides support for arbitrary delay distributions, a range of common primary distributions, and allows for truncation and secondary event censoring to be accounted for (Park et al. (2024) &lt;doi:10.1101/2024.01.12.24301247&gt;). A subset of common distributions also have analytical solutions implemented, allowing for faster computation. In addition, it provides multiple methods for fitting primary event censored distributions to data via optional dependencies.">
 <meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png">
@@ -28,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.1.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -178,12 +184,12 @@ Community Forum
 <div class="section level3">
 <h3 id="code">Code<a class="anchor" aria-label="anchor" href="#code"></a>
 </h3>
-<p><a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs" class="external-link">seabbs</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1" class="external-link">SamuelBrand1</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk" class="external-link">sbfnk</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=athowes" class="external-link">athowes</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca" class="external-link">pearsonca</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam" class="external-link">jamesmbaazam</a></p>
+<p><a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs" class="external-link">seabbs</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1" class="external-link">SamuelBrand1</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk" class="external-link">sbfnk</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=athowes" class="external-link">athowes</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam" class="external-link">jamesmbaazam</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova" class="external-link">barbora-sobolova</a>, <a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca" class="external-link">pearsonca</a></p>
 </div>
 <div class="section level3">
 <h3 id="issue-authors">Issue Authors<a class="anchor" aria-label="anchor" href="#issue-authors"></a>
 </h3>
-<p><a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein" class="external-link">zsusswein</a>, <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai" class="external-link">jcblemai</a></p>
+<p><a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein" class="external-link">zsusswein</a>, <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai" class="external-link">jcblemai</a>, <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski" class="external-link">adamkucharski</a></p>
 </div>
 <div class="section level3">
 <h3 id="issue-contributors">Issue Contributors<a class="anchor" aria-label="anchor" href="#issue-contributors"></a>
@@ -234,11 +240,12 @@ Community Forum
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a> <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0001-8057-8037" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Sam Brand <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-0645-5367" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Carl Pearson <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-0701-7860" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Sebastian Funk <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-2842-3406" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Kelly Charniga <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-7648-7041" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
+<a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a> <br><small class="roles"> Author, maintainer, copyright holder </small> <a href="https://orcid.org/0000-0001-8057-8037" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Sam Brand <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-0645-5367" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>James Mba Azam <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-5782-7330" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Carl Pearson <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0003-0701-7860" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Sebastian Funk <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-2842-3406" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Kelly Charniga <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0002-7648-7041" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
 <li><a href="authors.html">More about authors...</a></li>
 </ul>
 </div>
@@ -250,11 +257,11 @@ Community Forum
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
+  <p>Developed by <a href="https://www.samabbott.co.uk/" class="external-link">Sam Abbott</a>, Sam Brand, James Mba Azam, Carl Pearson, Sebastian Funk, Kelly Charniga.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.3.9000.</p>
 </div>
 
     </footer>
