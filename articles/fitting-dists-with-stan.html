@@ -298,13 +298,12 @@
 <span>  show_messages <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/interactive.html" class="external-link">interactive</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">naive_fit</span></span></code></pre></div>
-<pre><code><span><span class="co">## Warning: NAs introduced by coercion</span></span></code></pre>
 <pre><code><span><span class="co">##  variable       mean     median   sd  mad         q5        q95 rhat ess_bulk</span></span>
-<span><span class="co">##     lp__  -381721.39 -381721.00 1.04 0.00 -381723.00 -381720.00 1.00     1835</span></span>
+<span><span class="co">##     lp__  -381721.38 -381721.10 0.99 0.76 -381723.44 -381720.42 1.00     1817</span></span>
 <span><span class="co">##     mu         -0.60      -0.60 0.01 0.01      -0.62      -0.58 1.00     1601</span></span>
 <span><span class="co">##     sigma       5.10       5.10 0.01 0.01       5.08       5.11 1.00     3935</span></span>
 <span><span class="co">##  ess_tail</span></span>
-<span><span class="co">##        NA</span></span>
+<span><span class="co">##      2101</span></span>
 <span><span class="co">##      1882</span></span>
 <span><span class="co">##      2752</span></span></code></pre>
 <p>You may see a warning that <code>NAs introduced by coercion</code> this can be ignored as it is an artefact of this simple example model.</p>
@@ -315,7 +314,7 @@
 <span class="header-section-number">4</span> Fitting an improved model using primarycensored<a class="anchor" aria-label="anchor" href="#fitting-an-improved-model-using-primarycensored"></a>
 </h2>
 <p>We’ll now fit an improved model using the <code>primarycensored</code> package. The main improvement is that we will use the <code>primarycensored_lpdf</code> function to fit the model. This is the Stan version of the <code>pcens()</code> function and adjusts for the primary and secondary censoring windows as well as the truncation. We encode that our primary distribution is a lognormal distribution by passing 1 as the <code>dist_id</code> parameter and that our primary event distribution is uniform by passing 1 as the <code>primary_id</code> parameter. See the <a href="https://primarycensored.epinowcast.org/stan/primary__censored__dist_8stan.html#acc97240dee1bc19e4f02013118f3857d">Stan documentation</a> for more details on the <code>primarycensored_lpdf</code> function.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span></span>
 <span>  <span class="st">"</span></span>
 <span><span class="st">  functions {</span></span>
@@ -357,13 +356,13 @@
 <span>  con <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"primarycensored_lognormal.stan"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Now let’s compile the model</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">primarycensored_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://mc-stan.org/cmdstanr/reference/cmdstan_model.html" class="external-link">cmdstan_model</a></span><span class="op">(</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/file.path.html" class="external-link">file.path</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">"primarycensored_lognormal.stan"</span><span class="op">)</span>,</span>
 <span>  include_paths <span class="op">=</span> <span class="fu"><a href="../reference/pcd_stan_path.html">pcd_stan_path</a></span><span class="op">(</span><span class="op">)</span></span>
 <span><span class="op">)</span></span></code></pre></div>
 <p>Now let’s fit the compiled model.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">primarycensored_fit</span> <span class="op">&lt;-</span> <span class="va">primarycensored_model</span><span class="op">$</span><span class="fu">sample</span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>    y <span class="op">=</span> <span class="va">delay_counts</span><span class="op">$</span><span class="va">observed_delay</span>,</span>
@@ -380,8 +379,8 @@
 <span><span class="op">)</span></span>
 <span><span class="va">primarycensored_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##  variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##     lp__  -3422.81 -3422.47 1.09 0.74 -3424.97 -3421.80 1.00     1305     1439</span></span>
-<span><span class="co">##     mu        1.55     1.54 0.05 0.05     1.47     1.63 1.01     1072     1197</span></span>
+<span><span class="co">##     lp__  -3422.81 -3422.47 1.09 0.75 -3424.97 -3421.80 1.00     1316     1453</span></span>
+<span><span class="co">##     mu        1.55     1.54 0.05 0.05     1.47     1.63 1.01     1072     1211</span></span>
 <span><span class="co">##     sigma     0.78     0.78 0.03 0.03     0.73     0.84 1.01     1121     1281</span></span></code></pre>
 <p>We see that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters.</p>
 </div>
@@ -391,7 +390,7 @@
 </h2>
 <p>While the previous approach works well, <code>primarycensored</code> provides a more efficient and convenient model which we can compile using <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code>. This approach not only saves time in model specification but also leverages within chain parallelisation to make best use of your machine’s resources. Alongside this we also supply a convenience function <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to convert our data into a format that can be used to fit the model and supply priors, bounds, and other settings.</p>
 <p>Let’s use this function to fit our data:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Compile the model with multithreading support</span></span>
 <span><span class="va">pcd_model</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model</a></span><span class="op">(</span>cpp_options <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>stan_threads <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
@@ -420,9 +419,9 @@
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.75 -3422.44 1.03 0.73 -3424.74 -3421.79 1.00     1384     1611</span></span>
-<span><span class="co">##  params[1]     1.55     1.54 0.05 0.04     1.48     1.63 1.00     1098     1277</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1035     1092</span></span></code></pre>
+<span><span class="co">##  lp__      -3422.77 -3422.46 1.02 0.74 -3424.79 -3421.80 1.00     1339     1469</span></span>
+<span><span class="co">##  params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.01     1132     1249</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.01     1086     1147</span></span></code></pre>
 <p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example (i.e. the meanlog and sdlog parameters of the lognormal distribution). We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 <div class="section level3" number="5.1">
