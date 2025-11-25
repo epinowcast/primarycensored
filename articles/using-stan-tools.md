@@ -118,7 +118,7 @@ exp_model <- pcd_load_stan_functions(
 )
 ```
 
-    ## Stan functions written to: /tmp/Rtmpk4CfEp/expgrowth_rng.stan
+    ## Stan functions written to: /tmp/RtmphUoiVp/expgrowth_rng.stan
 
 This can now be compiled and used in the same way as any other
 `cmdstanr` model.
