@@ -331,8 +331,7 @@ test_that("new_pcens *_name deprecation is soft.", {
   )
 
   lifecycle::expect_deprecated(
-    obj <- new_pcens(
-      # nolint
+    obj <- new_pcens( # nolint: implicit_assignment_linter.
       pdist,
       add_name_attribute(dprimary, "dunif"),
       list(),
@@ -343,8 +342,7 @@ test_that("new_pcens *_name deprecation is soft.", {
   )
 
   lifecycle::expect_deprecated(
-    new_obj <- new_pcens(
-      # nolint
+    new_obj <- new_pcens( # nolint: implicit_assignment_linter.
       add_name_attribute(pdist, "pgamma"),
       dprimary,
       list(),

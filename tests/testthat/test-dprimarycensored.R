@@ -111,7 +111,10 @@ test_that("dprimarycensored returns non-negative values", {
     x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = Inf,
     meanlog = 0.55, sdlog = 0.27
   )
-  expect_true(all(pmf_inf >= 0), info = "PMF with D=Inf should never be negative")
+  expect_true(
+    all(pmf_inf >= 0),
+    info = "PMF with D=Inf should never be negative"
+  )
 
   # Test with other distributions
   pmf_gamma <- dpcens(
