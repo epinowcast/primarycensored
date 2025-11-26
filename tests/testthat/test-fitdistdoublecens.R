@@ -290,6 +290,87 @@ test_that("fitdistdoublecens works with custom column names", {
   expect_equal(unname(fit$estimate["rate"]), rate, tolerance = 0.2)
 })
 
+test_that("fitdistdoublecens handles additional columns correctly", {
+  set.seed(123)
+  n <- 1000
+  shape <- 1.77
+  rate <- 0.44
+
+  samples <- rprimarycensored(
+    n,
+    rgamma,
+    shape = shape,
+    rate = rate,
+    pwindow = 1,
+    swindow = 1,
+    D = 8
+  )
+
+  # Create data frame with extra columns that should be ignored
+  delay_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = rep(1, n),
+    D = rep(8, n),
+    extra_column = rep("extra", n),
+    another_extra = seq_len(n),
+    metadata = rep(TRUE, n)
+  )
+
+  # Should work without error despite extra columns
+  fit <- fitdistdoublecens(
+    delay_data,
+    distr = "gamma",
+    start = list(shape = 1, rate = 1)
+  )
+
+  expect_s3_class(fit, "fitdist")
+  expect_equal(unname(fit$estimate["shape"]), shape, tolerance = 0.2)
+  expect_equal(unname(fit$estimate["rate"]), rate, tolerance = 0.2)
+})
+
+test_that("fitdistdoublecens handles additional columns with custom names", {
+  set.seed(123)
+  n <- 1000
+  shape <- 1.77
+  rate <- 0.44
+
+  samples <- rprimarycensored(
+    n,
+    rgamma,
+    shape = shape,
+    rate = rate,
+    pwindow = 1,
+    swindow = 1,
+    D = 8
+  )
+
+  # Create data frame with custom column names AND extra columns
+  delay_data <- data.frame(
+    lower_bound = samples,
+    upper_bound = samples + 1,
+    primary_window = rep(1, n),
+    truncation_time = rep(8, n),
+    spurious_data = runif(n),
+    id = seq_len(n),
+    notes = rep("test", n)
+  )
+
+  fit <- fitdistdoublecens(
+    delay_data,
+    distr = "gamma",
+    start = list(shape = 1, rate = 1),
+    left = "lower_bound",
+    right = "upper_bound",
+    pwindow = "primary_window",
+    D = "truncation_time"
+  )
+
+  expect_s3_class(fit, "fitdist")
+  expect_equal(unname(fit$estimate["shape"]), shape, tolerance = 0.2)
+  expect_equal(unname(fit$estimate["rate"]), rate, tolerance = 0.2)
+})
+
 test_that("fitdistdoublecens handles truncation_check_multiplier correctly", {
   set.seed(123)
   n <- 100
