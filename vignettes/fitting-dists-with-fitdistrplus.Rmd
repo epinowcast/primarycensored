@@ -18,21 +18,6 @@ vignette: >
 
 # Introduction
 
-## What you will learn
-
-By the end of this vignette, you will be able to:
-- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
-- Use `fitdistdoublecens()` to fit distributions that properly account for primary censoring, secondary censoring, and truncation
-- Understand when MLE-based fitting with fitdistrplus is appropriate versus Bayesian approaches with Stan
-
-## How you might adapt this vignette
-
-This vignette uses simulated data, but you can adapt it for your own work:
-- **Replace simulation with real data**: Swap out the simulated `delay_data` with your own observations of delays between primary and secondary events
-- **Change the distribution**: Replace `"gamma"` with other distributions like `"lnorm"`, `"weibull"`, or `"norm"` depending on what fits your data
-- **Vary the censoring windows**: Adjust `pwindow` and `swindow` to match your data's actual primary and secondary censoring intervals
-- **Handle different truncation times**: Use varying values in the `D` column if your observations have different maximum observable delays
-
 ## What are we going to do in this vignette
 
 In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with `fitdistrplus` for fitting distributions. We'll cover the following key points:
@@ -42,6 +27,13 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 3. Evaluating the naive model's performance
 4. Fitting an improved model using `primarycensored` functionality
 5. Comparing the `primarycensored` model's performance to the naive model
+
+## What you will learn
+
+By the end of this vignette, you will be able to:
+- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
+- Use `fitdistdoublecens()` to fit distributions that properly account for primary censoring, secondary censoring, and truncation
+- Understand when MLE-based fitting with fitdistrplus is appropriate versus Bayesian approaches with Stan
 
 ## What might I need to know before starting
 
@@ -246,7 +238,6 @@ Key advantages of `fitdistdoublecens()`:
 - **Supports mixed censoring intervals**: Different secondary censoring windows across observations are handled automatically
 
 ```{r primarycensored-fitdistdoublecens}
-# Fit using the recommended fitdistdoublecens() wrapper
 fitdistdoublecens_fit <- fitdistdoublecens(
   delay_data,
   distr = "gamma",
@@ -269,3 +260,12 @@ In this vignette we have shown how to fit a distribution using `primarycensored`
 - **Ignoring censoring causes bias**: The naive model that ignores primary censoring and truncation substantially underestimates the true distribution parameters.
 
 For a more robust Bayesian approach to fitting distributions, see the `vignette("fitting-dists-with-stan")` vignette. For more flexible delay distribution fitting, see the [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).
+
+## How you might adapt this vignette
+
+This vignette uses simulated data, but you can adapt it for your own work:
+
+- **Replace simulation with real data**: Swap out the simulated `delay_data` with your own observations of delays between primary and secondary events
+- **Change the distribution**: Replace `"gamma"` with other distributions like `"lnorm"`, `"weibull"`, or `"norm"` depending on what fits your data
+- **Vary the censoring windows**: Adjust `pwindow` and `swindow` to match your data's actual primary and secondary censoring intervals
+- **Handle different truncation times**: Use varying values in the `D` column if your observations have different maximum observable delays

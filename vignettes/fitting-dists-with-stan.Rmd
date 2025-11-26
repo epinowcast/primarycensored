@@ -18,22 +18,6 @@ vignette: >
 
 # Introduction
 
-## What you will learn
-
-By the end of this vignette, you will be able to:
-- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
-- Use `pcd_cmdstan_model()` and `pcd_as_stan_data()` to fit distributions that properly account for primary censoring, secondary censoring, and truncation
-- Understand when Bayesian fitting with Stan is appropriate versus MLE approaches with fitdistrplus
-
-## How you might adapt this vignette
-
-This vignette uses simulated data, but you can adapt it for your own work:
-- **Replace simulation with real data**: Swap out the simulated `delay_data` with your own observations of delays between primary and secondary events
-- **Change the distribution**: Replace `"lognormal"` with other distributions like `"gamma"` or `"weibull"` using `pcd_stan_dist_id()`
-- **Vary the censoring windows**: Adjust `pwindow` values to match your data's actual primary censoring intervals
-- **Handle different truncation times**: Use varying values in the `obs_time` column if your observations have different maximum observable delays
-- **Modify priors**: Adjust the `priors` argument in `pcd_as_stan_data()` to reflect your prior knowledge about the distribution parameters
-
 ## What are we going to do in this vignette
 
 In this vignette, we'll demonstrate how to use `primarycensored` in conjunction with Stan for Bayesian inference of epidemiological delay distributions. We'll cover the following key points:
@@ -44,6 +28,13 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 4. Fitting an improved model using `primarycensored` functionality
 5. Fitting the same model using `primarycensored`'s built in cmdstan model.
 5. Comparing the `primarycensored` model's performance to the naive model
+
+## What you will learn
+
+By the end of this vignette, you will be able to:
+- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
+- Use `pcd_cmdstan_model()` and `pcd_as_stan_data()` to fit distributions that properly account for primary censoring, secondary censoring, and truncation
+- Understand when Bayesian fitting with Stan is appropriate versus MLE approaches with fitdistrplus
 
 ## What might I need to know before starting
 
@@ -348,3 +339,13 @@ In this vignette we have shown how to fit a delay distribution using `primarycen
 - **Ignoring censoring causes bias**: The naive model that ignores primary censoring and truncation substantially underestimates the true distribution parameters.
 
 For a faster MLE-based approach that doesn't require Stan, see the `vignette("fitting-dists-with-fitdistrplus")` vignette. For more flexible delay distribution fitting, see the [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).
+
+## How you might adapt this vignette
+
+This vignette uses simulated data, but you can adapt it for your own work:
+
+- **Replace simulation with real data**: Swap out the simulated `delay_data` with your own observations of delays between primary and secondary events
+- **Change the distribution**: Replace `"lognormal"` with other distributions like `"gamma"` or `"weibull"` using `pcd_stan_dist_id()`
+- **Vary the censoring windows**: Adjust `pwindow` values to match your data's actual primary censoring intervals
+- **Handle different truncation times**: Use varying values in the `obs_time` column if your observations have different maximum observable delays
+- **Modify priors**: Adjust the `priors` argument in `pcd_as_stan_data()` to reflect your prior knowledge about the distribution parameters
