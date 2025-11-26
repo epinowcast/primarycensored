@@ -38,6 +38,8 @@ jobs:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
       NOT_CRAN: true
+      # Only run spelling checks on release R version
+      _R_CHECK_SPELLING_: ${{ matrix.config.r == 'release' }}
 
     steps:
       - uses: actions/checkout@v6 
