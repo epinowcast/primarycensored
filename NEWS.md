@@ -28,6 +28,11 @@ This minor release adds quantile functions for primary censored distributions an
 - Removed authorship from vignettes.
 - Updated the `fitdistrplus` vignette to use more complex data where the relative observation time is not constant. Also removed the note that the `fitdistdoublecens()` function is limited to a single primary censoring windows and truncation time as this is no longer the case.
 - The [Stan Reference](https://primarycensored.epinowcast.org/stan/) has been enhanced to make it easier to navigate the Stan code.
+- Improved documentation for `fitdistdoublecens()`:
+  - Expanded function description to explain primary censoring, secondary censoring, and truncation.
+  - Added detailed `@details` sections explaining how distribution names are resolved (e.g., `"gamma"` uses `dgamma()` and `pgamma()`), what the function does internally, and environment handling.
+  - Enhanced `distr` parameter documentation with examples and guidance on custom distributions.
+- Added "What you will learn" and "How you might adapt this vignette" sections to both the fitdistrplus and Stan fitting vignettes to help users understand learning objectives and adapt the examples for their own data.
 
 # primarycensored 1.1.0
 
