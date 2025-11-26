@@ -122,4 +122,16 @@ test_that("dprimarycensored returns non-negative values", {
     shape = 2, rate = 0.5
   )
   expect_true(all(pmf_gamma >= 0), info = "Gamma PMF should never be negative")
+
+  # Test with exponential growth primary distribution
+  pmf_expgrowth <- dpcens(
+    x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = 30,
+    dprimary = dexpgrowth,
+    dprimary_args = list(r = 0.2),
+    meanlog = 0.55, sdlog = 0.27
+  )
+  expect_true(
+    all(pmf_expgrowth >= 0),
+    info = "PMF with expgrowth primary should never be negative"
+  )
 })

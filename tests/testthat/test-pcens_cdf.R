@@ -409,6 +409,21 @@ test_that("pcens_cdf returns values in [0, 1] for all analytical methods", {
     all(cdf_weibull >= 0 & cdf_weibull <= 1),
     info = "Weibull CDF should be in [0, 1]"
   )
+
+  # Test with exponential growth primary (uses numerical integration)
+  obj_expgrowth <- new_pcens(
+    plnorm,
+    dexpgrowth,
+    list(r = 0.2),
+    meanlog = 0.55,
+    sdlog = 0.27
+  )
+
+  cdf_expgrowth <- pcens_cdf(obj_expgrowth, q = q_values, pwindow = 1)
+  expect_true(
+    all(cdf_expgrowth >= 0 & cdf_expgrowth <= 1),
+    info = "CDF with expgrowth primary should be in [0, 1]"
+  )
 })
 
 test_that("new_pcens works with custom function with name attribute", {
