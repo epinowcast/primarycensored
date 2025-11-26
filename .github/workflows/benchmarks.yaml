@@ -4,6 +4,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
 
+# NOTE: Workflow disabled - see issue for details on fixes needed
+# To re-enable, remove the `if: false` from both jobs below
 on:
   pull_request:
     paths:
@@ -24,6 +26,7 @@ on:
 
 jobs:
   prepare:
+    if: false  # Disabled - benchmarking not functional
     runs-on: ubuntu-latest
     outputs:
       config: ${{ steps.read_touchstone_config.outputs.config }}
@@ -43,6 +46,7 @@ jobs:
           # end of optional handling for multi line json
           echo "::set-output name=config::$content"
   build:
+    if: false  # Disabled - benchmarking not functional
     needs: prepare
     runs-on: ${{ matrix.config.os }}
     strategy:
