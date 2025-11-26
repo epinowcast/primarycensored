@@ -1,5 +1,9 @@
 # primarycensored (development version)
 
+## Tests
+
+- Added tests to verify that `pcd_as_stan_data()` and `fitdistdoublecens()` correctly handle data frames with additional columns beyond those required. (#213)
+
 ## Bug fixes
 
 - Fixed an issue where `dprimarycensored()` could return very small negative values (e.g., -2.2e-16) due to floating-point precision when computing PMF as CDF differences. PMF values are now clamped to be non-negative. (#238)
