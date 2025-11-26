@@ -1,0 +1,345 @@
+# Primary event censored distributions
+
+[![Universe](https://epinowcast.r-universe.dev/badges/primarycensored)](https://epinowcast.r-universe.dev/primarycensored)
+[![MIT
+license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/epinowcast/primarycensored/blob/master/LICENSE.md/)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/primarycensored)](https://CRAN.R-project.org/package=primarycensored)
+[![GitHub
+contributors](https://img.shields.io/github/contributors/epinowcast/primarycensored)](https://github.com/epinowcast/primarycensored/graphs/contributors)
+[![DOI](https://zenodo.org/badge/845633278.svg)](https://zenodo.org/doi/10.5281/zenodo.13632838)
+
+## Summary
+
+Provides functions for working with primary event censored distributions
+and ‘Stan’ implementations for use in Bayesian modeling. Primary event
+censored distributions are useful for modeling delayed reporting
+scenarios in epidemiology and other fields (Charniga et al. (2024)
+<doi:10.48550/arXiv.2405.08841>). It also provides support for arbitrary
+delay distributions, a range of common primary distributions, and allows
+for truncation and secondary event censoring to be accounted for (Park
+et al. (2024) <doi:10.1101/2024.01.12.24301247>). A subset of common
+distributions also have analytical solutions implemented, allowing for
+faster computation. In addition, it provides multiple methods for
+fitting primary event censored distributions to data via optional
+dependencies.
+
+## Installation
+
+Installing the package
+
+You can install the latest released version from CRAN using the standard
+`install.packages` function:
+
+``` r
+install.packages("primarycensored")
+```
+
+Alternatively, you can install the latest release from our r-universe
+repository:
+
+``` r
+install.packages("primarycensored", repos = "https://epinowcast.r-universe.dev")
+```
+
+To install the development version from GitHub (warning! this version
+may contain breaking changes and/or bugs), use the [`pak`
+package](https://pak.r-lib.org/):
+
+``` r
+pak::pak("epinowcast/primarycensored")
+```
+
+Similarly, you can install historical versions by specifying the release
+tag (e.g.,
+[`v0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
+
+``` r
+pak::pak("epinowcast/primarycensored@v0.2.0")
+```
+
+*Note: You can also use the above approach to install a specific commit
+if needed, for example, if you want to try out a specific unreleased
+feature, but not the absolute latest developmental version.*
+
+Installing CmdStan (optional for Stan functionality)
+
+If you wish to use the Stan functions, you will need to install
+[CmdStan](https://mc-stan.org/users/interfaces/cmdstan), which also
+entails having a suitable C++ toolchain setup. We recommend using the
+[`cmdstanr` package](https://mc-stan.org/cmdstanr/). The Stan team
+provides instructions in the [*Getting started with
+`cmdstanr`*](https://mc-stan.org/cmdstanr/articles/cmdstanr.html)
+vignette, with other details and support at the [package
+site](https://mc-stan.org/cmdstanr/) along with some key instructions
+available in the [Stan resources package
+vignette](https://package.epinowcast.org/articles/stan-help.html#toolchain),
+but the brief version is:
+
+``` r
+# if you not yet installed `primarycensored`, or you installed it without
+# `Suggests` dependencies
+install.packages(
+  "cmdstanr",
+  repos = c("https://stan-dev.r-universe.dev", getOption("repos"))
+)
+# once `cmdstanr` is installed:
+cmdstanr::install_cmdstan()
+```
+
+*Note: You can speed up CmdStan installation using the `cores` argument.
+If you are installing a particular version of `epinowcast`, you may also
+need to install a past version of CmdStan, which you can do with the
+`version` argument.*
+
+## Resources
+
+We provide a range of other documentation, case studies, and community
+spaces to ask (and answer!) questions:
+
+Package Website
+
+The [`primarycensored` website](https://primarycensored.epinowcast.org/)
+includes a function reference, model outline, and case studies using the
+package. The site mainly concerns the release version, but you can also
+find documentation for [the latest development
+version](https://primarycensored.epinowcast.org/dev/).
+
+Vignettes
+
+We have created [package
+vignettes](https://primarycensored.epinowcast.org/articles/) to help you
+get started with primarycensored and to highlight other features with
+case studies.
+
+Organisation Website
+
+Our [organisation website](https://www.epinowcast.org/) includes links
+to other resources, [guest posts](https://www.epinowcast.org/blog.html),
+and [seminar schedule](https://www.epinowcast.org/seminars.html) for
+both upcoming and past recordings.
+
+Community Forum
+
+Our [community forum](https://community.epinowcast.org/) has areas for
+[question and answer](https://community.epinowcast.org/c/interface/15)
+and [considering new methods and
+tools](https://community.epinowcast.org/c/projects/11), among others. If
+you are generally interested in real-time analysis of infectious
+disease, you may find this useful even if you do not use
+`primarycensored`.
+
+## Contributing
+
+We welcome contributions and new contributors! We particularly
+appreciate help on [identifying and identified
+issues](https://github.com/epinowcast/primarycensored/issues). Please
+check and add to the issues, and/or add a [pull
+request](https://github.com/epinowcast/primarycensored/pulls) and see
+our [contributing
+guide](https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md)
+for more information.
+
+If you need a different underlying model for your work:
+`primarycensored` provides a flexible framework for censored
+distributions in both R and Stan. If you implement new distributions or
+censoring mechanisms that expand the overall flexibility or improve the
+defaults, please let us know either here or on the [community
+forum](https://community.epinowcast.org/). We always like to hear about
+new use-cases and extensions to the package.
+
+### How to make a bug report or feature request
+
+Please briefly describe your problem and what output you expect in an
+[issue](https://github.com/epinowcast/primarycensored/issues). If you
+have a question, please don’t open an issue. Instead, ask on our [Q and
+A
+page](https://github.com/epinowcast/primarycensored/discussions/categories/q-a).
+See our [contributing
+guide](https://github.com/epinowcast/.github/blob/main/CONTRIBUTING.md)
+for more information.
+
+### Code of Conduct
+
+Please note that the `primarycensored` project is released with a
+[Contributor Code of
+Conduct](https://github.com/epinowcast/.github/blob/main/CODE_OF_CONDUCT.md).
+By contributing to this project, you agree to abide by its terms.
+
+## Citation
+
+If making use of our methodology or the methodology on which ours is
+based, please cite the relevant papers from our [methods
+outline](https://primarycensored.epinowcast.org/articles//primarycensored.html).
+If you use `primarycensored` in your work, please consider citing it
+with `citation("primarycensored")`.
+
+## Contributors
+
+All contributions to this project are gratefully acknowledged using the
+[`allcontributors` package](https://github.com/ropensci/allcontributors)
+following the [all-contributors](https://allcontributors.org)
+specification. Contributions of any kind are welcome!
+
+### Code
+
+[seabbs](https://github.com/epinowcast/primarycensored/commits?author=seabbs),
+[SamuelBrand1](https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1),
+[sbfnk](https://github.com/epinowcast/primarycensored/commits?author=sbfnk),
+[athowes](https://github.com/epinowcast/primarycensored/commits?author=athowes),
+[jamesmbaazam](https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam),
+[barbora-sobolova](https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova),
+[pearsonca](https://github.com/epinowcast/primarycensored/commits?author=pearsonca)
+
+### Issue Authors
+
+[zsusswein](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein),
+[jcblemai](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai),
+[adamkucharski](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski)
+
+### Issue Contributors
+
+[parksw3](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3)
+
+# Package index
+
+## Primary event censored distribution functions
+
+Functions for generating, evaluating density, and computing cumulative
+probabilities of primary event censored distributions
+
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  [`dpcens()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  : Compute the primary event censored PMF for delays
+- [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  [`ppcens()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  : Compute the primary event censored CDF for delays
+- [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  [`qpcens()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  : Compute quantiles corresponding to target probabilities for primary
+  event censored delays
+- [`rprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/rprimarycensored.md)
+  [`rpcens()`](https://primarycensored.epinowcast.org/dev/reference/rprimarycensored.md)
+  : Generate random samples from a primary event censored distribution
+
+## Primary event distributions
+
+Probability density and random generation functions for primary event
+distributions
+
+- [`dexpgrowth()`](https://primarycensored.epinowcast.org/dev/reference/expgrowth.md)
+  [`pexpgrowth()`](https://primarycensored.epinowcast.org/dev/reference/expgrowth.md)
+  [`rexpgrowth()`](https://primarycensored.epinowcast.org/dev/reference/expgrowth.md)
+  : Exponential growth distribution functions
+
+## Primary censored distribution class and methods
+
+S3 class and methods for computing primary event censored distributions,
+focusing on the internal machinery used by the package. Unlike the
+primary event distributions section which deals with specific
+distribution functions, this section covers the general framework for
+handling censored distributions.
+
+- [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md)
+  : S3 class for primary event censored distribution computation
+- [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
+  : Compute primary event censored CDF
+- [`pcens_cdf(`*`<default>`*`)`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.default.md)
+  : Default method for computing primary event censored CDF
+- [`pcens_cdf(`*`<pcens_pgamma_dunif>`*`)`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgamma_dunif.md)
+  : Method for Gamma delay with uniform primary
+- [`pcens_cdf(`*`<pcens_plnorm_dunif>`*`)`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_plnorm_dunif.md)
+  : Method for Log-Normal delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pweibull_dunif>`*`)`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pweibull_dunif.md)
+  : Method for Weibull delay with uniform primary
+- [`pcens_quantile()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.md)
+  : Compute primary event censored quantiles
+- [`pcens_quantile(`*`<default>`*`)`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.default.md)
+  : Default method for computing primary event censored quantiles
+
+## Utility functions
+
+Utility functions for working withe package
+
+- [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
+  : Helper method for custom distributions
+- [`pcd_dist_name()`](https://primarycensored.epinowcast.org/dev/reference/pcd_dist_name.md)
+  : Get distribution function cdf or pdf name
+- [`pcd_distributions`](https://primarycensored.epinowcast.org/dev/reference/pcd_distributions.md)
+  : Supported delay distributions
+- [`pcd_primary_distributions`](https://primarycensored.epinowcast.org/dev/reference/pcd_primary_distributions.md)
+  : Supported primary event distributions
+
+## Distribution checking functions
+
+Functions to validate cumulative distribution functions (CDFs) and
+probability density functions (PDFs)
+
+- [`check_dprimary()`](https://primarycensored.epinowcast.org/dev/reference/check_dprimary.md)
+  : Check if a function is a valid bounded probability density function
+  (PDF)
+- [`check_pdist()`](https://primarycensored.epinowcast.org/dev/reference/check_pdist.md)
+  : Check if a function is a valid cumulative distribution function
+  (CDF)
+- [`check_truncation()`](https://primarycensored.epinowcast.org/dev/reference/check_truncation.md)
+  : Check if truncation time is appropriate relative to the maximum
+  delay
+
+## Tools for working with package Stan functions
+
+Utility functions for interfacing with Stan models and extracting
+results
+
+- [`pcd_load_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_load_stan_functions.md)
+  : Load Stan functions as a string
+- [`pcd_stan_dist_id()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_dist_id.md)
+  : Get distribution stan ID by name
+- [`pcd_stan_files()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_files.md)
+  : Get Stan files containing specified functions
+- [`pcd_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_functions.md)
+  : Get Stan function names from Stan files
+- [`pcd_stan_path()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_path.md)
+  : Get the path to the Stan code
+
+## Wrappers facilitating the use of other modelling packages
+
+Functions that wrap around external packages like fitdistrplus to fit
+distributions to doubly censored data
+
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  : Fit a distribution to doubly censored data
+- [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/dev/reference/pcd_as_stan_data.md)
+  : Prepare data for primarycensored Stan model
+- [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md)
+  : Create a CmdStanModel with primarycensored Stan functions
+
+# Articles
+
+### All vignettes
+
+- [Analytic solutions for censored delay
+  distributions](https://primarycensored.epinowcast.org/dev/articles/analytic-solutions.md):
+
+- [Fitting distributions using primarycensored and
+  fitdistrplus](https://primarycensored.epinowcast.org/dev/articles/fitting-dists-with-fitdistrplus.md):
+
+  A guide on how to fit distributions using primarycensored and
+  fitdistrplus.
+
+- [Fitting distributions using primarycensored and
+  cmdstan](https://primarycensored.epinowcast.org/dev/articles/fitting-dists-with-stan.md):
+
+  A guide on how to use primarycensored with Stan for Bayesian inference
+  of epidemiological delay distributions.
+
+- [Getting Started with
+  primarycensored](https://primarycensored.epinowcast.org/dev/articles/primarycensored.md):
+
+  A quick start example demonstrating use of primarycensored.
+
+- [How to use primarycensored with
+  Stan](https://primarycensored.epinowcast.org/dev/articles/using-stan-tools.md):
+
+  A guide on how to use primarycensored with Stan.
+
+- [Why it
+  works](https://primarycensored.epinowcast.org/dev/articles/why-it-works.md):
