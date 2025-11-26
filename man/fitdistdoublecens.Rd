@@ -24,7 +24,13 @@ the lower and upper bounds of the censored observations. Unlike
 \code{\link[fitdistrplus:fitdistcens]{fitdistrplus::fitdistcens()}} \code{NA} is not supported for either the
 upper or lower bounds.}
 
-\item{distr}{A character string naming the distribution to be fitted.}
+\item{distr}{A character string naming the distribution to be fitted. This
+should be the base name of a distribution with corresponding \code{d} (density)
+and \code{p} (cumulative distribution) functions available. For example, use
+\code{"gamma"} (which will use \code{dgamma} and \code{pgamma}), \code{"lnorm"} (for \code{dlnorm}
+and \code{plnorm}), \code{"weibull"}, \code{"norm"}, etc. Custom distributions can also
+be used as long as the corresponding \verb{d<distr>()} and \verb{p<distr>()}
+functions are defined and loaded.}
 
 \item{left}{Column name for lower bound of observed values (default: "left").}
 
@@ -68,16 +74,44 @@ An object of class "fitdist" as returned by fitdistrplus::fitdist.
 }
 \description{
 This function wraps the custom approach for fitting distributions to doubly
-censored data using fitdistrplus and primarycensored.
+censored data using fitdistrplus and primarycensored. It handles primary
+censoring (when the primary event time is not known exactly), secondary
+censoring (when the secondary event time is interval-censored), and right
+truncation (when events are only observed up to a maximum delay).
 }
 \details{
-This function temporarily assigns and then removes functions from the global
-environment in order to work with fitdistr. Users should be aware of this
-behaviour, especially if they have existing functions with the same names in
-their global environment.
+\subsection{How distribution functions are resolved}{
+
+The \code{distr} parameter specifies the base name of the distribution. The
+function automatically looks up the corresponding density (\code{d}) and
+cumulative distribution (\code{p}) functions by prepending these prefixes to the
+distribution name. For example:
+\itemize{
+\item \code{distr = "gamma"} uses \code{dgamma()} and \code{pgamma()}
+\item \code{distr = "lnorm"} uses \code{dlnorm()} and \code{plnorm()}
+\item \code{distr = "weibull"} uses \code{dweibull()} and \code{pweibull()}
+}
+
+Any distribution available in base R or loaded packages can be used, as long
+as the corresponding \verb{d<distr>} and \verb{p<distr>} functions exist and follow
+standard R distribution function conventions (first argument is \code{x} for
+density, \code{q} for CDF).
+}
+
+\subsection{What this function does internally}{
+
+This function creates custom density and CDF functions that account for
+primary censoring, secondary censoring, and truncation using
+\code{\link[=dprimarycensored]{dprimarycensored()}} and \code{\link[=pprimarycensored]{pprimarycensored()}}. These custom functions are
+then passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}} for maximum likelihood estimation.
+
+The function handles varying observation windows across observations,
+making it suitable for real-world data where truncation times or censoring
+windows may differ between observations.
+}
 }
 \examples{
-\dontshow{if (requireNamespace("fitdistrplus", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("fitdistrplus", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Example with normal distribution
 set.seed(123)
 n <- 1000
