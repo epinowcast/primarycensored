@@ -157,6 +157,10 @@ dprimarycensored <- function(
     result <- result / cdf_D
   }
 
+  # Ensure non-negative values (can become slightly negative due to
+  # floating-point precision when computing CDF differences)
+  result <- pmax(0, result)
+
   if (log) {
     return(log(result))
   } else {
