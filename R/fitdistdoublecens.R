@@ -33,13 +33,6 @@
 #' making it suitable for real-world data where truncation times or censoring
 #' windows may differ between observations.
 #'
-#' ## Environment handling
-#'
-#' This function temporarily assigns and then removes functions from the global
-#' environment in order to work with fitdistr. Users should be aware of this
-#' behaviour, especially if they have existing functions with the same names in
-#' their global environment.
-#'
 #' @param censdata A data frame with columns 'left' and 'right' representing
 #'  the lower and upper bounds of the censored observations. Unlike
 #'  [fitdistrplus::fitdistcens()] `NA` is not supported for either the
