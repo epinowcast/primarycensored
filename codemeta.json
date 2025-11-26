@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/epinowcast/primarycensored",
   "issueTracker": "https://github.com/epinowcast/primarycensored/issues",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "1.2.0",
+  "version": "1.2.0.1000",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.5.0 (2025-04-11)",
+  "runtimePlatform": "R version 4.5.2 (2025-10-31)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -265,7 +265,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "600.764KB",
+  "fileSize": "604.367KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
@@ -320,7 +320,7 @@
       "sameAs": "https://doi.org/10.5281/zenodo.13632839"
     }
   ],
-  "releaseNotes": "https://github.com/epinowcast/primarycensored/blob/master/NEWS.md",
+  "releaseNotes": "https://github.com/epinowcast/primarycensored/blob/main/NEWS.md",
   "readme": "https://github.com/epinowcast/primarycensored/blob/main/README.md",
   "contIntegration": ["https://github.com/epinowcast/primarycensored/actions/workflows/R-CMD-check.yaml", "https://app.codecov.io/gh/epinowcast/primarycensored"],
   "developmentStatus": "https://lifecycle.r-lib.org/articles/stages.html#stable",
