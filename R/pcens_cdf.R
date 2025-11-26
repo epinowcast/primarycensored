@@ -91,8 +91,8 @@ pcens_cdf.default <- function(
     numeric(1)
   )
 
-  # Ensure the result is not greater than 1 (accounts for numerical errors)
-  result <- pmin(1, result)
+  # Ensure the result is in [0, 1] (accounts for numerical errors)
+  result <- pmin(1, pmax(0, result))
 
   return(result)
 }
@@ -172,8 +172,8 @@ pcens_cdf.pcens_pgamma_dunif <- function(
     result[!zero_cases] <- non_zero_result
   }
 
-  # Ensure the result is not greater than 1 (accounts for numerical errors)
-  result <- pmin(1, result)
+  # Ensure the result is in [0, 1] (accounts for numerical errors)
+  result <- pmin(1, pmax(0, result))
 
   return(result)
 }
@@ -255,8 +255,8 @@ pcens_cdf.pcens_plnorm_dunif <- function(
     result[!zero_cases] <- non_zero_result
   }
 
-  # Ensure the result is not greater than 1 (accounts for numerical errors)
-  result <- pmin(1, result)
+  # Ensure the result is in [0, 1] (accounts for numerical errors)
+  result <- pmin(1, pmax(0, result))
 
   return(result)
 }
@@ -358,8 +358,8 @@ pcens_cdf.pcens_pweibull_dunif <- function(
     result[!zero_cases] <- non_zero_result
   }
 
-  # Ensure the result is not greater than 1 (accounts for numerical errors)
-  result <- pmin(1, result)
+  # Ensure the result is in [0, 1] (accounts for numerical errors)
+  result <- pmin(1, pmax(0, result))
 
   return(result)
 }

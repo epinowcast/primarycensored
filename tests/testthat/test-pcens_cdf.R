@@ -364,6 +364,55 @@ test_that("new_pcens *_name deprecation is soft.", {
   expect_identical(formals(new_obj$dprimary), formals(ref_obj$dprimary))
 })
 
+test_that("pcens_cdf returns values in [0, 1] for all analytical methods", {
+  # Test case from issue #238: parameters that stress numerical precision
+  # Lognormal with tight distribution where CDF approaches 1 quickly
+  obj_lnorm <- new_pcens(
+    plnorm,
+    dunif,
+    list(),
+    meanlog = 0.55,
+    sdlog = 0.27
+  )
+
+  q_values <- seq(0, 30, by = 1)
+  cdf_lnorm <- pcens_cdf(obj_lnorm, q = q_values, pwindow = 1)
+  expect_true(
+    all(cdf_lnorm >= 0 & cdf_lnorm <= 1),
+    info = "Lognormal CDF should be in [0, 1]"
+  )
+
+  # Gamma distribution
+  obj_gamma <- new_pcens(
+    pgamma,
+    dunif,
+    list(),
+    shape = 2,
+    rate = 0.5
+  )
+
+  cdf_gamma <- pcens_cdf(obj_gamma, q = q_values, pwindow = 1)
+  expect_true(
+    all(cdf_gamma >= 0 & cdf_gamma <= 1),
+    info = "Gamma CDF should be in [0, 1]"
+  )
+
+  # Weibull distribution
+  obj_weibull <- new_pcens(
+    pweibull,
+    dunif,
+    list(),
+    shape = 2,
+    scale = 1
+  )
+
+  cdf_weibull <- pcens_cdf(obj_weibull, q = q_values, pwindow = 1)
+  expect_true(
+    all(cdf_weibull >= 0 & cdf_weibull <= 1),
+    info = "Weibull CDF should be in [0, 1]"
+  )
+})
+
 test_that("new_pcens works with custom function with name attribute", {
   # Create custom functions with name attributes
   custom_pdist <- function(x, shape, rate) pgamma(x, shape, rate)
