@@ -1,3 +1,10 @@
+# primarycensored (development version)
+
+## Bug fixes
+
+- Fixed an issue where `dprimarycensored()` could return very small negative values (e.g., -2.2e-16) due to floating-point precision when computing PMF as CDF differences. PMF values are now clamped to be non-negative. (#238)
+- Added bounds checking to all `pcens_cdf()` methods to ensure CDF values are always in [0, 1], complementing the existing upper bound check with a lower bound check.
+
 # primarycensored 1.2.0
 
 This minor release adds quantile functions for primary censored distributions and enhances the `fitdistdoublecens()` function to support varying primary censoring windows and truncation times. The release also improves documentation, particularly the Stan reference, making it easier for users to navigate and work with the Stan code.
