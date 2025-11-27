@@ -94,3 +94,44 @@ test_that("dprimarycensored returns 0 for negative d", {
     )[2], 0
   )
 })
+
+test_that("dprimarycensored returns non-negative values", {
+  # Test case from issue #238: lognormal with specific parameters
+
+  # that previously produced negative values due to floating-point precision
+  pmf <- dpcens(
+    x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = 30,
+    meanlog = 0.55, sdlog = 0.27
+  )
+  expect_true(all(pmf >= 0), info = "PMF should never be negative")
+
+  # Also test with infinite D
+
+  pmf_inf <- dpcens(
+    x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = Inf,
+    meanlog = 0.55, sdlog = 0.27
+  )
+  expect_true(
+    all(pmf_inf >= 0),
+    info = "PMF with D=Inf should never be negative"
+  )
+
+  # Test with other distributions
+  pmf_gamma <- dpcens(
+    x = seq(0, 29), pgamma, pwindow = 1, swindow = 1, D = 30,
+    shape = 2, rate = 0.5
+  )
+  expect_true(all(pmf_gamma >= 0), info = "Gamma PMF should never be negative")
+
+  # Test with exponential growth primary distribution
+  pmf_expgrowth <- dpcens(
+    x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = 30,
+    dprimary = dexpgrowth,
+    dprimary_args = list(r = 0.2),
+    meanlog = 0.55, sdlog = 0.27
+  )
+  expect_true(
+    all(pmf_expgrowth >= 0),
+    info = "PMF with expgrowth primary should never be negative"
+  )
+})
