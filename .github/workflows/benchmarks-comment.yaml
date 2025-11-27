@@ -1,5 +1,7 @@
 name: Benchmarks (Comment)
 
+# NOTE: Workflow disabled - see issue for details on fixes needed
+# To re-enable, remove the `if: false` from the job below
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref }}
   cancel-in-progress: true
@@ -13,6 +15,7 @@ on:
 
 jobs:
   upload:
+    if: false  # Disabled - benchmarking not functional
     runs-on: ubuntu-latest
     steps:
       - uses: seabbs/touchstone/actions/comment@main
