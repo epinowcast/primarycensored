@@ -1,5 +1,13 @@
 # primarycensored (development version)
 
+## Documentation
+
+- Improved documentation for `fitdistdoublecens()`:
+  - Expanded function description to explain primary censoring, secondary censoring, and truncation.
+  - Added detailed `@details` sections explaining how distribution names are resolved (e.g., `"gamma"` uses `dgamma()` and `pgamma()`), and what the function does internally.
+  - Enhanced `distr` parameter documentation with examples and guidance on custom distributions.
+- Added "What you will learn" and "How you might adapt this vignette" sections to both the fitdistrplus and Stan fitting vignettes to help users understand learning objectives and adapt the examples for their own data.
+
 ## Tests
 
 - Added tests to verify that `pcd_as_stan_data()` and `fitdistdoublecens()` correctly handle data frames with additional columns beyond those required. (#213)
