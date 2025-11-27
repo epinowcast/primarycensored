@@ -314,7 +314,8 @@ test_that("fitdistdoublecens handles additional columns correctly", {
     D = rep(8, n),
     extra_column = rep("extra", n),
     another_extra = seq_len(n),
-    metadata = rep(TRUE, n)
+    metadata = rep(TRUE, n),
+    stringsAsFactors = FALSE
   )
 
   # Should work without error despite extra columns
@@ -353,7 +354,8 @@ test_that("fitdistdoublecens handles additional columns with custom names", {
     truncation_time = rep(8, n),
     spurious_data = runif(n),
     id = seq_len(n),
-    notes = rep("test", n)
+    notes = rep("test", n),
+    stringsAsFactors = FALSE
   )
 
   fit <- fitdistdoublecens(

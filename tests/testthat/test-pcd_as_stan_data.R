@@ -145,7 +145,8 @@ test_that("pcd_as_stan_data handles additional columns correctly", {
     relative_obs_time = c(10, 10, 10),
     extra_column = c("a", "b", "c"),
     another_extra = c(100, 200, 300),
-    yet_another = c(TRUE, FALSE, TRUE)
+    yet_another = c(TRUE, FALSE, TRUE),
+    stringsAsFactors = FALSE
   )
 
   expect_message(
@@ -186,7 +187,8 @@ test_that("pcd_as_stan_data handles additional columns with custom names", {
     primary_window = c(1, 1, 2),
     obs_time = c(10, 10, 10),
     spurious_data = c(1.5, 2.5, 3.5),
-    metadata = c("x", "y", "z")
+    metadata = c("x", "y", "z"),
+    stringsAsFactors = FALSE
   )
 
   expect_message(
