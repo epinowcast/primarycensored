@@ -40,22 +40,19 @@ frequently in both data analysis and theoretical modelling. For a more
 detailed description of these problems in an epidemiological context
 see^(\[[2](#ref-Park2024),[3](#ref-Charniga2024)\]).
 
-In data analysis, events in epidemiology are commonly reported as
-occurring on a particular day or week (*interval censoring*). In an
-emerging outbreak, datasets can be incompletely observed (*right
-truncation*) and their can be a great deal of uncertainty around the
-precise timing of events (*interval censoring*).
+**For data analysis**: In epidemiology, events are commonly reported as
+occurring on a particular day or week. This means that *both* events
+that define a delay are interval censored. In an emerging outbreak,
+datasets can also be incompletely observed (*right truncation*).
+`primarycensored` provides statistically rigorous methods to account for
+this double censoring and truncation.
 
-In theoretical epidemiological modelling, it is often appropriate to
-model the evolution of an infectious disease as occurring in discrete
-time, for example in the [`EpiNow2`](https://epiforecasts.io/EpiNow2/)
-and [`EpiEstim`](https://mrc-ide.github.io/EpiEstim/index.html)
-modelling packages. This means appropriately discretising continuous
-distributions, such as the generation interval distribution. In
-`primarycensored` we treat the discretisation of intrinsically
-continuous distributions as an *interval censoring* problem which allows
-us to simultaneously provide methods for both applied and theoretical
-contexts.
+**For theoretical modelling**: Discrete-time models (e.g.,
+[`EpiNow2`](https://epiforecasts.io/EpiNow2/),
+[`EpiEstim`](https://mrc-ide.github.io/EpiEstim/index.html)) implicitly
+treat both events as interval censored at the model’s timestep.
+`primarycensored` provides a principled approach to discretising
+continuous distributions that accounts for this.
 
 ## 3 Statistical model used in `primarycensored`
 
