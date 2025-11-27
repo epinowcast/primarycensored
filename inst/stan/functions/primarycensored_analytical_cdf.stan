@@ -252,7 +252,11 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
     result = result - log_cdf_D;
   }
 
-  return result;
+  // Clamp log_cdf to valid range [-inf, 0] to handle numerical edge cases
+  if (is_nan(result)) {
+    return 0.0;  // log(1) = 0, meaning CDF = 1
+  }
+  return fmin(0.0, result);  // Ensure log_cdf <= 0
 }
 
 /**
