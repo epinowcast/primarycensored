@@ -64,6 +64,15 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="primarycensored-development-version">primarycensored (development version)<a class="anchor" aria-label="anchor" href="#primarycensored-development-version"></a></h2>
 <div class="section level3">
+<h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
+<ul><li>Improved documentation for <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code>:
+<ul><li>Expanded function description to explain primary censoring, secondary censoring, and truncation.</li>
+<li>Added detailed <code>@details</code> sections explaining how distribution names are resolved (e.g., <code>"gamma"</code> uses <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code>), and what the function does internally.</li>
+<li>Enhanced <code>distr</code> parameter documentation with examples and guidance on custom distributions.</li>
+</ul></li>
+<li>Added “What you will learn” and “How you might adapt this vignette” sections to both the fitdistrplus and Stan fitting vignettes to help users understand learning objectives and adapt the examples for their own data.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="tests-development-version">Tests<a class="anchor" aria-label="anchor" href="#tests-development-version"></a></h3>
 <ul><li>Added tests to verify that <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> and <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> correctly handle data frames with additional columns beyond those required. (<a href="https://github.com/epinowcast/primarycensored/issues/213" class="external-link">#213</a>)</li>
 </ul></div>

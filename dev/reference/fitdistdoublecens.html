@@ -6,8 +6,14 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fit a distribution to doubly censored data — fitdistdoublecens"><meta name="description" content="This function wraps the custom approach for fitting distributions to doubly
-censored data using fitdistrplus and primarycensored."><meta property="og:description" content="This function wraps the custom approach for fitting distributions to doubly
-censored data using fitdistrplus and primarycensored."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
+censored data using fitdistrplus and primarycensored. It handles primary
+censoring (when the primary event time is not known exactly), secondary
+censoring (when the secondary event time is interval-censored), and right
+truncation (when events are only observed up to a maximum delay)."><meta property="og:description" content="This function wraps the custom approach for fitting distributions to doubly
+censored data using fitdistrplus and primarycensored. It handles primary
+censoring (when the primary event time is not known exactly), secondary
+censoring (when the secondary event time is interval-censored), and right
+truncation (when events are only observed up to a maximum delay)."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -66,7 +72,10 @@ censored data using fitdistrplus and primarycensored."><meta property="og:image"
 
     <div class="ref-description section level2">
     <p>This function wraps the custom approach for fitting distributions to doubly
-censored data using fitdistrplus and primarycensored.</p>
+censored data using fitdistrplus and primarycensored. It handles primary
+censoring (when the primary event time is not known exactly), secondary
+censoring (when the secondary event time is interval-censored), and right
+truncation (when events are only observed up to a maximum delay).</p>
     </div>
 
     <div class="section level2">
@@ -98,7 +107,13 @@ upper or lower bounds.</p></dd>
 
 
 <dt id="arg-distr">distr<a class="anchor" aria-label="anchor" href="#arg-distr"></a></dt>
-<dd><p>A character string naming the distribution to be fitted.</p></dd>
+<dd><p>A character string naming the distribution to be fitted. This
+should be the base name of a distribution with corresponding <code>d</code> (density)
+and <code>p</code> (cumulative distribution) functions available. For example, use
+<code>"gamma"</code> (which will use <code>dgamma</code> and <code>pgamma</code>), <code>"lnorm"</code> (for <code>dlnorm</code>
+and <code>plnorm</code>), <code>"weibull"</code>, <code>"norm"</code>, etc. Custom distributions can also
+be used as long as the corresponding <code>d&lt;distr&gt;()</code> and <code>p&lt;distr&gt;()</code>
+functions are defined and loaded.</p></dd>
 
 
 <dt id="arg-left">left<a class="anchor" aria-label="anchor" href="#arg-left"></a></dt>
@@ -162,10 +177,36 @@ Set to NULL to skip the check. Default is 2.</p></dd>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
-    <p>This function temporarily assigns and then removes functions from the global
-environment in order to work with fitdistr. Users should be aware of this
-behaviour, especially if they have existing functions with the same names in
-their global environment.</p>
+
+<div class="section">
+<h3 id="how-distribution-functions-are-resolved">How distribution functions are resolved<a class="anchor" aria-label="anchor" href="#how-distribution-functions-are-resolved"></a></h3>
+
+
+<p>The <code>distr</code> parameter specifies the base name of the distribution. The
+function automatically looks up the corresponding density (<code>d</code>) and
+cumulative distribution (<code>p</code>) functions by prepending these prefixes to the
+distribution name. For example:</p><ul><li><p><code>distr = "gamma"</code> uses <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code></p></li>
+<li><p><code>distr = "lnorm"</code> uses <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code> and <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm()</a></code></p></li>
+<li><p><code>distr = "weibull"</code> uses <code><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">dweibull()</a></code> and <code><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">pweibull()</a></code></p></li>
+</ul><p>Any distribution available in base R or loaded packages can be used, as long
+as the corresponding <code>d&lt;distr&gt;</code> and <code>p&lt;distr&gt;</code> functions exist and follow
+standard R distribution function conventions (first argument is <code>x</code> for
+density, <code>q</code> for CDF).</p>
+</div>
+
+<div class="section">
+<h3 id="what-this-function-does-internally">What this function does internally<a class="anchor" aria-label="anchor" href="#what-this-function-does-internally"></a></h3>
+
+
+<p>This function creates custom density and CDF functions that account for
+primary censoring, secondary censoring, and truncation using
+<code><a href="dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="pprimarycensored.html">pprimarycensored()</a></code>. These custom functions are
+then passed to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code> for maximum likelihood estimation.</p>
+<p>The function handles varying observation windows across observations,
+making it suitable for real-world data where truncation times or censoring
+windows may differ between observations.</p>
+</div>
+
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

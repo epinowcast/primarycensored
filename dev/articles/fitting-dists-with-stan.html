@@ -120,14 +120,23 @@
 </ol>
 </div>
 <div class="section level3" number="1.2">
+<h3 id="what-you-will-learn">
+<span class="header-section-number">1.2</span> What you will learn<a class="anchor" aria-label="anchor" href="#what-you-will-learn"></a>
+</h3>
+<p>By the end of this vignette, you will be able to:
+- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
+- Use <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code> and <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to fit distributions that properly account for primary censoring, secondary censoring, and truncation
+- Understand when Bayesian fitting with Stan is appropriate versus MLE approaches with fitdistrplus</p>
+</div>
+<div class="section level3" number="1.3">
 <h3 id="what-might-i-need-to-know-before-starting">
-<span class="header-section-number">1.2</span> What might I need to know before starting<a class="anchor" aria-label="anchor" href="#what-might-i-need-to-know-before-starting"></a>
+<span class="header-section-number">1.3</span> What might I need to know before starting<a class="anchor" aria-label="anchor" href="#what-might-i-need-to-know-before-starting"></a>
 </h3>
 <p>This vignette builds on the concepts introduced in the <a href="primarycensored.html">Getting Started with primarycensored</a> vignette and assumes familiarity with using Stan tools as covered in the <a href="using-stan-tools.html">How to use primarycensored with Stan</a> vignette.</p>
 </div>
-<div class="section level3" number="1.3">
+<div class="section level3" number="1.4">
 <h3 id="packages-used-in-this-vignette">
-<span class="header-section-number">1.3</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
+<span class="header-section-number">1.4</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
 </h3>
 <p>Alongside the <code>primarycensored</code> package we will use the <code>cmdstanr</code> package for interfacing with cmdstan. We will also use the <code>ggplot2</code> package for plotting and <code>dplyr</code> for data manipulation.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -420,17 +429,44 @@
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.75 -3422.45 1.01 0.75 -3424.73 -3421.80 1.00     1284     1826</span></span>
-<span><span class="co">##  params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00     1289     1356</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1265     1457</span></span></code></pre>
+<span><span class="co">##  lp__      -3422.74 -3422.42 0.99 0.72 -3424.69 -3421.79 1.00     1501     1558</span></span>
+<span><span class="co">##  params[1]     1.55     1.54 0.05 0.04     1.48     1.63 1.01      972     1214</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.01      957     1243</span></span></code></pre>
 <p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example (i.e. the meanlog and sdlog parameters of the lognormal distribution). We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 <div class="section level3" number="5.1">
 <h3 id="summary">
 <span class="header-section-number">5.1</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
-<p>In this vignette we have shown how to fit a delay distribution using <code>primarycensored</code> in conjunction with <code>cmdstan</code> and compared this estimate with both the known distribution parameters and a naive approach. We have also shown how to use the <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code> function to compile the model and <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to convert our data into a format that can be used to fit the model rather than manually writing the model and formatting the data.</p>
-<p>If you are instead interested in fitting a delay distribution more flexibly see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+<p>In this vignette we have shown how to fit a delay distribution using <code>primarycensored</code> in conjunction with <code>cmdstan</code>. The key takeaways are:</p>
+<ul>
+<li>
+<strong>Use <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code> and <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code></strong>: This is the recommended approach for most users. It handles all the complexity of primary censoring, secondary censoring, and truncation automatically, and supports within-chain parallelisation.</li>
+<li>
+<strong>Specify distributions by ID</strong>: Use <code><a href="../reference/pcd_stan_dist_id.html">pcd_stan_dist_id()</a></code> to get the correct distribution identifier (e.g., <code>"lognormal"</code>, <code>"gamma"</code>, <code>"weibull"</code>).</li>
+<li>
+<strong>Ignoring censoring causes bias</strong>: The naive model that ignores primary censoring and truncation substantially underestimates the true distribution parameters.</li>
+</ul>
+<p>For a faster MLE-based approach that doesn’t require Stan, see the <code><a href="../articles/fitting-dists-with-fitdistrplus.html">vignette("fitting-dists-with-fitdistrplus")</a></code> vignette. For more flexible delay distribution fitting, see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+</div>
+<div class="section level3" number="5.2">
+<h3 id="how-you-might-adapt-this-vignette">
+<span class="header-section-number">5.2</span> How you might adapt this vignette<a class="anchor" aria-label="anchor" href="#how-you-might-adapt-this-vignette"></a>
+</h3>
+<p>This vignette uses simulated data, but you can adapt it for your own work:</p>
+<ul>
+<li>
+<strong>Replace simulation with real data</strong>: Swap out the simulated <code>delay_data</code> with your own observations of delays between primary and secondary events</li>
+<li>
+<strong>Change the distribution</strong>: Replace <code>"lognormal"</code> with other distributions like <code>"gamma"</code> or <code>"weibull"</code> using <code><a href="../reference/pcd_stan_dist_id.html">pcd_stan_dist_id()</a></code>
+</li>
+<li>
+<strong>Vary the censoring windows</strong>: Adjust <code>pwindow</code> values to match your data’s actual primary censoring intervals</li>
+<li>
+<strong>Handle different truncation times</strong>: Use varying values in the <code>obs_time</code> column if your observations have different maximum observable delays</li>
+<li>
+<strong>Modify priors</strong>: Adjust the <code>priors</code> argument in <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> to reflect your prior knowledge about the distribution parameters</li>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

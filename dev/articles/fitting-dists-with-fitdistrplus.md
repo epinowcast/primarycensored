@@ -15,7 +15,17 @@ the following key points:
 5.  Comparing the `primarycensored` model’s performance to the naive
     model
 
-### 1.2 What might I need to know before starting
+### 1.2 What you will learn
+
+By the end of this vignette, you will be able to: - Understand the bias
+introduced by ignoring primary censoring and truncation when fitting
+delay distributions - Use
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+to fit distributions that properly account for primary censoring,
+secondary censoring, and truncation - Understand when MLE-based fitting
+with fitdistrplus is appropriate versus Bayesian approaches with Stan
+
+### 1.3 What might I need to know before starting
 
 This vignette assumes some familiarity with the `fitdistrplus` package.
 If you are not familiar with it then you might want to start with the
@@ -23,7 +33,7 @@ If you are not familiar with it then you might want to start with the
 `fitdistrplus`](https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html)
 vignette.
 
-### 1.3 How does this vignette differ from fitting distributions with Stan vignette
+### 1.4 How does this vignette differ from fitting distributions with Stan vignette
 
 This vignette is similar to the
 [`vignette("fitting-dists-with-stan")`](https://primarycensored.epinowcast.org/dev/articles/fitting-dists-with-stan.md)
@@ -37,7 +47,7 @@ software (Stan) to fit the distribution. **Note that rather than
 returning credible intervals, the `fitdistrplus` package returns
 standard errors and confidence intervals.**
 
-### 1.4 Packages used in this vignette
+### 1.5 Packages used in this vignette
 
 Alongside the `primarycensored` package we will use the `fitdistrplus`
 package for fitting distributions. We will also use the `ggplot2`
@@ -194,14 +204,30 @@ and right truncation in the data.
 
 ## 4 Fitting an improved model using `primarycensored` and `fitdistrplus`
 
-We’ll now fit an improved model using the `primarycensored` package. To
-do this we need to define the custom distribution functions using the
-`primarycensored` package that are required by `fitdistrplus`. Rather
-than using `fitdistcens` we use `fitdist` because our functions are
-handling the censoring themselves. Note that in this custom
-implementation for simplicity we are filtering to use only data with the
-same `obs_time` rather than handling varying observation times. This
-means we’re using a subset of our simulated data for the estimation.
+We’ll now fit an improved model using the `primarycensored` package.
+There are two approaches:
+
+1.  **Recommended**: Use
+    [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md) -
+    a convenience wrapper that handles all the complexity for you
+2.  **Advanced/Educational**: Define custom distribution functions
+    manually (shown first for understanding)
+
+### 4.1 Understanding the approach (advanced)
+
+This section shows how to manually define custom distribution functions.
+**You don’t need to do this yourself** -
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+handles it automatically. This is included to help you understand what’s
+happening under the hood.
+
+To fit using `fitdistrplus`, we need to define custom distribution
+functions that account for primary censoring and truncation. Rather than
+using `fitdistcens` we use `fitdist` because our functions are handling
+the censoring themselves. Note that in this custom implementation for
+simplicity we are filtering to use only data with the same `obs_time`
+rather than handling varying observation times. This means we’re using a
+subset of our simulated data for the estimation.
 
 ``` r
 # Define custom distribution functions using primarycensored
@@ -264,19 +290,27 @@ summary(pcens_fit)
 We see good agreement between the true and estimated parameters but with
 higher standard errors due to using a subset of the data.
 
-Rather than using
-[`fitdist()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html)
-directly `primarycensored` provides a wrapper function
+### 4.2 Using `fitdistdoublecens()` (recommended)
+
+Rather than defining custom functions manually, `primarycensored`
+provides the
 [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
-that can be used to estimate double censored and truncated data. A bonus
-of this approach is we can specify our data using the `fitdistcens`
-`left` and `right` formulation and support mixed censoring intervals.
-Another bonus of this approach is that it supports a mixture of
-observation times so we can fit to all the available data rather than
-the subset we used in the custom implementation above.
+wrapper function that handles everything automatically. This is the
+**recommended approach** for most users.
+
+Key advantages of
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md): -
+**No custom functions needed**: Just specify the distribution name
+(e.g., `"gamma"`, `"lnorm"`, `"weibull"`) - **Handles varying
+observation windows**: Supports different truncation times (`D`) and
+primary windows (`pwindow`) across observations - **Familiar
+interface**: Uses column names similar to
+[`fitdistcens()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html)
+(`left` and `right` for censoring bounds) - **Supports mixed censoring
+intervals**: Different secondary censoring windows across observations
+are handled automatically
 
 ``` r
-# Using Stan-like interface but with fitdistrplus
 fitdistdoublecens_fit <- fitdistdoublecens(
   delay_data,
   distr = "gamma",
@@ -301,17 +335,43 @@ summary(fitdistdoublecens_fit)
     ## shape 1.0000000 0.9196305
     ## rate  0.9196305 1.0000000
 
-### 4.1 Summary
+### 4.3 Summary
 
 In this vignette we have shown how to fit a distribution using
-`primarycensored` in conjunction with `fitdistrplus` both from scratch
-and using the
-[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
-function. We have also shown how to compare the performance of the
-`primarycensored` model to a naive model.
+`primarycensored` in conjunction with `fitdistrplus`. The key takeaways
+are:
 
-If interested in a more robust approach to fitting distributions see the
+- **Use
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)**:
+  This is the recommended approach for most users. It handles all the
+  complexity of primary censoring, secondary censoring, and truncation
+  automatically.
+- **Specify distributions by name**: Pass the base distribution name
+  (e.g., `"gamma"`, `"lnorm"`, `"weibull"`) to the `distr` parameter.
+  The function automatically finds the corresponding `d` and `p`
+  functions.
+- **Ignoring censoring causes bias**: The naive model that ignores
+  primary censoring and truncation substantially underestimates the true
+  distribution parameters.
+
+For a more robust Bayesian approach to fitting distributions, see the
 [`vignette("fitting-dists-with-stan")`](https://primarycensored.epinowcast.org/dev/articles/fitting-dists-with-stan.md)
-vignette. If you are instead interested in fitting a delay distribution
-more flexibly see the [`epidist`](https://epidist.epinowcast.org)
-package (which uses `primarycensored` under the hood).
+vignette. For more flexible delay distribution fitting, see the
+[`epidist`](https://epidist.epinowcast.org) package (which uses
+`primarycensored` under the hood).
+
+### 4.4 How you might adapt this vignette
+
+This vignette uses simulated data, but you can adapt it for your own
+work:
+
+- **Replace simulation with real data**: Swap out the simulated
+  `delay_data` with your own observations of delays between primary and
+  secondary events
+- **Change the distribution**: Replace `"gamma"` with other
+  distributions like `"lnorm"`, `"weibull"`, or `"norm"` depending on
+  what fits your data
+- **Vary the censoring windows**: Adjust `pwindow` and `swindow` to
+  match your data’s actual primary and secondary censoring intervals
+- **Handle different truncation times**: Use varying values in the `D`
+  column if your observations have different maximum observable delays

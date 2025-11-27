@@ -120,20 +120,29 @@
 </ol>
 </div>
 <div class="section level3" number="1.2">
+<h3 id="what-you-will-learn">
+<span class="header-section-number">1.2</span> What you will learn<a class="anchor" aria-label="anchor" href="#what-you-will-learn"></a>
+</h3>
+<p>By the end of this vignette, you will be able to:
+- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
+- Use <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to fit distributions that properly account for primary censoring, secondary censoring, and truncation
+- Understand when MLE-based fitting with fitdistrplus is appropriate versus Bayesian approaches with Stan</p>
+</div>
+<div class="section level3" number="1.3">
 <h3 id="what-might-i-need-to-know-before-starting">
-<span class="header-section-number">1.2</span> What might I need to know before starting<a class="anchor" aria-label="anchor" href="#what-might-i-need-to-know-before-starting"></a>
+<span class="header-section-number">1.3</span> What might I need to know before starting<a class="anchor" aria-label="anchor" href="#what-might-i-need-to-know-before-starting"></a>
 </h3>
 <p>This vignette assumes some familiarity with the <code>fitdistrplus</code> package. If you are not familiar with it then you might want to start with the <a href="https://cran.r-project.org/web/packages/fitdistrplus/vignettes/fitdistrplus_vignette.html" class="external-link">Introduction to <code>fitdistrplus</code></a> vignette.</p>
 </div>
-<div class="section level3" number="1.3">
+<div class="section level3" number="1.4">
 <h3 id="how-does-this-vignette-differ-from-fitting-distributions-with-stan-vignette">
-<span class="header-section-number">1.3</span> How does this vignette differ from fitting distributions with Stan vignette<a class="anchor" aria-label="anchor" href="#how-does-this-vignette-differ-from-fitting-distributions-with-stan-vignette"></a>
+<span class="header-section-number">1.4</span> How does this vignette differ from fitting distributions with Stan vignette<a class="anchor" aria-label="anchor" href="#how-does-this-vignette-differ-from-fitting-distributions-with-stan-vignette"></a>
 </h3>
 <p>This vignette is similar to the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette in that it shows how to fit a distribution using <code>primarycensored</code>. However, here we use maximum likelihood estimation (MLE) to fit the distribution, rather than MCMC. In some settings this may result in a faster fit, but in other settings especially when the data is complex, MCMC may be more reliable. The major benefit of the <code>fitdistrplus</code> approach is that we don’t need to install additional software (Stan) to fit the distribution. <strong>Note that rather than returning credible intervals, the <code>fitdistrplus</code> package returns standard errors and confidence intervals.</strong></p>
 </div>
-<div class="section level3" number="1.4">
+<div class="section level3" number="1.5">
 <h3 id="packages-used-in-this-vignette">
-<span class="header-section-number">1.4</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
+<span class="header-section-number">1.5</span> Packages used in this vignette<a class="anchor" aria-label="anchor" href="#packages-used-in-this-vignette"></a>
 </h3>
 <p>Alongside the <code>primarycensored</code> package we will use the <code>fitdistrplus</code> package for fitting distributions. We will also use the <code>ggplot2</code> package for plotting and <code>dplyr</code> for data manipulation.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
@@ -271,8 +280,19 @@
 <h2 id="fitting-an-improved-model-using-primarycensored-and-fitdistrplus">
 <span class="header-section-number">4</span> Fitting an improved model using <code>primarycensored</code> and <code>fitdistrplus</code><a class="anchor" aria-label="anchor" href="#fitting-an-improved-model-using-primarycensored-and-fitdistrplus"></a>
 </h2>
-<p>We’ll now fit an improved model using the <code>primarycensored</code> package.
-To do this we need to define the custom distribution functions using the <code>primarycensored</code> package that are required by <code>fitdistrplus</code>.
+<p>We’ll now fit an improved model using the <code>primarycensored</code> package. There are two approaches:</p>
+<ol style="list-style-type: decimal">
+<li>
+<strong>Recommended</strong>: Use <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> - a convenience wrapper that handles all the complexity for you</li>
+<li>
+<strong>Advanced/Educational</strong>: Define custom distribution functions manually (shown first for understanding)</li>
+</ol>
+<div class="section level3" number="4.1">
+<h3 id="understanding-the-approach-advanced">
+<span class="header-section-number">4.1</span> Understanding the approach (advanced)<a class="anchor" aria-label="anchor" href="#understanding-the-approach-advanced"></a>
+</h3>
+<p>This section shows how to manually define custom distribution functions. <strong>You don’t need to do this yourself</strong> - <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> handles it automatically. This is included to help you understand what’s happening under the hood.</p>
+<p>To fit using <code>fitdistrplus</code>, we need to define custom distribution functions that account for primary censoring and truncation.
 Rather than using <code>fitdistcens</code> we use <code>fitdist</code> because our functions are handling the censoring themselves.
 Note that in this custom implementation for simplicity we are filtering to use only data with the same <code>obs_time</code> rather than handling varying observation times.
 This means we’re using a subset of our simulated data for the estimation.</p>
@@ -332,12 +352,19 @@ This means we’re using a subset of our simulated data for the estimation.</p>
 <span><span class="co">## shape 1.0000000 0.9266603</span></span>
 <span><span class="co">## rate  0.9266603 1.0000000</span></span></code></pre>
 <p>We see good agreement between the true and estimated parameters but with higher standard errors due to using a subset of the data.</p>
-<p>Rather than using <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdist()</a></code> directly <code>primarycensored</code> provides a wrapper function <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> that can be used to estimate double censored and truncated data.
-A bonus of this approach is we can specify our data using the <code>fitdistcens</code> <code>left</code> and <code>right</code> formulation and support mixed censoring intervals.
-Another bonus of this approach is that it supports a mixture of observation times so we can fit to all the available data rather than the subset we used in the custom implementation above.</p>
+</div>
+<div class="section level3" number="4.2">
+<h3 id="using-fitdistdoublecens-recommended">
+<span class="header-section-number">4.2</span> Using <code>fitdistdoublecens()</code> (recommended)<a class="anchor" aria-label="anchor" href="#using-fitdistdoublecens-recommended"></a>
+</h3>
+<p>Rather than defining custom functions manually, <code>primarycensored</code> provides the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> wrapper function that handles everything automatically. This is the <strong>recommended approach</strong> for most users.</p>
+<p>Key advantages of <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code>:
+- <strong>No custom functions needed</strong>: Just specify the distribution name (e.g., <code>"gamma"</code>, <code>"lnorm"</code>, <code>"weibull"</code>)
+- <strong>Handles varying observation windows</strong>: Supports different truncation times (<code>D</code>) and primary windows (<code>pwindow</code>) across observations
+- <strong>Familiar interface</strong>: Uses column names similar to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html" class="external-link">fitdistcens()</a></code> (<code>left</code> and <code>right</code> for censoring bounds)
+- <strong>Supports mixed censoring intervals</strong>: Different secondary censoring windows across observations are handled automatically</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># Using Stan-like interface but with fitdistrplus</span></span>
-<span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fitdistdoublecens.html">fitdistdoublecens</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fitdistdoublecens.html">fitdistdoublecens</a></span><span class="op">(</span></span>
 <span>  <span class="va">delay_data</span>,</span>
 <span>  distr <span class="op">=</span> <span class="st">"gamma"</span>,</span>
 <span>  start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>shape <span class="op">=</span> <span class="fl">1</span>, rate <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
@@ -358,12 +385,37 @@ Another bonus of this approach is that it supports a mixture of observation time
 <span><span class="co">##           shape      rate</span></span>
 <span><span class="co">## shape 1.0000000 0.9196305</span></span>
 <span><span class="co">## rate  0.9196305 1.0000000</span></span></code></pre>
-<div class="section level3" number="4.1">
+</div>
+<div class="section level3" number="4.3">
 <h3 id="summary">
-<span class="header-section-number">4.1</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
+<span class="header-section-number">4.3</span> Summary<a class="anchor" aria-label="anchor" href="#summary"></a>
 </h3>
-<p>In this vignette we have shown how to fit a distribution using <code>primarycensored</code> in conjunction with <code>fitdistrplus</code> both from scratch and using the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> function. We have also shown how to compare the performance of the <code>primarycensored</code> model to a naive model.</p>
-<p>If interested in a more robust approach to fitting distributions see the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette. If you are instead interested in fitting a delay distribution more flexibly see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+<p>In this vignette we have shown how to fit a distribution using <code>primarycensored</code> in conjunction with <code>fitdistrplus</code>. The key takeaways are:</p>
+<ul>
+<li>
+<strong>Use <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code></strong>: This is the recommended approach for most users. It handles all the complexity of primary censoring, secondary censoring, and truncation automatically.</li>
+<li>
+<strong>Specify distributions by name</strong>: Pass the base distribution name (e.g., <code>"gamma"</code>, <code>"lnorm"</code>, <code>"weibull"</code>) to the <code>distr</code> parameter. The function automatically finds the corresponding <code>d</code> and <code>p</code> functions.</li>
+<li>
+<strong>Ignoring censoring causes bias</strong>: The naive model that ignores primary censoring and truncation substantially underestimates the true distribution parameters.</li>
+</ul>
+<p>For a more robust Bayesian approach to fitting distributions, see the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette. For more flexible delay distribution fitting, see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+</div>
+<div class="section level3" number="4.4">
+<h3 id="how-you-might-adapt-this-vignette">
+<span class="header-section-number">4.4</span> How you might adapt this vignette<a class="anchor" aria-label="anchor" href="#how-you-might-adapt-this-vignette"></a>
+</h3>
+<p>This vignette uses simulated data, but you can adapt it for your own work:</p>
+<ul>
+<li>
+<strong>Replace simulation with real data</strong>: Swap out the simulated <code>delay_data</code> with your own observations of delays between primary and secondary events</li>
+<li>
+<strong>Change the distribution</strong>: Replace <code>"gamma"</code> with other distributions like <code>"lnorm"</code>, <code>"weibull"</code>, or <code>"norm"</code> depending on what fits your data</li>
+<li>
+<strong>Vary the censoring windows</strong>: Adjust <code>pwindow</code> and <code>swindow</code> to match your data’s actual primary and secondary censoring intervals</li>
+<li>
+<strong>Handle different truncation times</strong>: Use varying values in the <code>D</code> column if your observations have different maximum observable delays</li>
+</ul>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

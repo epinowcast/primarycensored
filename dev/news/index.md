@@ -2,6 +2,24 @@
 
 ## primarycensored (development version)
 
+### Documentation
+
+- Improved documentation for
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md):
+  - Expanded function description to explain primary censoring,
+    secondary censoring, and truncation.
+  - Added detailed `@details` sections explaining how distribution names
+    are resolved (e.g., `"gamma"` uses
+    [`dgamma()`](https://rdrr.io/r/stats/GammaDist.html) and
+    [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html)), and what the
+    function does internally.
+  - Enhanced `distr` parameter documentation with examples and guidance
+    on custom distributions.
+- Added “What you will learn” and “How you might adapt this vignette”
+  sections to both the fitdistrplus and Stan fitting vignettes to help
+  users understand learning objectives and adapt the examples for their
+  own data.
+
 ### Tests
 
 - Added tests to verify that
