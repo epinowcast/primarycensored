@@ -64,6 +64,10 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="primarycensored-development-version">primarycensored (development version)<a class="anchor" aria-label="anchor" href="#primarycensored-development-version"></a></h2>
 <div class="section level3">
+<h3 id="tests-development-version">Tests<a class="anchor" aria-label="anchor" href="#tests-development-version"></a></h3>
+<ul><li>Added tests to verify that <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> and <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> correctly handle data frames with additional columns beyond those required. (<a href="https://github.com/epinowcast/primarycensored/issues/213" class="external-link">#213</a>)</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>Fixed an issue where <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> could return very small negative values (e.g., -2.2e-16) due to floating-point precision when computing PMF as CDF differences. PMF values are now clamped to be non-negative. (<a href="https://github.com/epinowcast/primarycensored/issues/238" class="external-link">#238</a>)</li>
 <li>Added bounds checking to all <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> methods to ensure CDF values are always in [0, 1], complementing the existing upper bound check with a lower bound check.</li>

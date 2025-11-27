@@ -2,6 +2,16 @@
 
 ## primarycensored (development version)
 
+### Tests
+
+- Added tests to verify that
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/dev/reference/pcd_as_stan_data.md)
+  and
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  correctly handle data frames with additional columns beyond those
+  required.
+  ([\#213](https://github.com/epinowcast/primarycensored/issues/213))
+
 ### Bug fixes
 
 - Fixed an issue where
