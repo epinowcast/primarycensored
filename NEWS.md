@@ -16,6 +16,7 @@
 
 - Fixed an issue where `dprimarycensored()` could return very small negative values (e.g., -2.2e-16) due to floating-point precision when computing PMF as CDF differences. PMF values are now clamped to be non-negative. (#238)
 - Added bounds checking to all `pcens_cdf()` methods to ensure CDF values are always in [0, 1], complementing the existing upper bound check with a lower bound check.
+- Fixed sporadic NaN values in Stan CDF functions. All Stan `lcdf` functions now clamp results to valid log-space range (`[-inf, 0]`) and explicitly handle NaN cases, matching the behaviour of the R implementation. This includes both `primarycensored_analytical_lcdf()` and `primarycensored_lcdf()`. (#129)
 
 # primarycensored 1.2.0
 
