@@ -1,7 +1,11 @@
 # Fit a distribution to doubly censored data
 
 This function wraps the custom approach for fitting distributions to
-doubly censored data using fitdistrplus and primarycensored.
+doubly censored data using fitdistrplus and primarycensored. It handles
+primary censoring (when the primary event time is not known exactly),
+secondary censoring (when the secondary event time is
+interval-censored), and right truncation (when events are only observed
+up to a maximum delay).
 
 ## Usage
 
@@ -32,7 +36,13 @@ fitdistdoublecens(
 
 - distr:
 
-  A character string naming the distribution to be fitted.
+  A character string naming the distribution to be fitted. This should
+  be the base name of a distribution with corresponding `d` (density)
+  and `p` (cumulative distribution) functions available. For example,
+  use `"gamma"` (which will use `dgamma` and `pgamma`), `"lnorm"` (for
+  `dlnorm` and `plnorm`), `"weibull"`, `"norm"`, etc. Custom
+  distributions can also be used as long as the corresponding
+  `d<distr>()` and `p<distr>()` functions are defined and loaded.
 
 - left:
 
@@ -100,10 +110,44 @@ An object of class "fitdist" as returned by fitdistrplus::fitdist.
 
 ## Details
 
-This function temporarily assigns and then removes functions from the
-global environment in order to work with fitdistr. Users should be aware
-of this behaviour, especially if they have existing functions with the
-same names in their global environment.
+### How distribution functions are resolved
+
+The `distr` parameter specifies the base name of the distribution. The
+function automatically looks up the corresponding density (`d`) and
+cumulative distribution (`p`) functions by prepending these prefixes to
+the distribution name. For example:
+
+- `distr = "gamma"` uses
+  [`dgamma()`](https://rdrr.io/r/stats/GammaDist.html) and
+  [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html)
+
+- `distr = "lnorm"` uses
+  [`dlnorm()`](https://rdrr.io/r/stats/Lognormal.html) and
+  [`plnorm()`](https://rdrr.io/r/stats/Lognormal.html)
+
+- `distr = "weibull"` uses
+  [`dweibull()`](https://rdrr.io/r/stats/Weibull.html) and
+  [`pweibull()`](https://rdrr.io/r/stats/Weibull.html)
+
+Any distribution available in base R or loaded packages can be used, as
+long as the corresponding `d<distr>` and `p<distr>` functions exist and
+follow standard R distribution function conventions (first argument is
+`x` for density, `q` for CDF).
+
+### What this function does internally
+
+This function creates custom density and CDF functions that account for
+primary censoring, secondary censoring, and truncation using
+[`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+and
+[`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md).
+These custom functions are then passed to
+[`fitdistrplus::fitdist()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html)
+for maximum likelihood estimation.
+
+The function handles varying observation windows across observations,
+making it suitable for real-world data where truncation times or
+censoring windows may differ between observations.
 
 ## See also
 

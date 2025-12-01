@@ -17,7 +17,19 @@ distributions. We’ll cover the following key points:
 6.  Comparing the `primarycensored` model’s performance to the naive
     model
 
-### 1.2 What might I need to know before starting
+### 1.2 What you will learn
+
+By the end of this vignette, you will be able to: - Understand the bias
+introduced by ignoring primary censoring and truncation when fitting
+delay distributions - Use
+[`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
+and
+[`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)
+to fit distributions that properly account for primary censoring,
+secondary censoring, and truncation - Understand when Bayesian fitting
+with Stan is appropriate versus MLE approaches with fitdistrplus
+
+### 1.3 What might I need to know before starting
 
 This vignette builds on the concepts introduced in the [Getting Started
 with
@@ -27,7 +39,7 @@ vignette and assumes familiarity with using Stan tools as covered in the
 Stan](https://primarycensored.epinowcast.org/articles/using-stan-tools.md)
 vignette.
 
-### 1.3 Packages used in this vignette
+### 1.4 Packages used in this vignette
 
 Alongside the `primarycensored` package we will use the `cmdstanr`
 package for interfacing with cmdstan. We will also use the `ggplot2`
@@ -392,9 +404,9 @@ pcd_fit
 ```
 
     ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.71 -3422.40 0.96 0.71 -3424.60 -3421.79 1.00     1154     1546
-    ##  params[1]     1.54     1.54 0.04 0.04     1.48     1.63 1.00     1150     1334
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1108     1367
+    ##  lp__      -3422.84 -3422.52 1.07 0.79 -3424.95 -3421.80 1.00     1250     1259
+    ##  params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00     1028     1064
+    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00      943      953
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and
@@ -417,15 +429,45 @@ that you make best use of your machine’s resources.**
 ### 5.1 Summary
 
 In this vignette we have shown how to fit a delay distribution using
-`primarycensored` in conjunction with `cmdstan` and compared this
-estimate with both the known distribution parameters and a naive
-approach. We have also shown how to use the
-[`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
-function to compile the model and
-[`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)
-to convert our data into a format that can be used to fit the model
-rather than manually writing the model and formatting the data.
+`primarycensored` in conjunction with `cmdstan`. The key takeaways are:
 
-If you are instead interested in fitting a delay distribution more
-flexibly see the [`epidist`](https://epidist.epinowcast.org) package
-(which uses `primarycensored` under the hood).
+- **Use
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
+  and
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)**:
+  This is the recommended approach for most users. It handles all the
+  complexity of primary censoring, secondary censoring, and truncation
+  automatically, and supports within-chain parallelisation.
+- **Specify distributions by ID**: Use
+  [`pcd_stan_dist_id()`](https://primarycensored.epinowcast.org/reference/pcd_stan_dist_id.md)
+  to get the correct distribution identifier (e.g., `"lognormal"`,
+  `"gamma"`, `"weibull"`).
+- **Ignoring censoring causes bias**: The naive model that ignores
+  primary censoring and truncation substantially underestimates the true
+  distribution parameters.
+
+For a faster MLE-based approach that doesn’t require Stan, see the
+[`vignette("fitting-dists-with-fitdistrplus")`](https://primarycensored.epinowcast.org/articles/fitting-dists-with-fitdistrplus.md)
+vignette. For more flexible delay distribution fitting, see the
+[`epidist`](https://epidist.epinowcast.org) package (which uses
+`primarycensored` under the hood).
+
+### 5.2 How you might adapt this vignette
+
+This vignette uses simulated data, but you can adapt it for your own
+work:
+
+- **Replace simulation with real data**: Swap out the simulated
+  `delay_data` with your own observations of delays between primary and
+  secondary events
+- **Change the distribution**: Replace `"lognormal"` with other
+  distributions like `"gamma"` or `"weibull"` using
+  [`pcd_stan_dist_id()`](https://primarycensored.epinowcast.org/reference/pcd_stan_dist_id.md)
+- **Vary the censoring windows**: Adjust `pwindow` values to match your
+  data’s actual primary censoring intervals
+- **Handle different truncation times**: Use varying values in the
+  `obs_time` column if your observations have different maximum
+  observable delays
+- **Modify priors**: Adjust the `priors` argument in
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)
+  to reflect your prior knowledge about the distribution parameters

@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,28 @@
       <small>Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.3.0" id="primarycensored-130">primarycensored 1.3.0<a class="anchor" aria-label="anchor" href="#primarycensored-130"></a></h2>
+<p>This minor release improves documentation for <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> and adds learning objective sections to vignettes. It also fixes floating-point precision issues in <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> and adds bounds checking to CDF methods.</p>
+<div class="section level3">
+<h3 id="documentation-1-3-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-3-0"></a></h3>
+<ul><li>Improved documentation for <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code>:
+<ul><li>Expanded function description to explain primary censoring, secondary censoring, and truncation.</li>
+<li>Added detailed <code>@details</code> sections explaining how distribution names are resolved (e.g., <code>"gamma"</code> uses <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code>), and what the function does internally.</li>
+<li>Enhanced <code>distr</code> parameter documentation with examples and guidance on custom distributions.</li>
+</ul></li>
+<li>Added “What you will learn” and “How you might adapt this vignette” sections to both the fitdistrplus and Stan fitting vignettes to help users understand learning objectives and adapt the examples for their own data.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="package-1-3-0">Package<a class="anchor" aria-label="anchor" href="#package-1-3-0"></a></h3>
+<ul><li>Added tests to verify that <code><a href="../reference/pcd_as_stan_data.html">pcd_as_stan_data()</a></code> and <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> correctly handle data frames with additional columns beyond those required. (<a href="https://github.com/epinowcast/primarycensored/issues/213" class="external-link">#213</a>)</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-3-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-3-0"></a></h3>
+<ul><li>Fixed an issue where <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> could return very small negative values (e.g., -2.2e-16) due to floating-point precision when computing PMF as CDF differences. PMF values are now clamped to be non-negative. (<a href="https://github.com/epinowcast/primarycensored/issues/238" class="external-link">#238</a>)</li>
+<li>Added bounds checking to all <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> methods to ensure CDF values are always in [0, 1], complementing the existing upper bound check with a lower bound check.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.2.0" id="primarycensored-120">primarycensored 1.2.0<a class="anchor" aria-label="anchor" href="#primarycensored-120"></a></h2><p class="text-muted">CRAN release: 2025-06-09</p>
 <p>This minor release adds quantile functions for primary censored distributions and enhances the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> function to support varying primary censoring windows and truncation times. The release also improves documentation, particularly the Stan reference, making it easier for users to navigate and work with the Stan code.</p>
