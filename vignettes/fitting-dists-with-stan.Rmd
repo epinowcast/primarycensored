@@ -32,6 +32,7 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 ## What you will learn
 
 By the end of this vignette, you will be able to:
+
 - Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
 - Use `pcd_cmdstan_model()` and `pcd_as_stan_data()` to fit distributions that properly account for primary censoring, secondary censoring, and truncation
 - Understand when Bayesian fitting with Stan is appropriate versus MLE approaches with fitdistrplus

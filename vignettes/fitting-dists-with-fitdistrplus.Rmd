@@ -31,6 +31,7 @@ In this vignette, we'll demonstrate how to use `primarycensored` in conjunction 
 ## What you will learn
 
 By the end of this vignette, you will be able to:
+
 - Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
 - Use `fitdistdoublecens()` to fit distributions that properly account for primary censoring, secondary censoring, and truncation
 - Understand when MLE-based fitting with fitdistrplus is appropriate versus Bayesian approaches with Stan
@@ -232,6 +233,7 @@ We see good agreement between the true and estimated parameters but with higher 
 Rather than defining custom functions manually, `primarycensored` provides the `fitdistdoublecens()` wrapper function that handles everything automatically. This is the **recommended approach** for most users.
 
 Key advantages of `fitdistdoublecens()`:
+
 - **No custom functions needed**: Just specify the distribution name (e.g., `"gamma"`, `"lnorm"`, `"weibull"`)
 - **Handles varying observation windows**: Supports different truncation times (`D`) and primary windows (`pwindow`) across observations
 - **Familiar interface**: Uses column names similar to `fitdistcens()` (`left` and `right` for censoring bounds)
