@@ -1,4 +1,6 @@
-# primarycensored (development version)
+# primarycensored 1.3.0
+
+This minor release improves documentation for `fitdistdoublecens()` and adds learning objective sections to vignettes. It also fixes floating-point precision issues in `dprimarycensored()` and adds bounds checking to CDF methods.
 
 ## Documentation
 
@@ -8,7 +10,7 @@
   - Enhanced `distr` parameter documentation with examples and guidance on custom distributions.
 - Added "What you will learn" and "How you might adapt this vignette" sections to both the fitdistrplus and Stan fitting vignettes to help users understand learning objectives and adapt the examples for their own data.
 
-## Tests
+## Package
 
 - Added tests to verify that `pcd_as_stan_data()` and `fitdistdoublecens()` correctly handle data frames with additional columns beyond those required. (#213)
 

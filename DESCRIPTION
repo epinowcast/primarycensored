@@ -1,6 +1,6 @@
 Package: primarycensored
 Title: Primary Event Censored Distributions
-Version: 1.2.0.1000
+Version: 1.3.0
 Authors@R:
   c(person(given = "Sam",
            family = "Abbott",
