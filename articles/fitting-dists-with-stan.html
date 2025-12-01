@@ -430,9 +430,9 @@
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.73 -3422.43 0.97 0.68 -3424.75 -3421.79 1.00     1299     1715</span></span>
-<span><span class="co">##  params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1088     1158</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1088     1233</span></span></code></pre>
+<span><span class="co">##  lp__      -3422.80 -3422.51 1.01 0.77 -3424.83 -3421.80 1.00     1407     1892</span></span>
+<span><span class="co">##  params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1109     1400</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1026     1317</span></span></code></pre>
 <p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example (i.e. the meanlog and sdlog parameters of the lognormal distribution). We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 <div class="section level3" number="5.1">
