@@ -122,10 +122,12 @@
 <h3 id="what-you-will-learn">
 <span class="header-section-number">1.2</span> What you will learn<a class="anchor" aria-label="anchor" href="#what-you-will-learn"></a>
 </h3>
-<p>By the end of this vignette, you will be able to:
-- Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions
-- Use <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to fit distributions that properly account for primary censoring, secondary censoring, and truncation
-- Understand when MLE-based fitting with fitdistrplus is appropriate versus Bayesian approaches with Stan</p>
+<p>By the end of this vignette, you will be able to:</p>
+<ul>
+<li>Understand the bias introduced by ignoring primary censoring and truncation when fitting delay distributions</li>
+<li>Use <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> to fit distributions that properly account for primary censoring, secondary censoring, and truncation</li>
+<li>Understand when MLE-based fitting with fitdistrplus is appropriate versus Bayesian approaches with Stan</li>
+</ul>
 </div>
 <div class="section level3" number="1.3">
 <h3 id="what-might-i-need-to-know-before-starting">
@@ -357,11 +359,17 @@ This means we’re using a subset of our simulated data for the estimation.</p>
 <span class="header-section-number">4.2</span> Using <code>fitdistdoublecens()</code> (recommended)<a class="anchor" aria-label="anchor" href="#using-fitdistdoublecens-recommended"></a>
 </h3>
 <p>Rather than defining custom functions manually, <code>primarycensored</code> provides the <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> wrapper function that handles everything automatically. This is the <strong>recommended approach</strong> for most users.</p>
-<p>Key advantages of <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code>:
-- <strong>No custom functions needed</strong>: Just specify the distribution name (e.g., <code>"gamma"</code>, <code>"lnorm"</code>, <code>"weibull"</code>)
-- <strong>Handles varying observation windows</strong>: Supports different truncation times (<code>D</code>) and primary windows (<code>pwindow</code>) across observations
-- <strong>Familiar interface</strong>: Uses column names similar to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html" class="external-link">fitdistcens()</a></code> (<code>left</code> and <code>right</code> for censoring bounds)
-- <strong>Supports mixed censoring intervals</strong>: Different secondary censoring windows across observations are handled automatically</p>
+<p>Key advantages of <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code>:</p>
+<ul>
+<li>
+<strong>No custom functions needed</strong>: Just specify the distribution name (e.g., <code>"gamma"</code>, <code>"lnorm"</code>, <code>"weibull"</code>)</li>
+<li>
+<strong>Handles varying observation windows</strong>: Supports different truncation times (<code>D</code>) and primary windows (<code>pwindow</code>) across observations</li>
+<li>
+<strong>Familiar interface</strong>: Uses column names similar to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html" class="external-link">fitdistcens()</a></code> (<code>left</code> and <code>right</code> for censoring bounds)</li>
+<li>
+<strong>Supports mixed censoring intervals</strong>: Different secondary censoring windows across observations are handled automatically</li>
+</ul>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fitdistdoublecens_fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/fitdistdoublecens.html">fitdistdoublecens</a></span><span class="op">(</span></span>
 <span>  <span class="va">delay_data</span>,</span>

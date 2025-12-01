@@ -19,15 +19,18 @@ distributions. We’ll cover the following key points:
 
 ### 1.2 What you will learn
 
-By the end of this vignette, you will be able to: - Understand the bias
-introduced by ignoring primary censoring and truncation when fitting
-delay distributions - Use
-[`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
-and
-[`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)
-to fit distributions that properly account for primary censoring,
-secondary censoring, and truncation - Understand when Bayesian fitting
-with Stan is appropriate versus MLE approaches with fitdistrplus
+By the end of this vignette, you will be able to:
+
+- Understand the bias introduced by ignoring primary censoring and
+  truncation when fitting delay distributions
+- Use
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
+  and
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)
+  to fit distributions that properly account for primary censoring,
+  secondary censoring, and truncation
+- Understand when Bayesian fitting with Stan is appropriate versus MLE
+  approaches with fitdistrplus
 
 ### 1.3 What might I need to know before starting
 
@@ -404,9 +407,9 @@ pcd_fit
 ```
 
     ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.84 -3422.52 1.07 0.79 -3424.95 -3421.80 1.00     1250     1259
-    ##  params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00     1028     1064
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00      943      953
+    ##  lp__      -3422.73 -3422.43 0.97 0.68 -3424.75 -3421.79 1.00     1299     1715
+    ##  params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1088     1158
+    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1088     1233
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and

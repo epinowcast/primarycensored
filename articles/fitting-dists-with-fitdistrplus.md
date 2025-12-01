@@ -17,13 +17,16 @@ the following key points:
 
 ### 1.2 What you will learn
 
-By the end of this vignette, you will be able to: - Understand the bias
-introduced by ignoring primary censoring and truncation when fitting
-delay distributions - Use
-[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
-to fit distributions that properly account for primary censoring,
-secondary censoring, and truncation - Understand when MLE-based fitting
-with fitdistrplus is appropriate versus Bayesian approaches with Stan
+By the end of this vignette, you will be able to:
+
+- Understand the bias introduced by ignoring primary censoring and
+  truncation when fitting delay distributions
+- Use
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  to fit distributions that properly account for primary censoring,
+  secondary censoring, and truncation
+- Understand when MLE-based fitting with fitdistrplus is appropriate
+  versus Bayesian approaches with Stan
 
 ### 1.3 What might I need to know before starting
 
@@ -299,16 +302,17 @@ wrapper function that handles everything automatically. This is the
 **recommended approach** for most users.
 
 Key advantages of
-[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md): -
-**No custom functions needed**: Just specify the distribution name
-(e.g., `"gamma"`, `"lnorm"`, `"weibull"`) - **Handles varying
-observation windows**: Supports different truncation times (`D`) and
-primary windows (`pwindow`) across observations - **Familiar
-interface**: Uses column names similar to
-[`fitdistcens()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html)
-(`left` and `right` for censoring bounds) - **Supports mixed censoring
-intervals**: Different secondary censoring windows across observations
-are handled automatically
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md):
+
+- **No custom functions needed**: Just specify the distribution name
+  (e.g., `"gamma"`, `"lnorm"`, `"weibull"`)
+- **Handles varying observation windows**: Supports different truncation
+  times (`D`) and primary windows (`pwindow`) across observations
+- **Familiar interface**: Uses column names similar to
+  [`fitdistcens()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html)
+  (`left` and `right` for censoring bounds)
+- **Supports mixed censoring intervals**: Different secondary censoring
+  windows across observations are handled automatically
 
 ``` r
 fitdistdoublecens_fit <- fitdistdoublecens(
