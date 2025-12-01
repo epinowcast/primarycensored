@@ -106,13 +106,13 @@ new_pcens(
 #>     }
 #>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)
 #> }
-#> <bytecode: 0x559232c2f0f8>
+#> <bytecode: 0x561a60f1d648>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary
 #> function (x, min = 0, max = 1, log = FALSE) 
 #> .Call(C_dunif, x, min, max, log)
-#> <bytecode: 0x55922525c6d0>
+#> <bytecode: 0x561a5354a970>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary_args
