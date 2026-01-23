@@ -186,6 +186,7 @@ specification. Contributions of any kind are welcome!
 [SamuelBrand1](https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1),
 [sbfnk](https://github.com/epinowcast/primarycensored/commits?author=sbfnk),
 [athowes](https://github.com/epinowcast/primarycensored/commits?author=athowes),
+[seabbs-bot](https://github.com/epinowcast/primarycensored/commits?author=seabbs-bot),
 [jamesmbaazam](https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam),
 [barbora-sobolova](https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova),
 [pearsonca](https://github.com/epinowcast/primarycensored/commits?author=pearsonca)
@@ -198,7 +199,10 @@ specification. Contributions of any kind are welcome!
 
 ### Issue Contributors
 
-[parksw3](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3)
+[parksw3](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3),
+[avehtari](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aavehtari),
+[jgabry](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Ajgabry),
+[WardBrian](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3AWardBrian)
 
 # Package index
 
