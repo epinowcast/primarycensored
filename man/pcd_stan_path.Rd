@@ -17,6 +17,7 @@ Tools for working with package Stan functions
 \code{\link{pcd_load_stan_functions}()},
 \code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_files}()},
+\code{\link{pcd_stan_function_deps}()},
 \code{\link{pcd_stan_functions}()}
 }
 \concept{stantools}
