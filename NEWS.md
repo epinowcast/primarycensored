@@ -1,5 +1,10 @@
 # primarycensored 1.3.0.9000
 
+## New features
+
+- Added `dependencies` argument to `pcd_load_stan_functions()` that automatically resolves and includes all functions that the requested functions depend on. When `TRUE`, dependencies are included in topological order (dependencies before functions that use them). (#171)
+- Added `pcd_stan_function_deps()` to query the dependency graph of Stan functions, returning all dependencies for a given function in topological order. (#171)
+
 ## Bug fixes
 
 - Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan functions (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_lcdf`, `expgrowth_rng`, `primary_lpdf`) to avoid conflicts with Stan built-in functions. CmdStan 2.38.0 now strictly enforces reserved keyword restrictions when exposing Stan functions to R. (#258)
