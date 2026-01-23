@@ -18,8 +18,6 @@ dprimarycensored(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
   ...
 )
 
@@ -32,8 +30,6 @@ dpcens(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
   ...
 )
 ```
@@ -94,20 +90,6 @@ dpcens(
 - log:
 
   Logical; if TRUE, probabilities p are given as log(p)
-
-- pdist_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `pdist` instead
-
-- dprimary_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `dprimary` instead
 
 - ...:
 

@@ -18,7 +18,6 @@ fitdistdoublecens(
   pwindow = "pwindow",
   D = "D",
   dprimary = stats::dunif,
-  dprimary_name = lifecycle::deprecated(),
   dprimary_args = list(),
   truncation_check_multiplier = 2,
   ...
@@ -78,13 +77,6 @@ fitdistdoublecens(
   [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
   to yield properly tagged functions if they wish to leverage analytical
   solutions.
-
-- dprimary_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `dprimary` instead
 
 - dprimary_args:
 

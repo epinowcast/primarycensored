@@ -88,7 +88,6 @@ truncation (when events are only observed up to a maximum delay).</p>
 <span>  pwindow <span class="op">=</span> <span class="st">"pwindow"</span>,</span>
 <span>  D <span class="op">=</span> <span class="st">"D"</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
-<span>  dprimary_name <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>  truncation_check_multiplier <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  <span class="va">...</span></span>
@@ -146,12 +145,6 @@ See <code><a href="pcd_primary_distributions.html">pcd_primary_distributions()</
 base R distributions for potential analytical solutions. For non-base R
 functions, users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
 functions if they wish to leverage analytical solutions.</p></dd>
-
-
-<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
-<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> this argument will be
-ignored in future versions; use <code><a href="add_name_attribute.html">add_name_attribute()</a></code> on <code>dprimary</code>
-instead</p></dd>
 
 
 <dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>

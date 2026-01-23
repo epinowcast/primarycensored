@@ -5,14 +5,7 @@ S3 class for primary event censored distribution computation
 ## Usage
 
 ``` r
-new_pcens(
-  pdist,
-  dprimary,
-  dprimary_args,
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
-  ...
-)
+new_pcens(pdist, dprimary, dprimary_args, ...)
 ```
 
 ## Arguments
@@ -49,20 +42,6 @@ new_pcens(
   when using `dexpgrowth`, you would pass
   `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
   and rate parameters
-
-- pdist_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `pdist` instead
-
-- dprimary_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `dprimary` instead
 
 - ...:
 
@@ -106,13 +85,13 @@ new_pcens(
 #>     }
 #>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)
 #> }
-#> <bytecode: 0x56514b670d30>
+#> <bytecode: 0x55df9fe3fb40>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary
 #> function (x, min = 0, max = 1, log = FALSE) 
 #> .Call(C_dunif, x, min, max, log)
-#> <bytecode: 0x565142d7f628>
+#> <bytecode: 0x55df9751ce68>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary_args

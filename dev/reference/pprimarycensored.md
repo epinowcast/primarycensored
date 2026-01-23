@@ -17,8 +17,6 @@ pprimarycensored(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
   ...
 )
 
@@ -29,8 +27,6 @@ ppcens(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
   ...
 )
 ```
@@ -83,20 +79,6 @@ ppcens(
   when using `dexpgrowth`, you would pass
   `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
   and rate parameters
-
-- pdist_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `pdist` instead
-
-- dprimary_name:
-
-  **\[deprecated\]** this argument will be ignored in future versions;
-  use
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
-  on `dprimary` instead
 
 - ...:
 

@@ -68,14 +68,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">new_pcens</span><span class="op">(</span></span>
-<span>  <span class="va">pdist</span>,</span>
-<span>  <span class="va">dprimary</span>,</span>
-<span>  <span class="va">dprimary_args</span>,</span>
-<span>  pdist_name <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  dprimary_name <span class="op">=</span> <span class="fu">lifecycle</span><span class="fu">::</span><span class="fu"><a href="https://lifecycle.r-lib.org/reference/deprecated.html" class="external-link">deprecated</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  <span class="va">...</span></span>
-<span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">new_pcens</span><span class="op">(</span><span class="va">pdist</span>, <span class="va">dprimary</span>, <span class="va">dprimary_args</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -107,18 +100,6 @@ functions if they wish to leverage analytical solutions.</p></dd>
 dprimary. For example, when using <code>dexpgrowth</code>, you would
 pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
 and rate parameters</p></dd>
-
-
-<dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
-<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> this argument will be
-ignored in future versions; use <code><a href="add_name_attribute.html">add_name_attribute()</a></code> on <code>pdist</code>
-instead</p></dd>
-
-
-<dt id="arg-dprimary-name">dprimary_name<a class="anchor" aria-label="anchor" href="#arg-dprimary-name"></a></dt>
-<dd><p><a href="https://lifecycle.r-lib.org/articles/stages.html#deprecated" class="external-link"><img src="figures/lifecycle-deprecated.svg" alt="[Deprecated]"></a> this argument will be
-ignored in future versions; use <code><a href="add_name_attribute.html">add_name_attribute()</a></code> on <code>dprimary</code>
-instead</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -162,13 +143,13 @@ cdf.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x56514b670d30&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x55df9fe3fb40&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> function (x, min = 0, max = 1, log = FALSE) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> .Call(C_dunif, x, min, max, log)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x565142d7f628&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x55df9751ce68&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary_args</span>
