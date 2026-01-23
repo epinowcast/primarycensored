@@ -93,7 +93,7 @@ functions to a file and wrap them in a `functions{}` block.
 pcd_load_stan_functions("primarycensored_lpmf")
 ```
 
-    ## [1] "// Stan functions from primarycensored version 1.2.0.1000\nreal primarycensored_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_id,\n                                array[] real primary_params) {\n  if (d_upper > D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper <= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primarycensored_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  real log_cdf_lower = primarycensored_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primarycensored_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"
+    ## [1] "// Stan functions from primarycensored version 1.3.0.9000\nreal primarycensored_lpmf(data int d, int dist_id, array[] real params,\n                                data real pwindow, data real d_upper,\n                                data real D, int primary_id,\n                                array[] real primary_params) {\n  if (d_upper > D) {\n    reject(\"Upper truncation point is greater than D. It is \", d_upper,\n           \" and D is \", D, \". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.\");\n  }\n  if (d_upper <= d) {\n    reject(\"Upper truncation point is less than or equal to d. It is \", d_upper,\n           \" and d is \", d, \". Resolve this by increasing d to be less than d_upper.\");\n  }\n  real log_cdf_upper = primarycensored_lcdf(\n    d_upper | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  real log_cdf_lower = primarycensored_lcdf(\n    d | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n  );\n  if (!is_inf(D)) {\n    real log_cdf_D;\n\n    if (d_upper == D) {\n      log_cdf_D = log_cdf_upper;\n    } else {\n      log_cdf_D = primarycensored_lcdf(\n        D | dist_id, params, pwindow, positive_infinity(), primary_id, primary_params\n      );\n    }\n    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_cdf_D;\n  } else {\n    return log_diff_exp(log_cdf_upper, log_cdf_lower);\n  }\n}"
 
 ### 2.3 Linking the Stan functions to your workflow
 
@@ -118,7 +118,7 @@ exp_model <- pcd_load_stan_functions(
 )
 ```
 
-    ## Stan functions written to: /tmp/RtmpsYW3RH/expgrowth_rng.stan
+    ## Stan functions written to: /tmp/RtmpjIrKQA/expgrowth_rng.stan
 
 This can now be compiled and used in the same way as any other
 `cmdstanr` model.
@@ -129,13 +129,13 @@ model
 ```
 
     ## functions {
-    ## // Stan functions from primarycensored version 1.2.0.1000
-    ## real expgrowth_rng(real min, real max, real r) {
+    ## // Stan functions from primarycensored version 1.3.0.9000
+    ## real expgrowth_rng(real xmin, real xmax, real r) {
     ##   real u = uniform_rng(0, 1);
     ##   if (abs(r) < 1e-10) {
-    ##     return min + u * (max - min);
+    ##     return xmin + u * (xmax - xmin);
     ##   }
-    ##   return min + log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r;
+    ##   return xmin + log(u * (exp(r * xmax) - exp(r * xmin)) + exp(r * xmin)) / r;
     ## }
     ## }
 

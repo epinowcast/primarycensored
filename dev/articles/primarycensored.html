@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.2.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.0.9000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -228,7 +228,7 @@
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="primarycensored_files/figure-html/sample-lognormal-1.png" width="672"></p>
+<p><img src="primarycensored_files/figure-html/sample-lognormal-1.png" alt="" width="672"></p>
 <p>Neither distribution matches the true distribution due to the truncation at <code>D</code> which biases both observed distributions towards shorter delays, as well as the primary and secondary event censoring.</p>
 </div>
 <div class="section level2" number="4">
@@ -283,7 +283,7 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="primarycensored_files/figure-html/cdf-lognormal-1.png" width="672"></p>
+<p><img src="primarycensored_files/figure-html/cdf-lognormal-1.png" alt="" width="672"></p>
 <p>The theoretical CDF matches the empirical CDF very well, confirming that <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code> is working as expected.</p>
 </div>
 <div class="section level2" number="5">
@@ -346,7 +346,7 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="primarycensored_files/figure-html/pmf-lognormal-1.png" width="672"></p>
+<p><img src="primarycensored_files/figure-html/pmf-lognormal-1.png" alt="" width="672"></p>
 <p>Again the theoretical PMF matches the empirical PMF very well, confirming that <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> is also working as expected.</p>
 </div>
 <div class="section level2" number="6">
