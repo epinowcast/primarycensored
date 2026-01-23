@@ -48,15 +48,24 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
     vector[1] y0 = rep_vector(0.0, 1);
     result = ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
 
-    // Apply truncation normalization: (F(d) - F(L)) / (F(D) - F(L))
+    // Apply truncation normalization on log scale for numerical stability
+    // log((F(d) - F(L)) / (F(D) - F(L)))
     if (!is_inf(D) || L > 0) {
-      real cdf_L = L > 0 ? primarycensored_cdf(
+      real log_result = log(result);
+      real log_cdf_L = L > 0 ? log(primarycensored_cdf(
         L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-      ) : 0;
-      real cdf_D = is_inf(D) ? 1 : primarycensored_cdf(
+      )) : negative_infinity();
+      real log_cdf_D = is_inf(D) ? 0 : log(primarycensored_cdf(
         D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-      );
-      result = (result - cdf_L) / (cdf_D - cdf_L);
+      ));
+
+      if (L > 0) {
+        log_result = log_diff_exp(log_result, log_cdf_L) -
+                     log_diff_exp(log_cdf_D, log_cdf_L);
+      } else {
+        log_result = log_result - log_cdf_D;
+      }
+      result = exp(log_result);
     }
   }
 
