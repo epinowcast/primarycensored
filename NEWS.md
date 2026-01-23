@@ -1,5 +1,13 @@
 # primarycensored 1.3.0.9000
 
+This major release removes deprecated functionality that was soft-deprecated in version 1.1.0. It also removes the `lifecycle` and `rlang` packages from dependencies.
+
+## Breaking changes
+
+- Removed deprecated `pdist_name` and `dprimary_name` arguments from `pprimarycensored()`, `dprimarycensored()`, `new_pcens()`, and `fitdistdoublecens()`. Use `add_name_attribute()` on the `pdist` and `dprimary` functions instead to enable analytical solutions.
+- Removed deprecated support for passing numeric values to the `pwindow` and `D` arguments in `fitdistdoublecens()`. These must now be column names in `censdata`.
+- Removed `lifecycle` and `rlang` packages from dependencies.
+
 ## New features
 
 - Added `dependencies` argument to `pcd_load_stan_functions()` that automatically resolves and includes all functions that the requested functions depend on. When `TRUE`, dependencies are included in topological order (dependencies before functions that use them). (#171)

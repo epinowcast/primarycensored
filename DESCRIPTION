@@ -55,9 +55,7 @@ BugReports: https://github.com/epinowcast/primarycensored/issues
 Depends:
     R (>= 4.0.0)
 Imports:
-    lifecycle,
-    pracma,
-    rlang
+    pracma
 Suggests:
     bookdown,
     cmdstanr,

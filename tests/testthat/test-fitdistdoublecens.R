@@ -55,52 +55,6 @@ test_that("fitdistdoublecens works correctly with column names", {
   expect_false(is.na(fit$bic))
 })
 
-test_that("fitdistdoublecens works with deprecated numeric inputs", {
-  # Set seed for reproducibility
-  set.seed(123)
-
-  # Define true distribution parameters
-  n <- 1000
-  shape <- 1.77
-  rate <- 0.44
-
-  # Generate samples
-  samples <- rprimarycensored(
-    n,
-    rgamma,
-    shape = shape,
-    rate = rate,
-    pwindow = 1,
-    swindow = 1,
-    D = 8
-  )
-
-  # Create data frame without pwindow and D columns
-  delay_data <- data.frame(
-    left = samples,
-    right = samples + 1
-  )
-
-  # Test with deprecated numeric inputs for pwindow and D
-  suppressWarnings(expect_warning(
-    fit <- fitdistdoublecens( # nolint
-      # nolint
-      delay_data,
-      distr = "gamma",
-      start = list(shape = 1, rate = 1),
-      pwindow = 1,
-      D = 8
-    )
-  ))
-
-  # Check that the function returns a fitdist object
-  expect_s3_class(fit, "fitdist")
-
-  # Check that the estimated parameters are close to the true values
-  expect_equal(unname(fit$estimate["shape"]), shape, tolerance = 0.2)
-  expect_equal(unname(fit$estimate["rate"]), rate, tolerance = 0.2)
-})
-
 test_that("fitdistdoublecens handles errors correctly", {
   # Test with missing columns
   expect_error(
@@ -419,55 +373,57 @@ test_that("fitdistdoublecens handles truncation_check_multiplier correctly", {
 })
 
 test_that(
-  "fitdistdoublecens throws error when required packages are not installed", {
-  # Create dummy data
-  dummy_data <- data.frame(
-    left = 1:5,
-    right = 2:6,
-    pwindow = rep(1, 5),
-    D = rep(10, 5)
-  )
+  "fitdistdoublecens throws error when required packages are not installed",
+  {
+    # Create dummy data
+    dummy_data <- data.frame(
+      left = 1:5,
+      right = 2:6,
+      pwindow = rep(1, 5),
+      D = rep(10, 5)
+    )
 
-  # Test for fitdistrplus
-  with_mocked_bindings(
-    expect_error(
-      fitdistdoublecens(dummy_data, "norm"),
-      "Package 'fitdistrplus' is required but not installed for this",
-      fixed = TRUE
-    ),
-    requireNamespace = function(pkg, ...) {
-      if (pkg == "fitdistrplus") {
-        return(FALSE)
-      }
-      TRUE
-    },
-    .package = "base"
-  )
+    # Test for fitdistrplus
+    with_mocked_bindings(
+      expect_error(
+        fitdistdoublecens(dummy_data, "norm"),
+        "Package 'fitdistrplus' is required but not installed for this",
+        fixed = TRUE
+      ),
+      requireNamespace = function(pkg, ...) {
+        if (pkg == "fitdistrplus") {
+          return(FALSE)
+        }
+        TRUE
+      },
+      .package = "base"
+    )
 
-  # Test for withr
-  with_mocked_bindings(
-    expect_error(
-      fitdistdoublecens(dummy_data, "norm"),
-      "Package 'withr' is required but not installed for this function.",
-      fixed = TRUE
-    ),
-    requireNamespace = function(pkg, ...) {
-      if (pkg == "withr") {
-        return(FALSE)
-      }
-      TRUE
-    },
-    .package = "base"
-  )
+    # Test for withr
+    with_mocked_bindings(
+      expect_error(
+        fitdistdoublecens(dummy_data, "norm"),
+        "Package 'withr' is required but not installed for this function.",
+        fixed = TRUE
+      ),
+      requireNamespace = function(pkg, ...) {
+        if (pkg == "withr") {
+          return(FALSE)
+        }
+        TRUE
+      },
+      .package = "base"
+    )
 
-  # Test when both packages are missing
-  with_mocked_bindings(
-    expect_error(
-      fitdistdoublecens(dummy_data, "norm"),
-      "Package 'fitdistrplus' is required but not installed",
-      fixed = TRUE
-    ),
-    requireNamespace = function(...) FALSE,
-    .package = "base"
-  )
-})
+    # Test when both packages are missing
+    with_mocked_bindings(
+      expect_error(
+        fitdistdoublecens(dummy_data, "norm"),
+        "Package 'fitdistrplus' is required but not installed",
+        fixed = TRUE
+      ),
+      requireNamespace = function(...) FALSE,
+      .package = "base"
+    )
+  }
+)

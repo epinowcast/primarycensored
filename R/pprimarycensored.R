@@ -34,14 +34,6 @@
 #'  pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
 #'  and rate parameters
 #'
-#' @param pdist_name `r lifecycle::badge("deprecated")` this argument will be
-#'  ignored in future versions; use [add_name_attribute()] on `pdist`
-#'  instead
-#'
-#' @param dprimary_name `r lifecycle::badge("deprecated")` this argument will be
-#'  ignored in future versions; use [add_name_attribute()] on `dprimary`
-#'  instead
-#'
 #' @param ... Additional arguments to be passed to pdist
 #'
 #' @return Vector of primary event censored CDFs, normalized by D if finite
@@ -104,17 +96,7 @@ pprimarycensored <- function(
     D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
-    pdist_name = lifecycle::deprecated(),
-    dprimary_name = lifecycle::deprecated(),
     ...) {
-  nms <- .name_deprecation(pdist_name, dprimary_name)
-  if (!is.null(nms$pdist)) {
-    pdist <- add_name_attribute(pdist, nms$pdist)
-  }
-  if (!is.null(nms$dprimary)) {
-    dprimary <- add_name_attribute(dprimary, nms$dprimary)
-  }
-
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
