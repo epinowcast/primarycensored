@@ -135,6 +135,18 @@ fitdistdoublecens <- function(
     censdata[[L]] <- 0
   }
 
+  # Validate truncation bounds: L must be less than D
+  invalid_rows <- which(censdata[[L]] >= censdata[[D]])
+  if (length(invalid_rows) > 0) {
+    stop(
+      "L must be less than D. Found ", length(invalid_rows),
+      " observation(s) where L >= D. First invalid row: ",
+      invalid_rows[1], " (L = ", censdata[[L]][invalid_rows[1]],
+      ", D = ", censdata[[D]][invalid_rows[1]], ")",
+      call. = FALSE
+    )
+  }
+
   required_cols <- c(left, right, pwindow, D)
   missing_cols <- setdiff(required_cols, names(censdata))
   if (length(missing_cols) > 0) {

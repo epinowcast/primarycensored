@@ -92,6 +92,7 @@ pcens_quantile.default <- function(
     tol = 1e-8,
     max_iter = 10000,
     ...) {
+  .check_truncation_bounds(L, D)
   sapply(p, function(prob) {
     # Handle boundary cases.
     if (prob <= 0) {

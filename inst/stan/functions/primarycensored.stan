@@ -240,16 +240,15 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * int d = 3;
-  * real d = 3.0;
   * int dist_id = 5; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
-  * real swindow = 0.1;
+  * real d_upper = 4.0;
   * real L = 0.0;
   * real D = positive_infinity();
   * int primary_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * real pmf = primarycensored_pmf(d, dist_id, params, pwindow, swindow, L, D, primary_id, primary_params);
+  * real pmf = primarycensored_pmf(d, dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params);
   * @endcode
   */
 real primarycensored_pmf(data int d, int dist_id, array[] real params,
@@ -357,17 +356,25 @@ vector primarycensored_sone_lpmf_vectorized(
 
   // Compute log PMFs
   // For d < L, set to negative infinity (will be exponentiated to 0)
-  int L_int = L > 0 ? max(1, to_int(floor(L))) : 0;
+  // L_int is the largest integer fully excluded by L
+  int L_int = L > 0 ? to_int(floor(L)) : 0;
 
   for (d in 1:upper_interval) {
-    if (d <= L_int) {
+    // Handle partial overlap case: d == 1 and 0 < L < 1
+    // The interval [0,1) partially overlaps with [L, D), so we need
+    // to compute the probability mass from L to 1
+    if (d == 1 && L > 0 && L < 1) {
+      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
+    } else if (d <= L_int) {
+      // Fully excluded delays (d entirely below L)
       log_pmfs[d] = negative_infinity();
+    } else if (d == L_int + 1 && L_int > 0) {
+      // First non-excluded interval after L: [L_int, L_int+1) partially overlaps
+      // Probability mass from L to L_int + 1
+      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
     } else if (d == 1) {
-      if (L > 0) {
-        log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
-      } else {
-        log_pmfs[d] = log_cdfs[d] - log_normalizer;
-      }
+      // d == 1 and L == 0 (no left truncation)
+      log_pmfs[d] = log_cdfs[d] - log_normalizer;
     } else {
       log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
     }
