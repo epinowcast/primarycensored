@@ -178,6 +178,18 @@ pcd_as_stan_data <- function(
     data[[L]] <- 0
   }
 
+  # Validate truncation bounds: L must be less than D
+  invalid_rows <- which(data[[L]] >= data[[relative_obs_time]])
+  if (length(invalid_rows) > 0) {
+    stop(
+      "L must be less than D. Found ", length(invalid_rows),
+      " observation(s) where L >= D. First invalid row: ",
+      invalid_rows[1], " (L = ", data[[L]][invalid_rows[1]],
+      ", D = ", data[[relative_obs_time]][invalid_rows[1]], ")",
+      call. = FALSE
+    )
+  }
+
   if (!is.null(truncation_check_multiplier)) {
     unique_D <- unique(data[[relative_obs_time]])
     for (D in unique_D) {
