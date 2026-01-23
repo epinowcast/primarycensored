@@ -12,7 +12,6 @@ fitdistdoublecens(
   pwindow = "pwindow",
   D = "D",
   dprimary = stats::dunif,
-  dprimary_name = lifecycle::deprecated(),
   dprimary_args = list(),
   truncation_check_multiplier = 2,
   ...
@@ -53,10 +52,6 @@ See \code{\link[=pcd_primary_distributions]{pcd_primary_distributions()}} for ex
 base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
-
-\item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
-ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{dprimary}
-instead}
 
 \item{dprimary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would

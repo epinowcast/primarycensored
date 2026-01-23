@@ -12,8 +12,6 @@ pprimarycensored(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
   ...
 )
 
@@ -24,8 +22,6 @@ ppcens(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  pdist_name = lifecycle::deprecated(),
-  dprimary_name = lifecycle::deprecated(),
   ...
 )
 }
@@ -57,14 +53,6 @@ functions if they wish to leverage analytical solutions.}
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
-
-\item{pdist_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
-ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{pdist}
-instead}
-
-\item{dprimary_name}{\ifelse{html}{\href{https://lifecycle.r-lib.org/articles/stages.html#deprecated}{\figure{lifecycle-deprecated.svg}{options: alt='[Deprecated]'}}}{\strong{[Deprecated]}} this argument will be
-ignored in future versions; use \code{\link[=add_name_attribute]{add_name_attribute()}} on \code{dprimary}
-instead}
 
 \item{...}{Additional arguments to be passed to pdist}
 }

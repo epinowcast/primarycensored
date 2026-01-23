@@ -99,23 +99,16 @@
 #'
 #' summary(fit_norm)
 fitdistdoublecens <- function(
-  censdata,
-  distr,
-  left = "left",
-  right = "right",
-  pwindow = "pwindow",
-  D = "D",
-  dprimary = stats::dunif,
-  dprimary_name = lifecycle::deprecated(),
-  dprimary_args = list(),
-  truncation_check_multiplier = 2,
-  ...
-) {
-  nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
-  if (!is.null(nms$dprimary)) {
-    dprimary <- add_name_attribute(dprimary, nms$dprimary)
-  }
-
+    censdata,
+    distr,
+    left = "left",
+    right = "right",
+    pwindow = "pwindow",
+    D = "D",
+    dprimary = stats::dunif,
+    dprimary_args = list(),
+    truncation_check_multiplier = 2,
+    ...) {
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -129,26 +122,6 @@ fitdistdoublecens <- function(
       "Package 'withr' is required but not installed for this function.",
       call. = FALSE
     )
-  }
-
-  # Deprecation handling for pwindow and D
-  if (is.numeric(pwindow)) {
-    lifecycle::deprecate_warn(
-      "1.1.0",
-      "fitdistdoublecens(pwindow)",
-      details = "Use pwindow column in censdata instead."
-    )
-    censdata[["pwindow"]] <- pwindow
-    pwindow <- "pwindow"
-  }
-  if (is.numeric(D)) {
-    lifecycle::deprecate_warn(
-      "1.1.0",
-      "fitdistdoublecens(D)",
-      details = "Use D column in censdata instead."
-    )
-    censdata[["D"]] <- D
-    D <- "D"
   }
 
   required_cols <- c(left, right, pwindow, D)
@@ -247,13 +220,12 @@ fitdistdoublecens <- function(
 #' truncation times for each element in x.
 #' @keywords internal
 .dpcens <- function(
-  x,
-  params,
-  pdist,
-  dprimary,
-  dprimary_args,
-  ...
-) {
+    x,
+    params,
+    pdist,
+    dprimary,
+    dprimary_args,
+    ...) {
   tryCatch(
     {
       unique_params <- unique(params)

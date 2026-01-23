@@ -1,5 +1,13 @@
 # primarycensored 1.3.0.9000
 
+This major release removes deprecated functionality that was soft-deprecated in version 1.1.0. It also removes the `lifecycle` and `rlang` packages from dependencies.
+
+## Breaking changes
+
+- Removed deprecated `pdist_name` and `dprimary_name` arguments from `pprimarycensored()`, `dprimarycensored()`, `new_pcens()`, and `fitdistdoublecens()`. Use `add_name_attribute()` on the `pdist` and `dprimary` functions instead to enable analytical solutions.
+- Removed deprecated support for passing numeric values to the `pwindow` and `D` arguments in `fitdistdoublecens()`. These must now be column names in `censdata`.
+- Removed `lifecycle` and `rlang` packages from dependencies.
+
 ## Bug fixes
 
 - Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan functions (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_lcdf`, `expgrowth_rng`, `primary_lpdf`) to avoid conflicts with Stan built-in functions. CmdStan 2.38.0 now strictly enforces reserved keyword restrictions when exposing Stan functions to R. (#258)
