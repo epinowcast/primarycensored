@@ -240,7 +240,9 @@ specification. Contributions of any kind are welcome!
 
 ### Issue Contributors
 
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aavehtari">avehtari</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Ajgabry">jgabry</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
