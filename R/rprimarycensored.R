@@ -80,14 +80,14 @@
 #' )
 #'
 #' # Example: Left-truncated distribution (e.g., for generation intervals)
-#' rprimarycensored(10, rlnorm, D = 10, L = 1, meanlog = 0, sdlog = 1)
+#' rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
 rprimarycensored <- function(
     n,
     rdist,
     pwindow = 1,
     swindow = 1,
-    D = Inf,
     L = 0,
+    D = Inf,
     rprimary = stats::runif,
     rprimary_args = list(),
     oversampling_factor = 1.2,
@@ -119,8 +119,8 @@ rprimarycensored <- function(
       rdist,
       pwindow,
       swindow,
-      D,
       L,
+      D,
       rprimary,
       rprimary_args,
       ...

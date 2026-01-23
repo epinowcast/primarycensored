@@ -10,8 +10,8 @@
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
-  * @param D Maximum delay (upper truncation point)
   * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
   * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
@@ -19,7 +19,7 @@
   * is applied
   */
 real primarycensored_cdf(data real d, int dist_id, array[] real params,
-                               data real pwindow, data real D, data real L,
+                               data real pwindow, data real L, data real D,
                                int primary_id,
                                array[] real primary_params) {
   real result;
@@ -35,7 +35,7 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   if (check_for_analytical(dist_id, primary_id)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
-      d | dist_id, params, pwindow, D, L, primary_id, primary_params
+      d | dist_id, params, pwindow, L, D, primary_id, primary_params
     );
   } else {
     // Use numerical integration for other cases
@@ -51,10 +51,10 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
     // Apply truncation normalization: (F(d) - F(L)) / (F(D) - F(L))
     if (!is_inf(D) || L > 0) {
       real cdf_L = L > 0 ? primarycensored_cdf(
-        L | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+        L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
       ) : 0;
       real cdf_D = is_inf(D) ? 1 : primarycensored_cdf(
-        D | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+        D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
       );
       result = (result - cdf_L) / (cdf_D - cdf_L);
     }
@@ -71,8 +71,8 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
-  * @param D Maximum delay (upper truncation point)
   * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
   * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
@@ -85,17 +85,17 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   * int dist_id = 5; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
-  * real D = positive_infinity();
   * real L = 0.0;
+  * real D = positive_infinity();
   * int primary_id = 1; // Uniform
   * array[0] real primary_params = rep_array(0.0, 0);
   * real log_cdf = primarycensored_lcdf(
-  *   d, dist_id, params, pwindow, D, L, primary_id, primary_params
+  *   d, dist_id, params, pwindow, L, D, primary_id, primary_params
   * );
   * @endcode
   */
 real primarycensored_lcdf(data real d, int dist_id, array[] real params,
-                                data real pwindow, data real D, data real L,
+                                data real pwindow, data real L, data real D,
                                 int primary_id,
                                 array[] real primary_params) {
   real result;
@@ -111,22 +111,22 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
   // Check if an analytical solution exists
   if (check_for_analytical(dist_id, primary_id)) {
     result = primarycensored_analytical_lcdf(
-      d | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
     );
   } else {
     // Use numerical integration
     result = log(primarycensored_cdf(
-      d | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
     ));
   }
 
   // Handle truncation: log((F(d) - F(L)) / (F(D) - F(L)))
   if (!is_inf(D) || L > 0) {
     real log_cdf_L = L > 0 ? primarycensored_lcdf(
-      L | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+      L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
     ) : negative_infinity();
     real log_cdf_D = is_inf(D) ? 0 : primarycensored_lcdf(
-      D | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+      D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
     );
 
     // log((F(d) - F(L)) / (F(D) - F(L)))
@@ -164,18 +164,18 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real d_upper = 4.0;
-  * real D = positive_infinity();
   * real L = 0.0;
+  * real D = positive_infinity();
   * int primary_id = 1; // Uniform
   * array[0] real primary_params = {};
   * real log_pmf = primarycensored_lpmf(
-  *   d, dist_id, params, pwindow, d_upper, D, L, primary_id, primary_params
+  *   d, dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params
   * );
   * @endcode
   */
 real primarycensored_lpmf(data int d, int dist_id, array[] real params,
                                 data real pwindow, data real d_upper,
-                                data real D, data real L, int primary_id,
+                                data real L, data real D, int primary_id,
                                 array[] real primary_params) {
   if (d_upper > D) {
     reject("Upper truncation point is greater than D. It is ", d_upper,
@@ -189,17 +189,17 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
     return negative_infinity();
   }
   real log_cdf_upper = primarycensored_lcdf(
-    d_upper | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+    d_upper | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
   );
   real log_cdf_lower = primarycensored_lcdf(
-    d | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+    d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
   );
 
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L)))
   if (!is_inf(D) || L > 0) {
     real log_cdf_D;
     real log_cdf_L = L > 0 ? primarycensored_lcdf(
-      L | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+      L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
     ) : negative_infinity();
 
     if (d_upper == D) {
@@ -208,7 +208,7 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
       log_cdf_D = 0;
     } else {
       log_cdf_D = primarycensored_lcdf(
-        D | dist_id, params, pwindow, positive_infinity(), 0, primary_id, primary_params
+        D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
       );
     }
 
@@ -245,20 +245,20 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real swindow = 0.1;
-  * real D = positive_infinity();
   * real L = 0.0;
+  * real D = positive_infinity();
   * int primary_id = 1; // Uniform
   * array[0] real primary_params = {};
-  * real pmf = primarycensored_pmf(d, dist_id, params, pwindow, swindow, D, L, primary_id, primary_params);
+  * real pmf = primarycensored_pmf(d, dist_id, params, pwindow, swindow, L, D, primary_id, primary_params);
   * @endcode
   */
 real primarycensored_pmf(data int d, int dist_id, array[] real params,
                                data real pwindow, data real d_upper,
-                               data real D, data real L, int primary_id,
+                               data real L, data real D, int primary_id,
                                array[] real primary_params) {
   return exp(
     primarycensored_lpmf(
-      d | dist_id, params, pwindow, d_upper, D, L, primary_id, primary_params
+      d | dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params
     )
   );
 }
@@ -268,8 +268,8 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
   * @ingroup primary_censored_vectorized
   *
   * @param max_delay Maximum delay to compute PMF for
-  * @param D Maximum delay (upper truncation point), must be at least max_delay + 1
   * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point), must be at least max_delay + 1
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -289,8 +289,8 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * int max_delay = 10;
-  * real D = 15.0;
   * real L = 0.0;
+  * real D = 15.0;
   * int dist_id = 5; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 7.0;
@@ -299,13 +299,13 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
 
   * vector[max_delay] log_pmf =
   *   primarycensored_sone_lpmf_vectorized(
-  *      max_delay, D, L, dist_id, params, pwindow, primary_id,
+  *      max_delay, L, D, dist_id, params, pwindow, primary_id,
   *      primary_params
   *   );
   * @endcode
   */
 vector primarycensored_sone_lpmf_vectorized(
-  int max_delay, data real D, data real L, int dist_id,
+  int max_delay, data real L, data real D, int dist_id,
   array[] real params, data real pwindow,
   int primary_id, array[] real primary_params
 ) {
@@ -323,14 +323,14 @@ vector primarycensored_sone_lpmf_vectorized(
   // Compute log CDFs (without truncation normalization)
   for (d in 1:upper_interval) {
     log_cdfs[d] = primarycensored_lcdf(
-      d | dist_id, params, pwindow, positive_infinity(), 0, primary_id,
+      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
       primary_params
     );
   }
 
   // Get CDF at lower truncation point L
   real log_cdf_L = L > 0 ? primarycensored_lcdf(
-    L | dist_id, params, pwindow, positive_infinity(), 0, primary_id,
+    L | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
     primary_params
   ) : negative_infinity();
 
@@ -341,7 +341,7 @@ vector primarycensored_sone_lpmf_vectorized(
       log_cdf_D = 0; // log(1) = 0 for infinite D
     } else {
       log_cdf_D = primarycensored_lcdf(
-        D | dist_id, params, pwindow, positive_infinity(), 0,
+        D | dist_id, params, pwindow, 0, positive_infinity(),
         primary_id, primary_params
       );
     }
@@ -381,8 +381,8 @@ vector primarycensored_sone_lpmf_vectorized(
   * @ingroup primary_censored_vectorized
   *
   * @param max_delay Maximum delay to compute PMF for
-  * @param D Maximum delay (upper truncation point), must be at least max_delay + 1
   * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point), must be at least max_delay + 1
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -401,8 +401,8 @@ vector primarycensored_sone_lpmf_vectorized(
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * int max_delay = 10;
-  * real D = 15.0;
   * real L = 0.0;
+  * real D = 15.0;
   * int dist_id = 5; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 7.0;
@@ -410,19 +410,19 @@ vector primarycensored_sone_lpmf_vectorized(
   * array[0] real primary_params = {};
   * vector[max_delay] pmf =
   *   primarycensored_sone_lpmf_vectorized(
-  *      max_delay, D, L, dist_id, params, pwindow, primary_id, primary_params
+  *      max_delay, L, D, dist_id, params, pwindow, primary_id, primary_params
   *   );
   * @endcode
   */
 vector primarycensored_sone_pmf_vectorized(
-  int max_delay, data real D, data real L, int dist_id,
+  int max_delay, data real L, data real D, int dist_id,
   array[] real params, data real pwindow,
   int primary_id,
   array[] real primary_params
 ) {
   return exp(
     primarycensored_sone_lpmf_vectorized(
-      max_delay, D, L, dist_id, params, pwindow, primary_id, primary_params
+      max_delay, L, D, dist_id, params, pwindow, primary_id, primary_params
     )
   );
 }

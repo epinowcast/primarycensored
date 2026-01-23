@@ -24,8 +24,8 @@ pcens_quantile <- function(
     object,
     p,
     pwindow,
-    D = Inf,
     L = 0,
+    D = Inf,
     use_numeric = FALSE,
     ...) {
   UseMethod("pcens_quantile")
@@ -80,13 +80,13 @@ pcens_quantile <- function(
 #' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
 #'
 #' # Compute quantiles with left truncation
-#' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10, L = 1)
+#' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, L = 1, D = 10)
 pcens_quantile.default <- function(
     object,
     p,
     pwindow,
-    D = Inf,
     L = 0,
+    D = Inf,
     use_numeric = FALSE,
     init = 5,
     tol = 1e-8,

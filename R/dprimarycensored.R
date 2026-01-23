@@ -67,14 +67,14 @@
 #' )
 #'
 #' # Example: Left-truncated distribution (e.g., for generation intervals)
-#' dprimarycensored(1:9, pweibull, D = 10, L = 1, shape = 1.5, scale = 2.0)
+#' dprimarycensored(1:9, pweibull, L = 1, D = 10, shape = 1.5, scale = 2.0)
 dprimarycensored <- function(
     x,
     pdist,
     pwindow = 1,
     swindow = 1,
-    D = Inf,
     L = 0,
+    D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
     log = FALSE,
