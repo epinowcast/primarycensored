@@ -11,6 +11,7 @@ dprimarycensored(
   pwindow = 1,
   swindow = 1,
   D = Inf,
+  L = 0,
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
@@ -23,6 +24,7 @@ dpcens(
   pwindow = 1,
   swindow = 1,
   D = Inf,
+  L = 0,
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
@@ -41,8 +43,14 @@ functions if they wish to leverage the analytical solutions.}
 
 \item{swindow}{Secondary event window (default: 1)}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
+
+\item{L}{Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded. Defaults to 0 (no left
+truncation).}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -65,15 +73,15 @@ and rate parameters}
 \item{...}{Additional arguments to be passed to the distribution function}
 }
 \value{
-Vector of primary event censored PMFs, normalized by D if finite
-(truncation adjustment)
+Vector of primary event censored PMFs, normalized over [L, D] if
+truncation is applied
 }
 \description{
 This function computes the primary event censored probability mass function
 (PMF) for a given set of quantiles. It adjusts the PMF of the primary event
 distribution by accounting for the delay distribution and potential
-truncation at a maximum delay (D). The function allows for custom primary
-event distributions and delay distributions.
+truncation at a maximum delay (D) and minimum delay (L). The function allows
+for custom primary event distributions and delay distributions.
 }
 \details{
 The primary event censored PMF is computed by taking the difference of the
@@ -88,19 +96,17 @@ where \eqn{F_{\text{cens}}} is the primary event censored CDF.
 The function first computes the CDFs for all unique points (including both
 \eqn{d} and \eqn{d + \text{swindow}}) using \code{\link[=pprimarycensored]{pprimarycensored()}}. It then
 creates a lookup table for these CDFs to efficiently calculate the PMF for
-each input value. For non-positive delays, the function returns 0.
+each input value. For delays less than L, the function returns 0.
 
-If a finite maximum delay \eqn{D} is specified, the PMF is normalized to
-ensure it sums to 1 over the range [0, D]. This normalization can be
-expressed as:
+If truncation is applied (finite D or L > 0), the PMF is normalized to
+ensure it sums to 1 over the range [L, D\). This normalization uses:
 \deqn{
-f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{\sum_{i=0}^{D-1}
- f_{\text{cens}}(i)}
+f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{
+  F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 }
-where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF and
-\eqn{f_{\text{cens}}(d)} is the unnormalized PMF. For the explanation and
-mathematical details of the CDF, refer to the documentation of
-\code{\link[=pprimarycensored]{pprimarycensored()}}.
+where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF. For the
+explanation and mathematical details of the CDF, refer to the documentation
+of \code{\link[=pprimarycensored]{pprimarycensored()}}.
 }
 \examples{
 # Example: Weibull distribution with uniform primary events
@@ -112,6 +118,9 @@ dprimarycensored(
   dprimary = dexpgrowth,
   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 )
+
+# Example: Left-truncated distribution (e.g., for generation intervals)
+dprimarycensored(1:9, pweibull, D = 10, L = 1, shape = 1.5, scale = 2.0)
 }
 \seealso{
 Primary event censored distribution functions

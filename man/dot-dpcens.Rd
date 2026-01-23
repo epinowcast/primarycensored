@@ -9,9 +9,9 @@
 \arguments{
 \item{x}{Vector of quantiles}
 
-\item{params}{A data frame with columns 'swindow', 'pwindow', and 'D'
-corresponding to the secondary window sizes, primary window sizes, and
-truncation times for each element in x.}
+\item{params}{A data frame with columns 'swindow', 'pwindow', 'D', and 'L'
+corresponding to the secondary window sizes, primary window sizes, upper
+truncation times, and lower truncation times for each element in x.}
 
 \item{pdist}{Distribution function (CDF). The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,

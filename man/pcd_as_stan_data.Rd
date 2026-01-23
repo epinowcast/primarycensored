@@ -11,6 +11,7 @@ pcd_as_stan_data(
   n = "n",
   pwindow = "pwindow",
   relative_obs_time = "relative_obs_time",
+  L = "L",
   dist_id,
   primary_id,
   param_bounds,
@@ -34,8 +35,12 @@ pcd_as_stan_data(
 
 \item{pwindow}{Column name for primary window (default: "pwindow")}
 
-\item{relative_obs_time}{Column name for relative observation time
-(default: "relative_obs_time")}
+\item{relative_obs_time}{Column name for relative observation time, used as
+the upper truncation point D (default: "relative_obs_time")}
+
+\item{L}{Column name for minimum delay (lower truncation point). If the
+column is not present in data, L = 0 is assumed for all observations.
+(default: "L")}
 
 \item{dist_id}{Integer identifying the delay distribution:
 You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the dist ID for a

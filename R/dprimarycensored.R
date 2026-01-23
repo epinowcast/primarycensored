@@ -4,8 +4,8 @@
 #' This function computes the primary event censored probability mass function
 #' (PMF) for a given set of quantiles. It adjusts the PMF of the primary event
 #' distribution by accounting for the delay distribution and potential
-#' truncation at a maximum delay (D). The function allows for custom primary
-#' event distributions and delay distributions.
+#' truncation at a maximum delay (D) and minimum delay (L). The function allows
+#' for custom primary event distributions and delay distributions.
 #'
 #' @inheritParams pprimarycensored
 #'
@@ -17,8 +17,8 @@
 #'
 #' @param ... Additional arguments to be passed to the distribution function
 #'
-#' @return Vector of primary event censored PMFs, normalized by D if finite
-#' (truncation adjustment)
+#' @return Vector of primary event censored PMFs, normalized over \[L, D\] if
+#' truncation is applied
 #'
 #' @aliases dpcens
 #'
@@ -39,19 +39,17 @@
 #' The function first computes the CDFs for all unique points (including both
 #' \eqn{d} and \eqn{d + \text{swindow}}) using [pprimarycensored()]. It then
 #' creates a lookup table for these CDFs to efficiently calculate the PMF for
-#' each input value. For non-positive delays, the function returns 0.
+#' each input value. For delays less than L, the function returns 0.
 #'
-#' If a finite maximum delay \eqn{D} is specified, the PMF is normalized to
-#' ensure it sums to 1 over the range \[0, D\]. This normalization can be
-#' expressed as:
+#' If truncation is applied (finite D or L > 0), the PMF is normalized to
+#' ensure it sums to 1 over the range \[L, D\). This normalization uses:
 #' \deqn{
-#' f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{\sum_{i=0}^{D-1}
-#'  f_{\text{cens}}(i)}
+#' f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{
+#'   F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 #' }
-#' where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF and
-#' \eqn{f_{\text{cens}}(d)} is the unnormalized PMF. For the explanation and
-#' mathematical details of the CDF, refer to the documentation of
-#' [pprimarycensored()].
+#' where \eqn{f_{\text{cens,norm}}(d)} is the normalized PMF. For the
+#' explanation and mathematical details of the CDF, refer to the documentation
+#' of [pprimarycensored()].
 #'
 #' @family primarycensored
 #'
@@ -67,16 +65,22 @@
 #'   dprimary = dexpgrowth,
 #'   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 #' )
+#'
+#' # Example: Left-truncated distribution (e.g., for generation intervals)
+#' dprimarycensored(1:9, pweibull, D = 10, L = 1, shape = 1.5, scale = 2.0)
 dprimarycensored <- function(
     x,
     pdist,
     pwindow = 1,
     swindow = 1,
     D = Inf,
+    L = 0,
     dprimary = stats::dunif,
     dprimary_args = list(),
     log = FALSE,
     ...) {
+  .check_truncation_bounds(L, D)
+
   check_pdist(pdist, D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
@@ -104,6 +108,7 @@ dprimarycensored <- function(
     pdist,
     pwindow,
     Inf,
+    L = 0,
     dprimary,
     dprimary_args,
     ...
@@ -115,8 +120,8 @@ dprimarycensored <- function(
   result <- vapply(
     x,
     function(d) {
-      if (d < 0) {
-        return(0) # Return 0 for negative delays
+      if (d < L) {
+        return(0) # Return 0 for delays below lower truncation
       } else if (d == 0) {
         # Special case for d = 0
         cdf_upper <- cdf_lookup[as.character(swindow)]
@@ -130,21 +135,47 @@ dprimarycensored <- function(
     numeric(1)
   )
 
-  if (is.finite(D)) {
+  # Apply truncation normalization
+  if (is.finite(D) || L > 0) {
+    # Get CDF at upper truncation point D
     if (max(unique_points) == D) {
       cdf_D <- max(cdfs)
+    } else if (is.infinite(D)) {
+      cdf_D <- 1
     } else {
       cdf_D <- pprimarycensored(
         D,
         pdist,
         pwindow,
         Inf,
+        L = 0,
         dprimary,
         dprimary_args,
         ...
       )
     }
-    result <- result / cdf_D
+
+    # Get CDF at lower truncation point L
+    if (L == 0) {
+      cdf_L <- 0
+    } else if (L %in% unique_points) {
+      cdf_L <- cdf_lookup[as.character(L)]
+    } else {
+      cdf_L <- pprimarycensored(
+        L,
+        pdist,
+        pwindow,
+        Inf,
+        L = 0,
+        dprimary,
+        dprimary_args,
+        ...
+      )
+    }
+
+    # Normalize by (F(D) - F(L))
+    normaliser <- cdf_D - cdf_L
+    result <- result / normaliser
   }
 
   # Ensure non-negative values (can become slightly negative due to

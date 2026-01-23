@@ -3,8 +3,8 @@
 #' This function wraps the custom approach for fitting distributions to doubly
 #' censored data using fitdistrplus and primarycensored. It handles primary
 #' censoring (when the primary event time is not known exactly), secondary
-#' censoring (when the secondary event time is interval-censored), and right
-#' truncation (when events are only observed up to a maximum delay).
+#' censoring (when the secondary event time is interval-censored), and
+#' truncation (when events are only observed within a delay range \[L, D\]).
 #'
 #' @details
 #' ## How distribution functions are resolved
@@ -53,9 +53,14 @@
 #'
 #' @param pwindow Column name for primary window (default: "pwindow").
 #'
-#' @param D Column name for maximum delay (truncation point). If finite, the
-#'  distribution is truncated at D. If set to Inf, no truncation is applied.
-#'  (default: "D").
+#' @param D Column name for maximum delay (upper truncation point). If finite,
+#'  the distribution is truncated at D. If set to Inf, no upper truncation is
+#'  applied. (default: "D").
+#'
+#' @param L Column name for minimum delay (lower truncation point). If greater
+#'  than 0, the distribution is left-truncated at L. This is useful for
+#'  modelling generation intervals where day 0 is excluded. (default: "L"). If
+#'  the column is not present in censdata, L = 0 is assumed.
 #'
 #' @inheritParams pprimarycensored
 #'
@@ -105,6 +110,7 @@ fitdistdoublecens <- function(
     right = "right",
     pwindow = "pwindow",
     D = "D",
+    L = "L",
     dprimary = stats::dunif,
     dprimary_args = list(),
     truncation_check_multiplier = 2,
@@ -122,6 +128,11 @@ fitdistdoublecens <- function(
       "Package 'withr' is required but not installed for this function.",
       call. = FALSE
     )
+  }
+
+  # Handle L column: if not present, create with default value 0
+  if (!L %in% names(censdata)) {
+    censdata[[L]] <- 0
   }
 
   required_cols <- c(left, right, pwindow, D)
@@ -152,7 +163,8 @@ fitdistdoublecens <- function(
   params <- data.frame(
     swindow = censdata[[right]] - censdata[[left]],
     pwindow = censdata[[pwindow]],
-    D = censdata[[D]]
+    D = censdata[[D]],
+    L = censdata[[L]]
   )
 
   # Create the function definition with named arguments for dpcens
@@ -215,9 +227,9 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around dprimarycensored
 #' @inheritParams dprimarycensored
 #'
-#' @param params A data frame with columns 'swindow', 'pwindow', and 'D'
-#' corresponding to the secondary window sizes, primary window sizes, and
-#' truncation times for each element in x.
+#' @param params A data frame with columns 'swindow', 'pwindow', 'D', and 'L'
+#' corresponding to the secondary window sizes, primary window sizes, upper
+#' truncation times, and lower truncation times for each element in x.
 #' @keywords internal
 .dpcens <- function(
     x,
@@ -237,6 +249,7 @@ fitdistdoublecens <- function(
           pwindow = unique_params$pwindow[1],
           swindow = unique_params$swindow[1],
           D = unique_params$D[1],
+          L = unique_params$L[1],
           dprimary = dprimary,
           dprimary_args = dprimary_args,
           ...
@@ -249,9 +262,11 @@ fitdistdoublecens <- function(
           sw <- unique_params$swindow[i]
           pw <- unique_params$pwindow[i]
           Ds <- unique_params$D[i] # nolint
+          Ls <- unique_params$L[i] # nolint
           mask <- params$swindow == sw &
             params$pwindow == pw &
-            params$D == Ds
+            params$D == Ds &
+            params$L == Ls
 
           result[mask] <- dprimarycensored(
             x[mask],
@@ -259,6 +274,7 @@ fitdistdoublecens <- function(
             pwindow = pw,
             swindow = sw,
             D = Ds,
+            L = Ls,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
             ...
@@ -281,12 +297,13 @@ fitdistdoublecens <- function(
     {
       # Vectorize the CDF calculation
       mapply(
-        function(q_i, pw, D_i) {
+        function(q_i, pw, D_i, L_i) {
           pprimarycensored(
             q_i,
             pdist,
             pwindow = pw,
             D = D_i,
+            L = L_i,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
             ...
@@ -295,6 +312,7 @@ fitdistdoublecens <- function(
         q,
         params$pwindow,
         params$D,
+        params$L,
         SIMPLIFY = TRUE
       )
     },

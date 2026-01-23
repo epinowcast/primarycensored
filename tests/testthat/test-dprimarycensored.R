@@ -135,3 +135,96 @@ test_that("dprimarycensored returns non-negative values", {
     info = "PMF with expgrowth primary should never be negative"
   )
 })
+
+# Left truncation (L parameter) tests
+
+test_that("dprimarycensored sums to 1 over [L, D) with L > 0", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+  pmf <- dpcens(
+    L:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1
+  )
+  expect_equal(sum(pmf), 1, tolerance = 1e-6)
+})
+
+test_that("dprimarycensored returns 0 for x < L", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+
+  pmf <- dpcens(
+    0:(L - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1
+  )
+  expect_true(all(pmf == 0))
+})
+
+test_that("dprimarycensored errors when L >= D", {
+  expect_error(
+    dpcens(5, plnorm, pwindow = 1, D = 10, L = 10, meanlog = 1, sdlog = 1),
+    "L must be less than D"
+  )
+  expect_error(
+    dpcens(5, plnorm, pwindow = 1, D = 10, L = 15, meanlog = 1, sdlog = 1),
+    "L must be less than D"
+  )
+})
+
+test_that("dprimarycensored errors when L < 0", {
+  expect_error(
+    dpcens(5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
+    "L must be non-negative"
+  )
+})
+
+test_that("dprimarycensored with L = 0 matches default behaviour", {
+  pwindow <- 1
+  D <- 10
+  pmf_default <- dpcens(
+    0:(D - 1), plnorm, pwindow,
+    D = D, meanlog = 1, sdlog = 1
+  )
+  pmf_explicit <- dpcens(
+    0:(D - 1), plnorm, pwindow,
+    D = D, L = 0, meanlog = 1, sdlog = 1
+  )
+  expect_equal(pmf_default, pmf_explicit)
+})
+
+test_that("dprimarycensored is consistent with pprimarycensored for L > 0", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+  x <- L:(D - 2)
+  pmf <- dpcens(x, plnorm, pwindow, D = D, L = L, meanlog = 1, sdlog = 1)
+  cdf_diff <- sapply(x, function(xi) {
+    ppcens(
+      xi + 1, plnorm, pwindow,
+      D = D, L = L,
+      meanlog = 1, sdlog = 1
+    ) -
+      ppcens(
+        xi, plnorm, pwindow,
+        D = D, L = L,
+        meanlog = 1, sdlog = 1
+      )
+  })
+  expect_equal(pmf, cdf_diff, tolerance = 1e-6)
+})
+
+test_that("dprimarycensored handles log probabilities with L > 0", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+  pmf <- dpcens(
+    L:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1
+  )
+  log_pmf <- dpcens(
+    L:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1, log = TRUE
+  )
+  expect_equal(exp(log_pmf), pmf, tolerance = 1e-6)
+})

@@ -86,6 +86,27 @@ check_dprimary <- function(
   return(invisible(NULL))
 }
 
+#' Validate truncation bounds L and D
+#'
+#' Internal function to validate that L (lower truncation) and D (upper
+#' truncation) parameters are valid: L must be non-negative and less than D.
+#'
+#' @param L Lower truncation bound
+#' @param D Upper truncation bound
+#'
+#' @return Invisible NULL if valid, otherwise stops with an error message.
+#'
+#' @keywords internal
+.check_truncation_bounds <- function(L, D) {
+  if (L < 0) {
+    stop("L must be non-negative.", call. = FALSE)
+  }
+  if (L >= D) {
+    stop("L must be less than D.", call. = FALSE)
+  }
+  invisible(NULL)
+}
+
 #' Check if truncation time is appropriate relative to the maximum delay
 #'
 #' This function checks if the truncation time D is appropriate relative to the

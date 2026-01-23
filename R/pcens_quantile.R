@@ -25,6 +25,7 @@ pcens_quantile <- function(
     p,
     pwindow,
     D = Inf,
+    L = 0,
     use_numeric = FALSE,
     ...) {
   UseMethod("pcens_quantile")
@@ -77,11 +78,15 @@ pcens_quantile <- function(
 #'
 #' # Compute quantiles for multiple probabilities with truncation
 #' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
+#'
+#' # Compute quantiles with left truncation
+#' pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10, L = 1)
 pcens_quantile.default <- function(
     object,
     p,
     pwindow,
     D = Inf,
+    L = 0,
     use_numeric = FALSE,
     init = 5,
     tol = 1e-8,
@@ -90,7 +95,7 @@ pcens_quantile.default <- function(
   sapply(p, function(prob) {
     # Handle boundary cases.
     if (prob <= 0) {
-      return(0)
+      return(L)
     }
     if (prob >= 1) {
       return(NA_real_)
@@ -99,16 +104,17 @@ pcens_quantile.default <- function(
     # Objective function: squared difference between the CDF value and prob.
     objective <- function(q) {
       cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
-      if (!is.infinite(D)) {
-        cdf_val <- .normalise_cdf(cdf_val, q, D, object, pwindow)
+      if (!is.infinite(D) || L > 0) {
+        cdf_val <- .normalise_cdf(cdf_val, q, D, L, object, pwindow)
       }
       (cdf_val - prob)^2
     }
 
-    lower_bound <- 0
+    # Lower bound is L (minimum truncation point)
+    lower_bound <- L
 
     opt_result <- stats::optim(
-      par = init,
+      par = max(init, L),
       fn = objective,
       method = "L-BFGS-B",
       lower = lower_bound,

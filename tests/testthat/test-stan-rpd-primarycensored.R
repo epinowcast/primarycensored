@@ -17,7 +17,7 @@ test_that("Stan primarycensored_cdf matches R pprimarycensored", {
       primary_params <- array(numeric(0))
 
       stan_cdf <- sapply(
-        d, primarycensored_cdf, dist_id, params, pwindow, D,
+        d, primarycensored_cdf, dist_id, params, pwindow, D, 0,
         primary_id, primary_params
       )
       r_cdf <- pprimarycensored(
@@ -50,7 +50,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_lcdf <- sapply(
-      d, primarycensored_lcdf, dist_id, params, pwindow, D,
+      d, primarycensored_lcdf, dist_id, params, pwindow, D, 0,
       primary_id, primary_params
     )
     r_cdf <- pprimarycensored(
@@ -70,7 +70,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_lcdf <- sapply(
-      d, primarycensored_lcdf, dist_id, params, pwindow, D,
+      d, primarycensored_lcdf, dist_id, params, pwindow, D, 0,
       primary_id, primary_params
     )
     r_cdf <- pprimarycensored(
@@ -97,7 +97,7 @@ test_that(
 
     expect_error(
       primarycensored_lpmf(
-        d, dist_id, params, pwindow, d_upper, D, primary_id, primary_params
+        d, dist_id, params, pwindow, d_upper, D, 0, primary_id, primary_params
       ),
       "Upper truncation point is greater than D"
     )
@@ -125,7 +125,7 @@ test_that(
       }
       for (d in d_values) {
         stan_pmf <- primarycensored_pmf(
-          d, dist_id, params, pwindow, d + 1, D, primary_id,
+          d, dist_id, params, pwindow, d + 1, D, 0, primary_id,
           primary_params
         )
         r_pmf <- dprimarycensored(
@@ -167,6 +167,7 @@ test_that("Stan primarycensored_pmf matches R dprimarycensored", {
       params = params,
       pwindow = pwindow,
       D = D,
+      L = 0,
       primary_id = primary_id,
       primary_params = primary_params
     )
@@ -202,6 +203,7 @@ test_that(
         params = params,
         pwindow = pwindow,
         D = D,
+        L = 0,
         primary_id = primary_id,
         primary_params = primary_params
       )
@@ -230,7 +232,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_pmf <- primarycensored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_id, primary_params
+      max_delay, D, 0, dist_id, params, pwindow, primary_id, primary_params
     )
     r_pmf <- dprimarycensored(
       0:max_delay, plnorm,
@@ -255,7 +257,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_pmf <- primarycensored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_id, primary_params
+      max_delay, D, 0, dist_id, params, pwindow, primary_id, primary_params
     )
     r_pmf <- dprimarycensored(
       0:max_delay, plnorm,
@@ -280,7 +282,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_pmf <- primarycensored_sone_pmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_id, primary_params
+      max_delay, D, 0, dist_id, params, pwindow, primary_id, primary_params
     )
     r_pmf <- dprimarycensored(
       0:max_delay, plnorm,
@@ -305,7 +307,7 @@ test_that(
     primary_params <- numeric(0)
 
     stan_lpmf <- primarycensored_sone_lpmf_vectorized(
-      max_delay, D, dist_id, params, pwindow, primary_id, primary_params
+      max_delay, D, 0, dist_id, params, pwindow, primary_id, primary_params
     )
     r_lpmf <- dprimarycensored(
       0:max_delay, plnorm,

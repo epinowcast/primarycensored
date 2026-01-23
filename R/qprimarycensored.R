@@ -33,8 +33,9 @@
 #' analytical solutions when available, falling back to numerical methods when
 #' necessary.
 #'
-#' For example, if p = 0.5, the function returns the median delay - the value
-#' where 50% of censored events occur by this time and 50% occur after.
+#' For example, if p = 0.5, the function returns the median delay (truncated
+#' over \[L, D\] if specified) where 50% of censored events occur by this time
+#' and 50% occur after.
 #'
 #' See `methods(pcens_quantile)` for which combinations have analytical
 #' solutions implemented.
@@ -60,14 +61,23 @@
 #'   dprimary = dexpgrowth,
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 #' )
+#'
+#' # Left-truncated distribution (e.g., for generation intervals)
+#' qprimarycensored(
+#'   c(0.25, 0.5, 0.75), plnorm,
+#'   D = 10, L = 1, meanlog = 0, sdlog = 1
+#' )
 qprimarycensored <- function(
     p,
     pdist,
     pwindow = 1,
     D = Inf,
+    L = 0,
     dprimary = stats::dunif,
     dprimary_args = list(),
     ...) {
+  .check_truncation_bounds(L, D)
+
   check_pdist(pdist, Inf, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
@@ -80,7 +90,7 @@ qprimarycensored <- function(
   )
 
   # Compute the quantiles using the S3 method
-  pcens_quantile(pcens_obj, p, pwindow, D)
+  pcens_quantile(pcens_obj, p, pwindow, D, L)
 }
 
 #' @rdname qprimarycensored
