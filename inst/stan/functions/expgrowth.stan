@@ -3,19 +3,19 @@
   * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the PDF
-  * @param min Lower bound of the distribution
-  * @param max Upper bound of the distribution
+  * @param xmin Lower bound of the distribution
+  * @param xmax Upper bound of the distribution
   * @param r Rate parameter for exponential growth
   * @return The PDF evaluated at x
   */
-real expgrowth_pdf(real x, real min, real max, real r) {
-  if (x < min || x > max) {
+real expgrowth_pdf(real x, real xmin, real xmax, real r) {
+  if (x < xmin || x > xmax) {
     return 0;
   }
   if (abs(r) < 1e-10) {
-    return 1 / (max - min);
+    return 1 / (xmax - xmin);
   }
-  return r * exp(r * (x - min)) / (exp(r * max) - exp(r * min));
+  return r * exp(r * (x - xmin)) / (exp(r * xmax) - exp(r * xmin));
 }
 
 /**
@@ -23,19 +23,19 @@ real expgrowth_pdf(real x, real min, real max, real r) {
   * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the log PDF
-  * @param min Lower bound of the distribution
-  * @param max Upper bound of the distribution
+  * @param xmin Lower bound of the distribution
+  * @param xmax Upper bound of the distribution
   * @param r Rate parameter for exponential growth
   * @return The log PDF evaluated at x
   */
-real expgrowth_lpdf(real x, real min, real max, real r) {
-  if (x < min || x > max) {
+real expgrowth_lpdf(real x, real xmin, real xmax, real r) {
+  if (x < xmin || x > xmax) {
     return negative_infinity();
   }
   if (abs(r) < 1e-10) {
-    return -log(max - min);
+    return -log(xmax - xmin);
   }
-  return log(r) + r * (x - min) - log(exp(r * max) - exp(r * min));
+  return log(r) + r * (x - xmin) - log(exp(r * xmax) - exp(r * xmin));
 }
 
 /**
@@ -43,22 +43,22 @@ real expgrowth_lpdf(real x, real min, real max, real r) {
   * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the CDF
-  * @param min Lower bound of the distribution
-  * @param max Upper bound of the distribution
+  * @param xmin Lower bound of the distribution
+  * @param xmax Upper bound of the distribution
   * @param r Rate parameter for exponential growth
   * @return The CDF evaluated at x
   */
-real expgrowth_cdf(real x, real min, real max, real r) {
-  if (x < min) {
+real expgrowth_cdf(real x, real xmin, real xmax, real r) {
+  if (x < xmin) {
     return 0;
   }
-  if (x > max) {
+  if (x > xmax) {
     return 1;
   }
   if (abs(r) < 1e-10) {
-    return (x - min) / (max - min);
+    return (x - xmin) / (xmax - xmin);
   }
-  return (exp(r * (x - min)) - exp(r * min)) / (exp(r * max) - exp(r * min));
+  return (exp(r * (x - xmin)) - exp(r * xmin)) / (exp(r * xmax) - exp(r * xmin));
 }
 
 /**
@@ -66,34 +66,34 @@ real expgrowth_cdf(real x, real min, real max, real r) {
   * @ingroup exponential_growth_distributions
   *
   * @param x Value at which to evaluate the log CDF
-  * @param min Lower bound of the distribution
-  * @param max Upper bound of the distribution
+  * @param xmin Lower bound of the distribution
+  * @param xmax Upper bound of the distribution
   * @param r Rate parameter for exponential growth
   * @return The log CDF evaluated at x
   */
-real expgrowth_lcdf(real x, real min, real max, real r) {
-  if (x < min) {
+real expgrowth_lcdf(real x, real xmin, real xmax, real r) {
+  if (x < xmin) {
     return negative_infinity();
   }
-  if (x > max) {
+  if (x > xmax) {
     return 0;
   }
-  return log(expgrowth_cdf(x | min, max, r));
+  return log(expgrowth_cdf(x | xmin, xmax, r));
 }
 
 /**
   * Exponential growth random number generator
   * @ingroup exponential_growth_distributions
   *
-  * @param min Lower bound of the distribution
-  * @param max Upper bound of the distribution
+  * @param xmin Lower bound of the distribution
+  * @param xmax Upper bound of the distribution
   * @param r Rate parameter for exponential growth
   * @return A random draw from the exponential growth distribution
   */
-real expgrowth_rng(real min, real max, real r) {
+real expgrowth_rng(real xmin, real xmax, real r) {
   real u = uniform_rng(0, 1);
   if (abs(r) < 1e-10) {
-    return min + u * (max - min);
+    return xmin + u * (xmax - xmin);
   }
-  return min + log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r;
+  return xmin + log(u * (exp(r * xmax) - exp(r * xmin)) + exp(r * xmin)) / r;
 }
