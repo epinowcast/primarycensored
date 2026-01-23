@@ -250,7 +250,7 @@ writeLines(
     for (i in 1:N) {
       target += n[i] * primarycensored_lpmf(
         y[i] | 1, {mu, sigma},
-        pwindow[i], y_upper[i], D[i],
+        pwindow[i], y_upper[i], D[i], 0,
         1, primary_params
       );
     }

@@ -68,8 +68,12 @@ pcd_cmdstan_model <- function(
 #'
 #' @param pwindow Column name for primary window (default: "pwindow")
 #'
-#' @param relative_obs_time Column name for relative observation time
-#'  (default: "relative_obs_time")
+#' @param relative_obs_time Column name for relative observation time, used as
+#'  the upper truncation point D (default: "relative_obs_time")
+#'
+#' @param L Column name for minimum delay (lower truncation point). If the
+#'  column is not present in data, L = 0 is assumed for all observations.
+#'  (default: "L")
 #'
 #' @param dist_id Integer identifying the delay distribution:
 #'   You can use [pcd_stan_dist_id()] to get the dist ID for a
@@ -131,6 +135,7 @@ pcd_as_stan_data <- function(
     n = "n",
     pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",
+    L = "L",
     dist_id,
     primary_id,
     param_bounds,
@@ -168,6 +173,11 @@ pcd_as_stan_data <- function(
     )
   }
 
+  # Handle L column: if not present, default to 0
+  if (!L %in% names(data)) {
+    data[[L]] <- 0
+  }
+
   if (!is.null(truncation_check_multiplier)) {
     unique_D <- unique(data[[relative_obs_time]])
     for (D in unique_D) {
@@ -187,6 +197,7 @@ pcd_as_stan_data <- function(
     n = data[[n]],
     pwindow = data[[pwindow]],
     D = data[[relative_obs_time]],
+    L = data[[L]],
     dist_id = dist_id,
     primary_id = primary_id,
     n_params = length(param_bounds$lower),
