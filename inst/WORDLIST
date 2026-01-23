@@ -19,6 +19,7 @@ barbora
 cdf
 cdot
 cens
+censdata
 cmdstan
 cmdstanr
 disccensunifprim
@@ -40,6 +41,7 @@ frac
 gammapartexp
 geq
 hexsticker
+infty
 int
 jamesmbaazam
 jcblemai
