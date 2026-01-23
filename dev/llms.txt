@@ -295,6 +295,8 @@ results
   : Get distribution stan ID by name
 - [`pcd_stan_files()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_files.md)
   : Get Stan files containing specified functions
+- [`pcd_stan_function_deps()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_function_deps.md)
+  : Get dependencies for a Stan function
 - [`pcd_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_functions.md)
   : Get Stan function names from Stan files
 - [`pcd_stan_path()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_path.md)

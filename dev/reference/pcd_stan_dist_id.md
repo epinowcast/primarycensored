@@ -32,6 +32,7 @@ Numeric distribution ID
 Tools for working with package Stan functions
 [`pcd_load_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_load_stan_functions.md),
 [`pcd_stan_files()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_files.md),
+[`pcd_stan_function_deps()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_function_deps.md),
 [`pcd_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_functions.md),
 [`pcd_stan_path()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_path.md)
 

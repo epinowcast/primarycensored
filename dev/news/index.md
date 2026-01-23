@@ -2,6 +2,20 @@
 
 ## primarycensored 1.3.0.9000
 
+### New features
+
+- Added `dependencies` argument to
+  [`pcd_load_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_load_stan_functions.md)
+  that automatically resolves and includes all functions that the
+  requested functions depend on. When `TRUE`, dependencies are included
+  in topological order (dependencies before functions that use them).
+  ([\#171](https://github.com/epinowcast/primarycensored/issues/171))
+- Added
+  [`pcd_stan_function_deps()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_function_deps.md)
+  to query the dependency graph of Stan functions, returning all
+  dependencies for a given function in topological order.
+  ([\#171](https://github.com/epinowcast/primarycensored/issues/171))
+
 ### Bug fixes
 
 - Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan

@@ -10,7 +10,8 @@ pcd_load_stan_functions(
   stan_path = primarycensored::pcd_stan_path(),
   wrap_in_block = FALSE,
   write_to_file = FALSE,
-  output_file = "pcd_functions.stan"
+  output_file = "pcd_functions.stan",
+  dependencies = FALSE
 )
 ```
 
@@ -39,6 +40,13 @@ pcd_load_stan_functions(
   Character string, the path to write the output file if write_to_file
   is TRUE. Defaults to "pcd_functions.stan".
 
+- dependencies:
+
+  Logical, whether to include all functions that the requested functions
+  depend on. When TRUE, recursively finds and includes all dependencies
+  in the correct order (dependencies before the functions that use
+  them). Default is FALSE.
+
 ## Value
 
 A character string containing the requested Stan functions
@@ -48,5 +56,6 @@ A character string containing the requested Stan functions
 Tools for working with package Stan functions
 [`pcd_stan_dist_id()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_dist_id.md),
 [`pcd_stan_files()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_files.md),
+[`pcd_stan_function_deps()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_function_deps.md),
 [`pcd_stan_functions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_functions.md),
 [`pcd_stan_path()`](https://primarycensored.epinowcast.org/dev/reference/pcd_stan_path.md)
