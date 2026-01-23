@@ -52,8 +52,8 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * @param x Value
   * @param primary_id Primary distribution identifier
   * @param params Distribution parameters
-  * @param min Minimum value
-  * @param max Maximum value
+  * @param xmin Minimum value
+  * @param xmax Maximum value
   *
   * @return Log PDF of the primary distribution
   *
@@ -62,15 +62,15 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * real x = 0.5;
   * int primary_id = 1; // Uniform
   * array[0] real params = {}; // No additional parameters for uniform
-  * real min = 0;
-  * real max = 1;
-  * real log_pdf = primary_lpdf(x, primary_id, params, min, max);
+  * real xmin = 0;
+  * real xmax = 1;
+  * real log_pdf = primary_lpdf(x, primary_id, params, xmin, xmax);
   * @endcode
   */
-real primary_lpdf(real x, int primary_id, array[] real params, real min, real max) {
+real primary_lpdf(real x, int primary_id, array[] real params, real xmin, real xmax) {
   // Implement switch for different primary distributions
-  if (primary_id == 1) return uniform_lpdf(x | min, max);
-  if (primary_id == 2) return expgrowth_lpdf(x | min, max, params[1]);
+  if (primary_id == 1) return uniform_lpdf(x | xmin, xmax);
+  if (primary_id == 2) return expgrowth_lpdf(x | xmin, xmax, params[1]);
   // Add more primary distributions as needed
   reject("Invalid primary distribution identifier");
 }
