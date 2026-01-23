@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['primary_5flpdf_0',['primary_lpdf',['../group__primary__distribution__log__pdfs.html#ga8ff5fd4d60c7f181715bb62f645d8b08',1,'primarycensored_ode.stan']]],
+  ['primary_5flpdf_0',['primary_lpdf',['../group__primary__distribution__log__pdfs.html#gacfee86fff92c3be55fc4bfe7e5ea8fd3',1,'primarycensored_ode.stan']]],
   ['primarycensored_5fanalytical_5fcdf_1',['primarycensored_analytical_cdf',['../group__primary__event__analytical__distributions.html#ga1b511c5d7317add3a126cf081631ad6c',1,'primarycensored_analytical_cdf.stan']]],
   ['primarycensored_5fanalytical_5flcdf_2',['primarycensored_analytical_lcdf',['../group__primary__event__analytical__distributions.html#ga663b8b1867912da09e56b5c88b7cad31',1,'primarycensored_analytical_cdf.stan']]],
   ['primarycensored_5fcdf_3',['primarycensored_cdf',['../group__primary__censored__single.html#ga35e43c3fedc1d431d5fce34059317864',1,'primarycensored.stan']]],
