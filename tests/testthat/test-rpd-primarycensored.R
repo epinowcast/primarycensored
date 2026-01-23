@@ -31,7 +31,8 @@ test_that(
     # Check empirical cdf against theoretical cdf
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
-      c(x_values[-1], D), plnorm, pwindow, D,
+      c(x_values[-1], D), plnorm,
+      pwindow = pwindow, D = D,
       meanlog = 0, sdlog = 1
     )
     expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
@@ -80,7 +81,8 @@ test_that(
     # Check empirical cdf against theoretical cdf
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
-      c(x_values[-1], D), plnorm, pwindow, D,
+      c(x_values[-1], D), plnorm,
+      pwindow = pwindow, D = D,
       dprimary = dexpgrowth,
       dprimary_args = list(r = r),
       meanlog = 1.5, sdlog = 0.5
@@ -135,7 +137,8 @@ test_that(
     # Check empirical CDF against theoretical CDF
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
-      c(x_values[-1], D), pweibull, pwindow, D,
+      c(x_values[-1], D), pweibull,
+      pwindow = pwindow, D = D,
       dprimary = dexpgrowth,
       dprimary_args = list(r = 0.5),
       shape = shape, scale = scale
@@ -164,11 +167,13 @@ test_that(
     }
     # Numerical solution using our functions
     numerical_pmf <- dpcens(
-      0:(D - 1), pexp, pwindow, swindow, 20,
+      0:(D - 1), pexp,
+      pwindow = pwindow, swindow = swindow, D = 20,
       rate = rate
     )
     numerical_cdf <- ppcens(
-      1:D, pexp, pwindow, 20,
+      1:D, pexp,
+      pwindow = pwindow, D = 20,
       rate = rate
     )
 
@@ -190,7 +195,8 @@ test_that(
 
     # Compare random number generator to analytical solution
     samples <- rpcens(
-      10000, rexp, pwindow, swindow, D,
+      10000, rexp,
+      pwindow = pwindow, swindow = swindow, D = D,
       rate = rate
     )
     empirical_pmf <- as.vector(table(samples) / 10000)

@@ -10,8 +10,8 @@ dprimarycensored(
   pdist,
   pwindow = 1,
   swindow = 1,
-  D = Inf,
   L = 0,
+  D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
@@ -23,8 +23,8 @@ dpcens(
   pdist,
   pwindow = 1,
   swindow = 1,
-  D = Inf,
   L = 0,
+  D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
@@ -43,14 +43,14 @@ functions if they wish to leverage the analytical solutions.}
 
 \item{swindow}{Secondary event window (default: 1)}
 
-\item{D}{Maximum delay (upper truncation point). If finite, the distribution
-is truncated at D. If set to Inf, no upper truncation is applied. Defaults
-to Inf.}
-
 \item{L}{Minimum delay (lower truncation point). If greater than 0, the
 distribution is left-truncated at L. This is useful for modelling
 generation intervals where day 0 is excluded. Defaults to 0 (no left
 truncation).}
+
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -120,7 +120,7 @@ dprimarycensored(
 )
 
 # Example: Left-truncated distribution (e.g., for generation intervals)
-dprimarycensored(1:9, pweibull, D = 10, L = 1, shape = 1.5, scale = 2.0)
+dprimarycensored(1:9, pweibull, L = 1, D = 10, shape = 1.5, scale = 2.0)
 }
 \seealso{
 Primary event censored distribution functions

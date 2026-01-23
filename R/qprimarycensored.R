@@ -65,14 +65,14 @@
 #' # Left-truncated distribution (e.g., for generation intervals)
 #' qprimarycensored(
 #'   c(0.25, 0.5, 0.75), plnorm,
-#'   D = 10, L = 1, meanlog = 0, sdlog = 1
+#'   L = 1, D = 10, meanlog = 0, sdlog = 1
 #' )
 qprimarycensored <- function(
     p,
     pdist,
     pwindow = 1,
-    D = Inf,
     L = 0,
+    D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
     ...) {
@@ -90,7 +90,7 @@ qprimarycensored <- function(
   )
 
   # Compute the quantiles using the S3 method
-  pcens_quantile(pcens_obj, p, pwindow, D, L)
+  pcens_quantile(pcens_obj, p, pwindow, L, D)
 }
 
 #' @rdname qprimarycensored

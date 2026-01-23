@@ -6,15 +6,15 @@ functions {
 
   real partial_sum(array[] int dummy, int start, int end,
                    array[] int d, array[] int d_upper, array[] int n,
-                   array[] int pwindow, data array[] real D,
-                   data array[] real L,
+                   array[] int pwindow, data array[] real L,
+                   data array[] real D,
                    int dist_id, array[] real params,
                    int primary_id, array[] real primary_params) {
     real partial_target = 0;
     for (i in start:end) {
       partial_target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, params,
-        pwindow[i], d_upper[i], D[i], L[i],
+        pwindow[i], d_upper[i], L[i], D[i],
         primary_id, primary_params
       );
     }
@@ -28,8 +28,8 @@ data {
   array[N] int<lower=0> d_upper;     // observed delays upper bound
   array[N] int<lower=0> n;     // number of occurrences for each delay
   array[N] int<lower=0> pwindow; // primary censoring window
-  array[N] real<lower=0> D; // maximum delay (upper truncation)
   array[N] real<lower=0> L; // minimum delay (lower truncation)
+  array[N] real<lower=0> D; // maximum delay (upper truncation)
   int<lower=1, upper=17> dist_id; // distribution identifier
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
@@ -73,13 +73,13 @@ model {
   // Likelihood
   if (use_reduce_sum) {
     target += reduce_sum(partial_sum, indexes, 1, d,
-                         d_upper, n, pwindow, D, L, dist_id, to_array_1d(params),
+                         d_upper, n, pwindow, L, D, dist_id, to_array_1d(params),
                          primary_id, to_array_1d(primary_params));
   } else {
     for (i in 1:N) {
       target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, to_array_1d(params),
-        pwindow[i], d_upper[i], D[i], L[i],
+        pwindow[i], d_upper[i], L[i], D[i],
         primary_id, to_array_1d(primary_params)
       );
     }
@@ -92,7 +92,7 @@ generated quantities {
     for (i in 1:N) {
       log_lik[i] = primarycensored_lpmf(
         d[i] | dist_id, to_array_1d(params),
-        pwindow[i], d_upper[i], D[i], L[i],
+        pwindow[i], d_upper[i], L[i], D[i],
         primary_id, to_array_1d(primary_params)
       );
     }

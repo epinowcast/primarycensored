@@ -40,16 +40,19 @@ test_that("dprimarycensored matches difference of pprimarycensored", {
   D <- 10
 
   pmf <- dpcens(
-    x, plnorm, pwindow, swindow, D,
+    x, plnorm,
+    pwindow = pwindow, swindow = swindow, D = D,
     meanlog = 0, sdlog = 1
   )
   cdf_diff <- sapply(x, function(xi) {
     ppcens(
-      xi + swindow, plnorm, pwindow, D,
+      xi + swindow, plnorm,
+      pwindow = pwindow, D = D,
       meanlog = 0, sdlog = 1
     ) -
       ppcens(
-        xi, plnorm, pwindow, D,
+        xi, plnorm,
+        pwindow = pwindow, D = D,
         meanlog = 0, sdlog = 1
       )
   })
@@ -67,7 +70,8 @@ test_that(
 
     expect_error(
       dpcens(
-        d, plnorm, pwindow, swindow, D,
+        d, plnorm,
+        pwindow = pwindow, swindow = swindow, D = D,
         meanlog = 0, sdlog = 1
       ),
       "Upper truncation point is greater than D"
@@ -83,13 +87,15 @@ test_that("dprimarycensored returns 0 for negative d", {
 
   expect_identical(
     dpcens(
-      d, plnorm, pwindow, swindow, D,
+      d, plnorm,
+      pwindow = pwindow, swindow = swindow, D = D,
       meanlog = 0, sdlog = 1
     ), 0
   )
   expect_identical(
     dpcens(
-      c(8, d), plnorm, pwindow, swindow, D,
+      c(8, d), plnorm,
+      pwindow = pwindow, swindow = swindow, D = D,
       meanlog = 0, sdlog = 1
     )[2], 0
   )

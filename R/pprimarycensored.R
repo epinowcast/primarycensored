@@ -16,14 +16,14 @@
 #'
 #' @param pwindow Primary event window
 #'
-#' @param D Maximum delay (upper truncation point). If finite, the distribution
-#'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
-#'  to Inf.
-#'
 #' @param L Minimum delay (lower truncation point). If greater than 0, the
 #'  distribution is left-truncated at L. This is useful for modelling
 #'  generation intervals where day 0 is excluded. Defaults to 0 (no left
 #'  truncation).
+#'
+#' @param D Maximum delay (upper truncation point). If finite, the distribution
+#'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+#'  to Inf.
 #'
 #' @param dprimary Function to generate the probability density function
 #'  (PDF) of primary event times. This function should take a value `x` and a
@@ -102,15 +102,15 @@
 #' # Example: Left-truncated distribution (e.g., for generation intervals)
 #' pprimarycensored(
 #'   c(1, 2, 3), plnorm,
-#'   D = 10, L = 1,
+#'   L = 1, D = 10,
 #'   meanlog = 0, sdlog = 1
 #' )
 pprimarycensored <- function(
     q,
     pdist,
     pwindow = 1,
-    D = Inf,
     L = 0,
+    D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
     ...) {

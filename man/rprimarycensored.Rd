@@ -10,8 +10,8 @@ rprimarycensored(
   rdist,
   pwindow = 1,
   swindow = 1,
-  D = Inf,
   L = 0,
+  D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
   oversampling_factor = 1.2,
@@ -23,8 +23,8 @@ rpcens(
   rdist,
   pwindow = 1,
   swindow = 1,
-  D = Inf,
   L = 0,
+  D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
   oversampling_factor = 1.2,
@@ -42,14 +42,14 @@ for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distrib
 \item{swindow}{Integer specifying the window size for rounding the delay
 (default is 1). If \code{swindow = 0} then no rounding is applied.}
 
-\item{D}{Maximum delay (upper truncation point). If finite, the distribution
-is truncated at D. If set to Inf, no upper truncation is applied. Defaults
-to Inf.}
-
 \item{L}{Minimum delay (lower truncation point). If greater than 0, the
 distribution is left-truncated at L. This is useful for modelling
 generation intervals where day 0 is excluded. Defaults to 0 (no left
 truncation).}
+
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{rprimary}{Function to generate random samples from the primary
 distribution (default is \code{\link[stats:Uniform]{stats::runif()}}).}
@@ -112,7 +112,7 @@ rprimarycensored(
 )
 
 # Example: Left-truncated distribution (e.g., for generation intervals)
-rprimarycensored(10, rlnorm, D = 10, L = 1, meanlog = 0, sdlog = 1)
+rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
 }
 \seealso{
 Primary event censored distribution functions
