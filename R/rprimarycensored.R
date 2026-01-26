@@ -132,9 +132,9 @@ rprimarycensored <- function(
   samples <- valid_samples[1:n]
 
 
-  # Round to the nearest swindow, anchored at L to preserve left truncation
+  # Round to the nearest swindow
   if (swindow > 0) {
-    rounded_samples <- floor((samples - L) / swindow) * swindow + L
+    rounded_samples <- floor(samples / swindow) * swindow
   } else {
     rounded_samples <- samples
   }

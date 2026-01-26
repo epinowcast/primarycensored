@@ -175,8 +175,8 @@ fitdistdoublecens <- function(
   params <- data.frame(
     swindow = censdata[[right]] - censdata[[left]],
     pwindow = censdata[[pwindow]],
-    D = censdata[[D]],
-    L = censdata[[L]]
+    L = censdata[[L]],
+    D = censdata[[D]]
   )
 
   # Create the function definition with named arguments for dpcens
@@ -260,8 +260,8 @@ fitdistdoublecens <- function(
           pdist,
           pwindow = unique_params$pwindow[1],
           swindow = unique_params$swindow[1],
-          D = unique_params$D[1],
           L = unique_params$L[1],
+          D = unique_params$D[1],
           dprimary = dprimary,
           dprimary_args = dprimary_args,
           ...
@@ -285,8 +285,8 @@ fitdistdoublecens <- function(
             pdist,
             pwindow = pw,
             swindow = sw,
-            D = Ds,
             L = Ls,
+            D = Ds,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
             ...

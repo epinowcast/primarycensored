@@ -207,22 +207,40 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L)))
   if (!is_inf(D) || L > 0) {
     real log_cdf_D;
-    real log_cdf_L = L > 0 ? primarycensored_lcdf(
-      L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-    ) : negative_infinity();
+    real log_cdf_L;
 
+    // Get CDF at lower truncation point L
+    if (d == L) {
+      log_cdf_L = log_cdf_lower;
+    } else if (L > 0) {
+      log_cdf_L = primarycensored_lcdf(
+        L | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
+      );
+    } else {
+      log_cdf_L = negative_infinity();
+    }
+
+    // Get CDF at upper truncation point D
     if (d_upper == D) {
       log_cdf_D = log_cdf_upper;
     } else if (is_inf(D)) {
       log_cdf_D = 0;
     } else {
       log_cdf_D = primarycensored_lcdf(
-        D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
+        D | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
       );
     }
 
     // Normalizer: log(F(D) - F(L))
-    real log_normalizer = L > 0 ? log_diff_exp(log_cdf_D, log_cdf_L) : log_cdf_D;
+    real log_normalizer;
+    if (L > 0) {
+      log_normalizer = log_diff_exp(log_cdf_D, log_cdf_L);
+    } else {
+      log_normalizer = log_cdf_D;
+    }
+
     return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_normalizer;
   } else {
     return log_diff_exp(log_cdf_upper, log_cdf_lower);
@@ -337,10 +355,20 @@ vector primarycensored_sone_lpmf_vectorized(
   }
 
   // Get CDF at lower truncation point L
-  real log_cdf_L = L > 0 ? primarycensored_lcdf(
-    L | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
-    primary_params
-  ) : negative_infinity();
+  real log_cdf_L;
+  if (L > 0 && L <= upper_interval && floor(L) == L) {
+    // L is an integer within the computed range, reuse cached value
+    log_cdf_L = log_cdfs[to_int(L)];
+  } else if (L > 0) {
+    // L is non-integer or outside computed range, compute directly
+    log_cdf_L = primarycensored_lcdf(
+      L | dist_id, params, pwindow, 0, positive_infinity(),
+      primary_id, primary_params
+    );
+  } else {
+    // L == 0, no left truncation
+    log_cdf_L = negative_infinity();
+  }
 
   // Compute log normalizer: log(F(D) - F(L))
   real log_cdf_D;
