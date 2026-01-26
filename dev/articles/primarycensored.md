@@ -383,15 +383,19 @@ In addition to these main functions, the package also includes:
 - For advice on best practices when estimating or handling delay
   distributions see Charniga et al.^(\[[1](#ref-Charniga2024)\]).
 
-1\. Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff,
-J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E.,
+1\.
+
+Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J.,
+Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E.,
 Pulliam, J. R. C., Ward, T., Cauchemez, S., & Abbott, S. (2024). Best
 practices for estimating and reporting epidemiological delay
 distributions of infectious diseases. *PLoS Comput. Biol.*, *20*(10),
 e1012520. <https://doi.org/10.1371/journal.pcbi.1012520>
 
-2\. Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N.
-G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
+2\.
+
+Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G.,
+Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
 Lipsitch, M., Lison, A., Overton, C. E., Ward, T., & Abbott, S. (2024).
 Estimating epidemiological delay distributions for infectious diseases.
 *bioRxiv*. <https://doi.org/10.1101/2024.01.12.24301247>

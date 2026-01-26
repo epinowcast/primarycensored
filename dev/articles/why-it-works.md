@@ -273,18 +273,23 @@ Pr(P \< -p \| P \in (-w_P, 0)) = 1 - Pr(C_P \leq p) = 1 - F\_{C_P}(p)\\.
 
 ## References
 
-1\. Leung, K.-M., Elashoff, R. M., & Afifi, A. A. (1997). Censoring
-issues in survival analysis. *Annual Review of Public Health*, *18*(1),
-83–104.
+1\.
 
-2\. Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N.
-G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
+Leung, K.-M., Elashoff, R. M., & Afifi, A. A. (1997). Censoring issues
+in survival analysis. *Annual Review of Public Health*, *18*(1), 83–104.
+
+2\.
+
+Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G.,
+Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
 Lipsitch, M., Lison, A., Overton, C. E., Ward, T., & Abbott, S. (2024).
 Estimating epidemiological delay distributions for infectious diseases.
 *bioRxiv*. <https://doi.org/10.1101/2024.01.12.24301247>
 
-3\. Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff,
-J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E.,
+3\.
+
+Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J.,
+Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E.,
 Pulliam, J. R. C., Ward, T., Cauchemez, S., & Abbott, S. (2024). Best
 practices for estimating and reporting epidemiological delay
 distributions of infectious diseases. *PLoS Comput. Biol.*, *20*(10),
