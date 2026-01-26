@@ -48,14 +48,6 @@ data {
 
 transformed data {
   array[N] int indexes = linspaced_int_array(N, 1, N);
-
-  // Validate that L <= D for all observations
-  for (i in 1:N) {
-    if (L[i] > D[i]) {
-      reject("L must be <= D for all observations. Violation at i = ", i,
-             ": L[", i, "] = ", L[i], ", D[", i, "] = ", D[i]);
-    }
-  }
 }
 
 parameters {

@@ -245,7 +245,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
     return negative_infinity();
   }
 
-  // Apply truncation normalization: log((F(d) - F(L)) / (F(D) - F(L)))
+  // Apply truncation normalization
   if (!is_inf(D) || L > 0) {
     real log_cdf_L = L > 0 ? primarycensored_analytical_lcdf(
       L | dist_id, params, pwindow, 0, positive_infinity(),
@@ -255,12 +255,8 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
       D | dist_id, params, pwindow, 0, positive_infinity(),
       primary_id, primary_params
     );
-
-    if (L > 0) {
-      result = log_diff_exp(result, log_cdf_L) - log_diff_exp(log_cdf_D, log_cdf_L);
-    } else {
-      result = result - log_cdf_D;
-    }
+    real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
+    result = primarycensored_apply_truncation(result, log_cdf_L, log_normalizer, L);
   }
 
   return result;
