@@ -96,6 +96,17 @@ dprimarycensored <- function(
     )
   }
 
+  if (min(x) < L) {
+    stop(
+      "Some values of x are below L. Minimum x is ",
+      min(x),
+      " and L is ",
+      L,
+      ". Resolve this by filtering x to only include values >= L.",
+      call. = FALSE
+    )
+  }
+
   # Compute CDFs for all unique points
   unique_points <- sort(unique(c(x, x + swindow)))
   unique_points <- unique_points[unique_points > 0]

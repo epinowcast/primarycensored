@@ -79,25 +79,27 @@ test_that(
   }
 )
 
-test_that("dprimarycensored returns 0 for negative d", {
+test_that("dprimarycensored errors for negative d", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5
   D <- 10
 
-  expect_identical(
+  expect_error(
     dpcens(
       d, plnorm,
       pwindow = pwindow, swindow = swindow, D = D,
       meanlog = 0, sdlog = 1
-    ), 0
+    ),
+    "values of x are below L"
   )
-  expect_identical(
+  expect_error(
     dpcens(
       c(8, d), plnorm,
       pwindow = pwindow, swindow = swindow, D = D,
       meanlog = 0, sdlog = 1
-    )[2], 0
+    ),
+    "values of x are below L"
   )
 })
 
@@ -155,16 +157,18 @@ test_that("dprimarycensored sums to 1 over [L, D) with L > 0", {
   expect_equal(sum(pmf), 1, tolerance = 1e-6)
 })
 
-test_that("dprimarycensored returns 0 for x < L", {
+test_that("dprimarycensored errors for x < L", {
   pwindow <- 1
   D <- 10
   L <- 2
 
-  pmf <- dpcens(
-    0:(L - 1), plnorm, pwindow,
-    D = D, L = L, meanlog = 1, sdlog = 1
+  expect_error(
+    dpcens(
+      0:(L - 1), plnorm, pwindow,
+      D = D, L = L, meanlog = 1, sdlog = 1
+    ),
+    "values of x are below L"
   )
-  expect_true(all(pmf == 0))
 })
 
 test_that("dprimarycensored errors when L >= D", {

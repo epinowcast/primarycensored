@@ -147,6 +147,18 @@ fitdistdoublecens <- function(
     )
   }
 
+  # Validate that observations are not below L
+  invalid_obs <- which(censdata[[left]] < censdata[[L]])
+  if (length(invalid_obs) > 0) {
+    stop(
+      "Observations must be >= L. Found ", length(invalid_obs),
+      " observation(s) where ", left, " < L. First invalid row: ",
+      invalid_obs[1], " (", left, " = ", censdata[[left]][invalid_obs[1]],
+      ", L = ", censdata[[L]][invalid_obs[1]], ")",
+      call. = FALSE
+    )
+  }
+
   required_cols <- c(left, right, pwindow, D)
   missing_cols <- setdiff(required_cols, names(censdata))
   if (length(missing_cols) > 0) {
