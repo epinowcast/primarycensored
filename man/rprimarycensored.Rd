@@ -86,15 +86,14 @@ parameters theta:
 \item Calculate the total delays (t) by adding the primary event times and
 the delays:
 \deqn{t = p + d}
-\item Apply truncation (i.e. remove any delays that fall outside the
-observation window) to ensure that the delays are within the specified
-range [L, D], where L is the minimum and D is the maximum observable
-delay:
-\deqn{t_{truncated} = \{t \mid L \leq t < D\}}
-\item Round the truncated delays to the nearest secondary event window
-(swindow):
-\deqn{t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor
+\item Apply upper truncation to remove delays >= D:
+\deqn{t_{upper} = \{t \mid t < D\}}
+\item Round the delays to the nearest secondary event window (swindow):
+\deqn{t_{rounded} = \lfloor \frac{t_{upper}}{swindow} \rfloor
      \times swindow}
+\item Apply lower truncation on the rounded values to ensure observed delays
+are >= L:
+\deqn{t_{valid} = \{t_{rounded} \mid t_{rounded} \geq L\}}
 }
 
 The function oversamples to account for potential truncation and generates

@@ -52,16 +52,16 @@
 #'    the delays:
 #'    \deqn{t = p + d}
 #'
-#' 4. Apply truncation (i.e. remove any delays that fall outside the
-#'    observation window) to ensure that the delays are within the specified
-#'    range \[L, D\], where L is the minimum and D is the maximum observable
-#'    delay:
-#'    \deqn{t_{truncated} = \{t \mid L \leq t < D\}}
+#' 4. Apply upper truncation to remove delays >= D:
+#'    \deqn{t_{upper} = \{t \mid t < D\}}
 #'
-#' 5. Round the truncated delays to the nearest secondary event window
-#'    (swindow):
-#'    \deqn{t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor
+#' 5. Round the delays to the nearest secondary event window (swindow):
+#'    \deqn{t_{rounded} = \lfloor \frac{t_{upper}}{swindow} \rfloor
 #'      \times swindow}
+#'
+#' 6. Apply lower truncation on the rounded values to ensure observed delays
+#'    are >= L:
+#'    \deqn{t_{valid} = \{t_{rounded} \mid t_{rounded} \geq L\}}
 #'
 #' The function oversamples to account for potential truncation and generates
 #' additional samples if needed to reach the desired number of valid samples.
@@ -109,8 +109,18 @@ rprimarycensored <- function(
   # Calculate total delays
   total_delay <- p + delay
 
-  # Apply truncation and select valid samples (within [L, D))
-  valid_samples <- total_delay[total_delay >= L & total_delay < D]
+  # Apply upper truncation (continuous delays must be < D)
+  valid_continuous <- total_delay[total_delay < D]
+
+  # Round to the nearest swindow
+  if (swindow > 0) {
+    rounded <- floor(valid_continuous / swindow) * swindow
+  } else {
+    rounded <- valid_continuous
+  }
+
+  # Apply lower truncation on observed values (must be >= L)
+  valid_samples <- rounded[rounded >= L]
 
   # If we don't have enough samples, generate more
   while (length(valid_samples) < n) {
@@ -129,17 +139,7 @@ rprimarycensored <- function(
   }
 
   # Return exactly n samples
-  samples <- valid_samples[1:n]
-
-
-  # Round to the nearest swindow
-  if (swindow > 0) {
-    rounded_samples <- floor(samples / swindow) * swindow
-  } else {
-    rounded_samples <- samples
-  }
-
-  return(rounded_samples)
+  return(valid_samples[1:n])
 }
 
 #' @rdname rprimarycensored
