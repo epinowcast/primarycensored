@@ -413,26 +413,17 @@ vector primarycensored_sone_lpmf_vectorized(
 
   // Compute log PMFs
   // For d < L, set to negative infinity (will be exponentiated to 0)
-  // L_int is the largest integer fully excluded by L
-  int L_int = L > 0 ? to_int(floor(L)) : 0;
-
+  // F(L) cancels out in numerator when taking CDF differences, so we only
+  // need it for the normalizer
   for (d in 1:upper_interval) {
-    // Handle partial overlap case: d == 1 and 0 < L < 1
-    // The interval [0,1) partially overlaps with [L, D), so we need
-    // to compute the probability mass from L to 1
-    if (d == 1 && L > 0 && L < 1) {
-      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
-    } else if (d <= L_int) {
-      // Fully excluded delays (d entirely below L)
+    if (d <= L) {
+      // Excluded delays (interval starts at or below L)
       log_pmfs[d] = negative_infinity();
-    } else if (d == L_int + 1 && L_int > 0) {
-      // First non-excluded interval after L: [L_int, L_int+1) partially overlaps
-      // Probability mass from L to L_int + 1
-      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
     } else if (d == 1) {
-      // d == 1 and L == 0 (no left truncation)
+      // First interval [0, 1) with no left truncation
       log_pmfs[d] = log_cdfs[d] - log_normalizer;
     } else {
+      // Standard case: PMF = F(d) - F(d-1)
       log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
     }
   }
