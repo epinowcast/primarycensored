@@ -77,6 +77,22 @@ test_that("fitdistdoublecens handles errors correctly", {
       distr = "nonexistent_dist"
     )
   )
+
+  # Test with observations below L
+  expect_error(
+    fitdistdoublecens(
+      data.frame(
+        left = 0:9,
+        right = 1:10,
+        pwindow = rep(1, 10),
+        L = rep(2, 10),
+        D = rep(15, 10)
+      ),
+      distr = "gamma",
+      start = list(shape = 1, rate = 1)
+    ),
+    "Observations must be >= L"
+  )
 })
 
 test_that("fitdistdoublecens works with different distributions", {

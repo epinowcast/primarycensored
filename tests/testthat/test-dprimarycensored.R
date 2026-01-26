@@ -238,3 +238,29 @@ test_that("dprimarycensored handles log probabilities with L > 0", {
   )
   expect_equal(exp(log_pmf), pmf, tolerance = 1e-6)
 })
+
+test_that("dprimarycensored works with L > 0 and D = Inf", {
+  pwindow <- 1
+  L <- 2
+  pmf <- dpcens(
+    L:10, plnorm, pwindow,
+    D = Inf, L = L, meanlog = 1, sdlog = 1
+  )
+  expect_true(all(pmf >= 0))
+  expect_true(sum(pmf) < 1) # Should be less than 1 since we're not summing all
+})
+
+test_that("dprimarycensored handles L not in unique_points", {
+  # Use non-integer L that won't be in the computed unique_points
+  # This exercises the branch where L needs to be computed separately
+  pwindow <- 1
+  L <- 1.5
+  D <- 10
+  pmf <- dpcens(
+    2:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1
+  )
+  expect_true(all(pmf >= 0))
+  # Sum won't be 1 because x=2 starts at interval [2,3), missing [1.5,2)
+  expect_true(sum(pmf) > 0 && sum(pmf) < 1)
+})

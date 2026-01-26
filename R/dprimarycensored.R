@@ -131,9 +131,7 @@ dprimarycensored <- function(
   result <- vapply(
     x,
     function(d) {
-      if (d < L) {
-        return(0) # Return 0 for delays below lower truncation
-      } else if (d == 0) {
+      if (d == 0) {
         # Special case for d = 0
         cdf_upper <- cdf_lookup[as.character(swindow)]
         return(cdf_upper)
