@@ -178,7 +178,7 @@ pprimarycensored <- function(
     cdf_L <- pcens_cdf(pcens_obj, L, pwindow)
   }
 
-  # Normalise: (F(q) - F(L)) / (F(D) - F(L))
+  # Normalise the CDF by the truncation range
   normaliser <- cdf_D - cdf_L
   result <- (result - cdf_L) / normaliser
 

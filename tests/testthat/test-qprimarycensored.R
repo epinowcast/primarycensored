@@ -86,7 +86,10 @@ test_that("qprimarycensored handles truncation correctly", {
 
 test_that("qprimarycensored handles left truncation boundary cases", {
   L <- 2
-  q <- qpcens(c(0, 1), plnorm, pwindow = 1, D = 10, L = L, meanlog = 1, sdlog = 1)
+  q <- qpcens(
+    c(0, 1), plnorm,
+    pwindow = 1, D = 10, L = L, meanlog = 1, sdlog = 1
+  )
   expect_identical(q[1], L)
   expect_true(is.na(q[2]))
 })
@@ -129,7 +132,10 @@ test_that("qprimarycensored errors when L < 0", {
 
 test_that("qprimarycensored with L = 0 matches default behaviour", {
   probs <- c(0.25, 0.5, 0.75)
-  q_default <- qpcens(probs, plnorm, pwindow = 1, D = 10, meanlog = 1, sdlog = 1)
+  q_default <- qpcens(
+    probs, plnorm,
+    pwindow = 1, D = 10, meanlog = 1, sdlog = 1
+  )
   q_explicit <- qpcens(
     probs, plnorm,
     pwindow = 1, D = 10, L = 0, meanlog = 1, sdlog = 1

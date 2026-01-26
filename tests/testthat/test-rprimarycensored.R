@@ -107,7 +107,7 @@ test_that("rprimarycensored with L = 0 matches default behaviour", {
     pwindow = 1, D = 10, L = 0,
     meanlog = 1, sdlog = 1
   )
-  expect_equal(samples_default, samples_explicit)
+  expect_identical(samples_default, samples_explicit)
 })
 
 test_that("rprimarycensored with L > 0 rounds correctly to swindow", {

@@ -196,7 +196,7 @@ test_that("dprimarycensored with L = 0 matches default behaviour", {
     0:(D - 1), plnorm, pwindow,
     D = D, L = 0, meanlog = 1, sdlog = 1
   )
-  expect_equal(pmf_default, pmf_explicit)
+  expect_identical(pmf_default, pmf_explicit)
 })
 
 test_that("dprimarycensored is consistent with pprimarycensored for L > 0", {
