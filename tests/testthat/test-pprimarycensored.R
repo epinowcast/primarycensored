@@ -147,3 +147,21 @@ test_that("pprimarycensored with L > 0 shifts distribution correctly", {
   expect_gt(mid_cdf, 0)
   expect_lt(mid_cdf, 1)
 })
+
+test_that("pprimarycensored works with L > 0 and D = Inf", {
+  pwindow <- 1
+  L <- 2
+
+  # CDF at L should be 0
+  cdf_at_L <- ppcens(L, plnorm, pwindow, D = Inf, L = L, meanlog = 1, sdlog = 1)
+  expect_identical(cdf_at_L, 0)
+
+  # CDF above L should be positive
+  cdf_above_L <- ppcens(5, plnorm, pwindow, D = Inf, L = L, meanlog = 1, sdlog = 1)
+  expect_gt(cdf_above_L, 0)
+  expect_lt(cdf_above_L, 1)
+
+  # CDF should approach 1 for large values
+  cdf_large <- ppcens(50, plnorm, pwindow, D = Inf, L = L, meanlog = 1, sdlog = 1)
+  expect_gt(cdf_large, 0.99)
+})
