@@ -1,0 +1,19 @@
+# Reverse dependency checking using r-devel/recheck
+# Manual workflow to check if changes break reverse dependencies
+on:
+  workflow_dispatch:
+    inputs:
+      which:
+        description: 'Which dependencies to check'
+        type: choice
+        options:
+          - strong
+          - most
+
+name: recheck
+
+jobs:
+  revdep_check:
+    uses: r-devel/recheck/.github/workflows/recheck.yml@v1
+    with:
+      which: ${{ inputs.which }}
