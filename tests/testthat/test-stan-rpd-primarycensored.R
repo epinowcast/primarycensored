@@ -1,5 +1,148 @@
 skip_on_cran()
 
+# Left truncation (L parameter) tests
+
+test_that("Stan primarycensored_cdf matches R pprimarycensored with L > 0", {
+  d_values <- seq(0, 10, by = 0.5)
+  D <- 12
+  L <- 2
+
+  dist_id <- 1 # Lognormal
+  params <- c(1, 0.5) # meanlog, sdlog
+  pwindow <- 1
+  primary_id <- 1 # Uniform
+  primary_params <- array(numeric(0))
+
+  stan_cdf <- sapply(
+    d_values, primarycensored_cdf, dist_id, params, pwindow, L, D,
+    primary_id, primary_params
+  )
+  r_cdf <- pprimarycensored(
+    d_values, plnorm,
+    pwindow = pwindow, D = D, L = L, meanlog = params[1], sdlog = params[2]
+  )
+
+  expect_equal(stan_cdf, r_cdf, tolerance = 1e-6)
+})
+
+test_that("Stan primarycensored_lcdf matches R pprimarycensored with L > 0", {
+  d_values <- seq(0, 10, by = 0.5)
+  D <- 12
+  L <- 2
+
+  dist_id <- 1 # Lognormal
+  params <- c(1, 0.5) # meanlog, sdlog
+  pwindow <- 1
+  primary_id <- 1 # Uniform
+  primary_params <- array(numeric(0))
+
+  stan_lcdf <- sapply(
+    d_values, primarycensored_lcdf, dist_id, params, pwindow, L, D,
+    primary_id, primary_params
+  )
+  r_cdf <- pprimarycensored(
+    d_values, plnorm,
+    pwindow = pwindow, D = D, L = L, meanlog = params[1], sdlog = params[2]
+  )
+
+  expect_equal(exp(stan_lcdf), r_cdf, tolerance = 1e-6)
+})
+
+test_that("Stan primarycensored_lpmf matches R dprimarycensored with L > 0", {
+  D <- 12
+  L <- 2
+  d <- L:(D - 1)
+
+  dist_id <- 1 # Lognormal
+  params <- c(1, 0.5) # meanlog, sdlog
+  pwindow <- 1
+  primary_id <- 1 # Uniform
+  primary_params <- numeric(0)
+
+  stan_lpmf <- mapply(
+    primarycensored_lpmf,
+    d = d,
+    d_upper = d + 1,
+    MoreArgs = list(
+      dist_id = dist_id,
+      params = params,
+      pwindow = pwindow,
+      L = L,
+      D = D,
+      primary_id = primary_id,
+      primary_params = primary_params
+    )
+  )
+  r_lpmf <- dprimarycensored(
+    d, plnorm,
+    pwindow = pwindow, swindow = 1, D = D, L = L,
+    meanlog = params[1], sdlog = params[2], log = TRUE
+  )
+
+  expect_equal(stan_lpmf, r_lpmf, tolerance = 1e-6)
+})
+
+test_that(
+  "Stan primarycensored_sone_lpmf_vectorized matches R dprimarycensored
+   with L > 0",
+  {
+    max_delay <- 10
+    D <- 15
+    L <- 2
+
+    dist_id <- 1 # Lognormal
+    params <- c(1, 0.5) # meanlog, sdlog
+    pwindow <- 1
+    primary_id <- 1 # Uniform
+    primary_params <- numeric(0)
+
+    stan_lpmf <- primarycensored_sone_lpmf_vectorized(
+      max_delay, L, D, dist_id, params, pwindow, primary_id, primary_params
+    )
+
+    # Stan returns -Inf for indices <= L, R errors for x < L
+    # Check that Stan correctly returns -Inf for excluded delays
+    expect_true(all(is.infinite(stan_lpmf[1:L])))
+    expect_true(all(stan_lpmf[1:L] < 0))
+
+    # Compare valid range with R
+    valid_indices <- (L + 1):(max_delay + 1)
+    r_lpmf <- dprimarycensored(
+      L:max_delay, plnorm,
+      pwindow = pwindow, swindow = 1, D = D, L = L,
+      meanlog = params[1], sdlog = params[2], log = TRUE
+    )
+
+    expect_equal(stan_lpmf[valid_indices], r_lpmf, tolerance = 1e-6)
+  }
+)
+
+test_that(
+  "Stan primarycensored functions handle L > 0 with D = Inf",
+  {
+    d_values <- seq(0, 10, by = 0.5)
+    D <- Inf
+    L <- 2
+
+    dist_id <- 1 # Lognormal
+    params <- c(1, 0.5) # meanlog, sdlog
+    pwindow <- 1
+    primary_id <- 1 # Uniform
+    primary_params <- array(numeric(0))
+
+    stan_cdf <- sapply(
+      d_values, primarycensored_cdf, dist_id, params, pwindow, L, D,
+      primary_id, primary_params
+    )
+    r_cdf <- pprimarycensored(
+      d_values, plnorm,
+      pwindow = pwindow, D = D, L = L, meanlog = params[1], sdlog = params[2]
+    )
+
+    expect_equal(stan_cdf, r_cdf, tolerance = 1e-6)
+  }
+)
+
 test_that("Stan primarycensored_cdf matches R pprimarycensored", {
   d_values <- list(
     seq(0, 10, by = 0.5),

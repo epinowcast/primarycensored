@@ -247,14 +247,29 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
 
   // Apply truncation normalization
   if (!is_inf(D) || L > 0) {
-    real log_cdf_L = L > 0 ? primarycensored_analytical_lcdf(
-      L | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
-    ) : negative_infinity();
-    real log_cdf_D = is_inf(D) ? 0 : primarycensored_analytical_lcdf(
-      D | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
-    );
+    real log_cdf_L;
+    real log_cdf_D;
+
+    // Get CDF at lower truncation point L
+    if (L <= 0) {
+      log_cdf_L = negative_infinity();
+    } else {
+      log_cdf_L = primarycensored_analytical_lcdf(
+        L | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
+      );
+    }
+
+    // Get CDF at upper truncation point D
+    if (is_inf(D)) {
+      log_cdf_D = 0;
+    } else {
+      log_cdf_D = primarycensored_analytical_lcdf(
+        D | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
+      );
+    }
+
     real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
     result = primarycensored_apply_truncation(result, log_cdf_L, log_normalizer, L);
   }

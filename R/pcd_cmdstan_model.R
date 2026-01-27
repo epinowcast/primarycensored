@@ -71,9 +71,10 @@ pcd_cmdstan_model <- function(
 #' @param relative_obs_time Column name for relative observation time, used as
 #'  the upper truncation point D (default: "relative_obs_time")
 #'
-#' @param L Column name for minimum delay (lower truncation point). If the
-#'  column is not present in data, L = 0 is assumed for all observations.
-#'  (default: "L")
+#' @param start_relative_obs_time Column name for start of relative observation
+#'  time, used as the lower truncation point L. If the column is not present in
+#'  data, L = 0 is assumed for all observations.
+#'  (default: "start_relative_obs_time")
 #'
 #' @param dist_id Integer identifying the delay distribution:
 #'   You can use [pcd_stan_dist_id()] to get the dist ID for a
@@ -135,7 +136,7 @@ pcd_as_stan_data <- function(
     n = "n",
     pwindow = "pwindow",
     relative_obs_time = "relative_obs_time",
-    L = "L",
+    start_relative_obs_time = "start_relative_obs_time",
     dist_id,
     primary_id,
     param_bounds,
@@ -173,19 +174,21 @@ pcd_as_stan_data <- function(
     )
   }
 
-  # Handle L column: if not present, default to 0
-  if (!L %in% names(data)) {
-    data[[L]] <- 0
+  # Handle start_relative_obs_time column: if not present, default to 0
+  if (!start_relative_obs_time %in% names(data)) {
+    data[[start_relative_obs_time]] <- 0
   }
 
   # Validate truncation bounds: L must be less than D
-  invalid_rows <- which(data[[L]] >= data[[relative_obs_time]])
+  L_col <- start_relative_obs_time
+  D_col <- relative_obs_time
+  invalid_rows <- which(data[[L_col]] >= data[[D_col]])
   if (length(invalid_rows) > 0) {
     stop(
       "L must be less than D. Found ", length(invalid_rows),
       " observation(s) where L >= D. First invalid row: ",
-      invalid_rows[1], " (L = ", data[[L]][invalid_rows[1]],
-      ", D = ", data[[relative_obs_time]][invalid_rows[1]], ")",
+      invalid_rows[1], " (L = ", data[[L_col]][invalid_rows[1]],
+      ", D = ", data[[D_col]][invalid_rows[1]], ")",
       call. = FALSE
     )
   }
@@ -208,7 +211,7 @@ pcd_as_stan_data <- function(
     d_upper = data[[delay_upper]],
     n = data[[n]],
     pwindow = data[[pwindow]],
-    L = data[[L]],
+    L = data[[start_relative_obs_time]],
     D = data[[relative_obs_time]],
     dist_id = dist_id,
     primary_id = primary_id,

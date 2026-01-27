@@ -9,7 +9,7 @@
 \arguments{
 \item{x}{Vector of quantiles}
 
-\item{params}{A data frame with columns 'swindow', 'pwindow', 'D', and 'L'
+\item{params}{A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
 corresponding to the secondary window sizes, primary window sizes, upper
 truncation times, and lower truncation times for each element in x.}
 

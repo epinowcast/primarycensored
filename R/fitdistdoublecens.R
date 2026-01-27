@@ -251,7 +251,7 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around dprimarycensored
 #' @inheritParams dprimarycensored
 #'
-#' @param params A data frame with columns 'swindow', 'pwindow', 'D', and 'L'
+#' @param params A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
 #' corresponding to the secondary window sizes, primary window sizes, upper
 #' truncation times, and lower truncation times for each element in x.
 #' @keywords internal
@@ -321,7 +321,7 @@ fitdistdoublecens <- function(
     {
       # Vectorize the CDF calculation
       mapply(
-        function(q_i, pw, D_i, L_i) {
+        function(q_i, pw, L_i, D_i) {
           pprimarycensored(
             q_i,
             pdist,
@@ -335,8 +335,8 @@ fitdistdoublecens <- function(
         },
         q,
         params$pwindow,
-        params$D,
         params$L,
+        params$D,
         SIMPLIFY = TRUE
       )
     },

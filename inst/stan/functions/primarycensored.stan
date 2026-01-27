@@ -91,12 +91,29 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
     // Apply truncation normalization on log scale for numerical stability
     if (!is_inf(D) || L > 0) {
       real log_result = log(result);
-      real log_cdf_L = L > 0 ? primarycensored_lcdf(
-        L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-      ) : negative_infinity();
-      real log_cdf_D = is_inf(D) ? 0 : primarycensored_lcdf(
-        D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-      );
+      real log_cdf_L;
+      real log_cdf_D;
+
+      // Get CDF at lower truncation point L
+      if (L <= 0) {
+        log_cdf_L = negative_infinity();
+      } else {
+        log_cdf_L = primarycensored_lcdf(
+          L | dist_id, params, pwindow, 0, positive_infinity(),
+          primary_id, primary_params
+        );
+      }
+
+      // Get CDF at upper truncation point D
+      if (is_inf(D)) {
+        log_cdf_D = 0;
+      } else {
+        log_cdf_D = primarycensored_lcdf(
+          D | dist_id, params, pwindow, 0, positive_infinity(),
+          primary_id, primary_params
+        );
+      }
+
       real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
       log_result = primarycensored_apply_truncation(
         log_result, log_cdf_L, log_normalizer, L
@@ -167,12 +184,29 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
 
   // Handle truncation normalization
   if (!is_inf(D) || L > 0) {
-    real log_cdf_L = L > 0 ? primarycensored_lcdf(
-      L | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-    ) : negative_infinity();
-    real log_cdf_D = is_inf(D) ? 0 : primarycensored_lcdf(
-      D | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
-    );
+    real log_cdf_L;
+    real log_cdf_D;
+
+    // Get CDF at lower truncation point L
+    if (L <= 0) {
+      log_cdf_L = negative_infinity();
+    } else {
+      log_cdf_L = primarycensored_lcdf(
+        L | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
+      );
+    }
+
+    // Get CDF at upper truncation point D
+    if (is_inf(D)) {
+      log_cdf_D = 0;
+    } else {
+      log_cdf_D = primarycensored_lcdf(
+        D | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
+      );
+    }
+
     real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
     result = primarycensored_apply_truncation(result, log_cdf_L, log_normalizer, L);
   }
@@ -241,15 +275,18 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
     real log_cdf_L;
 
     // Get CDF at lower truncation point L
-    if (d == L) {
+    if (L <= 0) {
+      // No left truncation
+      log_cdf_L = negative_infinity();
+    } else if (d == L) {
+      // Reuse already computed CDF at d
       log_cdf_L = log_cdf_lower;
-    } else if (L > 0) {
+    } else {
+      // Compute CDF at L directly
       log_cdf_L = primarycensored_lcdf(
         L | dist_id, params, pwindow, 0, positive_infinity(),
         primary_id, primary_params
       );
-    } else {
-      log_cdf_L = negative_infinity();
     }
 
     // Get CDF at upper truncation point D
@@ -294,7 +331,8 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   * int dist_id = 5; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
-  * real d_upper = 4.0;
+  * real swindow = 1.0;
+  * real d_upper = d + swindow; // = 4.0
   * real L = 0.0;
   * real D = positive_infinity();
   * int primary_id = 1; // Uniform
@@ -371,7 +409,9 @@ vector primarycensored_sone_lpmf_vectorized(
   }
 
   // Compute log CDFs (without truncation normalization)
-  for (d in 1:upper_interval) {
+  // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0
+  int start_idx = L > 0 ? max(1, to_int(floor(L))) : 1;
+  for (d in start_idx:upper_interval) {
     log_cdfs[d] = primarycensored_lcdf(
       d | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
       primary_params
@@ -380,18 +420,18 @@ vector primarycensored_sone_lpmf_vectorized(
 
   // Get CDF at lower truncation point L
   real log_cdf_L;
-  if (L > 0 && L <= upper_interval && floor(L) == L) {
-    // L is an integer within the computed range, reuse cached value
+  if (L <= 0) {
+    // No left truncation
+    log_cdf_L = negative_infinity();
+  } else if (L <= upper_interval && floor(L) == L) {
+    // L is an integer within computed range, reuse cached value
     log_cdf_L = log_cdfs[to_int(L)];
-  } else if (L > 0) {
-    // L is non-integer or outside computed range, compute directly
+  } else {
+    // L is outside computed range or non-integer, compute directly
     log_cdf_L = primarycensored_lcdf(
       L | dist_id, params, pwindow, 0, positive_infinity(),
       primary_id, primary_params
     );
-  } else {
-    // L == 0, no left truncation
-    log_cdf_L = negative_infinity();
   }
 
   // Compute log normalizer: log(F(D) - F(L))
@@ -411,19 +451,16 @@ vector primarycensored_sone_lpmf_vectorized(
 
   log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
 
-  // Compute log PMFs
-  // For d < L, set to negative infinity (will be exponentiated to 0)
-  // F(L) cancels out in numerator when taking CDF differences, so we only
-  // need it for the normalizer
+  // Compute log PMFs: log((F(d) - F(d-1)) / (F(D) - F(L)))
   for (d in 1:upper_interval) {
     if (d <= L) {
-      // Excluded delays (interval starts at or below L)
+      // Delay interval [d-1, d) is excluded by left truncation
       log_pmfs[d] = negative_infinity();
     } else if (d == 1) {
-      // First interval [0, 1) with no left truncation
+      // First interval [0, 1): F(0) = 0, so PMF = F(1) / normalizer
       log_pmfs[d] = log_cdfs[d] - log_normalizer;
     } else {
-      // Standard case: PMF = F(d) - F(d-1)
+      // Standard case: PMF = (F(d) - F(d-1)) / normalizer
       log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
     }
   }
