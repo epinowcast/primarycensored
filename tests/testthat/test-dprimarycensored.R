@@ -247,7 +247,7 @@ test_that("dprimarycensored works with L > 0 and D = Inf", {
     D = Inf, L = L, meanlog = 1, sdlog = 1
   )
   expect_true(all(pmf >= 0))
-  expect_true(sum(pmf) < 1) # Should be less than 1 since we're not summing all
+  expect_lt(sum(pmf), 1) # Should be less than 1 since we're not summing all
 })
 
 test_that("dprimarycensored handles L not in unique_points", {
@@ -262,5 +262,6 @@ test_that("dprimarycensored handles L not in unique_points", {
   )
   expect_true(all(pmf >= 0))
   # Sum won't be 1 because x=2 starts at interval [2,3), missing [1.5,2)
-  expect_true(sum(pmf) > 0 && sum(pmf) < 1)
+  expect_gt(sum(pmf), 0)
+  expect_lt(sum(pmf), 1)
 })

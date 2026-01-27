@@ -157,11 +157,17 @@ test_that("pprimarycensored works with L > 0 and D = Inf", {
   expect_identical(cdf_at_L, 0)
 
   # CDF above L should be positive
-  cdf_above_L <- ppcens(5, plnorm, pwindow, D = Inf, L = L, meanlog = 1, sdlog = 1)
+  cdf_above_L <- ppcens(
+    5, plnorm, pwindow,
+    D = Inf, L = L, meanlog = 1, sdlog = 1
+  )
   expect_gt(cdf_above_L, 0)
   expect_lt(cdf_above_L, 1)
 
   # CDF should approach 1 for large values
-  cdf_large <- ppcens(50, plnorm, pwindow, D = Inf, L = L, meanlog = 1, sdlog = 1)
+  cdf_large <- ppcens(
+    50, plnorm, pwindow,
+    D = Inf, L = L, meanlog = 1, sdlog = 1
+  )
   expect_gt(cdf_large, 0.99)
 })
