@@ -43,6 +43,50 @@ real primarycensored_apply_truncation(real log_cdf, real log_cdf_L,
 }
 
 /**
+  * Compute log CDFs at both truncation bounds L and D
+  * @ingroup truncation_helpers
+  *
+  * @param L Lower truncation point
+  * @param D Upper truncation point
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return 2-element vector: [log_cdf_L, log_cdf_D]
+  */
+vector primarycensored_truncation_bounds(
+  data real L, data real D,
+  int dist_id, array[] real params, data real pwindow,
+  int primary_id, array[] real primary_params
+) {
+  vector[2] result;
+
+  // Get CDF at lower truncation point L
+  if (L <= 0) {
+    result[1] = negative_infinity();
+  } else {
+    result[1] = primarycensored_lcdf(
+      L | dist_id, params, pwindow, 0, positive_infinity(),
+      primary_id, primary_params
+    );
+  }
+
+  // Get CDF at upper truncation point D
+  if (is_inf(D)) {
+    result[2] = 0;
+  } else {
+    result[2] = primarycensored_lcdf(
+      D | dist_id, params, pwindow, 0, positive_infinity(),
+      primary_id, primary_params
+    );
+  }
+
+  return result;
+}
+
+/**
   * Compute the primary event censored CDF for a single delay
   * @ingroup primary_censored_single
   *
@@ -91,28 +135,11 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
     // Apply truncation normalization on log scale for numerical stability
     if (!is_inf(D) || L > 0) {
       real log_result = log(result);
-      real log_cdf_L;
-      real log_cdf_D;
-
-      // Get CDF at lower truncation point L
-      if (L <= 0) {
-        log_cdf_L = negative_infinity();
-      } else {
-        log_cdf_L = primarycensored_lcdf(
-          L | dist_id, params, pwindow, 0, positive_infinity(),
-          primary_id, primary_params
-        );
-      }
-
-      // Get CDF at upper truncation point D
-      if (is_inf(D)) {
-        log_cdf_D = 0;
-      } else {
-        log_cdf_D = primarycensored_lcdf(
-          D | dist_id, params, pwindow, 0, positive_infinity(),
-          primary_id, primary_params
-        );
-      }
+      vector[2] bounds = primarycensored_truncation_bounds(
+        L, D, dist_id, params, pwindow, primary_id, primary_params
+      );
+      real log_cdf_L = bounds[1];
+      real log_cdf_D = bounds[2];
 
       real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
       log_result = primarycensored_apply_truncation(
@@ -184,28 +211,11 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
 
   // Handle truncation normalization
   if (!is_inf(D) || L > 0) {
-    real log_cdf_L;
-    real log_cdf_D;
-
-    // Get CDF at lower truncation point L
-    if (L <= 0) {
-      log_cdf_L = negative_infinity();
-    } else {
-      log_cdf_L = primarycensored_lcdf(
-        L | dist_id, params, pwindow, 0, positive_infinity(),
-        primary_id, primary_params
-      );
-    }
-
-    // Get CDF at upper truncation point D
-    if (is_inf(D)) {
-      log_cdf_D = 0;
-    } else {
-      log_cdf_D = primarycensored_lcdf(
-        D | dist_id, params, pwindow, 0, positive_infinity(),
-        primary_id, primary_params
-      );
-    }
+    vector[2] bounds = primarycensored_truncation_bounds(
+      L, D, dist_id, params, pwindow, primary_id, primary_params
+    );
+    real log_cdf_L = bounds[1];
+    real log_cdf_D = bounds[2];
 
     real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
     result = primarycensored_apply_truncation(result, log_cdf_L, log_normalizer, L);
