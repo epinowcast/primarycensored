@@ -1,0 +1,23 @@
+<map id="primarycensored_truncation_bounds" name="primarycensored_truncation_bounds">
+<area shape="rect" id="Node000001" title=" " alt="" coords="1289,101,1470,141"/>
+<area shape="rect" id="Node000002" href="$group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="1036,25,1241,51"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="1309,97,1240,73,1183,54,1185,49,1242,68,1311,92"/>
+<area shape="rect" id="Node000004" href="$group__primary__censored__single.html#gad77e795cb876e8083049ca02f36e6244" title=" " alt="" coords="596,76,738,102"/>
+<area shape="poly" id="edge11_Node000001_Node000004" title=" " alt="" coords="1274,119,738,95,738,89,1274,114"/>
+<area shape="rect" id="Node000005" href="$group__primary__censored__single.html#gaf03826a2164da9f913e2262c7fb668f1" title=" " alt="" coords="404,108,548,134"/>
+<area shape="poly" id="edge12_Node000001_Node000005" title=" " alt="" coords="1274,130,901,133,548,129,548,123,901,127,1274,124"/>
+<area shape="rect" id="Node000003" href="$group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="786,25,988,51"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="1021,41,988,41,988,36,1021,36"/>
+<area shape="poly" id="edge10_Node000002_Node000005" title=" " alt="" coords="1057,25,988,16,876,9,789,12,703,30,597,66,546,88,503,110,501,105,544,83,595,61,702,25,788,7,876,3,988,10,1057,19"/>
+<area shape="poly" id="edge3_Node000003_Node000004" title=" " alt="" coords="814,58,726,78,725,73,812,53"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="581,106,549,111,548,106,581,101"/>
+<area shape="poly" id="edge9_Node000005_Node000001" title=" " alt="" coords="563,113,925,109,1289,113,1289,118,925,115,563,118"/>
+<area shape="rect" id="Node000006" href="$group__primary__censored__single.html#gabaa91d68706974a28a14012dd8c4dd99" title=" " alt="" coords="206,79,354,104"/>
+<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="388,110,354,105,355,100,389,105"/>
+<area shape="rect" id="Node000008" href="$group__primary__censored__vectorized.html#ga87f86df6067548aca1a40df2fe4d1f8d" title=" " alt="" coords="205,129,356,169"/>
+<area shape="poly" id="edge7_Node000005_Node000008" title=" " alt="" coords="389,136,357,141,356,135,388,131"/>
+<area shape="rect" id="Node000007" href="$group__primary__censored__single.html#gaa9b015b423ee7cad6a35186985497079" title=" " alt="" coords="8,79,154,104"/>
+<area shape="poly" id="edge6_Node000006_Node000007" title=" " alt="" coords="191,94,154,94,154,89,191,89"/>
+<area shape="rect" id="Node000009" href="$group__primary__censored__vectorized.html#ga7ed0eed950880b1f52c87927158a873f" title=" " alt="" coords="5,129,157,169"/>
+<area shape="poly" id="edge8_Node000008_Node000009" title=" " alt="" coords="189,152,157,152,157,146,189,146"/>
+</map>
