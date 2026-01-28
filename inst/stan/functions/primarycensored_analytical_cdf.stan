@@ -252,10 +252,6 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
     d, dist_id, params, pwindow, primary_id
   );
 
-  if (result == negative_infinity()) {
-    return negative_infinity();
-  }
-
   // Apply truncation normalization
   if (!is_inf(D) || L > 0) {
     vector[2] bounds = primarycensored_truncation_bounds(
