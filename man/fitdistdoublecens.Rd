@@ -10,6 +10,7 @@ fitdistdoublecens(
   left = "left",
   right = "right",
   pwindow = "pwindow",
+  L = "L",
   D = "D",
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -38,9 +39,15 @@ functions are defined and loaded.}
 
 \item{pwindow}{Column name for primary window (default: "pwindow").}
 
-\item{D}{Column name for maximum delay (truncation point). If finite, the
-distribution is truncated at D. If set to Inf, no truncation is applied.
-(default: "D").}
+\item{L}{Column name for minimum delay (lower truncation point). If greater
+than 0, the distribution is left-truncated at L. This is useful for
+modelling generation intervals where day 0 is excluded, particularly when
+used in renewal models. (default: "L"). If the column is not present in
+censdata, L = 0 is assumed.}
+
+\item{D}{Column name for maximum delay (upper truncation point). If finite,
+the distribution is truncated at D. If set to Inf, no upper truncation is
+applied. (default: "D").}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -71,8 +78,8 @@ An object of class "fitdist" as returned by fitdistrplus::fitdist.
 This function wraps the custom approach for fitting distributions to doubly
 censored data using fitdistrplus and primarycensored. It handles primary
 censoring (when the primary event time is not known exactly), secondary
-censoring (when the secondary event time is interval-censored), and right
-truncation (when events are only observed up to a maximum delay).
+censoring (when the secondary event time is interval-censored), and
+truncation (when events are only observed within a delay range [L, D]).
 }
 \details{
 \subsection{How distribution functions are resolved}{

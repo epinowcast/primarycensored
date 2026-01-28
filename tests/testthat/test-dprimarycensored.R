@@ -40,16 +40,19 @@ test_that("dprimarycensored matches difference of pprimarycensored", {
   D <- 10
 
   pmf <- dpcens(
-    x, plnorm, pwindow, swindow, D,
+    x, plnorm,
+    pwindow = pwindow, swindow = swindow, D = D,
     meanlog = 0, sdlog = 1
   )
   cdf_diff <- sapply(x, function(xi) {
     ppcens(
-      xi + swindow, plnorm, pwindow, D,
+      xi + swindow, plnorm,
+      pwindow = pwindow, D = D,
       meanlog = 0, sdlog = 1
     ) -
       ppcens(
-        xi, plnorm, pwindow, D,
+        xi, plnorm,
+        pwindow = pwindow, D = D,
         meanlog = 0, sdlog = 1
       )
   })
@@ -67,7 +70,8 @@ test_that(
 
     expect_error(
       dpcens(
-        d, plnorm, pwindow, swindow, D,
+        d, plnorm,
+        pwindow = pwindow, swindow = swindow, D = D,
         meanlog = 0, sdlog = 1
       ),
       "Upper truncation point is greater than D"
@@ -75,23 +79,27 @@ test_that(
   }
 )
 
-test_that("dprimarycensored returns 0 for negative d", {
+test_that("dprimarycensored errors for negative d", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5
   D <- 10
 
-  expect_identical(
+  expect_error(
     dpcens(
-      d, plnorm, pwindow, swindow, D,
+      d, plnorm,
+      pwindow = pwindow, swindow = swindow, D = D,
       meanlog = 0, sdlog = 1
-    ), 0
+    ),
+    "values of x are below L"
   )
-  expect_identical(
+  expect_error(
     dpcens(
-      c(8, d), plnorm, pwindow, swindow, D,
+      c(8, d), plnorm,
+      pwindow = pwindow, swindow = swindow, D = D,
       meanlog = 0, sdlog = 1
-    )[2], 0
+    ),
+    "values of x are below L"
   )
 })
 
@@ -134,4 +142,137 @@ test_that("dprimarycensored returns non-negative values", {
     all(pmf_expgrowth >= 0),
     info = "PMF with expgrowth primary should never be negative"
   )
+})
+
+test_that("dprimarycensored sums to 1 over [L, D) with L > 0", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+  pmf <- dpcens(
+    L:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1
+  )
+  expect_equal(sum(pmf), 1, tolerance = 1e-6)
+})
+
+test_that("dprimarycensored errors for x < L", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+
+  expect_error(
+    dpcens(
+      0:(L - 1), plnorm, pwindow,
+      D = D, L = L, meanlog = 1, sdlog = 1
+    ),
+    "values of x are below L"
+  )
+})
+
+test_that("dprimarycensored errors when L >= D", {
+  expect_error(
+    dpcens(5, plnorm, pwindow = 1, D = 10, L = 10, meanlog = 1, sdlog = 1),
+    "L must be less than D"
+  )
+  expect_error(
+    dpcens(5, plnorm, pwindow = 1, D = 10, L = 15, meanlog = 1, sdlog = 1),
+    "L must be less than D"
+  )
+})
+
+test_that("dprimarycensored errors when L < 0", {
+  expect_error(
+    dpcens(5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
+    "L must be non-negative"
+  )
+})
+
+test_that("dprimarycensored with L = 0 matches default behaviour", {
+  pwindow <- 1
+  D <- 10
+  pmf_default <- dpcens(
+    0:(D - 1), plnorm, pwindow,
+    D = D, meanlog = 1, sdlog = 1
+  )
+  pmf_explicit <- dpcens(
+    0:(D - 1), plnorm, pwindow,
+    D = D, L = 0, meanlog = 1, sdlog = 1
+  )
+  expect_identical(pmf_default, pmf_explicit)
+})
+
+test_that("dprimarycensored is consistent with pprimarycensored for L > 0", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+  x <- L:(D - 2)
+  pmf <- dpcens(x, plnorm, pwindow, D = D, L = L, meanlog = 1, sdlog = 1)
+  cdf_diff <- sapply(x, function(xi) {
+    ppcens(
+      xi + 1, plnorm, pwindow,
+      D = D, L = L,
+      meanlog = 1, sdlog = 1
+    ) -
+      ppcens(
+        xi, plnorm, pwindow,
+        D = D, L = L,
+        meanlog = 1, sdlog = 1
+      )
+  })
+  expect_equal(pmf, cdf_diff, tolerance = 1e-6)
+})
+
+test_that("dprimarycensored handles log probabilities with L > 0", {
+  pwindow <- 1
+  D <- 10
+  L <- 2
+  pmf <- dpcens(
+    L:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1
+  )
+  log_pmf <- dpcens(
+    L:(D - 1), plnorm, pwindow,
+    D = D, L = L, meanlog = 1, sdlog = 1, log = TRUE
+  )
+  expect_equal(exp(log_pmf), pmf, tolerance = 1e-6)
+})
+
+test_that("dprimarycensored works with L > 0 and D = Inf", {
+  pwindow <- 1
+  L <- 2
+  pmf <- dpcens(
+    L:10, plnorm, pwindow,
+    D = Inf, L = L, meanlog = 1, sdlog = 1
+  )
+  expect_true(all(pmf >= 0))
+  expect_lt(sum(pmf), 1) # Should be less than 1 since we're not summing all
+})
+
+test_that("dprimarycensored handles L not in unique_points", {
+  # Use non-integer L that won't be in the computed unique_points
+  # This exercises the branch where L needs to be computed separately
+  pwindow <- 1
+  swindow <- 1
+  L <- 1.5
+  D <- 10
+  x <- 2:(D - 1)
+
+  pmf <- dpcens(
+    x, plnorm, pwindow,
+    swindow = swindow, L = L, D = D, meanlog = 1, sdlog = 1
+  )
+
+  # Verify correctness by comparing to CDF differences
+  cdf_upper <- ppcens(
+    x + swindow, plnorm, pwindow,
+    L = L, D = D, meanlog = 1, sdlog = 1
+  )
+  cdf_lower <- ppcens(
+    x, plnorm, pwindow,
+    L = L, D = D, meanlog = 1, sdlog = 1
+  )
+  expected_pmf <- cdf_upper - cdf_lower
+
+  expect_true(all(pmf >= 0))
+  expect_equal(pmf, expected_pmf, tolerance = 1e-10)
 })

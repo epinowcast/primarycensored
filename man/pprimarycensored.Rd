@@ -9,6 +9,7 @@ pprimarycensored(
   q,
   pdist,
   pwindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -19,6 +20,7 @@ ppcens(
   q,
   pdist,
   pwindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -35,8 +37,14 @@ functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{L}{Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).}
+
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -57,21 +65,22 @@ and rate parameters}
 \item{...}{Additional arguments to be passed to pdist}
 }
 \value{
-Vector of primary event censored CDFs, normalized by D if finite
-(truncation adjustment)
+Vector of primary event censored CDFs, normalized over [L, D] if
+truncation is applied
 }
 \description{
 This function computes the primary event censored cumulative distribution
 function (CDF) for a given set of quantiles. It adjusts the CDF of the
 primary event distribution by accounting for the delay distribution and
-potential truncation at a maximum delay (D). The function allows for
-custom primary event distributions and delay distributions.
+potential truncation at a maximum delay (D) and minimum delay (L). The
+function allows for custom primary event distributions and delay
+distributions.
 }
 \details{
 The primary event censored CDF is computed by integrating the product of
 the delay distribution function (CDF) and the primary event distribution
 function (PDF) over the primary event window. The integration is adjusted
-for truncation if a finite maximum delay (D) is specified.
+for truncation if specified.
 
 The primary event censored CDF, \eqn{F_{\text{cens}}(q)}, is given by:
 \deqn{
@@ -82,12 +91,14 @@ where \eqn{F} is the CDF of the delay distribution,
 \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
 \eqn{pwindow} is the primary event window.
 
-If the maximum delay \eqn{D} is finite, the CDF is normalized by dividing
-by \eqn{F_{\text{cens}}(D)}:
+If truncation is applied (finite D or L > 0), the CDF is normalized:
 \deqn{
-F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{
+F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 }
-where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
+where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF. For values
+\eqn{q \leq L}, the function returns 0; for values \eqn{q \geq D}, it
+returns 1.
 
 This function creates a \code{primarycensored} object using
 \code{\link[=new_pcens]{new_pcens()}} and then computes the primary event
@@ -107,6 +118,13 @@ pprimarycensored(
   c(0.1, 0.5, 1), plnorm,
   dprimary = dexpgrowth,
   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+)
+
+# Example: Left-truncated distribution (e.g., for generation intervals)
+pprimarycensored(
+  c(1, 2, 3), plnorm,
+  L = 1, D = 10,
+  meanlog = 0, sdlog = 1
 )
 }
 \seealso{

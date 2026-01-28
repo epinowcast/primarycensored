@@ -205,51 +205,63 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q, array[] real para
 
 /**
   * Compute the primary event censored log CDF analytically for a single delay
+  * (internal version without truncation)
+  * @ingroup primary_event_analytical_distributions
+  */
+real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
+                                         array[] real params,
+                                         data real pwindow,
+                                         int primary_id) {
+  real q = max({d - pwindow, 0});
+
+  if (dist_id == 2 && primary_id == 1) {
+    return primarycensored_gamma_uniform_lcdf(d | q, params, pwindow);
+  } else if (dist_id == 1 && primary_id == 1) {
+    return primarycensored_lognormal_uniform_lcdf(d | q, params, pwindow);
+  } else if (dist_id == 3 && primary_id == 1) {
+    return primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
+  }
+  return negative_infinity();
+}
+
+/**
+  * Compute the primary event censored log CDF analytically for a single delay
   * @ingroup primary_event_analytical_distributions
   *
   * @param d Delay
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
-  * @param D Maximum delay (truncation point)
+  * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
   * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
-  * @return Primary event censored log CDF, normalized by D if finite (truncation adjustment)
+  * @return Primary event censored log CDF, normalized over [L, D] if truncation
+  * is applied
   */
 real primarycensored_analytical_lcdf(data real d, int dist_id,
                                            array[] real params,
-                                           data real pwindow, data real D,
-                                           int primary_id,
+                                           data real pwindow, data real L,
+                                           data real D, int primary_id,
                                            array[] real primary_params) {
-  real result;
-  real log_cdf_D;
-
-  if (d <= 0) return negative_infinity();
+  if (d <= L) return negative_infinity();
   if (d >= D) return 0;
 
-  real q = max({d - pwindow, 0});
+  real result = primarycensored_analytical_lcdf_raw(
+    d, dist_id, params, pwindow, primary_id
+  );
 
-  if (dist_id == 2 && primary_id == 1) {
-    // Gamma delay with Uniform primary
-    result = primarycensored_gamma_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 1 && primary_id == 1) {
-    // Lognormal delay with Uniform primary
-    result = primarycensored_lognormal_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 3 && primary_id == 1) {
-    // Weibull delay with Uniform primary
-    result = primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
-  } else {
-    // No analytical solution available
-    return negative_infinity();
-  }
-
-  if (!is_inf(D)) {
-    log_cdf_D = primarycensored_lcdf(
-      D | dist_id, params, pwindow, positive_infinity(),
-      primary_id, primary_params
+  // Apply truncation normalization
+  if (!is_inf(D) || L > 0) {
+    vector[2] bounds = primarycensored_truncation_bounds(
+      L, D, dist_id, params, pwindow, primary_id, primary_params
     );
-    result = result - log_cdf_D;
+    real log_cdf_L = bounds[1];
+    real log_cdf_D = bounds[2];
+
+    real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
+    result = primarycensored_apply_truncation(result, log_cdf_L, log_normalizer, L);
   }
 
   return result;
@@ -263,16 +275,18 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
-  * @param D Maximum delay (truncation point)
+  * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
   * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
-  * @return Primary event censored CDF, normalized by D if finite (truncation adjustment)
+  * @return Primary event censored CDF, normalized over [L, D] if truncation
+  * is applied
   */
 real primarycensored_analytical_cdf(data real d, int dist_id,
                                           array[] real params,
-                                          data real pwindow, data real D,
-                                          int primary_id,
+                                          data real pwindow, data real L,
+                                          data real D, int primary_id,
                                           array[] real primary_params) {
-  return exp(primarycensored_analytical_lcdf(d | dist_id, params, pwindow, D, primary_id, primary_params));
+  return exp(primarycensored_analytical_lcdf(d | dist_id, params, pwindow, L, D, primary_id, primary_params));
 }

@@ -10,6 +10,7 @@ rprimarycensored(
   rdist,
   pwindow = 1,
   swindow = 1,
+  L = 0,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
@@ -22,6 +23,7 @@ rpcens(
   rdist,
   pwindow = 1,
   swindow = 1,
+  L = 0,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
@@ -40,8 +42,14 @@ for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distrib
 \item{swindow}{Integer specifying the window size for rounding the delay
 (default is 1). If \code{swindow = 0} then no rounding is applied.}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{L}{Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).}
+
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{rprimary}{Function to generate random samples from the primary
 distribution (default is \code{\link[stats:Uniform]{stats::runif()}}).}
@@ -60,9 +68,9 @@ distribution censored by the secondary event window.
 \description{
 This function generates random samples from a primary event censored
 distribution. It adjusts the distribution by accounting for the primary
-event distribution and potential truncation at a maximum delay (D). The
-function allows for custom primary event distributions and delay
-distributions.
+event distribution and potential truncation at a maximum delay (D) and
+minimum delay (L). The function allows for custom primary event
+distributions and delay distributions.
 }
 \details{
 The mathematical formulation for generating random samples from a primary
@@ -78,14 +86,14 @@ parameters theta:
 \item Calculate the total delays (t) by adding the primary event times and
 the delays:
 \deqn{t = p + d}
-\item Apply truncation (i.e. remove any delays that fall outside the observation
-window) to ensure that the delays are within the specified range [0, D],
-where D is the maximum observable delay:
-\deqn{t_{truncated} = \{t \mid 0 \leq t < D\}}
-\item Round the truncated delays to the nearest secondary event window
-(swindow):
-\deqn{t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor
+\item Apply upper truncation to remove delays >= D:
+\deqn{t_{upper} = \{t \mid t < D\}}
+\item Round the delays to the nearest secondary event window (swindow):
+\deqn{t_{rounded} = \lfloor \frac{t_{upper}}{swindow} \rfloor
      \times swindow}
+\item Apply lower truncation on the rounded values to ensure observed delays
+are >= L:
+\deqn{t_{valid} = \{t_{rounded} \mid t_{rounded} \geq L\}}
 }
 
 The function oversamples to account for potential truncation and generates
@@ -101,6 +109,9 @@ rprimarycensored(
   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
   meanlog = 0, sdlog = 1
 )
+
+# Example: Left-truncated distribution (e.g., for generation intervals)
+rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
 }
 \seealso{
 Primary event censored distribution functions

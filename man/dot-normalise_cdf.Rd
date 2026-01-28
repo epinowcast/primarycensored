@@ -4,14 +4,16 @@
 \alias{.normalise_cdf}
 \title{Normalise a primary event censored CDF}
 \usage{
-.normalise_cdf(result, q, D, pcens_obj, pwindow)
+.normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 }
 \arguments{
 \item{result}{Numeric vector of CDF values to normalise.}
 
 \item{q}{Numeric vector of quantiles at which CDF was evaluated.}
 
-\item{D}{Numeric truncation point}
+\item{L}{Numeric lower truncation point}
+
+\item{D}{Numeric upper truncation point}
 
 \item{pcens_obj}{A primarycensored object as created by \code{\link[=new_pcens]{new_pcens()}}.}
 
@@ -22,7 +24,7 @@ Normalised CDF values as a numeric vector
 }
 \description{
 Internal function to normalise a primary event censored CDF when truncation
-is applied. The CDF is normalised by dividing by its value at the truncation
-point D and setting all values beyond D to 1.
+is applied. The CDF is normalised using (F(q) - F(L)) / (F(D) - F(L)) and
+values outside [L, D] are clamped to 0 or 1.
 }
 \keyword{internal}

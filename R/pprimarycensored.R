@@ -3,8 +3,9 @@
 #' This function computes the primary event censored cumulative distribution
 #' function (CDF) for a given set of quantiles. It adjusts the CDF of the
 #' primary event distribution by accounting for the delay distribution and
-#' potential truncation at a maximum delay (D). The function allows for
-#' custom primary event distributions and delay distributions.
+#' potential truncation at a maximum delay (D) and minimum delay (L). The
+#' function allows for custom primary event distributions and delay
+#' distributions.
 #'
 #' @param q Vector of quantiles
 #'
@@ -15,8 +16,14 @@
 #'
 #' @param pwindow Primary event window
 #'
-#' @param D Maximum delay (truncation point). If finite, the distribution is
-#'  truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.
+#' @param L Minimum delay (lower truncation point). If greater than 0, the
+#'  distribution is left-truncated at L. This is useful for modelling
+#'  generation intervals where day 0 is excluded, particularly when used in
+#'  renewal models. Defaults to 0 (no left truncation).
+#'
+#' @param D Maximum delay (upper truncation point). If finite, the distribution
+#'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+#'  to Inf.
 #'
 #' @param dprimary Function to generate the probability density function
 #'  (PDF) of primary event times. This function should take a value `x` and a
@@ -36,8 +43,8 @@
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
-#' @return Vector of primary event censored CDFs, normalized by D if finite
-#'  (truncation adjustment)
+#' @return Vector of primary event censored CDFs, normalized over \[L, D\] if
+#'  truncation is applied
 #'
 #' @aliases ppcens
 #'
@@ -49,7 +56,7 @@
 #' The primary event censored CDF is computed by integrating the product of
 #' the delay distribution function (CDF) and the primary event distribution
 #' function (PDF) over the primary event window. The integration is adjusted
-#' for truncation if a finite maximum delay (D) is specified.
+#' for truncation if specified.
 #'
 #' The primary event censored CDF, \eqn{F_{\text{cens}}(q)}, is given by:
 #' \deqn{
@@ -60,12 +67,14 @@
 #' \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
 #' \eqn{pwindow} is the primary event window.
 #'
-#' If the maximum delay \eqn{D} is finite, the CDF is normalized by dividing
-#' by \eqn{F_{\text{cens}}(D)}:
+#' If truncation is applied (finite D or L > 0), the CDF is normalized:
 #' \deqn{
-#' F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
+#' F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{
+#' F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 #' }
-#' where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF.
+#' where \eqn{F_{\text{cens,norm}}(q)} is the normalized CDF. For values
+#' \eqn{q \leq L}, the function returns 0; for values \eqn{q \geq D}, it
+#' returns 1.
 #'
 #' This function creates a `primarycensored` object using
 #' [new_pcens()] and then computes the primary event
@@ -89,15 +98,25 @@
 #'   dprimary = dexpgrowth,
 #'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
+#'
+#' # Example: Left-truncated distribution (e.g., for generation intervals)
+#' pprimarycensored(
+#'   c(1, 2, 3), plnorm,
+#'   L = 1, D = 10,
+#'   meanlog = 0, sdlog = 1
+#' )
 pprimarycensored <- function(
     q,
     pdist,
     pwindow = 1,
+    L = 0,
     D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
     ...) {
-  check_pdist(pdist, D, ...)
+  .check_truncation_bounds(L, D)
+
+  check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   # Create a new primarycensored object
@@ -111,8 +130,9 @@ pprimarycensored <- function(
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
-  if (!is.infinite(D)) {
-    result <- .normalise_cdf(result, q, D, pcens_obj, pwindow)
+  # Apply truncation normalization if needed
+  if (!is.infinite(D) || L > 0) {
+    result <- .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
   }
 
   return(result)
@@ -121,14 +141,16 @@ pprimarycensored <- function(
 #' Normalise a primary event censored CDF
 #'
 #' Internal function to normalise a primary event censored CDF when truncation
-#' is applied. The CDF is normalised by dividing by its value at the truncation
-#' point D and setting all values beyond D to 1.
+#' is applied. The CDF is normalised using (F(q) - F(L)) / (F(D) - F(L)) and
+#' values outside \[L, D\] are clamped to 0 or 1.
 #'
 #' @param result Numeric vector of CDF values to normalise.
 #'
 #' @param q Numeric vector of quantiles at which CDF was evaluated.
 #'
-#' @param D Numeric truncation point
+#' @param L Numeric lower truncation point
+#'
+#' @param D Numeric upper truncation point
 #'
 #' @param pcens_obj A primarycensored object as created by [new_pcens()].
 #'
@@ -137,14 +159,33 @@ pprimarycensored <- function(
 #' @return Normalised CDF values as a numeric vector
 #'
 #' @keywords internal
-.normalise_cdf <- function(result, q, D, pcens_obj, pwindow) {
-  if (max(q) == D) {
-    adj <- result[which.max(q == D)]
+.normalise_cdf <- function(result, q, L, D, pcens_obj, pwindow) {
+  # Get CDF at upper truncation point D
+  if (any(q == D)) {
+    cdf_D <- result[which.max(q == D)]
+  } else if (is.infinite(D)) {
+    cdf_D <- 1
   } else {
-    adj <- pcens_cdf(pcens_obj, D, pwindow)
+    cdf_D <- pcens_cdf(pcens_obj, D, pwindow)
   }
-  result <- result / adj
-  result <- ifelse(q > D, 1, result)
+
+  # Get CDF at lower truncation point L
+  if (L == 0) {
+    cdf_L <- 0
+  } else if (any(q == L)) {
+    cdf_L <- result[which.max(q == L)]
+  } else {
+    cdf_L <- pcens_cdf(pcens_obj, L, pwindow)
+  }
+
+  # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
+  normaliser <- cdf_D - cdf_L
+  result <- (result - cdf_L) / normaliser
+
+  # Clamp values outside truncation range
+  result <- ifelse(q <= L, 0, result)
+  result <- ifelse(q >= D, 1, result)
+
   return(result)
 }
 
