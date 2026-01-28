@@ -144,7 +144,6 @@ test_that("dprimarycensored returns non-negative values", {
   )
 })
 
-
 test_that("dprimarycensored sums to 1 over [L, D) with L > 0", {
   pwindow <- 1
   D <- 10
