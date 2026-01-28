@@ -207,7 +207,6 @@ test_that(
   }
 )
 
-# Left truncation (L parameter) tests
 
 test_that(
   "rprimarycensored is consistent with dprimarycensored and

@@ -61,7 +61,6 @@ test_that(
   }
 )
 
-# Left truncation (L parameter) tests
 
 test_that("rprimarycensored generates samples within [L, D) with L > 0", {
   n <- 1000

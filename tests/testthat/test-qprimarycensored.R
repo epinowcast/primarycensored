@@ -82,7 +82,6 @@ test_that("qprimarycensored handles truncation correctly", {
   expect_equal(p_truncated, probs, tolerance = 1e-4)
 })
 
-# Left truncation (L parameter) tests
 
 test_that("qprimarycensored handles left truncation boundary cases", {
   L <- 2

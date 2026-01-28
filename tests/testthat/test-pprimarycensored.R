@@ -61,7 +61,6 @@ test_that("pprimarycensored is consistent with dprimarycensored", {
   expect_equal(cdf, cdf_from_pmf, tolerance = 1e-6)
 })
 
-# Left truncation (L parameter) tests
 
 test_that("pprimarycensored returns 0 for quantiles <= L", {
   pwindow <- 1

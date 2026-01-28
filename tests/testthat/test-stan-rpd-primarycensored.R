@@ -1,6 +1,5 @@
 skip_on_cran()
 
-# Left truncation (L parameter) tests
 
 test_that("Stan primarycensored_cdf matches R pprimarycensored with L > 0", {
   d_values <- seq(0, 10, by = 0.5)
