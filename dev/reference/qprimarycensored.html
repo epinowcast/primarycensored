@@ -87,6 +87,7 @@ event timing distribution.</p>
 <span>  <span class="va">p</span>,</span>
 <span>  <span class="va">pdist</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  L <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -97,6 +98,7 @@ event timing distribution.</p>
 <span>  <span class="va">p</span>,</span>
 <span>  <span class="va">pdist</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  L <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -124,9 +126,17 @@ functions if they wish to leverage the analytical solutions.</p></dd>
 <dd><p>Primary event window</p></dd>
 
 
+<dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
+<dd><p>Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).</p></dd>
+
+
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
-<dd><p>Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.</p></dd>
+<dd><p>Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.</p></dd>
 
 
 <dt id="arg-dprimary">dprimary<a class="anchor" aria-label="anchor" href="#arg-dprimary"></a></dt>
@@ -168,8 +178,9 @@ distribution function.</p>
 computes the quantiles using <code><a href="pcens_quantile.html">pcens_quantile()</a></code>. This approach allows for
 analytical solutions when available, falling back to numerical methods when
 necessary.</p>
-<p>For example, if p = 0.5, the function returns the median delay - the value
-where 50% of censored events occur by this time and 50% occur after.</p>
+<p>For example, if p = 0.5, the function returns the median delay (truncated
+over [L, D] if specified) where 50% of censored events occur by this time
+and 50% occur after.</p>
 <p>See <code>methods(pcens_quantile)</code> for which combinations have analytical
 solutions implemented.</p>
     </div>
@@ -204,6 +215,13 @@ solutions implemented.</p>
 <span class="r-in"><span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>r <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="fl">0</span>, sdlog <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">10</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.000000 1.541789 2.459511</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Left-truncated distribution (e.g., for generation intervals)</span></span></span>
+<span class="r-in"><span><span class="fu">qprimarycensored</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.25</span>, <span class="fl">0.5</span>, <span class="fl">0.75</span><span class="op">)</span>, <span class="va">plnorm</span>,</span></span>
+<span class="r-in"><span>  L <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">10</span>, meanlog <span class="op">=</span> <span class="fl">0</span>, sdlog <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 1.368467 1.872762 2.856597</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

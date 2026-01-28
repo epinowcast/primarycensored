@@ -111,16 +111,20 @@ them. The requested function itself is included as the last element.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># See what primarycensored_lpmf depends on</span></span></span>
 <span class="r-in"><span><span class="fu">pcd_stan_function_deps</span><span class="op">(</span><span class="st">"primarycensored_lpmf"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "check_for_analytical"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [2] "primarycensored_gamma_uniform_lcdf"    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [3] "primarycensored_lognormal_uniform_lcdf"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "log_weibull_g"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [5] "primarycensored_weibull_uniform_lcdf"  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] "primarycensored_analytical_lcdf"       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "primarycensored_analytical_cdf"        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [8] "primarycensored_cdf"                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] "primarycensored_lcdf"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "primarycensored_lpmf"                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "primarycensored_log_normalizer"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2] "primarycensored_apply_truncation"      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3] "primarycensored_truncation_bounds"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "check_for_analytical"                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5] "primarycensored_gamma_uniform_lcdf"    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] "primarycensored_lognormal_uniform_lcdf"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "log_weibull_g"                         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8] "primarycensored_weibull_uniform_lcdf"  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] "primarycensored_analytical_lcdf_raw"   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "primarycensored_analytical_lcdf"       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "primarycensored_analytical_cdf"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12] "primarycensored_cdf"                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "primarycensored_lcdf"                  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [14] "primarycensored_lpmf"                  </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A function with no dependencies</span></span></span>
 <span class="r-in"><span><span class="fu">pcd_stan_function_deps</span><span class="op">(</span><span class="st">"expgrowth_pdf"</span><span class="op">)</span></span></span>

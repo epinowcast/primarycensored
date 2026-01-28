@@ -423,6 +423,8 @@ This means we’re using a subset of our simulated data for the estimation.</p>
 <strong>Vary the censoring windows</strong>: Adjust <code>pwindow</code> and <code>swindow</code> to match your data’s actual primary and secondary censoring intervals</li>
 <li>
 <strong>Handle different truncation times</strong>: Use varying values in the <code>D</code> column if your observations have different maximum observable delays</li>
+<li>
+<strong>Add lower truncation</strong>: If you need to exclude delays below a minimum value (e.g., for generation intervals where day 0 is excluded in renewal models), add an <code>L</code> column to your data specifying the lower truncation point for each observation</li>
 </ul>
 </div>
 </div>

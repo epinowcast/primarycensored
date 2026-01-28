@@ -146,9 +146,9 @@
 </ol>
 <p><span class="math display">\[t = p + d\]</span></p>
 <ol start="4" style="list-style-type: decimal">
-<li>Apply truncation (i.e. remove any delays that fall outside the observation window) to ensure that the delays are within the specified range <span class="math inline">\([0, D]\)</span>, where <span class="math inline">\(D\)</span> is the maximum observable delay:</li>
+<li>Apply truncation (i.e. remove any delays that fall outside the observation window) to ensure that the delays are within the specified range <span class="math inline">\([L, D]\)</span>, where <span class="math inline">\(L\)</span> is the minimum delay (lower truncation, default 0) and <span class="math inline">\(D\)</span> is the maximum observable delay (upper truncation):</li>
 </ol>
-<p><span class="math display">\[t_{truncated} = \{t \mid 0 \leq t &lt; D\}\]</span></p>
+<p><span class="math display">\[t_{truncated} = \{t \mid L \leq t &lt; D\}\]</span></p>
 <ol start="5" style="list-style-type: decimal">
 <li>Round the truncated delays to the nearest secondary event window (<span class="math inline">\(swindow\)</span>):</li>
 </ol>
@@ -241,11 +241,11 @@
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, dp
 \]</span></p>
 <p>where <span class="math inline">\(F\)</span> is the CDF of the delay distribution, <span class="math inline">\(f_{\text{primary}}\)</span> is the PDF of the primary event times, and <span class="math inline">\(pwindow\)</span> is the primary event window.</p>
-<p>If the maximum delay <span class="math inline">\(D\)</span> is finite, the CDF is normalized by dividing by <span class="math inline">\(F_{\text{cens}}(D)\)</span>:</p>
+<p>If truncation is applied (i.e. <span class="math inline">\(L &gt; 0\)</span> or <span class="math inline">\(D &lt; \infty\)</span>), the CDF is normalized over the interval <span class="math inline">\([L, D]\)</span>:</p>
 <p><span class="math display">\[
-F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 \]</span></p>
-<p>where <span class="math inline">\(F_{\text{cens,norm}}(q)\)</span> is the normalized CDF.</p>
+<p>where <span class="math inline">\(F_{\text{cens,norm}}(q)\)</span> is the normalized CDF, <span class="math inline">\(L\)</span> is the lower truncation point (default 0), and <span class="math inline">\(D\)</span> is the upper truncation point.</p>
 <p>Let’s compare the empirical CDF of our samples without secondary event censoring to the theoretical CDF computed using <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>

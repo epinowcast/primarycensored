@@ -14,6 +14,7 @@ pcens_quantile(
   object,
   p,
   pwindow,
+  L = 0,
   D = Inf,
   use_numeric = FALSE,
   init = 5,
@@ -38,11 +39,18 @@ pcens_quantile(
 
   Primary event window
 
+- L:
+
+  Minimum delay (lower truncation point). If greater than 0, the
+  distribution is left-truncated at L. This is useful for modelling
+  generation intervals where day 0 is excluded, particularly when used
+  in renewal models. Defaults to 0 (no left truncation).
+
 - D:
 
-  Maximum delay (truncation point). If finite, the distribution is
-  truncated at D. If set to Inf, no truncation is applied. Defaults to
-  Inf.
+  Maximum delay (upper truncation point). If finite, the distribution is
+  truncated at D. If set to Inf, no upper truncation is applied.
+  Defaults to Inf.
 
 - use_numeric:
 
@@ -111,4 +119,8 @@ pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1)
 # Compute quantiles for multiple probabilities with truncation
 pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
 #> [1] 3.666380 5.270768 7.092987
+
+# Compute quantiles with left truncation
+pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, L = 1, D = 10)
+#> [1] 3.689124 5.285634 7.102640
 ```

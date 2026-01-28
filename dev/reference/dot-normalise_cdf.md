@@ -1,13 +1,13 @@
 # Normalise a primary event censored CDF
 
 Internal function to normalise a primary event censored CDF when
-truncation is applied. The CDF is normalised by dividing by its value at
-the truncation point D and setting all values beyond D to 1.
+truncation is applied. The CDF is normalised using (F(q) - F(L)) /
+(F(D) - F(L)) and values outside \[L, D\] are clamped to 0 or 1.
 
 ## Usage
 
 ``` r
-.normalise_cdf(result, q, D, pcens_obj, pwindow)
+.normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 ```
 
 ## Arguments
@@ -20,9 +20,13 @@ the truncation point D and setting all values beyond D to 1.
 
   Numeric vector of quantiles at which CDF was evaluated.
 
+- L:
+
+  Numeric lower truncation point
+
 - D:
 
-  Numeric truncation point
+  Numeric upper truncation point
 
 - pcens_obj:
 

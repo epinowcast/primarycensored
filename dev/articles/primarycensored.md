@@ -88,10 +88,11 @@ primary event censored distribution is as follows:
 
 4.  Apply truncation (i.e. remove any delays that fall outside the
     observation window) to ensure that the delays are within the
-    specified range \\\[0, D\]\\, where \\D\\ is the maximum observable
-    delay:
+    specified range \\\[L, D\]\\, where \\L\\ is the minimum delay
+    (lower truncation, default 0) and \\D\\ is the maximum observable
+    delay (upper truncation):
 
-\\t\_{truncated} = \\t \mid 0 \leq t \< D\\\\
+\\t\_{truncated} = \\t \mid L \leq t \< D\\\\
 
 5.  Round the truncated delays to the nearest secondary event window
     (\\swindow\\):
@@ -208,13 +209,15 @@ where \\F\\ is the CDF of the delay distribution,
 \\f\_{\text{primary}}\\ is the PDF of the primary event times, and
 \\pwindow\\ is the primary event window.
 
-If the maximum delay \\D\\ is finite, the CDF is normalized by dividing
-by \\F\_{\text{cens}}(D)\\:
+If truncation is applied (i.e. \\L \> 0\\ or \\D \< \infty\\), the CDF
+is normalized over the interval \\\[L, D\]\\:
 
-\\ F\_{\text{cens,norm}}(q) =
-\frac{F\_{\text{cens}}(q)}{F\_{\text{cens}}(D)} \\
+\\ F\_{\text{cens,norm}}(q) = \frac{F\_{\text{cens}}(q) -
+F\_{\text{cens}}(L)}{F\_{\text{cens}}(D) - F\_{\text{cens}}(L)} \\
 
-where \\F\_{\text{cens,norm}}(q)\\ is the normalized CDF.
+where \\F\_{\text{cens,norm}}(q)\\ is the normalized CDF, \\L\\ is the
+lower truncation point (default 0), and \\D\\ is the upper truncation
+point.
 
 Let’s compare the empirical CDF of our samples without secondary event
 censoring to the theoretical CDF computed using

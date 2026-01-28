@@ -15,6 +15,8 @@
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/check_dprimary.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/check_pdist.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/check_truncation.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-check_truncation_bounds.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-check_truncation_bounds_df.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-dpcens.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-extract_function_name.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/dev/reference/dot-extract_stan_functions.html</loc></url>

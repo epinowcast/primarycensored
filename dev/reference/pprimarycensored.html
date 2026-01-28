@@ -8,12 +8,14 @@
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Compute the primary event censored CDF for delays — pprimarycensored"><meta name="description" content="This function computes the primary event censored cumulative distribution
 function (CDF) for a given set of quantiles. It adjusts the CDF of the
 primary event distribution by accounting for the delay distribution and
-potential truncation at a maximum delay (D). The function allows for
-custom primary event distributions and delay distributions."><meta property="og:description" content="This function computes the primary event censored cumulative distribution
+potential truncation at a maximum delay (D) and minimum delay (L). The
+function allows for custom primary event distributions and delay
+distributions."><meta property="og:description" content="This function computes the primary event censored cumulative distribution
 function (CDF) for a given set of quantiles. It adjusts the CDF of the
 primary event distribution by accounting for the delay distribution and
-potential truncation at a maximum delay (D). The function allows for
-custom primary event distributions and delay distributions."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
+potential truncation at a maximum delay (D) and minimum delay (L). The
+function allows for custom primary event distributions and delay
+distributions."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -74,8 +76,9 @@ custom primary event distributions and delay distributions."><meta property="og:
     <p>This function computes the primary event censored cumulative distribution
 function (CDF) for a given set of quantiles. It adjusts the CDF of the
 primary event distribution by accounting for the delay distribution and
-potential truncation at a maximum delay (D). The function allows for
-custom primary event distributions and delay distributions.</p>
+potential truncation at a maximum delay (D) and minimum delay (L). The
+function allows for custom primary event distributions and delay
+distributions.</p>
     </div>
 
     <div class="section level2">
@@ -84,6 +87,7 @@ custom primary event distributions and delay distributions.</p>
 <span>  <span class="va">q</span>,</span>
 <span>  <span class="va">pdist</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  L <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -94,6 +98,7 @@ custom primary event distributions and delay distributions.</p>
 <span>  <span class="va">q</span>,</span>
 <span>  <span class="va">pdist</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  L <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -120,9 +125,17 @@ functions if they wish to leverage the analytical solutions.</p></dd>
 <dd><p>Primary event window</p></dd>
 
 
+<dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
+<dd><p>Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).</p></dd>
+
+
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
-<dd><p>Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.</p></dd>
+<dd><p>Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.</p></dd>
 
 
 <dt id="arg-dprimary">dprimary<a class="anchor" aria-label="anchor" href="#arg-dprimary"></a></dt>
@@ -151,15 +164,15 @@ and rate parameters</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>Vector of primary event censored CDFs, normalized by D if finite
-(truncation adjustment)</p>
+    <p>Vector of primary event censored CDFs, normalized over [L, D] if
+truncation is applied</p>
     </div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The primary event censored CDF is computed by integrating the product of
 the delay distribution function (CDF) and the primary event distribution
 function (PDF) over the primary event window. The integration is adjusted
-for truncation if a finite maximum delay (D) is specified.</p>
+for truncation if specified.</p>
 <p>The primary event censored CDF, \(F_{\text{cens}}(q)\), is given by:
 $$
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p)
@@ -168,12 +181,14 @@ $$
 where \(F\) is the CDF of the delay distribution,
 \(f_{\text{primary}}\) is the PDF of the primary event times, and
 \(pwindow\) is the primary event window.</p>
-<p>If the maximum delay \(D\) is finite, the CDF is normalized by dividing
-by \(F_{\text{cens}}(D)\):
+<p>If truncation is applied (finite D or L &gt; 0), the CDF is normalized:
 $$
-F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{
+F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 $$
-where \(F_{\text{cens,norm}}(q)\) is the normalized CDF.</p>
+where \(F_{\text{cens,norm}}(q)\) is the normalized CDF. For values
+\(q \leq L\), the function returns 0; for values \(q \geq D\), it
+returns 1.</p>
 <p>This function creates a <code>primarycensored</code> object using
 <code><a href="new_pcens.html">new_pcens()</a></code> and then computes the primary event
 censored CDF using <code><a href="pcens_cdf.html">pcens_cdf()</a></code>. This abstraction allows
@@ -204,6 +219,14 @@ solutions implemented.</p>
 <span class="r-in"><span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>r <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span>, meanlog <span class="op">=</span> <span class="fl">0</span>, sdlog <span class="op">=</span> <span class="fl">1</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.0002496934 0.0440815583 0.2290795695</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example: Left-truncated distribution (e.g., for generation intervals)</span></span></span>
+<span class="r-in"><span><span class="fu">pprimarycensored</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span>, <span class="fl">3</span><span class="op">)</span>, <span class="va">plnorm</span>,</span></span>
+<span class="r-in"><span>  L <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">10</span>,</span></span>
+<span class="r-in"><span>  meanlog <span class="op">=</span> <span class="fl">0</span>, sdlog <span class="op">=</span> <span class="fl">1</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.0000000 0.5461907 0.7719056</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

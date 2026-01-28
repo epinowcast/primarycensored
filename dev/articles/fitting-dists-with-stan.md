@@ -314,7 +314,7 @@ writeLines(
     for (i in 1:N) {
       target += n[i] * primarycensored_lpmf(
         y[i] | 1, {mu, sigma},
-        pwindow[i], y_upper[i], D[i],
+        pwindow[i], y_upper[i], 0, D[i],
         1, primary_params
       );
     }
@@ -407,9 +407,9 @@ pcd_fit
 ```
 
     ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.68 -3422.39 0.92 0.64 -3424.57 -3421.80 1.00     1434     1499
-    ##  params[1]     1.54     1.54 0.04 0.04     1.48     1.62 1.00     1200      967
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1222     1164
+    ##  lp__      -3422.73 -3422.43 0.97 0.72 -3424.63 -3421.80 1.00     1447     1562
+    ##  params[1]     1.55     1.54 0.04 0.05     1.48     1.62 1.00     1089     1253
+    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1011     1167
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and
@@ -471,6 +471,10 @@ work:
 - **Handle different truncation times**: Use varying values in the
   `obs_time` column if your observations have different maximum
   observable delays
+- **Add lower truncation**: If you need to exclude delays below a
+  minimum value (e.g., for generation intervals where day 0 is excluded
+  in renewal models), add a `start_relative_obs_time` column to your
+  data specifying the lower truncation point L for each observation
 - **Modify priors**: Adjust the `priors` argument in
   [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/dev/reference/pcd_as_stan_data.md)
   to reflect your prior knowledge about the distribution parameters

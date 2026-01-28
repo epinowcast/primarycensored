@@ -379,3 +379,7 @@ work:
   match your data’s actual primary and secondary censoring intervals
 - **Handle different truncation times**: Use varying values in the `D`
   column if your observations have different maximum observable delays
+- **Add lower truncation**: If you need to exclude delays below a
+  minimum value (e.g., for generation intervals where day 0 is excluded
+  in renewal models), add an `L` column to your data specifying the
+  lower truncation point for each observation

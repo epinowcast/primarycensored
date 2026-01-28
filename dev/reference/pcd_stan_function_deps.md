@@ -43,16 +43,20 @@ Tools for working with package Stan functions
 ``` r
 # See what primarycensored_lpmf depends on
 pcd_stan_function_deps("primarycensored_lpmf")
-#>  [1] "check_for_analytical"                  
-#>  [2] "primarycensored_gamma_uniform_lcdf"    
-#>  [3] "primarycensored_lognormal_uniform_lcdf"
-#>  [4] "log_weibull_g"                         
-#>  [5] "primarycensored_weibull_uniform_lcdf"  
-#>  [6] "primarycensored_analytical_lcdf"       
-#>  [7] "primarycensored_analytical_cdf"        
-#>  [8] "primarycensored_cdf"                   
-#>  [9] "primarycensored_lcdf"                  
-#> [10] "primarycensored_lpmf"                  
+#>  [1] "primarycensored_log_normalizer"        
+#>  [2] "primarycensored_apply_truncation"      
+#>  [3] "primarycensored_truncation_bounds"     
+#>  [4] "check_for_analytical"                  
+#>  [5] "primarycensored_gamma_uniform_lcdf"    
+#>  [6] "primarycensored_lognormal_uniform_lcdf"
+#>  [7] "log_weibull_g"                         
+#>  [8] "primarycensored_weibull_uniform_lcdf"  
+#>  [9] "primarycensored_analytical_lcdf_raw"   
+#> [10] "primarycensored_analytical_lcdf"       
+#> [11] "primarycensored_analytical_cdf"        
+#> [12] "primarycensored_cdf"                   
+#> [13] "primarycensored_lcdf"                  
+#> [14] "primarycensored_lpmf"                  
 
 # A function with no dependencies
 pcd_stan_function_deps("expgrowth_pdf")

@@ -6,7 +6,7 @@ checking if it's monotonically increasing and bounded between 0 and 1.
 ## Usage
 
 ``` r
-check_pdist(pdist, D, ...)
+check_pdist(pdist, D = Inf, ...)
 ```
 
 ## Arguments
@@ -22,9 +22,9 @@ check_pdist(pdist, D, ...)
 
 - D:
 
-  Maximum delay (truncation point). If finite, the distribution is
-  truncated at D. If set to Inf, no truncation is applied. Defaults to
-  Inf.
+  Maximum delay (upper truncation point). If finite, the distribution is
+  truncated at D. If set to Inf, no upper truncation is applied.
+  Defaults to Inf.
 
 - ...:
 

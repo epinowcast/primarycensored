@@ -125,14 +125,15 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   real partial_sum(array[] int dummy, int start, int end,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int d, array[] int d_upper, array[] int n,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int pwindow, data array[] real D,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int pwindow, data array[] real L,</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                    data array[] real D,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    int dist_id, array[] real params,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    int primary_id, array[] real primary_params) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     real partial_target = 0;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in start:end) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       partial_target += n[i] * primarycensored_lpmf(</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, params,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], D[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], L[i], D[i],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, primary_params</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
@@ -146,7 +147,8 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; d_upper;     // observed delays upper bound</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; n;     // number of occurrences for each delay</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int&lt;lower=0&gt; pwindow; // primary censoring window</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real&lt;lower=0&gt; D; // maximum delay</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real&lt;lower=0&gt; L; // minimum delay (lower truncation)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real&lt;lower=0&gt; D; // maximum delay (upper truncation)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=17&gt; dist_id; // distribution identifier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=2&gt; primary_id; // primary distribution identifier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_params; // number of distribution parameters</span>
@@ -190,13 +192,13 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   // Likelihood</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   if (use_reduce_sum) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     target += reduce_sum(partial_sum, indexes, 1, d,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                          d_upper, n, pwindow, D, dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          d_upper, n, pwindow, L, D, dist_id, to_array_1d(params),</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                          primary_id, to_array_1d(primary_params));</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   } else {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:N) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       target += n[i] * primarycensored_lpmf(</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, to_array_1d(params),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], D[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], L[i], D[i],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, to_array_1d(primary_params)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
@@ -209,7 +211,7 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:N) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       log_lik[i] = primarycensored_lpmf(</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, to_array_1d(params),</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], D[i],</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], L[i], D[i],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, to_array_1d(primary_params)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>

@@ -14,6 +14,7 @@ qprimarycensored(
   p,
   pdist,
   pwindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -24,6 +25,7 @@ qpcens(
   p,
   pdist,
   pwindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -51,11 +53,18 @@ qpcens(
 
   Primary event window
 
+- L:
+
+  Minimum delay (lower truncation point). If greater than 0, the
+  distribution is left-truncated at L. This is useful for modelling
+  generation intervals where day 0 is excluded, particularly when used
+  in renewal models. Defaults to 0 (no left truncation).
+
 - D:
 
-  Maximum delay (truncation point). If finite, the distribution is
-  truncated at D. If set to Inf, no truncation is applied. Defaults to
-  Inf.
+  Maximum delay (upper truncation point). If finite, the distribution is
+  truncated at D. If set to Inf, no upper truncation is applied.
+  Defaults to Inf.
 
 - dprimary:
 
@@ -104,9 +113,9 @@ and then computes the quantiles using
 This approach allows for analytical solutions when available, falling
 back to numerical methods when necessary.
 
-For example, if p = 0.5, the function returns the median delay - the
-value where 50% of censored events occur by this time and 50% occur
-after.
+For example, if p = 0.5, the function returns the median delay
+(truncated over \[L, D\] if specified) where 50% of censored events
+occur by this time and 50% occur after.
 
 See `methods(pcens_quantile)` for which combinations have analytical
 solutions implemented.
@@ -145,4 +154,11 @@ qprimarycensored(
   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 )
 #> [1] 0.000000 1.541789 2.459511
+
+# Left-truncated distribution (e.g., for generation intervals)
+qprimarycensored(
+  c(0.25, 0.5, 0.75), plnorm,
+  L = 1, D = 10, meanlog = 0, sdlog = 1
+)
+#> [1] 1.368467 1.872762 2.856597
 ```

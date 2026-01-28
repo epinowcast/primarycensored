@@ -8,12 +8,12 @@
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fit a distribution to doubly censored data — fitdistdoublecens"><meta name="description" content="This function wraps the custom approach for fitting distributions to doubly
 censored data using fitdistrplus and primarycensored. It handles primary
 censoring (when the primary event time is not known exactly), secondary
-censoring (when the secondary event time is interval-censored), and right
-truncation (when events are only observed up to a maximum delay)."><meta property="og:description" content="This function wraps the custom approach for fitting distributions to doubly
+censoring (when the secondary event time is interval-censored), and
+truncation (when events are only observed within a delay range [L, D])."><meta property="og:description" content="This function wraps the custom approach for fitting distributions to doubly
 censored data using fitdistrplus and primarycensored. It handles primary
 censoring (when the primary event time is not known exactly), secondary
-censoring (when the secondary event time is interval-censored), and right
-truncation (when events are only observed up to a maximum delay)."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
+censoring (when the secondary event time is interval-censored), and
+truncation (when events are only observed within a delay range [L, D])."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -74,8 +74,8 @@ truncation (when events are only observed up to a maximum delay)."><meta propert
     <p>This function wraps the custom approach for fitting distributions to doubly
 censored data using fitdistrplus and primarycensored. It handles primary
 censoring (when the primary event time is not known exactly), secondary
-censoring (when the secondary event time is interval-censored), and right
-truncation (when events are only observed up to a maximum delay).</p>
+censoring (when the secondary event time is interval-censored), and
+truncation (when events are only observed within a delay range [L, D]).</p>
     </div>
 
     <div class="section level2">
@@ -86,6 +86,7 @@ truncation (when events are only observed up to a maximum delay).</p>
 <span>  left <span class="op">=</span> <span class="st">"left"</span>,</span>
 <span>  right <span class="op">=</span> <span class="st">"right"</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="st">"pwindow"</span>,</span>
+<span>  L <span class="op">=</span> <span class="st">"L"</span>,</span>
 <span>  D <span class="op">=</span> <span class="st">"D"</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -128,10 +129,18 @@ functions are defined and loaded.</p></dd>
 <dd><p>Column name for primary window (default: "pwindow").</p></dd>
 
 
+<dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
+<dd><p>Column name for minimum delay (lower truncation point). If greater
+than 0, the distribution is left-truncated at L. This is useful for
+modelling generation intervals where day 0 is excluded, particularly when
+used in renewal models. (default: "L"). If the column is not present in
+censdata, L = 0 is assumed.</p></dd>
+
+
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
-<dd><p>Column name for maximum delay (truncation point). If finite, the
-distribution is truncated at D. If set to Inf, no truncation is applied.
-(default: "D").</p></dd>
+<dd><p>Column name for maximum delay (upper truncation point). If finite,
+the distribution is truncated at D. If set to Inf, no upper truncation is
+applied. (default: "D").</p></dd>
 
 
 <dt id="arg-dprimary">dprimary<a class="anchor" aria-label="anchor" href="#arg-dprimary"></a></dt>

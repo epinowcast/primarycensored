@@ -3,8 +3,9 @@
 This function computes the primary event censored probability mass
 function (PMF) for a given set of quantiles. It adjusts the PMF of the
 primary event distribution by accounting for the delay distribution and
-potential truncation at a maximum delay (D). The function allows for
-custom primary event distributions and delay distributions.
+potential truncation at a maximum delay (D) and minimum delay (L). The
+function allows for custom primary event distributions and delay
+distributions.
 
 ## Usage
 
@@ -14,6 +15,7 @@ dprimarycensored(
   pdist,
   pwindow = 1,
   swindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -26,6 +28,7 @@ dpcens(
   pdist,
   pwindow = 1,
   swindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -57,11 +60,18 @@ dpcens(
 
   Secondary event window (default: 1)
 
+- L:
+
+  Minimum delay (lower truncation point). If greater than 0, the
+  distribution is left-truncated at L. This is useful for modelling
+  generation intervals where day 0 is excluded, particularly when used
+  in renewal models. Defaults to 0 (no left truncation).
+
 - D:
 
-  Maximum delay (truncation point). If finite, the distribution is
-  truncated at D. If set to Inf, no truncation is applied. Defaults to
-  Inf.
+  Maximum delay (upper truncation point). If finite, the distribution is
+  truncated at D. If set to Inf, no upper truncation is applied.
+  Defaults to Inf.
 
 - dprimary:
 
@@ -97,8 +107,8 @@ dpcens(
 
 ## Value
 
-Vector of primary event censored PMFs, normalized by D if finite
-(truncation adjustment)
+Vector of primary event censored PMFs, normalized over \[L, D\] if
+truncation is applied
 
 ## Details
 
@@ -113,16 +123,15 @@ The function first computes the CDFs for all unique points (including
 both \\d\\ and \\d + \text{swindow}\\) using
 [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md).
 It then creates a lookup table for these CDFs to efficiently calculate
-the PMF for each input value. For non-positive delays, the function
+the PMF for each input value. For delays less than L, the function
 returns 0.
 
-If a finite maximum delay \\D\\ is specified, the PMF is normalized to
-ensure it sums to 1 over the range \[0, D\]. This normalization can be
-expressed as: \$\$ f\_{\text{cens,norm}}(d) =
-\frac{f\_{\text{cens}}(d)}{\sum\_{i=0}^{D-1} f\_{\text{cens}}(i)} \$\$
-where \\f\_{\text{cens,norm}}(d)\\ is the normalized PMF and
-\\f\_{\text{cens}}(d)\\ is the unnormalized PMF. For the explanation and
-mathematical details of the CDF, refer to the documentation of
+If truncation is applied (finite D or L \> 0), the PMF is normalized to
+ensure it sums to 1 over the range \[L, D\\. This normalization uses:
+\$\$ f\_{\text{cens,norm}}(d) = \frac{f\_{\text{cens}}(d)}{
+F\_{\text{cens}}(D) - F\_{\text{cens}}(L)} \$\$ where
+\\f\_{\text{cens,norm}}(d)\\ is the normalized PMF. For the explanation
+and mathematical details of the CDF, refer to the documentation of
 [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md).
 
 ## See also
@@ -146,4 +155,9 @@ dprimarycensored(
   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 )
 #> [1] 0.1522796 0.2691280 0.3459055
+
+# Example: Left-truncated distribution (e.g., for generation intervals)
+dprimarycensored(1:9, pweibull, L = 1, D = 10, shape = 1.5, scale = 2.0)
+#> [1] 0.3967387124 0.3138303103 0.1723520068 0.0760439783 0.0283706839
+#> [6] 0.0091967620 0.0026354003 0.0006757134 0.0001564326
 ```
