@@ -1,23 +1,20 @@
 # primarycensored 1.3.0.9000
 
-This major release removes deprecated functionality that was soft-deprecated in version 1.1.0. It also removes the `lifecycle` and `rlang` packages from dependencies.
+This major release adds left-truncation support via the `L` parameter, enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. It also removes deprecated functionality that was soft-deprecated in version 1.1.0 and removes the `lifecycle` and `rlang` packages from dependencies.
 
 ## Breaking changes
 
 - Removed deprecated `pdist_name` and `dprimary_name` arguments from `pprimarycensored()`, `dprimarycensored()`, `new_pcens()`, and `fitdistdoublecens()`. Use `add_name_attribute()` on the `pdist` and `dprimary` functions instead to enable analytical solutions.
 - Removed deprecated support for passing numeric values to the `pwindow` and `D` arguments in `fitdistdoublecens()`. These must now be column names in `censdata`.
 - Removed `lifecycle` and `rlang` packages from dependencies.
+- R functions now include an `L` parameter before `D` in their signatures. If you were using positional arguments for `D` (e.g., `pprimarycensored(x, pdist, pwindow, 10)`), you must now use named arguments (e.g., `pprimarycensored(x, pdist, pwindow, D = 10)`). The affected functions are `dprimarycensored()`, `pprimarycensored()`, `rprimarycensored()`, and `qprimarycensored()`. (#63)
+- Stan functions now include an `L` parameter for lower truncation, placed before `D`. This affects `primarycensored_lpmf`, `primarycensored_lcdf`, `primarycensored_cdf`, `primarycensored_pmf`, and all vectorized variants. Update your Stan code to include the new parameter: `primarycensored_lpmf(d | dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params)`. (#63)
 
 ## New features
 
 - Added `dependencies` argument to `pcd_load_stan_functions()` that automatically resolves and includes all functions that the requested functions depend on. When `TRUE`, dependencies are included in topological order (dependencies before functions that use them). (#171)
 - Added `pcd_stan_function_deps()` to query the dependency graph of Stan functions, returning all dependencies for a given function in topological order. (#171)
 - Added left-truncation support via the `L` parameter to all primary censored distribution functions (`dprimarycensored()`, `pprimarycensored()`, `rprimarycensored()`, `qprimarycensored()`) and Stan functions. The `L` parameter specifies the minimum delay (lower truncation point), enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. This is useful for generation intervals and other settings where delays below a threshold cannot occur. Defaults to `L = 0` for backward compatibility. (#63)
-
-## Breaking changes
-
-- R functions now include an `L` parameter before `D` in their signatures. If you were using positional arguments for `D` (e.g., `pprimarycensored(x, pdist, pwindow, 10)`), you must now use named arguments (e.g., `pprimarycensored(x, pdist, pwindow, D = 10)`). The affected functions are `dprimarycensored()`, `pprimarycensored()`, `rprimarycensored()`, and `qprimarycensored()`. (#63)
-- Stan functions now include an `L` parameter for lower truncation, placed before `D`. This affects `primarycensored_lpmf`, `primarycensored_lcdf`, `primarycensored_cdf`, `primarycensored_pmf`, and all vectorized variants. Update your Stan code to include the new parameter: `primarycensored_lpmf(d | dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params)`. (#63)
 
 ## Bug fixes
 
