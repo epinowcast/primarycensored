@@ -252,14 +252,27 @@ test_that("dprimarycensored handles L not in unique_points", {
   # Use non-integer L that won't be in the computed unique_points
   # This exercises the branch where L needs to be computed separately
   pwindow <- 1
+  swindow <- 1
   L <- 1.5
   D <- 10
+  x <- 2:(D - 1)
+
   pmf <- dpcens(
-    2:(D - 1), plnorm, pwindow,
-    D = D, L = L, meanlog = 1, sdlog = 1
+    x, plnorm, pwindow,
+    swindow = swindow, L = L, D = D, meanlog = 1, sdlog = 1
   )
+
+  # Verify correctness by comparing to CDF differences
+  cdf_upper <- ppcens(
+    x + swindow, plnorm, pwindow,
+    L = L, D = D, meanlog = 1, sdlog = 1
+  )
+  cdf_lower <- ppcens(
+    x, plnorm, pwindow,
+    L = L, D = D, meanlog = 1, sdlog = 1
+  )
+  expected_pmf <- cdf_upper - cdf_lower
+
   expect_true(all(pmf >= 0))
-  # Sum won't be 1 because x=2 starts at interval [2,3), missing [1.5,2)
-  expect_gt(sum(pmf), 0)
-  expect_lt(sum(pmf), 1)
+  expect_equal(pmf, expected_pmf, tolerance = 1e-10)
 })
