@@ -349,4 +349,5 @@ This vignette uses simulated data, but you can adapt it for your own work:
 - **Change the distribution**: Replace `"lognormal"` with other distributions like `"gamma"` or `"weibull"` using `pcd_stan_dist_id()`
 - **Vary the censoring windows**: Adjust `pwindow` values to match your data's actual primary censoring intervals
 - **Handle different truncation times**: Use varying values in the `obs_time` column if your observations have different maximum observable delays
+- **Add lower truncation**: If you need to exclude delays below a minimum value (e.g., for generation intervals where day 0 is excluded in renewal models), add a `start_relative_obs_time` column to your data specifying the lower truncation point L for each observation
 - **Modify priors**: Adjust the `priors` argument in `pcd_as_stan_data()` to reflect your prior knowledge about the distribution parameters
