@@ -225,47 +225,6 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
 }
 
 /**
-  * Compute log CDFs at both truncation bounds L and D using analytical solution
-  * @ingroup truncation_helpers
-  *
-  * @param L Lower truncation point
-  * @param D Upper truncation point
-  * @param dist_id Distribution identifier
-  * @param params Array of distribution parameters
-  * @param pwindow Primary event window
-  * @param primary_id Primary distribution identifier
-  *
-  * @return 2-element vector: [log_cdf_L, log_cdf_D]
-  */
-vector primarycensored_analytical_truncation_bounds(
-  data real L, data real D,
-  int dist_id, array[] real params, data real pwindow,
-  int primary_id
-) {
-  vector[2] result;
-
-  // Get CDF at lower truncation point L
-  if (L <= 0) {
-    result[1] = negative_infinity();
-  } else {
-    result[1] = primarycensored_analytical_lcdf_raw(
-      L, dist_id, params, pwindow, primary_id
-    );
-  }
-
-  // Get CDF at upper truncation point D
-  if (is_inf(D)) {
-    result[2] = 0;
-  } else {
-    result[2] = primarycensored_analytical_lcdf_raw(
-      D, dist_id, params, pwindow, primary_id
-    );
-  }
-
-  return result;
-}
-
-/**
   * Compute the primary event censored log CDF analytically for a single delay
   * @ingroup primary_event_analytical_distributions
   *
@@ -299,8 +258,8 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
 
   // Apply truncation normalization
   if (!is_inf(D) || L > 0) {
-    vector[2] bounds = primarycensored_analytical_truncation_bounds(
-      L, D, dist_id, params, pwindow, primary_id
+    vector[2] bounds = primarycensored_truncation_bounds(
+      L, D, dist_id, params, pwindow, primary_id, primary_params
     );
     real log_cdf_L = bounds[1];
     real log_cdf_D = bounds[2];

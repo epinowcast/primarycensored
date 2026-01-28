@@ -233,8 +233,8 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param d_upper Upper bound for the delay interval
-  * @param D Maximum delay (upper truncation point)
   * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
   * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
@@ -327,8 +327,8 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param d_upper Upper bound for the delay interval
-  * @param D Maximum delay (upper truncation point)
   * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
   * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   *
@@ -464,10 +464,13 @@ vector primarycensored_sone_lpmf_vectorized(
   // Compute log PMFs: log((F(d) - F(d-1)) / (F(D) - F(L)))
   for (d in 1:upper_interval) {
     if (d <= L) {
-      // Delay interval [d-1, d) is excluded by left truncation
+      // Delay interval [d-1, d) is entirely at or below L
       log_pmfs[d] = negative_infinity();
+    } else if (d - 1 < L) {
+      // L falls within interval [d-1, d), so compute mass in [L, d)
+      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
     } else if (d == 1) {
-      // First interval [0, 1): F(0) = 0, so PMF = F(1) / normalizer
+      // First interval [0, 1) with L <= 0: F(0) = 0, so PMF = F(1) / normalizer
       log_pmfs[d] = log_cdfs[d] - log_normalizer;
     } else {
       // Standard case: PMF = (F(d) - F(d-1)) / normalizer
