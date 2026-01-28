@@ -10,8 +10,8 @@ fitdistdoublecens(
   left = "left",
   right = "right",
   pwindow = "pwindow",
-  D = "D",
   L = "L",
+  D = "D",
   dprimary = stats::dunif,
   dprimary_args = list(),
   truncation_check_multiplier = 2,
@@ -39,14 +39,15 @@ functions are defined and loaded.}
 
 \item{pwindow}{Column name for primary window (default: "pwindow").}
 
+\item{L}{Column name for minimum delay (lower truncation point). If greater
+than 0, the distribution is left-truncated at L. This is useful for
+modelling generation intervals where day 0 is excluded, particularly when
+used in renewal models. (default: "L"). If the column is not present in
+censdata, L = 0 is assumed.}
+
 \item{D}{Column name for maximum delay (upper truncation point). If finite,
 the distribution is truncated at D. If set to Inf, no upper truncation is
 applied. (default: "D").}
-
-\item{L}{Column name for minimum delay (lower truncation point). If greater
-than 0, the distribution is left-truncated at L. This is useful for
-modelling generation intervals where day 0 is excluded. (default: "L"). If
-the column is not present in censdata, L = 0 is assumed.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
