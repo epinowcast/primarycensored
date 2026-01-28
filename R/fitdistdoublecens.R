@@ -136,16 +136,7 @@ fitdistdoublecens <- function(
   }
 
   # Validate truncation bounds: L must be less than D
-  invalid_rows <- which(censdata[[L]] >= censdata[[D]])
-  if (length(invalid_rows) > 0) {
-    stop(
-      "L must be less than D. Found ", length(invalid_rows),
-      " observation(s) where L >= D. First invalid row: ",
-      invalid_rows[1], " (L = ", censdata[[L]][invalid_rows[1]],
-      ", D = ", censdata[[D]][invalid_rows[1]], ")",
-      call. = FALSE
-    )
-  }
+  .check_truncation_bounds_df(censdata, L, D)
 
   # Validate that observations are not below L
   invalid_obs <- which(censdata[[left]] < censdata[[L]])
@@ -326,8 +317,8 @@ fitdistdoublecens <- function(
             q_i,
             pdist,
             pwindow = pw,
-            D = D_i,
             L = L_i,
+            D = D_i,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
             ...

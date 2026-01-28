@@ -44,8 +44,8 @@ for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distrib
 
 \item{L}{Minimum delay (lower truncation point). If greater than 0, the
 distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded. Defaults to 0 (no left
-truncation).}
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults

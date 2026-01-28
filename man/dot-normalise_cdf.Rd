@@ -4,16 +4,16 @@
 \alias{.normalise_cdf}
 \title{Normalise a primary event censored CDF}
 \usage{
-.normalise_cdf(result, q, D, L, pcens_obj, pwindow)
+.normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 }
 \arguments{
 \item{result}{Numeric vector of CDF values to normalise.}
 
 \item{q}{Numeric vector of quantiles at which CDF was evaluated.}
 
-\item{D}{Numeric upper truncation point}
-
 \item{L}{Numeric lower truncation point}
+
+\item{D}{Numeric upper truncation point}
 
 \item{pcens_obj}{A primarycensored object as created by \code{\link[=new_pcens]{new_pcens()}}.}
 

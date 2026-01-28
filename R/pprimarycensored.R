@@ -18,8 +18,8 @@
 #'
 #' @param L Minimum delay (lower truncation point). If greater than 0, the
 #'  distribution is left-truncated at L. This is useful for modelling
-#'  generation intervals where day 0 is excluded. Defaults to 0 (no left
-#'  truncation).
+#'  generation intervals where day 0 is excluded, particularly when used in
+#'  renewal models. Defaults to 0 (no left truncation).
 #'
 #' @param D Maximum delay (upper truncation point). If finite, the distribution
 #'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -116,7 +116,7 @@ pprimarycensored <- function(
     ...) {
   .check_truncation_bounds(L, D)
 
-  check_pdist(pdist, D, ...)
+  check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   # Create a new primarycensored object
@@ -132,7 +132,7 @@ pprimarycensored <- function(
 
   # Apply truncation normalization if needed
   if (!is.infinite(D) || L > 0) {
-    result <- .normalise_cdf(result, q, D, L, pcens_obj, pwindow)
+    result <- .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
   }
 
   return(result)
@@ -148,9 +148,9 @@ pprimarycensored <- function(
 #'
 #' @param q Numeric vector of quantiles at which CDF was evaluated.
 #'
-#' @param D Numeric upper truncation point
-#'
 #' @param L Numeric lower truncation point
+#'
+#' @param D Numeric upper truncation point
 #'
 #' @param pcens_obj A primarycensored object as created by [new_pcens()].
 #'
@@ -159,7 +159,7 @@ pprimarycensored <- function(
 #' @return Normalised CDF values as a numeric vector
 #'
 #' @keywords internal
-.normalise_cdf <- function(result, q, D, L, pcens_obj, pwindow) {
+.normalise_cdf <- function(result, q, L, D, pcens_obj, pwindow) {
   # Get CDF at upper truncation point D
   if (any(q == D)) {
     cdf_D <- result[which.max(q == D)]

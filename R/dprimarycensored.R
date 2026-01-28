@@ -81,7 +81,7 @@ dprimarycensored <- function(
     ...) {
   .check_truncation_bounds(L, D)
 
-  check_pdist(pdist, D, ...)
+  check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   if (max(x + swindow) > D) {
@@ -117,11 +117,11 @@ dprimarycensored <- function(
   cdfs <- pprimarycensored(
     unique_points,
     pdist,
-    pwindow,
-    Inf,
+    pwindow = pwindow,
     L = 0,
-    dprimary,
-    dprimary_args,
+    D = Inf,
+    dprimary = dprimary,
+    dprimary_args = dprimary_args,
     ...
   )
 
@@ -155,11 +155,11 @@ dprimarycensored <- function(
       cdf_D <- pprimarycensored(
         D,
         pdist,
-        pwindow,
-        Inf,
+        pwindow = pwindow,
         L = 0,
-        dprimary,
-        dprimary_args,
+        D = Inf,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args,
         ...
       )
     }
@@ -173,11 +173,11 @@ dprimarycensored <- function(
       cdf_L <- pprimarycensored(
         L,
         pdist,
-        pwindow,
-        Inf,
+        pwindow = pwindow,
         L = 0,
-        dprimary,
-        dprimary_args,
+        D = Inf,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args,
         ...
       )
     }

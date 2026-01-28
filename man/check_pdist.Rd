@@ -4,7 +4,7 @@
 \alias{check_pdist}
 \title{Check if a function is a valid cumulative distribution function (CDF)}
 \usage{
-check_pdist(pdist, D, ...)
+check_pdist(pdist, D = Inf, ...)
 }
 \arguments{
 \item{pdist}{Distribution function (CDF). The package can identify base R

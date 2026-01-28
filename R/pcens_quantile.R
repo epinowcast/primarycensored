@@ -106,7 +106,7 @@ pcens_quantile.default <- function(
     objective <- function(q) {
       cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
       if (!is.infinite(D) || L > 0) {
-        cdf_val <- .normalise_cdf(cdf_val, q, D, L, object, pwindow)
+        cdf_val <- .normalise_cdf(cdf_val, q, L, D, object, pwindow)
       }
       (cdf_val - prob)^2
     }

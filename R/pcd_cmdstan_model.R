@@ -68,13 +68,13 @@ pcd_cmdstan_model <- function(
 #'
 #' @param pwindow Column name for primary window (default: "pwindow")
 #'
-#' @param relative_obs_time Column name for relative observation time, used as
-#'  the upper truncation point D (default: "relative_obs_time")
-#'
 #' @param start_relative_obs_time Column name for start of relative observation
 #'  time, used as the lower truncation point L. If the column is not present in
 #'  data, L = 0 is assumed for all observations.
 #'  (default: "start_relative_obs_time")
+#'
+#' @param relative_obs_time Column name for relative observation time, used as
+#'  the upper truncation point D (default: "relative_obs_time")
 #'
 #' @param dist_id Integer identifying the delay distribution:
 #'   You can use [pcd_stan_dist_id()] to get the dist ID for a
@@ -135,8 +135,8 @@ pcd_as_stan_data <- function(
     delay_upper = "delay_upper",
     n = "n",
     pwindow = "pwindow",
-    relative_obs_time = "relative_obs_time",
     start_relative_obs_time = "start_relative_obs_time",
+    relative_obs_time = "relative_obs_time",
     dist_id,
     primary_id,
     param_bounds,
@@ -180,18 +180,7 @@ pcd_as_stan_data <- function(
   }
 
   # Validate truncation bounds: L must be less than D
-  L_col <- start_relative_obs_time
-  D_col <- relative_obs_time
-  invalid_rows <- which(data[[L_col]] >= data[[D_col]])
-  if (length(invalid_rows) > 0) {
-    stop(
-      "L must be less than D. Found ", length(invalid_rows),
-      " observation(s) where L >= D. First invalid row: ",
-      invalid_rows[1], " (L = ", data[[L_col]][invalid_rows[1]],
-      ", D = ", data[[D_col]][invalid_rows[1]], ")",
-      call. = FALSE
-    )
-  }
+  .check_truncation_bounds_df(data, start_relative_obs_time, relative_obs_time)
 
   if (!is.null(truncation_check_multiplier)) {
     unique_D <- unique(data[[relative_obs_time]])

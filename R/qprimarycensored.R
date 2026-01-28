@@ -78,7 +78,7 @@ qprimarycensored <- function(
     ...) {
   .check_truncation_bounds(L, D)
 
-  check_pdist(pdist, Inf, ...)
+  check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, dprimary_args)
 
   # Create a new primarycensored object
