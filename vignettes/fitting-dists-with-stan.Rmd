@@ -39,7 +39,7 @@ By the end of this vignette, you will be able to:
 
 ## What might I need to know before starting
 
-This vignette builds on the concepts introduced in the [Getting Started with primarycensored](primarycensored.html) vignette and assumes familiarity with using Stan tools as covered in the [How to use primarycensored with Stan](using-stan-tools.html) vignette.
+This vignette builds on the concepts introduced in the [Getting started with primarycensored](primarycensored.html) vignette and assumes familiarity with using Stan tools as covered in the [How to use primarycensored with Stan](using-stan-tools.html) vignette.
 
 ## Packages used in this vignette
 

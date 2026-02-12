@@ -20,6 +20,10 @@ This major release adds left-truncation support via the `L` parameter, enabling 
 
 - Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan functions (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_lcdf`, `expgrowth_rng`, `primary_lpdf`) to avoid conflicts with Stan built-in functions. CmdStan 2.38.0 now strictly enforces reserved keyword restrictions when exposing Stan functions to R. (#258)
 
+## Documentation
+
+- Updated vignette titles and section headers to use sentence case consistently. (#273)
+
 # primarycensored 1.3.0
 
 This minor release improves documentation for `fitdistdoublecens()` and adds learning objective sections to vignettes. It also fixes floating-point precision issues in `dprimarycensored()` and adds bounds checking to CDF methods.
