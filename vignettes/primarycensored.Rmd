@@ -11,7 +11,7 @@ bibliography: library.bib
 csl: https://raw.githubusercontent.com/citation-style-language/styles/master/apa-numeric-superscript-brackets.csl
 link-citations: true
 vignette: >
-  %\VignetteIndexEntry{Getting Started with primarycensored}
+  %\VignetteIndexEntry{Getting started with primarycensored}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
