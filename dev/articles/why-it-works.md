@@ -56,7 +56,7 @@ continuous distributions that accounts for this.
 
 ## 3 Statistical model used in `primarycensored`
 
-As described in [Getting Started with
+As described in [Getting started with
 `primarycensored`](https://primarycensored.epinowcast.org/dev/articles/primarycensored.md),
 `primarycensored` focuses on a subset of methods from time to event
 analysis that address data missingness problems commonly found in

@@ -134,7 +134,7 @@
 <h3 id="what-might-i-need-to-know-before-starting">
 <span class="header-section-number">1.3</span> What might I need to know before starting<a class="anchor" aria-label="anchor" href="#what-might-i-need-to-know-before-starting"></a>
 </h3>
-<p>This vignette builds on the concepts introduced in the <a href="primarycensored.html">Getting Started with primarycensored</a> vignette and assumes familiarity with using Stan tools as covered in the <a href="using-stan-tools.html">How to use primarycensored with Stan</a> vignette.</p>
+<p>This vignette builds on the concepts introduced in the <a href="primarycensored.html">Getting started with primarycensored</a> vignette and assumes familiarity with using Stan tools as covered in the <a href="using-stan-tools.html">How to use primarycensored with Stan</a> vignette.</p>
 </div>
 <div class="section level3" number="1.4">
 <h3 id="packages-used-in-this-vignette">
@@ -431,9 +431,9 @@
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
 <pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.73 -3422.43 0.97 0.72 -3424.63 -3421.80 1.00     1447     1562</span></span>
-<span><span class="co">##  params[1]     1.55     1.54 0.04 0.05     1.48     1.62 1.00     1089     1253</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1011     1167</span></span></code></pre>
+<span><span class="co">##  lp__      -3422.70 -3422.42 0.92 0.69 -3424.52 -3421.80 1.00     1436     1797</span></span>
+<span><span class="co">##  params[1]     1.55     1.54 0.05 0.04     1.48     1.63 1.01      971     1015</span></span>
+<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.01     1032     1258</span></span></code></pre>
 <p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example (i.e. the meanlog and sdlog parameters of the lognormal distribution). We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 <div class="section level3" number="5.1">

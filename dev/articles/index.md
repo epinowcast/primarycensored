@@ -17,7 +17,7 @@
   A guide on how to use primarycensored with Stan for Bayesian inference
   of epidemiological delay distributions.
 
-- [Getting Started with
+- [Getting started with
   primarycensored](https://primarycensored.epinowcast.org/dev/articles/primarycensored.md):
 
   A quick start example demonstrating use of primarycensored.

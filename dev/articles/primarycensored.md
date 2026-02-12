@@ -1,4 +1,4 @@
-# Getting Started with primarycensored
+# Getting started with primarycensored
 
 ## 1 Introduction
 

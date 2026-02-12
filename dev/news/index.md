@@ -79,6 +79,12 @@ packages from dependencies.
   reserved keyword restrictions when exposing Stan functions to R.
   ([\#258](https://github.com/epinowcast/primarycensored/issues/258))
 
+### Documentation
+
+- Updated vignette titles and section headers to use sentence case
+  consistently.
+  ([\#273](https://github.com/epinowcast/primarycensored/issues/273))
+
 ## primarycensored 1.3.0
 
 CRAN release: 2025-12-01

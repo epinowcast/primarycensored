@@ -82,7 +82,7 @@ where the average of the distribution can be calculated analytically,
 which includes commonly used non-negative distributions such as the
 Gamma, Log-Normal and Weibull distributions.
 
-### 3.2 General Discrete censored delay distribution
+### 3.2 General discrete censored delay distribution
 
 First, we note that equation 3.3 from [“Why it
 works”](https://primarycensored.epinowcast.org/dev/articles/why-it-works.md)
