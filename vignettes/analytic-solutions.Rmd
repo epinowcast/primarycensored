@@ -146,7 +146,7 @@ $$
 
 Which was also found by Cori _et al_ [@cori2013new].
 
-## Log-normal distribution
+## Log-Normal distribution
 
 The Log-Normal distribution has the density function:
 
@@ -163,7 +163,7 @@ F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
 $$
 Where $\Phi$ is the standard normal distribution function.
 
-### Log-normal partial expectation
+### Log-Normal partial expectation
 
 We know that the full expectation of the Log-Normal distribution is $\mathbb{E}[T] = e^{\mu + \frac{1}{2} \sigma^2}$, which can be calculated by integration with the integration substitution $y = (\ln z - \mu) / \sigma$. This has transformation Jacobian:
 
@@ -183,7 +183,7 @@ $$
 \end{aligned} (\#eq:lognormpartexp)
 $$
 
-### Survival function of $S_{+}$ for log-normal distribution
+### Survival function of $S_{+}$ for Log-Normal distribution
 
 By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccensunifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
 
@@ -191,7 +191,7 @@ $$
 Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 $$
 
-### Log-normal discrete censored delay distribution
+### Log-Normal discrete censored delay distribution
 
 By substituting \@ref(eq:lognormpartexp) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
 
