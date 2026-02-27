@@ -92,6 +92,35 @@ test_that(
       tolerance = 1e-6,
       info = "dist_id 17 should be logistic"
     )
+
+    # Normal: R dist_id = 18
+    stan_result <- dist_lcdf(delay, c(1.0, 0.5), 18L)
+    r_result <- pnorm(delay, 1.0, 0.5, log.p = TRUE)
+    expect_equal(
+      stan_result, r_result,
+      tolerance = 1e-6,
+      info = "dist_id 18 should be normal"
+    )
+
+    # Student's t: R dist_id = 23
+    stan_result <- dist_lcdf(delay, c(5.0, 0.0, 1.0), 23L)
+    r_result <- pt(
+      (delay - 0.0) / 1.0, df = 5.0, log.p = TRUE
+    )
+    expect_equal(
+      stan_result, r_result,
+      tolerance = 1e-6,
+      info = "dist_id 23 should be student t"
+    )
+
+    # Uniform: R dist_id = 24
+    stan_result <- dist_lcdf(delay, c(0.0, 5.0), 24L)
+    r_result <- punif(delay, 0.0, 5.0, log.p = TRUE)
+    expect_equal(
+      stan_result, r_result,
+      tolerance = 1e-6,
+      info = "dist_id 24 should be uniform"
+    )
   }
 )
 
@@ -141,6 +170,17 @@ test_that(
         name = "logis",
         params = c(1.0, 0.5),
         r_cdf = function(d, p) plogis(d, p[1], p[2], log.p = TRUE)
+      ),
+      list(
+        name = "norm",
+        params = c(1.0, 0.5),
+        r_cdf = function(d, p) pnorm(d, p[1], p[2], log.p = TRUE)
+      ),
+      list(
+        name = "unif",
+        delay = 2.5,
+        params = c(0.0, 5.0),
+        r_cdf = function(d, p) punif(d, p[1], p[2], log.p = TRUE)
       )
     )
 

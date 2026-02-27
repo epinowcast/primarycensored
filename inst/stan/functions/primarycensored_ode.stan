@@ -7,7 +7,11 @@
   * @param dist_id Distribution identifier matching pcd_distributions in R:
   *   1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential,
   *   9: Beta, 12: Cauchy, 13: Chi-square,
-  *   15: Gumbel, 16: Inverse Gamma, 17: Logistic
+  *   15: Gumbel, 16: Inverse Gamma, 17: Logistic,
+  *   18: Normal, 19: Inverse Chi-square,
+  *   20: Double Exponential, 21: Pareto,
+  *   22: Scaled Inverse Chi-square, 23: Student's t,
+  *   24: Uniform, 25: von Mises
   *
   * @return Log CDF of the delay distribution
   *
@@ -33,6 +37,14 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 15) return gumbel_lcdf(delay | params[1], params[2]);
   else if (dist_id == 16) return inv_gamma_lcdf(delay | params[1], params[2]);
   else if (dist_id == 17) return logistic_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 18) return normal_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 19) return inv_chi_square_lcdf(delay | params[1]);
+  else if (dist_id == 20) return double_exponential_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 21) return pareto_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 22) return scaled_inv_chi_square_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 23) return student_t_lcdf(delay | params[1], params[2], params[3]);
+  else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
   else reject("Invalid distribution identifier: ", dist_id);
 }
 
