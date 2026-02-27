@@ -19,6 +19,7 @@ This major release adds left-truncation support via the `L` parameter, enabling 
 
 ## Bug fixes
 
+- Fixed `expgrowth_lpdf` Stan function to support negative growth rates. Previously, `log(r)` returned NaN for `r < 0`. Now uses `log(abs(r))` and `log(abs(...))` for the denominator. (#276)
 - Fixed Stan `dist_lcdf` distribution ID mapping to match R's `pcd_distributions` table. Previously, most distribution IDs were mismatched between R and Stan (e.g. `pcd_stan_dist_id("weibull")` returned 3 but Stan's `dist_lcdf` used ID 3 for the Normal distribution). Only lognormal (1), gamma (2), and exponential (4) were correct. This affected the ODE numerical integration path for all mismatched distributions. (#277)
 - Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan functions (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_lcdf`, `expgrowth_rng`, `primary_lpdf`) to avoid conflicts with Stan built-in functions. CmdStan 2.38.0 now strictly enforces reserved keyword restrictions when exposing Stan functions to R. (#258)
 

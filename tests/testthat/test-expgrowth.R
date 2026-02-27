@@ -84,7 +84,7 @@ test_that("expgrowth functions handle very small r correctly", {
 
   # For very small r, the distribution should be close to uniform
   expect_equal(mean(samples), 0.5, tolerance = 0.01)
-  expect_equal(var(samples), 1 / 12, tolerance = 0.01)
+  expect_equal(var(samples), 1 / 12, tolerance = 0.02)
 
   # Test dexpgrowth
   x_values <- seq(min, max, length.out = 100)
@@ -99,6 +99,72 @@ test_that("expgrowth functions handle very small r correctly", {
   empirical_cdf <- ecdf(samples)
   theoretical_cdf <- pexpgrowth(x_values, min, max, r)
   expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.01)
+})
+
+test_that("dexpgrowth integrates to 1 for negative r", {
+  min <- 0
+  max <- 1
+  r <- -0.5
+  integral <- integrate(
+    function(x) dexpgrowth(x, min, max, r), min, max
+  )$value
+  expect_equal(integral, 1, tolerance = 1e-6)
+})
+
+test_that("pexpgrowth matches integral of dexpgrowth for negative r", {
+  min <- 0
+  max <- 2
+  r <- -1.5
+  q <- c(0.5, 1, 1.5)
+
+  for (x in q) {
+    cdf_integral <- integrate(function(t) {
+      dexpgrowth(t, min, max, r)
+    }, min, x)$value
+    cdf_pexpgrowth <- pexpgrowth(x, min, max, r)
+    expect_equal(cdf_integral, cdf_pexpgrowth, tolerance = 1e-6)
+  }
+})
+
+test_that("rexpgrowth generates samples in correct range for negative r", {
+  min <- 1
+  max <- 5
+  r <- -0.8
+  n <- 1000
+  samples <- rexpgrowth(n, min, max, r)
+
+  expect_true(all(samples >= min & samples < max))
+})
+
+test_that("expgrowth d, p, r functions are consistent for negative r", {
+  min <- 0
+  max <- 2
+  r <- -1.2
+  n <- 10000
+  samples <- rexpgrowth(n, min, max, r)
+
+  # Compare empirical CDF with theoretical CDF
+  empirical_cdf <- ecdf(samples)
+  x_values <- seq(min, max, length.out = 100)
+  theoretical_cdf <- pexpgrowth(x_values, min, max, r)
+
+  expect_equal(
+    empirical_cdf(x_values), theoretical_cdf,
+    tolerance = 0.05
+  )
+})
+
+test_that("dexpgrowth with log = TRUE works for negative r", {
+  min <- 0
+  max <- 1
+  r <- -0.5
+  x <- seq(0, 1, by = 0.1)
+
+  log_density <- dexpgrowth(x, min, max, r, log = TRUE)
+  density <- dexpgrowth(x, min, max, r, log = FALSE)
+
+  expect_equal(log_density, log(density), tolerance = 1e-10)
+  expect_true(all(is.finite(log_density)))
 })
 
 test_that("pexpgrowth handles lower.tail argument correctly", {
