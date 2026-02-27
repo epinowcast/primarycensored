@@ -32,7 +32,7 @@ test_that(
       info = "dist_id 3 should be weibull"
     )
 
-    # Exponential: R dist_id = 4
+    # Exponential: R dist_id = 4 (second param unused, padding)
     stan_result <- dist_lcdf(delay, c(0.5, 0.0), 4L)
     r_result <- pexp(delay, 0.5, log.p = TRUE)
     expect_equal(
@@ -59,7 +59,7 @@ test_that(
       info = "dist_id 12 should be cauchy"
     )
 
-    # Chi-square: R dist_id = 13
+    # Chi-square: R dist_id = 13 (second param unused, padding)
     stan_result <- dist_lcdf(delay, c(3.0, 0.0), 13L)
     r_result <- pchisq(delay, 3.0, log.p = TRUE)
     expect_equal(
@@ -82,6 +82,18 @@ test_that(
       stan_result, r_result,
       tolerance = 1e-6,
       info = "dist_id 16 should be inverse gamma"
+    )
+
+    # Gumbel: R dist_id = 15
+    # Stan gumbel(mu, beta): CDF = exp(-exp(-(x - mu) / beta))
+    gumbel_mu <- 1.0
+    gumbel_beta <- 0.5
+    stan_result <- dist_lcdf(delay, c(gumbel_mu, gumbel_beta), 15L)
+    r_result <- log(exp(-exp(-(delay - gumbel_mu) / gumbel_beta)))
+    expect_equal(
+      stan_result, r_result,
+      tolerance = 1e-6,
+      info = "dist_id 15 should be gumbel"
     )
 
     # Logistic: R dist_id = 17
@@ -147,7 +159,7 @@ test_that(
       ),
       list(
         name = "exp",
-        params = c(0.5, 0.0),
+        params = c(0.5, 0.0), # second param unused, padding
         r_cdf = function(d, p) pexp(d, p[1], log.p = TRUE)
       ),
       list(
@@ -163,13 +175,27 @@ test_that(
       ),
       list(
         name = "chisq",
-        params = c(3.0, 0.0),
+        params = c(3.0, 0.0), # second param unused, padding
         r_cdf = function(d, p) pchisq(d, p[1], log.p = TRUE)
       ),
       list(
         name = "logis",
         params = c(1.0, 0.5),
         r_cdf = function(d, p) plogis(d, p[1], p[2], log.p = TRUE)
+      ),
+      list(
+        name = "invgamma",
+        params = c(3.0, 2.0),
+        r_cdf = function(d, p) {
+          pgamma(p[2] / d, p[1], 1, lower.tail = FALSE, log.p = TRUE)
+        }
+      ),
+      list(
+        name = "gumbel",
+        params = c(1.0, 0.5),
+        r_cdf = function(d, p) {
+          log(exp(-exp(-(d - p[1]) / p[2])))
+        }
       ),
       list(
         name = "norm",
