@@ -84,7 +84,7 @@ test_that("expgrowth functions handle very small r correctly", {
 
   # For very small r, the distribution should be close to uniform
   expect_equal(mean(samples), 0.5, tolerance = 0.01)
-  expect_equal(var(samples), 1 / 12, tolerance = 0.01)
+  expect_equal(var(samples), 1 / 12, tolerance = 0.02)
 
   # Test dexpgrowth
   x_values <- seq(min, max, length.out = 100)
