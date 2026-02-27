@@ -148,7 +148,7 @@ Functions</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">delay</td><td>Time delay </td></tr>
     <tr><td class="paramname">params</td><td>Distribution parameters </td></tr>
-    <tr><td class="paramname">dist_id</td><td>Distribution identifier 1: Lognormal, 2: Gamma, 3: Normal, 4: Exponential, 5: Weibull, 6: Beta, 7: Cauchy, 8: Chi-square, 9: Inverse Chi-square, 10: Double Exponential, 11: Inverse Gamma, 12: Logistic, 13: Pareto, 14: Scaled Inverse Chi-square, 15: Student's t, 16: Uniform, 17: von Mises</td></tr>
+    <tr><td class="paramname">dist_id</td><td>Distribution identifier matching pcd_distributions in R: 1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential, 9: Beta, 12: Cauchy, 13: Chi-square, 15: Gumbel, 16: Inverse Gamma, 17: Logistic, 18: Normal, 19: Inverse Chi-square, 20: Double Exponential, 21: Pareto, 22: Scaled Inverse Chi-square, 23: Student's t, 24: Uniform, 25: von Mises</td></tr>
   </table>
   </dd>
 </dl>
@@ -158,9 +158,9 @@ Functions</h2></td></tr>
 <div class="line">array[2] real params = {0.0, 1.0}; <span class="comment">// mean and standard deviation on log scale</span></div>
 <div class="line"><span class="keywordtype">int</span> dist_id = 1; <span class="comment">// Lognormal</span></div>
 <div class="line">real log_cdf = <a class="code hl_function" href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(delay, params, dist_id);</div>
-<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00024">primarycensored_ode.stan:24</a></div></div>
+<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00026">primarycensored_ode.stan:26</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00024">24</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00026">26</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
