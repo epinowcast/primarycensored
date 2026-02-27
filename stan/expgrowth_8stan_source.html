@@ -122,50 +122,51 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordflow">return</span> -log(xmax - xmin);</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>  }</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keywordflow">return</span> log(r) + r * (x - xmin) - log(exp(r * xmax) - exp(r * xmin));</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>}</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keywordflow">return</span> log(abs(r)) + r * (x - xmin) -</div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    log(abs(exp(r * xmax) - exp(r * xmin)));</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>}</div>
 </div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
-<div class="foldopen" id="foldopen00051" data-start="{" data-end="}">
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno"><a class="line" href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">   51</a></span>real <a class="code hl_function" href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">expgrowth_cdf</a>(real x, real xmin, real xmax, real r) {</div>
-<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>  <span class="keywordflow">if</span> (x &lt; xmin) {</div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  }</div>
-<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  <span class="keywordflow">if</span> (x &gt; xmax) {</div>
-<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>    <span class="keywordflow">return</span> 1;</div>
-<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  }</div>
-<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
-<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>    <span class="keywordflow">return</span> (x - xmin) / (xmax - xmin);</div>
-<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  }</div>
-<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  <span class="keywordflow">return</span> (exp(r * (x - xmin)) - exp(r * xmin)) / (exp(r * xmax) - exp(r * xmin));</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>}</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span> </div>
+<div class="foldopen" id="foldopen00052" data-start="{" data-end="}">
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno"><a class="line" href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">   52</a></span>real <a class="code hl_function" href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">expgrowth_cdf</a>(real x, real xmin, real xmax, real r) {</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>  <span class="keywordflow">if</span> (x &lt; xmin) {</div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  }</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="keywordflow">if</span> (x &gt; xmax) {</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>    <span class="keywordflow">return</span> 1;</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  }</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordflow">return</span> (x - xmin) / (xmax - xmin);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  }</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <span class="keywordflow">return</span> (exp(r * (x - xmin)) - exp(r * xmin)) / (exp(r * xmax) - exp(r * xmin));</div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>}</div>
 </div>
-<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span> </div>
-<div class="foldopen" id="foldopen00074" data-start="{" data-end="}">
-<div class="line"><a id="l00074" name="l00074"></a><span class="lineno"><a class="line" href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">   74</a></span>real <a class="code hl_function" href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">expgrowth_lcdf</a>(real x, real xmin, real xmax, real r) {</div>
-<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span>  <span class="keywordflow">if</span> (x &lt; xmin) {</div>
-<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>    <span class="keywordflow">return</span> negative_infinity();</div>
-<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  }</div>
-<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  <span class="keywordflow">if</span> (x &gt; xmax) {</div>
-<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>    <span class="keywordflow">return</span> 0;</div>
-<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>  }</div>
-<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  <span class="keywordflow">return</span> log(<a class="code hl_function" href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">expgrowth_cdf</a>(x | xmin, xmax, r));</div>
-<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>}</div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
+<div class="foldopen" id="foldopen00075" data-start="{" data-end="}">
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno"><a class="line" href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">   75</a></span>real <a class="code hl_function" href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">expgrowth_lcdf</a>(real x, real xmin, real xmax, real r) {</div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  <span class="keywordflow">if</span> (x &lt; xmin) {</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>    <span class="keywordflow">return</span> negative_infinity();</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  }</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  <span class="keywordflow">if</span> (x &gt; xmax) {</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>    <span class="keywordflow">return</span> 0;</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  }</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>  <span class="keywordflow">return</span> log(<a class="code hl_function" href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">expgrowth_cdf</a>(x | xmin, xmax, r));</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>}</div>
 </div>
-<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span> </div>
-<div class="foldopen" id="foldopen00093" data-start="{" data-end="}">
-<div class="line"><a id="l00093" name="l00093"></a><span class="lineno"><a class="line" href="group__exponential__growth__distributions.html#gaf0dfb32d75baad982ac87e145fd64be0">   93</a></span>real <a class="code hl_function" href="group__exponential__growth__distributions.html#gaf0dfb32d75baad982ac87e145fd64be0">expgrowth_rng</a>(real xmin, real xmax, real r) {</div>
-<div class="line"><a id="l00094" name="l00094"></a><span class="lineno">   94</span>  real u = uniform_rng(0, 1);</div>
-<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
-<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>    <span class="keywordflow">return</span> xmin + u * (xmax - xmin);</div>
-<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  }</div>
-<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  <span class="keywordflow">return</span> xmin + log(u * (exp(r * xmax) - exp(r * xmin)) + exp(r * xmin)) / r;</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>}</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span> </div>
+<div class="foldopen" id="foldopen00094" data-start="{" data-end="}">
+<div class="line"><a id="l00094" name="l00094"></a><span class="lineno"><a class="line" href="group__exponential__growth__distributions.html#gaf0dfb32d75baad982ac87e145fd64be0">   94</a></span>real <a class="code hl_function" href="group__exponential__growth__distributions.html#gaf0dfb32d75baad982ac87e145fd64be0">expgrowth_rng</a>(real xmin, real xmax, real r) {</div>
+<div class="line"><a id="l00095" name="l00095"></a><span class="lineno">   95</span>  real u = uniform_rng(0, 1);</div>
+<div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
+<div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordflow">return</span> xmin + u * (xmax - xmin);</div>
+<div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  }</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  <span class="keywordflow">return</span> xmin + log(u * (exp(r * xmax) - exp(r * xmin)) + exp(r * xmin)) / r;</div>
+<div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>}</div>
 </div>
-<div class="ttc" id="agroup__exponential__growth__distributions_html_ga47c04b4df4d6d49e95e53f0151c0ead8"><div class="ttname"><a href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">expgrowth_lcdf</a></div><div class="ttdeci">real expgrowth_lcdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00074">expgrowth.stan:74</a></div></div>
+<div class="ttc" id="agroup__exponential__growth__distributions_html_ga47c04b4df4d6d49e95e53f0151c0ead8"><div class="ttname"><a href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">expgrowth_lcdf</a></div><div class="ttdeci">real expgrowth_lcdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00075">expgrowth.stan:75</a></div></div>
 <div class="ttc" id="agroup__exponential__growth__distributions_html_ga5aa3a650437bfdb837185cb79c829662"><div class="ttname"><a href="group__exponential__growth__distributions.html#ga5aa3a650437bfdb837185cb79c829662">expgrowth_lpdf</a></div><div class="ttdeci">real expgrowth_lpdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00031">expgrowth.stan:31</a></div></div>
-<div class="ttc" id="agroup__exponential__growth__distributions_html_gae41dce9f9c561a88a820b5a23c1dca9b"><div class="ttname"><a href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">expgrowth_cdf</a></div><div class="ttdeci">real expgrowth_cdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00051">expgrowth.stan:51</a></div></div>
-<div class="ttc" id="agroup__exponential__growth__distributions_html_gaf0dfb32d75baad982ac87e145fd64be0"><div class="ttname"><a href="group__exponential__growth__distributions.html#gaf0dfb32d75baad982ac87e145fd64be0">expgrowth_rng</a></div><div class="ttdeci">real expgrowth_rng(real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00093">expgrowth.stan:93</a></div></div>
+<div class="ttc" id="agroup__exponential__growth__distributions_html_gae41dce9f9c561a88a820b5a23c1dca9b"><div class="ttname"><a href="group__exponential__growth__distributions.html#gae41dce9f9c561a88a820b5a23c1dca9b">expgrowth_cdf</a></div><div class="ttdeci">real expgrowth_cdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00052">expgrowth.stan:52</a></div></div>
+<div class="ttc" id="agroup__exponential__growth__distributions_html_gaf0dfb32d75baad982ac87e145fd64be0"><div class="ttname"><a href="group__exponential__growth__distributions.html#gaf0dfb32d75baad982ac87e145fd64be0">expgrowth_rng</a></div><div class="ttdeci">real expgrowth_rng(real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00094">expgrowth.stan:94</a></div></div>
 <div class="ttc" id="agroup__exponential__growth__distributions_html_gaf2fa8ab3f8d647ea6d81633e915cdac9"><div class="ttname"><a href="group__exponential__growth__distributions.html#gaf2fa8ab3f8d647ea6d81633e915cdac9">expgrowth_pdf</a></div><div class="ttdeci">real expgrowth_pdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00011">expgrowth.stan:11</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
