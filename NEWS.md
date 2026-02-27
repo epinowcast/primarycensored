@@ -14,10 +14,12 @@ This major release adds left-truncation support via the `L` parameter, enabling 
 
 - Added `dependencies` argument to `pcd_load_stan_functions()` that automatically resolves and includes all functions that the requested functions depend on. When `TRUE`, dependencies are included in topological order (dependencies before functions that use them). (#171)
 - Added `pcd_stan_function_deps()` to query the dependency graph of Stan functions, returning all dependencies for a given function in topological order. (#171)
+- Added 8 distributions to `pcd_distributions` that were previously only available in Stan: normal, inverse chi-square, double exponential, pareto, scaled inverse chi-square, student t, uniform, and von Mises (IDs 18–25). These are now accessible via `pcd_stan_dist_id()`. (#277)
 - Added left-truncation support via the `L` parameter to all primary censored distribution functions (`dprimarycensored()`, `pprimarycensored()`, `rprimarycensored()`, `qprimarycensored()`) and Stan functions. The `L` parameter specifies the minimum delay (lower truncation point), enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. This is useful for generation intervals and other settings where delays below a threshold cannot occur. Defaults to `L = 0` for backward compatibility. (#63)
 
 ## Bug fixes
 
+- Fixed Stan `dist_lcdf` distribution ID mapping to match R's `pcd_distributions` table. Previously, most distribution IDs were mismatched between R and Stan (e.g. `pcd_stan_dist_id("weibull")` returned 3 but Stan's `dist_lcdf` used ID 3 for the Normal distribution). Only lognormal (1), gamma (2), and exponential (4) were correct. This affected the ODE numerical integration path for all mismatched distributions. (#277)
 - Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan functions (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_lcdf`, `expgrowth_rng`, `primary_lpdf`) to avoid conflicts with Stan built-in functions. CmdStan 2.38.0 now strictly enforces reserved keyword restrictions when exposing Stan functions to R. (#258)
 
 ## Documentation
