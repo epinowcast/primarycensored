@@ -35,7 +35,8 @@ real expgrowth_lpdf(real x, real xmin, real xmax, real r) {
   if (abs(r) < 1e-10) {
     return -log(xmax - xmin);
   }
-  return log(r) + r * (x - xmin) - log(exp(r * xmax) - exp(r * xmin));
+  return log(abs(r)) + r * (x - xmin) -
+    log(abs(exp(r * xmax) - exp(r * xmin)));
 }
 
 /**
