@@ -229,18 +229,6 @@
     },
     "2": {
       "@type": "SoftwareApplication",
-      "identifier": "lifecycle",
-      "name": "lifecycle",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=lifecycle"
-    },
-    "3": {
-      "@type": "SoftwareApplication",
       "identifier": "pracma",
       "name": "pracma",
       "provider": {
@@ -251,21 +239,9 @@
       },
       "sameAs": "https://CRAN.R-project.org/package=pracma"
     },
-    "4": {
-      "@type": "SoftwareApplication",
-      "identifier": "rlang",
-      "name": "rlang",
-      "provider": {
-        "@id": "https://cran.r-project.org",
-        "@type": "Organization",
-        "name": "Comprehensive R Archive Network (CRAN)",
-        "url": "https://cran.r-project.org"
-      },
-      "sameAs": "https://CRAN.R-project.org/package=rlang"
-    },
     "SystemRequirements": null
   },
-  "fileSize": "623.645KB",
+  "fileSize": "614.784KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
