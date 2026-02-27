@@ -171,7 +171,7 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * real d = 3.0;
-  * int dist_id = 5; // Weibull
+  * int dist_id = 3; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real L = 0.0;
@@ -244,7 +244,7 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * int d = 3;
-  * int dist_id = 5; // Weibull
+  * int dist_id = 3; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real d_upper = 4.0;
@@ -338,7 +338,7 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * int d = 3;
-  * int dist_id = 5; // Weibull
+  * int dist_id = 3; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 1.0;
   * real swindow = 1.0;
@@ -389,7 +389,7 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
   * int max_delay = 10;
   * real L = 0.0;
   * real D = 15.0;
-  * int dist_id = 5; // Weibull
+  * int dist_id = 3; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 7.0;
   * int primary_id = 1; // Uniform
@@ -508,7 +508,7 @@ vector primarycensored_sone_lpmf_vectorized(
   * int max_delay = 10;
   * real L = 0.0;
   * real D = 15.0;
-  * int dist_id = 5; // Weibull
+  * int dist_id = 3; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * real pwindow = 7.0;
   * int primary_id = 1; // Uniform
