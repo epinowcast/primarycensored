@@ -1,4 +1,4 @@
-# primarycensored 1.3.0.9000
+# primarycensored 1.4.0
 
 This major release adds left-truncation support via the `L` parameter, enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. It also removes deprecated functionality that was soft-deprecated in version 1.1.0 and removes the `lifecycle` and `rlang` packages from dependencies.
 
