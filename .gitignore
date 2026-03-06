@@ -25,3 +25,4 @@ inst/pcens_model
 inst/stan/pcens_model
 CRAN-SUBMISSION
 CLAUDE.md
+pcd_functions.stan

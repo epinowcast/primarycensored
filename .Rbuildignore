@@ -33,3 +33,4 @@
 ^CLAUDE\.md$
 ^\.claude$
 ^worktrees$
+^pcd_functions\.stan$
