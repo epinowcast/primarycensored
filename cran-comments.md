@@ -4,8 +4,8 @@
 
 ## Reverse dependencies
 
-Checked 1 reverse dependency (EpiNow2) using the recheck
-GitHub Action. No issues found.
+Checked 1 reverse dependency (EpiNow2) using
+r-devel/recheck. No issues found.
 
 ## Comments
 
