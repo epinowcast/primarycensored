@@ -2,6 +2,10 @@
 
 0 errors | 0 warnings | 1 note
 
+## Reverse dependencies
+
+Checked 1 reverse dependency (EpiNow2) using
+r-devel/recheck. No issues found.
 
 ## Comments
 
