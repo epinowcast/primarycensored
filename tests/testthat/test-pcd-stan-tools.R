@@ -115,6 +115,98 @@ test_that("pcd_load_stan_functions loads functions from specific files", {
   expect_false(grepl("expgrowth_pdf", stan_code, fixed = TRUE))
 })
 
+test_that("pcd_load_stan_functions with dependencies includes all deps", {
+  result <- pcd_load_stan_functions(
+    "primarycensored_pmf",
+    dependencies = TRUE
+  )
+
+  # Should contain the requested function
+  expect_true(
+    grepl("primarycensored_pmf", result, fixed = TRUE),
+    info = "Result should contain primarycensored_pmf"
+  )
+
+  # Should contain direct dependency
+  expect_true(
+    grepl("primarycensored_lpmf", result, fixed = TRUE),
+    info = "Result should contain primarycensored_lpmf"
+  )
+
+  # Should contain transitive dependency
+  expect_true(
+    grepl("primarycensored_lcdf", result, fixed = TRUE),
+    info = "Result should contain primarycensored_lcdf"
+  )
+})
+
+test_that("pcd_load_stan_functions with dependencies works for ODE", {
+  result <- pcd_load_stan_functions(
+    "primarycensored_ode",
+    dependencies = TRUE
+  )
+
+  # Should contain dependencies
+  expect_true(grepl("dist_lcdf", result, fixed = TRUE))
+  expect_true(grepl("primary_lpdf", result, fixed = TRUE))
+  expect_true(grepl("expgrowth_lpdf", result, fixed = TRUE))
+})
+
+test_that("pcd_load_stan_functions dependencies orders correctly", {
+  result <- pcd_load_stan_functions(
+    "primarycensored_pmf",
+    dependencies = TRUE
+  )
+
+  # Dependencies should appear before the functions that use them
+  pos_lpmf <- regexpr("real primarycensored_lpmf(", result, fixed = TRUE)[1]
+  pos_pmf <- regexpr("real primarycensored_pmf(", result, fixed = TRUE)[1]
+
+  expect_lt(pos_lpmf, pos_pmf)
+})
+
+test_that("pcd_load_stan_functions with deps handles no-dep function", {
+  result <- pcd_load_stan_functions("expgrowth_pdf", dependencies = TRUE)
+  expect_type(result, "character")
+  expect_true(grepl("expgrowth_pdf", result, fixed = TRUE))
+})
+
+test_that("pcd_load_stan_functions with deps errors on missing function", {
+  expect_error(
+    pcd_load_stan_functions("non_existent_function", dependencies = TRUE),
+    "not found"
+  )
+})
+
+test_that("pcd_stan_function_deps returns dependencies in order", {
+  deps <- pcd_stan_function_deps("primarycensored_pmf")
+
+  expect_type(deps, "character")
+  expect_gt(length(deps), 1)
+
+  # The requested function should be last
+
+  expect_identical(deps[length(deps)], "primarycensored_pmf")
+
+  # Should include direct dependency
+  expect_true("primarycensored_lpmf" %in% deps)
+})
+
+test_that("pcd_stan_function_deps handles function with no deps", {
+  deps <- pcd_stan_function_deps("expgrowth_pdf")
+
+  expect_type(deps, "character")
+  expect_length(deps, 1)
+  expect_identical(deps, "expgrowth_pdf")
+})
+
+test_that("pcd_stan_function_deps errors on missing function", {
+  expect_error(
+    pcd_stan_function_deps("non_existent_function"),
+    "not found"
+  )
+})
+
 test_that("pcd_stan_files returns correct files", {
   # Test with no functions specified
   all_files <- pcd_stan_files()

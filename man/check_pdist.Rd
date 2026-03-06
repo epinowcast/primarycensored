@@ -4,7 +4,7 @@
 \alias{check_pdist}
 \title{Check if a function is a valid cumulative distribution function (CDF)}
 \usage{
-check_pdist(pdist, D, ...)
+check_pdist(pdist, D = Inf, ...)
 }
 \arguments{
 \item{pdist}{Distribution function (CDF). The package can identify base R
@@ -12,8 +12,9 @@ distributions for potential analytical solutions. For non-base R functions,
 users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage the analytical solutions.}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }

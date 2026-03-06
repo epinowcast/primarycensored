@@ -25,7 +25,7 @@ test_that(
 
           stan_result <- vapply(q_values, function(q) {
             primarycensored_analytical_cdf(
-              q, 2, c(shape, rate), pwindow, Inf, 1, numeric(0)
+              q, 2, c(shape, rate), pwindow, 0, Inf, 1, numeric(0)
             )
           }, numeric(1))
           expect_equal(
@@ -67,7 +67,7 @@ test_that(
 
           stan_result <- vapply(q_values, function(q) {
             primarycensored_analytical_cdf(
-              q, 1, c(meanlog, sdlog), pwindow, Inf, 1, numeric(0)
+              q, 1, c(meanlog, sdlog), pwindow, 0, Inf, 1, numeric(0)
             )
           }, numeric(1))
           expect_equal(
@@ -109,7 +109,7 @@ test_that(
 
           stan_result <- vapply(q_values, function(q) {
             primarycensored_analytical_cdf(
-              q, 3, c(shape, scale), pwindow, Inf, 1, numeric(0)
+              q, 3, c(shape, scale), pwindow, 0, Inf, 1, numeric(0)
             )
           }, numeric(1))
           expect_equal(

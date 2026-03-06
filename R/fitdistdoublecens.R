@@ -3,8 +3,8 @@
 #' This function wraps the custom approach for fitting distributions to doubly
 #' censored data using fitdistrplus and primarycensored. It handles primary
 #' censoring (when the primary event time is not known exactly), secondary
-#' censoring (when the secondary event time is interval-censored), and right
-#' truncation (when events are only observed up to a maximum delay).
+#' censoring (when the secondary event time is interval-censored), and
+#' truncation (when events are only observed within a delay range \[L, D\]).
 #'
 #' @details
 #' ## How distribution functions are resolved
@@ -53,9 +53,15 @@
 #'
 #' @param pwindow Column name for primary window (default: "pwindow").
 #'
-#' @param D Column name for maximum delay (truncation point). If finite, the
-#'  distribution is truncated at D. If set to Inf, no truncation is applied.
-#'  (default: "D").
+#' @param L Column name for minimum delay (lower truncation point). If greater
+#'  than 0, the distribution is left-truncated at L. This is useful for
+#'  modelling generation intervals where day 0 is excluded, particularly when
+#'  used in renewal models. (default: "L"). If the column is not present in
+#'  censdata, L = 0 is assumed.
+#'
+#' @param D Column name for maximum delay (upper truncation point). If finite,
+#'  the distribution is truncated at D. If set to Inf, no upper truncation is
+#'  applied. (default: "D").
 #'
 #' @inheritParams pprimarycensored
 #'
@@ -99,23 +105,17 @@
 #'
 #' summary(fit_norm)
 fitdistdoublecens <- function(
-  censdata,
-  distr,
-  left = "left",
-  right = "right",
-  pwindow = "pwindow",
-  D = "D",
-  dprimary = stats::dunif,
-  dprimary_name = lifecycle::deprecated(),
-  dprimary_args = list(),
-  truncation_check_multiplier = 2,
-  ...
-) {
-  nms <- .name_deprecation(lifecycle::deprecated(), dprimary_name)
-  if (!is.null(nms$dprimary)) {
-    dprimary <- add_name_attribute(dprimary, nms$dprimary)
-  }
-
+    censdata,
+    distr,
+    left = "left",
+    right = "right",
+    pwindow = "pwindow",
+    L = "L",
+    D = "D",
+    dprimary = stats::dunif,
+    dprimary_args = list(),
+    truncation_check_multiplier = 2,
+    ...) {
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -131,24 +131,24 @@ fitdistdoublecens <- function(
     )
   }
 
-  # Deprecation handling for pwindow and D
-  if (is.numeric(pwindow)) {
-    lifecycle::deprecate_warn(
-      "1.1.0",
-      "fitdistdoublecens(pwindow)",
-      details = "Use pwindow column in censdata instead."
-    )
-    censdata[["pwindow"]] <- pwindow
-    pwindow <- "pwindow"
+  # Handle L column: if not present, create with default value 0
+  if (!L %in% names(censdata)) {
+    censdata[[L]] <- 0
   }
-  if (is.numeric(D)) {
-    lifecycle::deprecate_warn(
-      "1.1.0",
-      "fitdistdoublecens(D)",
-      details = "Use D column in censdata instead."
+
+  # Validate truncation bounds: L must be less than D
+  .check_truncation_bounds_df(censdata, L, D)
+
+  # Validate that observations are not below L
+  invalid_obs <- which(censdata[[left]] < censdata[[L]])
+  if (length(invalid_obs) > 0) {
+    stop(
+      "Observations must be >= L. Found ", length(invalid_obs),
+      " observation(s) where ", left, " < L. First invalid row: ",
+      invalid_obs[1], " (", left, " = ", censdata[[left]][invalid_obs[1]],
+      ", L = ", censdata[[L]][invalid_obs[1]], ")",
+      call. = FALSE
     )
-    censdata[["D"]] <- D
-    D <- "D"
   }
 
   required_cols <- c(left, right, pwindow, D)
@@ -179,6 +179,7 @@ fitdistdoublecens <- function(
   params <- data.frame(
     swindow = censdata[[right]] - censdata[[left]],
     pwindow = censdata[[pwindow]],
+    L = censdata[[L]],
     D = censdata[[D]]
   )
 
@@ -242,18 +243,17 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around dprimarycensored
 #' @inheritParams dprimarycensored
 #'
-#' @param params A data frame with columns 'swindow', 'pwindow', and 'D'
-#' corresponding to the secondary window sizes, primary window sizes, and
-#' truncation times for each element in x.
+#' @param params A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
+#' corresponding to the secondary window sizes, primary window sizes, upper
+#' truncation times, and lower truncation times for each element in x.
 #' @keywords internal
 .dpcens <- function(
-  x,
-  params,
-  pdist,
-  dprimary,
-  dprimary_args,
-  ...
-) {
+    x,
+    params,
+    pdist,
+    dprimary,
+    dprimary_args,
+    ...) {
   tryCatch(
     {
       unique_params <- unique(params)
@@ -264,6 +264,7 @@ fitdistdoublecens <- function(
           pdist,
           pwindow = unique_params$pwindow[1],
           swindow = unique_params$swindow[1],
+          L = unique_params$L[1],
           D = unique_params$D[1],
           dprimary = dprimary,
           dprimary_args = dprimary_args,
@@ -277,15 +278,18 @@ fitdistdoublecens <- function(
           sw <- unique_params$swindow[i]
           pw <- unique_params$pwindow[i]
           Ds <- unique_params$D[i] # nolint
+          Ls <- unique_params$L[i] # nolint
           mask <- params$swindow == sw &
             params$pwindow == pw &
-            params$D == Ds
+            params$D == Ds &
+            params$L == Ls
 
           result[mask] <- dprimarycensored(
             x[mask],
             pdist,
             pwindow = pw,
             swindow = sw,
+            L = Ls,
             D = Ds,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
@@ -309,11 +313,12 @@ fitdistdoublecens <- function(
     {
       # Vectorize the CDF calculation
       mapply(
-        function(q_i, pw, D_i) {
+        function(q_i, pw, L_i, D_i) {
           pprimarycensored(
             q_i,
             pdist,
             pwindow = pw,
+            L = L_i,
             D = D_i,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
@@ -322,6 +327,7 @@ fitdistdoublecens <- function(
         },
         q,
         params$pwindow,
+        params$L,
         params$D,
         SIMPLIFY = TRUE
       )

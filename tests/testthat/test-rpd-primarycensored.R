@@ -31,7 +31,8 @@ test_that(
     # Check empirical cdf against theoretical cdf
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
-      c(x_values[-1], D), plnorm, pwindow, D,
+      c(x_values[-1], D), plnorm,
+      pwindow = pwindow, D = D,
       meanlog = 0, sdlog = 1
     )
     expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.05)
@@ -80,7 +81,8 @@ test_that(
     # Check empirical cdf against theoretical cdf
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
-      c(x_values[-1], D), plnorm, pwindow, D,
+      c(x_values[-1], D), plnorm,
+      pwindow = pwindow, D = D,
       dprimary = dexpgrowth,
       dprimary_args = list(r = r),
       meanlog = 1.5, sdlog = 0.5
@@ -135,7 +137,8 @@ test_that(
     # Check empirical CDF against theoretical CDF
     empirical_cdf <- ecdf(samples)(x_values)
     theoretical_cdf <- ppcens(
-      c(x_values[-1], D), pweibull, pwindow, D,
+      c(x_values[-1], D), pweibull,
+      pwindow = pwindow, D = D,
       dprimary = dexpgrowth,
       dprimary_args = list(r = 0.5),
       shape = shape, scale = scale
@@ -164,11 +167,13 @@ test_that(
     }
     # Numerical solution using our functions
     numerical_pmf <- dpcens(
-      0:(D - 1), pexp, pwindow, swindow, 20,
+      0:(D - 1), pexp,
+      pwindow = pwindow, swindow = swindow, D = 20,
       rate = rate
     )
     numerical_cdf <- ppcens(
-      1:D, pexp, pwindow, 20,
+      1:D, pexp,
+      pwindow = pwindow, D = 20,
       rate = rate
     )
 
@@ -190,7 +195,8 @@ test_that(
 
     # Compare random number generator to analytical solution
     samples <- rpcens(
-      10000, rexp, pwindow, swindow, D,
+      10000, rexp,
+      pwindow = pwindow, swindow = swindow, D = D,
       rate = rate
     )
     empirical_pmf <- as.vector(table(samples) / 10000)
@@ -198,5 +204,87 @@ test_that(
       empirical_pmf, analytical_values[seq_along(empirical_pmf)],
       tolerance = 0.05
     )
+  }
+)
+
+
+test_that(
+  "rprimarycensored is consistent with dprimarycensored and
+   pprimarycensored with L > 0",
+  { # nolint
+    n <- 1e5
+    pwindow <- 1
+    D <- 10
+    L <- 2
+    samples <- rpcens(
+      n, rlnorm, pwindow,
+      D = D, L = L, meanlog = 1, sdlog = 0.5
+    )
+
+    # Check samples are in valid range
+    expect_true(all(samples >= L & samples < D))
+
+    # Check empirical PMF against theoretical PMF
+    x_values <- L:(D - 1)
+    empirical_pmf <- as.vector(table(factor(samples, levels = x_values)) / n)
+    theoretical_pmf <- dpcens(
+      x_values, plnorm, pwindow,
+      D = D, L = L, meanlog = 1, sdlog = 0.5
+    )
+    expect_equal(empirical_pmf, theoretical_pmf, tolerance = 0.02)
+
+    # Check empirical CDF against theoretical CDF
+    empirical_cdf <- ecdf(samples)(x_values)
+    theoretical_cdf <- ppcens(
+      x_values + 1, plnorm, pwindow,
+      D = D, L = L, meanlog = 1, sdlog = 0.5
+    )
+    # Adjust last value since CDF at D should be 1
+    theoretical_cdf[length(theoretical_cdf)] <- 1
+    expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.02)
+
+    # Check empirical mean matches theoretical mean
+    empirical_mean <- mean(samples)
+    theoretical_mean <- sum(x_values * theoretical_pmf)
+    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.05)
+  }
+)
+
+test_that(
+  "rprimarycensored is consistent with dprimarycensored and
+   pprimarycensored with L > 0 and exponential growth primary",
+  { # nolint
+    n <- 1e5
+    pwindow <- 2
+    D <- 12
+    L <- 3
+    r <- 0.3
+    samples <- rpcens(
+      n, rlnorm, pwindow,
+      D = D, L = L,
+      rprimary = rexpgrowth,
+      rprimary_args = list(r = r),
+      meanlog = 1.5, sdlog = 0.5
+    )
+
+    # Check samples are in valid range
+    expect_true(all(samples >= L & samples < D))
+
+    # Check empirical PMF against theoretical PMF
+    x_values <- L:(D - 1)
+    empirical_pmf <- as.vector(table(factor(samples, levels = x_values)) / n)
+    theoretical_pmf <- dpcens(
+      x_values, plnorm, pwindow,
+      D = D, L = L,
+      dprimary = dexpgrowth,
+      dprimary_args = list(r = r),
+      meanlog = 1.5, sdlog = 0.5
+    )
+    expect_equal(empirical_pmf, theoretical_pmf, tolerance = 0.02)
+
+    # Check empirical mean matches theoretical mean
+    empirical_mean <- mean(samples)
+    theoretical_mean <- sum(x_values * theoretical_pmf)
+    expect_equal(empirical_mean, theoretical_mean, tolerance = 0.1)
   }
 )

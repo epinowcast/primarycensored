@@ -4,12 +4,14 @@
   *
   * @param delay Time delay
   * @param params Distribution parameters
-  * @param dist_id Distribution identifier
-  *   1: Lognormal, 2: Gamma, 3: Normal, 4: Exponential, 5: Weibull,
-  *   6: Beta, 7: Cauchy, 8: Chi-square, 9: Inverse Chi-square,
-  *   10: Double Exponential, 11: Inverse Gamma, 12: Logistic,
-  *   13: Pareto, 14: Scaled Inverse Chi-square, 15: Student's t,
-  *   16: Uniform, 17: von Mises
+  * @param dist_id Distribution identifier matching pcd_distributions in R:
+  *   1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential,
+  *   9: Beta, 12: Cauchy, 13: Chi-square,
+  *   15: Gumbel, 16: Inverse Gamma, 17: Logistic,
+  *   18: Normal, 19: Inverse Chi-square,
+  *   20: Double Exponential, 21: Pareto,
+  *   22: Scaled Inverse Chi-square, 23: Student's t,
+  *   24: Uniform, 25: von Mises
   *
   * @return Log CDF of the delay distribution
   *
@@ -24,25 +26,26 @@
 real dist_lcdf(real delay, array[] real params, int dist_id) {
   if (delay <= 0) return negative_infinity();
 
-  // Use if-else statements to handle different distribution types
+  // IDs match pcd_distributions$stan_id in R
   if (dist_id == 1) return lognormal_lcdf(delay | params[1], params[2]);
   else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 3) return normal_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
-  else if (dist_id == 5) return weibull_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 6) return beta_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 7) return cauchy_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 8) return chi_square_lcdf(delay | params[1]);
-  else if (dist_id == 9) return inv_chi_square_lcdf(delay | params[1]);
-  else if (dist_id == 10) return double_exponential_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 11) return inv_gamma_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 12) return logistic_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 13) return pareto_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 14) return scaled_inv_chi_square_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 15) return student_t_lcdf(delay | params[1], params[2], params[3]);
-  else if (dist_id == 16) return uniform_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 17) return von_mises_lcdf(delay | params[1], params[2]);
-  else reject("Invalid distribution identifier");
+  else if (dist_id == 9) return beta_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 12) return cauchy_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 13) return chi_square_lcdf(delay | params[1]);
+  else if (dist_id == 15) return gumbel_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 16) return inv_gamma_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 17) return logistic_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 18) return normal_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 19) return inv_chi_square_lcdf(delay | params[1]);
+  else if (dist_id == 20) return double_exponential_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 21) return pareto_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 22) return scaled_inv_chi_square_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 23) return student_t_lcdf(delay | params[1], params[2], params[3]);
+  else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
+  else reject("Invalid distribution identifier: ", dist_id);
 }
 
 /**
@@ -52,8 +55,8 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * @param x Value
   * @param primary_id Primary distribution identifier
   * @param params Distribution parameters
-  * @param min Minimum value
-  * @param max Maximum value
+  * @param xmin Minimum value
+  * @param xmax Maximum value
   *
   * @return Log PDF of the primary distribution
   *
@@ -62,15 +65,15 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * real x = 0.5;
   * int primary_id = 1; // Uniform
   * array[0] real params = {}; // No additional parameters for uniform
-  * real min = 0;
-  * real max = 1;
-  * real log_pdf = primary_lpdf(x, primary_id, params, min, max);
+  * real xmin = 0;
+  * real xmax = 1;
+  * real log_pdf = primary_lpdf(x, primary_id, params, xmin, xmax);
   * @endcode
   */
-real primary_lpdf(real x, int primary_id, array[] real params, real min, real max) {
+real primary_lpdf(real x, int primary_id, array[] real params, real xmin, real xmax) {
   // Implement switch for different primary distributions
-  if (primary_id == 1) return uniform_lpdf(x | min, max);
-  if (primary_id == 2) return expgrowth_lpdf(x | min, max, params[1]);
+  if (primary_id == 1) return uniform_lpdf(x | xmin, xmax);
+  if (primary_id == 2) return expgrowth_lpdf(x | xmin, xmax, params[1]);
   // Add more primary distributions as needed
   reject("Invalid primary distribution identifier");
 }

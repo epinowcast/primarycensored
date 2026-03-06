@@ -228,6 +228,7 @@ specification. Contributions of any kind are welcome!
 <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs-bot">seabbs-bot</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam">jamesmbaazam</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova">barbora-sobolova</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>
@@ -240,7 +241,10 @@ specification. Contributions of any kind are welcome!
 
 ### Issue Contributors
 
-<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aparksw3">parksw3</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Aavehtari">avehtari</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3Ajgabry">jgabry</a>,
+<a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3AWardBrian">WardBrian</a>
 
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->

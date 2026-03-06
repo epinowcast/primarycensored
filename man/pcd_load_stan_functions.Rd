@@ -9,7 +9,8 @@ pcd_load_stan_functions(
   stan_path = primarycensored::pcd_stan_path(),
   wrap_in_block = FALSE,
   write_to_file = FALSE,
-  output_file = "pcd_functions.stan"
+  output_file = "pcd_functions.stan",
+  dependencies = FALSE
 )
 }
 \arguments{
@@ -27,6 +28,11 @@ is FALSE.}
 
 \item{output_file}{Character string, the path to write the output file if
 write_to_file is TRUE. Defaults to "pcd_functions.stan".}
+
+\item{dependencies}{Logical, whether to include all functions that the
+requested functions depend on. When TRUE, recursively finds and includes
+all dependencies in the correct order (dependencies before the functions
+that use them). Default is FALSE.}
 }
 \value{
 A character string containing the requested Stan functions
@@ -38,6 +44,7 @@ Load Stan functions as a string
 Tools for working with package Stan functions
 \code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_files}()},
+\code{\link{pcd_stan_function_deps}()},
 \code{\link{pcd_stan_functions}()},
 \code{\link{pcd_stan_path}()}
 }

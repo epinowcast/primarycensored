@@ -8,6 +8,7 @@
   object,
   p,
   pwindow,
+  L = 0,
   D = Inf,
   use_numeric = FALSE,
   init = 5,
@@ -23,8 +24,14 @@
 
 \item{pwindow}{Primary event window}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{L}{Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).}
+
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{use_numeric}{Logical; if TRUE forces the use of numeric inversion even
 if an analytical solution is available (not yet implemented).}
@@ -71,6 +78,9 @@ pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1)
 
 # Compute quantiles for multiple probabilities with truncation
 pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
+
+# Compute quantiles with left truncation
+pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, L = 1, D = 10)
 }
 \seealso{
 Low level primary event censored distribution objects and methods

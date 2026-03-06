@@ -2,9 +2,9 @@
 #'
 #' This function generates random samples from a primary event censored
 #' distribution. It adjusts the distribution by accounting for the primary
-#' event distribution and potential truncation at a maximum delay (D). The
-#' function allows for custom primary event distributions and delay
-#' distributions.
+#' event distribution and potential truncation at a maximum delay (D) and
+#' minimum delay (L). The function allows for custom primary event
+#' distributions and delay distributions.
 #'
 #' @inheritParams dprimarycensored
 #'
@@ -52,15 +52,16 @@
 #'    the delays:
 #'    \deqn{t = p + d}
 #'
-#' 4. Apply truncation (i.e. remove any delays that fall outside the observation
-#'    window) to ensure that the delays are within the specified range \[0, D\],
-#'    where D is the maximum observable delay:
-#'    \deqn{t_{truncated} = \{t \mid 0 \leq t < D\}}
+#' 4. Apply upper truncation to remove delays >= D:
+#'    \deqn{t_{upper} = \{t \mid t < D\}}
 #'
-#' 5. Round the truncated delays to the nearest secondary event window
-#'    (swindow):
-#'    \deqn{t_{valid} = \lfloor \frac{t_{truncated}}{swindow} \rfloor
+#' 5. Round the delays to the nearest secondary event window (swindow):
+#'    \deqn{t_{rounded} = \lfloor \frac{t_{upper}}{swindow} \rfloor
 #'      \times swindow}
+#'
+#' 6. Apply lower truncation on the rounded values to ensure observed delays
+#'    are >= L:
+#'    \deqn{t_{valid} = \{t_{rounded} \mid t_{rounded} \geq L\}}
 #'
 #' The function oversamples to account for potential truncation and generates
 #' additional samples if needed to reach the desired number of valid samples.
@@ -77,16 +78,22 @@
 #'   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
 #'   meanlog = 0, sdlog = 1
 #' )
+#'
+#' # Example: Left-truncated distribution (e.g., for generation intervals)
+#' rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
 rprimarycensored <- function(
     n,
     rdist,
     pwindow = 1,
     swindow = 1,
+    L = 0,
     D = Inf,
     rprimary = stats::runif,
     rprimary_args = list(),
     oversampling_factor = 1.2,
     ...) {
+  .check_truncation_bounds(L, D)
+
   # Generate more samples than needed to account for truncation
   n_generate <- ceiling(n * oversampling_factor)
 
@@ -102,8 +109,18 @@ rprimarycensored <- function(
   # Calculate total delays
   total_delay <- p + delay
 
-  # Apply truncation and select valid samples
-  valid_samples <- total_delay[total_delay >= 0 & total_delay < D]
+  # Apply upper truncation (continuous delays must be < D)
+  valid_continuous <- total_delay[total_delay < D]
+
+  # Round to the nearest swindow
+  if (swindow > 0) {
+    rounded <- floor(valid_continuous / swindow) * swindow
+  } else {
+    rounded <- valid_continuous
+  }
+
+  # Apply lower truncation on observed values (must be >= L)
+  valid_samples <- rounded[rounded >= L]
 
   # If we don't have enough samples, generate more
   while (length(valid_samples) < n) {
@@ -112,6 +129,7 @@ rprimarycensored <- function(
       rdist,
       pwindow,
       swindow,
+      L,
       D,
       rprimary,
       rprimary_args,
@@ -121,16 +139,7 @@ rprimarycensored <- function(
   }
 
   # Return exactly n samples
-  samples <- valid_samples[1:n]
-
-  # Round to the nearest swindow
-  if (swindow > 0) {
-    rounded_samples <- floor(samples / swindow) * swindow
-  } else {
-    rounded_samples <- samples
-  }
-
-  return(rounded_samples)
+  return(valid_samples[1:n])
 }
 
 #' @rdname rprimarycensored

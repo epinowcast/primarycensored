@@ -10,6 +10,7 @@ qprimarycensored(
   p,
   pdist,
   pwindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -20,6 +21,7 @@ qpcens(
   p,
   pdist,
   pwindow = 1,
+  L = 0,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -37,8 +39,14 @@ functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
-\item{D}{Maximum delay (truncation point). If finite, the distribution is
-truncated at D. If set to Inf, no truncation is applied. Defaults to Inf.}
+\item{L}{Minimum delay (lower truncation point). If greater than 0, the
+distribution is left-truncated at L. This is useful for modelling
+generation intervals where day 0 is excluded, particularly when used in
+renewal models. Defaults to 0 (no left truncation).}
+
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a
@@ -81,8 +89,9 @@ computes the quantiles using \code{\link[=pcens_quantile]{pcens_quantile()}}. Th
 analytical solutions when available, falling back to numerical methods when
 necessary.
 
-For example, if p = 0.5, the function returns the median delay - the value
-where 50\% of censored events occur by this time and 50\% occur after.
+For example, if p = 0.5, the function returns the median delay (truncated
+over [L, D] if specified) where 50\% of censored events occur by this time
+and 50\% occur after.
 
 See \code{methods(pcens_quantile)} for which combinations have analytical
 solutions implemented.
@@ -104,6 +113,12 @@ qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   dprimary = dexpgrowth,
   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
+)
+
+# Left-truncated distribution (e.g., for generation intervals)
+qprimarycensored(
+  c(0.25, 0.5, 0.75), plnorm,
+  L = 1, D = 10, meanlog = 0, sdlog = 1
 )
 }
 \seealso{

@@ -63,11 +63,37 @@ pcd_stan_functions()
 
 ## Accessing Stan functions
 
-Stan functions are accessed using the `pcd_load_stan_functions()` function. This function takes the name of the function as an argument and returns the function as a string. It can additionally write the functions to a file and wrap them in a `functions{}` block.
+Stan functions are accessed using the `pcd_load_stan_functions()` function.
+This function takes the name of the function as an argument and returns the function as a string.
+It can additionally write the functions to a file and wrap them in a `functions{}` block.
 
 ```{r}
 pcd_load_stan_functions("primarycensored_lpmf")
 ```
+
+### Including dependencies automatically
+
+Many Stan functions in `primarycensored` depend on other functions.
+For example, `primarycensored_lpmf` calls `primarycensored_lcdf`, which in turn may call analytical or ODE-based implementations.
+When using these functions in your own Stan models, you need all the dependencies to be available.
+
+The `dependencies` argument automatically resolves and includes all required functions in the correct order (dependencies before the functions that use them):
+```{r}
+pcd_load_stan_functions("primarycensored_lpmf", dependencies = TRUE)
+```
+
+This is useful when you want to extract a self-contained set of Stan functions for use in another project.
+
+### Exploring function dependencies
+
+To understand which functions a particular Stan function depends on, use `pcd_stan_function_deps()`:
+
+```{r}
+pcd_stan_function_deps("primarycensored_lpmf")
+```
+
+The result is ordered so that dependencies come before the functions that use them, with the requested function last.
+This can help you understand the structure of the package's Stan code or decide which functions you need to include.
 
 ## Linking the Stan functions to your workflow
 

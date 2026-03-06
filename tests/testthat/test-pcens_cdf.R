@@ -306,62 +306,6 @@ test_that("pcens_cdf.default computes the same values as
   }
 })
 
-test_that("new_pcens *_name deprecation is soft.", {
-  pdist <- function(...) pgamma(...)
-  dprimary <- function(...) dunif(...)
-  shape <- 2
-  rate <- 1
-
-  neg_obj <- new_pcens(
-    pdist,
-    dprimary,
-    list(),
-    shape = shape,
-    rate = rate
-  )
-
-  expect_s3_class(neg_obj, "pcens_unknown_unknown")
-
-  ref_obj <- new_pcens(
-    add_name_attribute(pdist, "pgamma"),
-    add_name_attribute(dprimary, "dunif"),
-    list(),
-    shape = shape,
-    rate = rate
-  )
-
-  lifecycle::expect_deprecated(
-    obj <- new_pcens( # nolint: implicit_assignment_linter.
-      pdist,
-      add_name_attribute(dprimary, "dunif"),
-      list(),
-      pdist_name = "pgamma",
-      shape = shape,
-      rate = rate
-    )
-  )
-
-  lifecycle::expect_deprecated(
-    new_obj <- new_pcens( # nolint: implicit_assignment_linter.
-      add_name_attribute(pdist, "pgamma"),
-      dprimary,
-      list(),
-      dprimary_name = "dunif",
-      shape = shape,
-      rate = rate
-    )
-  )
-
-  expect_identical(body(obj$pdist), body(ref_obj$pdist))
-  expect_identical(body(new_obj$pdist), body(ref_obj$pdist))
-  expect_identical(formals(obj$pdist), formals(ref_obj$pdist))
-  expect_identical(formals(new_obj$pdist), formals(ref_obj$pdist))
-  expect_identical(body(obj$dprimary), body(ref_obj$dprimary))
-  expect_identical(body(new_obj$dprimary), body(ref_obj$dprimary))
-  expect_identical(formals(obj$dprimary), formals(new_obj$dprimary))
-  expect_identical(formals(new_obj$dprimary), formals(ref_obj$dprimary))
-})
-
 test_that("pcens_cdf returns values in [0, 1] for all analytical methods", {
   # Test case from issue #238: parameters that stress numerical precision
   # Lognormal with tight distribution where CDF approaches 1 quickly

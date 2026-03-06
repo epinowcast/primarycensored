@@ -80,7 +80,7 @@ can be reduced to an analytic expression.
 
 The insight here is that this will be possible for any distribution where the average of the distribution can be calculated analytically, which includes commonly used non-negative distributions such as the Gamma, Log-Normal and Weibull distributions.
 
-## General Discrete censored delay distribution
+## General discrete censored delay distribution
 
 First, we note that equation 3.3 from ["Why it works"](why-it-works.html) can be written using the difference operator: $f_n = -\Delta_1 Q_{S_+}(n-1)$. We can insert this expression into equation \@ref(eq:unifprim) to give the discrete censored delay distribution for uniformly distributed primary event times:
 

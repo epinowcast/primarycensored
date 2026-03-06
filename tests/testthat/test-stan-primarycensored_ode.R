@@ -76,9 +76,9 @@ test_that("Stan primarycensored_ode handles different distributions", {
   )
   expect_true(is.finite(result_gamma[1]))
 
-  # Test for weibull distribution
+  # Test for weibull distribution (dist_id = 3 per pcd_distributions)
   theta_weibull <- c(1.5, 2.0)
-  x_i_weibull <- c(5, 1, 2, 0)
+  x_i_weibull <- c(3, 1, 2, 0)
   result_weibull <- primarycensored_ode(
     t, y, theta_weibull, x_r, x_i_weibull
   )
@@ -106,7 +106,7 @@ test_that("Stan primarycensored_ode handles extreme parameter values", {
   expect_true(is.finite(result_large_scale[1]))
 
   # Test with very small shape parameter (for distributions that use it)
-  x_i_weibull <- c(5, 1, 2, 0)
+  x_i_weibull <- c(3, 1, 2, 0)
   theta_small_shape <- c(1e-10, 1.0)
   result_small_shape <- primarycensored_ode(
     t, y, theta_small_shape, x_r, x_i_weibull

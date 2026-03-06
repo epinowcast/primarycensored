@@ -9,6 +9,144 @@ pcd_stan_path <- function() {
   system.file("stan", "functions", package = "primarycensored")
 }
 
+#' Find dependencies of a Stan function
+#'
+#' @param func_content Character string containing the function body
+#' @param all_func_names Character vector of all known function names
+#'
+#' @return Character vector of function names that are called
+#' @noRd
+.pcd_stan_function_deps <- function(func_content, all_func_names) {
+  deps <- character(0)
+  for (fname in all_func_names) {
+    # Match function_name followed by ( with optional whitespace
+    # Use word boundary to avoid partial matches
+    pattern <- paste0("\\b", fname, "\\s*\\(")
+    if (grepl(pattern, func_content)) {
+      deps <- c(deps, fname)
+    }
+  }
+  unique(deps)
+}
+
+#' Build dependency graph for all Stan functions
+#'
+#' @param stan_path Path to Stan functions directory
+#'
+#' @return Named list where each element is a vector of dependencies
+#' @noRd
+.pcd_build_dep_graph <- function(stan_path) {
+  stan_files <- list.files(
+    stan_path,
+    pattern = "\\.stan$",
+    full.names = TRUE,
+    recursive = TRUE
+  )
+
+  # First pass: get all function names
+  all_func_names <- character(0)
+  for (file in stan_files) {
+    content <- readLines(file)
+    all_func_names <- c(
+      all_func_names,
+      .extract_stan_functions(content, names_only = TRUE)
+    )
+  }
+  all_func_names <- unique(all_func_names)
+
+  # Second pass: build dependency graph
+  dep_graph <- list()
+  for (file in stan_files) {
+    content <- readLines(file)
+    func_names <- .extract_stan_functions(content, names_only = TRUE)
+
+    for (fname in func_names) {
+      func_content <- .extract_stan_functions(
+        content,
+        names_only = FALSE,
+        functions = fname
+      )
+      if (length(func_content) > 0) {
+        # Find dependencies, excluding self-references
+        deps <- .pcd_stan_function_deps(func_content, all_func_names)
+        deps <- setdiff(deps, fname)
+        dep_graph[[fname]] <- deps
+      }
+    }
+  }
+
+  dep_graph
+}
+
+#' Resolve all dependencies for a function recursively
+#'
+#' @param func_name Name of the function
+#' @param dep_graph Dependency graph from .pcd_build_dep_graph
+#' @param resolved Already resolved functions (for recursion)
+#' @param visiting Currently visiting functions (for cycle detection)
+#'
+#' @return Character vector of all dependencies in topological order
+#' @noRd
+.pcd_resolve_deps <- function(func_name, dep_graph,
+                              resolved = character(0),
+                              visiting = character(0)) {
+  if (func_name %in% resolved) {
+    return(resolved)
+  }
+  if (func_name %in% visiting) {
+    # Circular dependency - skip to avoid infinite loop
+    return(resolved)
+  }
+
+  visiting <- c(visiting, func_name)
+  deps <- dep_graph[[func_name]]
+
+  if (length(deps) > 0) {
+    for (dep in deps) {
+      resolved <- .pcd_resolve_deps(dep, dep_graph, resolved, visiting)
+    }
+  }
+
+  c(resolved, func_name)
+}
+
+#' Get dependencies for a Stan function
+#'
+#' Returns all Stan functions that the specified function depends on,
+#' in topological order (dependencies before the functions that use them).
+#'
+#' @param function_name Character string, the name of the Stan function.
+#' @inheritParams pcd_stan_functions
+#'
+#' @return A character vector of function names that the specified function
+#' depends on, ordered so that dependencies come before functions that use
+#' them. The requested function itself is included as the last element.
+#'
+#' @family stantools
+#'
+#' @export
+#'
+#' @examples
+#' # See what primarycensored_lpmf depends on
+#' pcd_stan_function_deps("primarycensored_lpmf")
+#'
+#' # A function with no dependencies
+#' pcd_stan_function_deps("expgrowth_pdf")
+pcd_stan_function_deps <- function(
+    function_name,
+    stan_path = primarycensored::pcd_stan_path()) {
+  dep_graph <- .pcd_build_dep_graph(stan_path)
+
+  if (!function_name %in% names(dep_graph)) {
+    stop(
+      "Function not found: ", function_name,
+      call. = FALSE
+    )
+  }
+
+  .pcd_resolve_deps(function_name, dep_graph)
+}
+
 #' Count the number of unmatched braces in a line
 #' @noRd
 .unmatched_braces <- function(line) {
@@ -188,6 +326,11 @@ pcd_stan_files <- function(
 #' @param output_file Character string, the path to write the output file if
 #' write_to_file is TRUE. Defaults to "pcd_functions.stan".
 #'
+#' @param dependencies Logical, whether to include all functions that the
+#' requested functions depend on. When TRUE, recursively finds and includes
+#' all dependencies in the correct order (dependencies before the functions
+#' that use them). Default is FALSE.
+#'
 #' @return A character string containing the requested Stan functions
 #'
 #' @family stantools
@@ -198,13 +341,37 @@ pcd_load_stan_functions <- function(
     stan_path = primarycensored::pcd_stan_path(),
     wrap_in_block = FALSE,
     write_to_file = FALSE,
-    output_file = "pcd_functions.stan") {
+    output_file = "pcd_functions.stan",
+    dependencies = FALSE) {
   stan_files <- list.files(
     stan_path,
     pattern = "\\.stan$",
     full.names = TRUE,
     recursive = TRUE
   )
+
+  # Resolve dependencies if requested
+  if (dependencies && !is.null(functions)) {
+    dep_graph <- .pcd_build_dep_graph(stan_path)
+
+    # Validate that all requested functions exist
+    available_funcs <- names(dep_graph)
+    not_found <- setdiff(functions, available_funcs)
+    if (length(not_found) > 0) {
+      stop(
+        "Function(s) not found: ", toString(not_found),
+        call. = FALSE
+      )
+    }
+
+    # Resolve all dependencies for each requested function
+    all_funcs <- character(0)
+    for (func in functions) {
+      all_funcs <- .pcd_resolve_deps(func, dep_graph, all_funcs)
+    }
+    functions <- all_funcs
+  }
+
   all_content <- character(0)
 
   for (file in stan_files) {
