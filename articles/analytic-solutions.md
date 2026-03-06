@@ -82,7 +82,7 @@ where the average of the distribution can be calculated analytically,
 which includes commonly used non-negative distributions such as the
 Gamma, Log-Normal and Weibull distributions.
 
-### 3.2 General Discrete censored delay distribution
+### 3.2 General discrete censored delay distribution
 
 First, we note that equation 3.3 from [“Why it
 works”](https://primarycensored.epinowcast.org/articles/why-it-works.md)
@@ -288,13 +288,17 @@ Which was also found by Cori *et al*^(\[[2](#ref-cori2013new)\]).
 
 ## References
 
-1\. Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N.
-G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
+1\.
+
+Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G.,
+Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
 Lipsitch, M., Lison, A., Overton, C. E., Ward, T., & Abbott, S. (2024).
 Estimating epidemiological delay distributions for infectious diseases.
 *bioRxiv*. <https://doi.org/10.1101/2024.01.12.24301247>
 
-2\. Cori, A., Ferguson, N. M., Fraser, C., & Cauchemez, S. (2013). A new
+2\.
+
+Cori, A., Ferguson, N. M., Fraser, C., & Cauchemez, S. (2013). A new
 framework and software to estimate time-varying reproduction numbers
 during epidemics. *American Journal of Epidemiology*, *178*(9),
 1505–1512.

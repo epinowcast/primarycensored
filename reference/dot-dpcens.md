@@ -16,9 +16,10 @@ Define a fitdistrplus compatible wrapper around dprimarycensored
 
 - params:
 
-  A data frame with columns 'swindow', 'pwindow', and 'D' corresponding
-  to the secondary window sizes, primary window sizes, and truncation
-  times for each element in x.
+  A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
+  corresponding to the secondary window sizes, primary window sizes,
+  upper truncation times, and lower truncation times for each element in
+  x.
 
 - pdist:
 

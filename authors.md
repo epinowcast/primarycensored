@@ -22,13 +22,13 @@
 Source:
 [`inst/CITATION`](https://github.com/epinowcast/primarycensored/blob/main/inst/CITATION)
 
-Abbott S, Brand S, Azam J, Pearson C, Funk S, Charniga K (2025).
+Abbott S, Brand S, Azam J, Pearson C, Funk S, Charniga K (2026).
 *primarycensored: Primary Event Censored Distributions*.
 [doi:10.5281/zenodo.13632839](https://doi.org/10.5281/zenodo.13632839).
 
     @Manual{,
       title = {primarycensored: Primary Event Censored Distributions},
       author = {Sam Abbott and Sam Brand and James Mba Azam and Carl Pearson and Sebastian Funk and Kelly Charniga},
-      year = {2025},
+      year = {2026},
       doi = {10.5281/zenodo.13632839},
     }

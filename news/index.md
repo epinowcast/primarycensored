@@ -1,6 +1,111 @@
 # Changelog
 
+## primarycensored 1.4.0
+
+This major release adds left-truncation support via the `L` parameter,
+enabling distributions to be truncated over `[L, D]` rather than just
+`[0, D]`. It also removes deprecated functionality that was
+soft-deprecated in version 1.1.0 and removes the `lifecycle` and `rlang`
+packages from dependencies.
+
+### Breaking changes
+
+- Removed deprecated `pdist_name` and `dprimary_name` arguments from
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`new_pcens()`](https://primarycensored.epinowcast.org/reference/new_pcens.md),
+  and
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md).
+  Use
+  [`add_name_attribute()`](https://primarycensored.epinowcast.org/reference/add_name_attribute.md)
+  on the `pdist` and `dprimary` functions instead to enable analytical
+  solutions.
+- Removed deprecated support for passing numeric values to the `pwindow`
+  and `D` arguments in
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md).
+  These must now be column names in `censdata`.
+- Removed `lifecycle` and `rlang` packages from dependencies.
+- R functions now include an `L` parameter before `D` in their
+  signatures. If you were using positional arguments for `D` (e.g.,
+  `pprimarycensored(x, pdist, pwindow, 10)`), you must now use named
+  arguments (e.g., `pprimarycensored(x, pdist, pwindow, D = 10)`). The
+  affected functions are
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`rprimarycensored()`](https://primarycensored.epinowcast.org/reference/rprimarycensored.md),
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md).
+  ([\#63](https://github.com/epinowcast/primarycensored/issues/63))
+- Stan functions now include an `L` parameter for lower truncation,
+  placed before `D`. This affects `primarycensored_lpmf`,
+  `primarycensored_lcdf`, `primarycensored_cdf`, `primarycensored_pmf`,
+  and all vectorized variants. Update your Stan code to include the new
+  parameter:
+  `primarycensored_lpmf(d | dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params)`.
+  ([\#63](https://github.com/epinowcast/primarycensored/issues/63))
+
+### New features
+
+- Added `dependencies` argument to
+  [`pcd_load_stan_functions()`](https://primarycensored.epinowcast.org/reference/pcd_load_stan_functions.md)
+  that automatically resolves and includes all functions that the
+  requested functions depend on. When `TRUE`, dependencies are included
+  in topological order (dependencies before functions that use them).
+  ([\#171](https://github.com/epinowcast/primarycensored/issues/171))
+- Added
+  [`pcd_stan_function_deps()`](https://primarycensored.epinowcast.org/reference/pcd_stan_function_deps.md)
+  to query the dependency graph of Stan functions, returning all
+  dependencies for a given function in topological order.
+  ([\#171](https://github.com/epinowcast/primarycensored/issues/171))
+- Added 8 distributions to `pcd_distributions` that were previously only
+  available in Stan: normal, inverse chi-square, double exponential,
+  pareto, scaled inverse chi-square, student t, uniform, and von Mises
+  (IDs 18–25). These are now accessible via
+  [`pcd_stan_dist_id()`](https://primarycensored.epinowcast.org/reference/pcd_stan_dist_id.md).
+  ([\#277](https://github.com/epinowcast/primarycensored/issues/277))
+- Added left-truncation support via the `L` parameter to all primary
+  censored distribution functions
+  ([`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`rprimarycensored()`](https://primarycensored.epinowcast.org/reference/rprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md))
+  and Stan functions. The `L` parameter specifies the minimum delay
+  (lower truncation point), enabling distributions to be truncated over
+  `[L, D]` rather than just `[0, D]`. This is useful for generation
+  intervals and other settings where delays below a threshold cannot
+  occur. Defaults to `L = 0` for backward compatibility.
+  ([\#63](https://github.com/epinowcast/primarycensored/issues/63))
+
+### Bug fixes
+
+- Fixed `expgrowth_lpdf` Stan function to support negative growth rates.
+  Previously, `log(r)` returned NaN for `r < 0`. Now uses `log(abs(r))`
+  and `log(abs(...))` for the denominator.
+  ([\#276](https://github.com/epinowcast/primarycensored/issues/276))
+- Fixed Stan `dist_lcdf` distribution ID mapping to match R’s
+  `pcd_distributions` table. Previously, most distribution IDs were
+  mismatched between R and Stan (e.g. `pcd_stan_dist_id("weibull")`
+  returned 3 but Stan’s `dist_lcdf` used ID 3 for the Normal
+  distribution). Only lognormal (1), gamma (2), and exponential (4) were
+  correct. This affected the ODE numerical integration path for all
+  mismatched distributions.
+  ([\#277](https://github.com/epinowcast/primarycensored/issues/277))
+- Renamed `min` and `max` parameters to `xmin` and `xmax` in Stan
+  functions (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`,
+  `expgrowth_lcdf`, `expgrowth_rng`, `primary_lpdf`) to avoid conflicts
+  with Stan built-in functions. CmdStan 2.38.0 now strictly enforces
+  reserved keyword restrictions when exposing Stan functions to R.
+  ([\#258](https://github.com/epinowcast/primarycensored/issues/258))
+
+### Documentation
+
+- Updated vignette titles and section headers to use sentence case
+  consistently.
+  ([\#273](https://github.com/epinowcast/primarycensored/issues/273))
+
 ## primarycensored 1.3.0
+
+CRAN release: 2025-12-01
 
 This minor release improves documentation for
 [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)

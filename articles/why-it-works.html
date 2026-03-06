@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -136,7 +136,7 @@
 <h2 id="statistical-model-used-in-primarycensored">
 <span class="header-section-number">3</span> Statistical model used in <code>primarycensored</code><a class="anchor" aria-label="anchor" href="#statistical-model-used-in-primarycensored"></a>
 </h2>
-<p>As described in <a href="primarycensored.html">Getting Started with <code>primarycensored</code></a>, <code>primarycensored</code> focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, all of the methods in <code>primarycensored</code> start by assuming no secondary event censoring and solving the primary censoring problem. This is the reason for the packages name despite the most common use case being when there is double censoring. A key assumption we make throughout is that the censoring window for events are known and independent of the event time within the censoring interval. This is known as non-informative censoring.</p>
+<p>As described in <a href="primarycensored.html">Getting started with <code>primarycensored</code></a>, <code>primarycensored</code> focuses on a subset of methods from time to event analysis that address data missingness problems commonly found in epidemiological datasets. We present the statistical problem as a double interval censoring problem, where both the primary event time and the secondary event times are interval censored. We can recover single interval censoring problems by reducing one of the intervals to a point. In particular, all of the methods in <code>primarycensored</code> start by assuming no secondary event censoring and solving the primary censoring problem. This is the reason for the packages name despite the most common use case being when there is double censoring. A key assumption we make throughout is that the censoring window for events are known and independent of the event time within the censoring interval. This is known as non-informative censoring.</p>
 <p>The target for inference is the distribution of the delay time between the primary and secondary events. We assume that the delay time is a random variable <span class="math inline">\(T = S - P_{u}\)</span> with distribution function <span class="math inline">\(F_T(t) = Pr(T &lt; t)\)</span> and density function <span class="math inline">\(f_T(t)\)</span>. In this treatment we assume that the delay time is shift-invariant, that is, the distribution of the delay time is the same regardless of the primary event time.</p>
 <p>The (unconditional) primary event time is a random variable <span class="math inline">\(P_{u}\)</span> with distribution function <span class="math inline">\(F_{P_{u}}(t)\)</span> and density function <span class="math inline">\(f_{P_{u}}(t)\)</span>. The secondary event time is a random variable <span class="math inline">\(S\)</span>, but in this treatment we construct the secondary event time from the primary time and delay, therefore the marginal distribution of <span class="math inline">\(S\)</span> is not considered.</p>
 <p>The <em>censoring window</em> for each event is the interval within which each event is known to have occurred, respectively, <span class="math inline">\(P \in [t_P, t_P + w_P]\)</span> and <span class="math inline">\(S \in [t_S, t_S + w_S]\)</span>. The lengths of the censoring windows are <span class="math inline">\(w_P\)</span> and <span class="math inline">\(w_S\)</span> respectively. The precise event times within their windows are unobserved. Note that since the primary event time is known up to the censoring window, we are predominantly interested in the <em>conditional</em> primary time <span class="math inline">\(P = P_{u} | \{ P_{u} \in [t_P, t_P + w_P]\}\)</span> which has density function:</p>
@@ -270,15 +270,20 @@ which is same as equation <a href="#eq:seccensorprob">(3.2)</a>.</p>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
+<div id="refs" class="references csl-bib-body" entry-spacing="0" line-spacing="2">
 <div id="ref-leung1997censoring" class="csl-entry">
-1. Leung, K.-M., Elashoff, R. M., &amp; Afifi, A. A. (1997). Censoring issues in survival analysis. <em>Annual Review of Public Health</em>, <em>18</em>(1), 83–104.
+<div class="csl-left-margin">1. </div>
+<div class="csl-right-inline">Leung, K.-M., Elashoff, R. M., &amp; Afifi, A. A. (1997). Censoring issues in survival analysis. <em>Annual Review of Public Health</em>, <em>18</em>(1), 83–104.</div>
 </div>
 <div id="ref-Park2024" class="csl-entry">
-2. Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M., Lipsitch, M., Lison, A., Overton, C. E., Ward, T., &amp; Abbott, S. (2024). Estimating epidemiological delay distributions for infectious diseases. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2024.01.12.24301247" class="external-link">https://doi.org/10.1101/2024.01.12.24301247</a>
+<div class="csl-left-margin">2. </div>
+<div class="csl-right-inline">Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M., Lipsitch, M., Lison, A., Overton, C. E., Ward, T., &amp; Abbott, S. (2024). Estimating epidemiological delay distributions for infectious diseases. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2024.01.12.24301247" class="external-link">https://doi.org/10.1101/2024.01.12.24301247</a>
+</div>
 </div>
 <div id="ref-Charniga2024" class="csl-entry">
-3. Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E., Pulliam, J. R. C., Ward, T., Cauchemez, S., &amp; Abbott, S. (2024). Best practices for estimating and reporting epidemiological delay distributions of infectious diseases. <em>PLoS Comput. Biol.</em>, <em>20</em>(10), e1012520. <a href="https://doi.org/10.1371/journal.pcbi.1012520" class="external-link">https://doi.org/10.1371/journal.pcbi.1012520</a>
+<div class="csl-left-margin">3. </div>
+<div class="csl-right-inline">Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E., Pulliam, J. R. C., Ward, T., Cauchemez, S., &amp; Abbott, S. (2024). Best practices for estimating and reporting epidemiological delay distributions of infectious diseases. <em>PLoS Comput. Biol.</em>, <em>20</em>(10), e1012520. <a href="https://doi.org/10.1371/journal.pcbi.1012520" class="external-link">https://doi.org/10.1371/journal.pcbi.1012520</a>
+</div>
 </div>
 </div>
 </div>

@@ -5,7 +5,7 @@
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<title>Getting Started with primarycensored • primarycensored</title>
+<title>Getting started with primarycensored • primarycensored</title>
 <!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
 <link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
 <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
@@ -21,7 +21,7 @@
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
-<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting Started with primarycensored">
+<script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Getting started with primarycensored">
 <meta name="description" content="A quick start example demonstrating use of primarycensored.">
 <meta property="og:description" content="A quick start example demonstrating use of primarycensored.">
 <meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png">
@@ -34,7 +34,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -91,7 +91,7 @@
 
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Getting Started with primarycensored</h1>
+      <img src="../logo.png" class="logo" alt=""><h1>Getting started with primarycensored</h1>
             
       
       <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/vignettes/primarycensored.Rmd" class="external-link"><code>vignettes/primarycensored.Rmd</code></a></small>
@@ -145,9 +145,9 @@
 </ol>
 <p><span class="math display">\[t = p + d\]</span></p>
 <ol start="4" style="list-style-type: decimal">
-<li>Apply truncation (i.e. remove any delays that fall outside the observation window) to ensure that the delays are within the specified range <span class="math inline">\([0, D]\)</span>, where <span class="math inline">\(D\)</span> is the maximum observable delay:</li>
+<li>Apply truncation (i.e. remove any delays that fall outside the observation window) to ensure that the delays are within the specified range <span class="math inline">\([L, D]\)</span>, where <span class="math inline">\(L\)</span> is the minimum delay (lower truncation, default 0) and <span class="math inline">\(D\)</span> is the maximum observable delay (upper truncation):</li>
 </ol>
-<p><span class="math display">\[t_{truncated} = \{t \mid 0 \leq t &lt; D\}\]</span></p>
+<p><span class="math display">\[t_{truncated} = \{t \mid L \leq t &lt; D\}\]</span></p>
 <ol start="5" style="list-style-type: decimal">
 <li>Round the truncated delays to the nearest secondary event window (<span class="math inline">\(swindow\)</span>):</li>
 </ol>
@@ -227,7 +227,7 @@
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="primarycensored_files/figure-html/sample-lognormal-1.png" width="672"></p>
+<p><img src="primarycensored_files/figure-html/sample-lognormal-1.png" alt="" width="672"></p>
 <p>Neither distribution matches the true distribution due to the truncation at <code>D</code> which biases both observed distributions towards shorter delays, as well as the primary and secondary event censoring.</p>
 </div>
 <div class="section level2" number="4">
@@ -240,11 +240,11 @@
 F_{\text{cens}}(q) = \int_{0}^{pwindow} F(q - p) \cdot f_{\text{primary}}(p) \, dp
 \]</span></p>
 <p>where <span class="math inline">\(F\)</span> is the CDF of the delay distribution, <span class="math inline">\(f_{\text{primary}}\)</span> is the PDF of the primary event times, and <span class="math inline">\(pwindow\)</span> is the primary event window.</p>
-<p>If the maximum delay <span class="math inline">\(D\)</span> is finite, the CDF is normalized by dividing by <span class="math inline">\(F_{\text{cens}}(D)\)</span>:</p>
+<p>If truncation is applied (i.e. <span class="math inline">\(L &gt; 0\)</span> or <span class="math inline">\(D &lt; \infty\)</span>), the CDF is normalized over the interval <span class="math inline">\([L, D]\)</span>:</p>
 <p><span class="math display">\[
-F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
+F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{F_{\text{cens}}(D) - F_{\text{cens}}(L)}
 \]</span></p>
-<p>where <span class="math inline">\(F_{\text{cens,norm}}(q)\)</span> is the normalized CDF.</p>
+<p>where <span class="math inline">\(F_{\text{cens,norm}}(q)\)</span> is the normalized CDF, <span class="math inline">\(L\)</span> is the lower truncation point (default 0), and <span class="math inline">\(D\)</span> is the upper truncation point.</p>
 <p>Let’s compare the empirical CDF of our samples without secondary event censoring to the theoretical CDF computed using <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">empirical_cdf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/ecdf.html" class="external-link">ecdf</a></span><span class="op">(</span><span class="va">samples</span><span class="op">)</span></span>
@@ -282,7 +282,7 @@ F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q)}{F_{\text{cens}}(D)}
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="primarycensored_files/figure-html/cdf-lognormal-1.png" width="672"></p>
+<p><img src="primarycensored_files/figure-html/cdf-lognormal-1.png" alt="" width="672"></p>
 <p>The theoretical CDF matches the empirical CDF very well, confirming that <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code> is working as expected.</p>
 </div>
 <div class="section level2" number="5">
@@ -345,7 +345,7 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 <span>    panel.grid.minor <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_blank</a></span><span class="op">(</span><span class="op">)</span>,</span>
 <span>    plot.title <span class="op">=</span> <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/element.html" class="external-link">element_text</a></span><span class="op">(</span>hjust <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span></span>
 <span>  <span class="op">)</span></span></code></pre></div>
-<p><img src="primarycensored_files/figure-html/pmf-lognormal-1.png" width="672"></p>
+<p><img src="primarycensored_files/figure-html/pmf-lognormal-1.png" alt="" width="672"></p>
 <p>Again the theoretical PMF matches the empirical PMF very well, confirming that <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> is also working as expected.</p>
 </div>
 <div class="section level2" number="6">
@@ -371,12 +371,16 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 <li>For more methodological background on delay distributions see Park et al.<span class="citation"><sup>[<a href="#ref-Park2024">2</a>]</sup></span>.</li>
 <li>For advice on best practices when estimating or handling delay distributions see Charniga et al.<span class="citation"><sup>[<a href="#ref-Charniga2024">1</a>]</sup></span>.</li>
 </ul>
-<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0" line-spacing="2">
+<div id="refs" class="references csl-bib-body" entry-spacing="0" line-spacing="2">
 <div id="ref-Charniga2024" class="csl-entry">
-1. Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E., Pulliam, J. R. C., Ward, T., Cauchemez, S., &amp; Abbott, S. (2024). Best practices for estimating and reporting epidemiological delay distributions of infectious diseases. <em>PLoS Comput. Biol.</em>, <em>20</em>(10), e1012520. <a href="https://doi.org/10.1371/journal.pcbi.1012520" class="external-link">https://doi.org/10.1371/journal.pcbi.1012520</a>
+<div class="csl-left-margin">1. </div>
+<div class="csl-right-inline">Charniga, K., Park, S. W., Akhmetzhanov, A. R., Cori, A., Dushoff, J., Funk, S., Gostic, K. M., Linton, N. M., Lison, A., Overton, C. E., Pulliam, J. R. C., Ward, T., Cauchemez, S., &amp; Abbott, S. (2024). Best practices for estimating and reporting epidemiological delay distributions of infectious diseases. <em>PLoS Comput. Biol.</em>, <em>20</em>(10), e1012520. <a href="https://doi.org/10.1371/journal.pcbi.1012520" class="external-link">https://doi.org/10.1371/journal.pcbi.1012520</a>
+</div>
 </div>
 <div id="ref-Park2024" class="csl-entry">
-2. Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M., Lipsitch, M., Lison, A., Overton, C. E., Ward, T., &amp; Abbott, S. (2024). Estimating epidemiological delay distributions for infectious diseases. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2024.01.12.24301247" class="external-link">https://doi.org/10.1101/2024.01.12.24301247</a>
+<div class="csl-left-margin">2. </div>
+<div class="csl-right-inline">Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M., Lipsitch, M., Lison, A., Overton, C. E., Ward, T., &amp; Abbott, S. (2024). Estimating epidemiological delay distributions for infectious diseases. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2024.01.12.24301247" class="external-link">https://doi.org/10.1101/2024.01.12.24301247</a>
+</div>
 </div>
 </div>
 </div>
