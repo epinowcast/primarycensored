@@ -2,6 +2,8 @@
 
 ## primarycensored 1.4.0
 
+CRAN release: 2026-03-06
+
 This major release adds left-truncation support via the `L` parameter,
 enabling distributions to be truncated over `[L, D]` rather than just
 `[0, D]`. It also removes deprecated functionality that was
