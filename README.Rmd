@@ -30,7 +30,10 @@ license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/
 ## Summary
 
 ```{r, results = "asis", echo=FALSE}
-cat(gsub("\n[ ]+", " ", packageDescription("primarycensored")$Description))
+desc_file <- read.dcf("DESCRIPTION")
+description <- gsub("\n[ ]+", " ", desc_file[1, "Description"])
+description <- gsub("<doi:([^>]+)>", "[doi:\\1](https://doi.org/\\1)", description)
+cat(description)
 ```
 
 ## Installation
