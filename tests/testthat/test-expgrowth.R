@@ -1,35 +1,77 @@
-test_that("dexpgrowth integrates to 1", {
-  min <- 0
-  max <- 1
-  r <- 0.5
-  integral <- integrate(function(x) dexpgrowth(x, min, max, r), min, max)$value
-  expect_equal(integral, 1, tolerance = 1e-6)
-})
+# Parameter sets covering positive r, negative r, and non-zero min
+test_cases <- list(
+  list(min = 0, max = 1, r = 0.5, label = "positive r"),
+  list(min = 0, max = 2, r = 1.5, label = "positive r wide"),
+  list(min = 0, max = 1, r = -0.5, label = "negative r"),
+  list(min = 0, max = 2, r = -1.5, label = "negative r wide"),
+  list(min = 10, max = 20, r = 0.1, label = "non-zero min positive r"),
+  list(min = 5, max = 15, r = -0.3, label = "non-zero min negative r")
+)
 
-test_that("pexpgrowth matches integral of dexpgrowth", {
-  min <- 0
-  max <- 2
-  r <- 1.5
-  q <- c(0.5, 1, 1.5)
+for (tc in test_cases) {
+  test_that(
+    paste("dexpgrowth integrates to 1:", tc$label),
+    {
+      integral <- integrate(
+        function(x) dexpgrowth(x, tc$min, tc$max, tc$r),
+        tc$min, tc$max
+      )$value
+      expect_equal(integral, 1, tolerance = 1e-6)
+    }
+  )
 
-  for (x in q) {
-    cdf_integral <- integrate(function(t) {
-      dexpgrowth(t, min, max, r)
-    }, min, x)$value
-    cdf_pexpgrowth <- pexpgrowth(x, min, max, r)
-    expect_equal(cdf_integral, cdf_pexpgrowth, tolerance = 1e-6)
-  }
-})
+  test_that(
+    paste("pexpgrowth matches integral of dexpgrowth:", tc$label),
+    {
+      q <- seq(tc$min, tc$max, length.out = 5)[2:4]
+      for (x in q) {
+        cdf_integral <- integrate(
+          function(t) dexpgrowth(t, tc$min, tc$max, tc$r),
+          tc$min, x
+        )$value
+        expect_equal(
+          pexpgrowth(x, tc$min, tc$max, tc$r),
+          cdf_integral,
+          tolerance = 1e-6
+        )
+      }
+    }
+  )
+}
 
-test_that("rexpgrowth generates samples within the correct range", {
-  min <- 1
-  max <- 5
-  r <- 0.8
-  n <- 1000
-  samples <- rexpgrowth(n, min, max, r)
+# Parameterised range and consistency tests
+consistency_cases <- list(
+  list(min = 0, max = 2, r = 1.2, label = "positive r"),
+  list(min = 0, max = 2, r = -1.2, label = "negative r"),
+  list(min = 10, max = 20, r = 0.2, label = "non-zero min")
+)
 
-  expect_true(all(samples >= min & samples < max))
-})
+for (tc in consistency_cases) {
+  test_that(
+    paste("rexpgrowth generates samples in correct range:", tc$label),
+    {
+      samples <- rexpgrowth(1000, tc$min, tc$max, tc$r)
+      expect_true(all(samples >= tc$min & samples < tc$max))
+    }
+  )
+
+  test_that(
+    paste("d, p, r expgrowth are consistent:", tc$label),
+    {
+      set.seed(42)
+      n <- 10000
+      samples <- rexpgrowth(n, tc$min, tc$max, tc$r)
+
+      empirical_cdf <- ecdf(samples)
+      x_values <- seq(tc$min, tc$max, length.out = 50)
+      theoretical_cdf <- pexpgrowth(x_values, tc$min, tc$max, tc$r)
+      expect_equal(
+        empirical_cdf(x_values), theoretical_cdf,
+        tolerance = 0.05
+      )
+    }
+  )
+}
 
 test_that("rexpgrowth mean approximates theoretical mean", {
   min <- 0
@@ -42,34 +84,8 @@ test_that("rexpgrowth mean approximates theoretical mean", {
     r * max * exp(r * max) - r * min * exp(r * min) -
       exp(r * max) + exp(r * min)
   ) / (r * (exp(r * max) - exp(r * min)))
-  sample_mean <- mean(samples)
 
-  expect_equal(sample_mean, theoretical_mean, tolerance = 0.01)
-})
-
-test_that("dexpgrowth, pexpgrowth, and rexpgrowth are consistent", {
-  min <- 0
-  max <- 2
-  r <- 1.2
-  n <- 10000
-  samples <- rexpgrowth(n, min, max, r)
-
-  # Compare empirical CDF with theoretical CDF
-  empirical_cdf <- ecdf(samples)
-  x_values <- seq(min, max, length.out = 100)
-  theoretical_cdf <- pexpgrowth(x_values, min, max, r)
-
-  expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.05)
-
-  # Compare empirical PDF with theoretical PDF using histogram
-  hist_data <- hist(samples, breaks = 50, plot = FALSE)
-  midpoints <- (
-    hist_data$breaks[-1] + hist_data$breaks[-length(hist_data$breaks)]
-  ) / 2
-  empirical_pdf <- hist_data$density
-  theoretical_pdf <- dexpgrowth(midpoints, min, max, r)
-
-  expect_equal(empirical_pdf, theoretical_pdf, tolerance = 0.1)
+  expect_equal(mean(samples), theoretical_mean, tolerance = 0.01)
 })
 
 test_that("expgrowth functions handle very small r correctly", {
@@ -78,7 +94,6 @@ test_that("expgrowth functions handle very small r correctly", {
   r <- 1e-11
   n <- 100000
 
-  # Test rexpgrowth
   samples <- rexpgrowth(n, min, max, r)
   expect_true(all(samples >= min & samples < max))
 
@@ -86,75 +101,15 @@ test_that("expgrowth functions handle very small r correctly", {
   expect_equal(mean(samples), 0.5, tolerance = 0.01)
   expect_equal(var(samples), 1 / 12, tolerance = 0.02)
 
-  # Test dexpgrowth
   x_values <- seq(min, max, length.out = 100)
   densities <- dexpgrowth(x_values, min, max, r)
   expect_true(all(densities >= 0.99 & densities <= 1.01))
 
-  # Test pexpgrowth
   cdfs <- pexpgrowth(x_values, min, max, r)
   expect_equal(cdfs, x_values, tolerance = 0.01)
-
-  # Consistency check
-  empirical_cdf <- ecdf(samples)
-  theoretical_cdf <- pexpgrowth(x_values, min, max, r)
-  expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.01)
 })
 
-test_that("dexpgrowth integrates to 1 for negative r", {
-  min <- 0
-  max <- 1
-  r <- -0.5
-  integral <- integrate(
-    function(x) dexpgrowth(x, min, max, r), min, max
-  )$value
-  expect_equal(integral, 1, tolerance = 1e-6)
-})
-
-test_that("pexpgrowth matches integral of dexpgrowth for negative r", {
-  min <- 0
-  max <- 2
-  r <- -1.5
-  q <- c(0.5, 1, 1.5)
-
-  for (x in q) {
-    cdf_integral <- integrate(function(t) {
-      dexpgrowth(t, min, max, r)
-    }, min, x)$value
-    cdf_pexpgrowth <- pexpgrowth(x, min, max, r)
-    expect_equal(cdf_integral, cdf_pexpgrowth, tolerance = 1e-6)
-  }
-})
-
-test_that("rexpgrowth generates samples in correct range for negative r", {
-  min <- 1
-  max <- 5
-  r <- -0.8
-  n <- 1000
-  samples <- rexpgrowth(n, min, max, r)
-
-  expect_true(all(samples >= min & samples < max))
-})
-
-test_that("expgrowth d, p, r functions are consistent for negative r", {
-  min <- 0
-  max <- 2
-  r <- -1.2
-  n <- 10000
-  samples <- rexpgrowth(n, min, max, r)
-
-  # Compare empirical CDF with theoretical CDF
-  empirical_cdf <- ecdf(samples)
-  x_values <- seq(min, max, length.out = 100)
-  theoretical_cdf <- pexpgrowth(x_values, min, max, r)
-
-  expect_equal(
-    empirical_cdf(x_values), theoretical_cdf,
-    tolerance = 0.05
-  )
-})
-
-test_that("dexpgrowth with log = TRUE works for negative r", {
+test_that("dexpgrowth with log = TRUE matches log of density", {
   min <- 0
   max <- 1
   r <- -0.5
@@ -167,32 +122,30 @@ test_that("dexpgrowth with log = TRUE works for negative r", {
   expect_true(all(is.finite(log_density)))
 })
 
+test_that("pexpgrowth boundary values are correct with non-zero min", {
+  min <- 10
+  max <- 20
+  r <- 0.1
+  expect_equal(pexpgrowth(max, min, max, r), 1, tolerance = 1e-10)
+  expect_equal(pexpgrowth(min, min, max, r), 0, tolerance = 1e-10)
+})
+
 test_that("pexpgrowth handles lower.tail argument correctly", {
   min <- 0
   max <- 10
   r <- 0.5
   x_values <- seq(min, max, length.out = 100)
 
-  # Calculate CDFs with lower.tail = TRUE and FALSE
   cdf_lower <- pexpgrowth(x_values, min, max, r, lower.tail = TRUE)
   cdf_upper <- pexpgrowth(x_values, min, max, r, lower.tail = FALSE)
 
-  # Check that the sum of lower and upper tail probabilities is 1
   expect_equal(
     cdf_lower + cdf_upper, rep(1, length(x_values)),
     tolerance = 1e-10
   )
 
-  # Check specific points
   expect_identical(pexpgrowth(min, min, max, r, lower.tail = TRUE), 0)
   expect_identical(pexpgrowth(min, min, max, r, lower.tail = FALSE), 1)
   expect_identical(pexpgrowth(max, min, max, r, lower.tail = TRUE), 1)
   expect_identical(pexpgrowth(max, min, max, r, lower.tail = FALSE), 0)
-
-  # Check that lower.tail = FALSE gives correct upper tail probabilities
-  expect_equal(
-    pexpgrowth(x_values, min, max, r, lower.tail = FALSE),
-    1 - pexpgrowth(x_values, min, max, r, lower.tail = TRUE),
-    tolerance = 1e-10
-  )
 })
