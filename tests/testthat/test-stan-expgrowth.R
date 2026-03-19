@@ -63,21 +63,32 @@ for (tc in stan_test_cases) {
   )
 }
 
-test_that("Stan expgrowth_rng matches distribution of R rexpgrowth", {
-  n <- 10000
-  min <- 0
-  max <- 1
-  r <- 0.5
+for (tc in stan_test_cases) {
+  test_that(
+    paste(
+      "Stan expgrowth_rng matches R rexpgrowth:", tc$label
+    ),
+    {
+      n <- 10000
+      set.seed(123)
+      stan_samples <- replicate(
+        n, expgrowth_rng(tc$min, tc$max, tc$r)
+      )
+      set.seed(123)
+      r_samples <- rexpgrowth(n, tc$min, tc$max, tc$r)
 
-  set.seed(123)
-  stan_samples <- replicate(n, expgrowth_rng(min, max, r))
-  set.seed(123)
-  r_samples <- rexpgrowth(n, min, max, r)
-
-  expect_equal(mean(stan_samples), mean(r_samples), tolerance = 1e-2)
-  expect_equal(sd(stan_samples), sd(r_samples), tolerance = 1e-2)
-  expect_equal(
-    quantile(stan_samples), quantile(r_samples),
-    tolerance = 1e-2
+      expect_equal(
+        mean(stan_samples), mean(r_samples),
+        tolerance = 1e-2
+      )
+      expect_equal(
+        sd(stan_samples), sd(r_samples),
+        tolerance = 1e-2
+      )
+      expect_equal(
+        quantile(stan_samples), quantile(r_samples),
+        tolerance = 1e-2
+      )
+    }
   )
-})
+}
