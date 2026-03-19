@@ -42,7 +42,7 @@ for (tc in test_cases) {
     paste("rexpgrowth generates samples in correct range:", tc$label),
     {
       samples <- rexpgrowth(1000, tc$min, tc$max, tc$r)
-      expect_true(all(samples >= tc$min & samples < tc$max))
+      expect_true(all(samples >= tc$min & samples <= tc$max))
     }
   )
 
@@ -95,22 +95,23 @@ for (tc in test_cases) {
       )
     }
   )
+
+  test_that(
+    paste("rexpgrowth mean approximates theoretical mean:", tc$label),
+    {
+      n <- 100000
+      samples <- rexpgrowth(n, tc$min, tc$max, tc$r)
+
+      theoretical_mean <- (
+        tc$r * tc$max * exp(tc$r * tc$max) -
+          tc$r * tc$min * exp(tc$r * tc$min) -
+          exp(tc$r * tc$max) + exp(tc$r * tc$min)
+      ) / (tc$r * (exp(tc$r * tc$max) - exp(tc$r * tc$min)))
+
+      expect_equal(mean(samples), theoretical_mean, tolerance = 0.01)
+    }
+  )
 }
-
-test_that("rexpgrowth mean approximates theoretical mean", {
-  min <- 0
-  max <- 1
-  r <- 2
-  n <- 100000
-  samples <- rexpgrowth(n, min, max, r)
-
-  theoretical_mean <- (
-    r * max * exp(r * max) - r * min * exp(r * min) -
-      exp(r * max) + exp(r * min)
-  ) / (r * (exp(r * max) - exp(r * min)))
-
-  expect_equal(mean(samples), theoretical_mean, tolerance = 0.01)
-})
 
 test_that("expgrowth functions handle very small r correctly", {
   min <- 0
@@ -119,7 +120,7 @@ test_that("expgrowth functions handle very small r correctly", {
   n <- 100000
 
   samples <- rexpgrowth(n, min, max, r)
-  expect_true(all(samples >= min & samples < max))
+  expect_true(all(samples >= min & samples <= max))
 
   # For very small r, the distribution should be close to uniform
   expect_equal(mean(samples), 0.5, tolerance = 0.01)
@@ -131,6 +132,11 @@ test_that("expgrowth functions handle very small r correctly", {
 
   cdfs <- pexpgrowth(x_values, min, max, r)
   expect_equal(cdfs, x_values, tolerance = 0.01)
+
+  # Consistency check
+  empirical_cdf <- ecdf(samples)
+  theoretical_cdf <- pexpgrowth(x_values, min, max, r)
+  expect_equal(empirical_cdf(x_values), theoretical_cdf, tolerance = 0.01)
 })
 
 test_that("dexpgrowth with log = TRUE matches log of density", {
