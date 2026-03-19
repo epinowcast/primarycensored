@@ -110,7 +110,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    <span class="keywordflow">return</span> 1 / (xmax - xmin);</div>
 <div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>  }</div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>  <span class="keywordflow">return</span> r * exp(r * (x - xmin)) / (exp(r * xmax) - exp(r * xmin));</div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span>  <span class="keywordflow">return</span> r * exp(r * x) / (exp(r * xmax) - exp(r * xmin));</div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span>}</div>
 </div>
 <div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span> </div>
@@ -122,7 +122,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
 <div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordflow">return</span> -log(xmax - xmin);</div>
 <div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>  }</div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keywordflow">return</span> log(abs(r)) + r * (x - xmin) -</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keywordflow">return</span> log(abs(r)) + r * x -</div>
 <div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>    log(abs(exp(r * xmax) - exp(r * xmin)));</div>
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>}</div>
 </div>
@@ -138,7 +138,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
 <div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>    <span class="keywordflow">return</span> (x - xmin) / (xmax - xmin);</div>
 <div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  }</div>
-<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <span class="keywordflow">return</span> (exp(r * (x - xmin)) - exp(r * xmin)) / (exp(r * xmax) - exp(r * xmin));</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span>  <span class="keywordflow">return</span> (exp(r * x) - exp(r * xmin)) / (exp(r * xmax) - exp(r * xmin));</div>
 <div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>}</div>
 </div>
 <div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span> </div>
@@ -160,7 +160,7 @@ $(function(){ initResizable(false); });
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  <span class="keywordflow">if</span> (abs(r) &lt; 1e-10) {</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>    <span class="keywordflow">return</span> xmin + u * (xmax - xmin);</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  }</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  <span class="keywordflow">return</span> xmin + log(u * (exp(r * xmax) - exp(r * xmin)) + exp(r * xmin)) / r;</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>  <span class="keywordflow">return</span> log(u * exp(r * xmax) + (1 - u) * exp(r * xmin)) / r;</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>}</div>
 </div>
 <div class="ttc" id="agroup__exponential__growth__distributions_html_ga47c04b4df4d6d49e95e53f0151c0ead8"><div class="ttname"><a href="group__exponential__growth__distributions.html#ga47c04b4df4d6d49e95e53f0151c0ead8">expgrowth_lcdf</a></div><div class="ttdeci">real expgrowth_lcdf(real x, real xmin, real xmax, real r)</div><div class="ttdef"><b>Definition</b> <a href="#l00075">expgrowth.stan:75</a></div></div>
