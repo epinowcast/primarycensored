@@ -63,27 +63,25 @@ for (tc in stan_test_cases) {
   )
 
   test_that(
-    paste("Stan expgrowth_rng matches R rexpgrowth:", tc$label),
+    paste("Stan expgrowth_rng matches theoretical CDF:", tc$label),
     {
       n <- 10000
-      set.seed(123)
       stan_samples <- replicate(
         n, expgrowth_rng(tc$min, tc$max, tc$r)
       )
-      set.seed(123)
-      r_samples <- rexpgrowth(n, tc$min, tc$max, tc$r)
 
-      expect_equal(
-        mean(stan_samples), mean(r_samples),
-        tolerance = 1e-2
+      expect_true(all(
+        stan_samples >= tc$min & stan_samples <= tc$max
+      ))
+
+      empirical_cdf <- ecdf(stan_samples)
+      x_values <- seq(tc$min, tc$max, length.out = 50)
+      theoretical_cdf <- pexpgrowth(
+        x_values, tc$min, tc$max, tc$r
       )
       expect_equal(
-        sd(stan_samples), sd(r_samples),
-        tolerance = 1e-2
-      )
-      expect_equal(
-        quantile(stan_samples), quantile(r_samples),
-        tolerance = 1e-2
+        empirical_cdf(x_values), theoretical_cdf,
+        tolerance = 0.05
       )
     }
   )
