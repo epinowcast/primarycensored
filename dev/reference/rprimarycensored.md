@@ -136,7 +136,7 @@ Primary event censored distribution functions
 ``` r
 # Example: Lognormal distribution with uniform primary events
 rprimarycensored(10, rlnorm, meanlog = 0, sdlog = 1)
-#>  [1] 1 1 1 2 1 1 0 2 1 2
+#>  [1] 1 0 0 0 4 3 2 3 1 2
 
 # Example: Lognormal distribution with exponential growth primary events
 rprimarycensored(
@@ -144,9 +144,9 @@ rprimarycensored(
   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
   meanlog = 0, sdlog = 1
 )
-#>  [1] 1 0 1 1 0 0 1 2 2 1
+#>  [1] 1 0 2 1 0 1 0 0 2 3
 
 # Example: Left-truncated distribution (e.g., for generation intervals)
 rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
-#>  [1] 1 1 1 1 1 1 2 1 2 2
+#>  [1] 1 1 2 2 1 1 3 3 1 1
 ```

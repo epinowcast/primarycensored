@@ -15,7 +15,7 @@ growth distribution."><meta property="og:image" content="https://primarycensored
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.3.0.9000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -123,16 +123,16 @@ maximum of the lengths of the numerical arguments for the other functions.</p>
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>The exponential growth distribution is defined on the interval [min, max]
 with rate parameter (r). Its probability density function (PDF) is:</p>
-<p>$$f(x) = \frac{r \cdot \exp(r \cdot (x - min))}{\exp(r \cdot max) -
+<p>$$f(x) = \frac{r \cdot \exp(r \cdot x)}{\exp(r \cdot max) -
  \exp(r \cdot min)}$$</p>
 <p>The cumulative distribution function (CDF) is:</p>
-<p>$$F(x) = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{
+<p>$$F(x) = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{
  \exp(r \cdot max) - \exp(r \cdot min)}$$</p>
 <p>For random number generation, we use the inverse transform sampling method:</p><ol><li><p>Generate \(u \sim \text{Uniform}(0,1)\)</p></li>
 <li><p>Set \(F(x) = u\) and solve for \(x\):
 $$
-   x = min + \frac{1}{r} \cdot \log(u \cdot (\exp(r \cdot max) -
-  \exp(r \cdot min)) + \exp(r \cdot min))
+   x = \frac{1}{r} \cdot \log(u \cdot \exp(r \cdot max) +
+  (1 - u) \cdot \exp(r \cdot min))
    $$</p></li>
 </ol><p>This method works because of the probability integral transform theorem,
 which states that if \(X\) is a continuous random variable with CDF
@@ -145,7 +145,7 @@ variable, then \(F^{-1}(U)\) has the same distribution as \(X\), where
 distribution. The formula for \(x\) is derived by algebraically solving
 the equation:</p>
 <p>$$
-u = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{\exp(r \cdot max) -
+u = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{\exp(r \cdot max) -
  \exp(r \cdot min)}
 $$</p>
 <p>When \(r\) is very close to 0 (\(|r| &lt; 1e-10\)), the distribution

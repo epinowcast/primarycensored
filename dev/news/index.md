@@ -1,6 +1,25 @@
 # Changelog
 
-## primarycensored 1.3.0.9000
+## primarycensored 1.4.0.1000
+
+### Bug fixes
+
+- Fixed incorrect normalisation in
+  [`dexpgrowth()`](https://primarycensored.epinowcast.org/dev/reference/expgrowth.md),
+  [`pexpgrowth()`](https://primarycensored.epinowcast.org/dev/reference/expgrowth.md),
+  and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`,
+  `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero. The PDF and
+  CDF formulas contained a stray `exp(-r * min)` factor from using
+  `exp(r * (x - min))` instead of `exp(r * x)`. The Stan RNG had a
+  compensating `xmin +` offset. The bug did not affect results when
+  `min = 0` (the default and only value used within the package’s
+  primary censoring functions). Thanks to
+  [@TimTaylor](https://github.com/TimTaylor) for reporting
+  ([\#290](https://github.com/epinowcast/primarycensored/issues/290)).
+
+## primarycensored 1.4.0
+
+CRAN release: 2026-03-06
 
 This major release adds left-truncation support via the `L` parameter,
 enabling distributions to be truncated over `[L, D]` rather than just
