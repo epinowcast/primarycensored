@@ -58,8 +58,8 @@ For random number generation, we use the inverse transform sampling method:
 \item Generate \eqn{u \sim \text{Uniform}(0,1)}
 \item Set \eqn{F(x) = u} and solve for \eqn{x}:
 \deqn{
-   x = \frac{1}{r} \cdot \log(u \cdot (\exp(r \cdot max) -
-  \exp(r \cdot min)) + \exp(r \cdot min))
+   x = \frac{1}{r} \cdot \log(u \cdot \exp(r \cdot max) +
+  (1 - u) \cdot \exp(r \cdot min))
    }
 }
 

@@ -96,5 +96,5 @@ real expgrowth_rng(real xmin, real xmax, real r) {
   if (abs(r) < 1e-10) {
     return xmin + u * (xmax - xmin);
   }
-  return log(u * (exp(r * xmax) - exp(r * xmin)) + exp(r * xmin)) / r;
+  return log(u * exp(r * xmax) + (1 - u) * exp(r * xmin)) / r;
 }

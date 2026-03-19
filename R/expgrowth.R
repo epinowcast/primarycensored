@@ -41,8 +41,8 @@
 #' 1. Generate \eqn{u \sim \text{Uniform}(0,1)}
 #' 2. Set \eqn{F(x) = u} and solve for \eqn{x}:
 #'    \deqn{
-#'    x = \frac{1}{r} \cdot \log(u \cdot (\exp(r \cdot max) -
-#'   \exp(r \cdot min)) + \exp(r \cdot min))
+#'    x = \frac{1}{r} \cdot \log(u \cdot \exp(r \cdot max) +
+#'   (1 - u) \cdot \exp(r \cdot min))
 #'    }
 #'
 #' This method works because of the probability integral transform theorem,
@@ -131,7 +131,9 @@ rexpgrowth <- function(n, min = 0, max = 1, r) {
   if (abs(r) < 1e-10) {
     samples <- min + u * (max - min)
   } else {
-    samples <- log(u * (exp(r * max) - exp(r * min)) + exp(r * min)) / r
+    samples <- log(
+      u * exp(r * max) + (1 - u) * exp(r * min)
+    ) / r
   }
   return(samples)
 }
