@@ -233,7 +233,8 @@ specification. Contributions of any kind are welcome!
 <a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam">jamesmbaazam</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova">barbora-sobolova</a>,
 <a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>,
-<a href="https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson">kaitejohnson</a>
+<a href="https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson">kaitejohnson</a>,
+<a href="https://github.com/epinowcast/primarycensored/commits?author=TimTaylor">TimTaylor</a>
 
 ### Issue Authors
 

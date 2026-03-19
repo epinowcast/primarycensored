@@ -130,6 +130,7 @@ If making use of our methodology or the methodology on which ours is based, plea
 
 
 
+
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
 <!-- prettier-ignore-start -->
 <!-- markdownlint-disable -->
@@ -147,7 +148,8 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 <a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam">jamesmbaazam</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova">barbora-sobolova</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>, 
-<a href="https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson">kaitejohnson</a>
+<a href="https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson">kaitejohnson</a>, 
+<a href="https://github.com/epinowcast/primarycensored/commits?author=TimTaylor">TimTaylor</a>
 
 
 
@@ -172,6 +174,7 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
 
 
 
