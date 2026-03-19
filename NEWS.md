@@ -1,3 +1,16 @@
+# primarycensored 1.4.0.1000
+
+## Bug fixes
+
+- Fixed incorrect normalisation in `dexpgrowth()`, `pexpgrowth()`, and their
+  Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`,
+  `expgrowth_rng`) when `min` is non-zero. The PDF and CDF formulas contained
+  a stray `exp(-r * min)` factor from using `exp(r * (x - min))` instead of
+  `exp(r * x)`. The Stan RNG had a compensating `xmin +` offset. The bug did
+  not affect results when `min = 0` (the default and only value used within the
+  package's primary censoring functions). Thanks to @TimTaylor for reporting
+  (#290).
+
 # primarycensored 1.4.0
 
 This major release adds left-truncation support via the `L` parameter, enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. It also removes deprecated functionality that was soft-deprecated in version 1.1.0 and removes the `lifecycle` and `rlang` packages from dependencies.
