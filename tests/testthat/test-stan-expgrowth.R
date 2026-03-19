@@ -61,13 +61,9 @@ for (tc in stan_test_cases) {
       expect_equal(stan_lcdf, r_lcdf, tolerance = 1e-6)
     }
   )
-}
 
-for (tc in stan_test_cases) {
   test_that(
-    paste(
-      "Stan expgrowth_rng matches R rexpgrowth:", tc$label
-    ),
+    paste("Stan expgrowth_rng matches R rexpgrowth:", tc$label),
     {
       n <- 10000
       set.seed(123)

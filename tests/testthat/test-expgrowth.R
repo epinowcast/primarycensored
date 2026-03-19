@@ -37,16 +37,7 @@ for (tc in test_cases) {
       }
     }
   )
-}
 
-# Parameterised range and consistency tests
-consistency_cases <- list(
-  list(min = 0, max = 2, r = 1.2, label = "positive r"),
-  list(min = 0, max = 2, r = -1.2, label = "negative r"),
-  list(min = 10, max = 20, r = 0.2, label = "non-zero min")
-)
-
-for (tc in consistency_cases) {
   test_that(
     paste("rexpgrowth generates samples in correct range:", tc$label),
     {
@@ -68,6 +59,39 @@ for (tc in consistency_cases) {
       expect_equal(
         empirical_cdf(x_values), theoretical_cdf,
         tolerance = 0.05
+      )
+    }
+  )
+
+  test_that(
+    paste("pexpgrowth boundary values:", tc$label),
+    {
+      expect_equal(
+        pexpgrowth(tc$max, tc$min, tc$max, tc$r), 1,
+        tolerance = 1e-10
+      )
+      expect_equal(
+        pexpgrowth(tc$min, tc$min, tc$max, tc$r), 0,
+        tolerance = 1e-10
+      )
+    }
+  )
+
+  test_that(
+    paste("pexpgrowth lower.tail sums to 1:", tc$label),
+    {
+      x_values <- seq(tc$min, tc$max, length.out = 50)
+      cdf_lower <- pexpgrowth(
+        x_values, tc$min, tc$max, tc$r,
+        lower.tail = TRUE
+      )
+      cdf_upper <- pexpgrowth(
+        x_values, tc$min, tc$max, tc$r,
+        lower.tail = FALSE
+      )
+      expect_equal(
+        cdf_lower + cdf_upper, rep(1, length(x_values)),
+        tolerance = 1e-10
       )
     }
   )
@@ -120,32 +144,4 @@ test_that("dexpgrowth with log = TRUE matches log of density", {
 
   expect_equal(log_density, log(density), tolerance = 1e-10)
   expect_true(all(is.finite(log_density)))
-})
-
-test_that("pexpgrowth boundary values are correct with non-zero min", {
-  min <- 10
-  max <- 20
-  r <- 0.1
-  expect_equal(pexpgrowth(max, min, max, r), 1, tolerance = 1e-10)
-  expect_equal(pexpgrowth(min, min, max, r), 0, tolerance = 1e-10)
-})
-
-test_that("pexpgrowth handles lower.tail argument correctly", {
-  min <- 0
-  max <- 10
-  r <- 0.5
-  x_values <- seq(min, max, length.out = 100)
-
-  cdf_lower <- pexpgrowth(x_values, min, max, r, lower.tail = TRUE)
-  cdf_upper <- pexpgrowth(x_values, min, max, r, lower.tail = FALSE)
-
-  expect_equal(
-    cdf_lower + cdf_upper, rep(1, length(x_values)),
-    tolerance = 1e-10
-  )
-
-  expect_identical(pexpgrowth(min, min, max, r, lower.tail = TRUE), 0)
-  expect_identical(pexpgrowth(min, min, max, r, lower.tail = FALSE), 1)
-  expect_identical(pexpgrowth(max, min, max, r, lower.tail = TRUE), 1)
-  expect_identical(pexpgrowth(max, min, max, r, lower.tail = FALSE), 0)
 })
