@@ -29,19 +29,19 @@
 #' The exponential growth distribution is defined on the interval \[min, max\]
 #' with rate parameter (r). Its probability density function (PDF) is:
 #'
-#' \deqn{f(x) = \frac{r \cdot \exp(r \cdot (x - min))}{\exp(r \cdot max) -
+#' \deqn{f(x) = \frac{r \cdot \exp(r \cdot x)}{\exp(r \cdot max) -
 #'  \exp(r \cdot min)}}
 #'
 #' The cumulative distribution function (CDF) is:
 #'
-#' \deqn{F(x) = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{
+#' \deqn{F(x) = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{
 #'  \exp(r \cdot max) - \exp(r \cdot min)}}
 #'
 #' For random number generation, we use the inverse transform sampling method:
 #' 1. Generate \eqn{u \sim \text{Uniform}(0,1)}
 #' 2. Set \eqn{F(x) = u} and solve for \eqn{x}:
 #'    \deqn{
-#'    x = min + \frac{1}{r} \cdot \log(u \cdot (\exp(r \cdot max) -
+#'    x = \frac{1}{r} \cdot \log(u \cdot (\exp(r \cdot max) -
 #'   \exp(r \cdot min)) + \exp(r \cdot min))
 #'    }
 #'
@@ -58,7 +58,7 @@
 #' the equation:
 #'
 #' \deqn{
-#' u = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{\exp(r \cdot max) -
+#' u = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{\exp(r \cdot max) -
 #'  \exp(r \cdot min)}
 #' }
 #'
@@ -83,7 +83,7 @@ dexpgrowth <- function(x, min = 0, max = 1, r, log = FALSE) {
   if (abs(r) < 1e-10) {
     result <- rep(1 / (max - min), length(x))
   } else {
-    result <- r * exp(r * (x - min)) / (exp(r * max) - exp(r * min))
+    result <- r * exp(r * x) / (exp(r * max) - exp(r * min))
   }
   result[x < min | x > max] <- 0
   if (log) {
@@ -108,7 +108,7 @@ pexpgrowth <- function(
   if (abs(r) < 1e-10) {
     cumulative[in_range] <- (q[in_range] - min) / (max - min)
   } else {
-    cumulative[in_range] <- (exp(r * (q[in_range] - min)) - exp(r * min)) /
+    cumulative[in_range] <- (exp(r * q[in_range]) - exp(r * min)) /
       (exp(r * max) - exp(r * min))
   }
 
