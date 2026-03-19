@@ -191,7 +191,8 @@ specification. Contributions of any kind are welcome!
 [jamesmbaazam](https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam),
 [barbora-sobolova](https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova),
 [pearsonca](https://github.com/epinowcast/primarycensored/commits?author=pearsonca),
-[kaitejohnson](https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson)
+[kaitejohnson](https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson),
+[TimTaylor](https://github.com/epinowcast/primarycensored/commits?author=TimTaylor)
 
 ### Issue Authors
 
