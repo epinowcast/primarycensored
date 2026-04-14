@@ -55,6 +55,16 @@ test_that("pprimarycensored returns proper truncated value for pnorm, L = 0", {
   expect_equal(f_at_0, 0, tolerance = 1e-6)
 })
 
+test_that("dprimarycensored accepts L = -Inf for pnorm", {
+  x <- -2:2
+  d_vals <- dpcens(
+    x, pnorm,
+    pwindow = 1, swindow = 1, L = -Inf, D = Inf, mean = 0, sd = 1
+  )
+  expect_true(all(d_vals >= 0))
+  expect_length(d_vals, length(x))
+})
+
 test_that("dprimarycensored handles x with 0 and negative values for pnorm", {
   x <- -2:2
   swindow <- 1
