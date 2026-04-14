@@ -33,26 +33,27 @@ pcens_quantile <- function(
 
 #' Default method for computing primary event censored quantiles
 #'
-#' This method inverts the primary event censored CDF using numerical
-#' optimisation via optim. For each probability value, it searches for the
-#' delay such that the CDF computed by [pcens_cdf()] approximates the target
-#' probability.
+#' This method inverts the primary event censored CDF by root-finding via
+#' [stats::uniroot()]. The censored CDF is monotone in `q`, so a bracketed
+#' root-finder is both simpler and more robust than the minimisation approach
+#' used previously, and it works without special casing for `L = -Inf` or
+#' `D = Inf` because [stats::uniroot()] can extend its search interval
+#' automatically.
 #'
-#' @param init Initial guess for the delay. By default, 5.
+#' @param init Half-width of the initial search interval used when one or
+#'   both truncation bounds are infinite. The starting interval is taken as
+#'   `[-init, init]` (or `[L, L + 2 * init]` / `[D - 2 * init, D]` when only
+#'   one bound is finite) and then extended outward by [stats::uniroot()]
+#'   as needed. Defaults to 5, which brackets the bulk of most commonly used
+#'   delay distributions.
 #'
-#' @param tol Numeric tolerance for the convergence criterion in the
-#'   optimisation routine.
+#' @param tol Numeric tolerance passed to [stats::uniroot()].
 #'
-#' @param max_iter Integer specifying the maximum number of iterations allowed
-#'   during optimisation.
+#' @param max_iter Maximum number of [stats::uniroot()] iterations.
 #'
 #' @param ... Additional arguments passed to underlying functions.
 #'
 #' @inheritParams pcens_quantile
-#'
-#' @details
-#' The quantile is computed by minimising the squared difference between the
-#' computed CDF and the target probability.
 #'
 #' @family pcens
 #'
@@ -93,8 +94,27 @@ pcens_quantile.default <- function(
     max_iter = 10000,
     ...) {
   .check_truncation_bounds(L, D)
+
+  # Build an initial bracket for `stats::uniroot`. When a bound is infinite
+  # we use a finite stand-in and rely on `extendInt = "yes"` to expand
+  # outward until the censored CDF brackets `prob`. This avoids any need for
+  # a "starting point" in the flat tail of the CDF (the failure mode that
+  # would previously strand L-BFGS-B at a zero gradient).
+  if (is.finite(L) && is.finite(D)) {
+    lower <- L
+    upper <- D
+  } else if (is.finite(L)) {
+    lower <- L
+    upper <- L + 2 * init
+  } else if (is.finite(D)) {
+    lower <- D - 2 * init
+    upper <- D
+  } else {
+    lower <- -init
+    upper <- init
+  }
+
   sapply(p, function(prob) {
-    # Handle boundary cases.
     if (prob <= 0) {
       return(L)
     }
@@ -102,26 +122,19 @@ pcens_quantile.default <- function(
       return(NA_real_)
     }
 
-    # Objective function: squared difference between the CDF value and prob.
     objective <- function(q) {
       cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
-      if (!is.infinite(D) || L > 0) {
-        cdf_val <- .normalise_cdf(cdf_val, q, L, D, object, pwindow)
-      }
-      (cdf_val - prob)^2
+      cdf_val <- .normalise_cdf(cdf_val, q, L, D, object, pwindow)
+      cdf_val - prob
     }
 
-    # Lower bound is L (minimum truncation point)
-    lower_bound <- L
-
-    opt_result <- stats::optim(
-      par = max(init, L),
-      fn = objective,
-      method = "L-BFGS-B",
-      lower = lower_bound,
-      control = list(fnscale = 1, maxit = max_iter, factr = tol)
-    )
-
-    opt_result$par
+    stats::uniroot(
+      objective,
+      lower = lower,
+      upper = upper,
+      extendInt = "upX",
+      tol = tol,
+      maxiter = max_iter
+    )$root
   })
 }

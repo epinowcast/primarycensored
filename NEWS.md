@@ -1,5 +1,9 @@
 # primarycensored 1.4.0.1000
 
+## New features
+
+- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is a sentinel for "no left truncation" and takes a fast path that skips normalisation entirely. `L = 0` is now a real truncation point for signed-support delays — `pprimarycensored(0, pnorm, L = 0, D = Inf, ...)` returns 0 rather than the raw convolution value, consistent with the documented `[L, D]` truncation semantics. The default remains `L = 0`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+
 ## Bug fixes
 
 - Fixed incorrect normalisation in `dexpgrowth()`, `pexpgrowth()`, and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero.

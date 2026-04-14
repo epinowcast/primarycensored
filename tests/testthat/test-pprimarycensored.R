@@ -103,13 +103,6 @@ test_that("pprimarycensored errors when L >= D", {
   )
 })
 
-test_that("pprimarycensored errors when L < 0", {
-  expect_error(
-    ppcens(5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
 test_that("pprimarycensored with L = 0 matches default behaviour", {
   pwindow <- 1
   D <- 10
@@ -169,4 +162,60 @@ test_that("pprimarycensored works with L > 0 and D = Inf", {
     D = Inf, L = L, meanlog = 1, sdlog = 1
   )
   expect_gt(cdf_large, 0.99)
+})
+
+test_that("pprimarycensored is a proper CDF for signed-support delays", {
+  # Normal is signed-support, so the raw convolution at `q = L` is non-zero
+  # and the censored CDF needs truncation-aware normalisation.
+  pwindow <- 1
+  L <- -3
+  D <- 3
+  q <- seq(L, D, by = 0.25)
+  cdf <- ppcens(q, pnorm, pwindow, L = L, D = D, mean = 0, sd = 1)
+  expect_equal(cdf[1], 0, tolerance = 1e-6)
+  expect_equal(cdf[length(cdf)], 1, tolerance = 1e-6)
+  expect_true(all(diff(cdf) >= 0))
+  expect_true(all(cdf >= 0 & cdf <= 1))
+})
+
+test_that("pprimarycensored with L = 0 truncates signed-support delays", {
+  # Regression for #267: with `L = 0` a signed-support delay must be
+  # renormalised so that `F(0) = 0`, not left as the raw convolution
+  # (~0.6844 for `pnorm(mean = 0, sd = 1)` with `pwindow = 1`).
+  cdf_at_0 <- ppcens(
+    0, pnorm,
+    pwindow = 1, L = 0, D = Inf, mean = 0, sd = 1
+  )
+  expect_equal(cdf_at_0, 0, tolerance = 1e-6)
+})
+
+test_that("pprimarycensored with L = -Inf is the raw censored convolution", {
+  q <- seq(-5, 5, by = 0.5)
+  cdf <- ppcens(
+    q, pnorm,
+    pwindow = 1, L = -Inf, D = Inf, mean = 0, sd = 1
+  )
+  expect_true(all(diff(cdf) >= 0))
+  expect_true(all(cdf >= 0 & cdf <= 1))
+  tails <- ppcens(
+    c(-50, 50), pnorm,
+    pwindow = 1, L = -Inf, D = Inf, mean = 0, sd = 1
+  )
+  expect_equal(tails[1], 0, tolerance = 1e-6)
+  expect_equal(tails[2], 1, tolerance = 1e-6)
+})
+
+test_that("pprimarycensored rejects L = Inf, NA, and NaN", {
+  expect_error(
+    ppcens(0, pnorm, pwindow = 1, L = Inf, D = 10, mean = 0, sd = 1),
+    "L must be finite or -Inf"
+  )
+  expect_error(
+    ppcens(0, pnorm, pwindow = 1, L = NA_real_, D = 10, mean = 0, sd = 1),
+    "non-NA numeric"
+  )
+  expect_error(
+    ppcens(0, pnorm, pwindow = 1, L = NaN, D = 10, mean = 0, sd = 1),
+    "non-NA numeric"
+  )
 })
