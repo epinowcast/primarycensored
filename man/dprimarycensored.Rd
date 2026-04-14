@@ -43,10 +43,13 @@ functions if they wish to leverage the analytical solutions.}
 
 \item{swindow}{Secondary event window (default: 1)}
 
-\item{L}{Minimum delay (lower truncation point). If greater than 0, the
-distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded, particularly when used in
-renewal models. Defaults to 0 (no left truncation).}
+\item{L}{Minimum delay (lower truncation point). Defaults to 0.
+If non-zero, the distribution is left-truncated at L.
+This is useful for modelling generation intervals where day 0 is excluded,
+particularly when used in renewal models.
+L may be negative for delay distributions with support below zero (e.g. a
+normal distribution).
+Set L to \code{-Inf} to indicate no left truncation.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -98,7 +101,7 @@ The function first computes the CDFs for all unique points (including both
 creates a lookup table for these CDFs to efficiently calculate the PMF for
 each input value. For delays less than L, the function returns 0.
 
-If truncation is applied (finite D or L > 0), the PMF is normalized to
+The PMF is normalised to
 ensure it sums to 1 over the range [L, D\). This normalization uses:
 \deqn{
 f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{

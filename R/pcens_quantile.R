@@ -105,17 +105,24 @@ pcens_quantile.default <- function(
     # Objective function: squared difference between the CDF value and prob.
     objective <- function(q) {
       cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
-      if (!is.infinite(D) || L > 0) {
-        cdf_val <- .normalise_cdf(cdf_val, q, L, D, object, pwindow)
-      }
+      cdf_val <- .normalise_cdf(cdf_val, q, L, D, object, pwindow)
       (cdf_val - prob)^2
     }
 
-    # Lower bound is L (minimum truncation point)
-    lower_bound <- L
+    # Lower bound is L. L-BFGS-B does not accept `-Inf` as a lower bound, so
+    # fall back to a large negative value when `L = -Inf`.
+    lower_bound <- if (is.infinite(L)) -1e8 else L
+
+    # Start from a point inside [L, D] when D is finite; otherwise use the
+    # generic `init` clamped above L and 0 so we start inside the support.
+    start_par <- if (is.finite(D)) {
+      (lower_bound + D) / 2
+    } else {
+      max(init, L, 0)
+    }
 
     opt_result <- stats::optim(
-      par = max(init, L),
+      par = start_par,
       fn = objective,
       method = "L-BFGS-B",
       lower = lower_bound,

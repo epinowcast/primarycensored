@@ -41,7 +41,7 @@
 #' creates a lookup table for these CDFs to efficiently calculate the PMF for
 #' each input value. For delays less than L, the function returns 0.
 #'
-#' If truncation is applied (finite D or L > 0), the PMF is normalized to
+#' The PMF is normalised to
 #' ensure it sums to 1 over the range \[L, D\). This normalization uses:
 #' \deqn{
 #' f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{
@@ -109,16 +109,17 @@ dprimarycensored <- function(
 
   # Compute CDFs for all unique points
   unique_points <- sort(unique(c(x, x + swindow)))
-  unique_points <- unique_points[unique_points > 0]
   if (length(unique_points) == 0) {
     return(rep(0, length(x)))
   }
 
+  # Compute raw (unnormalised) CDFs via `L = -Inf, D = Inf` so PMF differences
+  # below can be normalised with the truncation-aware F_cens(L) and F_cens(D).
   cdfs <- pprimarycensored(
     unique_points,
     pdist,
     pwindow = pwindow,
-    L = 0,
+    L = -Inf,
     D = Inf,
     dprimary = dprimary,
     dprimary_args = dprimary_args,
@@ -131,61 +132,56 @@ dprimarycensored <- function(
   result <- vapply(
     x,
     function(d) {
-      if (d == 0) {
-        # Special case for d = 0
-        cdf_upper <- cdf_lookup[as.character(swindow)]
-        return(cdf_upper)
-      } else {
-        cdf_upper <- cdf_lookup[as.character(d + swindow)]
-        cdf_lower <- cdf_lookup[as.character(d)]
-        return(cdf_upper - cdf_lower)
-      }
+      cdf_upper <- cdf_lookup[as.character(d + swindow)]
+      cdf_lower <- cdf_lookup[as.character(d)]
+      return(cdf_upper - cdf_lower)
     },
     numeric(1)
   )
 
-  # Apply truncation normalization
-  if (is.finite(D) || L > 0) {
-    # Get CDF at upper truncation point D
-    if (max(unique_points) == D) {
-      cdf_D <- max(cdfs)
-    } else if (is.infinite(D)) {
-      cdf_D <- 1
-    } else {
-      cdf_D <- pprimarycensored(
-        D,
-        pdist,
-        pwindow = pwindow,
-        L = 0,
-        D = Inf,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args,
-        ...
-      )
-    }
-
-    # Get CDF at lower truncation point L
-    if (L == 0) {
-      cdf_L <- 0
-    } else if (L %in% unique_points) {
-      cdf_L <- cdf_lookup[as.character(L)]
-    } else {
-      cdf_L <- pprimarycensored(
-        L,
-        pdist,
-        pwindow = pwindow,
-        L = 0,
-        D = Inf,
-        dprimary = dprimary,
-        dprimary_args = dprimary_args,
-        ...
-      )
-    }
-
-    # Normalize by (F(D) - F(L))
-    normaliser <- cdf_D - cdf_L
-    result <- result / normaliser
+  # Apply truncation normalisation. We always normalise so that truncation at
+  # `L` (including L = 0 for signed-support delays) is handled consistently.
+  # For positive-support delays with `L = 0` and `D = Inf`, `F_cens(L) = 0`
+  # and `F_cens(D) = 1`, so the normaliser is 1 and this is a no-op.
+  if (max(unique_points) == D) {
+    cdf_D <- max(cdfs)
+  } else if (is.infinite(D)) {
+    cdf_D <- 1
+  } else {
+    cdf_D <- pprimarycensored(
+      D,
+      pdist,
+      pwindow = pwindow,
+      L = -Inf,
+      D = Inf,
+      dprimary = dprimary,
+      dprimary_args = dprimary_args,
+      ...
+    )
   }
+
+  # `L = -Inf` is a sentinel for "no left truncation" so we skip the integral;
+  # otherwise compute F_cens(L).
+  if (is.infinite(L)) {
+    cdf_L <- 0
+  } else if (L %in% unique_points) {
+    cdf_L <- cdf_lookup[as.character(L)]
+  } else {
+    cdf_L <- pprimarycensored(
+      L,
+      pdist,
+      pwindow = pwindow,
+      L = -Inf,
+      D = Inf,
+      dprimary = dprimary,
+      dprimary_args = dprimary_args,
+      ...
+    )
+  }
+
+  # Normalise by (F(D) - F(L))
+  normaliser <- cdf_D - cdf_L
+  result <- result / normaliser
 
   # Ensure non-negative values (can become slightly negative due to
   # floating-point precision when computing CDF differences)

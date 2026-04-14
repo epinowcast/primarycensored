@@ -122,13 +122,6 @@ test_that("qprimarycensored errors when L >= D", {
   )
 })
 
-test_that("qprimarycensored errors when L < 0", {
-  expect_error(
-    qpcens(0.5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
 test_that("qprimarycensored with L = 0 matches default behaviour", {
   probs <- c(0.25, 0.5, 0.75)
   q_default <- qpcens(

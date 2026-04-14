@@ -103,13 +103,6 @@ test_that("pprimarycensored errors when L >= D", {
   )
 })
 
-test_that("pprimarycensored errors when L < 0", {
-  expect_error(
-    ppcens(5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
 test_that("pprimarycensored with L = 0 matches default behaviour", {
   pwindow <- 1
   D <- 10

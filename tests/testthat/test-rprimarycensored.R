@@ -86,13 +86,6 @@ test_that("rprimarycensored errors when L >= D", {
   )
 })
 
-test_that("rprimarycensored errors when L < 0", {
-  expect_error(
-    rpcens(10, rlnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
 test_that("rprimarycensored with L = 0 matches default behaviour", {
   set.seed(123)
   samples_default <- rpcens(

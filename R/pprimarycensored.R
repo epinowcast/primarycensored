@@ -16,10 +16,13 @@
 #'
 #' @param pwindow Primary event window
 #'
-#' @param L Minimum delay (lower truncation point). If greater than 0, the
-#'  distribution is left-truncated at L. This is useful for modelling
-#'  generation intervals where day 0 is excluded, particularly when used in
-#'  renewal models. Defaults to 0 (no left truncation).
+#' @param L Minimum delay (lower truncation point). Defaults to 0.
+#'  If non-zero, the distribution is left-truncated at L.
+#'  This is useful for modelling generation intervals where day 0 is excluded,
+#'  particularly when used in renewal models.
+#'  L may be negative for delay distributions with support below zero (e.g. a
+#'  normal distribution).
+#'  Set L to `-Inf` to indicate no left truncation.
 #'
 #' @param D Maximum delay (upper truncation point). If finite, the distribution
 #'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -130,10 +133,11 @@ pprimarycensored <- function(
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
-  # Apply truncation normalization if needed
-  if (!is.infinite(D) || L > 0) {
-    result <- .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
-  }
+  # Always normalise so that truncation at `L` (including L = 0 for signed-
+  # support delays) is applied consistently. For positive-support delays with
+  # `L = 0` and `D = Inf`, `F_cens(L) = 0` and `F_cens(D) = 1`, so this is a
+  # numerical no-op.
+  result <- .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 
   return(result)
 }
@@ -148,7 +152,7 @@ pprimarycensored <- function(
 #'
 #' @param q Numeric vector of quantiles at which CDF was evaluated.
 #'
-#' @param L Numeric lower truncation point
+#' @param L Numeric lower truncation point (may be negative or `-Inf`)
 #'
 #' @param D Numeric upper truncation point
 #'
@@ -169,8 +173,9 @@ pprimarycensored <- function(
     cdf_D <- pcens_cdf(pcens_obj, D, pwindow)
   }
 
-  # Get CDF at lower truncation point L
-  if (L == 0) {
+  # Get CDF at lower truncation point L. `L = -Inf` is a sentinel for "no
+  # left truncation" so we skip the integral; otherwise compute F_cens(L).
+  if (is.infinite(L)) {
     cdf_L <- 0
   } else if (any(q == L)) {
     cdf_L <- result[which.max(q == L)]

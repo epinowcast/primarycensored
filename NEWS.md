@@ -1,3 +1,13 @@
+# primarycensored 1.4.0.1000
+
+## New features
+
+- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is a sentinel for "no left truncation". The default remains `L = 0`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+
+## Bug fixes
+
+- `pprimarycensored(q, pdist, L = 0, D = Inf, ...)` now returns a proper truncated CDF for delay distributions with support below zero. Previously `pcens_cdf.default()` short-circuited `d <= 0` to 0, which produced an incoherent subprobability for signed-support families and made it impossible to treat `L = 0` as a meaningful truncation point. (#267)
+
 # primarycensored 1.4.0
 
 This major release adds left-truncation support via the `L` parameter, enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. It also removes deprecated functionality that was soft-deprecated in version 1.1.0 and removes the `lifecycle` and `rlang` packages from dependencies.
