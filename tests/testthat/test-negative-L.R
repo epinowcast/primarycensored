@@ -124,6 +124,21 @@ test_that("qprimarycensored inverts pprimarycensored with negative L", {
   expect_equal(back, probs, tolerance = 1e-4)
 })
 
+test_that("qprimarycensored inverts pprimarycensored with L = -Inf, finite D", {
+  probs <- c(0.25, 0.5, 0.75)
+  q <- qpcens(
+    probs, pnorm,
+    pwindow = 1, L = -Inf, D = 3, mean = 0, sd = 1
+  )
+  expect_true(all(is.finite(q)))
+  expect_true(all(q < 3))
+  back <- ppcens(
+    q, pnorm,
+    pwindow = 1, L = -Inf, D = 3, mean = 0, sd = 1
+  )
+  expect_equal(back, probs, tolerance = 1e-4)
+})
+
 test_that("rprimarycensored produces samples in [L, D) for negative L", {
   set.seed(42)
   samples <- rpcens(
@@ -168,5 +183,29 @@ test_that("pprimarycensored still errors when L >= D", {
       pwindow = 1, L = 15, D = 10, mean = 0, sd = 1
     ),
     "L must be less than D"
+  )
+})
+
+test_that("pprimarycensored rejects NA, NaN, and Inf values of L", {
+  expect_error(
+    ppcens(
+      0, pnorm,
+      pwindow = 1, L = NA_real_, D = 10, mean = 0, sd = 1
+    ),
+    "non-NA numeric"
+  )
+  expect_error(
+    ppcens(
+      0, pnorm,
+      pwindow = 1, L = NaN, D = 10, mean = 0, sd = 1
+    ),
+    "non-NA numeric"
+  )
+  expect_error(
+    ppcens(
+      0, pnorm,
+      pwindow = 1, L = Inf, D = 10, mean = 0, sd = 1
+    ),
+    "finite or -Inf"
   )
 })

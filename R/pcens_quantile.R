@@ -113,12 +113,15 @@ pcens_quantile.default <- function(
     # fall back to a large negative value when `L = -Inf`.
     lower_bound <- if (is.infinite(L)) -1e8 else L
 
-    # Start from a point inside [L, D] when D is finite; otherwise use the
-    # generic `init` clamped above L and 0 so we start inside the support.
+    # Start from a point inside [L, D] that the optimiser can actually move
+    # from. When `L = -Inf`, the midpoint of `[-1e8, D]` lies in the flat tail
+    # of any realistic CDF, so L-BFGS-B stalls at a zero gradient. Prefer a
+    # point near the bulk of the distribution in that case.
+    finite_L <- if (is.infinite(L)) 0 else L
     start_par <- if (is.finite(D)) {
-      (lower_bound + D) / 2
+      (finite_L + D) / 2
     } else {
-      max(init, L, 0)
+      max(init, finite_L, 0)
     }
 
     opt_result <- stats::optim(

@@ -42,13 +42,13 @@ for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distrib
 \item{swindow}{Integer specifying the window size for rounding the delay
 (default is 1). If \code{swindow = 0} then no rounding is applied.}
 
-\item{L}{Minimum delay (lower truncation point). Defaults to 0.
-If non-zero, the distribution is left-truncated at L.
-This is useful for modelling generation intervals where day 0 is excluded,
-particularly when used in renewal models.
-L may be negative for delay distributions with support below zero (e.g. a
-normal distribution).
-Set L to \code{-Inf} to indicate no left truncation.}
+\item{L}{Minimum delay (lower truncation point). Defaults to 0. The
+distribution is left-truncated at L, so \code{L = 0} is a real truncation
+bound for delay distributions with support below zero (e.g. a normal
+distribution). This is also useful for modelling generation intervals
+where day 0 is excluded, particularly when used in renewal models.
+L may be any finite value. Set L to \code{-Inf} to indicate no left
+truncation.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults

@@ -99,6 +99,12 @@ check_dprimary <- function(
 #'
 #' @keywords internal
 .check_truncation_bounds <- function(L, D) {
+  if (length(L) != 1L || length(D) != 1L || is.na(L) || is.na(D)) {
+    stop("L and D must each be a single non-NA numeric value.", call. = FALSE)
+  }
+  if (!is.finite(L) && L != -Inf) {
+    stop("L must be finite or -Inf.", call. = FALSE)
+  }
   if (L >= D) {
     stop("L must be less than D.", call. = FALSE)
   }
