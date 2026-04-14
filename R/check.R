@@ -102,7 +102,11 @@ check_dprimary <- function(
   if (length(L) != 1L || length(D) != 1L || is.na(L) || is.na(D)) {
     stop("L and D must each be a single non-NA numeric value.", call. = FALSE)
   }
-  if (!is.finite(L) && L != -Inf) {
+  # `D = Inf` is a valid "no upper truncation" sentinel but `L = +Inf` is
+  # always pathological (a lower bound above every upper bound) so we reject
+  # it explicitly rather than letting the `L >= D` check below catch it with
+  # a less informative message.
+  if (is.infinite(L) && L > 0) {
     stop("L must be finite or -Inf.", call. = FALSE)
   }
   if (L >= D) {

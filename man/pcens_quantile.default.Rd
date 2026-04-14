@@ -39,13 +39,16 @@ to Inf.}
 \item{use_numeric}{Logical; if TRUE forces the use of numeric inversion even
 if an analytical solution is available (not yet implemented).}
 
-\item{init}{Initial guess for the delay. By default, 5.}
+\item{init}{Half-width of the initial search interval used when one or
+both truncation bounds are infinite. The starting interval is taken as
+\verb{[-init, init]} (or \verb{[L, L + 2 * init]} / \verb{[D - 2 * init, D]} when only
+one bound is finite) and then extended outward by \code{\link[stats:uniroot]{stats::uniroot()}}
+as needed. Defaults to 5, which brackets the bulk of most commonly used
+delay distributions.}
 
-\item{tol}{Numeric tolerance for the convergence criterion in the
-optimisation routine.}
+\item{tol}{Numeric tolerance passed to \code{\link[stats:uniroot]{stats::uniroot()}}.}
 
-\item{max_iter}{Integer specifying the maximum number of iterations allowed
-during optimisation.}
+\item{max_iter}{Maximum number of \code{\link[stats:uniroot]{stats::uniroot()}} iterations.}
 
 \item{...}{Additional arguments passed to underlying functions.}
 }
@@ -54,14 +57,12 @@ A numeric vector containing the computed primary event censored
 quantiles.
 }
 \description{
-This method inverts the primary event censored CDF using numerical
-optimisation via optim. For each probability value, it searches for the
-delay such that the CDF computed by \code{\link[=pcens_cdf]{pcens_cdf()}} approximates the target
-probability.
-}
-\details{
-The quantile is computed by minimising the squared difference between the
-computed CDF and the target probability.
+This method inverts the primary event censored CDF by root-finding via
+\code{\link[stats:uniroot]{stats::uniroot()}}. The censored CDF is monotone in \code{q}, so a bracketed
+root-finder is both simpler and more robust than the minimisation approach
+used previously, and it works without special casing for \code{L = -Inf} or
+\code{D = Inf} because \code{\link[stats:uniroot]{stats::uniroot()}} can extend its search interval
+automatically.
 }
 \examples{
 # Create a primarycensored object with gamma delay and uniform primary

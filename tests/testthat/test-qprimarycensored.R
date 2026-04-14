@@ -122,6 +122,37 @@ test_that("qprimarycensored errors when L >= D", {
   )
 })
 
+test_that("qprimarycensored inverts ppcens for signed-support delays", {
+  probs <- c(0.1, 0.25, 0.5, 0.75, 0.9)
+  L <- -3
+  D <- 3
+  q <- qpcens(
+    probs, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_true(all(q >= L & q <= D))
+  back <- ppcens(
+    q, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_equal(back, probs, tolerance = 1e-4)
+})
+
+test_that("qprimarycensored inverts pprimarycensored with L = -Inf", {
+  probs <- c(0.25, 0.5, 0.75)
+  q <- qpcens(
+    probs, pnorm,
+    pwindow = 1, L = -Inf, D = 3, mean = 0, sd = 1
+  )
+  expect_true(all(is.finite(q)))
+  expect_true(all(q < 3))
+  back <- ppcens(
+    q, pnorm,
+    pwindow = 1, L = -Inf, D = 3, mean = 0, sd = 1
+  )
+  expect_equal(back, probs, tolerance = 1e-4)
+})
+
 test_that("qprimarycensored with L = 0 matches default behaviour", {
   probs <- c(0.25, 0.5, 0.75)
   q_default <- qpcens(

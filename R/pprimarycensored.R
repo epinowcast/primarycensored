@@ -133,13 +133,16 @@ pprimarycensored <- function(
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
-  # Always normalise so that truncation at `L` (including L = 0 for signed-
-  # support delays) is applied consistently. For positive-support delays with
-  # `L = 0` and `D = Inf`, `F_cens(L) = 0` and `F_cens(D) = 1`, so this is a
-  # numerical no-op.
-  result <- .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
+  # With no truncation on either side the raw convolution is already the
+  # final CDF; skip the two extra `pcens_cdf` calls the normaliser would
+  # otherwise cost. Any finite `L` or `D` triggers renormalisation so that
+  # truncation (including `L = 0` for signed-support delays) is applied
+  # consistently.
+  if (is.infinite(L) && is.infinite(D)) {
+    return(result)
+  }
 
-  return(result)
+  .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 }
 
 #' Normalise a primary event censored CDF
@@ -184,8 +187,12 @@ pprimarycensored <- function(
   }
 
   # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
+  # When `cdf_L = 0` and `cdf_D = 1` (e.g. positive-support delays with the
+  # default `L = 0, D = Inf`) the division is a no-op, so skip it.
   normaliser <- cdf_D - cdf_L
-  result <- (result - cdf_L) / normaliser
+  if (!(cdf_L == 0 && normaliser == 1)) {
+    result <- (result - cdf_L) / normaliser
+  }
 
   # Clamp values outside truncation range
   result <- ifelse(q <= L, 0, result)

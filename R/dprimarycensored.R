@@ -139,49 +139,55 @@ dprimarycensored <- function(
     numeric(1)
   )
 
-  # Apply truncation normalisation. We always normalise so that truncation at
-  # `L` (including L = 0 for signed-support delays) is handled consistently.
-  # For positive-support delays with `L = 0` and `D = Inf`, `F_cens(L) = 0`
-  # and `F_cens(D) = 1`, so the normaliser is 1 and this is a no-op.
-  if (max(unique_points) == D) {
-    cdf_D <- max(cdfs)
-  } else if (is.infinite(D)) {
-    cdf_D <- 1
-  } else {
-    cdf_D <- pprimarycensored(
-      D,
-      pdist,
-      pwindow = pwindow,
-      L = -Inf,
-      D = Inf,
-      dprimary = dprimary,
-      dprimary_args = dprimary_args,
-      ...
-    )
-  }
+  # Fast path: with no truncation on either side the raw PMF needs no
+  # renormalisation, so skip the two extra `pprimarycensored` lookups below.
+  if (!(is.infinite(L) && is.infinite(D))) {
+    # F_cens(D). Reuse the existing `unique_points` lookup when D lands on
+    # one of them; otherwise compute on demand.
+    if (is.infinite(D)) {
+      cdf_D <- 1
+    } else if (D %in% unique_points) {
+      cdf_D <- cdf_lookup[[as.character(D)]]
+    } else {
+      cdf_D <- pprimarycensored(
+        D,
+        pdist,
+        pwindow = pwindow,
+        L = -Inf,
+        D = Inf,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args,
+        ...
+      )
+    }
 
-  # `L = -Inf` is a sentinel for "no left truncation" so we skip the integral;
-  # otherwise compute F_cens(L).
-  if (is.infinite(L)) {
-    cdf_L <- 0
-  } else if (L %in% unique_points) {
-    cdf_L <- cdf_lookup[as.character(L)]
-  } else {
-    cdf_L <- pprimarycensored(
-      L,
-      pdist,
-      pwindow = pwindow,
-      L = -Inf,
-      D = Inf,
-      dprimary = dprimary,
-      dprimary_args = dprimary_args,
-      ...
-    )
-  }
+    # F_cens(L). `L = -Inf` is the "no left truncation" sentinel so we skip
+    # the integral; otherwise reuse the lookup when L is already in it.
+    if (is.infinite(L)) {
+      cdf_L <- 0
+    } else if (L %in% unique_points) {
+      cdf_L <- cdf_lookup[[as.character(L)]]
+    } else {
+      cdf_L <- pprimarycensored(
+        L,
+        pdist,
+        pwindow = pwindow,
+        L = -Inf,
+        D = Inf,
+        dprimary = dprimary,
+        dprimary_args = dprimary_args,
+        ...
+      )
+    }
 
-  # Normalise by (F(D) - F(L))
-  normaliser <- cdf_D - cdf_L
-  result <- result / normaliser
+    # Divide by (F(D) - F(L)). Skip the division when the normaliser is 1
+    # (positive-support delays with the default `L = 0, D = Inf` where
+    # `F_cens(L) = 0` and `F_cens(D) = 1`).
+    normaliser <- cdf_D - cdf_L
+    if (normaliser != 1) {
+      result <- result / normaliser
+    }
+  }
 
   # Ensure non-negative values (can become slightly negative due to
   # floating-point precision when computing CDF differences)
