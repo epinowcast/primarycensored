@@ -30,7 +30,10 @@ license](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/
 ## Summary
 
 ```{r, results = "asis", echo=FALSE}
-cat(gsub("\n[ ]+", " ", packageDescription("primarycensored")$Description))
+desc_file <- read.dcf("DESCRIPTION")
+description <- gsub("\n[ ]+", " ", desc_file[1, "Description"])
+description <- gsub("<doi:([^>]+)>", "[doi:\\1](https://doi.org/\\1)", description)
+cat(description)
 ```
 
 ## Installation
@@ -106,9 +109,11 @@ Please note that the `primarycensored` project is released with a [Contributor C
 
 ## Citation
 
-If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our [methods outline](https://primarycensored.epinowcast.org/articles//primarycensored.html). If you use `primarycensored` in your work, please consider citing it with `citation("primarycensored")`.
+If making use of our methodology or the methodology on which ours is based, please cite the relevant papers from our [methods outline](https://primarycensored.epinowcast.org/articles/primarycensored.html). If you use `primarycensored` in your work, please consider citing it with `citation("primarycensored")`.
 
 ## Contributors
+
+
 
 
 
@@ -136,13 +141,15 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 
 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs">seabbs</a>, 
+<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs-bot">seabbs-bot</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1">SamuelBrand1</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=sbfnk">sbfnk</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=athowes">athowes</a>, 
-<a href="https://github.com/epinowcast/primarycensored/commits?author=seabbs-bot">seabbs-bot</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam">jamesmbaazam</a>, 
 <a href="https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova">barbora-sobolova</a>, 
-<a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>
+<a href="https://github.com/epinowcast/primarycensored/commits?author=pearsonca">pearsonca</a>, 
+<a href="https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson">kaitejohnson</a>, 
+<a href="https://github.com/epinowcast/primarycensored/commits?author=TimTaylor">TimTaylor</a>
 
 
 
@@ -167,6 +174,8 @@ All contributions to this project are gratefully acknowledged using the [`allcon
 <!-- markdownlint-enable -->
 <!-- prettier-ignore-end -->
 <!-- ALL-CONTRIBUTORS-LIST:END -->
+
+
 
 
 

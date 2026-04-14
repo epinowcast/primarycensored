@@ -7,6 +7,11 @@
 ## Bug fixes
 
 - `pprimarycensored(q, pdist, L = 0, D = Inf, ...)` now returns a proper truncated CDF for delay distributions with support below zero. Previously `pcens_cdf.default()` short-circuited `d <= 0` to 0, which produced an incoherent subprobability for signed-support families and made it impossible to treat `L = 0` as a meaningful truncation point. (#267)
+- Fixed incorrect normalisation in `dexpgrowth()`, `pexpgrowth()`, and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero.
+  The PDF and CDF formulas contained a stray `exp(-r * min)` factor from using `exp(r * (x - min))` instead of `exp(r * x)`.
+  The Stan RNG had a compensating `xmin +` offset.
+  The bug did not affect results when `min = 0` (the default and only value used within the package's primary censoring functions).
+  Thanks to @TimTaylor for reporting (#290).
 
 # primarycensored 1.4.0
 
