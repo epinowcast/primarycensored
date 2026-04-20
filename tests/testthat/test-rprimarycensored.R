@@ -29,9 +29,10 @@ test_that("rprimarycensored handles very truncated distributions", {
   pwindow <- 0.1
   D <- 1
 
+  # Explicit `L = 0` restricts `rnorm` samples to non-negatives.
   samples <- rpcens(
     n, rnorm, pwindow,
-    D = D, mean = 0.5, sd = 1
+    L = 0, D = D, mean = 0.5, sd = 1
   )
 
   expect_true(all(samples >= 0 & samples < D))
@@ -86,14 +87,9 @@ test_that("rprimarycensored errors when L >= D", {
   )
 })
 
-test_that("rprimarycensored errors when L < 0", {
-  expect_error(
-    rpcens(10, rlnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
-test_that("rprimarycensored with L = 0 matches default behaviour", {
+test_that("rprimarycensored default matches L = 0 for positive support", {
+  # `rlnorm` samples are always non-negative so the default `L = -Inf`
+  # and an explicit `L = 0` leave the same set of samples after rounding.
   set.seed(123)
   samples_default <- rpcens(
     100, rlnorm,
@@ -107,6 +103,18 @@ test_that("rprimarycensored with L = 0 matches default behaviour", {
     meanlog = 1, sdlog = 1
   )
   expect_identical(samples_default, samples_explicit)
+})
+
+test_that("rprimarycensored samples lie in [L, D) for signed-support delays", {
+  set.seed(42)
+  samples <- rpcens(
+    n = 5000, rnorm,
+    pwindow = 1, swindow = 1, L = -3, D = 3, mean = 0, sd = 1
+  )
+  expect_length(samples, 5000)
+  expect_true(all(samples >= -3 & samples < 3))
+  expect_lt(abs(mean(samples)), 0.2)
+  expect_lt(abs(stats::sd(samples) - 1), 0.2)
 })
 
 test_that("rprimarycensored with L > 0 rounds correctly to swindow", {

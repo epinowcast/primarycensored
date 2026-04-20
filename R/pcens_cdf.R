@@ -75,9 +75,6 @@ pcens_cdf.default <- function(
   result <- vapply(
     q,
     function(d) {
-      if (d <= 0) {
-        return(0) # Return 0 for non-positive delays
-      }
       integrand <- function(p) {
         d_adj <- d - p
         do.call(object$pdist, c(list(q = d_adj), object$args)) *

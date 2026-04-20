@@ -89,17 +89,25 @@ check_dprimary <- function(
 #' Validate truncation bounds L and D
 #'
 #' Internal function to validate that L (lower truncation) and D (upper
-#' truncation) parameters are valid: L must be non-negative and less than D.
+#' truncation) parameters are valid. L must be less than D. L may be negative
+#' or `-Inf` for delay distributions with support below zero.
 #'
-#' @param L Lower truncation bound
+#' @param L Lower truncation bound (may be negative or `-Inf`)
 #' @param D Upper truncation bound
 #'
 #' @return Invisible NULL if valid, otherwise stops with an error message.
 #'
 #' @keywords internal
 .check_truncation_bounds <- function(L, D) {
-  if (L < 0) {
-    stop("L must be non-negative.", call. = FALSE)
+  if (length(L) != 1L || length(D) != 1L || is.na(L) || is.na(D)) {
+    stop("L and D must each be a single non-NA numeric value.", call. = FALSE)
+  }
+  # `D = Inf` is a valid "no upper truncation" sentinel but `L = +Inf` is
+  # always pathological (a lower bound above every upper bound) so we reject
+  # it explicitly rather than letting the `L >= D` check below catch it with
+  # a less informative message.
+  if (is.infinite(L) && L > 0) {
+    stop("L must be finite or -Inf.", call. = FALSE)
   }
   if (L >= D) {
     stop("L must be less than D.", call. = FALSE)
