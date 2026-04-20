@@ -58,11 +58,9 @@ quantiles.
 }
 \description{
 This method inverts the primary event censored CDF by root-finding via
-\code{\link[stats:uniroot]{stats::uniroot()}}. The censored CDF is monotone in \code{q}, so a bracketed
-root-finder is both simpler and more robust than the minimisation approach
-used previously, and it works without special casing for \code{L = -Inf} or
-\code{D = Inf} because \code{\link[stats:uniroot]{stats::uniroot()}} can extend its search interval
-automatically.
+\code{\link[stats:uniroot]{stats::uniroot()}} with \code{extendInt = "upX"}. The censored CDF is monotone
+in \code{q}, so \code{\link[stats:uniroot]{stats::uniroot()}} extends its starting bracket outward as
+needed and handles infinite \code{L} or \code{D} without special casing.
 }
 \examples{
 # Create a primarycensored object with gamma delay and uniform primary

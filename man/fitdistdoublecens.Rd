@@ -39,11 +39,11 @@ functions are defined and loaded.}
 
 \item{pwindow}{Column name for primary window (default: "pwindow").}
 
-\item{L}{Column name for minimum delay (lower truncation point). If greater
-than 0, the distribution is left-truncated at L. This is useful for
-modelling generation intervals where day 0 is excluded, particularly when
-used in renewal models. (default: "L"). If the column is not present in
-censdata, L = 0 is assumed.}
+\item{L}{Column name for minimum delay (lower truncation point). For any
+finite L the distribution is left-truncated at L; use \code{L = -Inf} for no
+left truncation. This is useful for modelling generation intervals where
+day 0 is excluded, particularly when used in renewal models. (default:
+"L"). If the column is not present in censdata, L = -Inf is assumed.}
 
 \item{D}{Column name for maximum delay (upper truncation point). If finite,
 the distribution is truncated at D. If set to Inf, no upper truncation is
@@ -122,12 +122,10 @@ true_sd <- 2
 pwindow <- 2
 swindow <- 2
 D <- 10
-# `fitdistdoublecens()` treats missing L columns as `L = 0` so sample
-# with a matching lower truncation.
 samples <- rprimarycensored(
   n, rnorm,
   mean = true_mean, sd = true_sd,
-  pwindow = pwindow, swindow = swindow, L = 0, D = D
+  pwindow = pwindow, swindow = swindow, D = D
 )
 
 delay_data <- data.frame(

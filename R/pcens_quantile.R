@@ -34,11 +34,9 @@ pcens_quantile <- function(
 #' Default method for computing primary event censored quantiles
 #'
 #' This method inverts the primary event censored CDF by root-finding via
-#' [stats::uniroot()]. The censored CDF is monotone in `q`, so a bracketed
-#' root-finder is both simpler and more robust than the minimisation approach
-#' used previously, and it works without special casing for `L = -Inf` or
-#' `D = Inf` because [stats::uniroot()] can extend its search interval
-#' automatically.
+#' [stats::uniroot()] with `extendInt = "upX"`. The censored CDF is monotone
+#' in `q`, so [stats::uniroot()] extends its starting bracket outward as
+#' needed and handles infinite `L` or `D` without special casing.
 #'
 #' @param init Half-width of the initial search interval used when one or
 #'   both truncation bounds are infinite. The starting interval is taken as
@@ -96,10 +94,8 @@ pcens_quantile.default <- function(
   .check_truncation_bounds(L, D)
 
   # Build an initial bracket for `stats::uniroot`. When a bound is infinite
-  # we use a finite stand-in and rely on `extendInt = "yes"` to expand
-  # outward until the censored CDF brackets `prob`. This avoids any need for
-  # a "starting point" in the flat tail of the CDF (the failure mode that
-  # would previously strand L-BFGS-B at a zero gradient).
+  # we use a finite stand-in and rely on `extendInt = "upX"` to expand
+  # outward until the censored CDF brackets `prob`.
   if (is.finite(L) && is.finite(D)) {
     lower <- L
     upper <- D

@@ -134,11 +134,7 @@ pprimarycensored <- function(
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
-  # With no truncation on either side (the default `L = -Inf, D = Inf`)
-  # the raw convolution is already the final CDF; skip the two extra
-  # `pcens_cdf` calls the normaliser would otherwise cost. Any finite `L`
-  # or `D` triggers renormalisation so that truncation (including `L = 0`
-  # for signed-support delays) is applied consistently.
+  # No truncation: raw convolution is the final CDF.
   if (is.infinite(L) && is.infinite(D)) {
     return(result)
   }
@@ -177,8 +173,7 @@ pprimarycensored <- function(
     cdf_D <- pcens_cdf(pcens_obj, D, pwindow)
   }
 
-  # Get CDF at lower truncation point L. `L = -Inf` is a sentinel for "no
-  # left truncation" so we skip the integral; otherwise compute F_cens(L).
+  # Get CDF at lower truncation point L. `L = -Inf` skips the integral.
   if (is.infinite(L)) {
     cdf_L <- 0
   } else if (any(q == L)) {
@@ -188,9 +183,7 @@ pprimarycensored <- function(
   }
 
   # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
-  # When `cdf_L = 0` and `cdf_D = 1` (e.g. finite `L` that falls in a tail
-  # where `F_cens(L) = 0` with `D = Inf`) the division is a no-op, so
-  # skip it.
+  # Skip the division when it is a no-op (cdf_L = 0, normaliser = 1).
   normaliser <- cdf_D - cdf_L
   if (!(cdf_L == 0 && normaliser == 1)) {
     result <- (result - cdf_L) / normaliser
