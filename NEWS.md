@@ -1,8 +1,12 @@
 # primarycensored 1.4.0.1000
 
+## Breaking changes
+
+- The default value of `L` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, `rprimarycensored()`, and `pcens_quantile()` has changed from `0` to `-Inf`. For delay distributions with support on the non-negative reals (e.g. lognormal, gamma, Weibull) this is a numerical no-op because `F_cens(0) = 0`, and it takes the new "no truncation" fast path that skips the two `F_cens` calls the normaliser would otherwise cost. Callers that relied on the implicit left truncation at `0` (for example to exclude day 0 in generation-interval settings, or to truncate signed-support delays such as `pnorm`) must now pass `L = 0` explicitly. (#267)
+
 ## New features
 
-- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is a sentinel for "no left truncation" and takes a fast path that skips normalisation entirely. `L = 0` is now a real truncation point for signed-support delays — `pprimarycensored(0, pnorm, L = 0, D = Inf, ...)` returns 0 rather than the raw convolution value, consistent with the documented `[L, D]` truncation semantics. The default remains `L = 0`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is a sentinel for "no left truncation" and takes a fast path that skips normalisation entirely. For any finite `L` (including `0`) the distribution is left-truncated at `L`, so `pprimarycensored(0, pnorm, L = 0, D = Inf, ...)` now returns 0 rather than the raw convolution value, consistent with the documented `[L, D]` truncation semantics. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
 
 ## Bug fixes
 

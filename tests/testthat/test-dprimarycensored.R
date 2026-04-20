@@ -79,7 +79,7 @@ test_that(
   }
 )
 
-test_that("dprimarycensored errors for negative d", {
+test_that("dprimarycensored errors for x below L = 0", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5
@@ -88,7 +88,7 @@ test_that("dprimarycensored errors for negative d", {
   expect_error(
     dpcens(
       d, plnorm,
-      pwindow = pwindow, swindow = swindow, D = D,
+      pwindow = pwindow, swindow = swindow, L = 0, D = D,
       meanlog = 0, sdlog = 1
     ),
     "values of x are below L"
@@ -96,7 +96,7 @@ test_that("dprimarycensored errors for negative d", {
   expect_error(
     dpcens(
       c(8, d), plnorm,
-      pwindow = pwindow, swindow = swindow, D = D,
+      pwindow = pwindow, swindow = swindow, L = 0, D = D,
       meanlog = 0, sdlog = 1
     ),
     "values of x are below L"
@@ -192,7 +192,9 @@ test_that("dprimarycensored errors when L >= D", {
   )
 })
 
-test_that("dprimarycensored L = 0 matches default for positive support", {
+test_that("dprimarycensored default matches L = 0 for positive support", {
+  # For positive-support delays `F_cens(0) = 0`, so the default `L = -Inf`
+  # and an explicit `L = 0` give numerically identical PMFs.
   pwindow <- 1
   D <- 10
   pmf_default <- dpcens(
@@ -203,7 +205,7 @@ test_that("dprimarycensored L = 0 matches default for positive support", {
     0:(D - 1), plnorm, pwindow,
     D = D, L = 0, meanlog = 1, sdlog = 1
   )
-  expect_identical(pmf_default, pmf_explicit)
+  expect_equal(pmf_default, pmf_explicit, tolerance = 1e-12)
 })
 
 test_that("dprimarycensored is consistent with pprimarycensored for L > 0", {

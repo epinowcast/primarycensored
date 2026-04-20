@@ -86,7 +86,7 @@ rprimarycensored <- function(
     rdist,
     pwindow = 1,
     swindow = 1,
-    L = 0,
+    L = -Inf,
     D = Inf,
     rprimary = stats::runif,
     rprimary_args = list(),

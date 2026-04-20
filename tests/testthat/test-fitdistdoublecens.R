@@ -115,7 +115,8 @@ test_that("fitdistdoublecens works with different distributions", {
   set.seed(123)
   n <- 1000
 
-  # Test with normal distribution
+  # Test with normal distribution. `fitdistdoublecens()` assumes `L = 0`
+  # when no L column is supplied, so match that in the sampler.
   true_mean <- 5
   true_sd <- 2
   samples <- rprimarycensored(
@@ -125,6 +126,7 @@ test_that("fitdistdoublecens works with different distributions", {
     sd = true_sd,
     pwindow = 2,
     swindow = 2,
+    L = 0,
     D = 10
   )
 

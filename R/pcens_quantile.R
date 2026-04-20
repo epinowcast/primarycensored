@@ -24,7 +24,7 @@ pcens_quantile <- function(
     object,
     p,
     pwindow,
-    L = 0,
+    L = -Inf,
     D = Inf,
     use_numeric = FALSE,
     ...) {
@@ -86,7 +86,7 @@ pcens_quantile.default <- function(
     object,
     p,
     pwindow,
-    L = 0,
+    L = -Inf,
     D = Inf,
     use_numeric = FALSE,
     init = 5,

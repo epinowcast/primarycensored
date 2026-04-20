@@ -73,7 +73,7 @@ dprimarycensored <- function(
     pdist,
     pwindow = 1,
     swindow = 1,
-    L = 0,
+    L = -Inf,
     D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
@@ -181,8 +181,8 @@ dprimarycensored <- function(
     }
 
     # Divide by (F(D) - F(L)). Skip the division when the normaliser is 1
-    # (positive-support delays with the default `L = 0, D = Inf` where
-    # `F_cens(L) = 0` and `F_cens(D) = 1`).
+    # (e.g. a finite `L` that sits below the support of the delay, so
+    # `F_cens(L) = 0`, paired with `D = Inf` where `F_cens(D) = 1`).
     normaliser <- cdf_D - cdf_L
     if (normaliser != 1) {
       result <- result / normaliser

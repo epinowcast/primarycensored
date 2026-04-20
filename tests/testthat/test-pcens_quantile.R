@@ -9,7 +9,10 @@ test_that("pcens_quantile handles boundary cases correctly", {
     rate = 1
   )
 
-  expect_identical(pcens_quantile(obj, p = 0, pwindow = 1), 0)
+  # Default `L = -Inf` so the `p = 0` quantile is `-Inf`; an explicit
+  # `L = 0` recovers the old behaviour.
+  expect_identical(pcens_quantile(obj, p = 0, pwindow = 1), -Inf)
+  expect_identical(pcens_quantile(obj, p = 0, pwindow = 1, L = 0), 0)
   expect_true(is.na(pcens_quantile(obj, p = 1, pwindow = 1)))
 })
 

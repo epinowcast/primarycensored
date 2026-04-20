@@ -16,13 +16,13 @@
 #'
 #' @param pwindow Primary event window
 #'
-#' @param L Minimum delay (lower truncation point). Defaults to 0. The
-#'  distribution is left-truncated at L, so `L = 0` is a real truncation
+#' @param L Minimum delay (lower truncation point). Defaults to `-Inf`,
+#'  meaning no left truncation. For any finite value of L (including 0)
+#'  the distribution is left-truncated at L, so `L = 0` is a real truncation
 #'  bound for delay distributions with support below zero (e.g. a normal
-#'  distribution). This is also useful for modelling generation intervals
-#'  where day 0 is excluded, particularly when used in renewal models.
-#'  L may be any finite value. Set L to `-Inf` to indicate no left
-#'  truncation.
+#'  distribution). Finite L is also useful for modelling generation intervals
+#'  where delays below a threshold are excluded, particularly when used in
+#'  renewal models.
 #'
 #' @param D Maximum delay (upper truncation point). If finite, the distribution
 #'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -70,7 +70,8 @@
 #' \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
 #' \eqn{pwindow} is the primary event window.
 #'
-#' If truncation is applied (finite D or L > 0), the CDF is normalized:
+#' If truncation is applied (finite `D` or finite `L`), the CDF is
+#' normalized:
 #' \deqn{
 #' F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{
 #' F_{\text{cens}}(D) - F_{\text{cens}}(L)}
@@ -112,7 +113,7 @@ pprimarycensored <- function(
     q,
     pdist,
     pwindow = 1,
-    L = 0,
+    L = -Inf,
     D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),
@@ -133,11 +134,11 @@ pprimarycensored <- function(
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
-  # With no truncation on either side the raw convolution is already the
-  # final CDF; skip the two extra `pcens_cdf` calls the normaliser would
-  # otherwise cost. Any finite `L` or `D` triggers renormalisation so that
-  # truncation (including `L = 0` for signed-support delays) is applied
-  # consistently.
+  # With no truncation on either side (the default `L = -Inf, D = Inf`)
+  # the raw convolution is already the final CDF; skip the two extra
+  # `pcens_cdf` calls the normaliser would otherwise cost. Any finite `L`
+  # or `D` triggers renormalisation so that truncation (including `L = 0`
+  # for signed-support delays) is applied consistently.
   if (is.infinite(L) && is.infinite(D)) {
     return(result)
   }
@@ -187,8 +188,9 @@ pprimarycensored <- function(
   }
 
   # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
-  # When `cdf_L = 0` and `cdf_D = 1` (e.g. positive-support delays with the
-  # default `L = 0, D = Inf`) the division is a no-op, so skip it.
+  # When `cdf_L = 0` and `cdf_D = 1` (e.g. finite `L` that falls in a tail
+  # where `F_cens(L) = 0` with `D = Inf`) the division is a no-op, so
+  # skip it.
   normaliser <- cdf_D - cdf_L
   if (!(cdf_L == 0 && normaliser == 1)) {
     result <- (result - cdf_L) / normaliser

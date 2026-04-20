@@ -8,7 +8,7 @@
   object,
   p,
   pwindow,
-  L = 0,
+  L = -Inf,
   D = Inf,
   use_numeric = FALSE,
   init = 5,
@@ -24,13 +24,13 @@
 
 \item{pwindow}{Primary event window}
 
-\item{L}{Minimum delay (lower truncation point). Defaults to 0. The
-distribution is left-truncated at L, so \code{L = 0} is a real truncation
+\item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
+meaning no left truncation. For any finite value of L (including 0)
+the distribution is left-truncated at L, so \code{L = 0} is a real truncation
 bound for delay distributions with support below zero (e.g. a normal
-distribution). This is also useful for modelling generation intervals
-where day 0 is excluded, particularly when used in renewal models.
-L may be any finite value. Set L to \code{-Inf} to indicate no left
-truncation.}
+distribution). Finite L is also useful for modelling generation intervals
+where delays below a threshold are excluded, particularly when used in
+renewal models.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults

@@ -122,10 +122,12 @@ true_sd <- 2
 pwindow <- 2
 swindow <- 2
 D <- 10
+# `fitdistdoublecens()` treats missing L columns as `L = 0` so sample
+# with a matching lower truncation.
 samples <- rprimarycensored(
   n, rnorm,
   mean = true_mean, sd = true_sd,
-  pwindow = pwindow, swindow = swindow, D = D
+  pwindow = pwindow, swindow = swindow, L = 0, D = D
 )
 
 delay_data <- data.frame(
