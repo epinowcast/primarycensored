@@ -1,8 +1,16 @@
-# primarycensored (development version)
+# primarycensored 1.4.0.1000
 
 ## Documentation
 
 - Added a CDF-direct form of the primary-censored analytic solutions to the "Why it works" and "Analytic solutions" vignettes alongside the existing survival-function form.
+
+## Bug fixes
+
+- Fixed incorrect normalisation in `dexpgrowth()`, `pexpgrowth()`, and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero.
+  The PDF and CDF formulas contained a stray `exp(-r * min)` factor from using `exp(r * (x - min))` instead of `exp(r * x)`.
+  The Stan RNG had a compensating `xmin +` offset.
+  The bug did not affect results when `min = 0` (the default and only value used within the package's primary censoring functions).
+  Thanks to @TimTaylor for reporting (#290).
 
 ## Internal
 
