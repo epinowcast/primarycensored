@@ -215,8 +215,18 @@ Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta 
 \]</span></p>
 </div>
 <div class="section level4" number="3.3.3">
+<h4 id="cdf-form-of-s_-for-gamma-distribution">
+<span class="header-section-number">3.3.3</span> CDF form of <span class="math inline">\(S_{+}\)</span> for Gamma distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-gamma-distribution"></a>
+</h4>
+<p>Rearranging equation <a href="#eq:survgammaunifprim">(3.5)</a> via <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> gives the equivalent CDF-direct form</p>
+<p><span class="math display">\[
+F_{S_+}(d; k, \theta) = \frac{1}{w_P}\Big[ d\, F_T(d; k, \theta) - q\, F_T(q; k, \theta) - k\theta\big( F_T(d; k{+}1, \theta) - F_T(q; k{+}1, \theta) \big) \Big],
+\]</span></p>
+<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.</p>
+</div>
+<div class="section level4" number="3.3.4">
 <h4 id="gamma-discrete-censored-delay-distribution">
-<span class="header-section-number">3.3.3</span> Gamma discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#gamma-discrete-censored-delay-distribution"></a>
+<span class="header-section-number">3.3.4</span> Gamma discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#gamma-discrete-censored-delay-distribution"></a>
 </h4>
 <p>By substituting <a href="#eq:survgammaunifprim">(3.5)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:
 <span class="math display">\[
@@ -274,8 +284,18 @@ Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu 
 \]</span></p>
 </div>
 <div class="section level4" number="3.4.3">
+<h4 id="cdf-form-of-s_-for-log-normal-distribution">
+<span class="header-section-number">3.4.3</span> CDF form of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-log-normal-distribution"></a>
+</h4>
+<p>Applying <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> to the preceding survival form gives the equivalent CDF-direct form</p>
+<p><span class="math display">\[
+F_{S_+}(d; \mu, \sigma) = \frac{1}{w_P}\Big[ d\, F_T(d; \mu, \sigma) - q\, F_T(q; \mu, \sigma) - e^{\mu + \sigma^2/2}\big( F_T(d; \mu{+}\sigma^2, \sigma) - F_T(q; \mu{+}\sigma^2, \sigma) \big) \Big],
+\]</span></p>
+<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.</p>
+</div>
+<div class="section level4" number="3.4.4">
 <h4 id="log-normal-discrete-censored-delay-distribution">
-<span class="header-section-number">3.4.3</span> Log-Normal discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#log-normal-discrete-censored-delay-distribution"></a>
+<span class="header-section-number">3.4.4</span> Log-Normal discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#log-normal-discrete-censored-delay-distribution"></a>
 </h4>
 <p>By substituting <a href="#eq:lognormpartexp">(3.6)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
 <p><span class="math display">\[
@@ -339,8 +359,18 @@ is a reparametrisation of the lower incomplete gamma function. Note that the <sp
 Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
 \]</span></p>
 <div class="section level4" number="3.6.1">
+<h4 id="cdf-form-of-s_-for-weibull-distribution">
+<span class="header-section-number">3.6.1</span> CDF form of <span class="math inline">\(S_{+}\)</span> for Weibull distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-weibull-distribution"></a>
+</h4>
+<p>Applying <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> to the preceding survival form gives the equivalent CDF-direct form</p>
+<p><span class="math display">\[
+F_{S_+}(d; \lambda, k) = \frac{1}{w_P}\Big[ d\, F_T(d; \lambda, k) - q\, F_T(q; \lambda, k) - \lambda\big( g(d; \lambda, k) - g(q; \lambda, k) \big) \Big],
+\]</span></p>
+<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span> and <span class="math inline">\(g\)</span> is as defined in equation <a href="#eq:weibullpartexp">(3.7)</a>.</p>
+</div>
+<div class="section level4" number="3.6.2">
 <h4 id="weibull-discrete-censored-delay-distribution">
-<span class="header-section-number">3.6.1</span> Weibull discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#weibull-discrete-censored-delay-distribution"></a>
+<span class="header-section-number">3.6.2</span> Weibull discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#weibull-discrete-censored-delay-distribution"></a>
 </h4>
 <p>By substituting <a href="#eq:weibullpartexp">(3.7)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
 <p><span class="math display">\[

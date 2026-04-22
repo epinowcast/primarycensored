@@ -353,9 +353,9 @@ primarycensored_fit
 ```
 
     ##  variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##     lp__  -3422.81 -3422.47 1.09 0.75 -3424.97 -3421.80 1.00     1316     1453
-    ##     mu        1.55     1.54 0.05 0.05     1.47     1.63 1.01     1072     1211
-    ##     sigma     0.78     0.78 0.03 0.03     0.73     0.84 1.01     1121     1281
+    ##     lp__  -3422.74 -3422.44 0.99 0.71 -3424.71 -3421.79 1.00     1369     1861
+    ##     mu        1.55     1.54 0.05 0.05     1.48     1.62 1.00     1122     1213
+    ##     sigma     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1063     1227
 
 We see that the model has converged and the diagnostics look good. We
 also see that the posterior means are very near the true parameters and
@@ -407,9 +407,9 @@ pcd_fit
 ```
 
     ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.77 -3422.44 1.04 0.72 -3424.82 -3421.80 1.00     1382     1448
-    ##  params[1]     1.55     1.54 0.05 0.05     1.48     1.63 1.00     1217     1260
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1246     1350
+    ##  lp__      -3422.77 -3422.46 1.02 0.75 -3424.75 -3421.80 1.00     1204     1755
+    ##  params[1]     1.54     1.54 0.05 0.05     1.47     1.63 1.00     1055     1305
+    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1096     1341
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and

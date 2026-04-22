@@ -2,6 +2,12 @@
 
 ## primarycensored 1.4.0.1000
 
+### Documentation
+
+- Added a CDF-direct form of the primary-censored analytic solutions to
+  the “Why it works” and “Analytic solutions” vignettes alongside the
+  existing survival-function form.
+
 ### Bug fixes
 
 - Fixed incorrect normalisation in
@@ -16,6 +22,26 @@
   primary censoring functions). Thanks to
   [@TimTaylor](https://github.com/TimTaylor) for reporting
   ([\#290](https://github.com/epinowcast/primarycensored/issues/290)).
+
+### Internal
+
+- Rewrote the analytical primary-censored CDFs (Gamma, Log-Normal,
+  Weibull with uniform primary) in R and Stan to use a CDF-direct
+  algebraic form, \\F\_{S\_+}(d) = \[d F_T(d) - q F_T(q) - E(\tilde
+  F(d) - \tilde F(q))\]/w_P\\. In Stan this unifies the `q = 0` and
+  `q > 0` code paths (single algebraic expression, better for NUTS), the
+  outer `log_diff_exp` ordering is now mathematically guaranteed, and
+  the Gamma case uses the incomplete-gamma recursion \\P(k{+}1, y) =
+  P(k, y) - y^k e^{-y}/\Gamma(k{+}1)\\ to halve `gamma_lcdf`
+  evaluations. Behaviour and tests are unchanged.
+- Replaced
+  [`pracma::gammainc`](https://rdrr.io/pkg/pracma/man/gammainc.html)
+  with [`stats::pgamma`](https://rdrr.io/r/stats/GammaDist.html) in the
+  Weibull `g()` helper, dropping the `pracma` dependency. The previous
+  `pwindow > 3` fallback to numeric integration (and the internal
+  overflow guard) is no longer needed — the base R implementation is
+  stable across the full parameter range. Closes
+  [\#127](https://github.com/epinowcast/primarycensored/issues/127).
 
 ## primarycensored 1.4.0
 

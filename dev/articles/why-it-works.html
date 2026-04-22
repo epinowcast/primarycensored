@@ -187,8 +187,26 @@ Q_{S_+}(t) = Q_T(t + w_P) + \int_0^{w_P} f_T(t+p) F_{C_P}(p) dp. \tag{3.1}
 <p>Note that in <a href="primarycensored.html#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored">“Getting started”</a> the target for numerical quadrature is the cumulative distribution function of the sum of the primary time within the primary censoring window and the delay time.</p>
 </div>
 <div class="section level4" number="3.1.2">
+<h4 id="cdf-form-of-s_-for-uniform-primary">
+<span class="header-section-number">3.1.2</span> CDF form of <span class="math inline">\(S_+\)</span> for uniform primary<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-uniform-primary"></a>
+</h4>
+<p>For uniform primary, equation <a href="#eq:survivalfunc">(3.1)</a> can be rearranged into a CDF-direct form that is often more convenient for computation.
+Applying <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> and <span class="math inline">\(F_T = 1 - Q_T\)</span> and integrating the partial expectation by parts,
+<span class="math inline">\(\int_t^{t+w_P} f_T(z)\, z\, dz = [z F_T(z)]_t^{t+w_P} - \int_t^{t+w_P} F_T(z)\, dz\)</span>, gives</p>
+<p><span class="math display">\[
+F_{S_+}(d) = \frac{1}{w_P}\Big[ d\, F_T(d) - q\, F_T(q) - \int_q^d F_T(z)\, dz \Big],
+\]</span></p>
+<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.
+Substituting the partial expectation in the Gamma, Log-Normal and Weibull cases gives the equivalent “distribution mean” form</p>
+<p><span class="math display">\[
+F_{S_+}(d) = \frac{1}{w_P}\Big[ d\, F_T(d;\cdot) - q\, F_T(q;\cdot) - E\big( \tilde F(d) - \tilde F(q) \big) \Big],
+\]</span></p>
+<p>where <span class="math inline">\(E\)</span> is the distribution mean and <span class="math inline">\(\tilde F\)</span> is a shifted or related CDF specific to each distribution.
+See <code><a href="../articles/analytic-solutions.html">vignette("analytic-solutions")</a></code> for the per-distribution expressions.</p>
+</div>
+<div class="section level4" number="3.1.3">
 <h4 id="probability-of-secondary-event-time-within-a-secondary-censoring-window">
-<span class="header-section-number">3.1.2</span> Probability of secondary event time within a secondary censoring window<a class="anchor" aria-label="anchor" href="#probability-of-secondary-event-time-within-a-secondary-censoring-window"></a>
+<span class="header-section-number">3.1.3</span> Probability of secondary event time within a secondary censoring window<a class="anchor" aria-label="anchor" href="#probability-of-secondary-event-time-within-a-secondary-censoring-window"></a>
 </h4>
 <p>Having constructed the survival function of <span class="math inline">\(S_+\)</span> with equation <a href="#eq:survivalfunc">(3.1)</a>, using numerical quadrature or in some other way, we can calculate the probability mass of a secondary event time falling within a observed secondary censoring window of length <span class="math inline">\(w_S\)</span> that begins at time <span class="math inline">\(n - w_S\)</span> <em>after</em> the primary censoring window. This is the probability that the censored delay time <span class="math inline">\(T_c\)</span> is <span class="math inline">\(n\)</span>.</p>
 <p>This gives the censored delay time probability <a href="https://mc-stan.org/docs/stan-users-guide/truncation-censoring.html#integrating-out-censored-values" class="external-link">by integrating over censored values</a>:</p>

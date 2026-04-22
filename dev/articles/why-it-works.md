@@ -175,7 +175,31 @@ the target for numerical quadrature is the cumulative distribution
 function of the sum of the primary time within the primary censoring
 window and the delay time.
 
-#### 3.1.2 Probability of secondary event time within a secondary censoring window
+#### 3.1.2 CDF form of \\S\_+\\ for uniform primary
+
+For uniform primary, equation [(3.1)](#eq:survivalfunc) can be
+rearranged into a CDF-direct form that is often more convenient for
+computation. Applying \\F\_{S\_+} = 1 - Q\_{S\_+}\\ and \\F_T = 1 -
+Q_T\\ and integrating the partial expectation by parts, \\\int_t^{t+w_P}
+f_T(z)\\ z\\ dz = \[z F_T(z)\]\_t^{t+w_P} - \int_t^{t+w_P} F_T(z)\\
+dz\\, gives
+
+\\ F\_{S\_+}(d) = \frac{1}{w_P}\Big\[ d\\ F_T(d) - q\\ F_T(q) - \int_q^d
+F_T(z)\\ dz \Big\], \\
+
+where \\q = \max(d - w_P, 0)\\. Substituting the partial expectation in
+the Gamma, Log-Normal and Weibull cases gives the equivalent
+“distribution mean” form
+
+\\ F\_{S\_+}(d) = \frac{1}{w_P}\Big\[ d\\ F_T(d;\cdot) - q\\
+F_T(q;\cdot) - E\big( \tilde F(d) - \tilde F(q) \big) \Big\], \\
+
+where \\E\\ is the distribution mean and \\\tilde F\\ is a shifted or
+related CDF specific to each distribution. See
+[`vignette("analytic-solutions")`](https://primarycensored.epinowcast.org/dev/articles/analytic-solutions.md)
+for the per-distribution expressions.
+
+#### 3.1.3 Probability of secondary event time within a secondary censoring window
 
 Having constructed the survival function of \\S\_+\\ with equation
 [(3.1)](#eq:survivalfunc), using numerical quadrature or in some other

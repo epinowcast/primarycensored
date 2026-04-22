@@ -64,8 +64,17 @@
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.4.0.1000" id="primarycensored-1401000">primarycensored 1.4.0.1000<a class="anchor" aria-label="anchor" href="#primarycensored-1401000"></a></h2>
 <div class="section level3">
+<h3 id="documentation-1-4-0-1000">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-4-0-1000"></a></h3>
+<ul><li>Added a CDF-direct form of the primary-censored analytic solutions to the “Why it works” and “Analytic solutions” vignettes alongside the existing survival-function form.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-1-4-0-1000">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-4-0-1000"></a></h3>
 <ul><li>Fixed incorrect normalisation in <code><a href="../reference/expgrowth.html">dexpgrowth()</a></code>, <code><a href="../reference/expgrowth.html">pexpgrowth()</a></code>, and their Stan equivalents (<code>expgrowth_pdf</code>, <code>expgrowth_lpdf</code>, <code>expgrowth_cdf</code>, <code>expgrowth_rng</code>) when <code>min</code> is non-zero. The PDF and CDF formulas contained a stray <code>exp(-r * min)</code> factor from using <code>exp(r * (x - min))</code> instead of <code>exp(r * x)</code>. The Stan RNG had a compensating <code>xmin +</code> offset. The bug did not affect results when <code>min = 0</code> (the default and only value used within the package’s primary censoring functions). Thanks to <a href="https://github.com/TimTaylor" class="external-link">@TimTaylor</a> for reporting (<a href="https://github.com/epinowcast/primarycensored/issues/290" class="external-link">#290</a>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="internal-1-4-0-1000">Internal<a class="anchor" aria-label="anchor" href="#internal-1-4-0-1000"></a></h3>
+<ul><li>Rewrote the analytical primary-censored CDFs (Gamma, Log-Normal, Weibull with uniform primary) in R and Stan to use a CDF-direct algebraic form, <span class="math inline">\(F_{S_+}(d) = [d F_T(d) - q F_T(q) - E(\tilde F(d) - \tilde F(q))]/w_P\)</span>. In Stan this unifies the <code>q = 0</code> and <code>q &gt; 0</code> code paths (single algebraic expression, better for NUTS), the outer <code>log_diff_exp</code> ordering is now mathematically guaranteed, and the Gamma case uses the incomplete-gamma recursion <span class="math inline">\(P(k{+}1, y) = P(k, y) - y^k e^{-y}/\Gamma(k{+}1)\)</span> to halve <code>gamma_lcdf</code> evaluations. Behaviour and tests are unchanged.</li>
+<li>Replaced <code><a href="https://rdrr.io/pkg/pracma/man/gammainc.html" class="external-link">pracma::gammainc</a></code> with <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">stats::pgamma</a></code> in the Weibull <code>g()</code> helper, dropping the <code>pracma</code> dependency. The previous <code>pwindow &gt; 3</code> fallback to numeric integration (and the internal overflow guard) is no longer needed — the base R implementation is stable across the full parameter range. Closes <a href="https://github.com/epinowcast/primarycensored/issues/127" class="external-link">#127</a>.</li>
 </ul></div>
 </div>
     <div class="section level2">
