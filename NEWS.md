@@ -1,5 +1,9 @@
 # primarycensored 1.4.0.1000
 
+## Documentation
+
+- Added a CDF-direct form of the primary-censored analytic solutions to the "Why it works" and "Analytic solutions" vignettes alongside the existing survival-function form.
+
 ## Bug fixes
 
 - Fixed incorrect normalisation in `dexpgrowth()`, `pexpgrowth()`, and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero.
@@ -7,6 +11,11 @@
   The Stan RNG had a compensating `xmin +` offset.
   The bug did not affect results when `min = 0` (the default and only value used within the package's primary censoring functions).
   Thanks to @TimTaylor for reporting (#290).
+
+## Internal
+
+- Rewrote the analytical primary-censored CDFs (Gamma, Log-Normal, Weibull with uniform primary) in R and Stan to use a CDF-direct algebraic form, $F_{S_+}(d) = [d F_T(d) - q F_T(q) - E(\tilde F(d) - \tilde F(q))]/w_P$. In Stan this unifies the `q = 0` and `q > 0` code paths (single algebraic expression, better for NUTS), the outer `log_diff_exp` ordering is now mathematically guaranteed, and the Gamma case uses the incomplete-gamma recursion $P(k{+}1, y) = P(k, y) - y^k e^{-y}/\Gamma(k{+}1)$ to halve `gamma_lcdf` evaluations. Behaviour and tests are unchanged.
+- Replaced `pracma::gammainc` with `stats::pgamma` in the Weibull `g()` helper, dropping the `pracma` dependency. The previous `pwindow > 3` fallback to numeric integration (and the internal overflow guard) is no longer needed — the base R implementation is stable across the full parameter range. Closes #127.
 
 # primarycensored 1.4.0
 

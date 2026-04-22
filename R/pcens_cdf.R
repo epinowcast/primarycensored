@@ -149,24 +149,22 @@ pcens_cdf.pcens_pgamma_dunif <- function(
   # Process non-zero cases only if there are any
   if (!all(zero_cases)) {
     non_zero_q <- q[!zero_cases]
+    d <- non_zero_q + pwindow
 
-    # Compute necessary survival and distribution functions
-    pgamma_q <- partial_pgamma(non_zero_q)
-    pgamma_q_pwindow <- partial_pgamma(non_zero_q + pwindow)
-    pgamma_q_1 <- partial_pgamm_k_1(non_zero_q)
-    pgamma_q_pwindow_1 <- partial_pgamm_k_1(non_zero_q + pwindow)
+    # Compute delay CDF at the interval endpoints and at the shifted (k+1)
+    # distribution for the mean-shift term E[T] = shape * scale.
+    F_T_q <- partial_pgamma(non_zero_q)
+    F_T_d <- partial_pgamma(d)
+    F_T_q_kp1 <- partial_pgamm_k_1(non_zero_q)
+    F_T_d_kp1 <- partial_pgamm_k_1(d)
 
-    Q_T <- 1 - pgamma_q_pwindow
-    Delta_F_T_kp1 <- pgamma_q_pwindow_1 - pgamma_q_1
-    Delta_F_T_k <- pgamma_q_pwindow - pgamma_q
+    E_T <- shape * scale
 
-    # Calculate Q_Splus using the analytical formula
-    Q_Splus <- Q_T +
-      (shape * scale / pwindow) * Delta_F_T_kp1 -
-      (non_zero_q / pwindow) * Delta_F_T_k
-
-    # Compute the CDF as 1 - Q_Splus
-    non_zero_result <- 1 - Q_Splus
+    # Direct CDF form:
+    #   F_{S+}(d) = ( d F_T(d) - q F_T(q) - E_T (F~_T(d) - F~_T(q)) ) / w_P
+    non_zero_result <-
+      (d * F_T_d - non_zero_q * F_T_q -
+        E_T * (F_T_d_kp1 - F_T_q_kp1)) / pwindow
 
     # Assign non-zero results back to the main result vector
     result[!zero_cases] <- non_zero_result
@@ -230,26 +228,23 @@ pcens_cdf.pcens_plnorm_dunif <- function(
   # Process non-zero cases only if there are any
   if (!all(zero_cases)) {
     non_zero_q <- q[!zero_cases]
+    d <- non_zero_q + pwindow
 
-    # Compute necessary survival and distribution functions
-    plnorm_q <- partial_plnorm(non_zero_q)
-    plnorm_q_pwindow <- partial_plnorm(non_zero_q + pwindow)
-    plnorm_q_sigma2 <- partial_plnorm_sigma2(non_zero_q)
-    plnorm_q_pwindow_sigma2 <- partial_plnorm_sigma2(
-      non_zero_q + pwindow
-    )
+    # Compute delay CDF at the interval endpoints and at the shifted
+    # (meanlog + sigma^2) distribution for the mean-shift term
+    # E[T] = exp(mu + sigma^2 / 2).
+    F_T_q <- partial_plnorm(non_zero_q)
+    F_T_d <- partial_plnorm(d)
+    F_T_q_shift <- partial_plnorm_sigma2(non_zero_q)
+    F_T_d_shift <- partial_plnorm_sigma2(d)
 
-    Q_T <- 1 - plnorm_q_pwindow
-    Delta_F_T_mu_sigma <- plnorm_q_pwindow_sigma2 - plnorm_q_sigma2
-    Delta_F_T <- plnorm_q_pwindow - plnorm_q
+    E_T <- exp(mu + 0.5 * sigma^2)
 
-    # Calculate Q_Splus using the analytical formula
-    Q_Splus <- Q_T +
-      (exp(mu + 0.5 * sigma^2) / pwindow) * Delta_F_T_mu_sigma -
-      (non_zero_q / pwindow) * Delta_F_T
-
-    # Compute the CDF as 1 - Q_Splus
-    non_zero_result <- 1 - Q_Splus
+    # Direct CDF form:
+    #   F_{S+}(d) = ( d F_T(d) - q F_T(q) - E_T (F~_T(d) - F~_T(q)) ) / w_P
+    non_zero_result <-
+      (d * F_T_d - non_zero_q * F_T_q -
+        E_T * (F_T_d_shift - F_T_q_shift)) / pwindow
 
     # Assign non-zero results back to the main result vector
     result[!zero_cases] <- non_zero_result
@@ -269,6 +264,8 @@ pcens_cdf.pcens_plnorm_dunif <- function(
 #'
 #' @inherit pcens_cdf return
 #'
+#' @importFrom stats pgamma
+#'
 #' @export
 pcens_cdf.pcens_pweibull_dunif <- function(
     object,
@@ -276,12 +273,6 @@ pcens_cdf.pcens_pweibull_dunif <- function(
     pwindow,
     use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
-    return(
-      pcens_cdf.default(object, q, pwindow, use_numeric)
-    )
-  }
-
-  if (pwindow > 3) {
     return(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
@@ -304,23 +295,15 @@ pcens_cdf.pcens_pweibull_dunif <- function(
   # Precompute constants
   inv_shape <- 1 / shape
   inv_scale <- 1 / scale
+  a <- 1 + inv_shape
+  lgamma_a <- lgamma(a)
 
+  # Lower incomplete gamma gamma(a, x) via the regularised form from
+  # stats::pgamma, which is numerically stable for large x where an
+  # unregularised series expansion would overflow.
   g <- function(t) {
-    # Use the lower incomplete gamma function
-    scaled_t <- (t * inv_scale)^shape
-    g_out <- vapply(
-      scaled_t,
-      function(x) {
-        a <- 1 + inv_shape
-        if (abs(-x + a * log(x)) > 700 || abs(a) > 170) {
-          return(0)
-        }
-        result <- pracma::gammainc(x, a)["lowinc"]
-        return(result)
-      },
-      numeric(1)
-    )
-    return(g_out)
+    x <- (t * inv_scale)^shape
+    exp(stats::pgamma(x, shape = a, scale = 1, log.p = TRUE) + lgamma_a)
   }
 
   # Adjust q so that we have [q-pwindow, q]
@@ -333,26 +316,24 @@ pcens_cdf.pcens_pweibull_dunif <- function(
   # Process non-zero cases only if there are any
   if (!all(zero_cases)) {
     non_zero_q <- q[!zero_cases]
-    q_pwindow <- pmax(non_zero_q + pwindow, 0)
-    non_zero_q_pos <- pmax(non_zero_q, 0)
+    d <- non_zero_q + pwindow
+    # Clamp to zero for evaluating F_T and g (both undefined / zero on R_-).
+    # The products q * F_T(q) and scale * g(q) are then zero when q < 0,
+    # matching F_T(q) = 0 and g(q) = 0 for q <= 0.
+    q_pos <- pmax(non_zero_q, 0)
+    d_pos <- pmax(d, 0)
 
-    # Compute necessary survival and distribution functions
-    pweibull_q <- partial_pweibull(non_zero_q_pos)
-    pweibull_q_pwindow <- partial_pweibull(q_pwindow)
-    g_q <- g(non_zero_q_pos)
-    g_q_pwindow <- g(q_pwindow)
+    # Compute delay CDF and helper g at the interval endpoints.
+    F_T_q <- partial_pweibull(q_pos)
+    F_T_d <- partial_pweibull(d_pos)
+    g_q <- g(q_pos)
+    g_d <- g(d_pos)
 
-    Q_T <- 1 - pweibull_q_pwindow
-    Delta_g <- g_q_pwindow - g_q
-    Delta_F_T <- pweibull_q_pwindow - pweibull_q
-
-    # Calculate Q_Splus using the analytical formula
-    Q_Splus <- Q_T +
-      (scale / pwindow) * Delta_g -
-      (non_zero_q / pwindow) * Delta_F_T
-
-    # Compute the CDF as 1 - Q_Splus
-    non_zero_result <- 1 - Q_Splus
+    # Direct CDF form (with E[T] = scale and the shifted-CDF role played
+    # by g / scale, so that E[T] * (F~_T(d) - F~_T(q)) = scale * (g(d) - g(q))):
+    #   F_{S+}(d) = ( d F_T(d) - q F_T(q) - scale (g(d) - g(q)) ) / w_P
+    non_zero_result <-
+      (d_pos * F_T_d - q_pos * F_T_q - scale * (g_d - g_q)) / pwindow
 
     # Assign non-zero results back to the main result vector
     result[!zero_cases] <- non_zero_result

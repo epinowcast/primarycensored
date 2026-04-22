@@ -29,45 +29,42 @@ int check_for_analytical(int dist_id, int primary_id) {
 real primarycensored_gamma_uniform_lcdf(data real d, real q, array[] real params, data real pwindow) {
   real shape = params[1];
   real rate = params[2];
-  real shape_1 = shape + 1;
   real log_window = log(pwindow);
+  // log E where E = k * theta = shape / rate is the mean of the delay
+  real log_E = log(shape) - log(rate);
 
-  real log_F_T = gamma_lcdf(d | shape, rate);
-  real log_F_T_kp1 = gamma_lcdf(d | shape_1, rate);
+  // F_T(d; k) and the recursion to F_T(d; k+1):
+  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1), with y = rate * d
+  real log_F_T_d_k = gamma_lcdf(d | shape, rate);
+  real gamma_kp1_pdf_log_d
+    = shape * log(rate * d) - rate * d - lgamma(shape + 1);
+  real log_F_T_d_kp1 = log_diff_exp(log_F_T_d_k, gamma_kp1_pdf_log_d);
 
-  real log_delta_F_T_kp1;
-  real log_delta_F_T_k;
-  real log_F_Splus;
-
-  if (q != 0) {
-    real log_F_T_q = gamma_lcdf(q | shape, rate);
-    real log_F_T_q_kp1 = gamma_lcdf(q | shape_1, rate);
-
-    // Ensure that the first argument is greater than the second
-    log_delta_F_T_kp1 = log_diff_exp(log_F_T_kp1, log_F_T_q_kp1);
-    log_delta_F_T_k = log_diff_exp(log_F_T, log_F_T_q);
-
-    log_F_Splus = log_diff_exp(
-      log_F_T,
-      log_diff_exp(
-        log(shape * inv(rate)) + log_delta_F_T_kp1,
-        log(d - pwindow) + log_delta_F_T_k
-      ) - log_window
-    );
+  // q-dependent terms. Final algebra is unified; only a guard to avoid
+  // log_diff_exp(-inf, -inf) and log(0) when q == 0 (q is data, so autodiff
+  // is unaffected by this branch).
+  real log_q_F_T_q;    // log(q * F_T(q; k))
+  real log_E_tF_T_q;   // log(E * F_T(q; k+1))
+  if (q > 0) {
+    real log_F_T_q_k = gamma_lcdf(q | shape, rate);
+    real gamma_kp1_pdf_log_q
+      = shape * log(rate * q) - rate * q - lgamma(shape + 1);
+    real log_F_T_q_kp1 = log_diff_exp(log_F_T_q_k, gamma_kp1_pdf_log_q);
+    log_q_F_T_q = log(q) + log_F_T_q_k;
+    log_E_tF_T_q = log_E + log_F_T_q_kp1;
   } else {
-    log_delta_F_T_kp1 = log_F_T_kp1;
-    log_delta_F_T_k = log_F_T;
-
-    log_F_Splus = log_diff_exp(
-      log_F_T,
-      log_sum_exp(
-        log(shape * inv(rate)) + log_delta_F_T_kp1,
-        log(pwindow - d) + log_delta_F_T_k
-      ) - log_window
-    );
+    log_q_F_T_q = negative_infinity();
+    log_E_tF_T_q = negative_infinity();
   }
 
-  return log_F_Splus;
+  // Unified form: F_{S+}(d) = (A - B) / w_P with A, B sums of positives:
+  //   A = d * F_T(d; k)   + E * F_T(q; k+1)
+  //   B = q * F_T(q; k)   + E * F_T(d; k+1)
+  // Ordering A >= B is guaranteed by F_{S+}(d) >= 0.
+  real log_A = log_sum_exp(log(d) + log_F_T_d_k, log_E_tF_T_q);
+  real log_B = log_sum_exp(log_q_F_T_q, log_E + log_F_T_d_kp1);
+
+  return log_diff_exp(log_A, log_B) - log_window;
 }
 
 /**
@@ -87,45 +84,33 @@ real primarycensored_lognormal_uniform_lcdf(data real d, real q, array[] real pa
   real sigma = params[2];
   real mu_sigma2 = mu + square(sigma);
   real log_window = log(pwindow);
+  // log E where E = exp(mu + sigma^2/2) is the mean of the delay
+  real log_E = mu + 0.5 * square(sigma);
 
-  real log_F_T = lognormal_lcdf(d | mu, sigma);
-  real log_F_T_mu_sigma2 = lognormal_lcdf(d | mu_sigma2, sigma);
+  real log_F_T_d = lognormal_lcdf(d | mu, sigma);
+  real log_tF_T_d = lognormal_lcdf(d | mu_sigma2, sigma);
 
-  real log_delta_F_T_mu_sigma;
-  real log_delta_F_T;
-  real log_F_Splus;
-
-  if (q != 0) {
+  // q-dependent terms (guard only to avoid log(0); final algebra is unified).
+  real log_q_F_T_q;    // log(q * F_T(q))
+  real log_E_tF_T_q;   // log(E * tilde F_T(q))
+  if (q > 0) {
     real log_F_T_q = lognormal_lcdf(q | mu, sigma);
-    real log_F_T_q_mu_sigma2 = lognormal_lcdf(q | mu_sigma2, sigma);
-
-    // Ensure that the first argument is greater than the second
-    log_delta_F_T_mu_sigma = log_diff_exp(
-      log_F_T_mu_sigma2, log_F_T_q_mu_sigma2
-    );
-    log_delta_F_T = log_diff_exp(log_F_T, log_F_T_q);
-
-    log_F_Splus = log_diff_exp(
-      log_F_T,
-      log_diff_exp(
-        (mu + 0.5 * square(sigma)) + log_delta_F_T_mu_sigma,
-        log(d - pwindow) + log_delta_F_T
-      ) - log_window
-    );
+    real log_tF_T_q = lognormal_lcdf(q | mu_sigma2, sigma);
+    log_q_F_T_q = log(q) + log_F_T_q;
+    log_E_tF_T_q = log_E + log_tF_T_q;
   } else {
-    log_delta_F_T_mu_sigma = log_F_T_mu_sigma2;
-    log_delta_F_T = log_F_T;
-
-    log_F_Splus = log_diff_exp(
-      log_F_T,
-      log_sum_exp(
-        (mu + 0.5 * square(sigma)) + log_delta_F_T_mu_sigma,
-        log(pwindow - d) + log_delta_F_T
-      ) - log_window
-    );
+    log_q_F_T_q = negative_infinity();
+    log_E_tF_T_q = negative_infinity();
   }
 
-  return log_F_Splus;
+  // Unified form: F_{S+}(d) = (A - B) / w_P with
+  //   A = d * F_T(d) + E * tilde F_T(q)
+  //   B = q * F_T(q) + E * tilde F_T(d)
+  // Ordering A >= B is guaranteed by F_{S+}(d) >= 0.
+  real log_A = log_sum_exp(log(d) + log_F_T_d, log_E_tF_T_q);
+  real log_B = log_sum_exp(log_q_F_T_q, log_E + log_tF_T_d);
+
+  return log_diff_exp(log_A, log_B) - log_window;
 }
 
 /**
@@ -164,43 +149,32 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q, array[] real para
   real shape = params[1];
   real scale = params[2];
   real log_window = log(pwindow);
+  real log_scale = log(scale);
 
-  real log_F_T = weibull_lcdf(d | shape, scale);
+  // For Weibull: E = scale (lambda) and tilde F_T(t) = g(t; lambda, k), so
+  // log(E * tilde F_T(t)) = log(scale) + log_weibull_g(t, shape, scale).
+  real log_F_T_d = weibull_lcdf(d | shape, scale);
+  real log_E_tF_T_d = log_scale + log_weibull_g(d, shape, scale);
 
-  real log_delta_g;
-  real log_delta_F_T;
-  real log_F_Splus;
-
-  if (q != 0) {
-    real log_F_T_q = weibull_lcdf(q | shape, scale);
-
-    log_delta_g = log_diff_exp(
-      log_weibull_g(d, shape, scale),
-      log_weibull_g(q, shape, scale)
-    );
-    log_delta_F_T = log_diff_exp(log_F_T, log_F_T_q);
-
-    log_F_Splus = log_diff_exp(
-      log_F_T,
-      log_diff_exp(
-        log(scale) + log_delta_g,
-        log(d - pwindow) + log_delta_F_T
-      ) - log_window
-    );
+  // q-dependent terms (guard only to avoid log(0); final algebra is unified).
+  real log_q_F_T_q;    // log(q * F_T(q))
+  real log_E_tF_T_q;   // log(E * tilde F_T(q)) = log(scale * g(q; lambda, k))
+  if (q > 0) {
+    log_q_F_T_q = log(q) + weibull_lcdf(q | shape, scale);
+    log_E_tF_T_q = log_scale + log_weibull_g(q, shape, scale);
   } else {
-    log_delta_g = log_weibull_g(d, shape, scale);
-    log_delta_F_T = log_F_T;
-
-    log_F_Splus = log_diff_exp(
-      log_F_T,
-      log_sum_exp(
-        log(scale) + log_delta_g,
-        log(pwindow - d) + log_delta_F_T
-      ) - log_window
-    );
+    log_q_F_T_q = negative_infinity();
+    log_E_tF_T_q = negative_infinity();
   }
 
-  return log_F_Splus;
+  // Unified form: F_{S+}(d) = (A - B) / w_P with
+  //   A = d * F_T(d)    + scale * g(q; lambda, k)
+  //   B = q * F_T(q)    + scale * g(d; lambda, k)
+  // Ordering A >= B is guaranteed by F_{S+}(d) >= 0.
+  real log_A = log_sum_exp(log(d) + log_F_T_d, log_E_tF_T_q);
+  real log_B = log_sum_exp(log_q_F_T_q, log_E_tF_T_d);
+
+  return log_diff_exp(log_A, log_B) - log_window;
 }
 
 /**

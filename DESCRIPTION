@@ -54,8 +54,6 @@ URL: https://primarycensored.epinowcast.org, https://github.com/epinowcast/prima
 BugReports: https://github.com/epinowcast/primarycensored/issues
 Depends:
     R (>= 4.0.0)
-Imports:
-    pracma
 Suggests:
     bookdown,
     cmdstanr,
