@@ -264,6 +264,8 @@ pcens_cdf.pcens_plnorm_dunif <- function(
 #'
 #' @inherit pcens_cdf return
 #'
+#' @importFrom stats pgamma
+#'
 #' @export
 pcens_cdf.pcens_pweibull_dunif <- function(
     object,
