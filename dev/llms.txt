@@ -178,13 +178,12 @@ with `citation("primarycensored")`.
 
 All contributions to this project are gratefully acknowledged using the
 [`allcontributors` package](https://github.com/ropensci/allcontributors)
-following the [all-contributors](https://allcontributors.org)
+following the [allcontributors](https://allcontributors.org)
 specification. Contributions of any kind are welcome!
 
 ### Code
 
 [seabbs](https://github.com/epinowcast/primarycensored/commits?author=seabbs),
-[seabbs-bot](https://github.com/epinowcast/primarycensored/commits?author=seabbs-bot),
 [SamuelBrand1](https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1),
 [sbfnk](https://github.com/epinowcast/primarycensored/commits?author=sbfnk),
 [athowes](https://github.com/epinowcast/primarycensored/commits?author=athowes),
@@ -198,7 +197,8 @@ specification. Contributions of any kind are welcome!
 
 [zsusswein](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein),
 [jcblemai](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai),
-[adamkucharski](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski)
+[adamkucharski](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski),
+[OvertonC2](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3AOvertonC2)
 
 ### Issue Contributors
 
