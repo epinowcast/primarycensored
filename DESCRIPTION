@@ -1,6 +1,6 @@
 Package: primarycensored
 Title: Primary Event Censored Distributions
-Version: 1.4.0
+Version: 1.4.0.9000
 Authors@R:
   c(person(given = "Sam",
            family = "Abbott",
@@ -54,8 +54,6 @@ URL: https://primarycensored.epinowcast.org, https://github.com/epinowcast/prima
 BugReports: https://github.com/epinowcast/primarycensored/issues
 Depends:
     R (>= 4.0.0)
-Imports:
-    pracma
 Suggests:
     bookdown,
     cmdstanr,
