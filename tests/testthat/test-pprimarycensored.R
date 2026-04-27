@@ -104,8 +104,6 @@ test_that("pprimarycensored errors when L >= D", {
 })
 
 test_that("pprimarycensored default matches L = 0 for positive support", {
-  # For positive-support delays `F_cens(0) = 0`, so the default `L = -Inf`
-  # and an explicit `L = 0` give numerically identical CDFs.
   pwindow <- 1
   D <- 10
   q <- seq(0, D, by = 0.5)

@@ -29,7 +29,6 @@ test_that("rprimarycensored handles very truncated distributions", {
   pwindow <- 0.1
   D <- 1
 
-  # Explicit `L = 0` restricts `rnorm` samples to non-negatives.
   samples <- rpcens(
     n, rnorm, pwindow,
     L = 0, D = D, mean = 0.5, sd = 1
@@ -88,8 +87,6 @@ test_that("rprimarycensored errors when L >= D", {
 })
 
 test_that("rprimarycensored default matches L = 0 for positive support", {
-  # `rlnorm` samples are always non-negative so the default `L = -Inf`
-  # and an explicit `L = 0` leave the same set of samples after rounding.
   set.seed(123)
   samples_default <- rpcens(
     100, rlnorm,

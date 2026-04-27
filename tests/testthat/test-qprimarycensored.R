@@ -1,10 +1,8 @@
 test_that("qprimarycensored handles boundary cases correctly", {
-  # Default `L = -Inf` so the `p = 0` quantile is `-Inf`.
   q <- qpcens(c(0, 1), plnorm, pwindow = 1, meanlog = 1, sdlog = 1)
   expect_identical(q[1], -Inf)
   expect_true(is.na(q[2]))
 
-  # Explicit `L = 0` reproduces the old default behaviour.
   q_l0 <- qpcens(c(0, 1), plnorm, pwindow = 1, L = 0, meanlog = 1, sdlog = 1)
   expect_identical(q_l0[1], 0)
   expect_true(is.na(q_l0[2]))
@@ -162,9 +160,6 @@ test_that("qprimarycensored inverts pprimarycensored with L = -Inf", {
 test_that(
   "qprimarycensored default matches L = 0 for positive-support delays",
   {
-    # For positive-support delays `F_cens(0) = 0`, so the renormalisation
-    # applied by an explicit `L = 0` is a numerical no-op relative to the
-    # new `L = -Inf` default.
     probs <- c(0.25, 0.5, 0.75)
     q_default <- qpcens(
       probs, plnorm,

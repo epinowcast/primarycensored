@@ -193,8 +193,6 @@ test_that("dprimarycensored errors when L >= D", {
 })
 
 test_that("dprimarycensored default matches L = 0 for positive support", {
-  # For positive-support delays `F_cens(0) = 0`, so the default `L = -Inf`
-  # and an explicit `L = 0` give numerically identical PMFs.
   pwindow <- 1
   D <- 10
   pmf_default <- dpcens(
