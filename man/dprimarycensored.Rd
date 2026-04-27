@@ -44,12 +44,8 @@ functions if they wish to leverage the analytical solutions.}
 \item{swindow}{Secondary event window (default: 1)}
 
 \item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
-meaning no left truncation. For any finite value of L (including 0)
-the distribution is left-truncated at L, so \code{L = 0} is a real truncation
-bound for delay distributions with support below zero (e.g. a normal
-distribution). Finite L is also useful for modelling generation intervals
-where delays below a threshold are excluded, particularly when used in
-renewal models.}
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults

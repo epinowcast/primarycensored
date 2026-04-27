@@ -17,12 +17,8 @@
 #' @param pwindow Primary event window
 #'
 #' @param L Minimum delay (lower truncation point). Defaults to `-Inf`,
-#'  meaning no left truncation. For any finite value of L (including 0)
-#'  the distribution is left-truncated at L, so `L = 0` is a real truncation
-#'  bound for delay distributions with support below zero (e.g. a normal
-#'  distribution). Finite L is also useful for modelling generation intervals
-#'  where delays below a threshold are excluded, particularly when used in
-#'  renewal models.
+#'  meaning no left truncation. For any finite value of L the distribution
+#'  is left-truncated at L.
 #'
 #' @param D Maximum delay (upper truncation point). If finite, the distribution
 #'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -133,11 +129,6 @@ pprimarycensored <- function(
 
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
-
-  # No truncation: raw convolution is the final CDF.
-  if (is.infinite(L) && is.infinite(D)) {
-    return(result)
-  }
 
   .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 }
