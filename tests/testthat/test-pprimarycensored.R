@@ -181,9 +181,6 @@ test_that("pprimarycensored is a proper CDF for signed-support delays", {
 })
 
 test_that("pprimarycensored with L = 0 truncates signed-support delays", {
-  # Regression for #267: with `L = 0` a signed-support delay must be
-  # renormalised so that `F(0) = 0`, not left as the raw convolution
-  # (~0.6844 for `pnorm(mean = 0, sd = 1)` with `pwindow = 1`).
   cdf_at_0 <- ppcens(
     0, pnorm,
     pwindow = 1, L = 0, D = Inf, mean = 0, sd = 1
