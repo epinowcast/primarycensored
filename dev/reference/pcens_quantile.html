@@ -80,7 +80,7 @@ solutions may be added.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pcens_quantile</span><span class="op">(</span><span class="va">object</span>, <span class="va">p</span>, <span class="va">pwindow</span>, L <span class="op">=</span> <span class="fl">0</span>, D <span class="op">=</span> <span class="cn">Inf</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">pcens_quantile</span><span class="op">(</span><span class="va">object</span>, <span class="va">p</span>, <span class="va">pwindow</span>, L <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>, D <span class="op">=</span> <span class="cn">Inf</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -100,10 +100,9 @@ solutions may be added.</p>
 
 
 <dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
-<dd><p>Minimum delay (lower truncation point). If greater than 0, the
-distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded, particularly when used in
-renewal models. Defaults to 0 (no left truncation).</p></dd>
+<dd><p>Minimum delay (lower truncation point). Defaults to <code>-Inf</code>,
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.</p></dd>
 
 
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>

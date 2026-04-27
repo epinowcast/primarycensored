@@ -1,8 +1,8 @@
 # Validate truncation bounds L and D
 
 Internal function to validate that L (lower truncation) and D (upper
-truncation) parameters are valid: L must be non-negative and less than
-D.
+truncation) parameters are valid. L must be less than D. L may be
+negative or `-Inf` for delay distributions with support below zero.
 
 ## Usage
 
@@ -14,7 +14,7 @@ D.
 
 - L:
 
-  Lower truncation bound
+  Lower truncation bound (may be negative or `-Inf`)
 
 - D:
 

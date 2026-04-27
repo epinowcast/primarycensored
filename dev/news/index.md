@@ -2,6 +2,41 @@
 
 ## primarycensored 1.4.0.1000
 
+### Breaking changes
+
+- The default value of `L` in
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md),
+  [`rprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/rprimarycensored.md),
+  and
+  [`pcens_quantile()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.md)
+  has changed from `0` to `-Inf`.
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  now treats a missing `L` column as `L = -Inf` to match. For delay
+  distributions with support on the non-negative reals (e.g. lognormal,
+  gamma, Weibull) `F_cens(0) = 0`, so the new default leaves results
+  unchanged. Callers that relied on the implicit left truncation at `0`
+  (for example to truncate signed-support delays such as `pnorm`) must
+  now pass `L = 0` explicitly (or add an `L` column in
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)).
+  ([\#267](https://github.com/epinowcast/primarycensored/issues/267))
+
+### New features
+
+- `L` may now be negative or `-Inf` in
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md),
+  and
+  [`rprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/rprimarycensored.md).
+  This lets delay distributions with support below zero (e.g. normal,
+  logistic, Cauchy) be used with primary censoring. `L = -Inf` is the
+  sentinel for “no left truncation”; any finite `L` left-truncates the
+  distribution at `L`. Stan functions still assume `L >= 0` and are
+  tracked as a follow-up.
+  ([\#267](https://github.com/epinowcast/primarycensored/issues/267))
+
 ### Documentation
 
 - Added a CDF-direct form of the primary-censored analytic solutions to
@@ -34,9 +69,8 @@
   the Gamma case uses the incomplete-gamma recursion \\P(k{+}1, y) =
   P(k, y) - y^k e^{-y}/\Gamma(k{+}1)\\ to halve `gamma_lcdf`
   evaluations. Behaviour and tests are unchanged.
-- Replaced
-  [`pracma::gammainc`](https://rdrr.io/pkg/pracma/man/gammainc.html)
-  with [`stats::pgamma`](https://rdrr.io/r/stats/GammaDist.html) in the
+- Replaced `pracma::gammainc` with
+  [`stats::pgamma`](https://rdrr.io/r/stats/GammaDist.html) in the
   Weibull `g()` helper, dropping the `pracma` dependency. The previous
   `pwindow > 3` fallback to numeric integration (and the internal
   overflow guard) is no longer needed — the base R implementation is

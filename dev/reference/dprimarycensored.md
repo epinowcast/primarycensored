@@ -15,7 +15,7 @@ dprimarycensored(
   pdist,
   pwindow = 1,
   swindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -28,7 +28,7 @@ dpcens(
   pdist,
   pwindow = 1,
   swindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -62,10 +62,9 @@ dpcens(
 
 - L:
 
-  Minimum delay (lower truncation point). If greater than 0, the
-  distribution is left-truncated at L. This is useful for modelling
-  generation intervals where day 0 is excluded, particularly when used
-  in renewal models. Defaults to 0 (no left truncation).
+  Minimum delay (lower truncation point). Defaults to `-Inf`, meaning no
+  left truncation. For any finite value of L the distribution is
+  left-truncated at L.
 
 - D:
 
@@ -126,12 +125,12 @@ It then creates a lookup table for these CDFs to efficiently calculate
 the PMF for each input value. For delays less than L, the function
 returns 0.
 
-If truncation is applied (finite D or L \> 0), the PMF is normalized to
-ensure it sums to 1 over the range \[L, D\\. This normalization uses:
-\$\$ f\_{\text{cens,norm}}(d) = \frac{f\_{\text{cens}}(d)}{
-F\_{\text{cens}}(D) - F\_{\text{cens}}(L)} \$\$ where
-\\f\_{\text{cens,norm}}(d)\\ is the normalized PMF. For the explanation
-and mathematical details of the CDF, refer to the documentation of
+The PMF is normalised to ensure it sums to 1 over the range \[L, D\\.
+This normalization uses: \$\$ f\_{\text{cens,norm}}(d) =
+\frac{f\_{\text{cens}}(d)}{ F\_{\text{cens}}(D) - F\_{\text{cens}}(L)}
+\$\$ where \\f\_{\text{cens,norm}}(d)\\ is the normalized PMF. For the
+explanation and mathematical details of the CDF, refer to the
+documentation of
 [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md).
 
 ## See also

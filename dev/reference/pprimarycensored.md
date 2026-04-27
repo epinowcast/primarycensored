@@ -14,7 +14,7 @@ pprimarycensored(
   q,
   pdist,
   pwindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -25,7 +25,7 @@ ppcens(
   q,
   pdist,
   pwindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -54,10 +54,9 @@ ppcens(
 
 - L:
 
-  Minimum delay (lower truncation point). If greater than 0, the
-  distribution is left-truncated at L. This is useful for modelling
-  generation intervals where day 0 is excluded, particularly when used
-  in renewal models. Defaults to 0 (no left truncation).
+  Minimum delay (lower truncation point). Defaults to `-Inf`, meaning no
+  left truncation. For any finite value of L the distribution is
+  left-truncated at L.
 
 - D:
 
@@ -111,8 +110,8 @@ f\_{\text{primary}}(p) \\ dp \$\$ where \\F\\ is the CDF of the delay
 distribution, \\f\_{\text{primary}}\\ is the PDF of the primary event
 times, and \\pwindow\\ is the primary event window.
 
-If truncation is applied (finite D or L \> 0), the CDF is normalized:
-\$\$ F\_{\text{cens,norm}}(q) = \frac{F\_{\text{cens}}(q) -
+If truncation is applied (finite `D` or finite `L`), the CDF is
+normalized: \$\$ F\_{\text{cens,norm}}(q) = \frac{F\_{\text{cens}}(q) -
 F\_{\text{cens}}(L)}{ F\_{\text{cens}}(D) - F\_{\text{cens}}(L)} \$\$
 where \\F\_{\text{cens,norm}}(q)\\ is the normalized CDF. For values \\q
 \leq L\\, the function returns 0; for values \\q \geq D\\, it returns 1.

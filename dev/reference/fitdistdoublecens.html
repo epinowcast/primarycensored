@@ -130,11 +130,11 @@ functions are defined and loaded.</p></dd>
 
 
 <dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
-<dd><p>Column name for minimum delay (lower truncation point). If greater
-than 0, the distribution is left-truncated at L. This is useful for
-modelling generation intervals where day 0 is excluded, particularly when
-used in renewal models. (default: "L"). If the column is not present in
-censdata, L = 0 is assumed.</p></dd>
+<dd><p>Column name for minimum delay (lower truncation point). For any
+finite L the distribution is left-truncated at L; use <code>L = -Inf</code> for no
+left truncation. This is useful for modelling generation intervals where
+day 0 is excluded, particularly when used in renewal models. (default:
+"L"). If the column is not present in censdata, L = -Inf is assumed.</p></dd>
 
 
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
@@ -250,13 +250,13 @@ windows may differ between observations.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Fitting of the distribution ' pcens_dist ' by maximum likelihood </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Parameters : </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      estimate Std. Error</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mean 5.007126 0.07883554</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sd   2.020160 0.06962184</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> Loglikelihood:  -1398.874   AIC:  2801.747   BIC:  2811.563 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean 5.003695 0.07759293</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sd   1.997836 0.06707002</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Loglikelihood:  -1401.056   AIC:  2806.112   BIC:  2815.927 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Correlation matrix:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>           mean        sd</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> mean 1.0000000 0.3248076</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> sd   0.3248076 1.0000000</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> mean 1.0000000 0.3174891</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> sd   0.3174891 1.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

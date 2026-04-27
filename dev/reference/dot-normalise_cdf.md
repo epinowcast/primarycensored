@@ -22,7 +22,7 @@ truncation is applied. The CDF is normalised using (F(q) - F(L)) /
 
 - L:
 
-  Numeric lower truncation point
+  Numeric lower truncation point (may be negative or `-Inf`)
 
 - D:
 

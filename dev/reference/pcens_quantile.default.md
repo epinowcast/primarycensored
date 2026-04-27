@@ -1,10 +1,11 @@
 # Default method for computing primary event censored quantiles
 
-This method inverts the primary event censored CDF using numerical
-optimisation via optim. For each probability value, it searches for the
-delay such that the CDF computed by
-[`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
-approximates the target probability.
+This method inverts the primary event censored CDF by root-finding via
+[`stats::uniroot()`](https://rdrr.io/r/stats/uniroot.html) with
+`extendInt = "upX"`. The censored CDF is monotone in `q`, so
+[`stats::uniroot()`](https://rdrr.io/r/stats/uniroot.html) extends its
+starting bracket outward as needed and handles infinite `L` or `D`
+without special casing.
 
 ## Usage
 
@@ -14,7 +15,7 @@ pcens_quantile(
   object,
   p,
   pwindow,
-  L = 0,
+  L = -Inf,
   D = Inf,
   use_numeric = FALSE,
   init = 5,
@@ -41,10 +42,9 @@ pcens_quantile(
 
 - L:
 
-  Minimum delay (lower truncation point). If greater than 0, the
-  distribution is left-truncated at L. This is useful for modelling
-  generation intervals where day 0 is excluded, particularly when used
-  in renewal models. Defaults to 0 (no left truncation).
+  Minimum delay (lower truncation point). Defaults to `-Inf`, meaning no
+  left truncation. For any finite value of L the distribution is
+  left-truncated at L.
 
 - D:
 
@@ -59,17 +59,23 @@ pcens_quantile(
 
 - init:
 
-  Initial guess for the delay. By default, 5.
+  Half-width of the initial search interval used when one or both
+  truncation bounds are infinite. The starting interval is taken as
+  `[-init, init]` (or `[L, L + 2 * init]` / `[D - 2 * init, D]` when
+  only one bound is finite) and then extended outward by
+  [`stats::uniroot()`](https://rdrr.io/r/stats/uniroot.html) as needed.
+  Defaults to 5, which brackets the bulk of most commonly used delay
+  distributions.
 
 - tol:
 
-  Numeric tolerance for the convergence criterion in the optimisation
-  routine.
+  Numeric tolerance passed to
+  [`stats::uniroot()`](https://rdrr.io/r/stats/uniroot.html).
 
 - max_iter:
 
-  Integer specifying the maximum number of iterations allowed during
-  optimisation.
+  Maximum number of
+  [`stats::uniroot()`](https://rdrr.io/r/stats/uniroot.html) iterations.
 
 - ...:
 
@@ -79,11 +85,6 @@ pcens_quantile(
 
 A numeric vector containing the computed primary event censored
 quantiles.
-
-## Details
-
-The quantile is computed by minimising the squared difference between
-the computed CDF and the target probability.
 
 ## See also
 
@@ -118,7 +119,7 @@ pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1)
 
 # Compute quantiles for multiple probabilities with truncation
 pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, D = 10)
-#> [1] 3.666380 5.270768 7.092987
+#> [1] 3.666380 5.270768 7.092986
 
 # Compute quantiles with left truncation
 pcens_quantile(pcens_obj, p = c(0.25, 0.5, 0.75), pwindow = 1, L = 1, D = 10)

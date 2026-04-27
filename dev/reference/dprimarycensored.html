@@ -85,7 +85,7 @@ for custom primary event distributions and delay distributions.</p>
 <span>  <span class="va">pdist</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  swindow <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  L <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  L <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -98,7 +98,7 @@ for custom primary event distributions and delay distributions.</p>
 <span>  <span class="va">pdist</span>,</span>
 <span>  pwindow <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  swindow <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  L <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  L <span class="op">=</span> <span class="op">-</span><span class="cn">Inf</span>,</span>
 <span>  D <span class="op">=</span> <span class="cn">Inf</span>,</span>
 <span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
@@ -131,10 +131,9 @@ functions if they wish to leverage the analytical solutions.</p></dd>
 
 
 <dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
-<dd><p>Minimum delay (lower truncation point). If greater than 0, the
-distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded, particularly when used in
-renewal models. Defaults to 0 (no left truncation).</p></dd>
+<dd><p>Minimum delay (lower truncation point). Defaults to <code>-Inf</code>,
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.</p></dd>
 
 
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
@@ -190,7 +189,7 @@ where \(F_{\text{cens}}\) is the primary event censored CDF.</p>
 \(d\) and \(d + \text{swindow}\)) using <code><a href="pprimarycensored.html">pprimarycensored()</a></code>. It then
 creates a lookup table for these CDFs to efficiently calculate the PMF for
 each input value. For delays less than L, the function returns 0.</p>
-<p>If truncation is applied (finite D or L &gt; 0), the PMF is normalized to
+<p>The PMF is normalised to
 ensure it sums to 1 over the range [L, D\). This normalization uses:
 $$
 f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{
