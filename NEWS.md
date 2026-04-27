@@ -1,5 +1,13 @@
 # primarycensored 1.4.0.1000
 
+## Breaking changes
+
+- The default value of `L` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, `rprimarycensored()`, and `pcens_quantile()` has changed from `0` to `-Inf`. `fitdistdoublecens()` now treats a missing `L` column as `L = -Inf` to match. For delay distributions with support on the non-negative reals (e.g. lognormal, gamma, Weibull) `F_cens(0) = 0`, so the new default leaves results unchanged. Callers that relied on the implicit left truncation at `0` (for example to truncate signed-support delays such as `pnorm`) must now pass `L = 0` explicitly (or add an `L` column in `fitdistdoublecens()`). (#267)
+
+## New features
+
+- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+
 ## Documentation
 
 - Added a CDF-direct form of the primary-censored analytic solutions to the "Why it works" and "Analytic solutions" vignettes alongside the existing survival-function form.

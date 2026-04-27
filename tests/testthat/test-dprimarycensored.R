@@ -79,7 +79,7 @@ test_that(
   }
 )
 
-test_that("dprimarycensored errors for negative d", {
+test_that("dprimarycensored errors for x below L = 0", {
   d <- -1
   pwindow <- 1
   swindow <- 0.5
@@ -88,7 +88,7 @@ test_that("dprimarycensored errors for negative d", {
   expect_error(
     dpcens(
       d, plnorm,
-      pwindow = pwindow, swindow = swindow, D = D,
+      pwindow = pwindow, swindow = swindow, L = 0, D = D,
       meanlog = 0, sdlog = 1
     ),
     "values of x are below L"
@@ -96,7 +96,7 @@ test_that("dprimarycensored errors for negative d", {
   expect_error(
     dpcens(
       c(8, d), plnorm,
-      pwindow = pwindow, swindow = swindow, D = D,
+      pwindow = pwindow, swindow = swindow, L = 0, D = D,
       meanlog = 0, sdlog = 1
     ),
     "values of x are below L"
@@ -192,14 +192,7 @@ test_that("dprimarycensored errors when L >= D", {
   )
 })
 
-test_that("dprimarycensored errors when L < 0", {
-  expect_error(
-    dpcens(5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
-test_that("dprimarycensored with L = 0 matches default behaviour", {
+test_that("dprimarycensored default matches L = 0 for positive support", {
   pwindow <- 1
   D <- 10
   pmf_default <- dpcens(
@@ -210,7 +203,7 @@ test_that("dprimarycensored with L = 0 matches default behaviour", {
     0:(D - 1), plnorm, pwindow,
     D = D, L = 0, meanlog = 1, sdlog = 1
   )
-  expect_identical(pmf_default, pmf_explicit)
+  expect_equal(pmf_default, pmf_explicit, tolerance = 1e-12)
 })
 
 test_that("dprimarycensored is consistent with pprimarycensored for L > 0", {
@@ -258,6 +251,39 @@ test_that("dprimarycensored works with L > 0 and D = Inf", {
   )
   expect_true(all(pmf >= 0))
   expect_lt(sum(pmf), 1) # Should be less than 1 since we're not summing all
+})
+
+test_that("dprimarycensored handles signed-support delays with negative L", {
+  L <- -1
+  D <- 2
+  swindow <- 0.5
+  x <- seq(L, D - swindow, by = swindow)
+  pmf <- dpcens(
+    x, pnorm,
+    pwindow = 1, swindow = swindow, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_true(all(pmf >= 0))
+  expect_equal(sum(pmf), 1, tolerance = 1e-6)
+  cdf_diff <- ppcens(
+    x + swindow, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  ) - ppcens(
+    x, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_equal(pmf, cdf_diff, tolerance = 1e-6)
+})
+
+test_that("dprimarycensored handles L = -Inf for signed-support delays", {
+  # Exercises the `is.infinite(L) && is.infinite(D)` fast path that skips
+  # truncation normalisation entirely.
+  x <- -2:2
+  pmf <- dpcens(
+    x, pnorm,
+    pwindow = 1, swindow = 1, L = -Inf, D = Inf, mean = 0, sd = 1
+  )
+  expect_true(all(pmf >= 0))
+  expect_length(pmf, length(x))
 })
 
 test_that("dprimarycensored handles L not in unique_points", {

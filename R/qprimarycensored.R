@@ -71,7 +71,7 @@ qprimarycensored <- function(
     p,
     pdist,
     pwindow = 1,
-    L = 0,
+    L = -Inf,
     D = Inf,
     dprimary = stats::dunif,
     dprimary_args = list(),

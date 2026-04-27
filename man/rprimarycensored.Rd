@@ -10,7 +10,7 @@ rprimarycensored(
   rdist,
   pwindow = 1,
   swindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
@@ -23,7 +23,7 @@ rpcens(
   rdist,
   pwindow = 1,
   swindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
@@ -42,10 +42,9 @@ for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distrib
 \item{swindow}{Integer specifying the window size for rounding the delay
 (default is 1). If \code{swindow = 0} then no rounding is applied.}
 
-\item{L}{Minimum delay (lower truncation point). If greater than 0, the
-distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded, particularly when used in
-renewal models. Defaults to 0 (no left truncation).}
+\item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults

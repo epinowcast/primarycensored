@@ -10,7 +10,7 @@ qprimarycensored(
   p,
   pdist,
   pwindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -21,7 +21,7 @@ qpcens(
   p,
   pdist,
   pwindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -39,10 +39,9 @@ functions if they wish to leverage the analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
-\item{L}{Minimum delay (lower truncation point). If greater than 0, the
-distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded, particularly when used in
-renewal models. Defaults to 0 (no left truncation).}
+\item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults
