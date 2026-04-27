@@ -460,3 +460,211 @@ test_that(
     expect_equal(stan_lpmf, r_lpmf, tolerance = 1e-6)
   }
 )
+
+test_that(
+  "Stan primarycensored_cdf with L = -Inf matches R pprimarycensored",
+  {
+    d_values <- seq(0, 10, by = 0.5)
+    dist_id <- 1 # Lognormal
+    params <- c(0, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- array(numeric(0))
+
+    for (D in list(Inf, 12)) {
+      stan_cdf <- sapply(
+        d_values, primarycensored_cdf, dist_id, params, pwindow,
+        -Inf, D, primary_id, primary_params
+      )
+      r_cdf <- pprimarycensored(
+        d_values, plnorm,
+        pwindow = pwindow, D = D, L = -Inf,
+        meanlog = params[1], sdlog = params[2]
+      )
+      expect_equal(
+        stan_cdf, r_cdf,
+        tolerance = 1e-6,
+        info = paste("D =", D)
+      )
+    }
+  }
+)
+
+test_that(
+  "Stan primarycensored_cdf with finite negative L matches L = -Inf for
+   positive-support delay",
+  {
+    d_values <- seq(0, 10, by = 0.5)
+    D <- 12
+    dist_id <- 1 # Lognormal (positive support)
+    params <- c(0, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- array(numeric(0))
+
+    stan_neg <- sapply(
+      d_values, primarycensored_cdf, dist_id, params, pwindow,
+      -3, D, primary_id, primary_params
+    )
+    stan_ninf <- sapply(
+      d_values, primarycensored_cdf, dist_id, params, pwindow,
+      -Inf, D, primary_id, primary_params
+    )
+    expect_equal(stan_neg, stan_ninf, tolerance = 1e-10)
+
+    r_cdf <- pprimarycensored(
+      d_values, plnorm,
+      pwindow = pwindow, D = D, L = -3,
+      meanlog = params[1], sdlog = params[2]
+    )
+    expect_equal(stan_neg, r_cdf, tolerance = 1e-6)
+  }
+)
+
+test_that(
+  "Stan primarycensored_lpmf with L = -Inf matches R dprimarycensored",
+  {
+    d <- 0:10
+    dist_id <- 1
+    params <- c(0, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- numeric(0)
+
+    for (D in list(Inf, 15)) {
+      stan_lpmf <- mapply(
+        primarycensored_lpmf,
+        d = d, d_upper = d + 1,
+        MoreArgs = list(
+          dist_id = dist_id, params = params, pwindow = pwindow,
+          L = -Inf, D = D,
+          primary_id = primary_id, primary_params = primary_params
+        )
+      )
+      r_lpmf <- dprimarycensored(
+        d, plnorm,
+        pwindow = pwindow, swindow = 1, D = D, L = -Inf,
+        meanlog = params[1], sdlog = params[2], log = TRUE
+      )
+      expect_equal(
+        stan_lpmf, r_lpmf,
+        tolerance = 1e-6,
+        info = paste("D =", D)
+      )
+    }
+  }
+)
+
+test_that(
+  "Stan primarycensored_sone_lpmf_vectorized with L = -Inf matches R",
+  {
+    max_delay <- 10
+    dist_id <- 1
+    params <- c(0, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- numeric(0)
+
+    for (D in list(Inf, 15)) {
+      stan_lpmf <- primarycensored_sone_lpmf_vectorized(
+        max_delay, -Inf, D, dist_id, params, pwindow,
+        primary_id, primary_params
+      )
+      r_lpmf <- dprimarycensored(
+        0:max_delay, plnorm,
+        pwindow = pwindow, swindow = 1, D = D, L = -Inf,
+        meanlog = params[1], sdlog = params[2], log = TRUE
+      )
+      expect_equal(
+        stan_lpmf, r_lpmf,
+        tolerance = 1e-6,
+        info = paste("D =", D)
+      )
+    }
+  }
+)
+
+test_that(
+  "Stan primarycensored_sone_lpmf_vectorized with finite negative L matches
+   L = -Inf for positive-support delay",
+  {
+    max_delay <- 10
+    D <- 15
+    dist_id <- 1
+    params <- c(0, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- numeric(0)
+
+    stan_neg <- primarycensored_sone_lpmf_vectorized(
+      max_delay, -2, D, dist_id, params, pwindow,
+      primary_id, primary_params
+    )
+    stan_ninf <- primarycensored_sone_lpmf_vectorized(
+      max_delay, -Inf, D, dist_id, params, pwindow,
+      primary_id, primary_params
+    )
+    expect_equal(stan_neg, stan_ninf, tolerance = 1e-10)
+  }
+)
+
+test_that(
+  "Stan primarycensored_lcdf matches R pprimarycensored for logistic
+   delays at negative d values",
+  {
+    d_values <- seq(-3, 8, by = 0.5)
+    dist_id <- 17 # Logistic
+    params <- c(2, 1) # location, scale
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- array(numeric(0))
+
+    for (D in list(Inf, 10)) {
+      stan_lcdf <- sapply(
+        d_values, primarycensored_lcdf, dist_id, params, pwindow,
+        -Inf, D, primary_id, primary_params
+      )
+      r_cdf <- pprimarycensored(
+        d_values, plogis,
+        pwindow = pwindow, D = D, L = -Inf,
+        location = params[1], scale = params[2]
+      )
+      expect_equal(
+        exp(stan_lcdf), r_cdf,
+        tolerance = 1e-5,
+        info = paste("D =", D)
+      )
+    }
+  }
+)
+
+test_that(
+  "Stan primarycensored_lpmf matches R dprimarycensored for logistic with
+   negative observed integer delays",
+  {
+    d_values <- -3:7
+    dist_id <- 17 # Logistic
+    params <- c(2, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- numeric(0)
+    L <- -3
+    D <- 10
+
+    stan_lpmf <- mapply(
+      primarycensored_lpmf,
+      d = d_values, d_upper = d_values + 1,
+      MoreArgs = list(
+        dist_id = dist_id, params = params, pwindow = pwindow,
+        L = L, D = D,
+        primary_id = primary_id, primary_params = primary_params
+      )
+    )
+    r_lpmf <- dprimarycensored(
+      d_values, plogis,
+      pwindow = pwindow, swindow = 1, D = D, L = L,
+      location = params[1], scale = params[2], log = TRUE
+    )
+    expect_equal(stan_lpmf, r_lpmf, tolerance = 1e-5)
+  }
+)

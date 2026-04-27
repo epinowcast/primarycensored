@@ -6,11 +6,14 @@
 
 ## New features
 
-- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. (#267)
+- The Stan functions and `pcd_as_stan_data()` now mirror the R-side handling of `L`: the `<lower=0>` constraint on `L` has been relaxed, `is_inf(L)` is the "no left truncation" sentinel (analogous to `is_inf(D)` for the upper bound), and a missing `start_relative_obs_time` column defaults to `-Inf` rather than `0`. The currently shipped analytical primary-censored solutions still assume the delay distribution has non-negative support, so `F(L) = 0` for any `L <= 0` regardless of magnitude.
+- `pcens_model.stan` now accepts negative observed delays. The `<lower=0>` constraints on `d` and `d_upper` have been removed, and a `transformed data` block rejects rows where `d[i] < L[i]` or `d_upper[i] > D[i]`. Combined with the negative-`L` work above, this lets distributions with support on the reals (e.g. Gumbel, Cauchy, logistic) be fitted via `pcd_cmdstan_model()`. A new `dist_has_positive_support()` Stan helper drives per-distribution dispatch in `dist_lcdf`, the ODE lower bound, and the internal CDF calls so that positive-support delays still short-circuit at `delay <= 0`.
 
 ## Documentation
 
 - Added a CDF-direct form of the primary-censored analytic solutions to the "Why it works" and "Analytic solutions" vignettes alongside the existing survival-function form.
+- Added a "Fitting delay distributions with negative support" vignette that walks through estimating a logistic-distributed serial interval with both `fitdistdoublecens()` and `pcd_cmdstan_model()` from doubly-censored, right-truncated samples that include negative observed delays.
 
 ## Bug fixes
 
