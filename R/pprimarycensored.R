@@ -174,7 +174,7 @@ pprimarycensored <- function(
   }
 
   # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
-  # Skip the division when it is a no-op (cdf_L = 0, normaliser = 1).
+  # Skip the division when cdf_L = 0 and normaliser = 1 leave result unchanged.
   normaliser <- cdf_D - cdf_L
   if (!(cdf_L == 0 && normaliser == 1)) {
     result <- (result - cdf_L) / normaliser

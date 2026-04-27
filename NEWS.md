@@ -2,7 +2,7 @@
 
 ## Breaking changes
 
-- The default value of `L` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, `rprimarycensored()`, and `pcens_quantile()` has changed from `0` to `-Inf`. `fitdistdoublecens()` now treats a missing `L` column as `L = -Inf` to match. For delay distributions with support on the non-negative reals (e.g. lognormal, gamma, Weibull) this is a numerical no-op because `F_cens(0) = 0`. Callers that relied on the implicit left truncation at `0` (for example to truncate signed-support delays such as `pnorm`) must now pass `L = 0` explicitly (or add an `L` column in `fitdistdoublecens()`). (#267)
+- The default value of `L` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, `rprimarycensored()`, and `pcens_quantile()` has changed from `0` to `-Inf`. `fitdistdoublecens()` now treats a missing `L` column as `L = -Inf` to match. For delay distributions with support on the non-negative reals (e.g. lognormal, gamma, Weibull) `F_cens(0) = 0`, so the new default leaves results unchanged. Callers that relied on the implicit left truncation at `0` (for example to truncate signed-support delays such as `pnorm`) must now pass `L = 0` explicitly (or add an `L` column in `fitdistdoublecens()`). (#267)
 
 ## New features
 

@@ -102,16 +102,25 @@ test_that("rprimarycensored default matches L = 0 for positive support", {
   expect_identical(samples_default, samples_explicit)
 })
 
-test_that("rprimarycensored samples lie in [L, D) for signed-support delays", {
+test_that("rprimarycensored signed-support samples match analytical CDF", {
   set.seed(42)
+  L <- -0.5
+  D <- 1.5
+  n <- 20000
   samples <- rpcens(
-    n = 5000, rnorm,
-    pwindow = 1, swindow = 1, L = -3, D = 3, mean = 0, sd = 1
+    n = n, rnorm,
+    pwindow = 1, swindow = 0, L = L, D = D, mean = 0, sd = 1
   )
-  expect_length(samples, 5000)
-  expect_true(all(samples >= -3 & samples < 3))
-  expect_lt(abs(mean(samples)), 0.2)
-  expect_lt(abs(stats::sd(samples) - 1), 0.2)
+  expect_length(samples, n)
+  expect_true(all(samples >= L & samples < D))
+
+  qs <- seq(L + 0.1, D - 0.1, length.out = 5)
+  empirical <- vapply(qs, function(q) mean(samples <= q), numeric(1))
+  analytical <- ppcens(
+    qs, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_equal(empirical, analytical, tolerance = 0.02)
 })
 
 test_that("rprimarycensored with L > 0 rounds correctly to swindow", {

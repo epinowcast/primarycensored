@@ -165,17 +165,24 @@ test_that("pprimarycensored works with L > 0 and D = Inf", {
 })
 
 test_that("pprimarycensored is a proper CDF for signed-support delays", {
-  # Normal is signed-support, so the raw convolution at `q = L` is non-zero
-  # and the censored CDF needs truncation-aware normalisation.
   pwindow <- 1
-  L <- -3
-  D <- 3
+  L <- -0.5
+  D <- 1.5
   q <- seq(L, D, by = 0.25)
   cdf <- ppcens(q, pnorm, pwindow, L = L, D = D, mean = 0, sd = 1)
   expect_equal(cdf[1], 0, tolerance = 1e-6)
   expect_equal(cdf[length(cdf)], 1, tolerance = 1e-6)
   expect_true(all(diff(cdf) >= 0))
   expect_true(all(cdf >= 0 & cdf <= 1))
+
+  raw_conv <- function(qq) {
+    stats::integrate(
+      function(p) stats::pnorm(qq - p, 0, 1), 0, pwindow
+    )$value / pwindow
+  }
+  raw <- vapply(q, raw_conv, numeric(1))
+  expected <- (raw - raw_conv(L)) / (raw_conv(D) - raw_conv(L))
+  expect_equal(cdf, expected, tolerance = 1e-6)
 })
 
 test_that("pprimarycensored with L = 0 truncates signed-support delays", {

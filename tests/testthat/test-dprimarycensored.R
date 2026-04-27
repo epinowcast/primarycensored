@@ -254,24 +254,24 @@ test_that("dprimarycensored works with L > 0 and D = Inf", {
 })
 
 test_that("dprimarycensored handles signed-support delays with negative L", {
-  x <- seq(-2, 2, by = 1)
-  L <- -3
-  D <- 3
-  swindow <- 1
+  L <- -1
+  D <- 2
+  swindow <- 0.5
+  x <- seq(L, D - swindow, by = swindow)
   pmf <- dpcens(
     x, pnorm,
     pwindow = 1, swindow = swindow, L = L, D = D, mean = 0, sd = 1
   )
   expect_true(all(pmf >= 0))
-  upper <- ppcens(
-    max(x) + swindow, pnorm,
+  expect_equal(sum(pmf), 1, tolerance = 1e-6)
+  cdf_diff <- ppcens(
+    x + swindow, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  ) - ppcens(
+    x, pnorm,
     pwindow = 1, L = L, D = D, mean = 0, sd = 1
   )
-  lower <- ppcens(
-    min(x), pnorm,
-    pwindow = 1, L = L, D = D, mean = 0, sd = 1
-  )
-  expect_equal(sum(pmf), upper - lower, tolerance = 1e-6)
+  expect_equal(pmf, cdf_diff, tolerance = 1e-6)
 })
 
 test_that("dprimarycensored handles L = -Inf for signed-support delays", {
