@@ -29,8 +29,6 @@ On the Stan side it dispatches to `dist_id = 17` and is integrated via the ODE p
 
 ```{r setup, message = FALSE}
 library(primarycensored)
-library(cmdstanr)
-library(fitdistrplus)
 library(ggplot2)
 library(dplyr)
 ```
@@ -67,7 +65,10 @@ delay_data <- data.frame(
 )
 
 cat(sprintf(
-  "Observed serial intervals span [%s, %s] with %d negative values out of %d.\n",
+  paste0(
+    "Observed serial intervals span [%s, %s] with %d negative values ",
+    "out of %d.\n"
+  ),
   min(samples), max(samples), sum(samples < 0), n
 ))
 ```
@@ -93,13 +94,13 @@ head(delay_counts)
 For a doubly-censored serial interval with no lower truncation we set `L = -Inf` and pass the upper interval directly via the `right` column.
 
 ```{r fitdistdoublecens-fit}
-fitdist_data <- delay_data |>
-  mutate(
-    left = observed_delay,
-    right = observed_delay_upper,
-    L = -Inf,
-    D = obs_time
-  )
+fitdist_data <- mutate(
+  delay_data,
+  left = observed_delay,
+  right = observed_delay_upper,
+  L = -Inf,
+  D = obs_time
+)
 
 mle_fit <- fitdistdoublecens(
   fitdist_data,
@@ -158,14 +159,23 @@ draws <- pcd_fit$draws("params", format = "data.frame")
 mle_pt <- coef(mle_fit)
 
 plot_data <- bind_rows(
-  data.frame(parameter = "location", value = draws[["params[1]"]]),
-  data.frame(parameter = "scale", value = draws[["params[2]"]])
+  data.frame(
+    parameter = "location",
+    value = draws[["params[1]"]],
+    stringsAsFactors = FALSE
+  ),
+  data.frame(
+    parameter = "scale",
+    value = draws[["params[2]"]],
+    stringsAsFactors = FALSE
+  )
 )
 
 truth <- data.frame(
   parameter = c("location", "scale"),
   truth = c(location_true, scale_true),
-  mle = c(mle_pt[["location"]], mle_pt[["scale"]])
+  mle = c(mle_pt[["location"]], mle_pt[["scale"]]),
+  stringsAsFactors = FALSE
 )
 
 ggplot(plot_data, aes(x = value)) +
