@@ -137,11 +137,7 @@ pcd_data <- pcd_as_stan_data(
   start_relative_obs_time = "start_relative_obs_time",
   dist_id = pcd_stan_dist_id("logistic", "delay"),
   primary_id = pcd_stan_dist_id("uniform", "primary"),
-  # Lower bound for `scale` is set slightly above zero rather than at zero so
-  # the leapfrog integrator cannot underflow `scale = exp(unconstrained)` to
-  # exactly 0, which would trip `logistic_lcdf`'s positivity check during
-  # warmup.
-  param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+  param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
   priors = list(location = c(2, 1), scale = c(1, 0.5)),
   primary_priors = list(location = numeric(0), scale = numeric(0))
