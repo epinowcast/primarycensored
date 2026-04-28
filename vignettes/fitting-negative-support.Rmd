@@ -44,7 +44,7 @@ set.seed(1)
 n <- 2000
 location_true <- 2
 scale_true <- 1
-L_truncation <- -3
+lower_truncation <- -3
 
 pwindows <- sample.int(2, n, replace = TRUE)
 swindows <- sample.int(2, n, replace = TRUE)
@@ -54,7 +54,7 @@ generate_sample <- function(pwindow, swindow, obs_time) {
   rprimarycensored(
     1, rlogis,
     location = location_true, scale = scale_true,
-    pwindow = pwindow, swindow = swindow, D = obs_time, L = L_truncation
+    pwindow = pwindow, swindow = swindow, D = obs_time, L = lower_truncation
   )
 }
 samples <- mapply(generate_sample, pwindows, swindows, obs_times)
@@ -63,7 +63,7 @@ delay_data <- data.frame(
   pwindow = pwindows,
   swindow = swindows,
   obs_time = obs_times,
-  start_relative_obs_time = L_truncation,
+  start_relative_obs_time = lower_truncation,
   observed_delay = samples,
   observed_delay_upper = pmin(obs_times, samples + swindows)
 )
@@ -137,7 +137,11 @@ pcd_data <- pcd_as_stan_data(
   start_relative_obs_time = "start_relative_obs_time",
   dist_id = pcd_stan_dist_id("logistic", "delay"),
   primary_id = pcd_stan_dist_id("uniform", "primary"),
-  param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
+  # Lower bound for `scale` is set slightly above zero rather than at zero so
+  # the leapfrog integrator cannot underflow `scale = exp(unconstrained)` to
+  # exactly 0, which would trip `logistic_lcdf`'s positivity check during
+  # warmup.
+  param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
   priors = list(location = c(2, 1), scale = c(1, 0.5)),
   primary_priors = list(location = numeric(0), scale = numeric(0))
