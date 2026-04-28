@@ -35,13 +35,16 @@ library(dplyr)
 
 # Simulating censored serial interval data
 
-We pick a logistic with location `2` and scale `1`.
+We pick a logistic with location `2` and scale `1` and impose a finite lower truncation `L = -3`: in our worked example we observed serial intervals only from pairs whose secondary case had symptom onset no more than three days before the primary.
+A finite `L < 0` is the case the Stan side could not previously handle and is the headline addition here.
+Setting `L = -Inf` (the package default) would also work and would correspond to "no lower truncation".
 
 ```{r simulate}
 set.seed(1)
 n <- 2000
 location_true <- 2
 scale_true <- 1
+L_truncation <- -3
 
 pwindows <- sample.int(2, n, replace = TRUE)
 swindows <- sample.int(2, n, replace = TRUE)
@@ -51,7 +54,7 @@ generate_sample <- function(pwindow, swindow, obs_time) {
   rprimarycensored(
     1, rlogis,
     location = location_true, scale = scale_true,
-    pwindow = pwindow, swindow = swindow, D = obs_time, L = -Inf
+    pwindow = pwindow, swindow = swindow, D = obs_time, L = L_truncation
   )
 }
 samples <- mapply(generate_sample, pwindows, swindows, obs_times)
@@ -60,6 +63,7 @@ delay_data <- data.frame(
   pwindow = pwindows,
   swindow = swindows,
   obs_time = obs_times,
+  start_relative_obs_time = L_truncation,
   observed_delay = samples,
   observed_delay_upper = pmin(obs_times, samples + swindows)
 )
@@ -82,7 +86,10 @@ We aggregate the data on its unique combinations of integer-valued covariates so
 delay_counts <- delay_data |>
   summarise(
     n = n(),
-    .by = c(pwindow, obs_time, observed_delay, observed_delay_upper)
+    .by = c(
+      pwindow, obs_time, start_relative_obs_time,
+      observed_delay, observed_delay_upper
+    )
   )
 
 head(delay_counts)
@@ -91,14 +98,14 @@ head(delay_counts)
 # MLE fit with `fitdistdoublecens()`
 
 `fitdistdoublecens()` wraps `fitdistrplus::fitdistcens()` so we can pass any distribution name for which `dlogis`/`plogis`/`qlogis` are available.
-For a doubly-censored serial interval with no lower truncation we set `L = -Inf` and pass the upper interval directly via the `right` column.
+We pass our left-truncation point `L = -3` via the `L` column and the upper interval via the `right` column.
 
 ```{r fitdistdoublecens-fit}
 fitdist_data <- mutate(
   delay_data,
   left = observed_delay,
   right = observed_delay_upper,
-  L = -Inf,
+  L = start_relative_obs_time,
   D = obs_time
 )
 
@@ -118,9 +125,8 @@ The MLE point estimates land close to the true `location = 2`, `scale = 1`.
 
 # Bayesian fit with `pcd_cmdstan_model()`
 
-The bundled cmdstan model dispatches to the logistic via `dist_id = 17`.
 Because the logistic has support on the real line, observed delays in the data may be negative; the data block now allows this and a `transformed data` check rejects rows where `d[i] < L[i]` or `d_upper[i] > D[i]`.
-We set `L = -Inf` (the default) by leaving the `start_relative_obs_time` column out of the data.
+We pass our left-truncation point through the `start_relative_obs_time` column.
 
 ```{r pcd-cmdstan-fit, message = FALSE}
 pcd_data <- pcd_as_stan_data(
@@ -128,11 +134,12 @@ pcd_data <- pcd_as_stan_data(
   delay = "observed_delay",
   delay_upper = "observed_delay_upper",
   relative_obs_time = "obs_time",
+  start_relative_obs_time = "start_relative_obs_time",
   dist_id = pcd_stan_dist_id("logistic", "delay"),
   primary_id = pcd_stan_dist_id("uniform", "primary"),
   param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  priors = list(location = c(2, 1), scale = c(2, 2)),
+  priors = list(location = c(2, 1), scale = c(1, 0.5)),
   primary_priors = list(location = numeric(0), scale = numeric(0))
 )
 
