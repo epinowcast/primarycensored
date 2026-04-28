@@ -215,6 +215,6 @@ You can still use them for the R-side `fitdistdoublecens()` fit.
 
 # Adapting this vignette
 
-- **Real serial-interval data**: replace the simulated `delay_data` with an empirical table of `(observed_delay, observed_delay_upper, pwindow, obs_time)` rows.
-- **Add a finite `L`**: pass a negative or positive value via the `start_relative_obs_time` column to truncate the distribution from below at `L`.
+- **Real serial-interval data**: replace the simulated `delay_data` with an empirical table of `(observed_delay, observed_delay_upper, pwindow, obs_time, start_relative_obs_time)` rows.
+- **No left truncation**: drop the `start_relative_obs_time` column (or set it to `-Inf`) to fit without lower truncation.
 - **Different distribution**: swap `rlogis`/`"logis"`/`"logistic"` for any of the alternatives listed above (or any base-R / package-supplied distribution with a matching `d`/`p`/`q`/`r` set on the R side).
