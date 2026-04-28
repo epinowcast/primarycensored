@@ -7,13 +7,14 @@
   * @ingroup truncation_helpers
   *
   * @param log_cdf_D Log CDF at upper truncation point D
-  * @param log_cdf_L Log CDF at lower truncation point L (negative_infinity if L=0)
-  * @param L Lower truncation point
+  * @param log_cdf_L Log CDF at lower truncation point L (negative_infinity if
+  *   L = -inf, i.e. no lower truncation)
+  * @param L Lower truncation point (-inf indicates no lower truncation)
   *
   * @return Log normalizer for truncation
   */
 real primarycensored_log_normalizer(real log_cdf_D, real log_cdf_L, real L) {
-  if (L > 0) {
+  if (!is_inf(L)) {
     return log_diff_exp(log_cdf_D, log_cdf_L);
   } else {
     return log_cdf_D;
@@ -27,15 +28,16 @@ real primarycensored_log_normalizer(real log_cdf_D, real log_cdf_L, real L) {
   * Computes log((F(x) - F(L)) / (F(D) - F(L)))
   *
   * @param log_cdf Log CDF value to normalize
-  * @param log_cdf_L Log CDF at lower truncation point L (negative_infinity if L=0)
+  * @param log_cdf_L Log CDF at lower truncation point L (negative_infinity if
+  *   L = -inf, i.e. no lower truncation)
   * @param log_normalizer Log normalizer from primarycensored_log_normalizer
-  * @param L Lower truncation point
+  * @param L Lower truncation point (-inf indicates no lower truncation)
   *
   * @return Normalized log CDF value
   */
 real primarycensored_apply_truncation(real log_cdf, real log_cdf_L,
                                       real log_normalizer, real L) {
-  if (L > 0) {
+  if (!is_inf(L)) {
     return log_diff_exp(log_cdf, log_cdf_L) - log_normalizer;
   } else {
     return log_cdf - log_normalizer;
@@ -46,8 +48,8 @@ real primarycensored_apply_truncation(real log_cdf, real log_cdf_L,
   * Compute log CDFs at both truncation bounds L and D
   * @ingroup truncation_helpers
   *
-  * @param L Lower truncation point
-  * @param D Upper truncation point
+  * @param L Lower truncation point (-inf indicates no lower truncation)
+  * @param D Upper truncation point (+inf indicates no upper truncation)
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -55,21 +57,35 @@ real primarycensored_apply_truncation(real log_cdf, real log_cdf_L,
   * @param primary_params Primary distribution parameters
   *
   * @return 2-element vector: [log_cdf_L, log_cdf_D]
+  *
+  * @note F(L) for finite L is computed via primarycensored_lcdf with internal
+  *   bounds [0, +inf]. This is correct for the analytical solutions currently
+  *   supported, all of which assume the delay distribution has non-negative
+  *   support, so F(L) = 0 for any L <= 0. If future analytical solutions add
+  *   distributions with negative support, this internal lower bound will need
+  *   to be relaxed to -inf so the underlying CDF is evaluated directly.
   */
 vector primarycensored_truncation_bounds(
   data real L, data real D,
-  int dist_id, array[] real params, data real pwindow,
-  int primary_id, array[] real primary_params
+  data int dist_id, array[] real params, data real pwindow,
+  data int primary_id, array[] real primary_params
 ) {
   vector[2] result;
+  // Internal lower bound for the un-truncated distribution: 0 lets the
+  // `d <= L` early-exit in primarycensored_lcdf return -inf for delays below
+  // the natural support of positive-support distributions; -inf disables that
+  // short-circuit so distributions with support on the reals are integrated.
+  // Expression is inlined (rather than bound to a local) so Stan's data-flow
+  // checker recognises it as data-only.
 
   // Get CDF at lower truncation point L
-  if (L <= 0) {
+  if (is_inf(L)) {
     result[1] = negative_infinity();
   } else {
     result[1] = primarycensored_lcdf(
-      L | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
+      L | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
     );
   }
 
@@ -78,8 +94,9 @@ vector primarycensored_truncation_bounds(
     result[2] = 0;
   } else {
     result[2] = primarycensored_lcdf(
-      D | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
+      D | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
     );
   }
 
@@ -102,9 +119,9 @@ vector primarycensored_truncation_bounds(
   * @return Primary event censored CDF, normalized over [L, D] if truncation
   * is applied
   */
-real primarycensored_cdf(data real d, int dist_id, array[] real params,
+real primarycensored_cdf(data real d, data int dist_id, array[] real params,
                                data real pwindow, data real L, data real D,
-                               int primary_id,
+                               data int primary_id,
                                array[] real primary_params) {
   real result;
   if (d <= L) {
@@ -122,8 +139,13 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
     );
   } else {
-    // Use numerical integration for other cases
-    real lower_bound = max({d - pwindow, 1e-6});
+    // Use numerical integration for other cases. The integration variable
+    // ranges over the primary-event time, so the natural lower bound is
+    // d - pwindow. For positive-support delays the integrand `F_delay(t)` is
+    // 0 for t <= 0, so an unclipped lower bound just adds a flat zero region
+    // for negative t. Distributions with support on the reals also accept the
+    // unclipped lower bound directly.
+    real lower_bound = d - pwindow;
     int n_params = num_elements(params);
     int n_primary_params = num_elements(primary_params);
     array[n_params + n_primary_params] real theta = append_array(params, primary_params);
@@ -133,7 +155,7 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
     result = ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
 
     // Apply truncation normalization on log scale for numerical stability
-    if (!is_inf(D) || L > 0) {
+    if (!is_inf(D) || !is_inf(L)) {
       real log_result = log(result);
       vector[2] bounds = primarycensored_truncation_bounds(
         L, D, dist_id, params, pwindow, primary_id, primary_params
@@ -183,9 +205,9 @@ real primarycensored_cdf(data real d, int dist_id, array[] real params,
   * );
   * @endcode
   */
-real primarycensored_lcdf(data real d, int dist_id, array[] real params,
+real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
                                 data real pwindow, data real L, data real D,
-                                int primary_id,
+                                data int primary_id,
                                 array[] real primary_params) {
   real result;
 
@@ -197,20 +219,26 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
     return 0;
   }
 
-  // Check if an analytical solution exists
+  // Check if an analytical solution exists. The internal lower bound is 0 for
+  // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
+  // and -inf for distributions with support on the reals.
   if (check_for_analytical(dist_id, primary_id)) {
     result = primarycensored_analytical_lcdf(
-      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
     );
   } else {
     // Use numerical integration
     result = log(primarycensored_cdf(
-      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
     ));
   }
 
   // Handle truncation normalization
-  if (!is_inf(D) || L > 0) {
+  if (!is_inf(D) || !is_inf(L)) {
     vector[2] bounds = primarycensored_truncation_bounds(
       L, D, dist_id, params, pwindow, primary_id, primary_params
     );
@@ -257,9 +285,9 @@ real primarycensored_lcdf(data real d, int dist_id, array[] real params,
   * );
   * @endcode
   */
-real primarycensored_lpmf(data int d, int dist_id, array[] real params,
+real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
                                 data real pwindow, data real d_upper,
-                                data real L, data real D, int primary_id,
+                                data real L, data real D, data int primary_id,
                                 array[] real primary_params) {
   if (d_upper > D) {
     reject("Upper truncation point is greater than D. It is ", d_upper,
@@ -273,20 +301,24 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
     return negative_infinity();
   }
   real log_cdf_upper = primarycensored_lcdf(
-    d_upper | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
+    d_upper | dist_id, params, pwindow,
+    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+    positive_infinity(), primary_id, primary_params
   );
   real log_cdf_lower = primarycensored_lcdf(
-    d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
+    d | dist_id, params, pwindow,
+    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+    positive_infinity(), primary_id, primary_params
   );
 
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L)))
-  if (!is_inf(D) || L > 0) {
+  if (!is_inf(D) || !is_inf(L)) {
     real log_cdf_D;
     real log_cdf_L;
 
     // Get CDF at lower truncation point L
-    if (L <= 0) {
-      // No left truncation
+    if (is_inf(L)) {
+      // No left truncation (L = -inf sentinel)
       log_cdf_L = negative_infinity();
     } else if (d == L) {
       // Reuse already computed CDF at d
@@ -294,8 +326,9 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
     } else {
       // Compute CDF at L directly
       log_cdf_L = primarycensored_lcdf(
-        L | dist_id, params, pwindow, 0, positive_infinity(),
-        primary_id, primary_params
+        L | dist_id, params, pwindow,
+        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+        positive_infinity(), primary_id, primary_params
       );
     }
 
@@ -306,8 +339,9 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
       log_cdf_D = 0;
     } else {
       log_cdf_D = primarycensored_lcdf(
-        D | dist_id, params, pwindow, 0, positive_infinity(),
-        primary_id, primary_params
+        D | dist_id, params, pwindow,
+        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+        positive_infinity(), primary_id, primary_params
       );
     }
 
@@ -350,9 +384,9 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   * real pmf = primarycensored_pmf(d, dist_id, params, pwindow, d_upper, L, D, primary_id, primary_params);
   * @endcode
   */
-real primarycensored_pmf(data int d, int dist_id, array[] real params,
+real primarycensored_pmf(data int d, data int dist_id, array[] real params,
                                data real pwindow, data real d_upper,
-                               data real L, data real D, int primary_id,
+                               data real L, data real D, data int primary_id,
                                array[] real primary_params) {
   return exp(
     primarycensored_lpmf(
@@ -403,9 +437,9 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
   * @endcode
   */
 vector primarycensored_sone_lpmf_vectorized(
-  int max_delay, data real L, data real D, int dist_id,
+  data int max_delay, data real L, data real D, data int dist_id,
   array[] real params, data real pwindow,
-  int primary_id, array[] real primary_params
+  data int primary_id, array[] real primary_params
 ) {
 
   int upper_interval = max_delay + 1;
@@ -418,29 +452,35 @@ vector primarycensored_sone_lpmf_vectorized(
     reject("D must be at least max_delay + 1");
   }
 
-  // Compute log CDFs (without truncation normalization)
-  // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0
-  int start_idx = L > 0 ? max(1, to_int(floor(L))) : 1;
+  // Compute log CDFs (without truncation normalization). The internal lower
+  // bound below is 0 for positive-support delays and -inf otherwise; it is
+  // inlined rather than bound to a local so Stan's type checker treats it as
+  // data-only.
+  // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0;
+  // for L <= 0 (including -inf) start at 1 since F(d) = 0 for d <= 0.
+  int start_idx = (!is_inf(L) && L > 0) ? max(1, to_int(floor(L))) : 1;
   for (d in start_idx:upper_interval) {
     log_cdfs[d] = primarycensored_lcdf(
-      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
-      primary_params
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
     );
   }
 
   // Get CDF at lower truncation point L
   real log_cdf_L;
-  if (L <= 0) {
-    // No left truncation
+  if (is_inf(L)) {
+    // No left truncation (L = -inf sentinel)
     log_cdf_L = negative_infinity();
-  } else if (L <= upper_interval && floor(L) == L) {
-    // L is an integer within computed range, reuse cached value
+  } else if (L >= 1 && L <= upper_interval && floor(L) == L) {
+    // L is a positive integer within computed range, reuse cached value
     log_cdf_L = log_cdfs[to_int(L)];
   } else {
     // L is outside computed range or non-integer, compute directly
     log_cdf_L = primarycensored_lcdf(
-      L | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
+      L | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
     );
   }
 
@@ -451,8 +491,9 @@ vector primarycensored_sone_lpmf_vectorized(
       log_cdf_D = 0; // log(1) = 0 for infinite D
     } else {
       log_cdf_D = primarycensored_lcdf(
-        D | dist_id, params, pwindow, 0, positive_infinity(),
-        primary_id, primary_params
+        D | dist_id, params, pwindow,
+        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+        positive_infinity(), primary_id, primary_params
       );
     }
   } else {
@@ -520,9 +561,9 @@ vector primarycensored_sone_lpmf_vectorized(
   * @endcode
   */
 vector primarycensored_sone_pmf_vectorized(
-  int max_delay, data real L, data real D, int dist_id,
+  data int max_delay, data real L, data real D, data int dist_id,
   array[] real params, data real pwindow,
-  int primary_id,
+  data int primary_id,
   array[] real primary_params
 ) {
   return exp(

@@ -23,8 +23,39 @@
   * real log_cdf = dist_lcdf(delay, params, dist_id);
   * @endcode
   */
+/**
+  * Test whether a delay distribution has support only on the non-negative reals
+  * @ingroup delay_log_cdfs
+  *
+  * Used internally to decide whether to short-circuit `dist_lcdf` at
+  * `delay <= 0` and whether the ODE / nested CDF calls need to integrate over
+  * negative arguments. Returns 1 for distributions with strictly non-negative
+  * support, 0 otherwise. IDs match `pcd_distributions$stan_id` in R.
+  *
+  * @param dist_id Distribution identifier
+  * @return 1 if the delay distribution has non-negative support, 0 otherwise.
+  */
+int dist_has_positive_support(data int dist_id) {
+  if (dist_id == 1) return 1;   // Lognormal
+  if (dist_id == 2) return 1;   // Gamma
+  if (dist_id == 3) return 1;   // Weibull
+  if (dist_id == 4) return 1;   // Exponential
+  if (dist_id == 9) return 1;   // Beta (support on [0, 1])
+  if (dist_id == 13) return 1;  // Chi-square
+  if (dist_id == 16) return 1;  // Inverse Gamma
+  if (dist_id == 19) return 1;  // Inverse Chi-square
+  if (dist_id == 21) return 1;  // Pareto
+  if (dist_id == 22) return 1;  // Scaled inverse Chi-square
+  if (dist_id == 24) return 1;  // Uniform (treated as non-negative; lower bound
+                                // is supplied via params and we conservatively
+                                // assume params[1] >= 0 here)
+  return 0;
+}
+
 real dist_lcdf(real delay, array[] real params, int dist_id) {
-  if (delay <= 0) return negative_infinity();
+  if (dist_has_positive_support(dist_id) && delay <= 0) {
+    return negative_infinity();
+  }
 
   // IDs match pcd_distributions$stan_id in R
   if (dist_id == 1) return lognormal_lcdf(delay | params[1], params[2]);

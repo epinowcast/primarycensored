@@ -36,9 +36,10 @@ pcd_as_stan_data(
 \item{pwindow}{Column name for primary window (default: "pwindow")}
 
 \item{start_relative_obs_time}{Column name for start of relative observation
-time, used as the lower truncation point L. If the column is not present in
-data, L = 0 is assumed for all observations.
-(default: "start_relative_obs_time")}
+time, used as the lower truncation point L. Values may be any finite real
+number (including negatives) or \code{-Inf} to indicate no lower truncation. If
+the column is not present in data, L = \code{-Inf} is assumed for all
+observations. (default: "start_relative_obs_time")}
 
 \item{relative_obs_time}{Column name for relative observation time, used as
 the upper truncation point D (default: "relative_obs_time")}

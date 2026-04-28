@@ -69,9 +69,10 @@ pcd_cmdstan_model <- function(
 #' @param pwindow Column name for primary window (default: "pwindow")
 #'
 #' @param start_relative_obs_time Column name for start of relative observation
-#'  time, used as the lower truncation point L. If the column is not present in
-#'  data, L = 0 is assumed for all observations.
-#'  (default: "start_relative_obs_time")
+#'  time, used as the lower truncation point L. Values may be any finite real
+#'  number (including negatives) or `-Inf` to indicate no lower truncation. If
+#'  the column is not present in data, L = `-Inf` is assumed for all
+#'  observations. (default: "start_relative_obs_time")
 #'
 #' @param relative_obs_time Column name for relative observation time, used as
 #'  the upper truncation point D (default: "relative_obs_time")
@@ -174,9 +175,10 @@ pcd_as_stan_data <- function(
     )
   }
 
-  # Handle start_relative_obs_time column: if not present, default to 0
+  # Handle start_relative_obs_time column: if not present, default to -Inf
+  # which is the "no lower truncation" sentinel mirroring `D = Inf`.
   if (!start_relative_obs_time %in% names(data)) {
-    data[[start_relative_obs_time]] <- 0
+    data[[start_relative_obs_time]] <- -Inf
   }
 
   # Validate truncation bounds: L must be less than D
