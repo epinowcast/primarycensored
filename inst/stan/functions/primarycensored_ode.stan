@@ -11,7 +11,9 @@
   *   18: Normal, 19: Inverse Chi-square,
   *   20: Double Exponential, 21: Pareto,
   *   22: Scaled Inverse Chi-square, 23: Student's t,
-  *   24: Uniform, 25: von Mises
+  *   24: Uniform, 25: von Mises,
+  *   26: Non-parametric step (params layout: first K+1 entries are boundaries,
+  *       remaining K entries are PMF values; total length = 2*K + 1)
   *
   * @return Log CDF of the delay distribution
   *
@@ -45,6 +47,16 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 23) return student_t_lcdf(delay | params[1], params[2], params[3]);
   else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
   else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 26) {
+    // Non-parametric step distribution.
+    // params layout: [boundaries (K+1), pmf (K)], total length = 2*K + 1.
+    int K = (num_elements(params) - 1) %/% 2;
+    vector[K + 1] boundaries;
+    vector[K] pmf;
+    for (k in 1:(K + 1)) boundaries[k] = params[k];
+    for (k in 1:K) pmf[k] = params[K + 1 + k];
+    return pstep_lcdf(delay | boundaries, pmf);
+  }
   else reject("Invalid distribution identifier: ", dist_id);
 }
 
