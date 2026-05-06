@@ -1,3 +1,30 @@
+# primarycensored 1.5.0 (DEV)
+
+## New features
+
+- Added two non-parametric delay distribution families. `pdiscretestep()`,
+  `ddiscretestep()`, and `rdiscretestep()` represent a delay via a direct PMF
+  over fixed bins. `pdiscretehazard()`, `ddiscretehazard()`, and
+  `rdiscretehazard()` use discrete-time hazards, with internal conversion via
+  `hazards_to_pmf()` and `pmf_to_hazards()`. (#218, EpiNow2#1338)
+- Extended `fitdistdoublecens()` to accept `distr = "discretestep"` for a
+  direct PMF parameterisation and `distr = "discretehazard"` for a
+  logit-hazard Gaussian random walk with MAP regularisation.
+- `pprimarycensored()` and `dprimarycensored()` now accept a `pprimary`
+  argument supplying a primary event CDF directly, enabling use with custom
+  or non-standard primary distributions.
+- Primary censored CDF dispatch now follows a two-layer S3 chain on `pcens`
+  objects: a specific method for a (delay, primary) pair is tried first, then
+  a delay-only general method, then a numerical default. Analytic primary
+  convolution is available for any primary with a known CDF; built-in support
+  covers uniform and exponential growth primaries.
+- Added Stan support for `dist_id = 26` (step-CDF, PMF supplied in `params`)
+  and `dist_id = 27` (discrete-time hazards, hazards supplied in `params` with
+  internal conversion to PMF) in `inst/stan/functions/nonparametric.stan`,
+  with dispatch in `primarycensored_ode.stan`.
+- Added vignette `fitting-nonparametric-delays` demonstrating end-to-end
+  non-parametric delay estimation.
+
 # primarycensored 1.4.0
 
 This major release adds left-truncation support via the `L` parameter, enabling distributions to be truncated over `[L, D]` rather than just `[0, D]`. It also removes deprecated functionality that was soft-deprecated in version 1.1.0 and removes the `lifecycle` and `rlang` packages from dependencies.
