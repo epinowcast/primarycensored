@@ -8,10 +8,12 @@
   * @return 1 if an analytical solution exists, 0 otherwise
   */
 int check_for_analytical(int dist_id, int primary_id) {
-  if (dist_id == 2 && primary_id == 1) return 1; // Gamma delay with Uniform primary
-  if (dist_id == 1 && primary_id == 1) return 1; // Lognormal delay with Uniform primary
-  if (dist_id == 3 && primary_id == 1) return 1; // Weibull delay with Uniform primary
-  if (dist_id == 26 && primary_id == 1) return 1; // Step delay with Uniform primary
+  if (dist_id == 2 && primary_id == 1) return 1; // Gamma, Uniform
+  if (dist_id == 1 && primary_id == 1) return 1; // Lognormal, Uniform
+  if (dist_id == 3 && primary_id == 1) return 1; // Weibull, Uniform
+  // Step (26) and discrete-hazard (27) support uniform and expgrowth primaries
+  if (dist_id == 26 && (primary_id == 1 || primary_id == 2)) return 1;
+  if (dist_id == 27 && (primary_id == 1 || primary_id == 2)) return 1;
   return 0; // No analytical solution for other combinations
 }
 
@@ -212,7 +214,8 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q, array[] real para
 real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
                                          array[] real params,
                                          data real pwindow,
-                                         int primary_id) {
+                                         int primary_id,
+                                         array[] real primary_params) {
   real q = max({d - pwindow, 0});
 
   if (dist_id == 2 && primary_id == 1) {
@@ -221,15 +224,27 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     return primarycensored_lognormal_uniform_lcdf(d | q, params, pwindow);
   } else if (dist_id == 3 && primary_id == 1) {
     return primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 26 && primary_id == 1) {
-    // Unpack params: [boundaries (K+1), pmf (K)], total length = 2*K + 1
+  } else if (dist_id == 26) {
+    // params layout: [boundaries (K+1), pmf (K)], total length = 2*K + 1
     int K = (num_elements(params) - 1) %/% 2;
     vector[K + 1] boundaries;
     vector[K] pmf;
     for (k in 1:(K + 1)) boundaries[k] = params[k];
     for (k in 1:K) pmf[k] = params[K + 1 + k];
-    return primarycensored_step_uniform_lcdf(
-      d | q, boundaries, pmf, pwindow
+    return primarycensored_discretestep_lcdf(
+      d | q, boundaries, pmf, primary_id, primary_params, pwindow
+    );
+  } else if (dist_id == 27) {
+    // params layout: [boundaries (K+1), hazards (K)], total length = 2*K + 1
+    // Last hazard must equal 1; converted to PMF before integration.
+    int K = (num_elements(params) - 1) %/% 2;
+    vector[K + 1] boundaries;
+    vector[K] hazards;
+    for (k in 1:(K + 1)) boundaries[k] = params[k];
+    for (k in 1:K) hazards[k] = params[K + 1 + k];
+    vector[K] pmf = hazards_to_pmf(hazards);
+    return primarycensored_discretestep_lcdf(
+      d | q, boundaries, pmf, primary_id, primary_params, pwindow
     );
   }
   return negative_infinity();
@@ -260,7 +275,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
   if (d >= D) return 0;
 
   real result = primarycensored_analytical_lcdf_raw(
-    d, dist_id, params, pwindow, primary_id
+    d, dist_id, params, pwindow, primary_id, primary_params
   );
 
   // Apply truncation normalization

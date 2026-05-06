@@ -57,7 +57,54 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
     for (k in 1:K) pmf[k] = params[K + 1 + k];
     return pstep_lcdf(delay | boundaries, pmf);
   }
+  else if (dist_id == 27) {
+    // Non-parametric discrete-hazard distribution.
+    // params layout: [boundaries (K+1), hazards (K)], total length = 2*K + 1.
+    // The last hazard must equal 1 so that the implied PMF sums to 1.
+    int K = (num_elements(params) - 1) %/% 2;
+    vector[K + 1] boundaries;
+    vector[K] hazards;
+    for (k in 1:(K + 1)) boundaries[k] = params[k];
+    for (k in 1:K) hazards[k] = params[K + 1 + k];
+    vector[K] pmf = hazards_to_pmf(hazards);
+    return pstep_lcdf(delay | boundaries, pmf);
+  }
   else reject("Invalid distribution identifier: ", dist_id);
+}
+
+/**
+  * Evaluate the CDF of the primary distribution on [0, pwindow]
+  *
+  * Returns F_primary(p) (not log) for a given primary event time p.
+  * Only primary_id values supported by check_for_analytical should be
+  * passed here.
+  *
+  * The function is named primary_F (not primary_cdf) to avoid the Stan
+  * restriction that functions ending in _cdf must use the | syntax.
+  *
+  * @param p Primary event time in [0, pwindow]
+  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth)
+  * @param primary_params Distribution parameters (empty for uniform;
+  *   [r] for expgrowth)
+  * @param pwindow Primary event window width
+  *
+  * @return F_primary(p) in [0, 1]
+  */
+real primary_F(
+  real p, int primary_id,
+  array[] real primary_params, data real pwindow
+) {
+  if (primary_id == 1) {
+    // Uniform on [0, pwindow]
+    if (p <= 0) return 0;
+    if (p >= pwindow) return 1;
+    return p / pwindow;
+  } else if (primary_id == 2) {
+    // Exponential growth on [0, pwindow]: uses expgrowth_cdf with
+    // xmin = 0, xmax = pwindow
+    return expgrowth_cdf(p | 0, pwindow, primary_params[1]);
+  }
+  reject("primary_F: unsupported primary_id ", primary_id);
 }
 
 /**
