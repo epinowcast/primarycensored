@@ -4,13 +4,13 @@
 \alias{rdiscretehazard}
 \title{Sample from a hazard-parameterised step distribution}
 \usage{
-rdiscretehazard(n, boundaries, hazards)
+rdiscretehazard(n, boundaries = NULL, hazards)
 }
 \arguments{
 \item{n}{Integer. Number of samples to draw.}
 
 \item{boundaries}{Numeric vector of length \eqn{K+1} defining the bin
-edges. Must be strictly increasing.}
+edges. Must be strictly increasing. Defaults to \code{0:K}.}
 
 \item{hazards}{Numeric vector of length \eqn{K} (or \eqn{K-1}, in which
 case a trailing 1 is appended) giving the discrete-time conditional

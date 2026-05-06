@@ -52,11 +52,12 @@ add_name_attribute <- function(func, name) {
 #' Extract and Combine Distribution Names
 #'
 #' This helper function attempts to determine distribution names and uses those
-#' to establish a class name for potential analytical solutions.
+#' to establish a class hierarchy for potential analytical solutions.
 #'
 #' @inheritParams pprimarycensored
 #'
-#' @return a character string representing the combined distribution class
+#' @return A character vector of class names: specific (delay + primary),
+#'   delay-only, and base class.
 #'
 #' @keywords internal
 .format_class <- function(pdist, dprimary) {
@@ -68,7 +69,154 @@ add_name_attribute <- function(func, name) {
   if (is.null(dprim_name)) {
     dprim_name <- .extract_function_name(dprimary)
   }
-  sprintf("pcens_%s_%s", pdist_name, dprim_name)
+  c(
+    sprintf("pcens_%s_%s", pdist_name, dprim_name),
+    sprintf("pcens_%s", pdist_name),
+    "pcens"
+  )
+}
+
+#' Look up the primary event CDF from the registry
+#'
+#' Given a primary event density function \code{dprimary}, looks up the
+#' corresponding CDF function from \code{pcd_primary_distributions} using
+#' the \code{"name"} attribute. Returns \code{NULL} silently when no match
+#' is found so that callers can fall back to numerical integration.
+#'
+#' @param dprimary Function. The primary event density function.
+#'
+#' @return A function (the primary CDF) or \code{NULL}.
+#'
+#' @keywords internal
+.lookup_pprimary <- function(dprimary) {
+  dprim_name <- attr(dprimary, "name")
+  if (is.null(dprim_name)) {
+    dprim_name <- .extract_function_name(dprimary)
+  }
+  if (is.null(dprim_name) || dprim_name == "unknown") {
+    return(NULL)
+  }
+  registry <- primarycensored::pcd_primary_distributions
+  idx <- which(
+    registry$name == dprim_name |
+      registry$aliases == dprim_name |
+      registry$dprimary == dprim_name
+  )
+  if (length(idx) == 0L) {
+    return(NULL)
+  }
+  pprimary_name <- registry$pprimary[idx[[1L]]]
+  if (is.na(pprimary_name)) {
+    return(NULL)
+  }
+  fn <- tryCatch(get(pprimary_name, envir = asNamespace("primarycensored")),
+    error = function(e) NULL
+  )
+  fn
+}
+
+#' Resolve a delay distribution function from a name or function
+#'
+#' Accepts either a function (returned as-is, with its existing
+#' \code{"name"} attribute preserved) or a character string that is looked
+#' up against \code{\link{pcd_distributions}}. When a string is supplied,
+#' the corresponding base R \code{p<name>} function is returned with the
+#' \code{"name"} attribute attached so analytical solutions can dispatch.
+#'
+#' @param pdist Either a function or a character string.
+#' @param type Character string. \code{"p"} for CDF lookup, \code{"d"} for
+#'   density. Defaults to \code{"p"}.
+#'
+#' @return A function with a \code{"name"} attribute.
+#'
+#' @keywords internal
+.resolve_pdist <- function(pdist, type = c("p", "d")) {
+  type <- match.arg(type)
+  if (is.function(pdist)) {
+    return(pdist)
+  }
+  if (!is.character(pdist) || length(pdist) != 1L) {
+    stop(
+      "pdist must be a function or a single character string.",
+      call. = FALSE
+    )
+  }
+  registry <- primarycensored::pcd_distributions
+  idx <- which(registry$name == pdist | registry$aliases == pdist)
+  if (length(idx) == 0L) {
+    fn_name <- paste0(type, pdist)
+    fn <- tryCatch(get(fn_name), error = function(e) NULL)
+    if (is.null(fn)) {
+      stop(
+        "No distribution found matching '", pdist, "'.",
+        call. = FALSE
+      )
+    }
+    return(add_name_attribute(fn, fn_name))
+  }
+  base <- registry$pdist[idx[[1L]]]
+  if (is.na(base)) {
+    stop(
+      "Distribution '", pdist, "' has no base R implementation; ",
+      "supply a function instead.",
+      call. = FALSE
+    )
+  }
+  fn_name <- if (type == "p") base else sub("^p", "d", base)
+  fn <- tryCatch(get(fn_name), error = function(e) NULL)
+  if (is.null(fn)) {
+    stop(
+      "Could not find function '", fn_name, "' for distribution '",
+      pdist, "'.",
+      call. = FALSE
+    )
+  }
+  add_name_attribute(fn, fn_name)
+}
+
+#' Resolve \code{primary_args} / \code{dprimary_args} with a deprecation
+#'
+#' Maps the deprecated \code{dprimary_args} formal to the new
+#' \code{primary_args}. Emits a deprecation warning when the old name is
+#' used, errors if both are supplied, and returns the resolved list.
+#'
+#' @param primary_args The new argument value (or \code{NULL}).
+#' @param dprimary_args The old argument value (or \code{NULL}).
+#' @param fn Character string identifying the calling function (used in
+#'   the deprecation message).
+#'
+#' @return A list (possibly empty) of primary distribution arguments.
+#'
+#' @keywords internal
+.resolve_primary_args <- function(primary_args, dprimary_args, fn) {
+  has_new <- !is.null(primary_args)
+  has_old <- !is.null(dprimary_args)
+  if (has_new && has_old) {
+    stop(
+      "Supply only one of `primary_args` or `dprimary_args`; ",
+      "`dprimary_args` is deprecated.",
+      call. = FALSE
+    )
+  }
+  if (has_old) {
+    if (requireNamespace("lifecycle", quietly = TRUE)) {
+      lifecycle::deprecate_warn(
+        when = "1.5.0",
+        what = paste0(fn, "(dprimary_args)"),
+        with = paste0(fn, "(primary_args)")
+      )
+    } else {
+      warning(
+        "Argument `dprimary_args` is deprecated; use `primary_args`.",
+        call. = FALSE
+      )
+    }
+    return(dprimary_args)
+  }
+  if (has_new) {
+    return(primary_args)
+  }
+  list()
 }
 
 #' Get distribution function cdf or pdf name

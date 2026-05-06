@@ -459,3 +459,353 @@ test_that(
     )
   }
 )
+
+# ---- non-parametric tests --------------------------------------------------
+
+test_that("fitdistdoublecens discretestep: recovers approximate PMF", {
+  skip_if_not(
+    exists("pdiscretestep"),
+    message = "pdiscretestep not yet available"
+  )
+  set.seed(101)
+  true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
+  K <- 5L
+  # D = K + 1 so the last bin (right edge = 5) is observable with swindow = 1
+  D_val <- K + 1L
+  n <- 800
+
+  samples <- rprimarycensored(
+    n, rdiscretestep,
+    boundaries = 0:K, pmf = true_pmf,
+    pwindow = 1, swindow = 1, D = D_val
+  )
+
+  step_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = rep(1, n),
+    D = rep(D_val, n)
+  )
+
+  start <- as.list(stats::setNames(rep(1 / K, K - 1L), paste0("p", 1:(K - 1))))
+  fit <- fitdistdoublecens(
+    step_data,
+    distr = "discretestep",
+    start = start,
+    boundaries = 0:K,
+    truncation_check_multiplier = NULL
+  )
+
+  expect_s3_class(fit, "fitdist")
+  expect_false(is.na(fit$loglik))
+  expect_false(is.infinite(fit$loglik))
+
+  # Reconstruct full PMF from estimated free parameters
+  p_free <- unname(fit$estimate)
+  p_last <- 1 - sum(p_free)
+  est_pmf <- c(p_free, p_last)
+
+  expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+  expect_true(all(est_pmf >= -0.01)) # allow tiny numeric noise
+  expect_equal(est_pmf, true_pmf, tolerance = 0.1)
+})
+
+test_that("fitdistdoublecens discretestep: infers K from start", {
+  skip_if_not(
+    exists("pdiscretestep"),
+    message = "pdiscretestep not yet available"
+  )
+  set.seed(202)
+  true_pmf <- c(0.2, 0.5, 0.3)
+  K <- 3L
+  D_val <- K + 1L
+  n <- 500
+
+  samples <- rprimarycensored(
+    n, rdiscretestep,
+    boundaries = 0:K, pmf = true_pmf,
+    pwindow = 1, swindow = 1, D = D_val
+  )
+
+  step_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = rep(1, n),
+    D = rep(D_val, n)
+  )
+
+  # K not supplied; inferred from start (length 2 -> K = 3)
+  fit <- fitdistdoublecens(
+    step_data,
+    distr = "discretestep",
+    start = list(p1 = 0.33, p2 = 0.33),
+    boundaries = 0:K,
+    truncation_check_multiplier = NULL
+  )
+
+  expect_s3_class(fit, "fitdist")
+  p_free <- unname(fit$estimate)
+  p_last <- 1 - sum(p_free)
+  est_pmf <- c(p_free, p_last)
+  expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+})
+
+test_that(
+  "fitdistdoublecens discretehazard: produces valid PMF close to truth",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    set.seed(303)
+    true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
+    K <- 5L
+    D_val <- K + 1L
+    n <- 800
+
+    samples <- rprimarycensored(
+      n, rdiscretestep,
+      boundaries = 0:K, pmf = true_pmf,
+      pwindow = 1, swindow = 1, D = D_val
+    )
+
+    haz_data <- data.frame(
+      left = samples,
+      right = samples + 1,
+      pwindow = rep(1, n),
+      D = rep(D_val, n)
+    )
+
+    haz_start <- c(
+      list(alpha = -2, log_sigma = log(0.5)),
+      as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
+    )
+    fit <- fitdistdoublecens(
+      haz_data,
+      distr = "discretehazard",
+      start = haz_start,
+      boundaries = 0:K,
+      truncation_check_multiplier = NULL
+    )
+
+    expect_s3_class(fit, "fitdist")
+    expect_false(is.na(fit$loglik))
+    expect_false(is.infinite(fit$loglik))
+
+    # Reconstruct PMF from estimated parameters
+    est <- fit$estimate
+    alpha_val <- est[["alpha"]]
+    log_sigma_val <- est[["log_sigma"]]
+    eps_vals <- unname(est[grep("^eps_", names(est))])
+    sigma <- exp(log_sigma_val)
+    logit_h <- alpha_val + sigma * cumsum(c(0, eps_vals))
+    h <- 1 / (1 + exp(-logit_h))
+    h[K] <- 1
+    est_pmf <- hazards_to_pmf(h)
+
+    expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+    expect_true(all(est_pmf >= 0))
+    expect_equal(est_pmf, true_pmf, tolerance = 0.1)
+  }
+)
+
+test_that(
+  "fitdistdoublecens discretestep: error when start is missing",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    dummy <- data.frame(
+      left = 1:5,
+      right = 2:6,
+      pwindow = rep(1, 5),
+      D = rep(6, 5)
+    )
+    expect_error(
+      fitdistdoublecens(
+        dummy,
+        distr = "discretestep",
+        truncation_check_multiplier = NULL
+      ),
+      "`start` must be supplied"
+    )
+  }
+)
+
+test_that("fitdistdoublecens discretehazard: error when start is missing", {
+  skip_if_not(
+    exists("pdiscretestep"),
+    message = "pdiscretestep not yet available"
+  )
+  dummy <- data.frame(
+    left = 1:5,
+    right = 2:6,
+    pwindow = rep(1, 5),
+    D = rep(6, 5)
+  )
+  expect_error(
+    fitdistdoublecens(dummy, distr = "discretehazard"),
+    "`start` must be supplied"
+  )
+})
+
+test_that(
+  "fitdistdoublecens discretestep: structural zeros in PMF",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    set.seed(404)
+    # PMF with a zero bin
+    true_pmf <- c(0.0, 0.5, 0.5)
+    K <- 3L
+    D_val <- K + 1L
+    n <- 500
+
+    samples <- rprimarycensored(
+      n, rdiscretestep,
+      boundaries = 0:K, pmf = true_pmf,
+      pwindow = 1, swindow = 1, D = D_val
+    )
+
+    step_data <- data.frame(
+      left = samples,
+      right = samples + 1,
+      pwindow = rep(1, n),
+      D = rep(D_val, n)
+    )
+
+    par_names <- paste0("p", 1:(K - 1))
+    start <- as.list(stats::setNames(rep(1 / K, K - 1L), par_names))
+    # Should complete without error
+    fit <- fitdistdoublecens(
+      step_data,
+      distr = "discretestep",
+      start = start,
+      boundaries = 0:K,
+      truncation_check_multiplier = NULL
+    )
+    expect_s3_class(fit, "fitdist")
+    p_free <- unname(fit$estimate)
+    p_last <- 1 - sum(p_free)
+    est_pmf <- c(p_free, p_last)
+    expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+  }
+)
+
+test_that("fitdistdoublecens discretehazard: prior argument changes penalty", {
+  skip_if_not(
+    exists("pdiscretestep"),
+    message = "pdiscretestep not yet available"
+  )
+  set.seed(606)
+  true_pmf <- c(0.2, 0.5, 0.3)
+  K <- 3L
+  D_val <- K + 1L
+  n <- 200
+  samples <- rprimarycensored(
+    n, rdiscretestep,
+    boundaries = 0:K, pmf = true_pmf,
+    pwindow = 1, swindow = 1, D = D_val
+  )
+  haz_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = rep(1, n),
+    D = rep(D_val, n)
+  )
+  haz_start <- c(
+    list(alpha = -2, log_sigma = log(0.5)),
+    as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
+  )
+  fit_default <- suppressWarnings(fitdistdoublecens(
+    haz_data,
+    distr = "discretehazard",
+    start = haz_start,
+    boundaries = 0:K,
+    truncation_check_multiplier = NULL
+  ))
+  fit_tight <- suppressWarnings(fitdistdoublecens(
+    haz_data,
+    distr = "discretehazard",
+    start = haz_start,
+    boundaries = 0:K,
+    prior = list(
+      alpha = list(mean = 0, sd = 0.1),
+      log_sigma = list(mean = 0, sd = 0.05)
+    ),
+    truncation_check_multiplier = NULL
+  ))
+  expect_false(
+    isTRUE(all.equal(
+      unname(fit_default$estimate), unname(fit_tight$estimate)
+    ))
+  )
+})
+
+test_that(
+  "fitdistdoublecens accepts deprecated dprimary_args with a warning",
+  {
+    set.seed(123)
+    n <- 200
+    samples <- rprimarycensored(
+      n, rgamma,
+      shape = 2, rate = 1,
+      pwindow = 1, swindow = 1, D = 8
+    )
+    delay_data <- data.frame(
+      left = samples,
+      right = samples + 1,
+      pwindow = rep(1, n),
+      D = rep(8, n)
+    )
+    expect_warning(
+      fitdistdoublecens(
+        delay_data,
+        distr = "gamma",
+        start = list(shape = 1, rate = 1),
+        dprimary_args = list()
+      ),
+      "deprecated"
+    )
+  }
+)
+
+test_that("pprimarycensored accepts pdist as a string lookup", {
+  res_string <- pprimarycensored(
+    c(0.5, 1, 2),
+    pdist = "lnorm", meanlog = 0, sdlog = 1
+  )
+  res_fn <- pprimarycensored(
+    c(0.5, 1, 2),
+    pdist = plnorm, meanlog = 0, sdlog = 1
+  )
+  expect_identical(res_string, res_fn)
+})
+
+test_that("pcens_cdf with general method works for uniform primary", {
+  # The pcens_pdiscretestep_dunif specialisation has been removed; the
+  # general step method now handles uniform primary too.
+  boundaries <- 0:3
+  pmf <- c(0.2, 0.5, 0.3)
+  obj <- new_pcens(
+    pdiscretestep,
+    stats::dunif,
+    primary_args = list(),
+    boundaries = boundaries,
+    pmf = pmf
+  )
+  pwindow <- 1
+  q_values <- c(0.3, 0.7, 1.2, 1.7, 2.2, 2.7)
+  result <- pcens_cdf(obj, q = q_values, pwindow = pwindow)
+  numeric_ref <- vapply(q_values, function(qi) {
+    stats::integrate(
+      function(p) pdiscretestep(qi - p, boundaries, pmf),
+      lower = 0,
+      upper = pwindow
+    )$value
+  }, numeric(1))
+  expect_equal(result, numeric_ref, tolerance = 1e-8)
+})

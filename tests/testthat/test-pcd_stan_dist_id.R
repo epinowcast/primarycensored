@@ -30,3 +30,13 @@ test_that("Distribution IDs match Stan model definitions", {
   prim_dists <- pcd_primary_distributions
   expect_identical(prim_dists$stan_id, seq_len(nrow(prim_dists)))
 })
+
+test_that("pcd_stan_dist_id returns 26L for discretestep distribution", {
+  expect_identical(pcd_stan_dist_id("discretestep"), 26L)
+  expect_identical(pcd_stan_dist_id("nonparametric"), 26L)
+})
+
+test_that("pcd_stan_dist_id returns 27L for discretehazard distribution", {
+  expect_identical(pcd_stan_dist_id("discretehazard"), 27L)
+  expect_identical(pcd_stan_dist_id("hazard"), 27L)
+})

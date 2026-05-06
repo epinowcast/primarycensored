@@ -4,13 +4,13 @@
 \alias{pdiscretehazard}
 \title{Hazard-parameterised piecewise-constant CDF}
 \usage{
-pdiscretehazard(q, boundaries, hazards)
+pdiscretehazard(q, boundaries = NULL, hazards)
 }
 \arguments{
 \item{q}{Numeric vector of quantiles.}
 
 \item{boundaries}{Numeric vector of length \eqn{K+1} defining the bin
-edges. Must be strictly increasing.}
+edges. Must be strictly increasing. Defaults to \code{0:K}.}
 
 \item{hazards}{Numeric vector of length \eqn{K} (or \eqn{K-1}, in which
 case a trailing 1 is appended) giving the discrete-time conditional
@@ -28,6 +28,30 @@ discrete-time hazards. Converts \code{hazards} to a PMF via
 The parameterisation is equivalent to \code{\link[=pdiscretestep]{pdiscretestep()}} but uses hazards
 rather than direct PMF values, which can be more natural for survival
 analysis and hazard-based modelling.
+\subsection{Use with \code{fitdistdoublecens()}}{
+
+This function carries the attribute \code{vector_param = "hazards"} so
+that \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} can drive it from a logit-hazard random walk.
+The free parameters are \code{alpha} (level), \code{log_sigma} (log
+random-walk scale), and \code{eps_1, ..., eps_{K-1}} (standardised
+innovations). The logit-hazard for bin \eqn{i} is
+\code{alpha + sigma * cumsum(c(0, eps_1, ..., eps_{K-1}))[i]}, where
+\code{sigma = exp(log_sigma)}. The final hazard is forced to 1 so the
+PMF sums to 1.
+
+A MAP-style prior penalty is amortised across observations so that
+\code{fitdistrplus::fitdist} (which minimises \code{-sum(log d_i)})
+implicitly optimises the posterior mode. The penalty is supplied via the
+\code{fit_penalty} attribute on this function. The default corresponds
+to independent priors:
+\itemize{
+\item \code{eps_j ~ N(0, 1)} (random-walk innovations);
+\item \code{alpha ~ N(0, 5)} (weakly informative level prior);
+\item \code{log_sigma ~ N(log(0.5), 1)} (weakly informative scale).
+}
+Pass \code{prior} to \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} to override the default
+settings.
+}
 }
 \examples{
 # Equivalent to pdiscretestep with the corresponding PMF
@@ -37,7 +61,7 @@ pdiscretehazard(c(0.5, 1, 2, 3), boundaries = boundaries,
   hazards = hazards)
 }
 \seealso{
-\code{\link[=pdiscretestep]{pdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}
+\code{\link[=pdiscretestep]{pdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
 
 Other pdiscretehazard:
 \code{\link{ddiscretehazard}()},

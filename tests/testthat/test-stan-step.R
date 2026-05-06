@@ -8,7 +8,9 @@ boundaries_vals <- 0:3
 # total length = 7
 packed_params <- c(as.numeric(boundaries_vals), pmf_vals)
 
-# R reference: step CDF at a point t
+# R reference: step CDF at a point t.
+# Matches pstep_lcdf() in Stan: on interval [bk, bk+1) the CDF equals
+# sum(pmf[1:k-1]) (cumulative before adding bin k's mass).
 r_step_cdf <- function(t, boundaries, pmf) {
   K <- length(pmf)
   if (t < boundaries[1]) {
@@ -79,44 +81,53 @@ test_that("Stan hazards_to_pmf matches R reference", {
 })
 
 test_that(
-  "Stan analytical step+uniform matches ODE numerical for pwindow=1",
+  "Stan analytical step+uniform matches R analytical for pwindow=1",
   {
     pwindow <- 1.0
-    # Test over a grid of d values; stay within step support [0, 3]
+    # Closed-form R reference matching primarycensored_step_uniform_lcdf
+    # in nonparametric.stan. F_obs(d) = (1/pwindow) *
+    # integral_{q}^{d} F_step(u) du, q = max(d - pwindow, 0).
+    # F_step on [bk, bk1) = sum(pmf[1:(k-1)]) (cumulative before bin k).
+    r_analytical <- function(d, boundaries, pmf, pwindow) {
+      K <- length(pmf)
+      q_lo <- max(d - pwindow, 0)
+      cumulative <- 0
+      integral <- 0
+      for (k in seq_len(K)) {
+        bk <- boundaries[k]
+        bk1 <- boundaries[k + 1]
+        if (bk1 <= q_lo) {
+          cumulative <- cumulative + pmf[k]
+          next
+        }
+        if (bk >= d) break
+        lo <- max(q_lo, bk)
+        hi <- min(d, bk1)
+        if (hi > lo) integral <- integral + cumulative * (hi - lo)
+        cumulative <- cumulative + pmf[k]
+      }
+      tail_start <- max(boundaries[K + 1], q_lo)
+      if (tail_start < d) integral <- integral + (d - tail_start)
+      integral / pwindow
+    }
+
     d_vals <- c(0.5, 1.0, 1.5, 2.0, 2.5, 2.99)
     for (d in d_vals) {
-      # Analytical path (dist_id=26, primary_id=1)
       analytical <- primarycensored_cdf(
         d, 26L, packed_params, pwindow, 0, Inf, 1L, numeric(0)
       )
-      # ODE numerical path: force it by using dist_id that has no
-      # analytical solution for primary_id=1... but we can also call
-      # primarycensored_cdf with the analytical check enabled and compare
-      # to the R-side integral directly.
-      # Build the R integral manually (vectorised over p for integrate()):
-      r_integrand <- function(p) {
-        vapply(p, function(pi) {
-          s <- d - pi # delay seen from primary event
-          r_step_cdf(s, boundaries_vals, pmf_vals) * (1 / pwindow)
-        }, numeric(1))
-      }
-      lower_b <- max(d - pwindow, 0)
-      r_integral <- tryCatch(
-        integrate(r_integrand, lower = lower_b, upper = d)$value,
-        error = function(e) NA_real_
+      r_ref <- r_analytical(
+        d, boundaries_vals, pmf_vals, pwindow
       )
-      if (!is.na(r_integral) && r_integral > 0) {
+      if (r_ref > 0) {
         expect_equal(
-          analytical, r_integral,
+          analytical, r_ref,
           tolerance = 1e-5,
           info = sprintf(
-            "analytical vs R integral mismatch at d = %s", d
+            "analytical vs R reference mismatch at d = %s", d
           )
         )
       }
     }
   }
 )
-
-# Once the R-side pstep() function is available, add a test comparing
-# Stan pstep_lcdf to log(pstep(t, boundaries, pmf)).

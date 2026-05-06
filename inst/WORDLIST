@@ -5,6 +5,7 @@ Codecov
 Cori
 Dirichlet
 EpiNow
+Formals
 Inf
 Lifecycle
 Mba
@@ -36,6 +37,7 @@ discretising
 dist
 doi
 dp
+dpcens
 dprimary
 dprimarycensored
 dx
@@ -43,14 +45,15 @@ dy
 dz
 eps
 eq
+erroring
 etc
 fcp
 fitdist
+fitdistdoublecens
 fitdistrplus
 frac
 gammapartexp
 geq
-haz
 hexsticker
 infty
 int
@@ -73,8 +76,10 @@ modeling
 nF
 obs
 optim
+param
 parameterisations
 parameterised
+parameterises
 pareto
 parksw
 partexp
@@ -87,6 +92,7 @@ pearsonca
 pexpgrowth
 plnorm
 pmf
+ppcens
 pprimary
 pprimarycensored
 precalculation

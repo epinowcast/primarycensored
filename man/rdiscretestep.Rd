@@ -4,16 +4,19 @@
 \alias{rdiscretestep}
 \title{Sample from a step distribution}
 \usage{
-rdiscretestep(n, boundaries, pmf)
+rdiscretestep(n, boundaries = NULL, pmf)
 }
 \arguments{
 \item{n}{Integer. Number of samples to draw.}
 
 \item{boundaries}{Numeric vector of length \eqn{K+1} defining the bin
-edges. Must be strictly increasing.}
+edges. Must be strictly increasing. Defaults to \code{0:K} (unit-width
+daily bins) where \code{K} is inferred from \code{length(pmf)}.}
 
 \item{pmf}{Numeric vector of length \eqn{K} giving the probability mass
-for each bin. Must be non-negative and sum to approximately 1.}
+for each bin. Must be non-negative and sum to approximately 1; if
+either condition is violated the function returns a vector of zeros
+(a soft simplex penalty for use inside optimisation).}
 }
 \value{
 Numeric vector of length \code{n}.

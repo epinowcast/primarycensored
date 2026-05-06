@@ -36,10 +36,12 @@
 #'  functions, users can apply [add_name_attribute()] to yield properly tagged
 #'  functions if they wish to leverage analytical solutions.
 #'
-#' @param dprimary_args List of additional arguments to be passed to
+#' @param primary_args List of additional arguments to be passed to
 #'  dprimary. For example, when using `dexpgrowth`, you would
 #'  pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
-#'  and rate parameters
+#'  and rate parameters. Replaces the deprecated `dprimary_args`.
+#'
+#' @param dprimary_args \[Deprecated\] Use `primary_args` instead.
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
@@ -112,18 +114,24 @@ pprimarycensored <- function(
     L = 0,
     D = Inf,
     dprimary = stats::dunif,
-    dprimary_args = list(),
+    primary_args = NULL,
+    dprimary_args = NULL,
     ...) {
   .check_truncation_bounds(L, D)
 
+  primary_args <- .resolve_primary_args( # nolint: object_usage_linter
+    primary_args, dprimary_args, "pprimarycensored"
+  )
+  pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
+
   check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+  check_dprimary(dprimary, pwindow, primary_args)
 
   # Create a new primarycensored object
   pcens_obj <- new_pcens(
     pdist,
     dprimary,
-    dprimary_args,
+    primary_args = primary_args,
     ...
   )
 

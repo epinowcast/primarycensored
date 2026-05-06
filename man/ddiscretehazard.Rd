@@ -4,13 +4,13 @@
 \alias{ddiscretehazard}
 \title{Hazard-parameterised piecewise-constant PMF}
 \usage{
-ddiscretehazard(x, boundaries, hazards)
+ddiscretehazard(x, boundaries = NULL, hazards)
 }
 \arguments{
 \item{x}{Numeric vector of values at which to evaluate the PMF.}
 
 \item{boundaries}{Numeric vector of length \eqn{K+1} defining the bin
-edges. Must be strictly increasing.}
+edges. Must be strictly increasing. Defaults to \code{0:K}.}
 
 \item{hazards}{Numeric vector of length \eqn{K} (or \eqn{K-1}, in which
 case a trailing 1 is appended) giving the discrete-time conditional

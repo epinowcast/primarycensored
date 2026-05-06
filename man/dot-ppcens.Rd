@@ -4,7 +4,7 @@
 \alias{.ppcens}
 \title{Define a fitdistrplus compatible wrapper around pprimarycensored}
 \usage{
-.ppcens(q, params, pdist, dprimary, dprimary_args, ...)
+.ppcens(q, params, pdist, dprimary, primary_args, ...)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -25,10 +25,10 @@ base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
-\item{dprimary_args}{List of additional arguments to be passed to
+\item{primary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters}
+and rate parameters. Replaces the deprecated \code{dprimary_args}.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }

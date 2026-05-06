@@ -4,16 +4,19 @@
 \alias{pdiscretestep}
 \title{Step (piecewise-constant) CDF}
 \usage{
-pdiscretestep(q, boundaries, pmf)
+pdiscretestep(q, boundaries = NULL, pmf)
 }
 \arguments{
 \item{q}{Numeric vector of quantiles.}
 
 \item{boundaries}{Numeric vector of length \eqn{K+1} defining the bin
-edges. Must be strictly increasing.}
+edges. Must be strictly increasing. Defaults to \code{0:K} (unit-width
+daily bins) where \code{K} is inferred from \code{length(pmf)}.}
 
 \item{pmf}{Numeric vector of length \eqn{K} giving the probability mass
-for each bin. Must be non-negative and sum to approximately 1.}
+for each bin. Must be non-negative and sum to approximately 1; if
+either condition is violated the function returns a vector of zeros
+(a soft simplex penalty for use inside optimisation).}
 }
 \value{
 Numeric vector of CDF values, the same length as \code{q}.
@@ -30,6 +33,18 @@ Below \code{boundaries[1]} the function returns 0. At
 For \code{q} in \eqn{[boundaries[i], boundaries[i+1])}, F equals
 \eqn{\sum_{j=1}^{i-1} pmf_j}. At or above \code{boundaries[K+1]}
 the function returns 1.
+\subsection{Use with \code{fitdistdoublecens()}}{
+
+This function carries the attribute \code{vector_param = "pmf"} so that
+\code{\link{fitdistdoublecens}} can drive it from a flat list of scalar
+parameters \code{p1, ..., p_{K-1}}. The free parameters are the first
+\eqn{K-1} bin probabilities; the last is set to
+\code{1 - sum(p1, ..., p_{K-1})}. When the implied probabilities violate
+the simplex (any negative entry, or sum departing from 1 by more than
+\eqn{10^{-8}}), the function returns 0 (or near-zero density in
+\code{\link{ddiscretestep}}) rather than erroring; this drives the
+optimiser back to the feasible region.
+}
 }
 \examples{
 # Two-bin PMF: mass 0.3 at x=1, mass 0.7 at x=2

@@ -4,16 +4,19 @@
 \alias{ddiscretestep}
 \title{Step (piecewise-constant) PMF}
 \usage{
-ddiscretestep(x, boundaries, pmf)
+ddiscretestep(x, boundaries = NULL, pmf)
 }
 \arguments{
 \item{x}{Numeric vector of values at which to evaluate the PMF.}
 
 \item{boundaries}{Numeric vector of length \eqn{K+1} defining the bin
-edges. Must be strictly increasing.}
+edges. Must be strictly increasing. Defaults to \code{0:K} (unit-width
+daily bins) where \code{K} is inferred from \code{length(pmf)}.}
 
 \item{pmf}{Numeric vector of length \eqn{K} giving the probability mass
-for each bin. Must be non-negative and sum to approximately 1.}
+for each bin. Must be non-negative and sum to approximately 1; if
+either condition is violated the function returns a vector of zeros
+(a soft simplex penalty for use inside optimisation).}
 }
 \value{
 Numeric vector of PMF values, the same length as \code{x}.
@@ -22,6 +25,14 @@ Numeric vector of PMF values, the same length as \code{x}.
 Returns the probability mass for each value in \code{x}. Mass
 \code{pmf[i]} is located at \code{boundaries[i+1]} (the right edge of
 bin \emph{i}); all other values return 0.
+}
+\details{
+Like \code{\link{pdiscretestep}}, this function applies a soft simplex
+penalty: if \code{pmf} contains negative entries or fails to sum to 1
+(within \eqn{10^{-8}}), the function returns near-zero density
+(\code{.Machine$double.eps}) rather than erroring. This makes it safe to
+call from inside \code{fitdistrplus::fitdist()} closures driven by
+\code{\link{fitdistdoublecens}}.
 }
 \examples{
 ddiscretestep(c(0, 1, 2, 3), boundaries = 0:3, pmf = c(0.2, 0.5, 0.3))

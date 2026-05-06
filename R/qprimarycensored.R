@@ -74,18 +74,24 @@ qprimarycensored <- function(
     L = 0,
     D = Inf,
     dprimary = stats::dunif,
-    dprimary_args = list(),
+    primary_args = NULL,
+    dprimary_args = NULL,
     ...) {
   .check_truncation_bounds(L, D)
 
+  primary_args <- .resolve_primary_args( # nolint: object_usage_linter
+    primary_args, dprimary_args, "qprimarycensored"
+  )
+  pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
+
   check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+  check_dprimary(dprimary, pwindow, primary_args)
 
   # Create a new primarycensored object
   pcens_obj <- new_pcens(
     pdist,
     dprimary,
-    dprimary_args,
+    primary_args = primary_args,
     ...
   )
 

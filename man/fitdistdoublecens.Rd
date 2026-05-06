@@ -13,10 +13,10 @@ fitdistdoublecens(
   L = "L",
   D = "D",
   dprimary = stats::dunif,
-  dprimary_args = list(),
+  primary_args = NULL,
+  dprimary_args = NULL,
   truncation_check_multiplier = 2,
-  K = NULL,
-  boundaries = NULL,
+  prior = NULL,
   ...
 )
 }
@@ -26,15 +26,9 @@ the lower and upper bounds of the censored observations. Unlike
 \code{\link[fitdistrplus:fitdistcens]{fitdistrplus::fitdistcens()}} \code{NA} is not supported for either the
 upper or lower bounds.}
 
-\item{distr}{A character string naming the distribution to be fitted. This
-should be the base name of a distribution with corresponding \code{d} (density)
-and \code{p} (cumulative distribution) functions available. For example, use
-\code{"gamma"} (which will use \code{dgamma} and \code{pgamma}), \code{"lnorm"} (for \code{dlnorm}
-and \code{plnorm}), \code{"weibull"}, \code{"norm"}, etc. Custom distributions can also
-be used as long as the corresponding \verb{d<distr>()} and \verb{p<distr>()}
-functions are defined and loaded. Special values \code{"discretestep"} and
-\code{"discretehazard"} select non-parametric step-distribution fitting; see
-Details.}
+\item{distr}{A character string naming the distribution to be fitted.
+Special values \code{"discretestep"} and \code{"discretehazard"} select the
+non-parametric step-distribution fitting; see Details.}
 
 \item{left}{Column name for lower bound of observed values (default:
 "left").}
@@ -65,25 +59,27 @@ base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
-\item{dprimary_args}{List of additional arguments to be passed to
+\item{primary_args}{List of additional arguments to be passed to
 dprimary. For example, when using \code{dexpgrowth}, you would
 pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters}
+and rate parameters. Replaces the deprecated \code{dprimary_args}.}
+
+\item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
 \item{truncation_check_multiplier}{Numeric multiplier to use for checking
 if the truncation time D is appropriate relative to the maximum delay.
 Set to NULL to skip the check. Default is 2.}
 
-\item{K}{Integer. Number of bins for non-parametric distributions
-(\code{distr = "discretestep"} or \code{distr = "discretehazard"}). Required unless
-\code{start} is supplied for \code{"discretestep"} (in which case \code{K} is inferred
-from \code{length(start) + 1}). Ignored for parametric distributions.}
+\item{prior}{Optional list of prior settings used by the dist function's
+\code{fit_penalty} attribute (currently only \code{"discretehazard"}). Each
+element is itself a list with \code{mean} and \code{sd} entries. Defaults are
+used for any component not supplied. See \code{\link[=pdiscretehazard]{pdiscretehazard()}} for
+the default values.}
 
-\item{boundaries}{Numeric vector of length \code{K + 1} defining bin edges for
-non-parametric distributions. Defaults to \code{0:K} (unit-width daily bins).
-Must be strictly increasing. Ignored for parametric distributions.}
-
-\item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.}
+\item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.
+For non-parametric distributions, \code{start} is required and determines
+the number of bins; pass \code{boundaries} here to override the
+default \code{0:K} unit-width bins.}
 }
 \value{
 An object of class "fitdist" as returned by fitdistrplus::fitdist.
@@ -98,85 +94,36 @@ truncation (when events are only observed within a delay range [L, D]).
 \details{
 \subsection{How distribution functions are resolved}{
 
-The \code{distr} parameter specifies the base name of the distribution. The
-function automatically looks up the corresponding density (\code{d}) and
-cumulative distribution (\code{p}) functions by prepending these prefixes to the
-distribution name. For example:
-\itemize{
-\item \code{distr = "gamma"} uses \code{dgamma()} and \code{pgamma()}
-\item \code{distr = "lnorm"} uses \code{dlnorm()} and \code{plnorm()}
-\item \code{distr = "weibull"} uses \code{dweibull()} and \code{pweibull()}
-}
-
-Any distribution available in base R or loaded packages can be used, as
-long as the corresponding \verb{d<distr>} and \verb{p<distr>} functions exist and
-follow standard R distribution function conventions (first argument is \code{x}
-for density, \code{q} for CDF).
+The \code{distr} argument names a distribution. The function looks up the
+density and CDF functions by prepending \code{d} and \code{p} to the name (e.g.
+\code{distr = "gamma"} resolves to \code{dgamma()} and \code{pgamma()}). Custom
+distributions can be used as long as the corresponding \verb{d<distr>()} and
+\verb{p<distr>()} functions are defined.
 }
 
 \subsection{Non-parametric distributions}{
 
-Two non-parametric distributions are supported by passing special values
-to \code{distr}:
-\subsection{\code{distr = "discretestep"} — piecewise-constant CDF via direct PMF}{
-
-Fits a \code{K}-bin step distribution using \code{\link[=pdiscretestep]{pdiscretestep()}} and
-\code{\link[=ddiscretestep]{ddiscretestep()}}. The free parameters are \verb{p1, ..., p_\{K-1\}} (each in
-\eqn{[0, 1]}), with the last bin probability set to
-\verb{1 - sum(p1, ..., p_\{K-1\})}. A soft penalty is applied when the implied
-last probability is negative, pushing the optimiser away from infeasible
-regions.
+Two non-parametric distributions are supported. They share a common
+fitting machinery: the dist function carries a \code{vector_param} attribute
+(\code{"pmf"} for \code{\link[=pdiscretestep]{pdiscretestep()}}/\code{\link[=ddiscretestep]{ddiscretestep()}}, \code{"hazards"} for
+\code{\link[=pdiscretehazard]{pdiscretehazard()}}/\code{\link[=ddiscretehazard]{ddiscretehazard()}}) that drives this function to
+build a closure mapping flat scalar parameters into the underlying
+vector argument.
 \itemize{
-\item \code{K} must be supplied via the \code{K} argument or inferred from \code{start}.
-\item \code{boundaries} defaults to \code{0:K} (unit-width bins). Pass a custom
-numeric vector of length \code{K + 1} to override.
-\item Default \code{start}: \code{rep(1/K, K-1)}. Default \code{lower = rep(0, K-1)},
-\code{upper = rep(1, K-1)}.
-}
-}
-
-\subsection{\code{distr = "discretehazard"} — piecewise-constant CDF via logit-hazard random walk}{
-
-Fits a \code{K}-bin distribution using \code{\link[=hazards_to_pmf]{hazards_to_pmf()}} and
-\code{\link[=pdiscretestep]{pdiscretestep()}}, with the hazards modelled on the logit scale via a
-Gaussian random walk. The
-\code{K + 1} free parameters are \code{alpha} (level), \code{log_sigma} (log random-walk
-scale), and \verb{eps_1, ..., eps_\{K-1\}} (standardised innovations).
-
-The logit-hazard for bin \code{i} is
-\verb{alpha + sigma * cumsum(c(0, eps_1, ..., eps_\{K-1\}))[i]},
-where \code{sigma = exp(log_sigma)}. The final hazard is forced to 1
-so that the PMF sums to 1.
-
-\strong{Prior penalty}: a MAP-style penalty is amortised across observations
-so that \code{fitdistrplus::fitdist} (which minimises \verb{-sum(log d_i)})
-implicitly optimises the posterior mode. The penalty per observation is
-\code{(0.5 * sum(eps^2) + alpha^2 / (2 * 5^2) + (log_sigma - log(0.5))^2 / 2) / N}. This corresponds to independent priors:
-\itemize{
-\item \code{eps_j ~ N(0, 1)} (random-walk innovations)
-\item \code{alpha ~ N(0, 5)} (weakly informative level prior)
-\item \code{log_sigma ~ N(log(0.5), 1)} (weakly informative scale prior)
-\item \code{K} must be supplied via the \code{K} argument (required for \code{"discretehazard"}).
-\item \code{boundaries} defaults to \code{0:K}. Pass a custom vector to override.
-\item Default \code{start}: \code{alpha = -2}, \code{log_sigma = log(0.5)},
-\code{eps_j = 0} for all \code{j}.
-\item Default bounds: \code{alpha} unbounded, \code{log_sigma} in \verb{[-6, 4]},
-\code{eps_j} in \verb{[-5, 5]}.
-}
+\item \code{distr = "discretestep"}: free parameters \verb{p1, ..., p_\{K-1\}} (in
+\verb{[0, 1]}); the last bin probability is \verb{1 - sum(p1, ..., p_\{K-1\})}.
+See \code{\link[=pdiscretestep]{pdiscretestep()}} for parameterisation details and the soft
+simplex penalty applied when probabilities are infeasible.
+\item \code{distr = "discretehazard"}: free parameters \code{alpha}, \code{log_sigma},
+\verb{eps_1, ..., eps_\{K-1\}}. See \code{\link[=pdiscretehazard]{pdiscretehazard()}} for the random-walk
+parameterisation and the MAP-equivalent prior penalty applied during
+fitting; pass \code{prior} to override the default prior settings.
 }
 
-}
-
-\subsection{What this function does internally}{
-
-This function creates custom density and CDF functions that account for
-primary censoring, secondary censoring, and truncation using
-\code{\link[=dprimarycensored]{dprimarycensored()}} and \code{\link[=pprimarycensored]{pprimarycensored()}}. These custom functions are
-then passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}} for maximum likelihood estimation.
-
-The function handles varying observation windows across observations,
-making it suitable for real-world data where truncation times or censoring
-windows may differ between observations.
+For non-parametric distributions \code{K} is implied by \code{length(start)}:
+\code{K = length(start) + 1} for \code{"discretestep"} and
+\code{K = length(start) - 1} for \code{"discretehazard"}. \code{start} is therefore
+required.
 }
 }
 \examples{
@@ -210,7 +157,7 @@ fit_norm <- fitdistdoublecens(
 
 summary(fit_norm)
 
-\dontrun{
+\donttest{
 # Example with discretestep (non-parametric PMF) distribution
 set.seed(42)
 true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
@@ -226,17 +173,28 @@ step_data <- data.frame(
   D = rep(6, 500)
 )
 fit_step <- fitdistdoublecens(
-  step_data, distr = "discretestep", K = 5
+  step_data,
+  distr = "discretestep",
+  boundaries = 0:5,
+  start = as.list(setNames(rep(0.2, 4), paste0("p", 1:4)))
 )
 
 # Example with discretehazard (logit-hazard random walk) distribution
 fit_haz <- fitdistdoublecens(
-  step_data, distr = "discretehazard", K = 5
+  step_data,
+  distr = "discretehazard",
+  boundaries = 0:5,
+  start = c(
+    list(alpha = -2, log_sigma = log(0.5)),
+    as.list(setNames(rep(0, 4), paste0("eps_", 1:4)))
+  )
 )
 }
 \dontshow{\}) # examplesIf}
 }
 \seealso{
+\code{\link[=pdiscretestep]{pdiscretestep()}} \code{\link[=pdiscretehazard]{pdiscretehazard()}}
+
 Modelling wrappers for external fitting packages
 \code{\link{pcd_as_stan_data}()},
 \code{\link{pcd_cmdstan_model}()}

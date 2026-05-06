@@ -24,24 +24,17 @@ Vector of computed primary event censored CDFs
 }
 \description{
 Computes the analytic primary event censored CDF for a hazard-parameterised
-piecewise-constant delay distribution and an arbitrary primary event
-distribution.
-}
-\details{
-Converts hazards to a PMF via \code{\link[=hazards_to_pmf]{hazards_to_pmf()}} and delegates to
-\code{\link[=pcens_cdf.pcens_pdiscretestep]{pcens_cdf.pcens_pdiscretestep()}}.
-
-Falls back to \code{pcens_cdf.default} when \code{use_numeric = TRUE}
-or when no primary CDF is available on the object.
+piecewise-constant delay distribution. Converts hazards to a PMF via
+\code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then dispatches back through \code{\link[=pcens_cdf]{pcens_cdf()}} using a
+freshly constructed step-distribution object. The same primary event
+distribution and arguments are preserved.
 }
 \seealso{
 Low level primary event censored distribution objects and methods
 \code{\link{new_pcens}()},
 \code{\link{pcens_cdf}()},
 \code{\link{pcens_cdf.default}()},
-\code{\link{pcens_cdf.pcens_pdiscretehazard_dunif}()},
 \code{\link{pcens_cdf.pcens_pdiscretestep}()},
-\code{\link{pcens_cdf.pcens_pdiscretestep_dunif}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},

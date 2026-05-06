@@ -4,7 +4,14 @@
 \alias{new_pcens}
 \title{S3 class for primary event censored distribution computation}
 \usage{
-new_pcens(pdist, dprimary, dprimary_args, pprimary = NULL, ...)
+new_pcens(
+  pdist,
+  dprimary,
+  primary_args = NULL,
+  pprimary = NULL,
+  dprimary_args = NULL,
+  ...
+)
 }
 \arguments{
 \item{pdist}{Distribution function (CDF). The package can identify base R
@@ -23,15 +30,16 @@ base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
-\item{dprimary_args}{List of additional arguments to be passed to
-dprimary. For example, when using \code{dexpgrowth}, you would
-pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters}
+\item{primary_args}{List of additional arguments to be passed to
+\code{dprimary} (and the looked-up \code{pprimary}). Replaces the
+deprecated \code{dprimary_args}.}
 
 \item{pprimary}{CDF of the primary event distribution. When \code{NULL}
 (the default), it is looked up automatically from the registry using the
 \code{"name"} attribute of \code{dprimary}. Pass a function explicitly to
 override the registry lookup or to supply a custom primary CDF.}
+
+\item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }
@@ -49,7 +57,7 @@ S3 class for primary event censored distribution computation
 \examples{
 new_pcens(
   pdist = pgamma, dprimary = dunif,
-  dprimary_args = list(min = 0, max = 1),
+  primary_args = list(min = 0, max = 1),
   shape = 1, scale = 1
 )
 }
@@ -58,9 +66,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf}()},
 \code{\link{pcens_cdf.default}()},
 \code{\link{pcens_cdf.pcens_pdiscretehazard}()},
-\code{\link{pcens_cdf.pcens_pdiscretehazard_dunif}()},
 \code{\link{pcens_cdf.pcens_pdiscretestep}()},
-\code{\link{pcens_cdf.pcens_pdiscretestep_dunif}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},

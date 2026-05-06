@@ -1,4 +1,5 @@
 functions {
+  #include nonparametric.stan
   #include primarycensored.stan
   #include primarycensored_ode.stan
   #include primarycensored_analytical_cdf.stan

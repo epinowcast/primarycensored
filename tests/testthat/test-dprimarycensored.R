@@ -135,7 +135,7 @@ test_that("dprimarycensored returns non-negative values", {
   pmf_expgrowth <- dpcens(
     x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = 30,
     dprimary = dexpgrowth,
-    dprimary_args = list(r = 0.2),
+    primary_args = list(r = 0.2),
     meanlog = 0.55, sdlog = 0.27
   )
   expect_true(
@@ -147,7 +147,7 @@ test_that("dprimarycensored returns non-negative values", {
   pmf_expgrowth_neg <- dpcens(
     x = seq(0, 29), plnorm, pwindow = 1, swindow = 1, D = 30,
     dprimary = dexpgrowth,
-    dprimary_args = list(r = -0.2),
+    primary_args = list(r = -0.2),
     meanlog = 0.55, sdlog = 0.27
   )
   expect_true(

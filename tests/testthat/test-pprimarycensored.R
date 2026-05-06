@@ -44,7 +44,7 @@ test_that("pprimarycensored handles custom primary distributions", {
     pwindow,
     D = D,
     dprimary = dexpgrowth,
-    dprimary_args = list(r = 0.2),
+    primary_args = list(r = 0.2),
     meanlog = 1,
     sdlog = 1
   )

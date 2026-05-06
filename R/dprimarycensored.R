@@ -76,13 +76,19 @@ dprimarycensored <- function(
     L = 0,
     D = Inf,
     dprimary = stats::dunif,
-    dprimary_args = list(),
+    primary_args = NULL,
+    dprimary_args = NULL,
     log = FALSE,
     ...) {
   .check_truncation_bounds(L, D)
 
+  primary_args <- .resolve_primary_args( # nolint: object_usage_linter
+    primary_args, dprimary_args, "dprimarycensored"
+  )
+  pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
+
   check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+  check_dprimary(dprimary, pwindow, primary_args)
 
   if (max(x + swindow) > D) {
     stop(
@@ -121,7 +127,7 @@ dprimarycensored <- function(
     L = 0,
     D = Inf,
     dprimary = dprimary,
-    dprimary_args = dprimary_args,
+    primary_args = primary_args,
     ...
   )
 
@@ -159,7 +165,7 @@ dprimarycensored <- function(
         L = 0,
         D = Inf,
         dprimary = dprimary,
-        dprimary_args = dprimary_args,
+        primary_args = primary_args,
         ...
       )
     }
@@ -177,7 +183,7 @@ dprimarycensored <- function(
         L = 0,
         D = Inf,
         dprimary = dprimary,
-        dprimary_args = dprimary_args,
+        primary_args = primary_args,
         ...
       )
     }
