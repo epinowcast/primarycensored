@@ -54,10 +54,8 @@ int dist_has_positive_support(data int dist_id) {
 
 real dist_lcdf(real delay, array[] real params, int dist_id) {
   if (dist_id == 24 && params[1] < 0) {
-    reject("Uniform delay distribution requires a non-negative lower bound ",
-           "(params[1]); got ", params[1], ". A negative lower bound would ",
-           "interact with the dist_has_positive_support short-circuit and ",
-           "silently return -inf for valid mass on (params[1], 0].");
+    reject("Uniform delay requires a non-negative lower bound; got ",
+           params[1], ".");
   }
   if (dist_has_positive_support(dist_id) && delay <= 0) {
     return negative_infinity();
