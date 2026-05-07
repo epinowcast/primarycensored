@@ -831,6 +831,55 @@ test_that(
 )
 
 test_that(
+  "fitdistdoublecens rejects left > D",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    set.seed(123)
+    K <- 5L
+    D_val <- K
+    n <- 50
+    # Construct a data frame with a single offending row where left > D.
+    samples <- rep(2L, n)
+    bad_data <- data.frame(
+      left = c(samples, D_val + 1L),
+      right = c(samples + 1L, D_val + 2L),
+      pwindow = rep(1, n + 1L),
+      D = rep(D_val, n + 1L)
+    )
+    start <- as.list(stats::setNames(
+      rep(1 / K, K - 1L), paste0("p", seq_len(K - 1L))
+    ))
+    expect_error(
+      fitdistdoublecens(
+        bad_data,
+        distr = "discretestep",
+        start = start,
+        boundaries = 0:K,
+        truncation_check_multiplier = NULL
+      ),
+      "left >= D"
+    )
+    # left == D is also rejected (degenerate observation).
+    boundary_data <- bad_data
+    boundary_data$left[n + 1L] <- D_val
+    boundary_data$right[n + 1L] <- D_val + 1L
+    expect_error(
+      fitdistdoublecens(
+        boundary_data,
+        distr = "discretestep",
+        start = start,
+        boundaries = 0:K,
+        truncation_check_multiplier = NULL
+      ),
+      "left >= D"
+    )
+  }
+)
+
+test_that(
   "fitdistdoublecens discretestep: recovers PMF under mixed windows",
   {
     skip_if_not(

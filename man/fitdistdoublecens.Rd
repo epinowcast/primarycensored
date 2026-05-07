@@ -47,10 +47,12 @@ day 0 is excluded, particularly when used in renewal models. (default:
 \item{D}{Column name for maximum delay (upper truncation point). If finite,
 the distribution is truncated at D. If set to Inf, no upper truncation is
 applied. (default: "D"). Observations whose secondary censoring interval
-straddles \code{D} (\code{right > D}) are accepted: the upper endpoint is internally
-clipped to \code{D} and the likelihood becomes
+straddles \code{D} (\verb{left < D <= right}) are accepted: the upper endpoint is
+internally clipped to \code{D} and the likelihood becomes
 \verb{P(X in [left, min(right, D)] | L <= X <= D)}. This is a no-op for the
-standard parametric case where \code{right <= D}.}
+standard parametric case where \code{right <= D}. Observations with
+\code{left >= D} are rejected because under truncation at \code{D} no event with
+latent value \verb{>= D} is observable.}
 
 \item{dprimary}{Function to generate the probability density function
 (PDF) of primary event times. This function should take a value \code{x} and a

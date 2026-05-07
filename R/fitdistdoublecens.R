@@ -64,10 +64,12 @@
 #' @param D Column name for maximum delay (upper truncation point). If finite,
 #'  the distribution is truncated at D. If set to Inf, no upper truncation is
 #'  applied. (default: "D"). Observations whose secondary censoring interval
-#'  straddles `D` (`right > D`) are accepted: the upper endpoint is internally
-#'  clipped to `D` and the likelihood becomes
+#'  straddles `D` (`left < D <= right`) are accepted: the upper endpoint is
+#'  internally clipped to `D` and the likelihood becomes
 #'  `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op for the
-#'  standard parametric case where `right <= D`.
+#'  standard parametric case where `right <= D`. Observations with
+#'  `left >= D` are rejected because under truncation at `D` no event with
+#'  latent value `>= D` is observable.
 #'
 #' @inheritParams pprimarycensored
 #'
@@ -198,6 +200,21 @@ fitdistdoublecens <- function(
       " observation(s) where ", left, " < L. First invalid row: ",
       invalid_obs[1], " (", left, " = ", censdata[[left]][invalid_obs[1]],
       ", L = ", censdata[[L]][invalid_obs[1]], ")",
+      call. = FALSE
+    )
+  }
+  invalid_upper <- which(
+    is.finite(censdata[[D]]) & censdata[[left]] >= censdata[[D]]
+  )
+  if (length(invalid_upper) > 0) {
+    stop(
+      "Observations must be < D. Found ", length(invalid_upper),
+      " observation(s) where ", left, " >= D. First invalid row: ",
+      invalid_upper[1], " (", left, " = ",
+      censdata[[left]][invalid_upper[1]],
+      ", D = ", censdata[[D]][invalid_upper[1]], ")",
+      ". Under truncation at D no event with latent value >= D is ",
+      "observable.",
       call. = FALSE
     )
   }

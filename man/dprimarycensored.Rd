@@ -102,14 +102,19 @@ creates a lookup table for these CDFs to efficiently calculate the PMF for
 each input value. For delays less than L, the function returns 0.
 
 When the secondary censoring interval extends past the upper truncation
-point (\eqn{d + \text{swindow} > D}), the upper endpoint is internally
-clipped to \eqn{D} before evaluating the CDF. The likelihood for such an
-observation is therefore
+point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
+\eqn{d < D}, the upper endpoint is internally clipped to \eqn{D} before
+evaluating the CDF. The likelihood for such an observation is
 \eqn{P(X \in [d, \min(d + \text{swindow}, D)] \mid L \le X \le D)}, which
 equals the usual interval probability when \eqn{d + \text{swindow} \le D}.
 This avoids erroring when an observation's secondary window straddles the
 truncation point (relevant for non-parametric delays such as
 \code{\link[=pdiscretestep]{pdiscretestep()}}).
+
+Observations with \eqn{d \ge D} are rejected with an error: under the
+truncation \eqn{X \le D}, no event with latent value \eqn{d \ge D} is
+observable, and accepting such inputs would otherwise yield a 0/0
+likelihood.
 
 The PMF is normalised to
 ensure it sums to 1 over the range [L, D\). This normalization uses:
