@@ -33,7 +33,7 @@ data {
   array[N] real L;
   // upper truncation; +Inf for no upper truncation
   array[N] real D;
-  int<lower=1, upper=17> dist_id; // distribution identifier
+  int<lower=1, upper=25> dist_id; // distribution identifier
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters

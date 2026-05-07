@@ -8,6 +8,7 @@
 
 - `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. (#267)
 - The Stan functions and `pcd_as_stan_data()` mirror the R-side handling of `L`: negative and `-Inf` values are accepted, and a missing `start_relative_obs_time` column defaults to `-Inf`. `pcd_cmdstan_model()` now accepts negative observed delays and fully-negative truncation windows, letting distributions with support on the reals (e.g. logistic, Cauchy, Gumbel) be fitted. (#313)
+- The `dist_id` upper bound in `pcens_model.stan` has been raised from `17` to `25`, exposing every delay distribution that `dist_lcdf` already dispatches (Normal, Double Exponential, Pareto, scaled inverse chi-square, Student's t, Uniform, von Mises) through `pcd_cmdstan_model()`. (#314)
 
 ## Documentation
 
