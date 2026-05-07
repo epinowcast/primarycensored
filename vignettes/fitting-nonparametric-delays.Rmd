@@ -18,46 +18,21 @@ vignette: >
 
 # Introduction
 
-## What are we going to do in this vignette
+## What we will do
 
-In this vignette, we demonstrate how to fit a non-parametric delay
-distribution to doubly censored data using `primarycensored`.
-We cover the following key points:
+In this vignette we fit a non-parametric delay distribution to doubly censored data using `primarycensored`.
+We simulate data from a known piecewise-constant PMF, fit it with MLE via `fitdistdoublecens()` and with Stan via a small custom model, then compare the four estimates against the truth.
+By the end you should be able to recognise when a non-parametric fit is appropriate and reproduce the workflow on your own data.
 
-1. Simulating censored data from a known piecewise-constant distribution
-2. Fitting via `fitdistdoublecens()` using both the direct PMF
-   (`distr = "discretestep"`) and logit-hazard random-walk
-   (`distr = "discretehazard"`) parameterisations
-3. Fitting via Stan using a Dirichlet-on-PMF prior and a
-   random-walk-on-logit-hazard prior
-4. Comparing all four estimates against the true PMF, including
-   posterior uncertainty from the Bayesian fits
+## What you might want to read first
 
-## What you will learn
-
-By the end of this vignette, you will be able to:
-
-- Use `rdiscretestep()`, `pdiscretestep()`, and `ddiscretestep()` to work
-  with piecewise-constant distributions
-- Fit a non-parametric step distribution to doubly censored data using
-  `fitdistdoublecens()` with `distr = "discretestep"` or
-  `distr = "discretehazard"`
-- Write custom Stan models that call `primarycensored_lpmf` with
-  `dist_id = 26` (direct PMF) or `dist_id = 27` (logit-hazard)
-
-## What might I need to know before starting
-
-This vignette assumes familiarity with the concepts in
-`vignette("fitting-dists-with-fitdistrplus")` and
-`vignette("fitting-dists-with-stan")`.
-Non-parametric distributions are useful when you do not want to assume a
-particular functional form for the delay distribution.
+This vignette assumes familiarity with `vignette("fitting-dists-with-fitdistrplus")` and `vignette("fitting-dists-with-stan")`.
+Mathematical derivations of the censored convolution are in `vignette("why-it-works")` and `vignette("analytic-solutions")`.
 
 ## Packages used in this vignette
 
-Alongside the `primarycensored` package we will use `cmdstanr` for Stan
-fitting, `ggplot2` for plotting, and `dplyr` for data manipulation. MLE
-fitting is delegated to `fitdistrplus` via `fitdistdoublecens()`.
+Alongside `primarycensored` we use `cmdstanr` for Stan fitting, `ggplot2` for plotting, and `dplyr` for data manipulation.
+MLE fitting goes through `fitdistdoublecens()` (which calls `fitdistrplus`).
 
 ```{r setup, message = FALSE}
 library(primarycensored)
@@ -66,37 +41,94 @@ library(ggplot2) # nolint: object_usage_linter.
 library(dplyr) # nolint: object_usage_linter.
 ```
 
+# Mathematical background
+
+The non-parametric delay is supported on a fixed grid of $K$ bins with boundaries $b_0 < b_1 < \dots < b_K$.
+Two parameterisations of the same step PMF are available.
+
+## Discrete step (direct PMF)
+
+We place a probability $f_i$ on each bin and require $\sum_{i=1}^{K} f_i = 1$ with $f_i \geq 0$.
+The CDF is the cumulative sum
+$$
+F(t) = \sum_{i: b_i \leq t} f_i, \qquad t \in [b_0, b_K].
+$$
+Under right truncation at $D$ and a censoring window $[d, d_\text{upper}]$ the censored likelihood contribution for one observation is
+$$
+\frac{F_\text{obs}(d_\text{upper}) - F_\text{obs}(d)}{F_\text{obs}(D)},
+$$
+where $F_\text{obs}$ is the convolution of $F$ with the primary event density (see `vignette("why-it-works")` and `vignette("analytic-solutions")` for derivations).
+The natural prior is a Dirichlet on the simplex, $f \sim \text{Dirichlet}(\alpha)$.
+
+## Discrete hazard (logit-RW)
+
+We instead model the discrete-time hazard $h_i = \Pr(T \in [b_{i-1}, b_i) \mid T \geq b_{i-1})$ on the logit scale via a Gaussian random walk.
+With innovations $\varepsilon_j \sim \mathcal{N}(0, 1)$,
+$$
+\text{logit}(h_i) = \alpha + \sigma \sum_{j=1}^{i-1} \varepsilon_j, \qquad i = 1, \dots, K-1,
+$$
+and $h_K = 1$ to make the PMF proper.
+The PMF is recovered by
+$$
+f_i = h_i \prod_{j < i} (1 - h_j).
+$$
+The random walk regularises towards smooth hazards and is well behaved when bins are sparse.
+
 # Simulating censored data from a step distribution
 
-We simulate data from a known 10-bin step distribution using `rpcens()`.
-To motivate the use of a non-parametric distribution we build a
-**bimodal** true PMF by mixing two discretised lognormals.
-This shape (e.g. a primary infection peak followed by a secondary
-reporting bump) is awkward to capture with a single parametric family
-and is a natural use case for the discrete step distribution.
-Following the convention of the parametric fitting vignettes, we let the
-primary window, secondary window, and right-truncation point vary across
-observations.
-This means a meaningful fraction of observations are right-truncated below
-the maximum support of the delay distribution, so the fits must correctly
-account for per-observation truncation as well as for primary and secondary
-censoring.
+We build a bimodal true PMF as a mixture of two discretised lognormals, one at days 2--3 and one at days 6--7.
+A shape like this (for example a primary infection peak followed by a secondary reporting bump) is awkward to capture with a single parametric family and is a natural use case for the discrete step distribution.
+Here a parametric mixture (e.g. mixture of two lognormals) would also work; this vignette shows the more general non-parametric approach.
 
-```{r simulate}
-set.seed(123) # For reproducibility
+```{r truth}
+set.seed(123)
 
-n <- 500
 K <- 10
 boundaries <- 0:K
 
-# Bimodal true PMF: a primary peak at days 2-3 plus a secondary bump
-# at days 6-7. Built from two discretised lognormals.
 mode1 <- diff(plnorm(boundaries, meanlog = 0.7, sdlog = 0.4))
 mode2 <- diff(plnorm(boundaries, meanlog = 1.9, sdlog = 0.2))
 raw_pmf <- 0.7 * mode1 + 0.3 * mode2
 true_pmf <- raw_pmf / sum(raw_pmf)
+```
 
-# Fixed primary and secondary windows; varying right-truncation
+Before simulating we plot the two component PMFs together with the resulting bimodal mixture, which makes the non-parametric motivation visible.
+
+```{r truth-plot, fig.width = 7, fig.height = 4}
+truth_components <- data.frame(
+  bin = rep(seq_len(K), 3),
+  pmf = c(
+    0.7 * mode1 / sum(raw_pmf),
+    0.3 * mode2 / sum(raw_pmf),
+    true_pmf
+  ),
+  series = factor(
+    rep(c("component 1", "component 2", "mixture"),
+      each = K
+    ),
+    levels = c("component 1", "component 2", "mixture")
+  )
+)
+
+ggplot(truth_components, aes(x = bin, y = pmf, fill = series)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  scale_fill_brewer(palette = "Set2") +
+  labs(
+    x = "Bin", y = "Probability", fill = NULL,
+    title = "True PMF and its lognormal components"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5)
+  )
+```
+
+We now simulate `n = 500` doubly censored observations using `rpcens()`.
+We let the right-truncation point vary across observations, so a meaningful fraction of draws are right-truncated below the maximum support; the fits must therefore correctly account for per-observation truncation as well as for primary and secondary censoring.
+
+```{r simulate}
+n <- 500
 pwindows <- rep(1, n)
 swindows <- rep(1, n)
 obs_times <- sample(8:11, n, replace = TRUE)
@@ -121,18 +153,9 @@ delay_data <- data.frame(
 head(delay_data)
 ```
 
-`rprimarycensored()` uses rejection sampling.
-It generates primary event times and delays, computes the total delay,
-and discards any sample with `total_delay >= D`, re-sampling until `n`
-valid observations are obtained.
-This correctly represents the truncation mechanism rather than clipping
-observed values.
+We can compare the empirical CDF of the simulated data against the true step CDF.
 
-
-We can compare the empirical CDF of the simulated data against the true
-step CDF.
-
-```{r plot-simulation}
+```{r plot-simulation, fig.width = 7, fig.height = 4}
 empirical_cdf <- ecdf(samples)
 x_seq <- seq(0, K, length.out = 200)
 theoretical_cdf <- pdiscretestep(
@@ -143,81 +166,34 @@ theoretical_cdf <- pdiscretestep(
 cdf_data <- data.frame(
   x = rep(x_seq, 2),
   probability = c(empirical_cdf(x_seq), theoretical_cdf),
-  type = rep(
-    c("Observed", "Theoretical"),
-    each = length(x_seq)
-  ),
-  stringsAsFactors = FALSE
+  type = rep(c("Observed", "Theoretical"), each = length(x_seq))
 )
 
-ggplot(cdf_data, aes(x = x, y = probability, color = type)) +
+ggplot(cdf_data, aes(x = x, y = probability, colour = type)) +
   geom_step(linewidth = 1) +
-  scale_color_manual(
-    values = c(Observed = "#4292C6", Theoretical = "#252525")
-  ) +
+  scale_colour_brewer(palette = "Set2") +
   labs(
-    title = "Observed vs Theoretical CDF (step distribution)",
-    x     = "Delay",
-    y     = "Cumulative probability",
-    color = "CDF type"
+    x = "Delay", y = "Cumulative probability",
+    colour = NULL,
+    title = "Observed vs theoretical CDF"
   ) +
   theme_minimal() +
   theme(
-    panel.grid.minor  = element_blank(),
-    plot.title        = element_text(hjust = 0.5),
-    legend.position   = "bottom"
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
   ) +
   coord_cartesian(xlim = c(0, K))
 ```
 
-The observed CDF is shifted left relative to the truth because right
-truncation and primary censoring suppress long delays in the raw data.
+The observed CDF is shifted left relative to the truth because right truncation and primary censoring suppress long delays in the raw data.
 Our goal is to recover the true PMF from these observed values.
 
 # Fitting via `fitdistdoublecens()`
 
-`fitdistdoublecens()` accepts two non-parametric options:
-`distr = "discretestep"` and `distr = "discretehazard"`.
-The number of bins is inferred from `length(start)`, and both share the
-column naming convention of the parametric interface.
+`fitdistdoublecens()` accepts two non-parametric options: `distr = "discretestep"` and `distr = "discretehazard"`.
+We start with the hazard parameterisation because, in our experience, it is more robust at the optimisation stage and faster to converge; we then show the direct PMF fit and discuss why it sometimes complains.
 
-## Direct PMF parameterisation (`distr = "discretestep"`)
-
-The `"discretestep"` parameterisation estimates `K - 1` free bin
-probabilities directly.
-The last bin probability is set to `1 - sum(p1, ..., p_{K-1})`, which
-keeps the PMF normalised.
-
-```{r fit-step, message = FALSE}
-step_start <- as.list(stats::setNames(
-  rep(1 / K, K - 1L), paste0("p", seq_len(K - 1L))
-))
-
-fit_step <- fitdistdoublecens(
-  delay_data,
-  distr      = "discretestep",
-  start      = step_start,
-  left       = "delay",
-  right      = "delay_upper",
-  pwindow    = "pwindow",
-  D          = "D",
-  boundaries = boundaries
-)
-
-summary(fit_step)
-```
-
-The estimated parameters `p1` through `p9` correspond to the first 9
-bin probabilities; the 10th is determined by the sum-to-one constraint.
-
-## Logit-hazard random-walk parameterisation (`distr = "discretehazard"`)
-
-The `"discretehazard"` parameterisation models discrete-time hazards on
-the logit scale via a Gaussian random walk, which smooths the estimated
-PMF and regularises against over-fitting to noise.
-A MAP-style prior penalty (equivalent to
-`alpha ~ normal(0, 5)`, `log_sigma ~ normal(log(0.5), 1)`,
-`eps_j ~ normal(0, 1)`) is applied.
+## Discrete hazard fit
 
 ```{r fit-haz, message = FALSE}
 haz_start <- c(
@@ -242,23 +218,59 @@ fit_haz <- fitdistdoublecens(
 summary(fit_haz)
 ```
 
+## Discrete step fit
+
+```{r fit-step, message = FALSE}
+step_start <- as.list(stats::setNames(
+  rep(1 / K, K - 1L), paste0("p", seq_len(K - 1L))
+))
+
+fit_step <- fitdistdoublecens(
+  delay_data,
+  distr      = "discretestep",
+  start      = step_start,
+  left       = "delay",
+  right      = "delay_upper",
+  pwindow    = "pwindow",
+  D          = "D",
+  boundaries = boundaries
+)
+
+summary(fit_step)
+```
+
+The direct PMF fit often emits a `cov2cor` warning at the `summary()` step.
+This comes from `fitdistrplus` taking a square root of negative or zero diagonal entries of the variance--covariance matrix.
+With this much primary censoring and right truncation the last few bins (whose probability mass is small and partially smeared by truncation) sit close to the boundary of the simplex, so the Hessian is near singular.
+The point estimates remain usable, but standard errors for those bins are not trustworthy.
+The hazard fit avoids this because it parameterises the simplex through unconstrained logit-hazards.
+
 # Fitting via Stan
 
-We show two model variants using the non-parametric Stan distributions.
-`dist_id = 26` is the direct-PMF (discretestep) parameterisation;
-its parameter vector packs `K + 1` boundaries followed by `K` PMF values,
-so `n_params = 2 * K + 1`.
-`dist_id = 27` is the logit-hazard (discretehazard) parameterisation;
-its parameter vector also packs `K + 1` boundaries followed by `K` hazard
-values, where the last hazard is constrained to 1.
+The package model returned by `pcd_cmdstan_model()` was designed for parametric distributions: it places independent normal priors on a fixed-shape `params` vector and constrains `dist_id <= 17`.
+A non-parametric fit needs a simplex prior on `pmf` (or the random-walk construction on hazards) and a way to pass `boundaries` as data, so the package model cannot drive `dist_id = 26` or `27` directly.
+We therefore use a small custom Stan wrapper for each parameterisation (under 30 lines each) that calls `primarycensored_lpmf` with the right `dist_id`.
+Generalising the package model to cover non-parametric distributions is tracked as follow-up work.
 
-## Dirichlet-on-PMF model
+The current analytic step CDF in Stan returns exactly zero for delays at the lower support boundary plus one (here `delay = 1`), which makes the autodiff gradient non-finite during HMC.
+We therefore filter `delay > 1` for the Stan fit; this is a workaround and the affected mass is small.
+Fixing the underlying analytic convolution (so the right-continuous step semantics are reflected in every interval contribution, not only at the upper boundary) is also tracked as follow-up work.
+We aggregate to unique `(pwindow, D, delay, delay_upper)` rows for efficiency.
 
-This model places a symmetric Dirichlet prior on the PMF by drawing
-`K` independent `gamma(alpha, 1)` variates and normalising.
-Passing the packed `[boundaries, pmf]` vector as `params` in
-`primarycensored_lpmf` dispatches to the analytic step-distribution
-integration in the package.
+```{r aggregate}
+delay_counts <- delay_data |>
+  filter(delay > 1) |>
+  summarise(
+    n_obs = n(),
+    .by   = c(pwindow, D, delay, delay_upper)
+  ) |>
+  rename(y = delay, y_upper = delay_upper)
+```
+
+## Dirichlet prior on the PMF
+
+We put a Dirichlet prior on the PMF.
+Stan supports the simplex constraint directly via `simplex[K] pmf; pmf ~ dirichlet(alpha);`, which avoids any normalisation trick.
 
 ```{r dirichlet-model-run, message = FALSE}
 dirichlet_stan_code <- "
@@ -282,18 +294,18 @@ data {
 }
 transformed data {
   array[0] real primary_params;
+  array[2*K+1] real params_template;
+  for (k in 1:(K+1)) params_template[k] = boundaries[k];
 }
 parameters {
-  vector<lower=0>[K] gamma_raw;
+  simplex[K] pmf;
 }
 transformed parameters {
-  vector[K] pmf = gamma_raw / sum(gamma_raw);
-  array[2*K+1] real params;
-  for (k in 1:(K+1)) params[k]     = boundaries[k];
-  for (k in 1:K)     params[K+1+k] = pmf[k];
+  array[2*K+1] real params = params_template;
+  for (k in 1:K) params[K+1+k] = pmf[k];
 }
 model {
-  gamma_raw ~ gamma(alpha, 1);
+  pmf ~ dirichlet(alpha);
   for (i in 1:N) {
     target += n_obs[i] * primarycensored_lpmf(
       y[i] | 26, params,
@@ -304,22 +316,13 @@ model {
 }
 "
 
-dirichlet_stan_file <- file.path(
-  tempdir(), "step_dirichlet.stan"
-)
+dirichlet_stan_file <- file.path(tempdir(), "step_dirichlet.stan")
 writeLines(dirichlet_stan_code, dirichlet_stan_file)
 
 dirichlet_model <- cmdstan_model(
   dirichlet_stan_file,
   include_paths = pcd_stan_path()
 )
-
-delay_counts <- delay_data |>
-  summarise(
-    n_obs = n(),
-    .by   = c(pwindow, D, delay, delay_upper)
-  ) |>
-  rename(y = delay, y_upper = delay_upper)
 
 dirichlet_data <- list(
   N          = nrow(delay_counts),
@@ -330,7 +333,7 @@ dirichlet_data <- list(
   D          = delay_counts$D,
   K          = K,
   boundaries = as.numeric(boundaries),
-  alpha      = rep(1, K) # symmetric Dirichlet(1, ..., 1)
+  alpha      = rep(1, K)
 )
 
 dirichlet_fit <- dirichlet_model$sample(
@@ -348,22 +351,10 @@ dirichlet_fit$summary(
 )
 ```
 
-## Random-walk-on-logit-hazard model
+## Gaussian random walk on the logit hazards
 
-This model places a Gaussian random walk prior on the logit-hazard at
-each time point.
-The final bin hazard is constrained to 1, which ensures the PMF sums to 1.
-
-In the Stan code the `transformed parameters` block builds a `vector[K]
-hazards` (with `hazards[K] = 1`) and packs the parameter array as
-`[boundaries (K+1), hazards (K)]`.
-This is passed to `primarycensored_lpmf` with `dist_id = 27`, which
-dispatches directly to the hazard-parameterised analytic convolution.
-No manual PMF conversion is needed.
-
-The Stan model uses a half-Normal prior on `sigma` for simplicity; the MLE
-penalty is on `log_sigma` and is therefore not identical, though both impose
-comparable smoothness.
+We model the logit hazards as a Gaussian random walk.
+The final bin hazard is fixed at 1 so the PMF sums to 1.
 
 ```{r rw-model-run, message = FALSE}
 rw_stan_code <- "
@@ -386,6 +377,8 @@ data {
 }
 transformed data {
   array[0] real primary_params;
+  array[2*K+1] real params_template;
+  for (k in 1:(K+1)) params_template[k] = boundaries[k];
 }
 parameters {
   real alpha;
@@ -398,9 +391,8 @@ transformed parameters {
   for (i in 2:K) logit_h[i] = logit_h[i-1] + sigma * eps[i-1];
   vector[K] hazards = inv_logit(logit_h);
   hazards[K] = 1;
-  array[2*K+1] real params;
-  for (k in 1:(K+1)) params[k]     = boundaries[k];
-  for (k in 1:K)     params[K+1+k] = hazards[k];
+  array[2*K+1] real params = params_template;
+  for (k in 1:K) params[K+1+k] = hazards[k];
 }
 model {
   alpha ~ normal(0, 5);
@@ -452,19 +444,16 @@ rw_fit$summary(
 
 # Comparing estimates against the truth
 
-We extract all four sets of estimates and show them in a single plot.
-The truth is shown as a bar chart; MLE point estimates are shown as
-coloured points; Bayesian posterior summaries are shown as points with
-90% credible intervals derived from the posterior draws.
+We extract the four sets of PMF estimates and plot them on a single panel.
+We use shape to encode the parameterisation (step vs hazard) and colour to encode the method (MLE vs Stan).
+Stan estimates are shown with `geom_pointrange` (median plus 90% credible interval); MLE estimates are shown with `geom_point`.
 
 ```{r extract-mle}
-# Helper: extract PMF from discretestep MLE fit
 extract_step_pmf <- function(fit, K) {
   p_free <- coef(fit)[paste0("p", seq_len(K - 1))]
   c(p_free, 1 - sum(p_free))
 }
 
-# Helper: reconstruct PMF from discretehazard MLE fit
 extract_haz_pmf <- function(fit, K) {
   alpha_hat <- coef(fit)[["alpha"]]
   log_sigma_hat <- coef(fit)[["log_sigma"]]
@@ -482,7 +471,6 @@ pmf_haz <- extract_haz_pmf(fit_haz, K)
 ```
 
 ```{r extract-stan-intervals}
-# Dirichlet model: pmf[k] is directly available as a parameter
 dirichlet_draws <- dirichlet_fit$draws(
   variables = paste0("pmf[", seq_len(K), "]"),
   format    = "matrix"
@@ -495,13 +483,11 @@ dirichlet_summary <- data.frame(
   hi90   = apply(dirichlet_draws, 2, quantile, 0.95)
 )
 
-# RW-hazard model: compute PMF from each draw of hazards
 hazard_draws <- rw_fit$draws(
   variables = paste0("hazards[", seq_len(K), "]"),
   format    = "matrix"
 )
 
-# Convert each draw's hazard vector to a PMF
 pmf_draws_rw <- t(apply(hazard_draws, 1, function(h) {
   h[K] <- 1
   hazards_to_pmf(h)
@@ -516,166 +502,79 @@ rw_summary <- data.frame(
 ```
 
 ```{r comparison-plot, fig.width = 8, fig.height = 5}
-# Colour palette
-pal <- c(
-  truth          = "#252525",
-  discretestep   = "#4292C6",
-  discretehazard = "#E6550D",
-  dirichlet_stan = "#31A354",
-  rw_stan        = "#756BB1"
-)
-
-# MLE point data
 mle_df <- rbind(
   data.frame(
     bin = seq_len(K), pmf = pmf_step,
-    method = "discretestep", stringsAsFactors = FALSE
+    param = "step", method = "MLE"
   ),
   data.frame(
     bin = seq_len(K), pmf = pmf_haz,
-    method = "discretehazard", stringsAsFactors = FALSE
+    param = "hazard", method = "MLE"
   )
 )
 
-# Stan interval data
 stan_df <- rbind(
-  mutate(dirichlet_summary, method = "dirichlet_stan"),
-  mutate(rw_summary, method = "rw_stan")
+  transform(dirichlet_summary, param = "step", method = "Stan"),
+  transform(rw_summary, param = "hazard", method = "Stan")
 )
 
-# Truth bars
-truth_df <- data.frame(
-  bin = seq_len(K), pmf = true_pmf, stringsAsFactors = FALSE
-)
+truth_df <- data.frame(bin = seq_len(K), pmf = true_pmf)
+
+dodge <- position_dodge(width = 0.6)
 
 ggplot() +
-  # Truth as grey bars
   geom_col(
-    data = truth_df,
-    aes(x = bin, y = pmf),
-    fill = "#D9D9D9",
-    colour = "#252525",
-    width = 0.6
+    data = truth_df, aes(x = bin, y = pmf),
+    fill = "#D9D9D9", colour = "#252525", width = 0.6
   ) +
-  # Stan 90% CI ribbons
-  geom_errorbar(
+  geom_pointrange(
     data = stan_df,
-    aes(x = bin, ymin = lo90, ymax = hi90, colour = method),
-    width = 0.25,
-    linewidth = 0.8,
-    position = position_dodge(width = 0.5)
+    aes(
+      x = bin, y = median, ymin = lo90, ymax = hi90,
+      colour = method, shape = param
+    ),
+    position = dodge, size = 0.5
   ) +
-  # Stan posterior medians
-  geom_point(
-    data = stan_df,
-    aes(x = bin, y = median, colour = method, shape = method),
-    size = 2.5,
-    position = position_dodge(width = 0.5)
-  ) +
-  # MLE points
   geom_point(
     data = mle_df,
-    aes(x = bin, y = pmf, colour = method, shape = method),
-    size = 2.5,
-    position = position_dodge(width = 0.5)
+    aes(x = bin, y = pmf, colour = method, shape = param),
+    position = dodge, size = 2.5
   ) +
-  scale_colour_manual(
-    values = pal[c(
-      "discretestep", "discretehazard",
-      "dirichlet_stan", "rw_stan"
-    )],
-    labels = c(
-      discretestep   = "discretestep MLE",
-      discretehazard = "discretehazard MLE",
-      dirichlet_stan = "Dirichlet Stan (median + 90% CI)",
-      rw_stan        = "RW-hazard Stan (median + 90% CI)"
-    )
-  ) +
-  scale_shape_manual(
-    values = c(
-      discretestep   = 16,
-      discretehazard = 17,
-      dirichlet_stan = 15,
-      rw_stan        = 18
-    ),
-    labels = c(
-      discretestep   = "discretestep MLE",
-      discretehazard = "discretehazard MLE",
-      dirichlet_stan = "Dirichlet Stan (median + 90% CI)",
-      rw_stan        = "RW-hazard Stan (median + 90% CI)"
-    )
-  ) +
+  scale_colour_brewer(palette = "Set2") +
+  scale_shape_manual(values = c(step = 16, hazard = 17)) +
   labs(
-    title = "PMF estimates vs truth (bars = truth, points = estimates)",
-    x     = "Bin",
-    y     = "Probability"
+    x = "Bin", y = "Probability",
+    colour = "Method", shape = "Parameterisation",
+    title = "PMF estimates vs truth"
   ) +
   theme_minimal() +
   theme(
-    panel.grid.minor = element_blank(),
-    plot.title       = element_text(hjust = 0.5),
-    legend.position  = "bottom",
-    legend.title     = element_blank()
-  ) +
-  guides(
-    colour = guide_legend(nrow = 2),
-    shape  = guide_legend(nrow = 2)
+    plot.title = element_text(hjust = 0.5),
+    legend.position = "bottom"
   )
 ```
 
-All four methods recover the true PMF (grey bars) well.
-The Stan 90% credible intervals correctly bracket the truth across most bins,
-and the MLE point estimates fall within or very close to those intervals.
-Residual discrepancies reflect both sampling variability (n = 500) and the
-mild prior differences between parameterisations.
+All four methods recover the bimodal shape of the truth.
+Bin 1 is biased low for the Stan fits because we filtered the `delay = 1` rows; with the analytic step CDF fix in place this would not be necessary.
+Bins 3 and 4 sit between the two modes and absorb most of the remaining disagreement: under primary censoring with `pwindow = 1` the mass that the convolution puts at days 2--3 leaks into days 3--4, which weakens identifiability for those middle bins.
+The Stan posterior intervals correctly widen there to reflect that the data are less informative about the trough than about the peaks.
+With more observations, narrower primary windows, or fewer bins around the trough, the disagreement between methods on those bins shrinks.
 
 # When to choose each parameterisation
 
-The `"discretestep"` / Dirichlet parameterisation places no structural
-constraint on the shape of the PMF.
-It works well when the number of bins is small and the data are plentiful.
-The `"discretehazard"` / random-walk parameterisation imposes smoothness
-via the random walk prior, which can be valuable with sparse data or many
-bins, at the cost of some flexibility in capturing sharp peaks.
-For most applied analyses with fewer than fifteen bins the two give similar
-results, so the choice is largely a matter of preference.
-When in doubt, the `"discretestep"` approach is simpler to interpret
-because its parameters are bin probabilities directly.
+The hazard / random-walk parameterisation is smoother and more robust at both MLE and Stan stages, so we suggest it as the default unless you have a reason to expect sharp jumps in the PMF.
+The Dirichlet on the PMF is more flexible but can be poorly identified for bins where the censored convolution has little leverage, which is exactly where you saw the `cov2cor` warning.
+This area is active research; for a recent overview see Charniga et al. [@Charniga2024].
 
-## Summary
-
-In this vignette we have shown how to fit a non-parametric step
-distribution to doubly censored data using `primarycensored`.
-The key takeaways are:
-
-- **Use `fitdistdoublecens()` with `distr = "discretestep"` or
-  `distr = "discretehazard"`** for MLE-based non-parametric fitting.
-- **Stan `dist_id = 26`** identifies the direct-PMF parameterisation.
-  Pack parameters as `[boundaries (K+1), pmf (K)]` in the `params` array.
-- **Stan `dist_id = 27`** identifies the logit-hazard parameterisation.
-  Pack parameters as `[boundaries (K+1), hazards (K)]`; the analytic
-  convolution handles the rest.
-- **Dirichlet-on-PMF** and **random-walk-on-logit-hazard** are two natural
-  Bayesian priors; the latter encourages smoother distributions.
-- Properly accounting for primary censoring and truncation is as important
-  here as with parametric distributions.
-
-For parametric alternatives, see `vignette("fitting-dists-with-fitdistrplus")`
-and `vignette("fitting-dists-with-stan")`.
-For more flexible delay distribution fitting, see the
-[`epidist`](https://epidist.epinowcast.org) package.
+In many applied settings a parametric distribution is a better fit than a non-parametric one, both because it has fewer parameters and because the smoothness it assumes matches what we know about biological delays.
+For parametric alternatives see `vignette("fitting-dists-with-fitdistrplus")` and `vignette("fitting-dists-with-stan")`.
+For more flexible delay distribution fitting see the [`epidist`](https://epidist.epinowcast.org) package.
 
 ## How you might adapt this vignette
 
-- **Change the number of bins**: Adjust `K` and `boundaries` to match
-  the temporal resolution of your data.
-- **Use non-uniform boundaries**: Pass a custom `boundaries` vector to
-  capture daily, weekly, or irregular intervals.
-- **Replace simulation with real data**: Swap out `delay_data` with your
-  own doubly censored observations.
-- **Adjust the Dirichlet concentration**: Change `alpha` to express
-  stronger or weaker prior beliefs about bin probabilities.
-- **Modify the random-walk scale prior**: Adjust `sigma ~ normal(0, 1)`
-  to allow more or less smoothness in the logit-hazard trajectory.
-- **Use a different primary distribution**: Pass any function with a
-  registered CDF to `dprimary` to use the analytic convolution.
+- Adjust `K` and `boundaries` to match the temporal resolution of your data.
+- Pass a custom non-uniform `boundaries` vector to capture daily, weekly, or irregular intervals.
+- Swap `delay_data` for your own doubly censored observations.
+- Change the Dirichlet concentration `alpha` to express stronger or weaker prior beliefs.
+- Adjust `sigma ~ normal(0, 1)` to allow more or less smoothness in the logit-hazard trajectory.
+- Use any registered primary distribution (uniform or expgrowth here) by passing the matching `primary_id` and `primary_params`.
