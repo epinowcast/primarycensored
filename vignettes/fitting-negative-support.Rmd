@@ -128,6 +128,9 @@ The MLE point estimates land close to the true `location = 2`, `scale = 1`.
 Because the logistic has support on the real line, observed delays in the data may be negative; the data block now allows this and a `transformed data` check rejects rows where `d[i] < L[i]` or `d_upper[i] > D[i]`.
 We pass our left-truncation point through the `start_relative_obs_time` column.
 
+The priors below are intentionally informative and centred near the simulation truth so the recovery demo runs quickly.
+Widen them (or use weakly informative defaults) when fitting real data where the truth is unknown.
+
 ```{r pcd-cmdstan-fit, message = FALSE}
 pcd_data <- pcd_as_stan_data(
   delay_counts,
