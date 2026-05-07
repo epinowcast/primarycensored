@@ -125,14 +125,14 @@ qprimarycensored(c(0.25, 0.5, 0.75), plnorm, meanlog = 0, sdlog = 1)
 qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+  primary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 )
 
 # Same quartiles but with truncation at 10
 qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
+  primary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 )
 
 # Left-truncated distribution (e.g., for generation intervals)

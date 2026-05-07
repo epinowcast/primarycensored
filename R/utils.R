@@ -141,11 +141,24 @@ add_name_attribute <- function(func, name) {
       call. = FALSE
     )
   }
+  # Resolve names against `stats` first (covers all base R `p<name>` /
+  # `d<name>` lookups in the registry), then `primarycensored` for package
+  # extras (`pexpgrowth`, `pdiscretestep`, ...), and finally the global
+  # search path. This avoids accidentally picking up an unrelated user
+  # object that happens to share the function name.
+  .lookup_dist_fn <- function(fn_name) {
+    for (env in list(asNamespace("stats"), asNamespace("primarycensored"))) {
+      if (exists(fn_name, envir = env, inherits = FALSE, mode = "function")) {
+        return(get(fn_name, envir = env, inherits = FALSE, mode = "function"))
+      }
+    }
+    tryCatch(get(fn_name, mode = "function"), error = function(e) NULL)
+  }
   registry <- primarycensored::pcd_distributions
   idx <- which(registry$name == pdist | registry$aliases == pdist)
   if (length(idx) == 0L) {
     fn_name <- paste0(type, pdist)
-    fn <- tryCatch(get(fn_name), error = function(e) NULL)
+    fn <- .lookup_dist_fn(fn_name)
     if (is.null(fn)) {
       stop(
         "No distribution found matching '", pdist, "'.",
@@ -163,7 +176,7 @@ add_name_attribute <- function(func, name) {
     )
   }
   fn_name <- if (type == "p") base else sub("^p", "d", base)
-  fn <- tryCatch(get(fn_name), error = function(e) NULL)
+  fn <- .lookup_dist_fn(fn_name)
   if (is.null(fn)) {
     stop(
       "Could not find function '", fn_name, "' for distribution '",

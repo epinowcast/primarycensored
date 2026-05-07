@@ -29,7 +29,7 @@ set.seed(42)
 rdiscretehazard(10, boundaries = 0:3, hazards = c(0.3, 0.5, 1))
 }
 \seealso{
-\code{\link[=rdiscretestep]{rdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}
+\code{\link[=rdiscretestep]{rdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}}
 
 Other pdiscretehazard:
 \code{\link{ddiscretehazard}()},

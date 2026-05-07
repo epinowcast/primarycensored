@@ -64,6 +64,23 @@ test_that("default boundaries are 0:length(hazards) when omitted", {
     pdiscretehazard(c(0.5, 1, 2, 3), hazards = h),
     pdiscretehazard(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = h)
   )
+  expect_identical(
+    ddiscretehazard(c(0.5, 1, 2, 3), hazards = h),
+    ddiscretehazard(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = h)
+  )
+  set.seed(1)
+  s1 <- rdiscretehazard(20, hazards = h)
+  set.seed(1)
+  s2 <- rdiscretehazard(20, boundaries = 0:3, hazards = h)
+  expect_identical(s1, s2)
+})
+
+test_that(".resolve_hazard_prior ignores unknown components", {
+  out <- primarycensored:::.resolve_hazard_prior(
+    list(unknown = list(mean = 99))
+  )
+  defaults <- primarycensored:::.resolve_hazard_prior(NULL)
+  expect_identical(out, defaults)
 })
 
 test_that("user prior partially overrides defaults in discretehazard", {

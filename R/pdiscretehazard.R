@@ -55,7 +55,9 @@
 #' @return Numeric vector of CDF values, the same length as \code{q}.
 #'
 #' @family pdiscretehazard
-#' @seealso [pdiscretestep()], [hazards_to_pmf()], [fitdistdoublecens()]
+#' @concept pdiscretehazard
+#' @seealso [pdiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()],
+#'   [fitdistdoublecens()]
 #' @export
 #' @examples
 #' # Equivalent to pdiscretestep with the corresponding PMF
@@ -81,7 +83,9 @@ attr(pdiscretehazard, "vector_param") <- "hazards"
 attr(pdiscretehazard, "param_transform") <- function(par_named) {
   alpha_val <- par_named[["alpha"]]
   log_sigma_val <- par_named[["log_sigma"]]
-  eps_names <- grep("^eps_", names(par_named), value = TRUE)
+  eps_names <- .sort_eps_names( # nolint: object_usage_linter
+    grep("^eps_", names(par_named), value = TRUE)
+  )
   eps_vals <- if (length(eps_names) > 0) {
     unlist(par_named[eps_names])
   } else {
@@ -98,7 +102,9 @@ attr(pdiscretehazard, "fit_penalty") <- function(par_named, N,
                                                  prior_settings = NULL) {
   alpha_val <- par_named[["alpha"]]
   log_sigma_val <- par_named[["log_sigma"]]
-  eps_names <- grep("^eps_", names(par_named), value = TRUE)
+  eps_names <- .sort_eps_names( # nolint: object_usage_linter
+    grep("^eps_", names(par_named), value = TRUE)
+  )
   eps_vals <- if (length(eps_names) > 0) {
     unlist(par_named[eps_names])
   } else {
@@ -127,7 +133,8 @@ attr(pdiscretehazard, "fit_penalty") <- function(par_named, N,
 #' @return Numeric vector of PMF values, the same length as \code{x}.
 #'
 #' @family pdiscretehazard
-#' @seealso [ddiscretestep()], [hazards_to_pmf()]
+#' @concept pdiscretehazard
+#' @seealso [ddiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()]
 #' @export
 #' @examples
 #' hazards <- c(0.3, 0.5, 1)
@@ -158,7 +165,8 @@ attr(ddiscretehazard, "param_transform") <- attr(
 #' @return Numeric vector of length \code{n}.
 #'
 #' @family pdiscretehazard
-#' @seealso [rdiscretestep()], [hazards_to_pmf()]
+#' @concept pdiscretehazard
+#' @seealso [rdiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()]
 #' @export
 #' @examples
 #' set.seed(42)
@@ -174,6 +182,25 @@ attr(rdiscretehazard, "name") <- "rdiscretehazard"
 attr(rdiscretehazard, "vector_param") <- "hazards"
 
 # ---- internal helpers -------------------------------------------------------
+
+#' Sort eps_* parameter names by trailing numeric suffix
+#'
+#' Lexicographic sorting of \code{c("eps_1", ..., "eps_10")} returns
+#' \code{eps_10} before \code{eps_2}, which would scramble the random-walk
+#' innovations when \eqn{K > 10}. This helper extracts the trailing integer
+#' and orders by it.
+#'
+#' @keywords internal
+.sort_eps_names <- function(eps_names) {
+  if (length(eps_names) <= 1L) {
+    return(eps_names)
+  }
+  idx <- suppressWarnings(as.integer(sub("^eps_", "", eps_names)))
+  if (anyNA(idx)) {
+    return(eps_names)
+  }
+  eps_names[order(idx)]
+}
 
 #' Resolve the prior settings for the hazard fit_penalty
 #'

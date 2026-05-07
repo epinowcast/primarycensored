@@ -15,8 +15,9 @@ daily bins) where \code{K} is inferred from \code{length(pmf)}.}
 
 \item{pmf}{Numeric vector of length \eqn{K} giving the probability mass
 for each bin. Must be non-negative and sum to approximately 1; if
-either condition is violated the function returns a vector of zeros
-(a soft simplex penalty for use inside optimisation).}
+either condition is violated the function returns a vector of
+\code{.Machine$double.eps} rather than 0 (a soft simplex penalty
+that keeps log-density finite inside fitting closures).}
 }
 \value{
 Numeric vector of PMF values, the same length as \code{x}.

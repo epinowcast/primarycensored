@@ -31,7 +31,7 @@ data {
   array[N] int<lower=0> pwindow; // primary censoring window
   array[N] real<lower=0> L; // minimum delay (lower truncation)
   array[N] real<lower=0> D; // maximum delay (upper truncation)
-  int<lower=1, upper=17> dist_id; // distribution identifier
+  int<lower=1, upper=27> dist_id; // distribution identifier
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters

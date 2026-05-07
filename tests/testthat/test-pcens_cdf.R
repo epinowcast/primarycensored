@@ -442,7 +442,7 @@ test_that(
         function(p) pdiscretestep(qi - p, boundaries, pmf),
         lower = 0,
         upper = pwindow
-      )$value
+      )$value / pwindow
     }, numeric(1))
     expect_equal(analytic, numeric_ref, tolerance = 1e-8)
   }
@@ -539,6 +539,83 @@ test_that(
     }, numeric(1))
 
     expect_equal(analytic, ref, tolerance = 1e-8)
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep falls back to default when use_numeric",
+  {
+    boundaries <- 0:3
+    pmf <- c(0.2, 0.5, 0.3)
+    obj <- new_pcens(
+      pdiscretestep,
+      dunif,
+      list(),
+      boundaries = boundaries,
+      pmf = pmf
+    )
+    analytic <- pcens_cdf(obj, q = 1.5, pwindow = 1)
+    numeric <- pcens_cdf(obj, q = 1.5, pwindow = 1, use_numeric = TRUE)
+    expect_equal(analytic, numeric, tolerance = 1e-8)
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep falls back when no pprimary on object",
+  {
+    # Custom dprimary with no name attribute and not in the registry: the
+    # registry lookup returns NULL so the analytic step method must fall
+    # back to numeric integration.
+    custom_dprim <- function(x, min = 0, max = 1) {
+      stats::dunif(x, min = min, max = max)
+    }
+    obj <- new_pcens(
+      pdiscretestep,
+      custom_dprim,
+      list(),
+      boundaries = 0:3,
+      pmf = c(0.2, 0.5, 0.3)
+    )
+    expect_null(obj$pprimary)
+    expect_no_error(pcens_cdf(obj, q = 1.5, pwindow = 1))
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep errors when boundaries or pmf missing",
+  {
+    obj <- new_pcens(pdiscretestep, dunif, list())
+    expect_error(
+      pcens_cdf(obj, q = 1, pwindow = 1),
+      "boundaries and pmf"
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretehazard errors when hazards missing",
+  {
+    obj <- new_pcens(pdiscretehazard, dunif, list())
+    expect_error(
+      pcens_cdf(obj, q = 1, pwindow = 1),
+      "hazards are required"
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretehazard with use_numeric uses default method",
+  {
+    hazards <- c(0.2, 0.3, 1)
+    obj <- new_pcens(
+      pdiscretehazard, dunif, list(),
+      boundaries = 0:3, hazards = hazards
+    )
+    # `use_numeric = TRUE` skips the cached hazards->pmf path and runs
+    # `pcens_cdf.default`, which calls `object$pdist` directly.
+    res <- pcens_cdf(obj, q = c(0.5, 1.5), pwindow = 1, use_numeric = TRUE)
+    expect_length(res, 2)
+    expect_true(all(res >= 0 & res <= 1))
   }
 )
 

@@ -29,7 +29,7 @@ hazards <- c(0.3, 0.5, 1)
 ddiscretehazard(c(1, 2, 3), boundaries = 0:3, hazards = hazards)
 }
 \seealso{
-\code{\link[=ddiscretestep]{ddiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}
+\code{\link[=ddiscretestep]{ddiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}}
 
 Other pdiscretehazard:
 \code{\link{pdiscretehazard}()},

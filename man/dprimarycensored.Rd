@@ -151,7 +151,7 @@ dprimarycensored(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
 dprimarycensored(
   c(0.1, 0.5, 1), pweibull,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
+  primary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 )
 
 # Example: Left-truncated distribution (e.g., for generation intervals)

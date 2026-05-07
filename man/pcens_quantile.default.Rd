@@ -63,7 +63,7 @@ needed and handles infinite \code{L} or \code{D} without special casing.
 pcens_obj <- new_pcens(
   pdist = pgamma,
   dprimary = dunif,
-  dprimary_args = list(min = 0, max = 1),
+  primary_args = list(min = 0, max = 1),
   shape = 3,
   scale = 2
 )

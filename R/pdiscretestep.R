@@ -35,6 +35,7 @@
 #' @return Numeric vector of CDF values, the same length as \code{q}.
 #'
 #' @family pdiscretestep
+#' @concept pdiscretestep
 #' @export
 #' @examples
 #' # Two-bin PMF: mass 0.3 at x=1, mass 0.7 at x=2
@@ -78,10 +79,16 @@ attr(pdiscretestep, "vector_param") <- "pmf"
 #'
 #' @inheritParams pdiscretestep
 #' @param x Numeric vector of values at which to evaluate the PMF.
+#' @param pmf Numeric vector of length \eqn{K} giving the probability mass
+#'   for each bin. Must be non-negative and sum to approximately 1; if
+#'   either condition is violated the function returns a vector of
+#'   \code{.Machine$double.eps} rather than 0 (a soft simplex penalty
+#'   that keeps log-density finite inside fitting closures).
 #'
 #' @return Numeric vector of PMF values, the same length as \code{x}.
 #'
 #' @family pdiscretestep
+#' @concept pdiscretestep
 #' @export
 #' @examples
 #' ddiscretestep(c(0, 1, 2, 3), boundaries = 0:3, pmf = c(0.2, 0.5, 0.3))
@@ -114,6 +121,7 @@ attr(ddiscretestep, "vector_param") <- "pmf"
 #' @return Numeric vector of length \code{n}.
 #'
 #' @family pdiscretestep
+#' @concept pdiscretestep
 #' @export
 #' @examples
 #' set.seed(42)
@@ -146,6 +154,7 @@ attr(rdiscretestep, "vector_param") <- "pmf"
 #' @return Numeric vector of PMF values.
 #'
 #' @family pdiscretestep
+#' @concept pdiscretestep
 #' @export
 #' @examples
 #' hazards_to_pmf(c(0.2, 0.3, 1))
@@ -182,6 +191,7 @@ hazards_to_pmf <- function(hazards) {
 #' @return Numeric vector of hazards in \eqn{[0, 1]}.
 #'
 #' @family pdiscretestep
+#' @concept pdiscretestep
 #' @export
 #' @examples
 #' pmf_to_hazards(c(0.2, 0.3, 0.5))
@@ -198,7 +208,9 @@ pmf_to_hazards <- function(pmf) {
   }
   K <- length(pmf)
   survival <- 1 - c(0, cumsum(pmf[-K]))
-  hazards <- pmf / survival
+  # Trailing zeros in `pmf` give `survival = 0` and `pmf / survival = NaN`.
+  # Define the conditional hazard at exhausted-mass bins as 0 instead.
+  hazards <- ifelse(survival > 0, pmf / survival, 0)
   # Clamp last entry to exactly 1 (avoid floating-point deviation)
   hazards[K] <- 1
   hazards

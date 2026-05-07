@@ -138,7 +138,7 @@ pprimarycensored(c(0.1, 0.5, 1), plnorm, meanlog = 0, sdlog = 1)
 pprimarycensored(
   c(0.1, 0.5, 1), plnorm,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+  primary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 )
 
 # Example: Left-truncated distribution (e.g., for generation intervals)

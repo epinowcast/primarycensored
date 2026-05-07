@@ -226,3 +226,17 @@ test_that("hazards_to_pmf errors on empty input", {
     "must have length >= 1"
   )
 })
+
+test_that("pmf_to_hazards handles trailing zeros without producing NaN", {
+  # Once cumulative survival hits 0 the hazard is undefined; we return 0
+  # for these bins instead of NaN so the result remains a valid hazard
+  # vector (final entry forced to 1).
+  result <- pmf_to_hazards(c(0.5, 0.5, 0, 0))
+  expect_false(anyNA(result))
+  expect_equal(result, c(0.5, 1, 0, 1), tolerance = 1e-12)
+  # Round-trip through hazards_to_pmf returns the original PMF.
+  expect_equal(
+    hazards_to_pmf(result), c(0.5, 0.5, 0, 0),
+    tolerance = 1e-12
+  )
+})

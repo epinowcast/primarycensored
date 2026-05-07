@@ -78,7 +78,8 @@ pdiscretehazard(c(0.5, 1, 2, 3),
 )
 }
 \seealso{
-\code{\link[=pdiscretestep]{pdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
+\code{\link[=pdiscretestep]{pdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
 
 Other pdiscretehazard:
 \code{\link{ddiscretehazard}()},

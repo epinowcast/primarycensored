@@ -655,6 +655,10 @@ test_that(
     p_last <- 1 - sum(p_free)
     est_pmf <- c(p_free, p_last)
     expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+    # The first bin is a structural zero in `true_pmf`; check the
+    # optimiser actually pushes the corresponding free parameter close
+    # to zero rather than just returning a feasible PMF.
+    expect_lt(est_pmf[1], 0.05)
   }
 )
 
@@ -881,9 +885,10 @@ test_that(
     ))
     fit <- fitdistdoublecens(
       step_data,
-      distr      = "discretestep",
-      start      = start,
-      boundaries = boundaries
+      distr = "discretestep",
+      start = start,
+      boundaries = boundaries,
+      truncation_check_multiplier = NULL
     )
 
     p_free <- unname(fit$estimate)
