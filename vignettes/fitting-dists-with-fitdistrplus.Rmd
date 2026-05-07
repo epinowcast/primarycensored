@@ -261,7 +261,7 @@ In this vignette we have shown how to fit a distribution using `primarycensored`
 - **Specify distributions by name**: Pass the base distribution name (e.g., `"gamma"`, `"lnorm"`, `"weibull"`) to the `distr` parameter. The function automatically finds the corresponding `d` and `p` functions.
 - **Ignoring censoring causes bias**: The naive model that ignores primary censoring and truncation substantially underestimates the true distribution parameters.
 
-For a more robust Bayesian approach to fitting distributions, see the `vignette("fitting-dists-with-stan")` vignette. For more flexible delay distribution fitting, see the [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).
+For a more robust Bayesian approach to fitting distributions, see the `vignette("fitting-dists-with-stan")` vignette. For fitting delay distributions that can take negative values (e.g. logistic-distributed serial intervals), see the `vignette("fitting-negative-support")` vignette. For more flexible delay distribution fitting, see the [`epidist`](https://epidist.epinowcast.org) package (which uses `primarycensored` under the hood).
 
 ## How you might adapt this vignette
 

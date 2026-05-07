@@ -7,8 +7,7 @@
 ## New features
 
 - `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. (#267)
-- The Stan functions and `pcd_as_stan_data()` now mirror the R-side handling of `L`: the `<lower=0>` constraint on `L` has been relaxed, `is_inf(L)` is the "no left truncation" sentinel (analogous to `is_inf(D)` for the upper bound), and a missing `start_relative_obs_time` column defaults to `-Inf` rather than `0`. The currently shipped analytical primary-censored solutions still assume the delay distribution has non-negative support, so `F(L) = 0` for any `L <= 0` regardless of magnitude.
-- `pcens_model.stan` now accepts negative observed delays. The `<lower=0>` constraints on `d`, `d_upper`, and `D` have been removed, and a `transformed data` block rejects rows where `d[i] < L[i]` or `d_upper[i] > D[i]`. Combined with the negative-`L` work above, this lets distributions with support on the reals (e.g. Gumbel, Cauchy, logistic) be fitted via `pcd_cmdstan_model()` over fully-negative truncation windows. A new `dist_has_positive_support()` Stan helper drives per-distribution dispatch in `dist_lcdf`, the ODE lower bound, and the internal CDF calls so that positive-support delays still short-circuit at `delay <= 0`. The `check_truncation()` heuristic in `pcd_as_stan_data()` is now skipped for non-positive `D` since "much larger than max delay" does not transfer to negative windows. (#313)
+- The Stan functions and `pcd_as_stan_data()` mirror the R-side handling of `L`: negative and `-Inf` values are accepted, and a missing `start_relative_obs_time` column defaults to `-Inf`. `pcd_cmdstan_model()` now accepts negative observed delays and fully-negative truncation windows, letting distributions with support on the reals (e.g. logistic, Cauchy, Gumbel) be fitted. (#313)
 
 ## Documentation
 
@@ -17,8 +16,6 @@
 
 ## Bug fixes
 
-- Fixed `primarycensored_sone_lpmf_vectorized()` so the first interval `[0, 1)` evaluates `F(1) - F(0)` for delay distributions with support on the reals. The previous code assumed `F(0) = 0` for any `L <= 0`, which silently dropped mass below zero for distributions such as logistic, Cauchy, and Gumbel.
-- Stan `dist_lcdf` now rejects uniform delay distributions with a negative lower bound. The short-circuit in `dist_has_positive_support()` would otherwise silently return `-inf` for delays in `(params[1], 0]`.
 - Fixed incorrect normalisation in `dexpgrowth()`, `pexpgrowth()`, and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`, `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero.
   The PDF and CDF formulas contained a stray `exp(-r * min)` factor from using `exp(r * (x - min))` instead of `exp(r * x)`.
   The Stan RNG had a compensating `xmin +` offset.

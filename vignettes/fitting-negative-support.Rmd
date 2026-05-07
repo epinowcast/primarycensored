@@ -18,7 +18,7 @@ vignette: >
 
 Some delays of epidemiological interest can be negative.
 The serial interval, the time between symptom onset in a primary case and symptom onset in a secondary case, is a common example: pre-symptomatic transmission means the secondary case can develop symptoms before the primary case, giving a negative observed serial interval.
-Distributions on the non-negative reals (lognormal, gamma, Weibull) cannot represent this and the package's analytical solutions all assume non-negative support.
+Distributions on the non-negative reals (lognormal, gamma, Weibull) cannot represent this and the package's current analytical solutions all assume non-negative support.
 
 In this vignette we estimate the parameters of a logistic-distributed serial interval from doubly-censored, right-truncated samples that include negative observations.
 We use [`fitdistdoublecens()`] for a quick MLE fit and [`pcd_cmdstan_model()`] for the Bayesian fit.
@@ -46,15 +46,16 @@ location_true <- 2
 scale_true <- 1
 lower_truncation <- -3
 
-pwindows <- sample.int(2, n, replace = TRUE)
-swindows <- sample.int(2, n, replace = TRUE)
+pwindows <- sample(1:3, n, replace = TRUE)
+swindows <- sample(1:3, n, replace = TRUE)
 obs_times <- sample(10:14, n, replace = TRUE)
 
 generate_sample <- function(pwindow, swindow, obs_time) {
   rprimarycensored(
     1, rlogis,
     location = location_true, scale = scale_true,
-    pwindow = pwindow, swindow = swindow, D = obs_time, L = lower_truncation
+    pwindow = pwindow, swindow = swindow,
+    L = lower_truncation, D = obs_time
   )
 }
 samples <- mapply(generate_sample, pwindows, swindows, obs_times)
@@ -128,8 +129,7 @@ The MLE point estimates land close to the true `location = 2`, `scale = 1`.
 Because the logistic has support on the real line, observed delays in the data may be negative; the data block now allows this and a `transformed data` check rejects rows where `d[i] < L[i]` or `d_upper[i] > D[i]`.
 We pass our left-truncation point through the `start_relative_obs_time` column.
 
-The priors below are intentionally informative and centred near the simulation truth so the recovery demo runs quickly.
-Widen them (or use weakly informative defaults) when fitting real data where the truth is unknown.
+We use weakly informative priors that are not centred on the simulation truth: a wide `Normal(0, 5)` on the location and `Normal(0, 2.5)` on the scale.
 
 ```{r pcd-cmdstan-fit, message = FALSE}
 pcd_data <- pcd_as_stan_data(
@@ -142,7 +142,7 @@ pcd_data <- pcd_as_stan_data(
   primary_id = pcd_stan_dist_id("uniform", "primary"),
   param_bounds = list(lower = c(-Inf, 0), upper = c(Inf, Inf)),
   primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  priors = list(location = c(2, 1), scale = c(1, 0.5)),
+  priors = list(location = c(0, 5), scale = c(0, 2.5)),
   primary_priors = list(location = numeric(0), scale = numeric(0))
 )
 
@@ -212,9 +212,6 @@ The same workflow extends to any signed-support delay that has a `d`/`p`/`q` tri
 - **Logistic** (`dist_id = 17`, used here): symmetric, slightly heavier tails than the normal, in base R.
 - **Cauchy** (`dist_id = 12`): symmetric, very heavy tails. Useful for serial intervals where extreme negative values cannot be ruled out. In base R as `dcauchy`/`pcauchy`/`qcauchy`/`rcauchy`.
 - **Gumbel** (`dist_id = 15`): right-skewed, supports the reals. A natural choice when the right tail is markedly heavier than the left, but not in base R; you would either define `dgumbel`/`pgumbel`/`qgumbel`/`rgumbel` in your script (the standard formulae are short) or attach a package such as `extraDistr`.
-
-The `dist_id` upper bound in `pcens_model.stan` is currently capped at `17`, so distributions with higher IDs (e.g. normal at `18`) are not yet available through `pcd_cmdstan_model()`.
-You can still use them for the R-side `fitdistdoublecens()` fit.
 
 # Adapting this vignette
 
