@@ -229,14 +229,19 @@ test_that("pcd_as_stan_data accepts a fully-negative truncation window", {
     relative_obs_time = c(-2, -2, -2)
   )
 
-  result <- pcd_as_stan_data(
-    data,
-    dist_id = 17,
-    primary_id = 1,
-    param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
-    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-    priors = list(location = c(0, 1), scale = c(1, 0.5)),
-    primary_priors = list(location = numeric(0), scale = numeric(0))
+  # check_truncation() errors on D <= 0, so the absence of an error here also
+  # confirms the heuristic skip. expect_no_message() locks in the documented
+  # behaviour that the heuristic is silently bypassed for non-positive D.
+  expect_no_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      dist_id = 17,
+      primary_id = 1,
+      param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(0, 1), scale = c(1, 0.5)),
+      primary_priors = list(location = numeric(0), scale = numeric(0))
+    )
   )
 
   expect_identical(result$L, data$start_relative_obs_time)
