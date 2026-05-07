@@ -229,9 +229,11 @@ test_that("pcd_as_stan_data accepts a fully-negative truncation window", {
     relative_obs_time = c(-2, -2, -2)
   )
 
-  # check_truncation() errors on D <= 0, so the absence of an error here also
-  # confirms the heuristic skip. expect_no_message() locks in the documented
-  # behaviour that the heuristic is silently bypassed for non-positive D.
+  # The wrapper filters non-positive D out of the heuristic loop in
+  # pcd_as_stan_data() before ever calling check_truncation(); without that
+  # filter the helper would error on D <= 0. expect_no_message() locks in the
+  # silent-bypass behaviour against future regressions that re-introduce a
+  # message path here.
   expect_no_message(
     result <- pcd_as_stan_data( # nolint
       data,
