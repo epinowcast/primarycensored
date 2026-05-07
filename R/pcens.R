@@ -2,10 +2,14 @@
 #'
 #' @inheritParams pprimarycensored
 #'
-#' @param pprimary CDF of the primary event distribution. When \code{NULL}
-#'   (the default), it is looked up automatically from the registry using the
-#'   \code{"name"} attribute of \code{dprimary}. Pass a function explicitly to
-#'   override the registry lookup or to supply a custom primary CDF.
+#' @param pprimary CDF of the primary event distribution. May be a function
+#'   or a character string naming a primary distribution in
+#'   \code{pcd_primary_distributions}. When \code{NULL} (the default), it is
+#'   looked up automatically from the registry using the \code{"name"}
+#'   attribute of \code{dprimary}. When both \code{dprimary} and
+#'   \code{pprimary} carry a name, the two must agree on everything other
+#'   than the leading \code{d}/\code{p} prefix; mismatches such as
+#'   \code{dunif} + \code{pexpgrowth} raise an error.
 #'
 #' @param primary_args List of additional arguments to be passed to
 #'   \code{dprimary} (and the looked-up \code{pprimary}). Replaces the
@@ -39,9 +43,9 @@ new_pcens <- function(
   primary_args <- .resolve_primary_args( # nolint: object_usage_linter
     primary_args, dprimary_args, "new_pcens"
   )
-  if (is.null(pprimary)) {
-    pprimary <- .lookup_pprimary(dprimary)
-  }
+  pprimary <- .resolve_pprimary( # nolint: object_usage_linter
+    dprimary, pprimary
+  )
   obj <- list(
     pdist = pdist,
     dprimary = dprimary,

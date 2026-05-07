@@ -92,6 +92,7 @@ dprimarycensored <- function(
     D = Inf,
     dprimary = stats::dunif,
     primary_args = NULL,
+    pprimary = NULL,
     dprimary_args = NULL,
     log = FALSE,
     ...) {
@@ -101,6 +102,9 @@ dprimarycensored <- function(
     primary_args, dprimary_args, "dprimarycensored"
   )
   pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
+  pprimary <- .resolve_pprimary( # nolint: object_usage_linter
+    dprimary, pprimary
+  )
 
   check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, primary_args)
@@ -118,7 +122,7 @@ dprimarycensored <- function(
 
   if (is.finite(D) && max(x) >= D) {
     stop(
-      "Some values of x are >= D. Maximum x is ",
+      "Upper truncation point is greater than D. Maximum x is ",
       max(x),
       " and D is ",
       D,
@@ -134,7 +138,17 @@ dprimarycensored <- function(
   # `P(X in [x, min(x + swindow, D)] | L <= X <= D)`, which equals the usual
   # interval probability when `x + swindow <= D` (the parametric default) and
   # captures the residual mass between `x` and `D` otherwise.
-  upper <- pmin(x + swindow, D)
+  upper_raw <- x + swindow
+  upper <- pmin(upper_raw, D)
+  if (is.finite(D) && any(upper_raw > D)) {
+    message(
+      "Upper truncation point is greater than D. It is ",
+      max(upper_raw),
+      " and D is ",
+      D,
+      "; clipping the upper end of secondary intervals at D."
+    )
+  }
 
   # Compute CDFs for all unique points
   unique_points <- sort(unique(c(x, upper)))
@@ -152,6 +166,7 @@ dprimarycensored <- function(
     D = Inf,
     dprimary = dprimary,
     primary_args = primary_args,
+    pprimary = pprimary,
     ...
   )
 
@@ -186,6 +201,7 @@ dprimarycensored <- function(
         D = Inf,
         dprimary = dprimary,
         primary_args = primary_args,
+        pprimary = pprimary,
         ...
       )
     }
@@ -205,6 +221,7 @@ dprimarycensored <- function(
         D = Inf,
         dprimary = dprimary,
         primary_args = primary_args,
+        pprimary = pprimary,
         ...
       )
     }

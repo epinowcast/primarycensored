@@ -2,13 +2,18 @@
   * Non-parametric step CDF and hazard conversion utilities.
   *
   * The step CDF is defined by K intervals and a PMF over those intervals.
-  * Boundaries is a vector of length K+1 giving interval endpoints
+  * `boundaries` is a vector of length K+1 giving interval endpoints
   * [boundaries[1], boundaries[2]), ..., [boundaries[K], boundaries[K+1]).
-  * pmf is a simplex of length K giving the probability mass in each interval.
+  * `pmf` is a simplex of length K giving the probability mass in each
+  * interval. The hazard parameterisation replaces `pmf` with discrete
+  * hazards in [0, 1] whose final entry is 1 so the implied PMF sums to 1.
   */
 
 /**
-  * Compute the log CDF of a piecewise-constant (step) distribution
+  * Log CDF of a piecewise-constant (step) distribution
+  *
+  * Vectorised via `cumulative_sum`; the only loop locates the bin
+  * containing `t` and is bounded by the (small) number of bins K.
   *
   * @param t Evaluation point
   * @param boundaries Vector of K+1 interval endpoints (strictly increasing)
@@ -16,37 +21,25 @@
   *
   * @return log(F_step(t)):
   *   negative_infinity() if t < boundaries[1],
-  *   0 if t >= boundaries[K+1],
-  *   log of cumulative mass up to the interval containing t otherwise.
+  *   0 if t >= boundaries[K + 1],
+  *   log of the cumulative mass through the bin containing t otherwise.
   */
 real pstep_lcdf(real t, vector boundaries, vector pmf) {
   int K = num_elements(pmf);
-  // t is below the support
   if (t < boundaries[1]) return negative_infinity();
-  // t is at or above the upper boundary
   if (t >= boundaries[K + 1]) return 0;
-
-  // Accumulate mass for intervals that are fully below t
-  real cumulative = 0;
-  for (k in 1:K) {
-    if (t >= boundaries[k + 1]) {
-      cumulative += pmf[k];
-    } else if (t >= boundaries[k]) {
-      // t is inside interval k; the full mass of this interval is included
-      // because the step CDF is right-continuous and we have F(t) = sum up to
-      // and including the interval containing t
-      cumulative += pmf[k];
-      break;
-    }
-  }
-  return log(cumulative);
+  vector[K] cum = cumulative_sum(pmf);
+  // Locate the bin containing t: largest k with boundaries[k] <= t.
+  int k = 1;
+  while (k < K && boundaries[k + 1] <= t) k += 1;
+  return log(cum[k]);
 }
 
 /**
   * Convert discrete hazards to a PMF
   *
-  * Each entry satisfies: pmf[i] = hazards[i] * prod_{j < i}(1 - hazards[j]).
-  * The last hazard must equal 1 so that the PMF sums to 1 (caller's
+  * Each entry satisfies pmf[i] = hazards[i] * prod_{j < i} (1 - hazards[j]).
+  * The last hazard must equal 1 so the PMF sums to 1 (caller's
   * responsibility).
   *
   * @param hazards Vector of K hazards in [0, 1], with hazards[K] = 1
@@ -55,119 +48,125 @@ real pstep_lcdf(real t, vector boundaries, vector pmf) {
   */
 vector hazards_to_pmf(vector hazards) {
   int K = num_elements(hazards);
-  vector[K] pmf;
-  real survival = 1.0;
-  for (k in 1:K) {
-    pmf[k] = hazards[k] * survival;
-    survival *= (1.0 - hazards[k]);
+  // Survival before bin k: S[k] = prod_{j < k} (1 - hazards[j]).
+  // S[1] = 1; S[k] = exp(cumulative_sum(log1m_hazards)[k - 1]) for k >= 2.
+  vector[K] log1m_h = log1m(hazards);
+  vector[K] log_surv;
+  log_surv[1] = 0;
+  if (K > 1) {
+    log_surv[2:K] = cumulative_sum(log1m_h[1:(K - 1)]);
   }
-  return pmf;
+  return hazards .* exp(log_surv);
 }
 
 /**
-  * Numerically stable conversion from log-hazards to a PMF
+  * Log CDF of a discrete-hazard distribution
   *
-  * @param log_hazards Vector of K log-hazards, log(h_k)
-  * @param log1m_hazards Vector of K log(1 - h_k) values
+  * Sibling of `pstep_lcdf` for the hazard parameterisation; converts
+  * hazards to the implied PMF then dispatches to `pstep_lcdf`.
   *
-  * @return PMF in primal scale, length K
+  * @param t Evaluation point
+  * @param boundaries Vector of K+1 boundaries (strictly increasing)
+  * @param hazards Vector of K hazards in [0, 1] with hazards[K] = 1
+  *
+  * @return log(F_step(t)) under the implied PMF.
   */
-vector log_hazards_to_pmf(vector log_hazards, vector log1m_hazards) {
-  int K = num_elements(log_hazards);
-  vector[K] pmf;
-  real log_survival = 0.0; // log(1) = 0
-  for (k in 1:K) {
-    pmf[k] = exp(log_hazards[k] + log_survival);
-    log_survival += log1m_hazards[k];
-  }
-  return pmf;
+real phazard_lcdf(real t, vector boundaries, vector hazards) {
+  return pstep_lcdf(t | boundaries, hazards_to_pmf(hazards));
 }
 
 /**
-  * Compute the primary event censored log CDF analytically for a step delay
-  * with any supported primary distribution.
+  * Primary event censored log CDF for a step delay (vectorised analytic)
   *
-  * The formula integrates F_step over the primary event window using:
-  *   F_obs(d) = integral_0^{pwindow} F_step(d - p) f_primary(p) dp.
-  * Substituting u = d - p (dp = -du), with clamping to [0, pwindow]:
-  *   u_min = max(d - pwindow, 0) = q, u_max = d.
-  *   F_obs(d) = integral_{q}^{d} F_step(u) f_primary(d - u) du.
-  * Because f_primary(d - u) du = -dF_primary(d - u) we can write:
-  *   F_obs(d) = integral_{q}^{d} F_step(u) dF_primary(d - u).
-  * On each sub-interval [lo, hi] where F_step equals the constant
-  * `cumulative`, the contribution is:
-  *   cumulative * [F_primary(d - lo) - F_primary(d - hi)].
-  * (The sign reversal comes from the change-of-variable direction.)
+  * Computes log(F_obs(d)) where
+  *   F_obs(d) = integral_q^d F_step(u) f_primary(d - u) du,
+  *   q = max(d - pwindow, 0).
+  * Using f_primary(d - u) du = -d F_primary(d - u), the integral on each
+  * sub-interval [lo, hi] where F_step is constant becomes
+  *   cumulative * (F_primary(d - lo) - F_primary(d - hi)).
+  * This routine builds the lo/hi/cumulative vectors in one pass and reduces
+  * via `dot_product`. The tail [boundaries[K+1], d] (where F_step = 1) is
+  * added in a single closed-form term.
   *
-  * Reduction to the uniform case: for uniform primary,
-  * F_primary(p) = p / pwindow, so
-  *   F_primary(d - lo) - F_primary(d - hi) = (hi - lo) / pwindow.
-  * Summing gives integral / pwindow, recovering the original formula.
-  *
-  * @param d Delay time (observation point)
-  * @param q Lower bound of integration: max(d - pwindow, 0)
+  * @param d Delay (observation point)
   * @param boundaries Vector of K+1 step boundaries
   * @param pmf Step PMF of length K
-  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth)
+  * @param primary_id Primary distribution identifier
   * @param primary_params Primary distribution parameters
   * @param pwindow Primary event window width
   *
-  * @return log(F_obs(d)) under convolution with the given primary distribution
+  * @return log(F_obs(d)) under convolution with the given primary
   */
-real primarycensored_discretestep_lcdf(
-  data real d, real q,
-  vector boundaries, vector pmf,
-  int primary_id, array[] real primary_params,
-  data real pwindow
+real discretestep_lcdf(
+  data real d, vector boundaries, vector pmf,
+  int primary_id, array[] real primary_params, data real pwindow
 ) {
   int K = num_elements(pmf);
-  // F_step is right-continuous: on [bk, bk1) the value is
-  // sum(pmf[1:k-1]) (the jump at bk1 has not yet occurred).
+  real u_min = fmax(d - pwindow, 0);
+  real u_max = d;
 
-  real u_min = q; // lower limit of integration
-  real u_max = d; // upper limit of integration
-  real integral = 0;
-  real cumulative = 0; // running sum of pmf
+  // Sub-interval endpoints in u-space, clipped to [u_min, u_max]
+  vector[K] lo = fmax(u_min, head(boundaries, K));
+  vector[K] hi = fmin(u_max, tail(boundaries, K));
 
+  // F_step is right-continuous and on [b_k, b_{k+1}) takes the value
+  // sum_{j < k} pmf[j] (mass before bin k). cumulative_sum(pmf) gives the
+  // mass through and including bin k, so we shift right by one.
+  vector[K] cum_after = cumulative_sum(pmf);
+  vector[K] cum_before;
+  cum_before[1] = 0;
+  if (K > 1) cum_before[2:K] = cum_after[1:(K - 1)];
+
+  // F_primary differences per sub-interval. Bins where hi <= lo contribute
+  // zero, so we only call primary_lcdf when hi > lo.
+  vector[K] f_diff = rep_vector(0, K);
   for (k in 1:K) {
-    // Step interval k: [bk, bk1); F_step = cumulative (before adding pmf[k])
-    real bk  = boundaries[k];
-    real bk1 = boundaries[k + 1];
-
-    // Skip intervals entirely below u_min
-    if (bk1 <= u_min) {
-      cumulative += pmf[k];
-      continue;
+    if (hi[k] > lo[k]) {
+      real fp_lo = exp(primary_lcdf(d - lo[k] | primary_id, primary_params,
+                                    pwindow));
+      real fp_hi = exp(primary_lcdf(d - hi[k] | primary_id, primary_params,
+                                    pwindow));
+      f_diff[k] = fp_lo - fp_hi;
     }
-    // Stop once we are entirely above u_max
-    if (bk >= u_max) break;
-
-    // Active sub-interval [lo, hi] in u-space
-    real lo = fmax(u_min, bk);
-    real hi = fmin(u_max, bk1);
-
-    if (hi > lo) {
-      // Contribution: cumulative * [F_primary(d-lo) - F_primary(d-hi)]
-      real fp_lo = primary_F(d - lo, primary_id, primary_params, pwindow);
-      real fp_hi = primary_F(d - hi, primary_id, primary_params, pwindow);
-      integral += cumulative * (fp_lo - fp_hi);
-    }
-
-    cumulative += pmf[k]; // F_step = cumulative on [bk1, next_bk1)
-    if (hi >= u_max) break;
   }
 
-  // Tail region u in [boundaries[K+1], u_max]: F_step = 1
+  real integral = dot_product(cum_before, f_diff);
+
+  // Tail region [boundaries[K+1], u_max]: F_step = 1, contributing
+  // F_primary(d - tail_start) - F_primary(d - u_max).
   real tail_start = fmax(boundaries[K + 1], u_min);
   if (tail_start < u_max) {
-    real fp_tail = primary_F(
-      d - tail_start, primary_id, primary_params, pwindow
-    );
-    real fp_end = primary_F(
-      d - u_max, primary_id, primary_params, pwindow
-    );
-    integral += (fp_tail - fp_end);
+    real fp_tail = exp(primary_lcdf(d - tail_start | primary_id,
+                                    primary_params, pwindow));
+    real fp_end = exp(primary_lcdf(d - u_max | primary_id, primary_params,
+                                   pwindow));
+    integral += fp_tail - fp_end;
   }
 
   return log(integral);
+}
+
+/**
+  * Primary event censored log CDF for a discrete-hazard delay
+  *
+  * Wrapper that converts hazards to a PMF and delegates to
+  * `discretestep_lcdf`. Provides the analytic CDF for `dist_id == 27`.
+  *
+  * @param d Delay (observation point)
+  * @param boundaries Vector of K+1 step boundaries
+  * @param hazards Vector of K hazards in [0, 1] with hazards[K] = 1
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  * @param pwindow Primary event window width
+  *
+  * @return log(F_obs(d)) under convolution with the given primary
+  */
+real discretehazard_lcdf(
+  data real d, vector boundaries, vector hazards,
+  int primary_id, array[] real primary_params, data real pwindow
+) {
+  return discretestep_lcdf(
+    d | boundaries, hazards_to_pmf(hazards), primary_id, primary_params,
+    pwindow
+  );
 }

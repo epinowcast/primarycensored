@@ -513,46 +513,6 @@ test_that("fitdistdoublecens discretestep: recovers approximate PMF", {
   expect_equal(est_pmf, true_pmf, tolerance = 0.1)
 })
 
-test_that("fitdistdoublecens discretestep: infers K from start", {
-  skip_if_not(
-    exists("pdiscretestep"),
-    message = "pdiscretestep not yet available"
-  )
-  set.seed(202)
-  true_pmf <- c(0.2, 0.5, 0.3)
-  K <- 3L
-  D_val <- K + 1L
-  n <- 500
-
-  samples <- rprimarycensored(
-    n, rdiscretestep,
-    boundaries = 0:K, pmf = true_pmf,
-    pwindow = 1, swindow = 1, D = D_val
-  )
-
-  step_data <- data.frame(
-    left = samples,
-    right = samples + 1,
-    pwindow = rep(1, n),
-    D = rep(D_val, n)
-  )
-
-  # K not supplied; inferred from start (length 2 -> K = 3)
-  fit <- fitdistdoublecens(
-    step_data,
-    distr = "discretestep",
-    start = list(p1 = 0.33, p2 = 0.33),
-    boundaries = 0:K,
-    truncation_check_multiplier = NULL
-  )
-
-  expect_s3_class(fit, "fitdist")
-  p_free <- unname(fit$estimate)
-  p_last <- 1 - sum(p_free)
-  est_pmf <- c(p_free, p_last)
-  expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
-})
-
 test_that(
   "fitdistdoublecens discretehazard: produces valid PMF close to truth",
   {

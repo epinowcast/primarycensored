@@ -235,3 +235,39 @@ test_that("pprimarycensored accepts pdist as a string lookup", {
   )
   expect_identical(res_string, res_fn)
 })
+
+test_that("pprimarycensored accepts pprimary as function or string", {
+  q <- c(0.5, 1, 2)
+  base <- pprimarycensored(
+    q, plnorm,
+    dprimary = dexpgrowth,
+    primary_args = list(r = 0.2),
+    meanlog = 0, sdlog = 1
+  )
+  by_fn <- pprimarycensored(
+    q, plnorm,
+    dprimary = dexpgrowth, pprimary = pexpgrowth,
+    primary_args = list(r = 0.2),
+    meanlog = 0, sdlog = 1
+  )
+  by_str <- pprimarycensored(
+    q, plnorm,
+    dprimary = dexpgrowth, pprimary = "expgrowth",
+    primary_args = list(r = 0.2),
+    meanlog = 0, sdlog = 1
+  )
+  expect_equal(by_fn, base, tolerance = 1e-12)
+  expect_equal(by_str, base, tolerance = 1e-12)
+})
+
+test_that("pprimarycensored rejects mismatched dprimary and pprimary", {
+  expect_error(
+    pprimarycensored(
+      1, plnorm,
+      dprimary = dunif, pprimary = pexpgrowth,
+      primary_args = list(r = 0.2),
+      meanlog = 0, sdlog = 1
+    ),
+    "different distributions"
+  )
+})

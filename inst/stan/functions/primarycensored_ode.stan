@@ -12,8 +12,10 @@
   *   20: Double Exponential, 21: Pareto,
   *   22: Scaled Inverse Chi-square, 23: Student's t,
   *   24: Uniform, 25: von Mises,
-  *   26: Non-parametric step (params layout: first K+1 entries are boundaries,
-  *       remaining K entries are PMF values; total length = 2*K + 1)
+  *   26: Non-parametric step (params = [boundaries (K+1), pmf (K)],
+  *       length 2*K + 1),
+  *   27: Non-parametric discrete hazard (params = [boundaries (K+1),
+  *       hazards (K)], length 2*K + 1; hazards[K] must equal 1).
   *
   * @return Log CDF of the delay distribution
   *
@@ -48,39 +50,33 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
   else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
   else if (dist_id == 26) {
-    // Non-parametric step distribution.
-    // params layout: [boundaries (K+1), pmf (K)], total length = 2*K + 1.
-    int K = (num_elements(params) - 1) %/% 2;
-    vector[K + 1] boundaries;
-    vector[K] pmf;
-    for (k in 1:(K + 1)) boundaries[k] = params[k];
-    for (k in 1:K) pmf[k] = params[K + 1 + k];
-    return pstep_lcdf(delay | boundaries, pmf);
+    // Non-parametric step: params = [boundaries (K+1), pmf (K)].
+    int K = (size(params) - 1) %/% 2;
+    return pstep_lcdf(
+      delay | to_vector(segment(params, 1, K + 1)),
+              to_vector(segment(params, K + 2, K))
+    );
   }
   else if (dist_id == 27) {
-    // Non-parametric discrete-hazard distribution.
-    // params layout: [boundaries (K+1), hazards (K)], total length = 2*K + 1.
-    // The last hazard must equal 1 so that the implied PMF sums to 1.
-    int K = (num_elements(params) - 1) %/% 2;
-    vector[K + 1] boundaries;
-    vector[K] hazards;
-    for (k in 1:(K + 1)) boundaries[k] = params[k];
-    for (k in 1:K) hazards[k] = params[K + 1 + k];
-    vector[K] pmf = hazards_to_pmf(hazards);
-    return pstep_lcdf(delay | boundaries, pmf);
+    // Non-parametric discrete hazard: params = [boundaries (K+1),
+    // hazards (K)] with hazards[K] = 1.
+    int K = (size(params) - 1) %/% 2;
+    return phazard_lcdf(
+      delay | to_vector(segment(params, 1, K + 1)),
+              to_vector(segment(params, K + 2, K))
+    );
   }
   else reject("Invalid distribution identifier: ", dist_id);
 }
 
 /**
-  * Evaluate the CDF of the primary distribution on [0, pwindow]
+  * Log CDF of the primary distribution on [0, pwindow]
+  * @ingroup primary_distribution_log_cdfs
   *
-  * Returns F_primary(p) (not log) for a given primary event time p.
-  * Only primary_id values supported by check_for_analytical should be
-  * passed here.
-  *
-  * The function is named primary_F (not primary_cdf) to avoid the Stan
-  * restriction that functions ending in _cdf must use the | syntax.
+  * Returns log F_primary(p) for the primary event time p in [0, pwindow].
+  * Only primary_id values supported by `check_for_analytical` should be
+  * passed here. The Stan `_lcdf` convention requires the `|` syntax at
+  * call sites.
   *
   * @param p Primary event time in [0, pwindow]
   * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth)
@@ -88,23 +84,20 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   *   [r] for expgrowth)
   * @param pwindow Primary event window width
   *
-  * @return F_primary(p) in [0, 1]
+  * @return log(F_primary(p))
   */
-real primary_F(
-  real p, int primary_id,
-  array[] real primary_params, data real pwindow
-) {
+real primary_lcdf(real p, int primary_id, array[] real primary_params,
+                  data real pwindow) {
   if (primary_id == 1) {
-    // Uniform on [0, pwindow]
-    if (p <= 0) return 0;
-    if (p >= pwindow) return 1;
-    return p / pwindow;
+    // Uniform on [0, pwindow]: built-in uniform_lcdf matches the package
+    // primary semantics over [0, pwindow].
+    if (p <= 0) return negative_infinity();
+    if (p >= pwindow) return 0;
+    return uniform_lcdf(p | 0, pwindow);
   } else if (primary_id == 2) {
-    // Exponential growth on [0, pwindow]: uses expgrowth_cdf with
-    // xmin = 0, xmax = pwindow
-    return expgrowth_cdf(p | 0, pwindow, primary_params[1]);
+    return expgrowth_lcdf(p | 0, pwindow, primary_params[1]);
   }
-  reject("primary_F: unsupported primary_id ", primary_id);
+  reject("primary_lcdf: unsupported primary_id ", primary_id);
 }
 
 /**
@@ -126,7 +119,7 @@ real primary_F(
   * array[0] real params = {}; // No additional parameters for uniform
   * real xmin = 0;
   * real xmax = 1;
-  * real log_pdf = primary_lpdf(x, primary_id, params, xmin, xmax);
+  * real log_pdf = primary_lpdf(x | primary_id, params, xmin, xmax);
   * @endcode
   */
 real primary_lpdf(real x, int primary_id, array[] real params, real xmin, real xmax) {

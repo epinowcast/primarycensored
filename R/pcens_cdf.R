@@ -232,6 +232,10 @@ pcens_cdf.pcens_pdiscretehazard <- function(
       call. = FALSE
     )
   }
+  # `hazards_to_pmf()` is called exactly once per dispatch (cached into
+  # `new_args$pmf`); the recursive `pcens_cdf()` call below then sweeps the
+  # full q vector through the step method without re-running the
+  # hazards->pmf conversion per element.
   new_args <- object$args
   new_args$hazards <- NULL
   new_args$pmf <- hazards_to_pmf(hazards)

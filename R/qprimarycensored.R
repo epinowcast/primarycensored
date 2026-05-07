@@ -75,6 +75,7 @@ qprimarycensored <- function(
     D = Inf,
     dprimary = stats::dunif,
     primary_args = NULL,
+    pprimary = NULL,
     dprimary_args = NULL,
     ...) {
   .check_truncation_bounds(L, D)
@@ -83,6 +84,9 @@ qprimarycensored <- function(
     primary_args, dprimary_args, "qprimarycensored"
   )
   pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
+  pprimary <- .resolve_pprimary( # nolint: object_usage_linter
+    dprimary, pprimary
+  )
 
   check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, primary_args)
@@ -92,6 +96,7 @@ qprimarycensored <- function(
     pdist,
     dprimary,
     primary_args = primary_args,
+    pprimary = pprimary,
     ...
   )
 

@@ -22,4 +22,12 @@ Maps the deprecated \code{dprimary_args} formal to the new
 \code{primary_args}. Emits a deprecation warning when the old name is
 used, errors if both are supplied, and returns the resolved list.
 }
+\details{
+The new \code{primary_args} formal defaults to \code{NULL} (rather than
+\code{list()}) so this resolver can distinguish "user supplied nothing"
+from "user supplied an empty list" alongside the deprecated
+\code{dprimary_args}. The returned list is never \code{NULL} (an empty
+list is returned when neither argument is supplied), so downstream code
+can treat the result as a list unconditionally.
+}
 \keyword{internal}

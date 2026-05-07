@@ -10,6 +10,7 @@
   params,
   dprimary,
   primary_args,
+  pprimary = NULL,
   vector_param,
   param_transform = NULL,
   fit_penalty,

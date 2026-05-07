@@ -261,6 +261,10 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
                                 data real pwindow, data real d_upper,
                                 data real L, data real D, int primary_id,
                                 array[] real primary_params) {
+  if (d_upper > D) {
+    reject("Upper truncation point is greater than D. It is ", d_upper,
+           " and D is ", D, ". Resolve this by increasing D to be greater or equal to d + swindow or decreasing swindow.");
+  }
   if (d_upper <= d) {
     reject("Upper truncation point is less than or equal to d. It is ", d_upper,
            " and d is ", d, ". Resolve this by increasing d to be less than d_upper.");
@@ -268,37 +272,9 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   if (d < L) {
     return negative_infinity();
   }
-  // Reject inputs whose left edge lies at or above the upper truncation D:
-  // under truncation at D we cannot observe an event with latent X > D, so
-  // d > D is genuinely invalid. The d == D boundary is degenerate (the
-  // observation interval [D, d_upper) contributes zero mass under both
-  // continuous and discrete-step semantics) and is also returned as
-  // negative_infinity() rather than rejected so the optimiser can move
-  // away from it. This early return must precede the clip-to-D branch
-  // below: the clipped interval [d, D) would otherwise be empty.
-  if (!is_inf(D) && d >= D) {
-    return negative_infinity();
-  }
-  // Observation interval [d, d_upper) is clipped to the truncation upper
-  // bound D so that intervals which straddle D contribute the mass in
-  // [d, min(d_upper, D)). The d >= D case is handled above.
-  int clip_to_D = (!is_inf(D) && d_upper > D);
-  // Compute log F at the (possibly clipped) upper end of the observation
-  // interval. We branch on `clip_to_D` to keep the data-only typing of
-  // the lcdf call: passing either `d_upper` (data) or `D` (data) directly
-  // rather than a derived local variable.
-  real log_cdf_upper;
-  if (clip_to_D) {
-    log_cdf_upper = primarycensored_lcdf(
-      D | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
-    );
-  } else {
-    log_cdf_upper = primarycensored_lcdf(
-      d_upper | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
-    );
-  }
+  real log_cdf_upper = primarycensored_lcdf(
+    d_upper | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
+  );
   real log_cdf_lower = primarycensored_lcdf(
     d | dist_id, params, pwindow, 0, positive_infinity(), primary_id, primary_params
   );
@@ -323,9 +299,8 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
       );
     }
 
-    // Get CDF at upper truncation point D. Reuse log_cdf_upper when the
-    // (possibly-clipped) interval upper coincides with D.
-    if (clip_to_D || d_upper == D) {
+    // Get CDF at upper truncation point D
+    if (d_upper == D) {
       log_cdf_D = log_cdf_upper;
     } else if (is_inf(D)) {
       log_cdf_D = 0;
@@ -392,9 +367,7 @@ real primarycensored_pmf(data int d, int dist_id, array[] real params,
   *
   * @param max_delay Maximum delay to compute PMF for
   * @param L Minimum delay (lower truncation point)
-  * @param D Maximum delay (upper truncation point); intervals whose upper
-  *   end exceeds D are clipped to D, and intervals lying entirely above D
-  *   contribute -inf to the log PMF
+  * @param D Maximum delay (upper truncation point), must be at least max_delay + 1
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -440,28 +413,19 @@ vector primarycensored_sone_lpmf_vectorized(
   vector[upper_interval] log_cdfs;
   real log_normalizer;
 
-  // D may be smaller than upper_interval. In that case, intervals whose
-  // upper end exceeds D are clipped to D (the rectangle-clipping rule),
-  // and intervals lying entirely above D contribute -inf.
-  if (D <= L) {
-    reject("D must be greater than L");
+  // Check if D is at least max_delay + 1
+  if (D < upper_interval) {
+    reject("D must be at least max_delay + 1");
   }
 
-  // Compute log CDFs (without truncation normalization). When d exceeds D
-  // the unclipped CDF is not used directly; we substitute log_cdf_D below.
-  // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0.
+  // Compute log CDFs (without truncation normalization)
+  // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0
   int start_idx = L > 0 ? max(1, to_int(floor(L))) : 1;
   for (d in start_idx:upper_interval) {
-    if (D < d) {
-      // We never need log_cdfs[d] when the entire interval upper d lies
-      // above D; it is replaced by log_cdf_D when d straddles D.
-      log_cdfs[d] = negative_infinity();
-    } else {
-      log_cdfs[d] = primarycensored_lcdf(
-        d | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
-        primary_params
-      );
-    }
+    log_cdfs[d] = primarycensored_lcdf(
+      d | dist_id, params, pwindow, 0, positive_infinity(), primary_id,
+      primary_params
+    );
   }
 
   // Get CDF at lower truncation point L
@@ -469,7 +433,7 @@ vector primarycensored_sone_lpmf_vectorized(
   if (L <= 0) {
     // No left truncation
     log_cdf_L = negative_infinity();
-  } else if (L <= upper_interval && floor(L) == L && L <= D) {
+  } else if (L <= upper_interval && floor(L) == L) {
     // L is an integer within computed range, reuse cached value
     log_cdf_L = log_cdfs[to_int(L)];
   } else {
@@ -482,54 +446,35 @@ vector primarycensored_sone_lpmf_vectorized(
 
   // Compute log normalizer: log(F(D) - F(L))
   real log_cdf_D;
-  if (is_inf(D)) {
-    log_cdf_D = 0; // log(1) = 0 for infinite D
-  } else if (D == upper_interval) {
-    // D coincides exactly with the top of the computed CDF grid
-    log_cdf_D = log_cdfs[upper_interval];
+  if (D > upper_interval) {
+    if (is_inf(D)) {
+      log_cdf_D = 0; // log(1) = 0 for infinite D
+    } else {
+      log_cdf_D = primarycensored_lcdf(
+        D | dist_id, params, pwindow, 0, positive_infinity(),
+        primary_id, primary_params
+      );
+    }
   } else {
-    // D may be smaller or larger than upper_interval; compute directly
-    log_cdf_D = primarycensored_lcdf(
-      D | dist_id, params, pwindow, 0, positive_infinity(),
-      primary_id, primary_params
-    );
+    log_cdf_D = log_cdfs[upper_interval];
   }
 
   log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
 
-  // Compute log PMFs: log((F(min(d, D)) - F(max(d-1, L))) / (F(D) - F(L)))
+  // Compute log PMFs: log((F(d) - F(d-1)) / (F(D) - F(L)))
   for (d in 1:upper_interval) {
-    real lower_bd = d - 1;
-    real upper_bd = d;
-    if (lower_bd >= D) {
-      // Interval [d-1, d) has left edge at or above D. Both the strict
-      // "d-1 > D" case (entirely above D) and the boundary "d-1 == D"
-      // case contribute zero mass and are returned as -inf. This matches
-      // the scalar primarycensored_lpmf early return for d >= D.
-      log_pmfs[d] = negative_infinity();
-    } else if (d <= L) {
+    if (d <= L) {
       // Delay interval [d-1, d) is entirely at or below L
       log_pmfs[d] = negative_infinity();
+    } else if (d - 1 < L) {
+      // L falls within interval [d-1, d), so compute mass in [L, d)
+      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
+    } else if (d == 1) {
+      // First interval [0, 1) with L <= 0: F(0) = 0, so PMF = F(1) / normalizer
+      log_pmfs[d] = log_cdfs[d] - log_normalizer;
     } else {
-      // Choose log F at the upper end of the (possibly clipped) interval
-      real log_cdf_up;
-      if (upper_bd > D) {
-        log_cdf_up = log_cdf_D;
-      } else {
-        log_cdf_up = log_cdfs[d];
-      }
-      // Choose log F at the lower end of the (possibly clipped) interval
-      real log_cdf_lo;
-      if (lower_bd < L) {
-        log_cdf_lo = log_cdf_L;
-      } else if (d == 1) {
-        // First interval [0, 1) with L <= 0: F(0) = 0
-        log_pmfs[d] = log_cdf_up - log_normalizer;
-        continue;
-      } else {
-        log_cdf_lo = log_cdfs[d - 1];
-      }
-      log_pmfs[d] = log_diff_exp(log_cdf_up, log_cdf_lo) - log_normalizer;
+      // Standard case: PMF = (F(d) - F(d-1)) / normalizer
+      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
     }
   }
 
@@ -542,9 +487,7 @@ vector primarycensored_sone_lpmf_vectorized(
   *
   * @param max_delay Maximum delay to compute PMF for
   * @param L Minimum delay (lower truncation point)
-  * @param D Maximum delay (upper truncation point); intervals whose upper
-  *   end exceeds D are clipped to D, and intervals lying entirely above D
-  *   contribute -inf to the log PMF
+  * @param D Maximum delay (upper truncation point), must be at least max_delay + 1
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window

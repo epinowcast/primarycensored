@@ -1,6 +1,11 @@
 /**
-  * Check if an analytical solution exists for the given distribution combination
+  * Check if an analytical solution exists for the given distribution
+  * combination
   * @ingroup analytical_solution_helpers
+  *
+  * The non-parametric step (26) and discrete-hazard (27) delays support any
+  * primary for which `primary_lcdf` is defined. New primaries are picked up
+  * automatically when added to that dispatch.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -11,9 +16,10 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (dist_id == 2 && primary_id == 1) return 1; // Gamma, Uniform
   if (dist_id == 1 && primary_id == 1) return 1; // Lognormal, Uniform
   if (dist_id == 3 && primary_id == 1) return 1; // Weibull, Uniform
-  // Step (26) and discrete-hazard (27) support uniform and expgrowth primaries
-  if (dist_id == 26 && (primary_id == 1 || primary_id == 2)) return 1;
-  if (dist_id == 27 && (primary_id == 1 || primary_id == 2)) return 1;
+  // Step and discrete-hazard delays support any registered primary.
+  if (dist_id == 26 || dist_id == 27) {
+    return primary_id == 1 || primary_id == 2;
+  }
   return 0; // No analytical solution for other combinations
 }
 
@@ -199,26 +205,21 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
   } else if (dist_id == 3 && primary_id == 1) {
     return primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
   } else if (dist_id == 26) {
-    // params layout: [boundaries (K+1), pmf (K)], total length = 2*K + 1
-    int K = (num_elements(params) - 1) %/% 2;
-    vector[K + 1] boundaries;
-    vector[K] pmf;
-    for (k in 1:(K + 1)) boundaries[k] = params[k];
-    for (k in 1:K) pmf[k] = params[K + 1 + k];
-    return primarycensored_discretestep_lcdf(
-      d | q, boundaries, pmf, primary_id, primary_params, pwindow
+    // params = [boundaries (K+1), pmf (K)]; length 2*K + 1.
+    int K = (size(params) - 1) %/% 2;
+    return discretestep_lcdf(
+      d | to_vector(segment(params, 1, K + 1)),
+          to_vector(segment(params, K + 2, K)),
+          primary_id, primary_params, pwindow
     );
   } else if (dist_id == 27) {
-    // params layout: [boundaries (K+1), hazards (K)], total length = 2*K + 1
-    // Last hazard must equal 1; converted to PMF before integration.
-    int K = (num_elements(params) - 1) %/% 2;
-    vector[K + 1] boundaries;
-    vector[K] hazards;
-    for (k in 1:(K + 1)) boundaries[k] = params[k];
-    for (k in 1:K) hazards[k] = params[K + 1 + k];
-    vector[K] pmf = hazards_to_pmf(hazards);
-    return primarycensored_discretestep_lcdf(
-      d | q, boundaries, pmf, primary_id, primary_params, pwindow
+    // params = [boundaries (K+1), hazards (K)]; length 2*K + 1. The last
+    // hazard must equal 1.
+    int K = (size(params) - 1) %/% 2;
+    return discretehazard_lcdf(
+      d | to_vector(segment(params, 1, K + 1)),
+          to_vector(segment(params, K + 2, K)),
+          primary_id, primary_params, pwindow
     );
   }
   return negative_infinity();

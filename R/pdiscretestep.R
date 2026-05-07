@@ -93,15 +93,11 @@ ddiscretestep <- function(x, boundaries = NULL, pmf) {
   if (!.is_valid_simplex(pmf)) {
     return(rep(.Machine$double.eps, length(x)))
   }
-  right_edges <- boundaries[-1]
-  result <- vapply(
-    x,
-    function(xi) {
-      m <- which(right_edges == xi)
-      if (length(m) == 1L) pmf[m] else 0
-    },
-    numeric(1)
-  )
+  right_edges <- boundaries[-1L]
+  # Vectorised lookup: match each x against the right-edge vector and pull
+  # the corresponding pmf entry; non-matches return 0.
+  idx <- match(x, right_edges)
+  result <- ifelse(is.na(idx), 0, pmf[idx])
   result
 }
 attr(ddiscretestep, "name") <- "ddiscretestep"

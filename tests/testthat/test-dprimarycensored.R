@@ -100,7 +100,7 @@ test_that(
         pwindow = pwindow, swindow = swindow, D = D,
         meanlog = 0, sdlog = 1
       ),
-      "values of x are >= D"
+      "Upper truncation point is greater than D"
     )
     # x > D: cannot be observed under truncation; rejected.
     expect_error(
@@ -109,7 +109,7 @@ test_that(
         pwindow = pwindow, swindow = swindow, D = D,
         meanlog = 0, sdlog = 1
       ),
-      "values of x are >= D"
+      "Upper truncation point is greater than D"
     )
     # Vectorised: error if any element violates the constraint.
     expect_error(
@@ -118,7 +118,7 @@ test_that(
         pwindow = pwindow, swindow = swindow, D = D,
         meanlog = 0, sdlog = 1
       ),
-      "values of x are >= D"
+      "Upper truncation point is greater than D"
     )
   }
 )

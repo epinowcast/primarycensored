@@ -34,10 +34,14 @@ functions if they wish to leverage analytical solutions.}
 \code{dprimary} (and the looked-up \code{pprimary}). Replaces the
 deprecated \code{dprimary_args}.}
 
-\item{pprimary}{CDF of the primary event distribution. When \code{NULL}
-(the default), it is looked up automatically from the registry using the
-\code{"name"} attribute of \code{dprimary}. Pass a function explicitly to
-override the registry lookup or to supply a custom primary CDF.}
+\item{pprimary}{CDF of the primary event distribution. May be a function
+or a character string naming a primary distribution in
+\code{pcd_primary_distributions}. When \code{NULL} (the default), it is
+looked up automatically from the registry using the \code{"name"}
+attribute of \code{dprimary}. When both \code{dprimary} and
+\code{pprimary} carry a name, the two must agree on everything other
+than the leading \code{d}/\code{p} prefix; mismatches such as
+\code{dunif} + \code{pexpgrowth} raise an error.}
 
 \item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 

@@ -19,6 +19,20 @@
 - The `pdist` argument of `pprimarycensored()`, `dprimarycensored()`, and
   `qprimarycensored()` now accepts a character string, looked up via the
   `pcd_distributions` registry; passing a function still works as before.
+- `pprimary` is now a user-facing argument on `pprimarycensored()`,
+  `dprimarycensored()`, `qprimarycensored()`, and `fitdistdoublecens()`.
+  It accepts either a function or a character string naming a primary
+  distribution in `pcd_primary_distributions`. When omitted, the primary
+  CDF is looked up automatically from the registry using the `"name"`
+  attribute of `dprimary`. Supplying both `dprimary` and `pprimary` with
+  inconsistent names (e.g. `dunif` + `pexpgrowth`) now errors clearly.
+- `pdiscretehazard()`, `ddiscretehazard()`, and `rdiscretehazard()` are
+  retained as user-facing wrappers around their `pdiscretestep()`
+  counterparts; they use a hazard parameterisation that is identical at
+  evaluation time. Their main role is as a fitting parameterisation for
+  `fitdistdoublecens(distr = "discretehazard")`, where a Gaussian random
+  walk on the logit hazard regularises the recovered PMF and makes the
+  fit more stable in sparse data.
 - Deprecated `dprimary_args` in favour of `primary_args` (warns via
   `lifecycle::deprecate_warn()`). The new name reflects that the arguments
   are passed to both `dprimary` and the matching primary CDF.

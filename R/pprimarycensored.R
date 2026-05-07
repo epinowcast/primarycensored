@@ -36,11 +36,26 @@
 #'  functions if they wish to leverage analytical solutions.
 #'
 #' @param primary_args List of additional arguments to be passed to
-#'  dprimary. For example, when using `dexpgrowth`, you would
-#'  pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
-#'  and rate parameters. Replaces the deprecated `dprimary_args`.
+#'  dprimary (and the matching primary CDF). For example, when using
+#'  `dexpgrowth`, you would pass `list(min = 0, max = pwindow, r = 0.2)` to
+#'  set the minimum, maximum, and rate parameters. Replaces the deprecated
+#'  `dprimary_args`. Defaults to `NULL` so the resolver can distinguish
+#'  "not supplied" from "supplied as an empty list" alongside the
+#'  deprecated `dprimary_args`; an empty list is used internally when
+#'  neither argument is supplied.
 #'
 #' @param dprimary_args \[Deprecated\] Use `primary_args` instead.
+#'
+#' @param pprimary Optional CDF for the primary event distribution. May be
+#'  a function or a character string naming a primary distribution in
+#'  `pcd_primary_distributions`. Defaults to `NULL`, in which case the
+#'  primary CDF is looked up automatically from the registry using the
+#'  `"name"` attribute of `dprimary`. When both `dprimary` and `pprimary`
+#'  carry a `"name"` attribute (or are base R functions whose name can be
+#'  inferred), the two names must agree on everything other than the
+#'  leading `d`/`p` prefix; mismatches such as `dunif` + `pexpgrowth` raise
+#'  an error. Supplying `pprimary` explicitly is mainly useful when using a
+#'  custom primary distribution whose CDF is not in the registry.
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
@@ -115,6 +130,7 @@ pprimarycensored <- function(
     D = Inf,
     dprimary = stats::dunif,
     primary_args = NULL,
+    pprimary = NULL,
     dprimary_args = NULL,
     ...) {
   .check_truncation_bounds(L, D)
@@ -123,6 +139,12 @@ pprimarycensored <- function(
     primary_args, dprimary_args, "pprimarycensored"
   )
   pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
+  # Resolve `pprimary` early so name-mismatch errors surface before the
+  # delay/primary checks (which may otherwise fail first with a less
+  # specific message).
+  pprimary <- .resolve_pprimary( # nolint: object_usage_linter
+    dprimary, pprimary
+  )
 
   check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, primary_args)
@@ -132,6 +154,7 @@ pprimarycensored <- function(
     pdist,
     dprimary,
     primary_args = primary_args,
+    pprimary = pprimary,
     ...
   )
 

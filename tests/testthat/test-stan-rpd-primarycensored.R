@@ -225,140 +225,24 @@ test_that(
 )
 
 test_that(
-  "Stan primarycensored_lpmf clips d_upper to D when d_upper > D",
+  "Stan primarycensored_lpmf throws an error for invalid upper truncation
+   point",
   {
-    # When the observation interval [d, d_upper) extends past the
-    # truncation upper bound D, the likelihood should reflect the mass
-    # in [d, D), normalised by F(D). For d = 10, D = 11, d_upper = 12
-    # this equals log((F(D) - F(d)) / F(D)).
+    d <- 10
     dist_id <- 1 # Lognormal
-    params <- c(0, 1)
+    params <- c(0, 1) # meanlog, sdlog
     pwindow <- 1
-    primary_id <- 1
-    primary_params <- numeric(0)
-
-    F <- function(x, D_norm) {
-      primarycensored_cdf(
-        x, dist_id, params, pwindow, 0, D_norm,
-        primary_id, primary_params
-      )
-    }
-
-    d <- 10L
-    d_upper <- 12
-    D <- 11
-    val <- primarycensored_lpmf(
-      d, dist_id, params, pwindow, d_upper, 0, D,
-      primary_id, primary_params
-    )
-    # Reference: log((F(D) - F(d)) / F(D)) using un-truncated F
-    F_D <- primarycensored_cdf(
-      D, dist_id, params, pwindow, 0, Inf, primary_id, primary_params
-    )
-    F_d <- primarycensored_cdf(
-      d, dist_id, params, pwindow, 0, Inf, primary_id, primary_params
-    )
-    expect_equal(val, log((F_D - F_d) / F_D), tolerance = 1e-9)
-
-    # When d >= D the interval is empty and the lpmf is -inf
-    expect_equal(
-      primarycensored_lpmf(
-        11L, dist_id, params, pwindow, 12, 0, 11,
-        primary_id, primary_params
-      ),
-      -Inf
-    )
-  }
-)
-
-test_that(
-  "Stan primarycensored_lpmf returns -inf when d > D",
-  {
-    # Strictly d > D: latent event cannot be observed under truncation at D.
-    dist_id <- 1 # Lognormal
-    params <- c(0, 1)
-    pwindow <- 1
-    primary_id <- 1
-    primary_params <- numeric(0)
-
-    val <- primarycensored_lpmf(
-      15L, dist_id, params, pwindow, 16, 0, 11,
-      primary_id, primary_params
-    )
-    expect_equal(val, -Inf)
-  }
-)
-
-test_that(
-  "Stan primarycensored_lpmf returns -inf when d == D (boundary)",
-  {
-    # Boundary case d == D: the [D, d_upper) observation interval has
-    # zero mass under truncation at D and the lpmf must be -inf.
-    dist_id <- 1 # Lognormal
-    params <- c(0, 1)
-    pwindow <- 1
-    primary_id <- 1
-    primary_params <- numeric(0)
-
-    val <- primarycensored_lpmf(
-      11L, dist_id, params, pwindow, 12, 0, 11,
-      primary_id, primary_params
-    )
-    expect_equal(val, -Inf)
-  }
-)
-
-test_that(
-  "Stan primarycensored_lpmf clips d_upper = D when d < D < d_upper",
-  {
-    # Regression: the clip-to-D branch must continue to return the mass
-    # in [d, D), normalised by F(D), when only the upper edge straddles D.
-    dist_id <- 1 # Lognormal
-    params <- c(0, 1)
-    pwindow <- 1
-    primary_id <- 1
-    primary_params <- numeric(0)
-
-    d <- 5L
-    d_upper <- 12
+    d_upper <- 11
     D <- 10
-    val <- primarycensored_lpmf(
-      d, dist_id, params, pwindow, d_upper, 0, D,
-      primary_id, primary_params
-    )
-    F_D <- primarycensored_cdf(
-      D, dist_id, params, pwindow, 0, Inf, primary_id, primary_params
-    )
-    F_d <- primarycensored_cdf(
-      d, dist_id, params, pwindow, 0, Inf, primary_id, primary_params
-    )
-    expect_true(is.finite(val))
-    expect_equal(val, log((F_D - F_d) / F_D), tolerance = 1e-9)
-  }
-)
-
-test_that(
-  "Stan primarycensored_sone_lpmf_vectorized returns -inf above D",
-  {
-    # Strict d-1 > D: intervals lying entirely above D must be -inf,
-    # mirroring the scalar lpmf behaviour for d > D. Set max_delay so the
-    # last few intervals fall above D.
-    dist_id <- 1 # Lognormal
-    params <- c(0, 1)
-    pwindow <- 1
-    primary_id <- 1
+    primary_id <- 1 # Uniform
     primary_params <- numeric(0)
 
-    max_delay <- 8L
-    D <- 5
-    log_pmfs <- primarycensored_sone_lpmf_vectorized(
-      max_delay, 0, D, dist_id, params, pwindow, primary_id, primary_params
+    expect_error(
+      primarycensored_lpmf(
+        d, dist_id, params, pwindow, d_upper, 0, D, primary_id, primary_params
+      ),
+      "Upper truncation point is greater than D"
     )
-    # Intervals with lower edge >= D are -inf; here lower edges are
-    # 0, 1, ..., 8 so indices with lower_bd >= 5 i.e. d in 6:9 are -inf.
-    expect_equal(log_pmfs[6:9], rep(-Inf, 4))
-    # The remaining mass normalises to one (truncation at D applied).
-    expect_equal(sum(exp(log_pmfs)), 1, tolerance = 1e-9)
   }
 )
 

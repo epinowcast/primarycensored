@@ -14,6 +14,7 @@ qprimarycensored(
   D = Inf,
   dprimary = stats::dunif,
   primary_args = NULL,
+  pprimary = NULL,
   dprimary_args = NULL,
   ...
 )
@@ -26,6 +27,7 @@ qpcens(
   D = Inf,
   dprimary = stats::dunif,
   primary_args = NULL,
+  pprimary = NULL,
   dprimary_args = NULL,
   ...
 )
@@ -61,9 +63,24 @@ functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()
 functions if they wish to leverage analytical solutions.}
 
 \item{primary_args}{List of additional arguments to be passed to
-dprimary. For example, when using \code{dexpgrowth}, you would
-pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters. Replaces the deprecated \code{dprimary_args}.}
+dprimary (and the matching primary CDF). For example, when using
+\code{dexpgrowth}, you would pass \code{list(min = 0, max = pwindow, r = 0.2)} to
+set the minimum, maximum, and rate parameters. Replaces the deprecated
+\code{dprimary_args}. Defaults to \code{NULL} so the resolver can distinguish
+"not supplied" from "supplied as an empty list" alongside the
+deprecated \code{dprimary_args}; an empty list is used internally when
+neither argument is supplied.}
+
+\item{pprimary}{Optional CDF for the primary event distribution. May be
+a function or a character string naming a primary distribution in
+\code{pcd_primary_distributions}. Defaults to \code{NULL}, in which case the
+primary CDF is looked up automatically from the registry using the
+\code{"name"} attribute of \code{dprimary}. When both \code{dprimary} and \code{pprimary}
+carry a \code{"name"} attribute (or are base R functions whose name can be
+inferred), the two names must agree on everything other than the
+leading \code{d}/\code{p} prefix; mismatches such as \code{dunif} + \code{pexpgrowth} raise
+an error. Supplying \code{pprimary} explicitly is mainly useful when using a
+custom primary distribution whose CDF is not in the registry.}
 
 \item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 

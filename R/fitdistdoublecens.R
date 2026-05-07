@@ -29,9 +29,15 @@
 #'   See [pdiscretestep()] for parameterisation details and the soft
 #'   simplex penalty applied when probabilities are infeasible.
 #' - `distr = "discretehazard"`: free parameters `alpha`, `log_sigma`,
-#'   `eps_1, ..., eps_{K-1}`. See [pdiscretehazard()] for the random-walk
-#'   parameterisation and the MAP-equivalent prior penalty applied during
-#'   fitting; pass `prior` to override the default prior settings.
+#'   `eps_1, ..., eps_{K-1}`. The hazard form parameterises the same
+#'   family of step distributions as `"discretestep"`, but its free
+#'   parameters drive a Gaussian random walk on the logit hazard. The
+#'   smoothing regularises the recovered PMF against over-fitting in
+#'   sparse data and replaces the simplex constraint with an
+#'   unconstrained optimisation, which tends to be more stable. See
+#'   [pdiscretehazard()] for full parameterisation details and the
+#'   MAP-equivalent prior penalty applied during fitting; pass `prior`
+#'   to override the default prior settings.
 #'
 #' For non-parametric distributions `K` is implied by `length(start)`:
 #' `K = length(start) + 1` for `"discretestep"` and
@@ -166,6 +172,7 @@ fitdistdoublecens <- function(
     D = "D",
     dprimary = stats::dunif,
     primary_args = NULL,
+    pprimary = NULL,
     dprimary_args = NULL,
     truncation_check_multiplier = 2,
     prior = NULL,
@@ -275,6 +282,7 @@ fitdistdoublecens <- function(
     params = params,
     dprimary = dprimary,
     primary_args = primary_args,
+    pprimary = pprimary,
     vector_param = vector_param,
     param_transform = param_transform,
     fit_penalty = fit_penalty,
@@ -323,6 +331,7 @@ fitdistdoublecens <- function(
     params,
     dprimary,
     primary_args,
+    pprimary = NULL,
     vector_param,
     param_transform = NULL,
     fit_penalty,
@@ -383,7 +392,8 @@ fitdistdoublecens <- function(
           params = params,
           pdist = pdist,
           dprimary = dprimary,
-          primary_args = primary_args
+          primary_args = primary_args,
+          pprimary = pprimary
         ),
         pdist_extras,
         extra
@@ -411,7 +421,8 @@ fitdistdoublecens <- function(
           params = params,
           pdist = pdist,
           dprimary = dprimary,
-          primary_args = primary_args
+          primary_args = primary_args,
+          pprimary = pprimary
         ),
         pdist_extras,
         extra
@@ -474,8 +485,11 @@ fitdistdoublecens <- function(
     pdist,
     dprimary,
     primary_args,
+    pprimary = NULL,
     ...) {
-  tryCatch(
+  # Wrap in `suppressMessages` so the per-call upper-clip notice from
+  # dprimarycensored() is not emitted on every fitdistrplus iteration.
+  suppressMessages(tryCatch(
     {
       unique_params <- unique(params)
       if (nrow(unique_params) == 1) {
@@ -488,6 +502,7 @@ fitdistdoublecens <- function(
           D = unique_params$D[1],
           dprimary = dprimary,
           primary_args = primary_args,
+          pprimary = pprimary,
           ...
         )
       } else {
@@ -510,6 +525,7 @@ fitdistdoublecens <- function(
             D = Ds,
             dprimary = dprimary,
             primary_args = primary_args,
+            pprimary = pprimary,
             ...
           )
         }
@@ -519,13 +535,14 @@ fitdistdoublecens <- function(
     error = function(e) {
       rep(NaN, length(x))
     }
-  )
+  ))
 }
 
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @keywords internal
-.ppcens <- function(q, params, pdist, dprimary, primary_args, ...) {
+.ppcens <- function(q, params, pdist, dprimary, primary_args, pprimary = NULL,
+                    ...) {
   tryCatch(
     {
       mapply(
@@ -538,6 +555,7 @@ fitdistdoublecens <- function(
             D = D_i,
             dprimary = dprimary,
             primary_args = primary_args,
+            pprimary = pprimary,
             ...
           )
         },

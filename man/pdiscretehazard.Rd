@@ -22,19 +22,34 @@ Numeric vector of CDF values, the same length as \code{q}.
 \description{
 Returns the CDF of a discrete distribution specified by its bin-wise
 discrete-time hazards. Converts \code{hazards} to a PMF via
-\code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then delegates to \code{\link[=pdiscretestep]{pdiscretestep()}}.
+\code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then delegates to \code{\link[=pdiscretestep]{pdiscretestep()}}: the two
+parameterisations describe the same family of step distributions and
+yield identical CDFs.
 }
 \details{
-The parameterisation is equivalent to \code{\link[=pdiscretestep]{pdiscretestep()}} but uses hazards
-rather than direct PMF values, which can be more natural for survival
-analysis and hazard-based modelling.
+\subsection{When to use the hazard parameterisation}{
+
+Outside fitting, \code{\link[=pdiscretehazard]{pdiscretehazard()}} is a deterministic wrapper around
+\code{\link[=pdiscretestep]{pdiscretestep()}}. For evaluating a CDF, sampling, or computing a PMF
+there is no advantage over the direct-PMF parameterisation.
+
+The hazard parameterisation exists to support fitting via
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}}. There the free parameters are not the hazards
+directly but a Gaussian random walk on the logit hazard. This smooths
+the recovered PMF, regularises against over-fitting in sparse data,
+and turns a constrained simplex problem into an unconstrained
+optimisation, all of which make the fit more stable. The PMF is
+guaranteed to be valid by construction.
+}
+
 \subsection{Use with \code{fitdistdoublecens()}}{
 
 This function carries the attribute \code{vector_param = "hazards"} so
-that \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} can drive it from a logit-hazard random walk.
-The free parameters are \code{alpha} (level), \code{log_sigma} (log
-random-walk scale), and \code{eps_1, ..., eps_{K-1}} (standardised
-innovations). The logit-hazard for bin \eqn{i} is
+that \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} can drive it from the logit-hazard random
+walk described above. The free parameters are \code{alpha} (level),
+\code{log_sigma} (log random-walk scale), and
+\code{eps_1, ..., eps_{K-1}} (standardised innovations). The
+logit-hazard for bin \eqn{i} is
 \code{alpha + sigma * cumsum(c(0, eps_1, ..., eps_{K-1}))[i]}, where
 \code{sigma = exp(log_sigma)}. The final hazard is forced to 1 so the
 PMF sums to 1.

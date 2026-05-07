@@ -180,6 +180,13 @@ add_name_attribute <- function(func, name) {
 #' \code{primary_args}. Emits a deprecation warning when the old name is
 #' used, errors if both are supplied, and returns the resolved list.
 #'
+#' The new \code{primary_args} formal defaults to \code{NULL} (rather than
+#' \code{list()}) so this resolver can distinguish "user supplied nothing"
+#' from "user supplied an empty list" alongside the deprecated
+#' \code{dprimary_args}. The returned list is never \code{NULL} (an empty
+#' list is returned when neither argument is supplied), so downstream code
+#' can treat the result as a list unconditionally.
+#'
 #' @param primary_args The new argument value (or \code{NULL}).
 #' @param dprimary_args The old argument value (or \code{NULL}).
 #' @param fn Character string identifying the calling function (used in
@@ -217,6 +224,72 @@ add_name_attribute <- function(func, name) {
     return(primary_args)
   }
   list()
+}
+
+#' Resolve the primary CDF, validating against \code{dprimary} if both supplied
+#'
+#' Returns the primary CDF to use. If the user supplies \code{pprimary}
+#' explicitly (either a function or a string name), it is returned (after
+#' resolving the string via \code{\link{pcd_dist_name}}). When both
+#' \code{dprimary} and \code{pprimary} carry a \code{"name"} attribute,
+#' the names must agree on everything except the leading \code{d}/\code{p};
+#' otherwise we error to catch typos like \code{dunif} + \code{pexpgrowth}.
+#' If \code{pprimary} is not supplied, falls back to a registry lookup
+#' against \code{dprimary} via \code{\link{.lookup_pprimary}}, which may
+#' return \code{NULL}.
+#'
+#' @param dprimary The primary density function.
+#' @param pprimary Optional user-supplied primary CDF (function or string).
+#'
+#' @return A primary CDF function, or \code{NULL} if no match was found.
+#'
+#' @keywords internal
+.resolve_pprimary <- function(dprimary, pprimary = NULL) {
+  if (is.null(pprimary)) {
+    return(.lookup_pprimary(dprimary))
+  }
+  if (is.character(pprimary)) {
+    if (length(pprimary) != 1L) {
+      stop(
+        "pprimary must be a function or a single character string.",
+        call. = FALSE
+      )
+    }
+    fn_name <- pcd_dist_name(pprimary, type = "primary")
+    fn_name <- sub("^d", "p", fn_name)
+    fn <- tryCatch(
+      get(fn_name, envir = asNamespace("primarycensored")),
+      error = function(e) tryCatch(get(fn_name), error = function(e2) NULL)
+    )
+    if (is.null(fn)) {
+      stop(
+        "Could not find primary CDF function '", fn_name, "'.",
+        call. = FALSE
+      )
+    }
+    pprimary <- add_name_attribute(fn, fn_name)
+  }
+  if (!is.function(pprimary)) {
+    stop(
+      "pprimary must be a function or a single character string.",
+      call. = FALSE
+    )
+  }
+  d_name <- attr(dprimary, "name")
+  if (is.null(d_name)) d_name <- .extract_function_name(dprimary)
+  p_name <- attr(pprimary, "name")
+  if (is.null(p_name)) p_name <- .extract_function_name(pprimary)
+  if (!is.null(d_name) && !is.null(p_name) &&
+    d_name != "unknown" && p_name != "unknown") {
+    if (sub("^d", "", d_name) != sub("^p", "", p_name)) {
+      stop(
+        "dprimary and pprimary refer to different distributions: '",
+        d_name, "' vs '", p_name, "'.",
+        call. = FALSE
+      )
+    }
+  }
+  pprimary
 }
 
 #' Get distribution function cdf or pdf name
