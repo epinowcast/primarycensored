@@ -223,3 +223,15 @@ test_that("pprimarycensored rejects L = Inf, NA, and NaN", {
     "non-NA numeric"
   )
 })
+
+test_that("pprimarycensored accepts pdist as a string lookup", {
+  res_string <- pprimarycensored(
+    c(0.5, 1, 2),
+    pdist = "lnorm", meanlog = 0, sdlog = 1
+  )
+  res_fn <- pprimarycensored(
+    c(0.5, 1, 2),
+    pdist = plnorm, meanlog = 0, sdlog = 1
+  )
+  expect_identical(res_string, res_fn)
+})

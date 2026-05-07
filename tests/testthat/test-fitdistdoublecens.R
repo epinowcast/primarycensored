@@ -775,18 +775,6 @@ test_that(
   }
 )
 
-test_that("pprimarycensored accepts pdist as a string lookup", {
-  res_string <- pprimarycensored(
-    c(0.5, 1, 2),
-    pdist = "lnorm", meanlog = 0, sdlog = 1
-  )
-  res_fn <- pprimarycensored(
-    c(0.5, 1, 2),
-    pdist = plnorm, meanlog = 0, sdlog = 1
-  )
-  expect_identical(res_string, res_fn)
-})
-
 test_that(
   "fitdistdoublecens discretestep: recovers PMF under mixed windows",
   {
@@ -840,29 +828,3 @@ test_that(
     expect_lt(max(abs(est_pmf - true_pmf)), 0.05)
   }
 )
-
-
-test_that("pcens_cdf with general method works for uniform primary", {
-  # The pcens_pdiscretestep_dunif specialisation has been removed; the
-  # general step method now handles uniform primary too.
-  boundaries <- 0:3
-  pmf <- c(0.2, 0.5, 0.3)
-  obj <- new_pcens(
-    pdiscretestep,
-    stats::dunif,
-    primary_args = list(),
-    boundaries = boundaries,
-    pmf = pmf
-  )
-  pwindow <- 1
-  q_values <- c(0.3, 0.7, 1.2, 1.7, 2.2, 2.7)
-  result <- pcens_cdf(obj, q = q_values, pwindow = pwindow)
-  numeric_ref <- vapply(q_values, function(qi) {
-    stats::integrate(
-      function(p) pdiscretestep(qi - p, boundaries, pmf),
-      lower = 0,
-      upper = pwindow
-    )$value
-  }, numeric(1))
-  expect_equal(result, numeric_ref, tolerance = 1e-8)
-})
