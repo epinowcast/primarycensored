@@ -103,14 +103,7 @@ test_that("pprimarycensored errors when L >= D", {
   )
 })
 
-test_that("pprimarycensored errors when L < 0", {
-  expect_error(
-    ppcens(5, plnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
-test_that("pprimarycensored with L = 0 matches default behaviour", {
+test_that("pprimarycensored default matches L = 0 for positive support", {
   pwindow <- 1
   D <- 10
   q <- seq(0, D, by = 0.5)
@@ -119,7 +112,7 @@ test_that("pprimarycensored with L = 0 matches default behaviour", {
     q, plnorm, pwindow,
     D = D, L = 0, meanlog = 1, sdlog = 1
   )
-  expect_identical(cdf_default, cdf_explicit)
+  expect_equal(cdf_default, cdf_explicit, tolerance = 1e-12)
 })
 
 test_that("pprimarycensored with L > 0 shifts distribution correctly", {
@@ -169,4 +162,64 @@ test_that("pprimarycensored works with L > 0 and D = Inf", {
     D = Inf, L = L, meanlog = 1, sdlog = 1
   )
   expect_gt(cdf_large, 0.99)
+})
+
+test_that("pprimarycensored is a proper CDF for signed-support delays", {
+  pwindow <- 1
+  L <- -0.5
+  D <- 1.5
+  q <- seq(L, D, by = 0.25)
+  cdf <- ppcens(q, pnorm, pwindow, L = L, D = D, mean = 0, sd = 1)
+  expect_equal(cdf[1], 0, tolerance = 1e-6)
+  expect_equal(cdf[length(cdf)], 1, tolerance = 1e-6)
+  expect_true(all(diff(cdf) >= 0))
+  expect_true(all(cdf >= 0 & cdf <= 1))
+
+  raw_conv <- function(qq) {
+    stats::integrate(
+      function(p) stats::pnorm(qq - p, 0, 1), 0, pwindow
+    )$value / pwindow
+  }
+  raw <- vapply(q, raw_conv, numeric(1))
+  expected <- (raw - raw_conv(L)) / (raw_conv(D) - raw_conv(L))
+  expect_equal(cdf, expected, tolerance = 1e-6)
+})
+
+test_that("pprimarycensored with L = 0 truncates signed-support delays", {
+  cdf_at_0 <- ppcens(
+    0, pnorm,
+    pwindow = 1, L = 0, D = Inf, mean = 0, sd = 1
+  )
+  expect_equal(cdf_at_0, 0, tolerance = 1e-6)
+})
+
+test_that("pprimarycensored with L = -Inf is the raw censored convolution", {
+  q <- seq(-5, 5, by = 0.5)
+  cdf <- ppcens(
+    q, pnorm,
+    pwindow = 1, L = -Inf, D = Inf, mean = 0, sd = 1
+  )
+  expect_true(all(diff(cdf) >= 0))
+  expect_true(all(cdf >= 0 & cdf <= 1))
+  tails <- ppcens(
+    c(-50, 50), pnorm,
+    pwindow = 1, L = -Inf, D = Inf, mean = 0, sd = 1
+  )
+  expect_equal(tails[1], 0, tolerance = 1e-6)
+  expect_equal(tails[2], 1, tolerance = 1e-6)
+})
+
+test_that("pprimarycensored rejects L = Inf, NA, and NaN", {
+  expect_error(
+    ppcens(0, pnorm, pwindow = 1, L = Inf, D = 10, mean = 0, sd = 1),
+    "L must be finite or -Inf"
+  )
+  expect_error(
+    ppcens(0, pnorm, pwindow = 1, L = NA_real_, D = 10, mean = 0, sd = 1),
+    "non-NA numeric"
+  )
+  expect_error(
+    ppcens(0, pnorm, pwindow = 1, L = NaN, D = 10, mean = 0, sd = 1),
+    "non-NA numeric"
+  )
 })

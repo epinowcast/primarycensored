@@ -11,7 +11,7 @@
 
 \item{q}{Numeric vector of quantiles at which CDF was evaluated.}
 
-\item{L}{Numeric lower truncation point}
+\item{L}{Numeric lower truncation point (may be negative or \code{-Inf})}
 
 \item{D}{Numeric upper truncation point}
 

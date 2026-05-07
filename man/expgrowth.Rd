@@ -45,12 +45,12 @@ growth distribution.
 The exponential growth distribution is defined on the interval [min, max]
 with rate parameter (r). Its probability density function (PDF) is:
 
-\deqn{f(x) = \frac{r \cdot \exp(r \cdot (x - min))}{\exp(r \cdot max) -
+\deqn{f(x) = \frac{r \cdot \exp(r \cdot x)}{\exp(r \cdot max) -
  \exp(r \cdot min)}}
 
 The cumulative distribution function (CDF) is:
 
-\deqn{F(x) = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{
+\deqn{F(x) = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{
  \exp(r \cdot max) - \exp(r \cdot min)}}
 
 For random number generation, we use the inverse transform sampling method:
@@ -58,8 +58,8 @@ For random number generation, we use the inverse transform sampling method:
 \item Generate \eqn{u \sim \text{Uniform}(0,1)}
 \item Set \eqn{F(x) = u} and solve for \eqn{x}:
 \deqn{
-   x = min + \frac{1}{r} \cdot \log(u \cdot (\exp(r \cdot max) -
-  \exp(r \cdot min)) + \exp(r \cdot min))
+   x = \frac{1}{r} \cdot \log(u \cdot \exp(r \cdot max) +
+  (1 - u) \cdot \exp(r \cdot min))
    }
 }
 
@@ -76,7 +76,7 @@ distribution. The formula for \eqn{x} is derived by algebraically solving
 the equation:
 
 \deqn{
-u = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{\exp(r \cdot max) -
+u = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{\exp(r \cdot max) -
  \exp(r \cdot min)}
 }
 

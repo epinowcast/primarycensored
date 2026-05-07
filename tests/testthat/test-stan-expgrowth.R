@@ -1,113 +1,88 @@
 skip_on_cran()
 
-test_that("Stan expgrowth_pdf matches R dexpgrowth", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- 0.5
+# Parameter sets covering positive r, negative r, and non-zero min
+stan_test_cases <- list(
+  list(
+    x = seq(0, 1, by = 0.1), min = 0, max = 1,
+    r = 0.5, label = "positive r"
+  ),
+  list(
+    x = seq(0, 1, by = 0.1), min = 0, max = 1,
+    r = -0.5, label = "negative r"
+  ),
+  list(
+    x = seq(10, 20, by = 1), min = 10, max = 20,
+    r = 0.1, label = "non-zero min"
+  )
+)
 
-  stan_pdf <- sapply(x, expgrowth_pdf, min, max, r)
-  r_pdf <- dexpgrowth(x, min, max, r)
+for (tc in stan_test_cases) {
+  test_that(
+    paste("Stan expgrowth_pdf matches R dexpgrowth:", tc$label),
+    {
+      stan_pdf <- sapply(tc$x, expgrowth_pdf, tc$min, tc$max, tc$r)
+      r_pdf <- dexpgrowth(tc$x, tc$min, tc$max, tc$r)
+      expect_equal(stan_pdf, r_pdf, tolerance = 1e-4)
+    }
+  )
 
-  expect_equal(stan_pdf, r_pdf, tolerance = 1e-4)
-})
+  test_that(
+    paste("Stan expgrowth_lpdf matches R dexpgrowth:", tc$label),
+    {
+      stan_lpdf <- sapply(
+        tc$x, expgrowth_lpdf, tc$min, tc$max, tc$r
+      )
+      r_lpdf <- dexpgrowth(tc$x, tc$min, tc$max, tc$r, log = TRUE)
+      expect_equal(stan_lpdf, r_lpdf, tolerance = 1e-4)
+    }
+  )
 
-test_that("Stan expgrowth_lpdf matches R dexpgrowth with log = TRUE", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- 0.5
+  test_that(
+    paste("Stan expgrowth_cdf matches R pexpgrowth:", tc$label),
+    {
+      stan_cdf <- sapply(tc$x, expgrowth_cdf, tc$min, tc$max, tc$r)
+      r_cdf <- pexpgrowth(tc$x, tc$min, tc$max, tc$r)
+      expect_equal(stan_cdf, r_cdf, tolerance = 1e-4)
+    }
+  )
 
-  stan_lpdf <- sapply(x, expgrowth_lpdf, min, max, r)
-  r_lpdf <- dexpgrowth(x, min, max, r, log = TRUE)
+  test_that(
+    paste("Stan expgrowth_lcdf matches R pexpgrowth:", tc$label),
+    {
+      # Avoid boundary points where log(0) = -Inf
+      x_inner <- tc$x[tc$x > tc$min & tc$x < tc$max]
+      stan_lcdf <- sapply(
+        x_inner, expgrowth_lcdf, tc$min, tc$max, tc$r
+      )
+      r_lcdf <- pexpgrowth(
+        x_inner, tc$min, tc$max, tc$r,
+        log.p = TRUE
+      )
+      expect_equal(stan_lcdf, r_lcdf, tolerance = 1e-6)
+    }
+  )
 
-  expect_equal(stan_lpdf, r_lpdf, tolerance = 1e-4)
-})
+  test_that(
+    paste("Stan expgrowth_rng matches theoretical CDF:", tc$label),
+    {
+      n <- 10000
+      stan_samples <- replicate(
+        n, expgrowth_rng(tc$min, tc$max, tc$r)
+      )
 
-test_that("Stan expgrowth_cdf matches R pexpgrowth", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- 0.5
+      expect_true(all(
+        stan_samples >= tc$min & stan_samples <= tc$max
+      ))
 
-  stan_cdf <- sapply(x, expgrowth_cdf, min, max, r)
-  r_cdf <- pexpgrowth(x, min, max, r)
-
-  expect_equal(stan_cdf, r_cdf, tolerance = 1e-4)
-})
-
-test_that("Stan expgrowth_lcdf matches R pexpgrowth with log.p = TRUE", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- 0.5
-
-  stan_lcdf <- sapply(x, expgrowth_lcdf, min, max, r)
-  r_lcdf <- pexpgrowth(x, min, max, r, log.p = TRUE)
-
-  expect_equal(stan_lcdf, r_lcdf, tolerance = 1e-6)
-})
-
-test_that("Stan expgrowth_pdf matches R dexpgrowth for negative r", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- -0.5
-
-  stan_pdf <- sapply(x, expgrowth_pdf, min, max, r)
-  r_pdf <- dexpgrowth(x, min, max, r)
-
-  expect_equal(stan_pdf, r_pdf, tolerance = 1e-4)
-})
-
-test_that("Stan expgrowth_lpdf matches R dexpgrowth for negative r", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- -0.5
-
-  stan_lpdf <- sapply(x, expgrowth_lpdf, min, max, r)
-  r_lpdf <- dexpgrowth(x, min, max, r, log = TRUE)
-
-  expect_equal(stan_lpdf, r_lpdf, tolerance = 1e-4)
-})
-
-test_that("Stan expgrowth_cdf matches R pexpgrowth for negative r", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- -0.5
-
-  stan_cdf <- sapply(x, expgrowth_cdf, min, max, r)
-  r_cdf <- pexpgrowth(x, min, max, r)
-
-  expect_equal(stan_cdf, r_cdf, tolerance = 1e-4)
-})
-
-test_that("Stan expgrowth_lcdf matches R pexpgrowth for negative r", {
-  x <- seq(0, 1, by = 0.1)
-  min <- 0
-  max <- 1
-  r <- -0.5
-
-  stan_lcdf <- sapply(x, expgrowth_lcdf, min, max, r)
-  r_lcdf <- pexpgrowth(x, min, max, r, log.p = TRUE)
-
-  expect_equal(stan_lcdf, r_lcdf, tolerance = 1e-6)
-})
-
-test_that("Stan expgrowth_rng matches distribution of R rexpgrowth", {
-  n <- 10000
-  min <- 0
-  max <- 1
-  r <- 0.5
-
-  set.seed(123)
-  stan_samples <- replicate(n, expgrowth_rng(min, max, r))
-  set.seed(123)
-  r_samples <- rexpgrowth(n, min, max, r)
-
-  expect_equal(mean(stan_samples), mean(r_samples), tolerance = 1e-2)
-  expect_equal(sd(stan_samples), sd(r_samples), tolerance = 1e-2)
-  expect_equal(quantile(stan_samples), quantile(r_samples), tolerance = 1e-2)
-})
+      empirical_cdf <- ecdf(stan_samples)
+      x_values <- seq(tc$min, tc$max, length.out = 50)
+      theoretical_cdf <- pexpgrowth(
+        x_values, tc$min, tc$max, tc$r
+      )
+      expect_equal(
+        empirical_cdf(x_values), theoretical_cdf,
+        tolerance = 0.05
+      )
+    }
+  )
+}

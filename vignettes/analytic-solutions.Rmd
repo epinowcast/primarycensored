@@ -133,6 +133,16 @@ Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta 
 (\#eq:survgammaunifprim)
 $$
 
+### CDF form of $S_{+}$ for Gamma distribution
+
+Rearranging equation \@ref(eq:survgammaunifprim) via $F_{S_+} = 1 - Q_{S_+}$ gives the equivalent CDF-direct form
+
+$$
+F_{S_+}(d; k, \theta) = \frac{1}{w_P}\Big[ d\, F_T(d; k, \theta) - q\, F_T(q; k, \theta) - k\theta\big( F_T(d; k{+}1, \theta) - F_T(q; k{+}1, \theta) \big) \Big],
+$$
+
+where $q = \max(d - w_P, 0)$.
+
 ### Gamma discrete censored delay distribution
 
 By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
@@ -190,6 +200,16 @@ By substituting equation \@ref(eq:lognormpartexp) into equation \@ref(eq:disccen
 $$
 Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
 $$
+
+### CDF form of $S_{+}$ for Log-Normal distribution
+
+Applying $F_{S_+} = 1 - Q_{S_+}$ to the preceding survival form gives the equivalent CDF-direct form
+
+$$
+F_{S_+}(d; \mu, \sigma) = \frac{1}{w_P}\Big[ d\, F_T(d; \mu, \sigma) - q\, F_T(q; \mu, \sigma) - e^{\mu + \sigma^2/2}\big( F_T(d; \mu{+}\sigma^2, \sigma) - F_T(q; \mu{+}\sigma^2, \sigma) \big) \Big],
+$$
+
+where $q = \max(d - w_P, 0)$.
 
 ### Log-Normal discrete censored delay distribution
 
@@ -256,6 +276,16 @@ By substituting equation \@ref(eq:weibullpartexp) into equation \@ref(eq:disccen
 $$
 Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
 $$
+
+### CDF form of $S_{+}$ for Weibull distribution
+
+Applying $F_{S_+} = 1 - Q_{S_+}$ to the preceding survival form gives the equivalent CDF-direct form
+
+$$
+F_{S_+}(d; \lambda, k) = \frac{1}{w_P}\Big[ d\, F_T(d; \lambda, k) - q\, F_T(q; \lambda, k) - \lambda\big( g(d; \lambda, k) - g(q; \lambda, k) \big) \Big],
+$$
+
+where $q = \max(d - w_P, 0)$ and $g$ is as defined in equation \@ref(eq:weibullpartexp).
 
 ### Weibull discrete censored delay distribution
 

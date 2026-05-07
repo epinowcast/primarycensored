@@ -55,11 +55,11 @@
 #'
 #' @param pwindow Column name for primary window (default: "pwindow").
 #'
-#' @param L Column name for minimum delay (lower truncation point). If greater
-#'  than 0, the distribution is left-truncated at L. This is useful for
-#'  modelling generation intervals where day 0 is excluded, particularly when
-#'  used in renewal models. (default: "L"). If the column is not present in
-#'  censdata, L = 0 is assumed.
+#' @param L Column name for minimum delay (lower truncation point). For any
+#'  finite L the distribution is left-truncated at L; use `L = -Inf` for no
+#'  left truncation. This is useful for modelling generation intervals where
+#'  day 0 is excluded, particularly when used in renewal models. (default:
+#'  "L"). If the column is not present in censdata, L = -Inf is assumed.
 #'
 #' @param D Column name for maximum delay (upper truncation point). If finite,
 #'  the distribution is truncated at D. If set to Inf, no upper truncation is
@@ -181,9 +181,9 @@ fitdistdoublecens <- function(
     primary_args, dprimary_args, "fitdistdoublecens"
   )
 
-  # Handle L column: if not present, create with default value 0
+  # Handle L column: if not present, default to -Inf (no left truncation).
   if (!L %in% names(censdata)) {
-    censdata[[L]] <- 0
+    censdata[[L]] <- -Inf
   }
 
   .check_truncation_bounds_df(censdata, L, D)

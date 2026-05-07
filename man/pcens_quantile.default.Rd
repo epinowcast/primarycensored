@@ -8,7 +8,7 @@
   object,
   p,
   pwindow,
-  L = 0,
+  L = -Inf,
   D = Inf,
   use_numeric = FALSE,
   init = 5,
@@ -24,10 +24,9 @@
 
 \item{pwindow}{Primary event window}
 
-\item{L}{Minimum delay (lower truncation point). If greater than 0, the
-distribution is left-truncated at L. This is useful for modelling
-generation intervals where day 0 is excluded, particularly when used in
-renewal models. Defaults to 0 (no left truncation).}
+\item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -36,13 +35,16 @@ to Inf.}
 \item{use_numeric}{Logical; if TRUE forces the use of numeric inversion even
 if an analytical solution is available (not yet implemented).}
 
-\item{init}{Initial guess for the delay. By default, 5.}
+\item{init}{Half-width of the initial search interval used when one or
+both truncation bounds are infinite. The starting interval is taken as
+\verb{[-init, init]} (or \verb{[L, L + 2 * init]} / \verb{[D - 2 * init, D]} when only
+one bound is finite) and then extended outward by \code{\link[stats:uniroot]{stats::uniroot()}}
+as needed. Defaults to 5, which brackets the bulk of most commonly used
+delay distributions.}
 
-\item{tol}{Numeric tolerance for the convergence criterion in the
-optimisation routine.}
+\item{tol}{Numeric tolerance passed to \code{\link[stats:uniroot]{stats::uniroot()}}.}
 
-\item{max_iter}{Integer specifying the maximum number of iterations allowed
-during optimisation.}
+\item{max_iter}{Maximum number of \code{\link[stats:uniroot]{stats::uniroot()}} iterations.}
 
 \item{...}{Additional arguments passed to underlying functions.}
 }
@@ -51,14 +53,10 @@ A numeric vector containing the computed primary event censored
 quantiles.
 }
 \description{
-This method inverts the primary event censored CDF using numerical
-optimisation via optim. For each probability value, it searches for the
-delay such that the CDF computed by \code{\link[=pcens_cdf]{pcens_cdf()}} approximates the target
-probability.
-}
-\details{
-The quantile is computed by minimising the squared difference between the
-computed CDF and the target probability.
+This method inverts the primary event censored CDF by root-finding via
+\code{\link[stats:uniroot]{stats::uniroot()}} with \code{extendInt = "upX"}. The censored CDF is monotone
+in \code{q}, so \code{\link[stats:uniroot]{stats::uniroot()}} extends its starting bracket outward as
+needed and handles infinite \code{L} or \code{D} without special casing.
 }
 \examples{
 # Create a primarycensored object with gamma delay and uniform primary

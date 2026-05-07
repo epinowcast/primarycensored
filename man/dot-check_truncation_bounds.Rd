@@ -7,7 +7,7 @@
 .check_truncation_bounds(L, D)
 }
 \arguments{
-\item{L}{Lower truncation bound}
+\item{L}{Lower truncation bound (may be negative or \code{-Inf})}
 
 \item{D}{Upper truncation bound}
 }
@@ -16,6 +16,7 @@ Invisible NULL if valid, otherwise stops with an error message.
 }
 \description{
 Internal function to validate that L (lower truncation) and D (upper
-truncation) parameters are valid: L must be non-negative and less than D.
+truncation) parameters are valid. L must be less than D. L may be negative
+or \code{-Inf} for delay distributions with support below zero.
 }
 \keyword{internal}

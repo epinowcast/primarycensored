@@ -106,6 +106,26 @@ Equation \@ref(eq:survivalfunc) is the key equation in this note and is used to 
 
 Note that in ["Getting started"](primarycensored.html#compute-the-primary-event-censored-cumulative-distribution-function-cdf-for-delays-with-pprimarycensored) the target for numerical quadrature is the cumulative distribution function of the sum of the primary time within the primary censoring window and the delay time.
 
+### CDF form of $S_+$ for uniform primary
+
+For uniform primary, equation \@ref(eq:survivalfunc) can be rearranged into a CDF-direct form that is often more convenient for computation.
+Applying $F_{S_+} = 1 - Q_{S_+}$ and $F_T = 1 - Q_T$ and integrating the partial expectation by parts,
+$\int_t^{t+w_P} f_T(z)\, z\, dz = [z F_T(z)]_t^{t+w_P} - \int_t^{t+w_P} F_T(z)\, dz$, gives
+
+$$
+F_{S_+}(d) = \frac{1}{w_P}\Big[ d\, F_T(d) - q\, F_T(q) - \int_q^d F_T(z)\, dz \Big],
+$$
+
+where $q = \max(d - w_P, 0)$.
+Substituting the partial expectation in the Gamma, Log-Normal and Weibull cases gives the equivalent "distribution mean" form
+
+$$
+F_{S_+}(d) = \frac{1}{w_P}\Big[ d\, F_T(d;\cdot) - q\, F_T(q;\cdot) - E\big( \tilde F(d) - \tilde F(q) \big) \Big],
+$$
+
+where $E$ is the distribution mean and $\tilde F$ is a shifted or related CDF specific to each distribution.
+See `vignette("analytic-solutions")` for the per-distribution expressions.
+
 ### Probability of secondary event time within a secondary censoring window
 
 Having constructed the survival function of $S_+$ with equation \@ref(eq:survivalfunc), using numerical quadrature or in some other way, we can calculate the probability mass of a secondary event time falling within a observed secondary censoring window of length $w_S$ that begins at time $n - w_S$ _after_ the primary censoring window. This is the probability that the censored delay time $T_c$ is $n$.

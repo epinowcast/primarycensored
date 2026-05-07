@@ -31,7 +31,7 @@ test_that("rprimarycensored handles very truncated distributions", {
 
   samples <- rpcens(
     n, rnorm, pwindow,
-    D = D, mean = 0.5, sd = 1
+    L = 0, D = D, mean = 0.5, sd = 1
   )
 
   expect_true(all(samples >= 0 & samples < D))
@@ -86,14 +86,7 @@ test_that("rprimarycensored errors when L >= D", {
   )
 })
 
-test_that("rprimarycensored errors when L < 0", {
-  expect_error(
-    rpcens(10, rlnorm, pwindow = 1, D = 10, L = -1, meanlog = 1, sdlog = 1),
-    "L must be non-negative"
-  )
-})
-
-test_that("rprimarycensored with L = 0 matches default behaviour", {
+test_that("rprimarycensored default matches L = 0 for positive support", {
   set.seed(123)
   samples_default <- rpcens(
     100, rlnorm,
@@ -107,6 +100,27 @@ test_that("rprimarycensored with L = 0 matches default behaviour", {
     meanlog = 1, sdlog = 1
   )
   expect_identical(samples_default, samples_explicit)
+})
+
+test_that("rprimarycensored signed-support samples match analytical CDF", {
+  set.seed(42)
+  L <- -0.5
+  D <- 1.5
+  n <- 20000
+  samples <- rpcens(
+    n = n, rnorm,
+    pwindow = 1, swindow = 0, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_length(samples, n)
+  expect_true(all(samples >= L & samples < D))
+
+  qs <- seq(L + 0.1, D - 0.1, length.out = 5)
+  empirical <- vapply(qs, function(q) mean(samples <= q), numeric(1))
+  analytical <- ppcens(
+    qs, pnorm,
+    pwindow = 1, L = L, D = D, mean = 0, sd = 1
+  )
+  expect_equal(empirical, analytical, tolerance = 0.02)
 })
 
 test_that("rprimarycensored with L > 0 rounds correctly to swindow", {

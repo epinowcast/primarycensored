@@ -16,10 +16,9 @@
 #'
 #' @param pwindow Primary event window
 #'
-#' @param L Minimum delay (lower truncation point). If greater than 0, the
-#'  distribution is left-truncated at L. This is useful for modelling
-#'  generation intervals where day 0 is excluded, particularly when used in
-#'  renewal models. Defaults to 0 (no left truncation).
+#' @param L Minimum delay (lower truncation point). Defaults to `-Inf`,
+#'  meaning no left truncation. For any finite value of L the distribution
+#'  is left-truncated at L.
 #'
 #' @param D Maximum delay (upper truncation point). If finite, the distribution
 #'  is truncated at D. If set to Inf, no upper truncation is applied. Defaults
@@ -69,7 +68,8 @@
 #' \eqn{f_{\text{primary}}} is the PDF of the primary event times, and
 #' \eqn{pwindow} is the primary event window.
 #'
-#' If truncation is applied (finite D or L > 0), the CDF is normalized:
+#' If truncation is applied (finite `D` or finite `L`), the CDF is
+#' normalized:
 #' \deqn{
 #' F_{\text{cens,norm}}(q) = \frac{F_{\text{cens}}(q) - F_{\text{cens}}(L)}{
 #' F_{\text{cens}}(D) - F_{\text{cens}}(L)}
@@ -111,7 +111,7 @@ pprimarycensored <- function(
     q,
     pdist,
     pwindow = 1,
-    L = 0,
+    L = -Inf,
     D = Inf,
     dprimary = stats::dunif,
     primary_args = NULL,
@@ -138,12 +138,7 @@ pprimarycensored <- function(
   # Compute the CDF using the S3 method
   result <- pcens_cdf(pcens_obj, q, pwindow)
 
-  # Apply truncation normalization if needed
-  if (!is.infinite(D) || L > 0) {
-    result <- .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
-  }
-
-  return(result)
+  .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
 }
 
 #' Normalise a primary event censored CDF
@@ -156,7 +151,7 @@ pprimarycensored <- function(
 #'
 #' @param q Numeric vector of quantiles at which CDF was evaluated.
 #'
-#' @param L Numeric lower truncation point
+#' @param L Numeric lower truncation point (may be negative or `-Inf`)
 #'
 #' @param D Numeric upper truncation point
 #'
@@ -177,8 +172,8 @@ pprimarycensored <- function(
     cdf_D <- pcens_cdf(pcens_obj, D, pwindow)
   }
 
-  # Get CDF at lower truncation point L
-  if (L == 0) {
+  # Get CDF at lower truncation point L. `L = -Inf` skips the integral.
+  if (is.infinite(L)) {
     cdf_L <- 0
   } else if (any(q == L)) {
     cdf_L <- result[which.max(q == L)]
@@ -187,8 +182,11 @@ pprimarycensored <- function(
   }
 
   # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
+  # Skip the division when cdf_L = 0 and normaliser = 1 leave result unchanged.
   normaliser <- cdf_D - cdf_L
-  result <- (result - cdf_L) / normaliser
+  if (!(cdf_L == 0 && normaliser == 1)) {
+    result <- (result - cdf_L) / normaliser
+  }
 
   # Clamp values outside truncation range
   result <- ifelse(q <= L, 0, result)
