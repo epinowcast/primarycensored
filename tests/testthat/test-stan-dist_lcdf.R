@@ -117,7 +117,8 @@ test_that(
     # Student's t: R dist_id = 23
     stan_result <- dist_lcdf(delay, c(5.0, 0.0, 1.0), 23L)
     r_result <- pt(
-      (delay - 0.0) / 1.0, df = 5.0, log.p = TRUE
+      (delay - 0.0) / 1.0,
+      df = 5.0, log.p = TRUE
     )
     expect_equal(
       stan_result, r_result,
@@ -132,6 +133,16 @@ test_that(
       stan_result, r_result,
       tolerance = 1e-6,
       info = "dist_id 24 should be uniform"
+    )
+  }
+)
+
+test_that(
+  "Stan dist_lcdf rejects uniform with a negative lower bound",
+  {
+    expect_error(
+      dist_lcdf(0.5, c(-1.0, 5.0), 24L),
+      "non-negative lower bound"
     )
   }
 )

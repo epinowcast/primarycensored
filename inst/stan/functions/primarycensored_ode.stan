@@ -46,13 +46,19 @@ int dist_has_positive_support(data int dist_id) {
   if (dist_id == 19) return 1;  // Inverse Chi-square
   if (dist_id == 21) return 1;  // Pareto
   if (dist_id == 22) return 1;  // Scaled inverse Chi-square
-  if (dist_id == 24) return 1;  // Uniform (treated as non-negative; lower bound
-                                // is supplied via params and we conservatively
-                                // assume params[1] >= 0 here)
+  if (dist_id == 24) return 1;  // Uniform (treated as non-negative; the
+                                // dist_lcdf rejects params[1] < 0 to keep this
+                                // assumption safe)
   return 0;
 }
 
 real dist_lcdf(real delay, array[] real params, int dist_id) {
+  if (dist_id == 24 && params[1] < 0) {
+    reject("Uniform delay distribution requires a non-negative lower bound ",
+           "(params[1]); got ", params[1], ". A negative lower bound would ",
+           "interact with the dist_has_positive_support short-circuit and ",
+           "silently return -inf for valid mass on (params[1], 0].");
+  }
   if (dist_has_positive_support(dist_id) && delay <= 0) {
     return negative_infinity();
   }

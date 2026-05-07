@@ -59,11 +59,12 @@ real primarycensored_apply_truncation(real log_cdf, real log_cdf_L,
   * @return 2-element vector: [log_cdf_L, log_cdf_D]
   *
   * @note F(L) for finite L is computed via primarycensored_lcdf with internal
-  *   bounds [0, +inf]. This is correct for the analytical solutions currently
-  *   supported, all of which assume the delay distribution has non-negative
-  *   support, so F(L) = 0 for any L <= 0. If future analytical solutions add
-  *   distributions with negative support, this internal lower bound will need
-  *   to be relaxed to -inf so the underlying CDF is evaluated directly.
+  *   bounds `[0, +inf]` for distributions with non-negative support and
+  *   `[-inf, +inf]` for distributions with support on the reals, controlled
+  *   by `dist_has_positive_support(dist_id)`. The positive-support branch
+  *   lets the `d <= L` early-exit short-circuit `F(L) = 0` for `L <= 0`,
+  *   while the real-support branch evaluates the underlying CDF directly so
+  *   F(L) is non-zero for negative L.
   */
 vector primarycensored_truncation_bounds(
   data real L, data real D,
@@ -510,9 +511,19 @@ vector primarycensored_sone_lpmf_vectorized(
     } else if (d - 1 < L) {
       // L falls within interval [d-1, d), so compute mass in [L, d)
       log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
-    } else if (d == 1) {
-      // First interval [0, 1) with L <= 0: F(0) = 0, so PMF = F(1) / normalizer
+    } else if (d == 1 && dist_has_positive_support(dist_id)) {
+      // First interval [0, 1) with L <= 0 and positive-support delay:
+      // F(0) = 0, so PMF = F(1) / normalizer
       log_pmfs[d] = log_cdfs[d] - log_normalizer;
+    } else if (d == 1) {
+      // First interval [0, 1) with L <= 0 and real-support delay: F(0) is
+      // non-zero in general, so compute it explicitly.
+      real log_cdf_0 = primarycensored_lcdf(
+        0.0 | dist_id, params, pwindow,
+        negative_infinity(), positive_infinity(),
+        primary_id, primary_params
+      );
+      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_0) - log_normalizer;
     } else {
       // Standard case: PMF = (F(d) - F(d-1)) / normalizer
       log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
