@@ -23,7 +23,7 @@ Distributions on the non-negative reals (lognormal, gamma, Weibull) cannot repre
 In this vignette we estimate the parameters of a logistic-distributed serial interval from doubly-censored, right-truncated samples that include negative observations.
 We use [`fitdistdoublecens()`] for a quick MLE fit and [`pcd_cmdstan_model()`] for the Bayesian fit.
 The logistic is symmetric with slightly heavier tails than the normal, has support on the whole real line, and ships in base R as `dlogis`/`plogis`/`qlogis`/`rlogis`.
-On the Stan side it dispatches to `dist_id = 17` and is integrated via the ODE path (no analytical solution is registered for it).
+On the Stan side no analytical primary-censored solution is registered for it, so the model integrates the CDF numerically via the ODE path.
 
 ## Packages used in this vignette
 
@@ -209,9 +209,9 @@ The MLE returns a point estimate and asymptotic standard errors; the Bayesian fi
 The same workflow extends to any signed-support delay that has a `d`/`p`/`q` triple in R and a Stan dispatch.
 `pcd_distributions` and `pcd_stan_dist_id()` document the registered options; the negative-support choices currently available on the Stan side are:
 
-- **Logistic** (`dist_id = 17`, used here): symmetric, slightly heavier tails than the normal, in base R.
-- **Cauchy** (`dist_id = 12`): symmetric, very heavy tails. Useful for serial intervals where extreme negative values cannot be ruled out. In base R as `dcauchy`/`pcauchy`/`qcauchy`/`rcauchy`.
-- **Gumbel** (`dist_id = 15`): right-skewed, supports the reals. A natural choice when the right tail is markedly heavier than the left, but not in base R; you would either define `dgumbel`/`pgumbel`/`qgumbel`/`rgumbel` in your script (the standard formulae are short) or attach a package such as `extraDistr`.
+- **Logistic** (used here): symmetric, slightly heavier tails than the normal, in base R.
+- **Cauchy**: symmetric, very heavy tails. Useful for serial intervals where extreme negative values cannot be ruled out. In base R as `dcauchy`/`pcauchy`/`qcauchy`/`rcauchy`.
+- **Gumbel**: right-skewed, supports the reals. A natural choice when the right tail is markedly heavier than the left, but not in base R; you would either define `dgumbel`/`pgumbel`/`qgumbel`/`rgumbel` in your script (the standard formulae are short) or attach a package such as `extraDistr`.
 
 # Adapting this vignette
 

@@ -188,9 +188,7 @@ pcd_as_stan_data <- function(
 
   if (!is.null(truncation_check_multiplier)) {
     unique_D <- unique(data[[relative_obs_time]])
-    # Skip negative or zero D: the "D much larger than max delay" heuristic
-    # does not transfer to fully-negative truncation windows.
-    for (D in unique_D[unique_D > 0]) {
+    for (D in unique_D) {
       delays_subset <- data[[delay]][data[[relative_obs_time]] == D]
       check_truncation(
         delays = delays_subset,

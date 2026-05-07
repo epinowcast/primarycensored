@@ -171,15 +171,14 @@ check_truncation <- function(delays, D, multiplier = 2) {
     stop("D must be a single value for check_truncation", call. = FALSE)
   }
 
-  if (D <= 0 || multiplier <= 1) {
-    stop(
-      "Invalid argument values. D must be positive and multiplier must be ",
-      "greater than 1.",
-      call. = FALSE
-    )
+  if (multiplier <= 1) {
+    stop("multiplier must be greater than 1.", call. = FALSE)
   }
 
-  if (is.infinite(D)) {
+  # The "D much larger than max delay" heuristic only applies to positive
+  # finite D. For Inf or non-positive D (e.g. fully-negative truncation
+  # windows), return silently.
+  if (D <= 0 || is.infinite(D)) {
     return(invisible(NULL))
   }
 
