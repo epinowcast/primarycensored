@@ -101,6 +101,16 @@ The function first computes the CDFs for all unique points (including both
 creates a lookup table for these CDFs to efficiently calculate the PMF for
 each input value. For delays less than L, the function returns 0.
 
+When the secondary censoring interval extends past the upper truncation
+point (\eqn{d + \text{swindow} > D}), the upper endpoint is internally
+clipped to \eqn{D} before evaluating the CDF. The likelihood for such an
+observation is therefore
+\eqn{P(X \in [d, \min(d + \text{swindow}, D)] \mid L \le X \le D)}, which
+equals the usual interval probability when \eqn{d + \text{swindow} \le D}.
+This avoids erroring when an observation's secondary window straddles the
+truncation point (relevant for non-parametric delays such as
+\code{\link[=pdiscretestep]{pdiscretestep()}}).
+
 The PMF is normalised to
 ensure it sums to 1 over the range [L, D\). This normalization uses:
 \deqn{

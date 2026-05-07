@@ -118,14 +118,6 @@ delay_data <- data.frame(
   D           = obs_times
 )
 
-# Where the secondary interval extends past D, widen D by one swindow so
-# the observation remains valid under truncation.
-delay_data$D <- ifelse(
-  delay_data$D < delay_data$delay_upper,
-  delay_data$D + swindows,
-  delay_data$D
-)
-
 head(delay_data)
 ```
 

@@ -63,7 +63,11 @@
 #'
 #' @param D Column name for maximum delay (upper truncation point). If finite,
 #'  the distribution is truncated at D. If set to Inf, no upper truncation is
-#'  applied. (default: "D").
+#'  applied. (default: "D"). Observations whose secondary censoring interval
+#'  straddles `D` (`right > D`) are accepted: the upper endpoint is internally
+#'  clipped to `D` and the likelihood becomes
+#'  `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op for the
+#'  standard parametric case where `right <= D`.
 #'
 #' @inheritParams pprimarycensored
 #'

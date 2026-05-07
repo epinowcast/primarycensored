@@ -472,7 +472,8 @@ test_that("fitdistdoublecens discretestep: recovers approximate PMF", {
   set.seed(101)
   true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
   K <- 5L
-  # D = K + 1 so the last bin (right edge = 5) is observable with swindow = 1
+  # D = K + 1 keeps the rightmost bin observable with swindow = 1; the
+  # `right > D` boundary case is exercised separately below.
   D_val <- K + 1L
   n <- 800
 
@@ -776,6 +777,60 @@ test_that(
 )
 
 test_that(
+  "fitdistdoublecens accepts right > D without erroring",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    set.seed(707)
+    true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
+    K <- 5L
+    D_val <- K
+    n <- 800
+    # swindow = 2 ensures `right > D` for samples at the rightmost
+    # observable bins (e.g. sample = 4 gives right = 6 > D = 5). Pre-fix
+    # this would have errored with "Upper truncation point is greater than
+    # D"; the relaxation now clips internally and the fit completes.
+    samples <- rprimarycensored(
+      n, rdiscretestep,
+      boundaries = 0:K, pmf = true_pmf,
+      pwindow = 1, swindow = 2, D = D_val
+    )
+    step_data <- data.frame(
+      left = samples,
+      right = samples + 2,
+      pwindow = rep(1, n),
+      D = rep(D_val, n)
+    )
+    # Confirm the boundary case is actually present in the data.
+    expect_true(any(step_data$right > step_data$D))
+
+    start <- as.list(stats::setNames(
+      rep(1 / K, K - 1L), paste0("p", seq_len(K - 1L))
+    ))
+    fit <- fitdistdoublecens(
+      step_data,
+      distr = "discretestep",
+      start = start,
+      boundaries = 0:K,
+      truncation_check_multiplier = NULL
+    )
+    expect_s3_class(fit, "fitdist")
+    expect_false(is.na(fit$loglik))
+    expect_false(is.infinite(fit$loglik))
+    p_free <- unname(fit$estimate)
+    est_pmf <- c(p_free, 1 - sum(p_free))
+    expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+    # Mass identifiability is limited under swindow = 2 with D = K (only
+    # even sample values are observed), so we tolerate moderate departure
+    # while confirming the fit is well-behaved on every bin.
+    expect_true(all(est_pmf >= -0.01))
+    expect_true(all(est_pmf <= 1.01))
+  }
+)
+
+test_that(
   "fitdistdoublecens discretestep: recovers PMF under mixed windows",
   {
     skip_if_not(
@@ -803,9 +858,11 @@ test_that(
       pwindows, swindows, obs_times
     )
 
+    # `right > D` is now allowed (e.g. samples + 2 may exceed obs_times);
+    # fitdistdoublecens internally clips the upper end at D.
     step_data <- data.frame(
       left    = samples,
-      right   = pmin(samples + swindows, obs_times),
+      right   = samples + swindows,
       pwindow = pwindows,
       D       = obs_times
     )

@@ -34,6 +34,7 @@
 - Added vignette `fitting-nonparametric-delays` demonstrating end-to-end
   non-parametric delay estimation.
 - `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+- `dprimarycensored()` and `fitdistdoublecens()` now accept observations whose secondary censoring interval extends past `D` (`right > D`). The upper endpoint is internally clipped to `D` and the likelihood becomes `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op when `right <= D` and removes the need to pad `D = K + 1` (or pre-clamp `right`) when fitting non-parametric delays whose support reaches `D` directly. (#312)
 
 ## Documentation
 

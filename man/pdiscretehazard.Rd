@@ -57,8 +57,10 @@ settings.
 # Equivalent to pdiscretestep with the corresponding PMF
 hazards <- c(0.3, 0.5, 1)
 boundaries <- 0:3
-pdiscretehazard(c(0.5, 1, 2, 3), boundaries = boundaries,
-  hazards = hazards)
+pdiscretehazard(c(0.5, 1, 2, 3),
+  boundaries = boundaries,
+  hazards = hazards
+)
 }
 \seealso{
 \code{\link[=pdiscretestep]{pdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}

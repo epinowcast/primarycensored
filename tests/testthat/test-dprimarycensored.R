@@ -61,21 +61,40 @@ test_that("dprimarycensored matches difference of pprimarycensored", {
 })
 
 test_that(
-  "dprimarycensored throws an error for invalid upper truncation point",
+  "dprimarycensored clips the upper endpoint at D when right > D",
   {
-    d <- 10
     pwindow <- 1
     swindow <- 1
     D <- 10
-
-    expect_error(
-      dpcens(
-        d, plnorm,
-        pwindow = pwindow, swindow = swindow, D = D,
-        meanlog = 0, sdlog = 1
-      ),
-      "Upper truncation point is greater than D"
+    # x + swindow == D + 1 > D: result is the residual mass on [x, D],
+    # equivalent to (F_cens(D) - F_cens(x)) / (F_cens(D) - F_cens(L)).
+    res <- dpcens(
+      D, plnorm,
+      pwindow = pwindow, swindow = swindow, D = D,
+      meanlog = 0, sdlog = 1
     )
+    # Should be exactly zero because the clipped interval [D, D] has
+    # measure zero under the (continuous) censored CDF.
+    expect_equal(res, 0)
+
+    # When the lower edge is strictly below D, the clipped likelihood
+    # equals (F_cens(D) - F_cens(D - 0.5)) / F_cens(D), using the
+    # un-normalised censored CDF (computed via D = Inf).
+    res2 <- dpcens(
+      D - 0.5, plnorm,
+      pwindow = pwindow, swindow = swindow, D = D,
+      meanlog = 0, sdlog = 1
+    )
+    raw_F_D <- pprimarycensored(
+      D, plnorm,
+      pwindow = pwindow, L = -Inf, D = Inf, meanlog = 0, sdlog = 1
+    )
+    raw_F_lower <- pprimarycensored(
+      D - 0.5, plnorm,
+      pwindow = pwindow, L = -Inf, D = Inf, meanlog = 0, sdlog = 1
+    )
+    expected2 <- (raw_F_D - raw_F_lower) / raw_F_D
+    expect_equal(res2, expected2, tolerance = 1e-8)
   }
 )
 

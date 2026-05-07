@@ -41,6 +41,16 @@
 #' creates a lookup table for these CDFs to efficiently calculate the PMF for
 #' each input value. For delays less than L, the function returns 0.
 #'
+#' When the secondary censoring interval extends past the upper truncation
+#' point (\eqn{d + \text{swindow} > D}), the upper endpoint is internally
+#' clipped to \eqn{D} before evaluating the CDF. The likelihood for such an
+#' observation is therefore
+#' \eqn{P(X \in [d, \min(d + \text{swindow}, D)] \mid L \le X \le D)}, which
+#' equals the usual interval probability when \eqn{d + \text{swindow} \le D}.
+#' This avoids erroring when an observation's secondary window straddles the
+#' truncation point (relevant for non-parametric delays such as
+#' [pdiscretestep()]).
+#'
 #' The PMF is normalised to
 #' ensure it sums to 1 over the range \[L, D\). This normalization uses:
 #' \deqn{
@@ -90,18 +100,6 @@ dprimarycensored <- function(
   check_pdist(pdist, D = D, ...)
   check_dprimary(dprimary, pwindow, primary_args)
 
-  if (max(x + swindow) > D) {
-    stop(
-      "Upper truncation point is greater than D. It is ",
-      max(x + swindow),
-      " and D is ",
-      D,
-      ". Resolve this by increasing D to be the maximum",
-      " of x + swindow.",
-      call. = FALSE
-    )
-  }
-
   if (min(x) < L) {
     stop(
       "Some values of x are below L. Minimum x is ",
@@ -113,8 +111,16 @@ dprimarycensored <- function(
     )
   }
 
+  # Clip the upper end of each secondary interval at D so observations with
+  # `x + swindow > D` (legitimate when the secondary censoring interval
+  # straddles D) are still valid. The likelihood becomes
+  # `P(X in [x, min(x + swindow, D)] | L <= X <= D)`, which equals the usual
+  # interval probability when `x + swindow <= D` (the parametric default) and
+  # captures the residual mass between `x` and `D` otherwise.
+  upper <- pmin(x + swindow, D)
+
   # Compute CDFs for all unique points
-  unique_points <- sort(unique(c(x, x + swindow)))
+  unique_points <- sort(unique(c(x, upper)))
   if (length(unique_points) == 0) {
     return(rep(0, length(x)))
   }
@@ -136,10 +142,10 @@ dprimarycensored <- function(
   cdf_lookup <- stats::setNames(cdfs, as.character(unique_points))
 
   result <- vapply(
-    x,
-    function(d) {
-      cdf_upper <- cdf_lookup[as.character(d + swindow)]
-      cdf_lower <- cdf_lookup[as.character(d)]
+    seq_along(x),
+    function(i) {
+      cdf_upper <- cdf_lookup[as.character(upper[i])]
+      cdf_lower <- cdf_lookup[as.character(x[i])]
       return(cdf_upper - cdf_lower)
     },
     numeric(1)
