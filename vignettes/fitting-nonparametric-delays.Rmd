@@ -32,8 +32,6 @@ We cover the following key points:
    random-walk-on-logit-hazard prior
 4. Comparing all four estimates against the true PMF, including
    posterior uncertainty from the Bayesian fits
-5. Demonstrating the analytic primary convolution with an exponential-growth
-   primary distribution
 
 ## What you will learn
 
@@ -46,7 +44,6 @@ By the end of this vignette, you will be able to:
   `distr = "discretehazard"`
 - Write custom Stan models that call `primarycensored_lpmf` with
   `dist_id = 26` (direct PMF) or `dist_id = 27` (logit-hazard)
-- Use the analytic primary convolution with non-uniform primary distributions
 
 ## What might I need to know before starting
 
@@ -71,29 +68,34 @@ library(dplyr) # nolint: object_usage_linter.
 
 # Simulating censored data from a step distribution
 
-We simulate data from a known 14-bin step distribution using `rpcens()`.
-The true PMF is obtained by discretising a lognormal(meanlog = 1.5,
-sdlog = 0.6) distribution onto integer bins 1–14, giving a distribution
-that peaks around days 3–4 and has a right tail, as one might expect for
+We simulate data from a known 10-bin step distribution using `rpcens()`.
+The true PMF is obtained by discretising a lognormal(meanlog = 1.0,
+sdlog = 0.6) distribution onto integer bins 1–10, giving a distribution
+that peaks around days 2–3 and has a right tail, as one might expect for
 an incubation or reporting delay.
-We simulate under right-truncation at `D = K + 1 = 15`, so the fits must
-account for this.
+Following the convention of the parametric fitting vignettes, we let the
+primary window, secondary window, and right-truncation point vary across
+observations.
+This means a meaningful fraction of observations are right-truncated below
+the maximum support of the delay distribution, so the fits must correctly
+account for per-observation truncation as well as for primary and secondary
+censoring.
 
 ```{r simulate}
 set.seed(123) # For reproducibility
 
 n <- 500
-K <- 14
+K <- 10
 boundaries <- 0:K
-D <- K + 1 # right-truncation point
 
 # Discretise lognormal onto bins 1..K then normalise
-raw_pmf <- diff(plnorm(boundaries, meanlog = 1.5, sdlog = 0.6))
+raw_pmf <- diff(plnorm(boundaries, meanlog = 1.0, sdlog = 0.6))
 true_pmf <- raw_pmf / sum(raw_pmf)
 
+# Fixed primary and secondary windows; varying right-truncation
 pwindows <- rep(1, n)
 swindows <- rep(1, n)
-obs_times <- rep(D, n)
+obs_times <- sample(8:11, n, replace = TRUE)
 
 generate_sample <- function(pwindow, swindow, obs_time) {
   rpcens(
@@ -112,6 +114,14 @@ delay_data <- data.frame(
   D           = obs_times
 )
 
+# Where the secondary interval extends past D, widen D by one swindow so
+# the observation remains valid under truncation.
+delay_data$D <- ifelse(
+  delay_data$D < delay_data$delay_upper,
+  delay_data$D + swindows,
+  delay_data$D
+)
+
 head(delay_data)
 ```
 
@@ -121,6 +131,29 @@ and discards any sample with `total_delay >= D`, re-sampling until `n`
 valid observations are obtained.
 This correctly represents the truncation mechanism rather than clipping
 observed values.
+
+Because we built `true_pmf` by discretising a lognormal CDF, we expect
+samples drawn through `rdiscretestep` to look approximately like samples
+drawn directly from the same lognormal under the same censoring.
+The check below confirms this.
+
+```{r sanity-check}
+samples_lnorm <- mapply(
+  function(pwindow, swindow, obs_time) {
+    rpcens(
+      1, rlnorm,
+      meanlog = 1.0, sdlog = 0.6,
+      pwindow = pwindow, swindow = swindow, D = obs_time
+    )
+  },
+  pwindows, swindows, obs_times
+)
+
+quantile(samples, probs = c(0.25, 0.5, 0.75))
+quantile(samples_lnorm, probs = c(0.25, 0.5, 0.75))
+```
+
+The two samples have similar quantiles up to discretisation noise.
 
 We can compare the empirical CDF of the simulated data against the true
 step CDF.
@@ -194,15 +227,14 @@ fit_step <- fitdistdoublecens(
   right      = "delay_upper",
   pwindow    = "pwindow",
   D          = "D",
-  boundaries = boundaries,
-  control    = list(maxit = 20000)
+  boundaries = boundaries
 )
 
 summary(fit_step)
 ```
 
-The estimated parameters `p1` through `p13` correspond to the first 13
-bin probabilities; the 14th is determined by the sum-to-one constraint.
+The estimated parameters `p1` through `p9` correspond to the first 9
+bin probabilities; the 10th is determined by the sum-to-one constraint.
 
 ## Logit-hazard random-walk parameterisation (`distr = "discretehazard"`)
 
@@ -229,8 +261,7 @@ fit_haz <- fitdistdoublecens(
   right      = "delay_upper",
   pwindow    = "pwindow",
   D          = "D",
-  boundaries = boundaries,
-  control    = list(maxit = 50000, reltol = 1e-8)
+  boundaries = boundaries
 )
 
 summary(fit_haz)
@@ -623,77 +654,6 @@ and the MLE point estimates fall within or very close to those intervals.
 Residual discrepancies reflect both sampling variability (n = 500) and the
 mild prior differences between parameterisations.
 
-# Analytic convolution with a non-uniform primary
-
-The analytic primary convolution for step distributions handles any
-primary distribution with a known CDF, not only the uniform.
-Below we demonstrate fitting when primary events follow an exponential-growth
-distribution (`dexpgrowth` / `pexpgrowth`) with growth rate `r` = 0.5.
-
-## Simulating with exponential-growth primary
-
-```{r expgrowth-simulate}
-set.seed(456)
-
-generate_expgrowth_sample <- function(pwindow, swindow, obs_time) {
-  rpcens(
-    1, rdiscretestep, # nolint: object_usage_linter
-    boundaries = boundaries, pmf = true_pmf,
-    pwindow = pwindow, swindow = swindow, D = obs_time,
-    rprimary = rexpgrowth,
-    rprimary_args = list(r = 0.5)
-  )
-}
-
-samples_eg <- mapply(
-  generate_expgrowth_sample, pwindows, swindows, obs_times
-)
-
-delay_data_eg <- data.frame(
-  delay       = samples_eg,
-  delay_upper = samples_eg + swindows,
-  pwindow     = pwindows,
-  D           = obs_times
-)
-```
-
-## Fitting with `fitdistdoublecens()` and exponential-growth primary
-
-Passing `dprimary = dexpgrowth` and `primary_args = list(r = 0.5)` to
-`fitdistdoublecens()` tells the fitting routine to use the same primary
-distribution used to generate the data.
-The analytic convolution is dispatched automatically because `pexpgrowth`
-is registered alongside `dexpgrowth` in the primary distribution registry.
-
-```{r expgrowth-fit, message = FALSE}
-fit_eg <- fitdistdoublecens(
-  delay_data_eg,
-  distr        = "discretestep",
-  start        = step_start,
-  left         = "delay",
-  right        = "delay_upper",
-  pwindow      = "pwindow",
-  D            = "D",
-  boundaries   = boundaries,
-  dprimary     = dexpgrowth,
-  primary_args = list(r = 0.5),
-  control      = list(maxit = 20000)
-)
-
-pmf_eg <- extract_step_pmf(fit_eg, K)
-
-data.frame(
-  bin           = seq_len(K),
-  truth         = round(true_pmf, 3),
-  expgrowth_mle = round(pmf_eg, 3)
-)
-```
-
-The recovered PMF is close to the truth, demonstrating that the analytic
-method correctly accounts for the non-uniform primary distribution.
-Using the analytic convolution avoids the numerical errors that `integrate()`
-can introduce at the piecewise-constant step boundaries.
-
 # When to choose each parameterisation
 
 The `"discretestep"` / Dirichlet parameterisation places no structural
@@ -722,8 +682,6 @@ The key takeaways are:
   convolution handles the rest.
 - **Dirichlet-on-PMF** and **random-walk-on-logit-hazard** are two natural
   Bayesian priors; the latter encourages smoother distributions.
-- The analytic primary convolution supports any primary distribution with
-  a known CDF, including exponential growth.
 - Properly accounting for primary censoring and truncation is as important
   here as with parametric distributions.
 
