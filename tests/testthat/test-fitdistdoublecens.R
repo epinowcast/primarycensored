@@ -785,6 +785,61 @@ test_that("pprimarycensored accepts pdist as a string lookup", {
   expect_identical(res_string, res_fn)
 })
 
+test_that(
+  "fitdistdoublecens discretestep: recovers PMF under mixed windows",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    set.seed(404)
+    true_pmf <- c(0.05, 0.20, 0.35, 0.20, 0.10, 0.05, 0.03, 0.02)
+    K <- 8L
+    n <- 1500
+    boundaries <- 0:K
+
+    pwindows <- sample(c(1, 2), n, replace = TRUE)
+    swindows <- sample(c(1, 2), n, replace = TRUE)
+    obs_times <- sample(c(K + 1L, K + 2L), n, replace = TRUE)
+
+    samples <- mapply(
+      function(pw, sw, ot) {
+        rprimarycensored(
+          1, rdiscretestep,
+          boundaries = boundaries, pmf = true_pmf,
+          pwindow = pw, swindow = sw, D = ot
+        )
+      },
+      pwindows, swindows, obs_times
+    )
+
+    step_data <- data.frame(
+      left    = samples,
+      right   = pmin(samples + swindows, obs_times),
+      pwindow = pwindows,
+      D       = obs_times
+    )
+
+    start <- as.list(stats::setNames(
+      rep(1 / K, K - 1L), paste0("p", seq_len(K - 1L))
+    ))
+    fit <- fitdistdoublecens(
+      step_data,
+      distr      = "discretestep",
+      start      = start,
+      boundaries = boundaries
+    )
+
+    p_free <- unname(fit$estimate)
+    est_pmf <- c(p_free, 1 - sum(p_free))
+    expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+    # Mixed windows + 1500 obs: the recovered PMF should be within
+    # ~0.05 absolute on every bin
+    expect_lt(max(abs(est_pmf - true_pmf)), 0.05)
+  }
+)
+
+
 test_that("pcens_cdf with general method works for uniform primary", {
   # The pcens_pdiscretestep_dunif specialisation has been removed; the
   # general step method now handles uniform primary too.

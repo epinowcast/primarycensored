@@ -69,10 +69,11 @@ library(dplyr) # nolint: object_usage_linter.
 # Simulating censored data from a step distribution
 
 We simulate data from a known 10-bin step distribution using `rpcens()`.
-The true PMF is obtained by discretising a lognormal(meanlog = 1.0,
-sdlog = 0.6) distribution onto integer bins 1–10, giving a distribution
-that peaks around days 2–3 and has a right tail, as one might expect for
-an incubation or reporting delay.
+To motivate the use of a non-parametric distribution we build a
+**bimodal** true PMF by mixing two discretised lognormals.
+This shape (e.g. a primary infection peak followed by a secondary
+reporting bump) is awkward to capture with a single parametric family
+and is a natural use case for the discrete step distribution.
 Following the convention of the parametric fitting vignettes, we let the
 primary window, secondary window, and right-truncation point vary across
 observations.
@@ -88,8 +89,11 @@ n <- 500
 K <- 10
 boundaries <- 0:K
 
-# Discretise lognormal onto bins 1..K then normalise
-raw_pmf <- diff(plnorm(boundaries, meanlog = 1.0, sdlog = 0.6))
+# Bimodal true PMF: a primary peak at days 2-3 plus a secondary bump
+# at days 6-7. Built from two discretised lognormals.
+mode1 <- diff(plnorm(boundaries, meanlog = 0.7, sdlog = 0.4))
+mode2 <- diff(plnorm(boundaries, meanlog = 1.9, sdlog = 0.2))
+raw_pmf <- 0.7 * mode1 + 0.3 * mode2
 true_pmf <- raw_pmf / sum(raw_pmf)
 
 # Fixed primary and secondary windows; varying right-truncation
@@ -132,28 +136,6 @@ valid observations are obtained.
 This correctly represents the truncation mechanism rather than clipping
 observed values.
 
-Because we built `true_pmf` by discretising a lognormal CDF, we expect
-samples drawn through `rdiscretestep` to look approximately like samples
-drawn directly from the same lognormal under the same censoring.
-The check below confirms this.
-
-```{r sanity-check}
-samples_lnorm <- mapply(
-  function(pwindow, swindow, obs_time) {
-    rpcens(
-      1, rlnorm,
-      meanlog = 1.0, sdlog = 0.6,
-      pwindow = pwindow, swindow = swindow, D = obs_time
-    )
-  },
-  pwindows, swindows, obs_times
-)
-
-quantile(samples, probs = c(0.25, 0.5, 0.75))
-quantile(samples_lnorm, probs = c(0.25, 0.5, 0.75))
-```
-
-The two samples have similar quantiles up to discretisation noise.
 
 We can compare the empirical CDF of the simulated data against the true
 step CDF.
@@ -247,7 +229,7 @@ A MAP-style prior penalty (equivalent to
 
 ```{r fit-haz, message = FALSE}
 haz_start <- c(
-  list(alpha = -2, log_sigma = log(0.3)),
+  list(alpha = -2, log_sigma = log(1.0)),
   as.list(stats::setNames(
     rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))
   ))
@@ -261,7 +243,8 @@ fit_haz <- fitdistdoublecens(
   right      = "delay_upper",
   pwindow    = "pwindow",
   D          = "D",
-  boundaries = boundaries
+  boundaries = boundaries,
+  control    = list(maxit = 10000)
 )
 
 summary(fit_haz)
