@@ -293,14 +293,13 @@ add_name_attribute <- function(func, name) {
   p_name <- attr(pprimary, "name")
   if (is.null(p_name)) p_name <- .extract_function_name(pprimary)
   if (!is.null(d_name) && !is.null(p_name) &&
-    d_name != "unknown" && p_name != "unknown") {
-    if (sub("^d", "", d_name) != sub("^p", "", p_name)) {
-      stop(
-        "dprimary and pprimary refer to different distributions: '",
-        d_name, "' vs '", p_name, "'.",
-        call. = FALSE
-      )
-    }
+    d_name != "unknown" && p_name != "unknown" &&
+    sub("^d", "", d_name) != sub("^p", "", p_name)) {
+    stop(
+      "dprimary and pprimary refer to different distributions: '",
+      d_name, "' vs '", p_name, "'.",
+      call. = FALSE
+    )
   }
   pprimary
 }
