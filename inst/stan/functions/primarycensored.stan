@@ -268,14 +268,21 @@ real primarycensored_lpmf(data int d, int dist_id, array[] real params,
   if (d < L) {
     return negative_infinity();
   }
-  // Observation interval [d, d_upper) is clipped to the truncation upper
-  // bound D so that intervals which straddle D contribute the mass in
-  // [d, min(d_upper, D)). If d >= D the interval is empty and the
-  // log-likelihood is negative_infinity().
-  int clip_to_D = (!is_inf(D) && d_upper > D);
+  // Reject inputs whose left edge lies at or above the upper truncation D:
+  // under truncation at D we cannot observe an event with latent X > D, so
+  // d > D is genuinely invalid. The d == D boundary is degenerate (the
+  // observation interval [D, d_upper) contributes zero mass under both
+  // continuous and discrete-step semantics) and is also returned as
+  // negative_infinity() rather than rejected so the optimiser can move
+  // away from it. This early return must precede the clip-to-D branch
+  // below: the clipped interval [d, D) would otherwise be empty.
   if (!is_inf(D) && d >= D) {
     return negative_infinity();
   }
+  // Observation interval [d, d_upper) is clipped to the truncation upper
+  // bound D so that intervals which straddle D contribute the mass in
+  // [d, min(d_upper, D)). The d >= D case is handled above.
+  int clip_to_D = (!is_inf(D) && d_upper > D);
   // Compute log F at the (possibly clipped) upper end of the observation
   // interval. We branch on `clip_to_D` to keep the data-only typing of
   // the lcdf call: passing either `d_upper` (data) or `D` (data) directly
@@ -495,7 +502,10 @@ vector primarycensored_sone_lpmf_vectorized(
     real lower_bd = d - 1;
     real upper_bd = d;
     if (lower_bd >= D) {
-      // Interval [d-1, d) lies entirely at or above D
+      // Interval [d-1, d) has left edge at or above D. Both the strict
+      // "d-1 > D" case (entirely above D) and the boundary "d-1 == D"
+      // case contribute zero mass and are returned as -inf. This matches
+      // the scalar primarycensored_lpmf early return for d >= D.
       log_pmfs[d] = negative_infinity();
     } else if (d <= L) {
       // Delay interval [d-1, d) is entirely at or below L
