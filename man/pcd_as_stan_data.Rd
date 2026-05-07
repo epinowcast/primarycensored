@@ -42,7 +42,9 @@ the column is not present in data, L = \code{-Inf} is assumed for all
 observations. (default: "start_relative_obs_time")}
 
 \item{relative_obs_time}{Column name for relative observation time, used as
-the upper truncation point D (default: "relative_obs_time")}
+the upper truncation point D. Values may be any finite real number
+(including negatives, paired with a smaller \code{start_relative_obs_time}) or
+\code{+Inf} to indicate no upper truncation. (default: "relative_obs_time")}
 
 \item{dist_id}{Integer identifying the delay distribution:
 You can use \code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}} to get the dist ID for a

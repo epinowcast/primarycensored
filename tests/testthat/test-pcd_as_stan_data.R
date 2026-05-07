@@ -178,7 +178,6 @@ test_that("pcd_as_stan_data handles additional columns correctly", {
 })
 
 test_that("pcd_as_stan_data handles additional columns with custom names", {
-
   # Data with custom column names AND extra columns
   data <- data.frame(
     obs_delay = c(1, 2, 3),
@@ -218,4 +217,52 @@ test_that("pcd_as_stan_data handles additional columns with custom names", {
   # Verify extra columns are not included in result
   expect_null(result$spurious_data)
   expect_null(result$metadata)
+})
+
+test_that("pcd_as_stan_data accepts a fully-negative truncation window", {
+  data <- data.frame(
+    delay = c(-8, -6, -5),
+    delay_upper = c(-7, -5, -4),
+    n = c(10, 20, 15),
+    pwindow = c(1, 1, 1),
+    start_relative_obs_time = c(-10, -10, -10),
+    relative_obs_time = c(-2, -2, -2)
+  )
+
+  result <- pcd_as_stan_data(
+    data,
+    dist_id = 17,
+    primary_id = 1,
+    param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = c(0, 1), scale = c(1, 0.5)),
+    primary_priors = list(location = numeric(0), scale = numeric(0))
+  )
+
+  expect_identical(result$L, data$start_relative_obs_time)
+  expect_identical(result$D, data$relative_obs_time)
+})
+
+test_that("pcd_as_stan_data rejects rows where L >= D", {
+  data <- data.frame(
+    delay = c(-3, -2),
+    delay_upper = c(-2, -1),
+    n = c(10, 20),
+    pwindow = c(1, 1),
+    start_relative_obs_time = c(-5, 0),
+    relative_obs_time = c(-5, 0)
+  )
+
+  expect_error(
+    pcd_as_stan_data(
+      data,
+      dist_id = 17,
+      primary_id = 1,
+      param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(0, 1), scale = c(1, 0.5)),
+      primary_priors = list(location = numeric(0), scale = numeric(0))
+    ),
+    "L must be less than D"
+  )
 })

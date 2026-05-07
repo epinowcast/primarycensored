@@ -75,7 +75,9 @@ pcd_cmdstan_model <- function(
 #'  observations. (default: "start_relative_obs_time")
 #'
 #' @param relative_obs_time Column name for relative observation time, used as
-#'  the upper truncation point D (default: "relative_obs_time")
+#'  the upper truncation point D. Values may be any finite real number
+#'  (including negatives, paired with a smaller `start_relative_obs_time`) or
+#'  `+Inf` to indicate no upper truncation. (default: "relative_obs_time")
 #'
 #' @param dist_id Integer identifying the delay distribution:
 #'   You can use [pcd_stan_dist_id()] to get the dist ID for a
@@ -186,7 +188,9 @@ pcd_as_stan_data <- function(
 
   if (!is.null(truncation_check_multiplier)) {
     unique_D <- unique(data[[relative_obs_time]])
-    for (D in unique_D) {
+    # Skip negative or zero D: the "D much larger than max delay" heuristic
+    # does not transfer to fully-negative truncation windows.
+    for (D in unique_D[unique_D > 0]) {
       delays_subset <- data[[delay]][data[[relative_obs_time]] == D]
       check_truncation(
         delays = delays_subset,
