@@ -134,6 +134,81 @@ test_that(
 )
 
 test_that(
+  "Stan primarycensored_lpmf clips d_upper to D for boundary intervals",
+  {
+    # Boundary case: K = 3 with boundaries 0:3 and unit secondary windows.
+    # An observation with d = 2, d_upper = 3, D = 3 (i.e. d_upper == D)
+    # has always worked. The new behaviour relaxes d_upper > D so that
+    # observation [d, d_upper) with d_upper > D yields the log mass in
+    # [d, D) divided by F(D), rather than being rejected.
+    pwindow <- 1.0
+
+    F <- function(d) {
+      primarycensored_cdf(
+        d, 26L, packed_params, pwindow, 0, Inf, 1L, numeric(0)
+      )
+    }
+
+    # Reference for the boundary case d = 2, d_upper = 4, D = 3:
+    # log((F(D) - F(d)) / F(D))
+    d <- 2L
+    d_upper <- 4 # > D, would have been rejected before
+    D_val <- 3
+    ref <- log((F(D_val) - F(d)) / F(D_val))
+
+    val <- primarycensored_lpmf(
+      d, 26L, packed_params, pwindow, d_upper, 0, D_val, 1L, numeric(0)
+    )
+    expect_true(is.finite(val))
+    expect_equal(val, ref, tolerance = 1e-9)
+
+    # And it matches the un-clipped call when d_upper == D (no-op case).
+    val_no_clip <- primarycensored_lpmf(
+      d, 26L, packed_params, pwindow, D_val, 0, D_val, 1L, numeric(0)
+    )
+    expect_equal(val, val_no_clip, tolerance = 1e-9)
+  }
+)
+
+test_that(
+  "Stan vectorised PMF clips intervals straddling D",
+  {
+    # K = 3 step distribution; pick D = 3 with max_delay = 3 so the upper
+    # interval [3, 4) lies entirely at D and is clipped to zero mass.
+    pwindow <- 1.0
+    max_delay <- 3L
+    D_val <- 3
+    log_pmfs <- primarycensored_sone_lpmf_vectorized(
+      max_delay, 0, D_val, 26L, packed_params, pwindow, 1L, numeric(0)
+    )
+    # The interval [3, 4) starts at D, so its log PMF is -inf
+    expect_equal(log_pmfs[length(log_pmfs)], -Inf)
+    # The other intervals normalise to one
+    expect_equal(sum(exp(log_pmfs)), 1, tolerance = 1e-9)
+
+    # D = 2 with max_delay = 3: interval [2, 3) is clipped to [2, 2)
+    # (empty -> -inf); [3, 4) is already above D, also -inf. The remaining
+    # finite mass over [0, 2) normalises to one under truncation at D.
+    log_pmfs2 <- primarycensored_sone_lpmf_vectorized(
+      max_delay, 0, 2, 26L, packed_params, pwindow, 1L, numeric(0)
+    )
+    expect_equal(log_pmfs2[3:4], c(-Inf, -Inf))
+    expect_equal(sum(exp(log_pmfs2)), 1, tolerance = 1e-9)
+  }
+)
+
+test_that(
+  "Stan primarycensored_lpmf returns -inf when d >= D",
+  {
+    pwindow <- 1.0
+    val <- primarycensored_lpmf(
+      3L, 26L, packed_params, pwindow, 4, 0, 3, 1L, numeric(0)
+    )
+    expect_equal(val, -Inf)
+  }
+)
+
+test_that(
   "Stan analytical step+expgrowth matches R partition reference",
   {
     pwindow <- 3.0

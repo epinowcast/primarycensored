@@ -225,23 +225,48 @@ test_that(
 )
 
 test_that(
-  "Stan primarycensored_lpmf throws an error for invalid upper truncation
-   point",
+  "Stan primarycensored_lpmf clips d_upper to D when d_upper > D",
   {
-    d <- 10
+    # When the observation interval [d, d_upper) extends past the
+    # truncation upper bound D, the likelihood should reflect the mass
+    # in [d, D), normalised by F(D). For d = 10, D = 11, d_upper = 12
+    # this equals log((F(D) - F(d)) / F(D)).
     dist_id <- 1 # Lognormal
-    params <- c(0, 1) # meanlog, sdlog
+    params <- c(0, 1)
     pwindow <- 1
-    d_upper <- 11
-    D <- 10
-    primary_id <- 1 # Uniform
+    primary_id <- 1
     primary_params <- numeric(0)
 
-    expect_error(
+    F <- function(x, D_norm) {
+      primarycensored_cdf(
+        x, dist_id, params, pwindow, 0, D_norm,
+        primary_id, primary_params
+      )
+    }
+
+    d <- 10L
+    d_upper <- 12
+    D <- 11
+    val <- primarycensored_lpmf(
+      d, dist_id, params, pwindow, d_upper, 0, D,
+      primary_id, primary_params
+    )
+    # Reference: log((F(D) - F(d)) / F(D)) using un-truncated F
+    F_D <- primarycensored_cdf(
+      D, dist_id, params, pwindow, 0, Inf, primary_id, primary_params
+    )
+    F_d <- primarycensored_cdf(
+      d, dist_id, params, pwindow, 0, Inf, primary_id, primary_params
+    )
+    expect_equal(val, log((F_D - F_d) / F_D), tolerance = 1e-9)
+
+    # When d >= D the interval is empty and the lpmf is -inf
+    expect_equal(
       primarycensored_lpmf(
-        d, dist_id, params, pwindow, d_upper, 0, D, primary_id, primary_params
+        11L, dist_id, params, pwindow, 12, 0, 11,
+        primary_id, primary_params
       ),
-      "Upper truncation point is greater than D"
+      -Inf
     )
   }
 )
