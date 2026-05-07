@@ -182,3 +182,47 @@ test_that("pdiscretestep handles structural zero pmf entries", {
   # CDF at right edges should be cumulative sums
   expect_equal(result, cumsum(pmf), tolerance = 1e-12)
 })
+
+test_that("default boundaries are 0:length(pmf) when omitted", {
+  pmf <- c(0.2, 0.5, 0.3)
+  expect_identical(
+    pdiscretestep(c(0.5, 1, 2, 3), pmf = pmf),
+    pdiscretestep(c(0.5, 1, 2, 3), boundaries = 0:3, pmf = pmf)
+  )
+  expect_identical(
+    ddiscretestep(c(0, 1, 2, 3), pmf = pmf),
+    ddiscretestep(c(0, 1, 2, 3), boundaries = 0:3, pmf = pmf)
+  )
+  set.seed(1)
+  s1 <- rdiscretestep(20, pmf = pmf)
+  set.seed(1)
+  s2 <- rdiscretestep(20, boundaries = 0:3, pmf = pmf)
+  expect_identical(s1, s2)
+})
+
+test_that("validation errors for boundaries and pmf", {
+  pmf <- c(0.5, 0.5)
+  expect_error(
+    pdiscretestep(0.5, boundaries = c("a", "b", "c"), pmf = pmf),
+    "boundaries must be numeric"
+  )
+  expect_error(
+    pdiscretestep(0.5, boundaries = 0:2, pmf = c("a", "b")),
+    "pmf must be numeric"
+  )
+  expect_error(
+    pdiscretestep(0.5, boundaries = c(0, NA, 2), pmf = pmf),
+    "must not contain NA"
+  )
+  expect_error(
+    pdiscretestep(0.5, boundaries = 0:2, pmf = c(0.5, NA)),
+    "must not contain NA"
+  )
+})
+
+test_that("hazards_to_pmf errors on empty input", {
+  expect_error(
+    hazards_to_pmf(numeric(0)),
+    "must have length >= 1"
+  )
+})

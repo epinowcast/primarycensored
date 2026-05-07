@@ -101,3 +101,55 @@ test_that("pdiscretehazard propagates validation errors from hazards_to_pmf", {
     "\\[0, 1\\]"
   )
 })
+
+test_that("default boundaries are 0:length(hazards) when omitted", {
+  h <- c(0.3, 0.5, 1)
+  expect_identical(
+    pdiscretehazard(c(0.5, 1, 2, 3), hazards = h),
+    pdiscretehazard(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = h)
+  )
+  expect_identical(
+    ddiscretehazard(c(0, 1, 2, 3), hazards = h),
+    ddiscretehazard(c(0, 1, 2, 3), boundaries = 0:3, hazards = h)
+  )
+  set.seed(1)
+  s1 <- rdiscretehazard(20, hazards = h)
+  set.seed(1)
+  s2 <- rdiscretehazard(20, boundaries = 0:3, hazards = h)
+  expect_identical(s1, s2)
+})
+
+test_that("user prior partially overrides defaults in discretehazard", {
+  set.seed(404)
+  K <- 4L
+  true_pmf <- c(0.4, 0.3, 0.2, 0.1)
+  D_val <- K + 1L
+  n <- 200
+  samples <- rprimarycensored(
+    n, rdiscretestep,
+    boundaries = 0:K, pmf = true_pmf,
+    pwindow = 1, swindow = 1, D = D_val
+  )
+  haz_data <- data.frame(
+    left    = samples,
+    right   = samples + 1,
+    pwindow = rep(1, n),
+    D       = rep(D_val, n)
+  )
+  start <- c(
+    list(alpha = -1, log_sigma = log(0.5)),
+    as.list(stats::setNames(
+      rep(0, K - 1L),
+      paste0("eps_", seq_len(K - 1L))
+    ))
+  )
+  fit <- fitdistdoublecens(
+    haz_data,
+    distr      = "discretehazard",
+    start      = start,
+    boundaries = 0:K,
+    prior      = list(alpha = list(mean = -2))
+  )
+  expect_s3_class(fit, "fitdist")
+  expect_false(is.na(fit$loglik))
+})
