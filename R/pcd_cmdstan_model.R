@@ -106,6 +106,23 @@ pcd_cmdstan_model <- function(
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
+#' @param nonparametric Optional list configuring a non-parametric delay
+#'   (`dist_id` 26 or 27). When `NULL` (the default) the model uses the
+#'   parametric path and all `np_*` Stan data fields are sized 0. When
+#'   supplied, expects a list with elements:
+#'   * `K`: integer, number of bins.
+#'   * `boundaries`: numeric vector of length `K + 1`.
+#'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26) or
+#'     `"hazard"` (random walk on logit hazards, `dist_id` 27).
+#'   * `dirichlet_alpha`: optional numeric vector of length `K`,
+#'     defaults to `rep(1, K)`.
+#'   * `hazard_priors`: optional list with elements `alpha_mean`,
+#'     `alpha_sd`, `log_sigma_mean`, `log_sigma_sd`. Defaults to
+#'     `list(alpha_mean = 0, alpha_sd = 5, log_sigma_mean = 0,
+#'     log_sigma_sd = 1)`.
+#'   When supplied, `param_bounds`, `priors`, and the parametric
+#'   `dist_id` argument are ignored (`dist_id` is set from `paramtype`).
+#'
 #' @return A list containing the data formatted for use with
 #'   [pcd_cmdstan_model()]
 #'
@@ -145,7 +162,14 @@ pcd_as_stan_data <- function(
     primary_priors,
     compute_log_lik = FALSE,
     use_reduce_sum = FALSE,
-    truncation_check_multiplier = 2) {
+    truncation_check_multiplier = 2,
+    nonparametric = NULL) {
+  np <- .build_nonparametric_stan_fields(nonparametric)
+  if (!is.null(nonparametric)) {
+    dist_id <- np$dist_id
+    param_bounds <- list(lower = numeric(0), upper = numeric(0))
+    priors <- list(location = numeric(0), scale = numeric(0))
+  }
   required_cols <- c(delay, delay_upper, n, pwindow, relative_obs_time)
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
@@ -215,8 +239,99 @@ pcd_as_stan_data <- function(
     prior_location = priors$location,
     prior_scale = priors$scale,
     primary_prior_location = primary_priors$location,
-    primary_prior_scale = primary_priors$scale
+    primary_prior_scale = primary_priors$scale,
+    nonparametric = np$nonparametric,
+    K_np = np$K_np,
+    np_boundaries = np$np_boundaries,
+    np_paramtype = np$np_paramtype,
+    np_dirichlet_alpha = np$np_dirichlet_alpha,
+    np_alpha_mean = np$np_alpha_mean,
+    np_alpha_sd = np$np_alpha_sd,
+    np_log_sigma_mean = np$np_log_sigma_mean,
+    np_log_sigma_sd = np$np_log_sigma_sd
   )
 
   return(stan_data)
 }
+
+# Build the np_* Stan data fields. When `nonparametric` is NULL all fields
+# are sized 0 and `np_paramtype` defaults to 1 (a no-op for the parametric
+# path). When supplied, validates the list and returns Stan-shaped fields
+# plus the inferred `dist_id` (26 for "simplex", 27 for "hazard").
+.build_nonparametric_stan_fields <- function(nonparametric) {
+  if (is.null(nonparametric)) {
+    # When the non-parametric path is off all np_* fields collapse to the
+    # smallest valid size for their declared types. `np_boundaries` is
+    # `vector[K_np + 1]` so it cannot be empty even when `K_np = 0`.
+    return(list(
+      nonparametric = 0L,
+      K_np = 0L,
+      np_boundaries = 0,
+      np_paramtype = 1L,
+      np_dirichlet_alpha = numeric(0),
+      np_alpha_mean = 0,
+      np_alpha_sd = 1,
+      np_log_sigma_mean = 0,
+      np_log_sigma_sd = 1,
+      dist_id = NA_integer_
+    ))
+  }
+  required <- c("K", "boundaries", "paramtype")
+  missing <- setdiff(required, names(nonparametric))
+  if (length(missing) > 0) {
+    stop(
+      "`nonparametric` is missing required elements: ",
+      toString(missing),
+      call. = FALSE
+    )
+  }
+  K <- as.integer(nonparametric$K)
+  if (!is.finite(K) || K < 1) {
+    stop("`nonparametric$K` must be a positive integer.", call. = FALSE)
+  }
+  boundaries <- as.numeric(nonparametric$boundaries)
+  if (length(boundaries) != K + 1L) {
+    stop(
+      "`nonparametric$boundaries` must have length K + 1 (got ",
+      length(boundaries), ", expected ", K + 1L, ").",
+      call. = FALSE
+    )
+  }
+  paramtype <- match.arg(
+    nonparametric$paramtype,
+    choices = c("simplex", "hazard")
+  )
+  np_paramtype <- if (paramtype == "simplex") 1L else 2L
+  dist_id <- if (paramtype == "simplex") 26L else 27L
+  dirichlet_alpha <- nonparametric$dirichlet_alpha %||% rep(1, K)
+  if (length(dirichlet_alpha) != K) {
+    stop(
+      "`nonparametric$dirichlet_alpha` must have length K.",
+      call. = FALSE
+    )
+  }
+  hazard_priors <- nonparametric$hazard_priors %||% list()
+  hp <- modifyList(
+    list(
+      alpha_mean = 0,
+      alpha_sd = 5,
+      log_sigma_mean = 0,
+      log_sigma_sd = 1
+    ),
+    hazard_priors
+  )
+  list(
+    nonparametric = 1L,
+    K_np = K,
+    np_boundaries = boundaries,
+    np_paramtype = np_paramtype,
+    np_dirichlet_alpha = as.numeric(dirichlet_alpha),
+    np_alpha_mean = as.numeric(hp$alpha_mean),
+    np_alpha_sd = as.numeric(hp$alpha_sd),
+    np_log_sigma_mean = as.numeric(hp$log_sigma_mean),
+    np_log_sigma_sd = as.numeric(hp$log_sigma_sd),
+    dist_id = dist_id
+  )
+}
+
+`%||%` <- function(a, b) if (is.null(a)) b else a

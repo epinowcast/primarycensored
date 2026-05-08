@@ -6,6 +6,12 @@
 
 ## New features
 
+- The Stan model returned by `pcd_cmdstan_model()` now drives the
+  non-parametric delay families directly. `pcd_as_stan_data()` accepts a
+  `nonparametric` list that selects either a Dirichlet on the simplex
+  (`paramtype = "simplex"`, `dist_id = 26`) or a random-walk on the
+  logit hazards (`paramtype = "hazard"`, `dist_id = 27`), with
+  `boundaries` carried as data; the parametric path is unchanged.
 - Added a non-parametric step CDF family. `pdiscretestep()`,
   `ddiscretestep()`, and `rdiscretestep()` represent a delay via a direct PMF
   over fixed bins, and the discrete-time hazard variant `pdiscretehazard()`,

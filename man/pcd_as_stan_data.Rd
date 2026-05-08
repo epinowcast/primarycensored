@@ -20,7 +20,8 @@ pcd_as_stan_data(
   primary_priors,
   compute_log_lik = FALSE,
   use_reduce_sum = FALSE,
-  truncation_check_multiplier = 2
+  truncation_check_multiplier = 2,
+  nonparametric = NULL
 )
 }
 \arguments{
@@ -72,6 +73,24 @@ numeric vector specifying priors for the primary distribution parameters.}
 \item{truncation_check_multiplier}{Numeric multiplier to use for checking
 if the truncation time D is appropriate relative to the maximum delay
 for each unique D value. Set to NULL to skip the check. Default is 2.}
+
+\item{nonparametric}{Optional list configuring a non-parametric delay
+(\code{dist_id} 26 or 27). When \code{NULL} (the default) the model uses the
+parametric path and all \verb{np_*} Stan data fields are sized 0. When
+supplied, expects a list with elements:
+\itemize{
+\item \code{K}: integer, number of bins.
+\item \code{boundaries}: numeric vector of length \code{K + 1}.
+\item \code{paramtype}: \code{"simplex"} (Dirichlet on the PMF, \code{dist_id} 26) or
+\code{"hazard"} (random walk on logit hazards, \code{dist_id} 27).
+\item \code{dirichlet_alpha}: optional numeric vector of length \code{K},
+defaults to \code{rep(1, K)}.
+\item \code{hazard_priors}: optional list with elements \code{alpha_mean},
+\code{alpha_sd}, \code{log_sigma_mean}, \code{log_sigma_sd}. Defaults to
+\code{list(alpha_mean = 0, alpha_sd = 5, log_sigma_mean = 0, log_sigma_sd = 1)}.
+When supplied, \code{param_bounds}, \code{priors}, and the parametric
+\code{dist_id} argument are ignored (\code{dist_id} is set from \code{paramtype}).
+}}
 }
 \value{
 A list containing the data formatted for use with

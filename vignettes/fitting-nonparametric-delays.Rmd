@@ -21,7 +21,7 @@ vignette: >
 ## What we will do
 
 In this vignette we fit a non-parametric delay distribution to doubly censored data using `primarycensored`.
-We simulate data from a known piecewise-constant PMF, fit it with MLE via `fitdistdoublecens()` and with Stan via a small custom model, then compare the four estimates against the truth.
+We simulate data from a known piecewise-constant PMF, fit it with MLE via `fitdistdoublecens()` and with Stan via the package model exposed by `pcd_cmdstan_model()`, then compare the four estimates against the truth.
 By the end you should be able to recognise when a non-parametric fit is appropriate and reproduce the workflow on your own data.
 
 ## What you might want to read first
@@ -247,96 +247,50 @@ The hazard fit avoids this because it parameterises the simplex through unconstr
 
 # Fitting via Stan
 
-The package model returned by `pcd_cmdstan_model()` was designed for parametric distributions: it places independent normal priors on a fixed-shape `params` vector and constrains `dist_id <= 17`.
-A non-parametric fit needs a simplex prior on `pmf` (or the random-walk construction on hazards) and a way to pass `boundaries` as data, so the package model cannot drive `dist_id = 26` or `27` directly.
-We therefore use a small custom Stan wrapper for each parameterisation (under 30 lines each) that calls `primarycensored_lpmf` with the right `dist_id`.
-Generalising the package model to cover non-parametric distributions is tracked as follow-up work.
+The package model returned by `pcd_cmdstan_model()` accepts a `nonparametric` block that selects either `dist_id = 26` (Dirichlet on the PMF) or `dist_id = 27` (random-walk hazards) directly, with `boundaries` carried as data and the simplex / random-walk constructed inside the Stan model.
+We use the same model object for both fits below; only the `nonparametric` argument to `pcd_as_stan_data()` changes.
 
 The current analytic step CDF in Stan returns exactly zero for delays at the lower support boundary plus one (here `delay = 1`), which makes the autodiff gradient non-finite during HMC.
 We therefore filter `delay > 1` for the Stan fit; this is a workaround and the affected mass is small.
-Fixing the underlying analytic convolution (so the right-continuous step semantics are reflected in every interval contribution, not only at the upper boundary) is also tracked as follow-up work.
+Fixing the underlying analytic convolution (so the right-continuous step semantics are reflected in every interval contribution, not only at the upper boundary) is tracked as follow-up work.
 We aggregate to unique `(pwindow, D, delay, delay_upper)` rows for efficiency.
 
 ```{r aggregate}
 delay_counts <- delay_data |>
   filter(delay > 1) |>
   summarise(
-    n_obs = n(),
-    .by   = c(pwindow, D, delay, delay_upper)
+    n = n(),
+    .by = c(pwindow, D, delay, delay_upper)
   ) |>
-  rename(y = delay, y_upper = delay_upper)
+  rename(relative_obs_time = D)
+```
+
+```{r np-model}
+np_model <- pcd_cmdstan_model()
 ```
 
 ## Dirichlet prior on the PMF
 
 We put a Dirichlet prior on the PMF.
-Stan supports the simplex constraint directly via `simplex[K] pmf; pmf ~ dirichlet(alpha);`, which avoids any normalisation trick.
+The package model declares the simplex parameter as `simplex[K] np_pmf` directly when `paramtype = "simplex"`, which avoids any normalisation trick.
 
 ```{r dirichlet-model-run, message = FALSE}
-dirichlet_stan_code <- "
-functions {
-  #include primarycensored.stan
-  #include primarycensored_ode.stan
-  #include primarycensored_analytical_cdf.stan
-  #include expgrowth.stan
-  #include nonparametric.stan
-}
-data {
-  int<lower=1> N;
-  array[N] int<lower=0> y;
-  array[N] int<lower=0> y_upper;
-  array[N] int<lower=0> n_obs;
-  array[N] int<lower=0> pwindow;
-  array[N] int<lower=0> D;
-  int<lower=1> K;
-  vector<lower=0>[K+1] boundaries;
-  vector<lower=0>[K] alpha;
-}
-transformed data {
-  array[0] real primary_params;
-  array[2*K+1] real params_template;
-  for (k in 1:(K+1)) params_template[k] = boundaries[k];
-}
-parameters {
-  simplex[K] pmf;
-}
-transformed parameters {
-  array[2*K+1] real params = params_template;
-  for (k in 1:K) params[K+1+k] = pmf[k];
-}
-model {
-  pmf ~ dirichlet(alpha);
-  for (i in 1:N) {
-    target += n_obs[i] * primarycensored_lpmf(
-      y[i] | 26, params,
-      pwindow[i], y_upper[i], 0, D[i],
-      1, primary_params
-    );
-  }
-}
-"
-
-dirichlet_stan_file <- file.path(tempdir(), "step_dirichlet.stan")
-writeLines(dirichlet_stan_code, dirichlet_stan_file)
-
-dirichlet_model <- cmdstan_model(
-  dirichlet_stan_file,
-  include_paths = pcd_stan_path()
+dirichlet_data <- pcd_as_stan_data(
+  delay_counts,
+  dist_id = 26,
+  primary_id = 1,
+  param_bounds = list(lower = numeric(0), upper = numeric(0)),
+  primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+  priors = list(location = numeric(0), scale = numeric(0)),
+  primary_priors = list(location = numeric(0), scale = numeric(0)),
+  nonparametric = list(
+    K          = K,
+    boundaries = boundaries,
+    paramtype  = "simplex"
+  )
 )
 
-dirichlet_data <- list(
-  N          = nrow(delay_counts),
-  y          = delay_counts$y,
-  y_upper    = delay_counts$y_upper,
-  n_obs      = delay_counts$n_obs,
-  pwindow    = delay_counts$pwindow,
-  D          = delay_counts$D,
-  K          = K,
-  boundaries = as.numeric(boundaries),
-  alpha      = rep(1, K)
-)
-
-dirichlet_fit <- dirichlet_model$sample(
+dirichlet_fit <- np_model$sample(
   data            = dirichlet_data,
   chains          = 4,
   parallel_chains = 4,
@@ -347,87 +301,36 @@ dirichlet_fit <- dirichlet_model$sample(
 )
 
 dirichlet_fit$summary(
-  variables = paste0("pmf[", seq_len(K), "]")
+  variables = paste0("np_pmf[", seq_len(K), "]")
 )
 ```
 
 ## Gaussian random walk on the logit hazards
 
-We model the logit hazards as a Gaussian random walk.
-The final bin hazard is fixed at 1 so the PMF sums to 1.
+The package model also exposes the hazard random-walk parameterisation when `paramtype = "hazard"`.
+The final bin hazard is pinned to 1 inside the model so the PMF sums to 1; only the prior hyperparameters are user-supplied.
 
 ```{r rw-model-run, message = FALSE}
-rw_stan_code <- "
-functions {
-  #include primarycensored.stan
-  #include primarycensored_ode.stan
-  #include primarycensored_analytical_cdf.stan
-  #include expgrowth.stan
-  #include nonparametric.stan
-}
-data {
-  int<lower=1> N;
-  array[N] int<lower=0> y;
-  array[N] int<lower=0> y_upper;
-  array[N] int<lower=0> n_obs;
-  array[N] int<lower=0> pwindow;
-  array[N] int<lower=0> D;
-  int<lower=1> K;
-  vector<lower=0>[K+1] boundaries;
-}
-transformed data {
-  array[0] real primary_params;
-  array[2*K+1] real params_template;
-  for (k in 1:(K+1)) params_template[k] = boundaries[k];
-}
-parameters {
-  real alpha;
-  real<lower=0> sigma;
-  vector[K-1] eps;
-}
-transformed parameters {
-  vector[K] logit_h;
-  logit_h[1] = alpha;
-  for (i in 2:K) logit_h[i] = logit_h[i-1] + sigma * eps[i-1];
-  vector[K] hazards = inv_logit(logit_h);
-  hazards[K] = 1;
-  array[2*K+1] real params = params_template;
-  for (k in 1:K) params[K+1+k] = hazards[k];
-}
-model {
-  alpha ~ normal(0, 5);
-  sigma ~ normal(0, 1);
-  eps   ~ std_normal();
-  for (i in 1:N) {
-    target += n_obs[i] * primarycensored_lpmf(
-      y[i] | 27, params,
-      pwindow[i], y_upper[i], 0, D[i],
-      1, primary_params
-    );
-  }
-}
-"
-
-rw_stan_file <- file.path(tempdir(), "step_rw.stan")
-writeLines(rw_stan_code, rw_stan_file)
-
-rw_model <- cmdstan_model(
-  rw_stan_file,
-  include_paths = pcd_stan_path()
+rw_data <- pcd_as_stan_data(
+  delay_counts,
+  dist_id = 27,
+  primary_id = 1,
+  param_bounds = list(lower = numeric(0), upper = numeric(0)),
+  primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+  priors = list(location = numeric(0), scale = numeric(0)),
+  primary_priors = list(location = numeric(0), scale = numeric(0)),
+  nonparametric = list(
+    K = K,
+    boundaries = boundaries,
+    paramtype = "hazard",
+    hazard_priors = list(
+      alpha_mean     = 0, alpha_sd     = 5,
+      log_sigma_mean = 0, log_sigma_sd = 1
+    )
+  )
 )
 
-rw_data <- list(
-  N          = nrow(delay_counts),
-  y          = delay_counts$y,
-  y_upper    = delay_counts$y_upper,
-  n_obs      = delay_counts$n_obs,
-  pwindow    = delay_counts$pwindow,
-  D          = delay_counts$D,
-  K          = K,
-  boundaries = as.numeric(boundaries)
-)
-
-rw_fit <- rw_model$sample(
+rw_fit <- np_model$sample(
   data            = rw_data,
   chains          = 4,
   parallel_chains = 4,
@@ -438,7 +341,7 @@ rw_fit <- rw_model$sample(
 )
 
 rw_fit$summary(
-  variables = paste0("hazards[", seq_len(K), "]")
+  variables = paste0("np_weights[", seq_len(K), "]")
 )
 ```
 
@@ -472,7 +375,7 @@ pmf_haz <- extract_haz_pmf(fit_haz, K)
 
 ```{r extract-stan-intervals}
 dirichlet_draws <- dirichlet_fit$draws(
-  variables = paste0("pmf[", seq_len(K), "]"),
+  variables = paste0("np_pmf[", seq_len(K), "]"),
   format    = "matrix"
 )
 
@@ -484,7 +387,7 @@ dirichlet_summary <- data.frame(
 )
 
 hazard_draws <- rw_fit$draws(
-  variables = paste0("hazards[", seq_len(K), "]"),
+  variables = paste0("np_weights[", seq_len(K), "]"),
   format    = "matrix"
 )
 

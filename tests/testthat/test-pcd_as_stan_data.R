@@ -25,6 +25,11 @@ test_that("pcd_as_stan_data correctly formats data", {
       primary_priors = primary_priors
     )
   )
+  # Default (parametric) path: nonparametric off, np_* fields sized 0.
+  expect_identical(result$nonparametric, 0L)
+  expect_identical(result$K_np, 0L)
+  expect_length(result$np_boundaries, 0)
+  expect_length(result$np_dirichlet_alpha, 0)
 
   expect_type(result, "list")
   expect_identical(result$N, nrow(data))
@@ -178,7 +183,6 @@ test_that("pcd_as_stan_data handles additional columns correctly", {
 })
 
 test_that("pcd_as_stan_data handles additional columns with custom names", {
-
   # Data with custom column names AND extra columns
   data <- data.frame(
     obs_delay = c(1, 2, 3),
@@ -218,4 +222,116 @@ test_that("pcd_as_stan_data handles additional columns with custom names", {
   # Verify extra columns are not included in result
   expect_null(result$spurious_data)
   expect_null(result$metadata)
+})
+
+test_that("pcd_as_stan_data populates np_* fields for simplex paramtype", {
+  data <- data.frame(
+    delay = c(1, 2, 3),
+    delay_upper = c(2, 3, 4),
+    n = c(10, 20, 15),
+    pwindow = c(1, 1, 2),
+    relative_obs_time = c(10, 10, 10)
+  )
+
+  expect_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      dist_id = 1, # ignored when nonparametric is supplied
+      primary_id = 1,
+      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(1, 1), scale = c(1, 1)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      nonparametric = list(
+        K = 5,
+        boundaries = 0:5,
+        paramtype = "simplex"
+      )
+    )
+  )
+
+  expect_identical(result$nonparametric, 1L)
+  expect_identical(result$dist_id, 26L)
+  expect_identical(result$K_np, 5L)
+  expect_identical(result$np_paramtype, 1L)
+  expect_identical(result$np_boundaries, as.numeric(0:5))
+  expect_identical(result$np_dirichlet_alpha, rep(1, 5))
+  expect_identical(result$n_params, 0L)
+})
+
+test_that("pcd_as_stan_data populates np_* fields for hazard paramtype", {
+  data <- data.frame(
+    delay = c(1, 2, 3),
+    delay_upper = c(2, 3, 4),
+    n = c(10, 20, 15),
+    pwindow = c(1, 1, 2),
+    relative_obs_time = c(10, 10, 10)
+  )
+
+  expect_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      dist_id = 1,
+      primary_id = 1,
+      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(1, 1), scale = c(1, 1)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      nonparametric = list(
+        K = 4,
+        boundaries = 0:4,
+        paramtype = "hazard",
+        hazard_priors = list(alpha_mean = -1, alpha_sd = 2)
+      )
+    )
+  )
+
+  expect_identical(result$nonparametric, 1L)
+  expect_identical(result$dist_id, 27L)
+  expect_identical(result$K_np, 4L)
+  expect_identical(result$np_paramtype, 2L)
+  expect_identical(result$np_alpha_mean, -1)
+  expect_identical(result$np_alpha_sd, 2)
+  # Defaults for unspecified hazard_priors entries.
+  expect_identical(result$np_log_sigma_mean, 0)
+  expect_identical(result$np_log_sigma_sd, 1)
+})
+
+test_that("pcd_as_stan_data validates nonparametric input", {
+  data <- data.frame(
+    delay = c(1, 2, 3),
+    delay_upper = c(2, 3, 4),
+    n = c(10, 20, 15),
+    pwindow = c(1, 1, 2),
+    relative_obs_time = c(10, 10, 10)
+  )
+  base_args <- list(
+    data,
+    dist_id = 1,
+    primary_id = 1,
+    param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = numeric(0), scale = numeric(0)),
+    primary_priors = list(location = numeric(0), scale = numeric(0))
+  )
+  # Wrong boundaries length.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
+      nonparametric = list(K = 3, boundaries = 0:2, paramtype = "simplex")
+    )))),
+    "boundaries.*length K \\+ 1"
+  )
+  # Unknown paramtype.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
+      nonparametric = list(K = 3, boundaries = 0:3, paramtype = "wibble")
+    ))))
+  )
+  # Missing K.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
+      nonparametric = list(boundaries = 0:3, paramtype = "simplex")
+    )))),
+    "missing required elements"
+  )
 })

@@ -407,3 +407,91 @@ test_that("pcd_cmdstan_model recovers true values with no bound on D", {
   expect_gt(true_sdlog, ci_sdlog[1])
   expect_lt(true_sdlog, ci_sdlog[2])
 })
+
+test_that(
+  "pcd_cmdstan_model fits non-parametric delays via the package model",
+  {
+    set.seed(2024)
+    K <- 4
+    boundaries <- 0:K
+    true_pmf <- c(0.1, 0.4, 0.3, 0.2)
+    delays <- rpcens(
+      300,
+      rdiscretestep,
+      boundaries = boundaries, pmf = true_pmf,
+      pwindow = 1, swindow = 1, D = K
+    )
+    delay_data <- data.frame(
+      delay = delays,
+      delay_upper = delays + 1,
+      pwindow = 1,
+      relative_obs_time = K
+    )
+    # Drop delay = 1 to avoid log(0) on the lower edge of the analytic step
+    # CDF (tracked as a follow-up to the convolution semantics).
+    delay_data <- delay_data[delay_data$delay > 1, ]
+    delay_counts <- delay_data |>
+      dplyr::summarise(
+        n = dplyr::n(),
+        .by = c(pwindow, relative_obs_time, delay, delay_upper)
+      )
+
+    # dist_id = 26: Dirichlet on the simplex.
+    stan_data <- pcd_as_stan_data(
+      delay_counts,
+      dist_id = 1, # ignored
+      primary_id = 1,
+      param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = numeric(0), scale = numeric(0)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      nonparametric = list(
+        K = K, boundaries = boundaries, paramtype = "simplex"
+      )
+    )
+    expect_identical(stan_data$dist_id, 26L)
+
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    fit <- suppressMessages(suppressWarnings(model$sample(
+      data = stan_data,
+      seed = 1,
+      chains = 1,
+      iter_warmup = 200,
+      iter_sampling = 200,
+      refresh = 0,
+      show_messages = FALSE
+    )))
+    summary <- fit$summary(variables = paste0("np_pmf[", seq_len(K), "]"))
+    expect_identical(nrow(summary), as.integer(K))
+    expect_true(all(is.finite(summary$mean)))
+
+    # dist_id = 27: random walk on logit hazards.
+    stan_data_h <- pcd_as_stan_data(
+      delay_counts,
+      dist_id = 1,
+      primary_id = 1,
+      param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = numeric(0), scale = numeric(0)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      nonparametric = list(
+        K = K, boundaries = boundaries, paramtype = "hazard"
+      )
+    )
+    expect_identical(stan_data_h$dist_id, 27L)
+    fit_h <- suppressMessages(suppressWarnings(model$sample(
+      data = stan_data_h,
+      seed = 2,
+      chains = 1,
+      iter_warmup = 200,
+      iter_sampling = 200,
+      refresh = 0,
+      show_messages = FALSE
+    )))
+    summary_h <- fit_h$summary(
+      variables = paste0("np_weights[", seq_len(K), "]")
+    )
+    expect_identical(nrow(summary_h), as.integer(K))
+    expect_true(all(is.finite(summary_h$mean)))
+  }
+)
