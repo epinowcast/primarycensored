@@ -28,7 +28,8 @@ test_that("pcd_as_stan_data correctly formats data", {
   # Default (parametric) path: nonparametric off, np_* fields sized 0.
   expect_identical(result$nonparametric, 0L)
   expect_identical(result$K_np, 0L)
-  expect_length(result$np_boundaries, 0)
+  # np_boundaries is declared `vector[K_np + 1]` so length 1 when K_np = 0.
+  expect_length(result$np_boundaries, 1)
   expect_length(result$np_dirichlet_alpha, 0)
 
   expect_type(result, "list")
