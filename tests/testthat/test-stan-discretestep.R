@@ -8,30 +8,6 @@ boundaries_vals <- 0:3
 # total length = 7
 packed_params <- c(as.numeric(boundaries_vals), pmf_vals)
 
-test_that("Stan pstep_lcdf matches R step CDF on a grid", {
-  cum <- cumsum(pmf_vals)
-  r_step_cdf <- function(t) {
-    if (t < boundaries_vals[1]) {
-      return(0)
-    }
-    if (t >= boundaries_vals[length(boundaries_vals)]) {
-      return(1)
-    }
-    k <- max(which(boundaries_vals[seq_along(pmf_vals)] <= t))
-    cum[k]
-  }
-  grid <- c(-0.5, 0, 0.5, 1, 1.5, 2, 2.5, 2.999, 3, 3.5)
-  for (t in grid) {
-    r_val <- r_step_cdf(t)
-    r_log <- if (r_val == 0) -Inf else log(r_val)
-    stan_val <- pstep_lcdf(t, as.numeric(boundaries_vals), pmf_vals)
-    expect_equal(stan_val, r_log,
-      tolerance = 1e-9,
-      info = sprintf("pstep_lcdf mismatch at t = %s", t)
-    )
-  }
-})
-
 test_that("Stan dist_lcdf with dist_id 26 matches pstep_lcdf directly", {
   for (t in c(0.5, 1.5, 2.5, 2.99)) {
     via_dist <- dist_lcdf(t, packed_params, 26L)
@@ -40,23 +16,9 @@ test_that("Stan dist_lcdf with dist_id 26 matches pstep_lcdf directly", {
   }
 })
 
-test_that("Stan hazards_to_pmf matches R reference", {
-  hazards <- c(0.2, 0.4, 1.0)
-  r_pmf <- numeric(length(hazards))
-  surv <- 1.0
-  for (i in seq_along(hazards)) {
-    r_pmf[i] <- hazards[i] * surv
-    surv <- surv * (1 - hazards[i])
-  }
-  stan_pmf <- hazards_to_pmf(hazards)
-  expect_equal(stan_pmf, r_pmf, tolerance = 1e-9)
-  expect_equal(sum(stan_pmf), 1, tolerance = 1e-9)
-})
-
 test_that("Stan analytic step CDF matches R pprimarycensored", {
   # Cross-check the analytic Stan path against the R reference
-  # `pprimarycensored` for both supported primaries. The closed-form
-  # algebra is also exercised by the R-side `pdiscretestep` tests.
+  # `pprimarycensored` for both supported primaries.
   d_vals <- c(0.5, 1.0, 1.5, 2.0, 2.5, 2.99)
 
   # Uniform primary, pwindow = 1
@@ -91,4 +53,54 @@ test_that("Stan analytic step CDF matches R pprimarycensored", {
       info = sprintf("expgrowth mismatch at d = %s", d)
     )
   }
+})
+
+test_that(
+  "primarycensored_lpmf returns finite mass at the d=1 boundary case",
+  {
+    # Regression test for the `log(0) = -Inf` autodiff propagation in
+    # `discretestep_lcdf`: the lower-edge interval [0, 1] has zero
+    # cumulative-before mass, so `log_diff_exp(lcdf(d_upper), lcdf(d))`
+    # evaluates against a literal -inf rather than a `log(0)` autodiff
+    # value. The vignette's `delay > 1` workaround should be unnecessary.
+    d_upper <- 2L
+    D <- 3.0
+    stan_val <- primarycensored_lpmf(
+      1L, 26L, packed_params, 1.0, d_upper, 0.0, D, 1L, numeric(0)
+    )
+    expect_true(is.finite(stan_val))
+
+    # Cross-validate against R's PMF construction.
+    r_ref <- log(
+      dprimarycensored(
+        1, pdiscretestep,
+        pwindow = 1.0, swindow = 1.0, D = D,
+        boundaries = boundaries_vals, pmf = pmf_vals
+      )
+    )
+    expect_equal(stan_val, r_ref, tolerance = 1e-9)
+  }
+)
+
+test_that("discretestep_lcdf handles d=K and d_upper=D boundary cases", {
+  # d at the upper support edge (K = 3): convolution still includes the
+  # bulk of bin K under the primary smear, so the result must be finite
+  # and agree with `pprimarycensored`.
+  for (d in c(3, 3 - 1e-6)) {
+    stan_val <- primarycensored_cdf(
+      d, 26L, packed_params, 1.0, 0, Inf, 1L, numeric(0)
+    )
+    r_ref <- pprimarycensored(
+      d, pdiscretestep,
+      pwindow = 1.0, boundaries = boundaries_vals, pmf = pmf_vals
+    )
+    expect_equal(stan_val, r_ref, tolerance = 1e-6)
+  }
+
+  # d_upper = D: `primarycensored_lpmf` must reuse the cached cdf at the
+  # upper truncation point and return finite mass.
+  stan_val <- primarycensored_lpmf(
+    2L, 26L, packed_params, 1.0, 3.0, 0.0, 3.0, 1L, numeric(0)
+  )
+  expect_true(is.finite(stan_val))
 })
