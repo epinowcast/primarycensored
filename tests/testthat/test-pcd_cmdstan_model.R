@@ -2,12 +2,10 @@ skip_on_cran()
 
 test_that("pcd_cmdstan_model throws error when cmdstanr is not installed", {
   with_mocked_bindings(
-    {
-      expect_error(
-        pcd_cmdstan_model(),
-        "Package 'cmdstanr' is required but not installed for this function"
-      )
-    },
+    expect_error(
+      pcd_cmdstan_model(),
+      "Package 'cmdstanr' is required but not installed for this function"
+    ),
     requireNamespace = function(...) FALSE,
     .package = "base"
   )
