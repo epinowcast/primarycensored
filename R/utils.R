@@ -189,16 +189,9 @@ add_name_attribute <- function(func, name) {
 
 #' Resolve \code{primary_args} / \code{dprimary_args} with a deprecation
 #'
-#' Maps the deprecated \code{dprimary_args} formal to the new
-#' \code{primary_args}. Emits a deprecation warning when the old name is
-#' used, errors if both are supplied, and returns the resolved list.
-#'
-#' The new \code{primary_args} formal defaults to \code{NULL} (rather than
-#' \code{list()}) so this resolver can distinguish "user supplied nothing"
-#' from "user supplied an empty list" alongside the deprecated
-#' \code{dprimary_args}. The returned list is never \code{NULL} (an empty
-#' list is returned when neither argument is supplied), so downstream code
-#' can treat the result as a list unconditionally.
+#' The resolver distinguishes "user supplied nothing" from "user supplied
+#' an empty list" so the deprecated \code{dprimary_args} path can be
+#' detected. The returned list is never \code{NULL}.
 #'
 #' @param primary_args The new argument value (or \code{NULL}).
 #' @param dprimary_args The old argument value (or \code{NULL}).

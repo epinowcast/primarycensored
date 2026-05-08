@@ -24,12 +24,18 @@ Draws \code{n} independent samples from the discrete distribution defined
 by \code{hazards}. Converts \code{hazards} to a PMF via
 \code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then delegates to \code{\link[=rdiscretestep]{rdiscretestep()}}.
 }
+\details{
+Outside fitting it is a deterministic wrapper around \code{\link[=rdiscretestep]{rdiscretestep()}}.
+It earns its keep as a fitting parameterisation in \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
+because the random walk on the logit hazard smooths the recovered PMF.
+}
 \examples{
 set.seed(42)
 rdiscretehazard(10, boundaries = 0:3, hazards = c(0.3, 0.5, 1))
 }
 \seealso{
-\code{\link[=rdiscretestep]{rdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}}
+\code{\link[=rdiscretestep]{rdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
 
 Other pdiscretehazard:
 \code{\link{ddiscretehazard}()},

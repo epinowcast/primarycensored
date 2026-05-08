@@ -214,14 +214,18 @@ fitdistdoublecens <- function(
     is.finite(censdata[[D]]) & censdata[[left]] >= censdata[[D]]
   )
   if (length(invalid_upper) > 0) {
+    bad_left <- censdata[[left]][invalid_upper[1]]
+    bad_D <- censdata[[D]][invalid_upper[1]]
     stop(
-      "Observations must be < D. Found ", length(invalid_upper),
-      " observation(s) where ", left, " >= D. First invalid row: ",
-      invalid_upper[1], " (", left, " = ",
-      censdata[[left]][invalid_upper[1]],
-      ", D = ", censdata[[D]][invalid_upper[1]], ")",
+      "Upper truncation point is greater than D. Maximum ", left, " is ",
+      max(censdata[[left]][invalid_upper]),
+      " and D is ", bad_D,
       ". Under truncation at D no event with latent value >= D is ",
-      "observable.",
+      "observable; resolve this by filtering ", left,
+      " to values strictly less than D. Found ", length(invalid_upper),
+      " observation(s) where ", left, " >= D; first invalid row: ",
+      invalid_upper[1], " (", left, " = ", bad_left,
+      ", D = ", bad_D, ").",
       call. = FALSE
     )
   }
@@ -313,162 +317,9 @@ fitdistdoublecens <- function(
   )
 }
 
-# ---- closure builder -------------------------------------------------------
-
-#' Build the (dpcens_dist, ppcens_dist) closure pair for fitdistdoublecens
-#'
-#' Single path: scalar named parameters are gathered from the closure's
-#' environment, optionally folded into the vector argument named by
-#' \code{vector_param}, and dispatched through \code{.dpcens}/\code{.ppcens}.
-#' Formals on the closures are derived from the supplied \code{start} list
-#' (parametric) or from a vector_param-aware naming convention
-#' (non-parametric).
-#'
-#' @keywords internal
-.build_pcens_closures <- function(
-    pdist,
-    ddist,
-    params,
-    dprimary,
-    primary_args,
-    pprimary = NULL,
-    vector_param,
-    param_transform = NULL,
-    fit_penalty,
-    prior,
-    N,
-    start,
-    pdist_extras = list()) {
-  if (is.null(vector_param)) {
-    # Parametric path: parameter names come from start, or fall back to
-    # the formals of the d<distr> function.
-    if (!is.null(start)) {
-      par_names <- names(start)
-    } else {
-      par_names <- setdiff(names(formals(ddist)), c("x", "log"))
-    }
-  } else {
-    if (is.null(start)) {
-      stop(
-        "Argument `start` must be supplied for distr with ",
-        "vector_param = '", vector_param, "'.",
-        call. = FALSE
-      )
-    }
-    par_names <- names(start)
-  }
-
-  # The closure body looks up scalar named args from its environment,
-  # builds either a numeric vector (non-parametric) or a flat list
-  # (parametric), and dispatches through .dpcens / .ppcens.
-  build_call_args <- function(env_args) {
-    if (is.null(vector_param)) {
-      # Parametric: pass through scalar args by name.
-      return(env_args[par_names])
-    }
-    par_named <- env_args[par_names]
-    if (!is.null(param_transform)) {
-      # Distribution-supplied mapping from named scalar args to a numeric
-      # vector. Used by the logit-hazard random walk, where the free
-      # parameters (alpha, log_sigma, eps_*) are not the hazards themselves.
-      full_vec <- param_transform(par_named)
-    } else if (vector_param == "pmf") {
-      free <- unlist(par_named, use.names = FALSE)
-      full_vec <- c(free, 1 - sum(free))
-    } else {
-      full_vec <- unlist(par_named, use.names = FALSE)
-    }
-    stats::setNames(list(full_vec), vector_param)
-  }
-
-  dpcens_dist <- function() {
-    env_args <- as.list(environment())
-    extra <- build_call_args(env_args)
-    base_dens <- do.call(
-      .dpcens,
-      c(
-        list(
-          x = env_args$x,
-          params = params,
-          pdist = pdist,
-          dprimary = dprimary,
-          primary_args = primary_args,
-          pprimary = pprimary
-        ),
-        pdist_extras,
-        extra
-      )
-    )
-    if (!is.null(fit_penalty)) {
-      par_named <- env_args[par_names]
-      penalty_per_obs <- fit_penalty(par_named, N = N, prior_settings = prior)
-      base_dens <- pmax(
-        base_dens * exp(-penalty_per_obs),
-        .Machine$double.eps
-      )
-    }
-    base_dens
-  }
-
-  ppcens_dist <- function() {
-    env_args <- as.list(environment())
-    extra <- build_call_args(env_args)
-    do.call(
-      .ppcens,
-      c(
-        list(
-          q = env_args$q,
-          params = params,
-          pdist = pdist,
-          dprimary = dprimary,
-          primary_args = primary_args,
-          pprimary = pprimary
-        ),
-        pdist_extras,
-        extra
-      )
-    )
-  }
-
-  free_formals <- vector("list", length(par_names))
-  names(free_formals) <- par_names
-  formals(dpcens_dist) <- c(alist(x = ), free_formals)
-  formals(ppcens_dist) <- c(alist(q = ), free_formals)
-
-  list(
-    dpcens_dist = dpcens_dist,
-    ppcens_dist = ppcens_dist,
-    par_names = par_names
-  )
-}
-
-#' Apply default bounds for non-parametric fits
-#'
-#' Sets sensible defaults for \code{lower} and \code{upper} when the user
-#' has not supplied them, based on the \code{vector_param} kind.
-#'
-#' @keywords internal
-.nonparametric_defaults <- function(dots, vector_param, par_names) {
-  if (is.null(vector_param)) {
-    return(dots)
-  }
-  if (vector_param == "pmf") {
-    if (is.null(dots$lower)) dots$lower <- rep(0, length(par_names))
-    if (is.null(dots$upper)) dots$upper <- rep(1, length(par_names))
-    return(dots)
-  }
-  if (vector_param == "hazards") {
-    # Expect par_names = c("alpha", "log_sigma", eps_1, ..., eps_{K-1}).
-    n_eps <- length(par_names) - 2L
-    if (is.null(dots$lower)) {
-      dots$lower <- c(-Inf, -6, rep(-5, n_eps))
-    }
-    if (is.null(dots$upper)) {
-      dots$upper <- c(Inf, 4, rep(5, n_eps))
-    }
-  }
-  dots
-}
+# Closure builder (`.build_pcens_closures`) and default-bounds helper
+# (`.nonparametric_defaults`) live in R/nonparametric_helpers.R alongside
+# the rest of the non-parametric machinery.
 
 # ---- low-level wrappers ----------------------------------------------------
 

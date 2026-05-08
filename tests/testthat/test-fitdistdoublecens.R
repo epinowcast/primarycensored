@@ -824,7 +824,7 @@ test_that(
         boundaries = 0:K,
         truncation_check_multiplier = NULL
       ),
-      "left >= D"
+      "Upper truncation point is greater than D"
     )
     # left == D is also rejected (degenerate observation).
     boundary_data <- bad_data
@@ -838,7 +838,7 @@ test_that(
         boundaries = 0:K,
         truncation_check_multiplier = NULL
       ),
-      "left >= D"
+      "Upper truncation point is greater than D"
     )
   }
 )

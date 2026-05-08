@@ -39,10 +39,7 @@
 #'  dprimary (and the matching primary CDF). For example, when using
 #'  `dexpgrowth`, you would pass `list(min = 0, max = pwindow, r = 0.2)` to
 #'  set the minimum, maximum, and rate parameters. Replaces the deprecated
-#'  `dprimary_args`. Defaults to `NULL` so the resolver can distinguish
-#'  "not supplied" from "supplied as an empty list" alongside the
-#'  deprecated `dprimary_args`; an empty list is used internally when
-#'  neither argument is supplied.
+#'  `dprimary_args`; defaults to `NULL`.
 #'
 #' @param dprimary_args \[Deprecated\] Use `primary_args` instead.
 #'

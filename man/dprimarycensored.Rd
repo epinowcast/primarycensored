@@ -70,10 +70,7 @@ functions if they wish to leverage analytical solutions.}
 dprimary (and the matching primary CDF). For example, when using
 \code{dexpgrowth}, you would pass \code{list(min = 0, max = pwindow, r = 0.2)} to
 set the minimum, maximum, and rate parameters. Replaces the deprecated
-\code{dprimary_args}. Defaults to \code{NULL} so the resolver can distinguish
-"not supplied" from "supplied as an empty list" alongside the
-deprecated \code{dprimary_args}; an empty list is used internally when
-neither argument is supplied.}
+\code{dprimary_args}; defaults to \code{NULL}.}
 
 \item{pprimary}{Optional CDF for the primary event distribution. May be
 a function or a character string naming a primary distribution in

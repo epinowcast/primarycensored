@@ -22,60 +22,16 @@ Numeric vector of CDF values, the same length as \code{q}.
 \description{
 Returns the CDF of a discrete distribution specified by its bin-wise
 discrete-time hazards. Converts \code{hazards} to a PMF via
-\code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then delegates to \code{\link[=pdiscretestep]{pdiscretestep()}}: the two
-parameterisations describe the same family of step distributions and
-yield identical CDFs.
+\code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then delegates to \code{\link[=pdiscretestep]{pdiscretestep()}}.
 }
 \details{
-\subsection{When to use the hazard parameterisation}{
-
-Outside fitting, \code{\link[=pdiscretehazard]{pdiscretehazard()}} is a deterministic wrapper around
-\code{\link[=pdiscretestep]{pdiscretestep()}}. For evaluating a CDF, sampling, or computing a PMF
-there is no advantage over the direct-PMF parameterisation.
-
-The hazard parameterisation exists to support fitting via
-\code{\link[=fitdistdoublecens]{fitdistdoublecens()}}. There the free parameters are not the hazards
-directly but a Gaussian random walk on the logit hazard. This smooths
-the recovered PMF, regularises against over-fitting in sparse data,
-and turns a constrained simplex problem into an unconstrained
-optimisation, all of which make the fit more stable. The PMF is
-guaranteed to be valid by construction.
-}
-
-\subsection{Use with \code{fitdistdoublecens()}}{
-
-This function carries the attribute \code{vector_param = "hazards"} so
-that \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} can drive it from the logit-hazard random
-walk described above. The free parameters are \code{alpha} (level),
-\code{log_sigma} (log random-walk scale), and
-\code{eps_1, ..., eps_{K-1}} (standardised innovations). The
-logit-hazard for bin \eqn{i} is
-\code{alpha + sigma * cumsum(c(0, eps_1, ..., eps_{K-1}))[i]}, where
-\code{sigma = exp(log_sigma)}. The final hazard is forced to 1 so the
-PMF sums to 1.
-
-A MAP-style prior penalty is amortised across observations so that
-\code{fitdistrplus::fitdist} (which minimises \code{-sum(log d_i)})
-implicitly optimises the posterior mode. The penalty is supplied via the
-\code{fit_penalty} attribute on this function. The default corresponds
-to independent priors:
-\itemize{
-\item \code{eps_j ~ N(0, 1)} (random-walk innovations);
-\item \code{alpha ~ N(0, 5)} (weakly informative level prior);
-\item \code{log_sigma ~ N(log(0.5), 1)} (weakly informative scale).
-}
-Pass \code{prior} to \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} to override the default
-settings.
-}
+Outside fitting it is a deterministic wrapper around \code{\link[=pdiscretestep]{pdiscretestep()}}.
+It earns its keep as a fitting parameterisation in \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
+because the random walk on the logit hazard smooths the recovered PMF.
 }
 \examples{
-# Equivalent to pdiscretestep with the corresponding PMF
 hazards <- c(0.3, 0.5, 1)
-boundaries <- 0:3
-pdiscretehazard(c(0.5, 1, 2, 3),
-  boundaries = boundaries,
-  hazards = hazards
-)
+pdiscretehazard(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = hazards)
 }
 \seealso{
 \code{\link[=pdiscretestep]{pdiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}},

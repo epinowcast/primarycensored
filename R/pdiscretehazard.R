@@ -2,48 +2,11 @@
 #'
 #' Returns the CDF of a discrete distribution specified by its bin-wise
 #' discrete-time hazards. Converts \code{hazards} to a PMF via
-#' [hazards_to_pmf()] then delegates to [pdiscretestep()]: the two
-#' parameterisations describe the same family of step distributions and
-#' yield identical CDFs.
+#' [hazards_to_pmf()] then delegates to [pdiscretestep()].
 #'
-#' ## When to use the hazard parameterisation
-#'
-#' Outside fitting, [pdiscretehazard()] is a deterministic wrapper around
-#' [pdiscretestep()]. For evaluating a CDF, sampling, or computing a PMF
-#' there is no advantage over the direct-PMF parameterisation.
-#'
-#' The hazard parameterisation exists to support fitting via
-#' [fitdistdoublecens()]. There the free parameters are not the hazards
-#' directly but a Gaussian random walk on the logit hazard. This smooths
-#' the recovered PMF, regularises against over-fitting in sparse data,
-#' and turns a constrained simplex problem into an unconstrained
-#' optimisation, all of which make the fit more stable. The PMF is
-#' guaranteed to be valid by construction.
-#'
-#' ## Use with \code{fitdistdoublecens()}
-#'
-#' This function carries the attribute \code{vector_param = "hazards"} so
-#' that [fitdistdoublecens()] can drive it from the logit-hazard random
-#' walk described above. The free parameters are \code{alpha} (level),
-#' \code{log_sigma} (log random-walk scale), and
-#' \code{eps_1, ..., eps_{K-1}} (standardised innovations). The
-#' logit-hazard for bin \eqn{i} is
-#' \code{alpha + sigma * cumsum(c(0, eps_1, ..., eps_{K-1}))[i]}, where
-#' \code{sigma = exp(log_sigma)}. The final hazard is forced to 1 so the
-#' PMF sums to 1.
-#'
-#' A MAP-style prior penalty is amortised across observations so that
-#' \code{fitdistrplus::fitdist} (which minimises \code{-sum(log d_i)})
-#' implicitly optimises the posterior mode. The penalty is supplied via the
-#' \code{fit_penalty} attribute on this function. The default corresponds
-#' to independent priors:
-#' \itemize{
-#'   \item \code{eps_j ~ N(0, 1)} (random-walk innovations);
-#'   \item \code{alpha ~ N(0, 5)} (weakly informative level prior);
-#'   \item \code{log_sigma ~ N(log(0.5), 1)} (weakly informative scale).
-#' }
-#' Pass \code{prior} to [fitdistdoublecens()] to override the default
-#' settings.
+#' Outside fitting it is a deterministic wrapper around [pdiscretestep()].
+#' It earns its keep as a fitting parameterisation in [fitdistdoublecens()]
+#' because the random walk on the logit hazard smooths the recovered PMF.
 #'
 #' @param q Numeric vector of quantiles.
 #' @param boundaries Numeric vector of length \eqn{K+1} defining the bin
@@ -60,13 +23,8 @@
 #'   [fitdistdoublecens()]
 #' @export
 #' @examples
-#' # Equivalent to pdiscretestep with the corresponding PMF
 #' hazards <- c(0.3, 0.5, 1)
-#' boundaries <- 0:3
-#' pdiscretehazard(c(0.5, 1, 2, 3),
-#'   boundaries = boundaries,
-#'   hazards = hazards
-#' )
+#' pdiscretehazard(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = hazards)
 pdiscretehazard <- function(q, boundaries = NULL, hazards) {
   if (is.null(boundaries)) {
     boundaries <- seq.int(0L, length(hazards))
@@ -127,6 +85,10 @@ attr(pdiscretehazard, "fit_penalty") <- function(par_named, N,
 #' \code{hazards} to a PMF via [hazards_to_pmf()] then delegates to
 #' [ddiscretestep()].
 #'
+#' Outside fitting it is a deterministic wrapper around [ddiscretestep()].
+#' It earns its keep as a fitting parameterisation in [fitdistdoublecens()]
+#' because the random walk on the logit hazard smooths the recovered PMF.
+#'
 #' @inheritParams pdiscretehazard
 #' @param x Numeric vector of values at which to evaluate the PMF.
 #'
@@ -134,7 +96,8 @@ attr(pdiscretehazard, "fit_penalty") <- function(par_named, N,
 #'
 #' @family pdiscretehazard
 #' @concept pdiscretehazard
-#' @seealso [ddiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()]
+#' @seealso [ddiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()],
+#'   [fitdistdoublecens()]
 #' @export
 #' @examples
 #' hazards <- c(0.3, 0.5, 1)
@@ -159,6 +122,10 @@ attr(ddiscretehazard, "param_transform") <- attr(
 #' by \code{hazards}. Converts \code{hazards} to a PMF via
 #' [hazards_to_pmf()] then delegates to [rdiscretestep()].
 #'
+#' Outside fitting it is a deterministic wrapper around [rdiscretestep()].
+#' It earns its keep as a fitting parameterisation in [fitdistdoublecens()]
+#' because the random walk on the logit hazard smooths the recovered PMF.
+#'
 #' @param n Integer. Number of samples to draw.
 #' @inheritParams pdiscretehazard
 #'
@@ -166,7 +133,8 @@ attr(ddiscretehazard, "param_transform") <- attr(
 #'
 #' @family pdiscretehazard
 #' @concept pdiscretehazard
-#' @seealso [rdiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()]
+#' @seealso [rdiscretestep()], [hazards_to_pmf()], [pmf_to_hazards()],
+#'   [fitdistdoublecens()]
 #' @export
 #' @examples
 #' set.seed(42)
@@ -181,51 +149,6 @@ rdiscretehazard <- function(n, boundaries = NULL, hazards) {
 attr(rdiscretehazard, "name") <- "rdiscretehazard"
 attr(rdiscretehazard, "vector_param") <- "hazards"
 
-# ---- internal helpers -------------------------------------------------------
-
-#' Sort eps_* parameter names by trailing numeric suffix
-#'
-#' Lexicographic sorting of \code{c("eps_1", ..., "eps_10")} returns
-#' \code{eps_10} before \code{eps_2}, which would scramble the random-walk
-#' innovations when \eqn{K > 10}. This helper extracts the trailing integer
-#' and orders by it.
-#'
-#' @keywords internal
-.sort_eps_names <- function(eps_names) {
-  if (length(eps_names) <= 1L) {
-    return(eps_names)
-  }
-  idx <- suppressWarnings(as.integer(sub("^eps_", "", eps_names)))
-  if (anyNA(idx)) {
-    return(eps_names)
-  }
-  eps_names[order(idx)]
-}
-
-#' Resolve the prior settings for the hazard fit_penalty
-#'
-#' Defaults: \code{alpha ~ N(0, 5)}, \code{log_sigma ~ N(log(0.5), 1)}.
-#' User overrides are merged in: each component of \code{prior_settings}
-#' may itself be a list with \code{mean} and \code{sd} entries.
-#'
-#' @keywords internal
-.resolve_hazard_prior <- function(prior_settings = NULL) {
-  defaults <- list(
-    alpha = c(mean = 0, sd = 5),
-    log_sigma = c(mean = log(0.5), sd = 1)
-  )
-  if (is.null(prior_settings)) {
-    return(defaults)
-  }
-  for (nm in names(prior_settings)) {
-    if (!nm %in% names(defaults)) next
-    user <- prior_settings[[nm]]
-    if (!is.null(user[["mean"]])) {
-      defaults[[nm]][["mean"]] <- user[["mean"]]
-    }
-    if (!is.null(user[["sd"]])) {
-      defaults[[nm]][["sd"]] <- user[["sd"]]
-    }
-  }
-  defaults
-}
+# Internal helpers (`.sort_eps_names`, `.resolve_hazard_prior`) now live
+# in R/nonparametric_helpers.R alongside the rest of the non-parametric
+# machinery.

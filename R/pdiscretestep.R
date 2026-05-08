@@ -216,49 +216,6 @@ pmf_to_hazards <- function(pmf) {
   hazards
 }
 
-# ---- internal helpers -------------------------------------------------------
-
-#' Test whether a numeric vector lies on the simplex
-#'
-#' Returns \code{TRUE} when the vector contains no missing values, no
-#' negative entries, and sums to 1 within \eqn{10^{-8}}. Used by the
-#' \code{discretestep} family to apply a soft penalty inside fitting
-#' closures rather than erroring.
-#'
-#' @keywords internal
-.is_valid_simplex <- function(p, tol = 1e-8) {
-  if (!is.numeric(p) || anyNA(p)) {
-    return(FALSE)
-  }
-  if (any(p < 0)) {
-    return(FALSE)
-  }
-  abs(sum(p) - 1) <= tol
-}
-
-#' Validate boundaries and pmf for step distribution functions
-#' @keywords internal
-.validate_discretestep_args <- function(boundaries, pmf) {
-  if (!is.numeric(boundaries)) {
-    stop("boundaries must be numeric.", call. = FALSE)
-  }
-  if (!is.numeric(pmf)) {
-    stop("pmf must be numeric.", call. = FALSE)
-  }
-  if (anyNA(boundaries) || anyNA(pmf)) {
-    stop(
-      "boundaries and pmf must not contain NA values.",
-      call. = FALSE
-    )
-  }
-  if (length(boundaries) != length(pmf) + 1L) {
-    stop(
-      "length(boundaries) must equal length(pmf) + 1.",
-      call. = FALSE
-    )
-  }
-  if (any(diff(boundaries) <= 0)) {
-    stop("boundaries must be strictly increasing.", call. = FALSE)
-  }
-  invisible(NULL)
-}
+# Internal helpers (`.is_valid_simplex`, `.validate_discretestep_args`)
+# now live in R/nonparametric_helpers.R alongside the rest of the
+# non-parametric machinery.

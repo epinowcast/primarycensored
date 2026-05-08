@@ -24,12 +24,18 @@ Returns the probability mass for each value in \code{x}. Converts
 \code{hazards} to a PMF via \code{\link[=hazards_to_pmf]{hazards_to_pmf()}} then delegates to
 \code{\link[=ddiscretestep]{ddiscretestep()}}.
 }
+\details{
+Outside fitting it is a deterministic wrapper around \code{\link[=ddiscretestep]{ddiscretestep()}}.
+It earns its keep as a fitting parameterisation in \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
+because the random walk on the logit hazard smooths the recovered PMF.
+}
 \examples{
 hazards <- c(0.3, 0.5, 1)
 ddiscretehazard(c(1, 2, 3), boundaries = 0:3, hazards = hazards)
 }
 \seealso{
-\code{\link[=ddiscretestep]{ddiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}}
+\code{\link[=ddiscretestep]{ddiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
 
 Other pdiscretehazard:
 \code{\link{pdiscretehazard}()},
