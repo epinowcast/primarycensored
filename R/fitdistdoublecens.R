@@ -190,7 +190,7 @@ fitdistdoublecens <- function(
     )
   }
 
-  primary_args <- .resolve_primary_args( # nolint: object_usage_linter
+  primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "fitdistdoublecens"
   )
 
@@ -276,7 +276,7 @@ fitdistdoublecens <- function(
   pdist_extras <- dots[setdiff(names(dots), fitdist_arg_names)]
   dots <- dots[intersect(names(dots), fitdist_arg_names)]
 
-  closures <- .build_pcens_closures( # nolint: object_usage_linter
+  closures <- .build_pcens_closures(
     pdist = pdist,
     ddist = ddist,
     params = params,
@@ -293,7 +293,7 @@ fitdistdoublecens <- function(
   )
 
   # Apply default bounds for non-parametric fits when not supplied.
-  dots <- .nonparametric_defaults( # nolint: object_usage_linter
+  dots <- .nonparametric_defaults(
     dots = dots, vector_param = vector_param, par_names = closures$par_names
   )
 

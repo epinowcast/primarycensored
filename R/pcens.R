@@ -40,10 +40,10 @@ new_pcens <- function(
     pprimary = NULL,
     dprimary_args = NULL,
     ...) {
-  primary_args <- .resolve_primary_args( # nolint: object_usage_linter
+  primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "new_pcens"
   )
-  pprimary <- .resolve_pprimary( # nolint: object_usage_linter
+  pprimary <- .resolve_pprimary(
     dprimary, pprimary
   )
   obj <- list(

@@ -98,11 +98,11 @@ dprimarycensored <- function(
     ...) {
   .check_truncation_bounds(L, D)
 
-  primary_args <- .resolve_primary_args( # nolint: object_usage_linter
+  primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "dprimarycensored"
   )
-  pdist <- .resolve_pdist(pdist, type = "p") # nolint: object_usage_linter
-  pprimary <- .resolve_pprimary( # nolint: object_usage_linter
+  pdist <- .resolve_pdist(pdist, type = "p")
+  pprimary <- .resolve_pprimary(
     dprimary, pprimary
   )
 

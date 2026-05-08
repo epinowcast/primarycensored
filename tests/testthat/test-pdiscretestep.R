@@ -60,7 +60,7 @@ test_that("pdiscretestep validates structural arguments", {
   # Length mismatch and non-monotone boundaries are structural errors.
   expect_error(
     pdiscretestep(1, boundaries = 0:3, pmf = c(0.2, 0.5)),
-    "length\\(boundaries\\) must equal length\\(pmf\\) \\+ 1" # nolint: nonportable_path_linter
+    "must equal"
   )
   expect_error(
     pdiscretestep(1, boundaries = c(0, 2, 1), pmf = c(0.5, 0.5)),

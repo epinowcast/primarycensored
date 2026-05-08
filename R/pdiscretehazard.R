@@ -71,8 +71,8 @@ pdiscretehazard <- function(q, boundaries = NULL, hazards) {
   if (is.null(boundaries)) {
     boundaries <- seq.int(0L, length(hazards))
   }
-  pmf <- hazards_to_pmf(hazards) # nolint: object_usage_linter
-  pdiscretestep(q, boundaries, pmf) # nolint: object_usage_linter
+  pmf <- hazards_to_pmf(hazards)
+  pdiscretestep(q, boundaries, pmf)
 }
 attr(pdiscretehazard, "name") <- "pdiscretehazard"
 attr(pdiscretehazard, "vector_param") <- "hazards"
@@ -83,7 +83,7 @@ attr(pdiscretehazard, "vector_param") <- "hazards"
 attr(pdiscretehazard, "param_transform") <- function(par_named) {
   alpha_val <- par_named[["alpha"]]
   log_sigma_val <- par_named[["log_sigma"]]
-  eps_names <- .sort_eps_names( # nolint: object_usage_linter
+  eps_names <- .sort_eps_names(
     grep("^eps_", names(par_named), value = TRUE)
   )
   eps_vals <- if (length(eps_names) > 0) {
@@ -102,7 +102,7 @@ attr(pdiscretehazard, "fit_penalty") <- function(par_named, N,
                                                  prior_settings = NULL) {
   alpha_val <- par_named[["alpha"]]
   log_sigma_val <- par_named[["log_sigma"]]
-  eps_names <- .sort_eps_names( # nolint: object_usage_linter
+  eps_names <- .sort_eps_names(
     grep("^eps_", names(par_named), value = TRUE)
   )
   eps_vals <- if (length(eps_names) > 0) {
@@ -143,8 +143,8 @@ ddiscretehazard <- function(x, boundaries = NULL, hazards) {
   if (is.null(boundaries)) {
     boundaries <- seq.int(0L, length(hazards))
   }
-  pmf <- hazards_to_pmf(hazards) # nolint: object_usage_linter
-  ddiscretestep(x, boundaries, pmf) # nolint: object_usage_linter
+  pmf <- hazards_to_pmf(hazards)
+  ddiscretestep(x, boundaries, pmf)
 }
 attr(ddiscretehazard, "name") <- "ddiscretehazard"
 attr(ddiscretehazard, "vector_param") <- "hazards"
@@ -175,8 +175,8 @@ rdiscretehazard <- function(n, boundaries = NULL, hazards) {
   if (is.null(boundaries)) {
     boundaries <- seq.int(0L, length(hazards))
   }
-  pmf <- hazards_to_pmf(hazards) # nolint: object_usage_linter
-  rdiscretestep(n, boundaries, pmf) # nolint: object_usage_linter
+  pmf <- hazards_to_pmf(hazards)
+  rdiscretestep(n, boundaries, pmf)
 }
 attr(rdiscretehazard, "name") <- "rdiscretehazard"
 attr(rdiscretehazard, "vector_param") <- "hazards"
