@@ -220,26 +220,34 @@ summary(fit_haz)
 ```
 
 We also fit the IID logit random-effect variant on the same data to compare it against the random walk later on.
-The RE model drops the dependency between adjacent bins, so its bins are independent draws around the intercept rather than a smooth trajectory; we initialise with a wider `log_sigma` to give the optimiser room.
+The RE model drops the smoothing between adjacent bins, so its hazards are independent draws around the intercept rather than a smooth trajectory.
+With `K = 10` bins on this bimodal dataset the RE likelihood is flat in `log_sigma` at the eps-zero start (every bin equals the intercept), so optimisation through `fitdistrplus` may not converge from this initialisation; we wrap the call in `tryCatch()` and skip the RE estimate in the comparison plot if so.
 
 ```{r fit-haz-re, message = FALSE}
 haz_re_start <- c(
-  list(alpha = -1, log_sigma = log(2.0)),
+  list(alpha = -2, log_sigma = log(0.5)),
   as.list(stats::setNames(
-    rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))
+    rep(0.1 * seq_len(K - 1L), 1L), paste0("eps_", seq_len(K - 1L))
   ))
 )
 
-fit_haz_re <- fitdistdoublecens(
-  delay_data,
-  distr      = "discretehazardre",
-  start      = haz_re_start,
-  left       = "delay",
-  right      = "delay_upper",
-  pwindow    = "pwindow",
-  D          = "D",
-  boundaries = boundaries,
-  control    = list(maxit = 10000)
+fit_haz_re <- tryCatch(
+  fitdistdoublecens(
+    delay_data,
+    distr      = "discretehazardre",
+    start      = haz_re_start,
+    left       = "delay",
+    right      = "delay_upper",
+    pwindow    = "pwindow",
+    D          = "D",
+    boundaries = boundaries,
+    calcvcov   = FALSE,
+    control    = list(maxit = 50000)
+  ),
+  error = function(e) {
+    message("Could not fit RE variant: ", conditionMessage(e))
+    NULL
+  }
 )
 ```
 
@@ -397,7 +405,11 @@ extract_haz_pmf <- function(fit, K, model = c("rw", "re")) {
 
 pmf_step <- extract_step_pmf(fit_step, K)
 pmf_haz <- extract_haz_pmf(fit_haz, K, "rw")
-pmf_haz_re <- extract_haz_pmf(fit_haz_re, K, "re")
+pmf_haz_re <- if (!is.null(fit_haz_re)) {
+  extract_haz_pmf(fit_haz_re, K, "re")
+} else {
+  NULL
+}
 ```
 
 ```{r extract-stan-intervals}
@@ -440,12 +452,17 @@ mle_df <- rbind(
   data.frame(
     bin = seq_len(K), pmf = pmf_haz,
     param = "hazard (RW)", method = "MLE"
-  ),
-  data.frame(
-    bin = seq_len(K), pmf = pmf_haz_re,
-    param = "hazard (RE)", method = "MLE"
   )
 )
+if (!is.null(pmf_haz_re)) {
+  mle_df <- rbind(
+    mle_df,
+    data.frame(
+      bin = seq_len(K), pmf = pmf_haz_re,
+      param = "hazard (RE)", method = "MLE"
+    )
+  )
+}
 
 stan_df <- rbind(
   transform(dirichlet_summary, param = "step", method = "Stan"),
