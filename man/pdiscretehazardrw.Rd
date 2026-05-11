@@ -30,6 +30,10 @@ edges. Must be strictly increasing. Defaults to \code{0:K}.}
 \item{hazards}{Numeric vector of length \eqn{K} (or \eqn{K-1}, in which
 case a trailing 1 is appended) giving the discrete-time conditional
 hazard for each bin. Values must be in \eqn{[0, 1]}.}
+
+\item{x}{Numeric vector of values at which to evaluate the PMF.}
+
+\item{n}{Integer. Number of samples to draw.}
 }
 \value{
 Numeric vector of CDF (or PMF, or sample) values; see the

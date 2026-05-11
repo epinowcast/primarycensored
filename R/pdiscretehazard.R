@@ -136,6 +136,8 @@ attr(rdiscretehazard, "vector_param") <- "hazards"
 #'   `logit(h_i) = alpha + sigma * eps_i`.
 #'
 #' @inheritParams pdiscretehazard
+#' @param x Numeric vector of values at which to evaluate the PMF.
+#' @param n Integer. Number of samples to draw.
 #'
 #' @return Numeric vector of CDF (or PMF, or sample) values; see the
 #'   underlying function.

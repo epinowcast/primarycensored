@@ -375,19 +375,19 @@ fitdistdoublecens <- function(
         for (i in seq_len(nrow(unique_params))) {
           sw <- unique_params$swindow[i]
           pw <- unique_params$pwindow[i]
-          Ds <- unique_params$D[i] # nolint
-          Ls <- unique_params$L[i] # nolint
+          d_i <- unique_params$D[i]
+          l_i <- unique_params$L[i]
           mask <- params$swindow == sw &
             params$pwindow == pw &
-            params$D == Ds &
-            params$L == Ls
+            params$D == d_i &
+            params$L == l_i
           result[mask] <- dprimarycensored(
             x[mask],
             pdist,
             pwindow = pw,
             swindow = sw,
-            L = Ls,
-            D = Ds,
+            L = l_i,
+            D = d_i,
             dprimary = dprimary,
             primary_args = primary_args,
             pprimary = pprimary,

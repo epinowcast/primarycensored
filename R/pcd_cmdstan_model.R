@@ -166,7 +166,7 @@ pcd_as_stan_data <- function(
     use_reduce_sum = FALSE,
     truncation_check_multiplier = 2,
     nonparametric = NULL) {
-  np <- .build_nonparametric_stan_fields(nonparametric)
+  np <- .build_np_stan_fields(nonparametric)
   if (!is.null(nonparametric)) {
     dist_id <- np$dist_id
     param_bounds <- list(lower = numeric(0), upper = numeric(0))
@@ -260,7 +260,7 @@ pcd_as_stan_data <- function(
 # are sized 0 and `np_paramtype` defaults to 1 (a no-op for the parametric
 # path). When supplied, validates the list and returns Stan-shaped fields
 # plus the inferred `dist_id` (26 for "simplex", 27 for "hazard").
-.build_nonparametric_stan_fields <- function(nonparametric) {
+.build_np_stan_fields <- function(nonparametric) {
   if (is.null(nonparametric)) {
     # When the non-parametric path is off all np_* fields collapse to the
     # smallest valid size for their declared types. `np_boundaries` is
@@ -279,11 +279,11 @@ pcd_as_stan_data <- function(
     ))
   }
   required <- c("K", "boundaries", "paramtype")
-  missing <- setdiff(required, names(nonparametric))
-  if (length(missing) > 0) {
+  missing_fields <- setdiff(required, names(nonparametric))
+  if (length(missing_fields) > 0) {
     stop(
       "`nonparametric` is missing required elements: ",
-      toString(missing),
+      toString(missing_fields),
       call. = FALSE
     )
   }
@@ -318,7 +318,7 @@ pcd_as_stan_data <- function(
     )
   }
   hazard_priors <- nonparametric$hazard_priors %||% list()
-  hp <- modifyList(
+  hp <- utils::modifyList(
     list(
       alpha_mean = 0,
       alpha_sd = 5,
