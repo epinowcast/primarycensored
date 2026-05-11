@@ -573,6 +573,107 @@ test_that(
 )
 
 test_that(
+  "fitdistdoublecens discretehazardre: produces valid PMF close to truth",
+  {
+    skip_if_not(
+      exists("pdiscretestep"),
+      message = "pdiscretestep not yet available"
+    )
+    set.seed(404)
+    true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
+    K <- 5L
+    D_val <- K + 1L
+    n <- 800
+
+    samples <- rprimarycensored(
+      n, rdiscretestep,
+      boundaries = 0:K, pmf = true_pmf,
+      pwindow = 1, swindow = 1, D = D_val
+    )
+
+    haz_data <- data.frame(
+      left = samples,
+      right = samples + 1,
+      pwindow = rep(1, n),
+      D = rep(D_val, n)
+    )
+
+    haz_start <- c(
+      list(alpha = -2, log_sigma = log(0.5)),
+      as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
+    )
+    fit <- fitdistdoublecens(
+      haz_data,
+      distr = "discretehazardre",
+      start = haz_start,
+      boundaries = 0:K,
+      truncation_check_multiplier = NULL
+    )
+
+    expect_s3_class(fit, "fitdist")
+    expect_false(is.na(fit$loglik))
+    expect_false(is.infinite(fit$loglik))
+
+    # Reconstruct PMF from estimated parameters using the IID transform.
+    est <- fit$estimate
+    alpha_val <- est[["alpha"]]
+    log_sigma_val <- est[["log_sigma"]]
+    eps_vals <- unname(est[grep("^eps_", names(est))])
+    sigma <- exp(log_sigma_val)
+    logit_h <- alpha_val + sigma * c(0, eps_vals)
+    h <- 1 / (1 + exp(-logit_h))
+    h[K] <- 1
+    est_pmf <- hazards_to_pmf(h)
+
+    expect_equal(sum(est_pmf), 1, tolerance = 1e-6)
+    expect_true(all(est_pmf >= 0))
+    expect_equal(est_pmf, true_pmf, tolerance = 0.15)
+  }
+)
+
+test_that("fitdistdoublecens discretehazardrw alias matches discretehazard", {
+  skip_if_not(
+    exists("pdiscretestep"),
+    message = "pdiscretestep not yet available"
+  )
+  set.seed(505)
+  true_pmf <- c(0.2, 0.5, 0.3)
+  K <- 3L
+  D_val <- K + 1L
+  n <- 200
+  samples <- rprimarycensored(
+    n, rdiscretestep,
+    boundaries = 0:K, pmf = true_pmf,
+    pwindow = 1, swindow = 1, D = D_val
+  )
+  haz_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = rep(1, n),
+    D = rep(D_val, n)
+  )
+  haz_start <- c(
+    list(alpha = -2, log_sigma = log(0.5)),
+    as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
+  )
+  fit_default <- suppressWarnings(fitdistdoublecens(
+    haz_data,
+    distr = "discretehazard",
+    start = haz_start,
+    boundaries = 0:K,
+    truncation_check_multiplier = NULL
+  ))
+  fit_rw <- suppressWarnings(fitdistdoublecens(
+    haz_data,
+    distr = "discretehazardrw",
+    start = haz_start,
+    boundaries = 0:K,
+    truncation_check_multiplier = NULL
+  ))
+  expect_equal(unname(fit_default$estimate), unname(fit_rw$estimate))
+})
+
+test_that(
   "fitdistdoublecens discretestep: error when start is missing",
   {
     skip_if_not(

@@ -493,5 +493,35 @@ test_that(
     )
     expect_identical(nrow(summary_h), as.integer(K))
     expect_true(all(is.finite(summary_h$mean)))
+
+    # dist_id = 27 with np_paramtype = 3: IID logit random effects.
+    stan_data_re <- pcd_as_stan_data(
+      delay_counts,
+      dist_id = 1,
+      primary_id = 1,
+      param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = numeric(0), scale = numeric(0)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      nonparametric = list(
+        K = K, boundaries = boundaries, paramtype = "hazardre"
+      )
+    )
+    expect_identical(stan_data_re$dist_id, 27L)
+    expect_identical(stan_data_re$np_paramtype, 3L)
+    fit_re <- suppressMessages(suppressWarnings(model$sample(
+      data = stan_data_re,
+      seed = 3,
+      chains = 1,
+      iter_warmup = 200,
+      iter_sampling = 200,
+      refresh = 0,
+      show_messages = FALSE
+    )))
+    summary_re <- fit_re$summary(
+      variables = paste0("np_weights[", seq_len(K), "]")
+    )
+    expect_identical(nrow(summary_re), as.integer(K))
+    expect_true(all(is.finite(summary_re$mean)))
   }
 )

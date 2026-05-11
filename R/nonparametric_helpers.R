@@ -66,6 +66,72 @@
   eps_names[order(idx)]
 }
 
+#' Build a hazard-vector transform for a given model
+#'
+#' Returns a function that maps a named list of scalar parameters
+#' (\code{alpha}, \code{log_sigma}, \code{eps_1}, ..., \code{eps_{K-1}})
+#' to a length-\eqn{K} hazard vector with the final entry pinned to 1.
+#' `model = "rw"` uses a Gaussian random walk on the logit hazard;
+#' `model = "re"` treats the innovations as IID logit random effects
+#' around the intercept.
+#'
+#' @keywords internal
+.make_hazard_transform <- function(model = c("rw", "re")) {
+  model <- match.arg(model)
+  function(par_named) {
+    alpha_val <- par_named[["alpha"]]
+    log_sigma_val <- par_named[["log_sigma"]]
+    eps_names <- .sort_eps_names(
+      grep("^eps_", names(par_named), value = TRUE)
+    )
+    eps_vals <- if (length(eps_names) > 0) {
+      unlist(par_named[eps_names])
+    } else {
+      numeric(0)
+    }
+    sigma <- exp(log_sigma_val)
+    K <- length(eps_vals) + 1L
+    deltas <- if (model == "rw") {
+      cumsum(c(0, eps_vals))
+    } else {
+      c(0, eps_vals)
+    }
+    logit_h <- alpha_val + sigma * deltas
+    h <- 1 / (1 + exp(-logit_h))
+    h[K] <- 1
+    h
+  }
+}
+
+#' Shared MAP penalty for the logit-hazard families
+#'
+#' Both RW and RE variants share priors on \code{alpha}, \code{log_sigma},
+#' and \code{eps_*}; only how the hazards are built from those scalars
+#' differs (see \code{.make_hazard_transform()}).
+#'
+#' @keywords internal
+.hazard_fit_penalty <- function(par_named, N, prior_settings = NULL) {
+  alpha_val <- par_named[["alpha"]]
+  log_sigma_val <- par_named[["log_sigma"]]
+  eps_names <- .sort_eps_names(
+    grep("^eps_", names(par_named), value = TRUE)
+  )
+  eps_vals <- if (length(eps_names) > 0) {
+    unlist(par_named[eps_names])
+  } else {
+    numeric(0)
+  }
+  prior <- .resolve_hazard_prior(prior_settings)
+  # Negative log prior (so adding to -loglik amounts to negative log
+  # posterior). Amortised across N observations.
+  nlp <- 0.5 * sum(eps_vals^2) +
+    (alpha_val - prior$alpha[["mean"]])^2 /
+      (2 * prior$alpha[["sd"]]^2) +
+    (log_sigma_val - prior$log_sigma[["mean"]])^2 /
+      (2 * prior$log_sigma[["sd"]]^2)
+  nlp / N
+}
+
 #' Resolve the prior settings for the hazard fit_penalty
 #'
 #' Defaults: \code{alpha ~ N(0, 5)}, \code{log_sigma ~ N(log(0.5), 1)}.
@@ -98,10 +164,10 @@
 #'
 #' Single path: scalar named parameters are gathered from the closure's
 #' environment, optionally folded into the vector argument named by
-#' \code{vector_param}, and dispatched through \code{.dpcens}/\code{.ppcens}.
-#' Formals on the closures are derived from the supplied \code{start} list
-#' (parametric) or from a vector_param-aware naming convention
-#' (non-parametric).
+#' \code{vector_param} via the distribution's \code{param_transform}, and
+#' dispatched through \code{.dpcens}/\code{.ppcens}. Formals on the closures
+#' are derived from the supplied \code{start} list (parametric) or from a
+#' \code{vector_param}-aware naming convention (non-parametric).
 #'
 #' @keywords internal
 .build_pcens_closures <- function(
@@ -137,26 +203,18 @@
     par_names <- names(start)
   }
 
-  # The closure body looks up scalar named args from its environment,
-  # builds either a numeric vector (non-parametric) or a flat list
-  # (parametric), and dispatches through .dpcens / .ppcens.
+  # The closure body looks up scalar named args from its environment and
+  # dispatches through .dpcens/.ppcens. For non-parametric distributions
+  # the named scalars are first folded into a single numeric vector via
+  # the distribution's `param_transform`; the result is passed as the
+  # `vector_param` argument.
   build_call_args <- function(env_args) {
     if (is.null(vector_param)) {
       # Parametric: pass through scalar args by name.
       return(env_args[par_names])
     }
     par_named <- env_args[par_names]
-    if (!is.null(param_transform)) {
-      # Distribution-supplied mapping from named scalar args to a numeric
-      # vector. Used by the logit-hazard random walk, where the free
-      # parameters (alpha, log_sigma, eps_*) are not the hazards themselves.
-      full_vec <- param_transform(par_named)
-    } else if (vector_param == "pmf") {
-      free <- unlist(par_named, use.names = FALSE)
-      full_vec <- c(free, 1 - sum(free))
-    } else {
-      full_vec <- unlist(par_named, use.names = FALSE)
-    }
+    full_vec <- param_transform(par_named)
     stats::setNames(list(full_vec), vector_param)
   }
 
@@ -219,32 +277,4 @@
     ppcens_dist = ppcens_dist,
     par_names = par_names
   )
-}
-
-#' Apply default bounds for non-parametric fits
-#'
-#' Sets sensible defaults for \code{lower} and \code{upper} when the user
-#' has not supplied them, based on the \code{vector_param} kind.
-#'
-#' @keywords internal
-.nonparametric_defaults <- function(dots, vector_param, par_names) {
-  if (is.null(vector_param)) {
-    return(dots)
-  }
-  if (vector_param == "pmf") {
-    if (is.null(dots$lower)) dots$lower <- rep(0, length(par_names))
-    if (is.null(dots$upper)) dots$upper <- rep(1, length(par_names))
-    return(dots)
-  }
-  if (vector_param == "hazards") {
-    # Expect par_names = c("alpha", "log_sigma", eps_1, ..., eps_{K-1}).
-    n_eps <- length(par_names) - 2L
-    if (is.null(dots$lower)) {
-      dots$lower <- c(-Inf, -6, rep(-5, n_eps))
-    }
-    if (is.null(dots$upper)) {
-      dots$upper <- c(Inf, 4, rep(5, n_eps))
-    }
-  }
-  dots
 }

@@ -254,6 +254,14 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   pcens_cdf(step_obj, q, pwindow, use_numeric)
 }
 
+#' @rdname pcens_cdf.pcens_pdiscretehazard
+#' @export
+pcens_cdf.pcens_pdiscretehazardrw <- pcens_cdf.pcens_pdiscretehazard
+
+#' @rdname pcens_cdf.pcens_pdiscretehazard
+#' @export
+pcens_cdf.pcens_pdiscretehazardre <- pcens_cdf.pcens_pdiscretehazard
+
 #' Method for Gamma delay with uniform primary
 #'
 #' @inheritParams pcens_cdf

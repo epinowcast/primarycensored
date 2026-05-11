@@ -39,6 +39,7 @@ pdiscretehazard(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = hazards)
 
 Other pdiscretehazard:
 \code{\link{ddiscretehazard}()},
+\code{\link{pdiscretehazardrw}()},
 \code{\link{rdiscretehazard}()}
 }
 \concept{pdiscretehazard}

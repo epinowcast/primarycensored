@@ -112,8 +112,10 @@ pcd_cmdstan_model <- function(
 #'   supplied, expects a list with elements:
 #'   * `K`: integer, number of bins.
 #'   * `boundaries`: numeric vector of length `K + 1`.
-#'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26) or
-#'     `"hazard"` (random walk on logit hazards, `dist_id` 27).
+#'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26),
+#'     `"hazard"` / `"hazardrw"` (random walk on logit hazards,
+#'     `dist_id` 27), or `"hazardre"` (IID logit random effects on the
+#'     hazards around a mean, `dist_id` 27 with `np_paramtype = 3`).
 #'   * `dirichlet_alpha`: optional numeric vector of length `K`,
 #'     defaults to `rep(1, K)`.
 #'   * `hazard_priors`: optional list with elements `alpha_mean`,
@@ -299,9 +301,14 @@ pcd_as_stan_data <- function(
   }
   paramtype <- match.arg(
     nonparametric$paramtype,
-    choices = c("simplex", "hazard")
+    choices = c("simplex", "hazard", "hazardrw", "hazardre")
   )
-  np_paramtype <- if (paramtype == "simplex") 1L else 2L
+  np_paramtype <- switch(paramtype,
+    simplex = 1L,
+    hazard = 2L,
+    hazardrw = 2L,
+    hazardre = 3L
+  )
   dist_id <- if (paramtype == "simplex") 26L else 27L
   dirichlet_alpha <- nonparametric$dirichlet_alpha %||% rep(1, K)
   if (length(dirichlet_alpha) != K) {

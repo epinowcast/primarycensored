@@ -298,6 +298,37 @@ test_that("pcd_as_stan_data populates np_* fields for hazard paramtype", {
   expect_identical(result$np_log_sigma_sd, 1)
 })
 
+test_that("pcd_as_stan_data populates np_* fields for hazardre paramtype", {
+  data <- data.frame(
+    delay = c(1, 2, 3),
+    delay_upper = c(2, 3, 4),
+    n = c(10, 20, 15),
+    pwindow = c(1, 1, 2),
+    relative_obs_time = c(10, 10, 10)
+  )
+
+  expect_message(
+    result <- pcd_as_stan_data( # nolint
+      data,
+      dist_id = 1,
+      primary_id = 1,
+      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(1, 1), scale = c(1, 1)),
+      primary_priors = list(location = numeric(0), scale = numeric(0)),
+      nonparametric = list(
+        K = 4,
+        boundaries = 0:4,
+        paramtype = "hazardre"
+      )
+    )
+  )
+
+  # Same dist_id as the RW hazard path; the data flag picks the variant.
+  expect_identical(result$dist_id, 27L)
+  expect_identical(result$np_paramtype, 3L)
+})
+
 test_that("pcd_as_stan_data validates nonparametric input", {
   data <- data.frame(
     delay = c(1, 2, 3),

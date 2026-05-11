@@ -73,6 +73,7 @@ $$
 f_i = h_i \prod_{j < i} (1 - h_j).
 $$
 The random walk regularises towards smooth hazards and is well behaved when bins are sparse.
+An alternative parameterisation drops the cumulative sum and instead places IID logit random effects around the intercept, $\text{logit}(h_i) = \alpha + \sigma\, \varepsilon_i$, giving independent draws on each bin (`distr = "discretehazardre"`).
 
 # Simulating censored data from a step distribution
 
@@ -218,6 +219,30 @@ fit_haz <- fitdistdoublecens(
 summary(fit_haz)
 ```
 
+We also fit the IID logit random-effect variant on the same data to compare it against the random walk later on.
+The RE model drops the dependency between adjacent bins, so its bins are independent draws around the intercept rather than a smooth trajectory; we initialise with a wider `log_sigma` to give the optimiser room.
+
+```{r fit-haz-re, message = FALSE}
+haz_re_start <- c(
+  list(alpha = -1, log_sigma = log(2.0)),
+  as.list(stats::setNames(
+    rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))
+  ))
+)
+
+fit_haz_re <- fitdistdoublecens(
+  delay_data,
+  distr      = "discretehazardre",
+  start      = haz_re_start,
+  left       = "delay",
+  right      = "delay_upper",
+  pwindow    = "pwindow",
+  D          = "D",
+  boundaries = boundaries,
+  control    = list(maxit = 10000)
+)
+```
+
 ## Discrete step fit
 
 ```{r fit-step, message = FALSE}
@@ -357,20 +382,22 @@ extract_step_pmf <- function(fit, K) {
   c(p_free, 1 - sum(p_free))
 }
 
-extract_haz_pmf <- function(fit, K) {
+extract_haz_pmf <- function(fit, K, model = c("rw", "re")) {
+  model <- match.arg(model)
   alpha_hat <- coef(fit)[["alpha"]]
   log_sigma_hat <- coef(fit)[["log_sigma"]]
   sigma_hat <- exp(log_sigma_hat)
   eps_hat <- coef(fit)[paste0("eps_", seq_len(K - 1))]
-  deltas <- c(0, eps_hat)
-  logit_h <- alpha_hat + sigma_hat * cumsum(deltas)
+  deltas <- if (model == "rw") cumsum(c(0, eps_hat)) else c(0, eps_hat)
+  logit_h <- alpha_hat + sigma_hat * deltas
   h <- 1 / (1 + exp(-logit_h))
   h[K] <- 1
   hazards_to_pmf(h)
 }
 
 pmf_step <- extract_step_pmf(fit_step, K)
-pmf_haz <- extract_haz_pmf(fit_haz, K)
+pmf_haz <- extract_haz_pmf(fit_haz, K, "rw")
+pmf_haz_re <- extract_haz_pmf(fit_haz_re, K, "re")
 ```
 
 ```{r extract-stan-intervals}
@@ -412,13 +439,17 @@ mle_df <- rbind(
   ),
   data.frame(
     bin = seq_len(K), pmf = pmf_haz,
-    param = "hazard", method = "MLE"
+    param = "hazard (RW)", method = "MLE"
+  ),
+  data.frame(
+    bin = seq_len(K), pmf = pmf_haz_re,
+    param = "hazard (RE)", method = "MLE"
   )
 )
 
 stan_df <- rbind(
   transform(dirichlet_summary, param = "step", method = "Stan"),
-  transform(rw_summary, param = "hazard", method = "Stan")
+  transform(rw_summary, param = "hazard (RW)", method = "Stan")
 )
 
 truth_df <- data.frame(bin = seq_len(K), pmf = true_pmf)
@@ -444,7 +475,9 @@ ggplot() +
     position = dodge, size = 2.5
   ) +
   scale_colour_brewer(palette = "Set2") +
-  scale_shape_manual(values = c(step = 16, hazard = 17)) +
+  scale_shape_manual(
+    values = c(step = 16, `hazard (RW)` = 17, `hazard (RE)` = 15)
+  ) +
   labs(
     x = "Bin", y = "Probability",
     colour = "Method", shape = "Parameterisation",

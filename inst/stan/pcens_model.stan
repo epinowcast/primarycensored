@@ -50,7 +50,7 @@ data {
   int<lower=0, upper=1> nonparametric;
   int<lower=0> K_np; // number of bins
   vector[K_np + 1] np_boundaries; // bin boundaries (length K_np + 1)
-  int<lower=1, upper=2> np_paramtype; // 1 = simplex/Dirichlet, 2 = RW hazards
+  int<lower=1, upper=3> np_paramtype; // 1 = simplex/Dirichlet, 2 = RW hazards, 3 = RE hazards
   vector<lower=0>[K_np] np_dirichlet_alpha; // Dirichlet concentration
   real np_alpha_mean; // hazard intercept prior mean (logit scale)
   real<lower=0> np_alpha_sd; // hazard intercept prior sd
@@ -65,7 +65,11 @@ transformed data {
   // pad to size 1 when the simplex branch is inactive and ignore it.
   int simplex_active = (nonparametric == 1 && np_paramtype == 1) ? 1 : 0;
   int K_simplex = simplex_active == 1 ? K_np : 1;
-  int K_hazard = (nonparametric == 1 && np_paramtype == 2) ? K_np : 0;
+  // Both hazard parameterisations share the same set of unconstrained
+  // parameters (alpha, sigma, eps_1..eps_{K-1}); the only difference is
+  // how `np_weights` is assembled in `transformed parameters`.
+  int K_hazard = (nonparametric == 1 && (np_paramtype == 2
+                  || np_paramtype == 3)) ? K_np : 0;
   int n_eps = K_hazard > 0 ? K_hazard - 1 : 0;
   // Length of the params array consumed by primarycensored_lpmf:
   // - parametric path: n_params
@@ -93,13 +97,22 @@ transformed parameters {
     if (np_paramtype == 1) {
       np_weights = np_pmf;
     } else {
-      // Build hazards from a Gaussian random walk on the logit scale,
-      // pinning the final hazard to 1 so the implied PMF sums to 1.
+      // Build hazards on the logit scale, pinning the final hazard to 1
+      // so the implied PMF sums to 1. paramtype 2 uses a Gaussian random
+      // walk (logit(h_i) = logit(h_{i-1}) + sigma * eps_i); paramtype 3
+      // uses IID logit random effects around the intercept
+      // (logit(h_i) = alpha + sigma * eps_i, eps_i ~ N(0, 1)).
       vector[K_np] logit_h;
       logit_h[1] = np_alpha[1];
       if (K_np > 1) {
-        for (i in 2:K_np) {
-          logit_h[i] = logit_h[i - 1] + np_sigma[1] * np_eps[i - 1];
+        if (np_paramtype == 2) {
+          for (i in 2:K_np) {
+            logit_h[i] = logit_h[i - 1] + np_sigma[1] * np_eps[i - 1];
+          }
+        } else {
+          for (i in 2:K_np) {
+            logit_h[i] = np_alpha[1] + np_sigma[1] * np_eps[i - 1];
+          }
         }
       }
       np_weights = inv_logit(logit_h);
@@ -129,6 +142,7 @@ model {
     if (np_paramtype == 1) {
       np_pmf ~ dirichlet(np_dirichlet_alpha);
     } else {
+      // Shared priors for both hazard parameterisations (RW and RE).
       np_alpha[1] ~ normal(np_alpha_mean, np_alpha_sd);
       log(np_sigma[1]) ~ normal(np_log_sigma_mean, np_log_sigma_sd);
       target += -log(np_sigma[1]); // Jacobian for log transform

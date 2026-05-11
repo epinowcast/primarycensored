@@ -23,9 +23,9 @@
 \description{
 Single path: scalar named parameters are gathered from the closure's
 environment, optionally folded into the vector argument named by
-\code{vector_param}, and dispatched through \code{.dpcens}/\code{.ppcens}.
-Formals on the closures are derived from the supplied \code{start} list
-(parametric) or from a vector_param-aware naming convention
-(non-parametric).
+\code{vector_param} via the distribution's \code{param_transform}, and
+dispatched through \code{.dpcens}/\code{.ppcens}. Formals on the closures
+are derived from the supplied \code{start} list (parametric) or from a
+\code{vector_param}-aware naming convention (non-parametric).
 }
 \keyword{internal}

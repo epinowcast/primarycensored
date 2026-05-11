@@ -34,49 +34,21 @@ pdiscretehazard <- function(q, boundaries = NULL, hazards) {
 }
 attr(pdiscretehazard, "name") <- "pdiscretehazard"
 attr(pdiscretehazard, "vector_param") <- "hazards"
-# Transform a named list of scalar parameters into the vector argument
-# named by `vector_param`. For the logit-hazard random walk the inputs
-# are alpha, log_sigma, eps_1, ..., eps_{K-1}; the output is a length-K
-# hazards vector with the final entry forced to 1.
-attr(pdiscretehazard, "param_transform") <- function(par_named) {
-  alpha_val <- par_named[["alpha"]]
-  log_sigma_val <- par_named[["log_sigma"]]
-  eps_names <- .sort_eps_names(
-    grep("^eps_", names(par_named), value = TRUE)
+# Map named scalar free parameters (alpha, log_sigma, eps_1, ..., eps_{K-1})
+# into a length-K hazard vector with the final entry pinned to 1. The
+# random-walk model places `logit(h) = alpha + sigma * cumsum(eps)`.
+attr(pdiscretehazard, "param_transform") <- .make_hazard_transform("rw")
+attr(pdiscretehazard, "fit_penalty") <- .hazard_fit_penalty
+# Default `lower`/`upper` bounds used by `fitdistdoublecens()` for the
+# logit-hazard random walk: `alpha` unbounded, `log_sigma` in a narrow
+# strip around 0, `eps_*` clipped to keep the optimiser away from
+# absorbing barriers.
+attr(pdiscretehazard, "fit_bounds") <- function(par_names) {
+  n_eps <- length(par_names) - 2L
+  list(
+    lower = c(-Inf, -6, rep(-5, n_eps)),
+    upper = c(Inf, 4, rep(5, n_eps))
   )
-  eps_vals <- if (length(eps_names) > 0) {
-    unlist(par_named[eps_names])
-  } else {
-    numeric(0)
-  }
-  sigma <- exp(log_sigma_val)
-  K <- length(eps_vals) + 1L
-  logit_h <- alpha_val + sigma * cumsum(c(0, eps_vals))
-  h <- 1 / (1 + exp(-logit_h))
-  h[K] <- 1
-  h
-}
-attr(pdiscretehazard, "fit_penalty") <- function(par_named, N,
-                                                 prior_settings = NULL) {
-  alpha_val <- par_named[["alpha"]]
-  log_sigma_val <- par_named[["log_sigma"]]
-  eps_names <- .sort_eps_names(
-    grep("^eps_", names(par_named), value = TRUE)
-  )
-  eps_vals <- if (length(eps_names) > 0) {
-    unlist(par_named[eps_names])
-  } else {
-    numeric(0)
-  }
-  prior <- .resolve_hazard_prior(prior_settings)
-  # Negative log prior (so adding to -loglik amounts to negative log
-  # posterior). Amortised across N observations.
-  nlp <- 0.5 * sum(eps_vals^2) +
-    (alpha_val - prior$alpha[["mean"]])^2 /
-      (2 * prior$alpha[["sd"]]^2) +
-    (log_sigma_val - prior$log_sigma[["mean"]])^2 /
-      (2 * prior$log_sigma[["sd"]]^2)
-  nlp / N
 }
 
 #' Hazard-parameterised piecewise-constant PMF
@@ -115,6 +87,7 @@ attr(ddiscretehazard, "fit_penalty") <- attr(pdiscretehazard, "fit_penalty")
 attr(ddiscretehazard, "param_transform") <- attr(
   pdiscretehazard, "param_transform"
 )
+attr(ddiscretehazard, "fit_bounds") <- attr(pdiscretehazard, "fit_bounds")
 
 #' Sample from a hazard-parameterised step distribution
 #'
@@ -148,6 +121,59 @@ rdiscretehazard <- function(n, boundaries = NULL, hazards) {
 }
 attr(rdiscretehazard, "name") <- "rdiscretehazard"
 attr(rdiscretehazard, "vector_param") <- "hazards"
+
+#' Hazard-parameterised step CDF aliases (RW and RE variants)
+#'
+#' Thin aliases of [pdiscretehazard()]/[ddiscretehazard()]/[rdiscretehazard()].
+#' Outside fitting they are byte-identical: the dist family is fully
+#' specified by the hazard vector. They differ at the fitting layer in
+#' [fitdistdoublecens()]:
+#'
+#' - `pdiscretehazardrw` uses the random-walk transform
+#'   `logit(h_i) = alpha + sigma * cumsum(eps)` (default for
+#'   `distr = "discretehazard"`).
+#' - `pdiscretehazardre` uses an IID logit random-effect transform
+#'   `logit(h_i) = alpha + sigma * eps_i`.
+#'
+#' @inheritParams pdiscretehazard
+#'
+#' @return Numeric vector of CDF (or PMF, or sample) values; see the
+#'   underlying function.
+#'
+#' @family pdiscretehazard
+#' @export
+#' @examples
+#' hazards <- c(0.3, 0.5, 1)
+#' pdiscretehazardre(c(0.5, 1, 2, 3), boundaries = 0:3, hazards = hazards)
+pdiscretehazardrw <- pdiscretehazard
+attr(pdiscretehazardrw, "name") <- "pdiscretehazardrw"
+
+#' @rdname pdiscretehazardrw
+#' @export
+ddiscretehazardrw <- ddiscretehazard
+attr(ddiscretehazardrw, "name") <- "ddiscretehazardrw"
+
+#' @rdname pdiscretehazardrw
+#' @export
+rdiscretehazardrw <- rdiscretehazard
+attr(rdiscretehazardrw, "name") <- "rdiscretehazardrw"
+
+#' @rdname pdiscretehazardrw
+#' @export
+pdiscretehazardre <- pdiscretehazard
+attr(pdiscretehazardre, "name") <- "pdiscretehazardre"
+attr(pdiscretehazardre, "param_transform") <- .make_hazard_transform("re")
+
+#' @rdname pdiscretehazardrw
+#' @export
+ddiscretehazardre <- ddiscretehazard
+attr(ddiscretehazardre, "name") <- "ddiscretehazardre"
+attr(ddiscretehazardre, "param_transform") <- .make_hazard_transform("re")
+
+#' @rdname pdiscretehazardrw
+#' @export
+rdiscretehazardre <- rdiscretehazard
+attr(rdiscretehazardre, "name") <- "rdiscretehazardre"
 
 # Internal helpers (`.sort_eps_names`, `.resolve_hazard_prior`) now live
 # in R/nonparametric_helpers.R alongside the rest of the non-parametric

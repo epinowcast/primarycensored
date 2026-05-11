@@ -28,7 +28,8 @@ the lower and upper bounds of the censored observations. Unlike
 upper or lower bounds.}
 
 \item{distr}{A character string naming the distribution to be fitted.
-Special values \code{"discretestep"} and \code{"discretehazard"} select the
+Special values \code{"discretestep"}, \code{"discretehazard"} (alias
+\code{"discretehazardrw"}), and \code{"discretehazardre"} select the
 non-parametric step-distribution fitting; see Details.}
 
 \item{left}{Column name for lower bound of observed values (default:
@@ -133,14 +134,21 @@ vector argument.
 \verb{[0, 1]}); the last bin probability is \verb{1 - sum(p1, ..., p_\{K-1\})}.
 See \code{\link[=pdiscretestep]{pdiscretestep()}} for parameterisation details and the soft
 simplex penalty applied when probabilities are infeasible.
-\item \code{distr = "discretehazard"}: free parameters \code{alpha}, \code{log_sigma},
-\verb{eps_1, ..., eps_\{K-1\}}. The hazard form parameterises the same
-family of step distributions as \code{"discretestep"}, but its free
-parameters drive a Gaussian random walk on the logit hazard. The
-smoothing regularises the recovered PMF against over-fitting in
-sparse data and replaces the simplex constraint with an
-unconstrained optimisation, which tends to be more stable. See
-\code{\link[=pdiscretehazard]{pdiscretehazard()}} for full parameterisation details and the
+\item \code{distr = "discretehazard"} (alias \code{"discretehazardrw"}): free
+parameters \code{alpha}, \code{log_sigma}, \verb{eps_1, ..., eps_\{K-1\}}. The hazard
+form parameterises the same family of step distributions as
+\code{"discretestep"}, but its free parameters drive a Gaussian random
+walk on the logit hazard
+(\code{logit(h_i) = alpha + sigma * cumsum(eps)}). The smoothing
+regularises the recovered PMF against over-fitting in sparse data
+and replaces the simplex constraint with an unconstrained
+optimisation, which tends to be more stable.
+\item \code{distr = "discretehazardre"}: same free parameters and prior, but
+the innovations enter as IID logit random effects around the
+intercept (\code{logit(h_i) = alpha + sigma * eps_i},
+\code{eps_i ~ N(0, 1)}). Hazards are independent draws around \code{alpha}
+rather than a smoothed trajectory.
+See \code{\link[=pdiscretehazard]{pdiscretehazard()}} for full parameterisation details and the
 MAP-equivalent prior penalty applied during fitting; pass \code{prior}
 to override the default prior settings.
 }

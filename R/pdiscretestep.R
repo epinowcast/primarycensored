@@ -63,6 +63,21 @@ pdiscretestep <- function(q, boundaries = NULL, pmf) {
 }
 attr(pdiscretestep, "name") <- "pdiscretestep"
 attr(pdiscretestep, "vector_param") <- "pmf"
+# Map named free scalars `p1, ..., p_{K-1}` into a length-K PMF whose
+# final entry closes the simplex. Shared by `ddiscretestep` and
+# `rdiscretestep` so the fitting closure builder is `param_transform`-only.
+attr(pdiscretestep, "param_transform") <- function(par_named) {
+  free <- unlist(par_named, use.names = FALSE)
+  c(free, 1 - sum(free))
+}
+# Default `lower`/`upper` bounds used by `fitdistdoublecens()` for the
+# simplex parameterisation: each free probability lives in [0, 1].
+attr(pdiscretestep, "fit_bounds") <- function(par_names) {
+  list(
+    lower = rep(0, length(par_names)),
+    upper = rep(1, length(par_names))
+  )
+}
 
 #' Step (piecewise-constant) PMF
 #'
@@ -109,6 +124,10 @@ ddiscretestep <- function(x, boundaries = NULL, pmf) {
 }
 attr(ddiscretestep, "name") <- "ddiscretestep"
 attr(ddiscretestep, "vector_param") <- "pmf"
+attr(ddiscretestep, "param_transform") <- attr(
+  pdiscretestep, "param_transform"
+)
+attr(ddiscretestep, "fit_bounds") <- attr(pdiscretestep, "fit_bounds")
 
 #' Sample from a step distribution
 #'

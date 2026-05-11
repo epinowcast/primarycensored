@@ -28,14 +28,21 @@
 #'   `[0, 1]`); the last bin probability is `1 - sum(p1, ..., p_{K-1})`.
 #'   See [pdiscretestep()] for parameterisation details and the soft
 #'   simplex penalty applied when probabilities are infeasible.
-#' - `distr = "discretehazard"`: free parameters `alpha`, `log_sigma`,
-#'   `eps_1, ..., eps_{K-1}`. The hazard form parameterises the same
-#'   family of step distributions as `"discretestep"`, but its free
-#'   parameters drive a Gaussian random walk on the logit hazard. The
-#'   smoothing regularises the recovered PMF against over-fitting in
-#'   sparse data and replaces the simplex constraint with an
-#'   unconstrained optimisation, which tends to be more stable. See
-#'   [pdiscretehazard()] for full parameterisation details and the
+#' - `distr = "discretehazard"` (alias `"discretehazardrw"`): free
+#'   parameters `alpha`, `log_sigma`, `eps_1, ..., eps_{K-1}`. The hazard
+#'   form parameterises the same family of step distributions as
+#'   `"discretestep"`, but its free parameters drive a Gaussian random
+#'   walk on the logit hazard
+#'   (`logit(h_i) = alpha + sigma * cumsum(eps)`). The smoothing
+#'   regularises the recovered PMF against over-fitting in sparse data
+#'   and replaces the simplex constraint with an unconstrained
+#'   optimisation, which tends to be more stable.
+#' - `distr = "discretehazardre"`: same free parameters and prior, but
+#'   the innovations enter as IID logit random effects around the
+#'   intercept (`logit(h_i) = alpha + sigma * eps_i`,
+#'   `eps_i ~ N(0, 1)`). Hazards are independent draws around `alpha`
+#'   rather than a smoothed trajectory.
+#'   See [pdiscretehazard()] for full parameterisation details and the
 #'   MAP-equivalent prior penalty applied during fitting; pass `prior`
 #'   to override the default prior settings.
 #'
@@ -50,7 +57,8 @@
 #'  upper or lower bounds.
 #'
 #' @param distr A character string naming the distribution to be fitted.
-#'  Special values `"discretestep"` and `"discretehazard"` select the
+#'  Special values `"discretestep"`, `"discretehazard"` (alias
+#'  `"discretehazardrw"`), and `"discretehazardre"` select the
 #'  non-parametric step-distribution fitting; see Details.
 #'
 #' @param left Column name for lower bound of observed values (default:
@@ -267,6 +275,7 @@ fitdistdoublecens <- function(
   vector_param <- attr(ddist, "vector_param")
   fit_penalty <- attr(ddist, "fit_penalty")
   param_transform <- attr(ddist, "param_transform")
+  fit_bounds <- attr(ddist, "fit_bounds")
 
   dots <- list(...)
 
@@ -296,10 +305,13 @@ fitdistdoublecens <- function(
     pdist_extras = pdist_extras
   )
 
-  # Apply default bounds for non-parametric fits when not supplied.
-  dots <- .nonparametric_defaults(
-    dots = dots, vector_param = vector_param, par_names = closures$par_names
-  )
+  # If the dist function carries a `fit_bounds` attribute, use it to fill
+  # in any `lower`/`upper` the caller did not supply.
+  if (!is.null(fit_bounds)) {
+    fb <- fit_bounds(closures$par_names)
+    if (is.null(dots$lower)) dots$lower <- fb$lower
+    if (is.null(dots$upper)) dots$upper <- fb$upper
+  }
 
   fit_env <- new.env(parent = emptyenv())
   fit_env$delays <- delays
@@ -317,9 +329,11 @@ fitdistdoublecens <- function(
   )
 }
 
-# Closure builder (`.build_pcens_closures`) and default-bounds helper
-# (`.nonparametric_defaults`) live in R/nonparametric_helpers.R alongside
-# the rest of the non-parametric machinery.
+# Closure builder (`.build_pcens_closures`) lives in
+# R/nonparametric_helpers.R alongside the rest of the non-parametric
+# machinery. Default `lower`/`upper` bounds are now declared by the
+# dist function itself via the `fit_bounds` attribute (see
+# `pdiscretestep()` and `pdiscretehazard()`).
 
 # ---- low-level wrappers ----------------------------------------------------
 
