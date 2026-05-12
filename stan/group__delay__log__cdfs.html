@@ -114,32 +114,23 @@ Collaboration diagram for Log CDFs for the ode function:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga0761ffd0ab06dc8b52d0ef30090941ce" id="r_ga0761ffd0ab06dc8b52d0ef30090941ce"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a> (real delay, array[] real params, int dist_id)</td></tr>
-<tr class="separator:ga0761ffd0ab06dc8b52d0ef30090941ce"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac677200fa47a95f644537be481450960" id="r_gac677200fa47a95f644537be481450960"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac677200fa47a95f644537be481450960">dist_has_positive_support</a> (data int dist_id)</td></tr>
+<tr class="separator:gac677200fa47a95f644537be481450960"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <p>Helper function to compute the log CDF for the delay distribution. </p>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="ga0761ffd0ab06dc8b52d0ef30090941ce" name="ga0761ffd0ab06dc8b52d0ef30090941ce"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">&#9670;&#160;</a></span>dist_lcdf()</h2>
+<a id="gac677200fa47a95f644537be481450960" name="gac677200fa47a95f644537be481450960"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gac677200fa47a95f644537be481450960">&#9670;&#160;</a></span>dist_has_positive_support()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">real dist_lcdf </td>
+          <td class="memname">int dist_has_positive_support </td>
           <td>(</td>
-          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>delay</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span></td><td>)</td>
           <td></td>
-          <td class="paramtype">array[]real</td>          <td class="paramname"><span class="paramname"><em>params</em></span>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>&#160;)</td>
         </tr>
       </table>
 </div><div class="memdoc">
@@ -157,40 +148,55 @@ Functions</h2></td></tr>
 <div class="line">real delay = 5.0;</div>
 <div class="line">array[2] real params = {0.0, 1.0}; <span class="comment">// mean and standard deviation on log scale</span></div>
 <div class="line"><span class="keywordtype">int</span> dist_id = 1; <span class="comment">// Lognormal</span></div>
-<div class="line">real log_cdf = <a class="code hl_function" href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(delay, params, dist_id);</div>
-<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00026">primarycensored_ode.stan:26</a></div></div>
-</div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00026">26</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<div class="line">real log_cdf = <a class="code hl_function" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(delay, params, dist_id);</div>
+<div class="ttc" id="aprimarycensored__ode_8stan_html_a0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00052">primarycensored_ode.stan:52</a></div></div>
+</div><!-- fragment --><p> Test whether a delay distribution has support only on the non-negative reals</p>
+<p>Used internally to decide whether to short-circuit <code>dist_lcdf</code> at <code>delay &lt;= 0</code> and whether the ODE / nested CDF calls need to integrate over negative arguments. Returns 1 for distributions with strictly non-negative support, 0 otherwise. IDs match <code>pcd_distributions$stan_id</code> in R.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">dist_id</td><td>Distribution identifier </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>1 if the delay distribution has non-negative support, 0 otherwise. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00038">38</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="group__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_icgraph.png" border="0" usemap="#agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_icgraph" alt=""/></div>
-<map name="agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_icgraph" id="agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_icgraph">
-<area shape="rect" title=" " alt="" coords="1311,177,1382,203"/>
-<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="1119,177,1263,203"/>
-<area shape="poly" title=" " alt="" coords="1296,193,1263,193,1263,188,1296,188"/>
-<area shape="rect" href="group__primary__censored__single.html#gad77e795cb876e8083049ca02f36e6244" title=" " alt="" coords="930,177,1071,203"/>
-<area shape="poly" title=" " alt="" coords="1104,193,1072,193,1072,188,1104,188"/>
-<area shape="rect" href="group__primary__censored__single.html#gaf03826a2164da9f913e2262c7fb668f1" title=" " alt="" coords="737,124,882,150"/>
-<area shape="poly" title=" " alt="" coords="936,175,858,153,859,148,938,170"/>
-<area shape="rect" href="group__primary__censored__single.html#gabaa91d68706974a28a14012dd8c4dd99" title=" " alt="" coords="525,5,673,31"/>
-<area shape="poly" title=" " alt="" coords="782,115,740,80,688,46,659,34,661,29,691,41,743,75,786,111"/>
-<area shape="rect" href="group__primary__censored__vectorized.html#ga87f86df6067548aca1a40df2fe4d1f8d" title=" " alt="" coords="524,55,675,96"/>
-<area shape="poly" title=" " alt="" coords="747,122,671,99,672,94,749,117"/>
-<area shape="rect" href="primarycensored_8stan.html#a8de61bdbea882cd20f02977b96e35453" title=" " alt="" coords="509,170,689,210"/>
-<area shape="poly" title=" " alt="" coords="767,158,691,179,689,174,766,152"/>
-<area shape="rect" href="group__primary__censored__single.html#gaa9b015b423ee7cad6a35186985497079" title=" " alt="" coords="286,5,431,31"/>
-<area shape="poly" title=" " alt="" coords="509,21,432,21,432,16,509,16"/>
-<area shape="rect" href="group__primary__censored__vectorized.html#ga7ed0eed950880b1f52c87927158a873f" title=" " alt="" coords="283,55,434,96"/>
-<area shape="poly" title=" " alt="" coords="508,78,435,78,435,73,508,73"/>
-<area shape="poly" title=" " alt="" coords="705,188,929,188,929,193,705,193"/>
-<area shape="poly" title=" " alt="" coords="665,162,736,144,737,149,666,168"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="256,177,461,203"/>
-<area shape="poly" title=" " alt="" coords="493,193,462,193,462,188,493,188"/>
-<area shape="poly" title=" " alt="" coords="428,171,509,156,629,143,737,136,737,142,630,148,509,161,429,176"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="5,207,208,232"/>
-<area shape="poly" title=" " alt="" coords="240,207,208,210,208,205,240,201"/>
-<area shape="poly" title=" " alt="" coords="223,221,440,225,689,220,816,210,929,197,929,202,817,215,689,225,440,230,223,227"/>
+<div class="center"><img src="group__delay__log__cdfs_gac677200fa47a95f644537be481450960_icgraph.png" border="0" usemap="#agroup__delay__log__cdfs_gac677200fa47a95f644537be481450960_icgraph" alt=""/></div>
+<map name="agroup__delay__log__cdfs_gac677200fa47a95f644537be481450960_icgraph" id="agroup__delay__log__cdfs_gac677200fa47a95f644537be481450960_icgraph">
+<area shape="rect" title=" " alt="" coords="1430,109,1602,135"/>
+<area shape="rect" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="1311,8,1382,34"/>
+<area shape="poly" title=" " alt="" coords="1478,103,1368,36,1371,32,1481,99"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9e88f6f30a8f32d8e4771826bf72e463" title=" " alt="" coords="737,109,882,135"/>
+<area shape="poly" title=" " alt="" coords="1414,125,882,125,882,120,1414,120"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9dd889406826dfe58ea658440784c9a7" title=" " alt="" coords="525,157,673,183"/>
+<area shape="poly" title=" " alt="" coords="1448,142,1329,164,1261,172,1193,175,999,175,674,174,674,168,999,170,1192,170,1260,167,1328,159,1447,136"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga11d79d0886e7c1828c78e68aa74e67dc" title=" " alt="" coords="524,207,675,248"/>
+<area shape="poly" title=" " alt="" coords="1478,145,1424,170,1354,197,1275,219,1233,225,1193,227,999,227,675,229,675,224,999,222,1192,222,1233,220,1273,214,1352,192,1422,166,1476,140"/>
+<area shape="rect" href="primarycensored_8stan.html#ae87aca017577bc03680c5f0bca4637e6" title=" " alt="" coords="509,42,689,82"/>
+<area shape="poly" title=" " alt="" coords="1447,108,1328,85,1260,77,1192,74,999,74,690,68,690,63,999,69,1193,69,1261,72,1329,80,1448,103"/>
+<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="1119,8,1263,34"/>
+<area shape="poly" title=" " alt="" coords="1296,24,1263,24,1263,18,1296,18"/>
+<area shape="rect" href="group__primary__censored__single.html#ga1c048ace7a520e3d45670e4e4c14f585" title=" " alt="" coords="930,8,1071,34"/>
+<area shape="poly" title=" " alt="" coords="1104,24,1072,24,1072,18,1104,18"/>
+<area shape="poly" title=" " alt="" coords="962,44,837,111,834,107,959,39"/>
+<area shape="poly" title=" " alt="" coords="736,142,659,159,658,154,734,136"/>
+<area shape="poly" title=" " alt="" coords="778,146,737,172,691,198,665,209,663,204,688,193,734,168,775,142"/>
+<area shape="poly" title=" " alt="" coords="721,109,646,86,647,81,723,104"/>
+<area shape="rect" href="group__primary__censored__single.html#ga2a1155a9ec8b2007be790fafd45bf0c9" title=" " alt="" coords="286,157,431,183"/>
+<area shape="poly" title=" " alt="" coords="509,173,432,173,432,168,509,168"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga7bf306228dadd0b06abc4a583439cdc9" title=" " alt="" coords="283,207,434,248"/>
+<area shape="poly" title=" " alt="" coords="508,230,435,230,435,225,508,225"/>
+<area shape="poly" title=" " alt="" coords="705,49,929,25,929,31,705,54"/>
+<area shape="poly" title=" " alt="" coords="705,81,784,106,782,111,703,86"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="256,49,461,75"/>
+<area shape="poly" title=" " alt="" coords="493,65,462,65,462,60,493,60"/>
+<area shape="poly" title=" " alt="" coords="430,76,509,92,630,106,737,115,737,121,629,112,509,97,429,82"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="5,5,208,31"/>
+<area shape="poly" title=" " alt="" coords="265,49,183,34,184,29,266,43"/>
+<area shape="poly" title=" " alt="" coords="223,16,929,18,929,23,223,21"/>
 </map>
 </div>
 

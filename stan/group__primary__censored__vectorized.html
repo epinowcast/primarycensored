@@ -114,16 +114,16 @@ Collaboration diagram for Primary Censored Distributions Functions (Vectorized):
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga87f86df6067548aca1a40df2fe4d1f8d" id="r_ga87f86df6067548aca1a40df2fe4d1f8d"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga87f86df6067548aca1a40df2fe4d1f8d">primarycensored_sone_lpmf_vectorized</a> (int max_delay, data real L, data real D, int dist_id, array[] real params, data real pwindow, int primary_id, array[] real primary_params)</td></tr>
-<tr class="separator:ga87f86df6067548aca1a40df2fe4d1f8d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7ed0eed950880b1f52c87927158a873f" id="r_ga7ed0eed950880b1f52c87927158a873f"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga7ed0eed950880b1f52c87927158a873f">primarycensored_sone_pmf_vectorized</a> (int max_delay, data real L, data real D, int dist_id, array[] real params, data real pwindow, int primary_id, array[] real primary_params)</td></tr>
-<tr class="separator:ga7ed0eed950880b1f52c87927158a873f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga11d79d0886e7c1828c78e68aa74e67dc" id="r_ga11d79d0886e7c1828c78e68aa74e67dc"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga11d79d0886e7c1828c78e68aa74e67dc">primarycensored_sone_lpmf_vectorized</a> (data int max_delay, data real L, data real D, data int dist_id, array[] real params, data real pwindow, data int primary_id, array[] real primary_params)</td></tr>
+<tr class="separator:ga11d79d0886e7c1828c78e68aa74e67dc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga7bf306228dadd0b06abc4a583439cdc9" id="r_ga7bf306228dadd0b06abc4a583439cdc9"><td class="memItemLeft" align="right" valign="top">vector&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#ga7bf306228dadd0b06abc4a583439cdc9">primarycensored_sone_pmf_vectorized</a> (data int max_delay, data real L, data real D, data int dist_id, array[] real params, data real pwindow, data int primary_id, array[] real primary_params)</td></tr>
+<tr class="separator:ga7bf306228dadd0b06abc4a583439cdc9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Description</h2>
 <p>Functions for computing primary censored distributions for multiple integer delays. </p>
 <h2 class="groupheader">Function Documentation</h2>
-<a id="ga87f86df6067548aca1a40df2fe4d1f8d" name="ga87f86df6067548aca1a40df2fe4d1f8d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga87f86df6067548aca1a40df2fe4d1f8d">&#9670;&#160;</a></span>primarycensored_sone_lpmf_vectorized()</h2>
+<a id="ga11d79d0886e7c1828c78e68aa74e67dc" name="ga11d79d0886e7c1828c78e68aa74e67dc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga11d79d0886e7c1828c78e68aa74e67dc">&#9670;&#160;</a></span>primarycensored_sone_lpmf_vectorized()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -131,7 +131,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">vector primarycensored_sone_lpmf_vectorized </td>
           <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max_delay</em></span>, </td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>max_delay</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -146,7 +146,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -161,7 +161,7 @@ Functions</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -201,80 +201,85 @@ Functions</h2></td></tr>
 <div class="line">array[0] real primary_params = {};</div>
 <div class="line"> </div>
 <div class="line">vector[max_delay] log_pmf =</div>
-<div class="line">  <a class="code hl_function" href="#ga87f86df6067548aca1a40df2fe4d1f8d">primarycensored_sone_lpmf_vectorized</a>(</div>
+<div class="line">  <a class="code hl_function" href="#ga11d79d0886e7c1828c78e68aa74e67dc">primarycensored_sone_lpmf_vectorized</a>(</div>
 <div class="line">     max_delay, L, D, dist_id, params, pwindow, primary_id,</div>
 <div class="line">     primary_params</div>
 <div class="line">  );</div>
-<div class="ttc" id="agroup__primary__censored__vectorized_html_ga87f86df6067548aca1a40df2fe4d1f8d"><div class="ttname"><a href="#ga87f86df6067548aca1a40df2fe4d1f8d">primarycensored_sone_lpmf_vectorized</a></div><div class="ttdeci">vector primarycensored_sone_lpmf_vectorized(int max_delay, data real L, data real D, int dist_id, array[] real params, data real pwindow, int primary_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored_8stan_source.html#l00405">primarycensored.stan:405</a></div></div>
+<div class="ttc" id="agroup__primary__censored__vectorized_html_ga11d79d0886e7c1828c78e68aa74e67dc"><div class="ttname"><a href="#ga11d79d0886e7c1828c78e68aa74e67dc">primarycensored_sone_lpmf_vectorized</a></div><div class="ttdeci">vector primarycensored_sone_lpmf_vectorized(data int max_delay, data real L, data real D, data int dist_id, array[] real params, data real pwindow, data int primary_id, array[] real primary_params)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored_8stan_source.html#l00440">primarycensored.stan:440</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored_8stan_source.html#l00405">405</a> of file <a class="el" href="primarycensored_8stan_source.html">primarycensored.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored_8stan_source.html#l00440">440</a> of file <a class="el" href="primarycensored_8stan_source.html">primarycensored.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="group__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_cgraph.png" border="0" usemap="#agroup__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_cgraph" alt=""/></div>
-<map name="agroup__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_cgraph" id="agroup__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_cgraph">
-<area shape="rect" title=" " alt="" coords="5,371,157,412"/>
-<area shape="rect" href="group__primary__censored__single.html#gaf03826a2164da9f913e2262c7fb668f1" title=" " alt="" coords="205,164,349,190"/>
-<area shape="poly" title=" " alt="" coords="99,369,252,200,255,203,103,372"/>
-<area shape="rect" href="primarycensored_8stan.html#a265a7a4cb9d9f28774aa815d74570f47" title=" " alt="" coords="1110,474,1250,515"/>
-<area shape="poly" title=" " alt="" coords="109,410,169,454,255,505,305,528,357,547,411,560,466,565,689,565,799,560,909,547,1010,529,1095,512,1096,517,1011,535,910,552,800,565,689,570,466,570,411,565,356,552,302,533,252,510,166,459,106,415"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#gafbcb39f95f9afcd6128039ece98c070a" title=" " alt="" coords="618,100,757,126"/>
-<area shape="poly" title=" " alt="" coords="349,163,602,123,603,129,350,168"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="837,201,1042,227"/>
-<area shape="poly" title=" " alt="" coords="302,161,385,124,442,103,507,84,576,70,648,64,720,68,790,85,830,105,866,132,920,187,916,191,863,136,827,110,788,90,719,73,648,69,577,75,508,89,444,108,387,129,305,166"/>
-<area shape="rect" href="primarycensored_8stan.html#a1bd5e1e0fb7c8162729c535d4e1175d1" title=" " alt="" coords="1104,253,1257,293"/>
-<area shape="poly" title=" " alt="" coords="300,188,344,214,398,237,490,261,586,278,682,289,777,294,951,292,1088,281,1088,287,951,297,777,299,682,294,585,284,489,267,396,242,341,218,297,193"/>
-<area shape="poly" title=" " alt="" coords="290,188,331,240,398,313,440,353,486,391,535,425,587,453,652,478,720,495,789,507,859,513,988,513,1094,504,1095,510,989,518,858,518,789,512,719,501,650,483,585,458,533,429,483,395,437,357,394,317,327,243,285,191"/>
-<area shape="rect" href="primarycensored_8stan.html#a8de61bdbea882cd20f02977b96e35453" title=" " alt="" coords="1090,47,1270,88"/>
-<area shape="poly" title=" " alt="" coords="296,162,339,125,366,106,396,90,484,60,576,41,670,30,762,26,852,28,935,34,1075,51,1074,56,935,39,852,33,762,31,670,35,577,46,485,65,398,95,369,111,342,129,300,166"/>
-<area shape="rect" href="group__primary__censored__single.html#gad77e795cb876e8083049ca02f36e6244" title=" " alt="" coords="397,201,538,227"/>
-<area shape="poly" title=" " alt="" coords="347,188,384,195,383,200,346,193"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#ga3cc1a0a455342c3961224afe31db5416" title=" " alt="" coords="1092,187,1269,228"/>
-<area shape="poly" title=" " alt="" coords="1042,209,1076,208,1076,213,1042,214"/>
-<area shape="poly" title=" " alt="" coords="996,225,1089,248,1088,253,995,230"/>
-<area shape="poly" title=" " alt="" coords="955,226,997,274,1044,340,1058,368,1066,392,1075,414,1092,439,1121,463,1118,467,1088,443,1070,417,1061,394,1053,370,1040,342,993,278,951,229"/>
-<area shape="poly" title=" " alt="" coords="996,198,1041,180,1099,140,1147,97,1151,101,1103,144,1043,185,998,203"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560" title=" " alt="" coords="1325,122,1491,163"/>
-<area shape="poly" title=" " alt="" coords="1253,184,1319,165,1321,170,1254,189"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gaa144386bb3c2a04524e4fe2e216c368d" title=" " alt="" coords="1318,187,1498,228"/>
-<area shape="poly" title=" " alt="" coords="1269,205,1303,205,1303,210,1269,210"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#ga435887da77ef71daacacddbaf3f1113f" title=" " alt="" coords="1326,253,1490,293"/>
-<area shape="poly" title=" " alt="" coords="1254,226,1321,245,1319,250,1253,231"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4" title=" " alt="" coords="1546,260,1645,286"/>
-<area shape="poly" title=" " alt="" coords="1490,270,1530,270,1530,276,1490,276"/>
-<area shape="poly" title=" " alt="" coords="1114,49,978,24,892,14,796,9,696,10,594,19,494,39,398,71,367,88,339,109,295,153,291,150,335,105,364,83,396,66,492,34,594,14,696,5,797,4,892,9,979,19,1115,44"/>
-<area shape="poly" title=" " alt="" coords="487,199,531,171,585,142,621,129,623,134,587,147,534,176,490,203"/>
-<area shape="poly" title=" " alt="" coords="523,225,587,237,723,252,860,261,1088,270,1088,275,860,267,723,257,586,242,522,230"/>
-<area shape="poly" title=" " alt="" coords="476,226,490,260,513,305,546,351,566,372,588,389,627,408,681,425,818,453,966,473,1095,485,1094,491,966,478,817,459,679,431,625,413,585,394,562,376,542,355,509,308,485,262,471,229"/>
-<area shape="poly" title=" " alt="" coords="530,198,586,186,1074,86,1075,91,587,191,531,203"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="586,201,789,227"/>
-<area shape="poly" title=" " alt="" coords="539,212,571,212,571,217,539,217"/>
-<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="615,353,760,379"/>
-<area shape="poly" title=" " alt="" coords="490,226,656,342,653,347,487,230"/>
-<area shape="poly" title=" " alt="" coords="789,212,821,212,821,217,789,217"/>
-<area shape="rect" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="904,353,974,379"/>
-<area shape="poly" title=" " alt="" coords="760,364,888,364,888,369,760,369"/>
-<area shape="rect" href="group__primary__distribution__log__pdfs.html#gacfee86fff92c3be55fc4bfe7e5ea8fd3" title=" " alt="" coords="894,403,985,428"/>
-<area shape="poly" title=" " alt="" coords="757,377,879,401,878,406,756,382"/>
-<area shape="rect" href="group__exponential__growth__distributions.html#ga5aa3a650437bfdb837185cb79c829662" title=" " alt="" coords="1126,403,1234,428"/>
-<area shape="poly" title=" " alt="" coords="985,413,1111,413,1111,418,985,418"/>
+<div class="center"><img src="group__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_cgraph.png" border="0" usemap="#agroup__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_cgraph" alt=""/></div>
+<map name="agroup__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_cgraph" id="agroup__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_cgraph">
+<area shape="rect" title=" " alt="" coords="5,186,157,227"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gac677200fa47a95f644537be481450960" title=" " alt="" coords="1322,75,1494,101"/>
+<area shape="poly" title=" " alt="" coords="102,184,160,134,246,74,297,46,351,24,408,8,466,3,941,3,1034,5,1107,13,1271,45,1353,67,1352,73,1270,51,1106,18,1034,10,941,8,466,8,409,14,353,29,299,51,249,79,163,138,105,188"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9e88f6f30a8f32d8e4771826bf72e463" title=" " alt="" coords="205,194,349,220"/>
+<area shape="poly" title=" " alt="" coords="157,204,189,204,189,209,157,209"/>
+<area shape="rect" href="primarycensored_8stan.html#a265a7a4cb9d9f28774aa815d74570f47" title=" " alt="" coords="1110,550,1250,591"/>
+<area shape="poly" title=" " alt="" coords="92,226,132,326,165,393,208,462,259,528,288,557,319,582,353,603,388,619,426,630,466,633,689,633,799,629,909,617,1094,586,1095,591,909,622,799,634,689,639,466,639,425,635,387,624,350,608,316,586,285,560,255,531,203,465,161,396,127,328,87,228"/>
+<area shape="poly" title=" " alt="" coords="291,191,335,154,365,134,396,118,473,85,537,65,602,56,686,53,941,53,1135,60,1306,74,1306,80,1135,66,941,59,686,59,603,61,538,70,475,90,398,122,367,139,338,159,294,195"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#gafbcb39f95f9afcd6128039ece98c070a" title=" " alt="" coords="618,219,757,245"/>
+<area shape="poly" title=" " alt="" coords="349,208,603,224,602,229,349,214"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="837,470,1042,496"/>
+<area shape="poly" title=" " alt="" coords="288,219,331,282,363,321,399,357,446,394,486,419,529,438,587,456,646,470,707,478,821,484,821,489,706,483,645,475,586,461,527,443,483,424,443,399,395,361,359,325,327,286,284,221"/>
+<area shape="rect" href="primarycensored_8stan.html#a1bd5e1e0fb7c8162729c535d4e1175d1" title=" " alt="" coords="1104,305,1257,346"/>
+<area shape="poly" title=" " alt="" coords="349,199,397,197,538,197,664,195,719,196,789,204,878,222,966,247,1113,296,1111,302,965,252,877,228,788,209,719,201,664,200,538,203,397,203,349,205"/>
+<area shape="poly" title=" " alt="" coords="283,219,294,263,316,325,350,390,372,420,399,446,438,475,481,500,571,539,667,566,764,581,860,589,949,590,1095,580,1095,585,949,595,859,594,764,587,666,571,570,544,478,505,435,479,395,450,368,424,345,393,311,327,289,265,278,221"/>
+<area shape="rect" href="primarycensored_8stan.html#ae87aca017577bc03680c5f0bca4637e6" title=" " alt="" coords="1090,98,1270,139"/>
+<area shape="poly" title=" " alt="" coords="334,191,396,172,488,156,582,143,769,128,939,121,1075,120,1075,125,939,127,769,133,583,148,489,161,398,177,335,196"/>
+<area shape="rect" href="group__primary__censored__single.html#ga1c048ace7a520e3d45670e4e4c14f585" title=" " alt="" coords="397,320,538,346"/>
+<area shape="poly" title=" " alt="" coords="299,218,436,309,433,314,296,222"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga3cc1a0a455342c3961224afe31db5416" title=" " alt="" coords="1092,470,1269,511"/>
+<area shape="poly" title=" " alt="" coords="1042,483,1076,485,1076,490,1042,489"/>
+<area shape="poly" title=" " alt="" coords="1017,467,1041,456,1056,445,1066,434,1088,406,1143,354,1147,358,1092,410,1070,437,1060,449,1043,461,1019,472"/>
+<area shape="poly" title=" " alt="" coords="987,494,1043,512,1117,541,1116,546,1041,517,985,499"/>
+<area shape="poly" title=" " alt="" coords="1026,467,1040,457,1057,438,1066,420,1074,383,1076,341,1080,318,1088,292,1122,216,1157,151,1162,154,1127,218,1092,294,1085,319,1081,342,1079,383,1071,421,1061,441,1044,461,1029,472"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560" title=" " alt="" coords="1325,470,1491,511"/>
+<area shape="poly" title=" " alt="" coords="1269,488,1309,488,1309,493,1269,493"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaa144386bb3c2a04524e4fe2e216c368d" title=" " alt="" coords="1318,536,1498,576"/>
+<area shape="poly" title=" " alt="" coords="1254,509,1321,528,1319,533,1253,514"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga435887da77ef71daacacddbaf3f1113f" title=" " alt="" coords="1326,405,1490,446"/>
+<area shape="poly" title=" " alt="" coords="1253,467,1319,448,1321,453,1254,472"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4" title=" " alt="" coords="1546,412,1645,438"/>
+<area shape="poly" title=" " alt="" coords="1490,423,1530,423,1530,428,1490,428"/>
+<area shape="poly" title=" " alt="" coords="1270,104,1306,99,1307,104,1271,109"/>
+<area shape="poly" title=" " alt="" coords="1090,110,955,106,781,109,589,124,492,136,398,153,348,168,305,188,302,183,346,163,396,148,491,131,589,118,781,104,955,101,1090,105"/>
+<area shape="poly" title=" " alt="" coords="487,318,531,290,585,262,621,248,623,253,587,266,534,295,490,322"/>
+<area shape="poly" title=" " alt="" coords="538,330,1088,324,1088,329,538,335"/>
+<area shape="poly" title=" " alt="" coords="479,345,521,400,552,431,588,456,628,474,683,490,820,519,968,542,1095,559,1094,564,967,548,819,524,682,495,626,479,585,461,548,435,517,404,475,348"/>
+<area shape="poly" title=" " alt="" coords="534,317,653,291,788,255,963,197,1111,143,1112,148,965,202,789,260,654,296,535,323"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="586,420,789,446"/>
+<area shape="poly" title=" " alt="" coords="487,344,531,376,587,407,603,413,601,418,585,412,528,380,484,349"/>
+<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="615,371,760,397"/>
+<area shape="poly" title=" " alt="" coords="527,344,614,365,613,370,526,349"/>
+<area shape="poly" title=" " alt="" coords="757,444,856,464,855,469,756,449"/>
+<area shape="rect" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="904,371,974,397"/>
+<area shape="poly" title=" " alt="" coords="760,381,888,381,888,387,760,387"/>
+<area shape="rect" href="group__primary__distribution__log__pdfs.html#gacfee86fff92c3be55fc4bfe7e5ea8fd3" title=" " alt="" coords="894,420,985,446"/>
+<area shape="poly" title=" " alt="" coords="757,395,879,419,878,424,756,400"/>
+<area shape="poly" title=" " alt="" coords="975,389,1036,397,1112,399,1153,396,1194,388,1233,374,1269,355,1298,331,1323,302,1344,269,1361,235,1386,169,1399,115,1404,117,1391,170,1366,237,1349,272,1327,305,1302,335,1272,360,1235,379,1195,393,1154,401,1112,404,1035,402,975,394"/>
+<area shape="rect" href="group__exponential__growth__distributions.html#ga5aa3a650437bfdb837185cb79c829662" title=" " alt="" coords="1126,420,1234,446"/>
+<area shape="poly" title=" " alt="" coords="985,431,1111,431,1111,436,985,436"/>
 </map>
 </div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="group__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_icgraph.png" border="0" usemap="#agroup__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_icgraph" alt=""/></div>
-<map name="agroup__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_icgraph" id="agroup__primary__censored__vectorized_ga87f86df6067548aca1a40df2fe4d1f8d_icgraph">
+<div class="center"><img src="group__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_icgraph.png" border="0" usemap="#agroup__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_icgraph" alt=""/></div>
+<map name="agroup__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_icgraph" id="agroup__primary__censored__vectorized_ga11d79d0886e7c1828c78e68aa74e67dc_icgraph">
 <area shape="rect" title=" " alt="" coords="205,5,356,46"/>
-<area shape="rect" href="group__primary__censored__vectorized.html#ga7ed0eed950880b1f52c87927158a873f" title=" " alt="" coords="5,5,157,46"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga7bf306228dadd0b06abc4a583439cdc9" title=" " alt="" coords="5,5,157,46"/>
 <area shape="poly" title=" " alt="" coords="189,28,157,28,157,23,189,23"/>
 </map>
 </div>
 
 </div>
 </div>
-<a id="ga7ed0eed950880b1f52c87927158a873f" name="ga7ed0eed950880b1f52c87927158a873f"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ga7ed0eed950880b1f52c87927158a873f">&#9670;&#160;</a></span>primarycensored_sone_pmf_vectorized()</h2>
+<a id="ga7bf306228dadd0b06abc4a583439cdc9" name="ga7bf306228dadd0b06abc4a583439cdc9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ga7bf306228dadd0b06abc4a583439cdc9">&#9670;&#160;</a></span>primarycensored_sone_pmf_vectorized()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -282,7 +287,7 @@ Here is the caller graph for this function:</div>
         <tr>
           <td class="memname">vector primarycensored_sone_pmf_vectorized </td>
           <td>(</td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>max_delay</em></span>, </td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>max_delay</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -297,7 +302,7 @@ Here is the caller graph for this function:</div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>dist_id</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -312,7 +317,7 @@ Here is the caller graph for this function:</div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
+          <td class="paramtype">data int</td>          <td class="paramname"><span class="paramname"><em>primary_id</em></span>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -351,63 +356,68 @@ Here is the caller graph for this function:</div>
 <div class="line"><span class="keywordtype">int</span> primary_id = 1; <span class="comment">// Uniform</span></div>
 <div class="line">array[0] real primary_params = {};</div>
 <div class="line">vector[max_delay] pmf =</div>
-<div class="line">  <a class="code hl_function" href="#ga87f86df6067548aca1a40df2fe4d1f8d">primarycensored_sone_lpmf_vectorized</a>(</div>
+<div class="line">  <a class="code hl_function" href="#ga11d79d0886e7c1828c78e68aa74e67dc">primarycensored_sone_lpmf_vectorized</a>(</div>
 <div class="line">     max_delay, L, D, dist_id, params, pwindow, primary_id, primary_params</div>
 <div class="line">  );</div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored_8stan_source.html#l00522">522</a> of file <a class="el" href="primarycensored_8stan_source.html">primarycensored.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored_8stan_source.html#l00574">574</a> of file <a class="el" href="primarycensored_8stan_source.html">primarycensored.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="group__primary__censored__vectorized_ga7ed0eed950880b1f52c87927158a873f_cgraph.png" border="0" usemap="#agroup__primary__censored__vectorized_ga7ed0eed950880b1f52c87927158a873f_cgraph" alt=""/></div>
-<map name="agroup__primary__censored__vectorized_ga7ed0eed950880b1f52c87927158a873f_cgraph" id="agroup__primary__censored__vectorized_ga7ed0eed950880b1f52c87927158a873f_cgraph">
-<area shape="rect" title=" " alt="" coords="5,371,157,412"/>
-<area shape="rect" href="group__primary__censored__vectorized.html#ga87f86df6067548aca1a40df2fe4d1f8d" title=" " alt="" coords="205,371,356,412"/>
-<area shape="poly" title=" " alt="" coords="157,389,189,389,189,394,157,394"/>
-<area shape="rect" href="group__primary__censored__single.html#gaf03826a2164da9f913e2262c7fb668f1" title=" " alt="" coords="404,164,548,190"/>
-<area shape="poly" title=" " alt="" coords="299,369,451,200,455,203,303,372"/>
-<area shape="rect" href="primarycensored_8stan.html#a265a7a4cb9d9f28774aa815d74570f47" title=" " alt="" coords="1309,474,1450,515"/>
-<area shape="poly" title=" " alt="" coords="308,410,368,454,454,505,504,528,556,547,611,560,666,565,888,565,999,560,1109,547,1210,529,1294,512,1295,517,1211,535,1109,552,999,565,888,570,666,570,610,565,555,552,502,533,452,510,365,459,305,415"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#gafbcb39f95f9afcd6128039ece98c070a" title=" " alt="" coords="817,100,956,126"/>
-<area shape="poly" title=" " alt="" coords="548,163,801,123,802,129,549,168"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="1036,201,1241,227"/>
-<area shape="poly" title=" " alt="" coords="502,161,584,124,642,103,706,84,776,70,848,64,919,68,989,85,1029,105,1065,132,1119,187,1116,191,1062,136,1026,110,987,90,919,73,848,69,777,75,708,89,643,108,586,129,504,166"/>
-<area shape="rect" href="primarycensored_8stan.html#a1bd5e1e0fb7c8162729c535d4e1175d1" title=" " alt="" coords="1303,253,1456,293"/>
-<area shape="poly" title=" " alt="" coords="499,188,543,214,597,237,689,261,785,278,882,289,976,294,1150,292,1287,281,1288,287,1151,297,976,299,881,294,784,284,688,267,595,242,540,218,496,193"/>
-<area shape="poly" title=" " alt="" coords="489,188,530,240,598,313,639,353,685,391,735,425,787,453,851,478,919,495,989,507,1058,513,1188,513,1294,504,1294,510,1188,518,1058,518,988,512,918,501,850,483,785,458,732,429,682,395,636,357,594,317,526,243,485,191"/>
-<area shape="rect" href="primarycensored_8stan.html#a8de61bdbea882cd20f02977b96e35453" title=" " alt="" coords="1289,47,1470,88"/>
-<area shape="poly" title=" " alt="" coords="496,162,538,125,566,106,595,90,683,60,775,41,869,30,962,26,1051,28,1135,34,1274,51,1273,56,1134,39,1051,33,962,31,869,35,776,46,685,65,597,95,569,111,542,129,499,166"/>
-<area shape="rect" href="group__primary__censored__single.html#gad77e795cb876e8083049ca02f36e6244" title=" " alt="" coords="596,201,738,227"/>
-<area shape="poly" title=" " alt="" coords="546,188,583,195,582,200,545,193"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#ga3cc1a0a455342c3961224afe31db5416" title=" " alt="" coords="1291,187,1468,228"/>
-<area shape="poly" title=" " alt="" coords="1242,209,1275,208,1275,213,1242,214"/>
-<area shape="poly" title=" " alt="" coords="1195,225,1289,248,1287,253,1194,230"/>
-<area shape="poly" title=" " alt="" coords="1154,226,1196,274,1244,340,1258,368,1265,392,1274,414,1291,439,1321,463,1317,467,1287,443,1269,417,1260,394,1253,370,1239,342,1192,278,1150,229"/>
-<area shape="poly" title=" " alt="" coords="1195,198,1240,180,1299,140,1346,97,1350,101,1302,144,1243,185,1197,203"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560" title=" " alt="" coords="1524,122,1690,163"/>
-<area shape="poly" title=" " alt="" coords="1452,184,1519,165,1520,170,1453,189"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gaa144386bb3c2a04524e4fe2e216c368d" title=" " alt="" coords="1518,187,1697,228"/>
-<area shape="poly" title=" " alt="" coords="1469,205,1502,205,1502,210,1469,210"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#ga435887da77ef71daacacddbaf3f1113f" title=" " alt="" coords="1526,253,1689,293"/>
-<area shape="poly" title=" " alt="" coords="1453,226,1520,245,1519,250,1452,231"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4" title=" " alt="" coords="1745,260,1844,286"/>
-<area shape="poly" title=" " alt="" coords="1690,270,1730,270,1730,276,1690,276"/>
-<area shape="poly" title=" " alt="" coords="1313,49,1178,24,1091,14,996,9,896,10,794,19,693,39,597,71,566,88,538,109,495,153,491,150,535,105,564,83,595,66,692,34,793,14,895,5,996,4,1091,9,1178,19,1314,44"/>
-<area shape="poly" title=" " alt="" coords="687,199,730,171,785,142,820,129,822,134,787,147,733,176,689,203"/>
-<area shape="poly" title=" " alt="" coords="722,225,786,237,922,252,1059,261,1287,270,1287,275,1059,267,922,257,785,242,721,230"/>
-<area shape="poly" title=" " alt="" coords="675,226,689,260,713,305,745,351,765,372,787,389,826,408,880,425,1017,453,1166,473,1294,485,1293,491,1165,478,1016,459,879,431,824,413,784,394,761,376,741,355,708,308,685,262,670,229"/>
-<area shape="poly" title=" " alt="" coords="729,198,785,186,1273,86,1275,91,786,191,730,203"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="786,201,988,227"/>
-<area shape="poly" title=" " alt="" coords="738,212,770,212,770,217,738,217"/>
-<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="815,353,959,379"/>
-<area shape="poly" title=" " alt="" coords="689,226,856,342,853,347,686,230"/>
-<area shape="poly" title=" " alt="" coords="988,212,1021,212,1021,217,988,217"/>
-<area shape="rect" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="1104,353,1174,379"/>
-<area shape="poly" title=" " alt="" coords="960,364,1088,364,1088,369,960,369"/>
-<area shape="rect" href="group__primary__distribution__log__pdfs.html#gacfee86fff92c3be55fc4bfe7e5ea8fd3" title=" " alt="" coords="1093,403,1184,428"/>
-<area shape="poly" title=" " alt="" coords="957,377,1078,401,1077,406,956,382"/>
-<area shape="rect" href="group__exponential__growth__distributions.html#ga5aa3a650437bfdb837185cb79c829662" title=" " alt="" coords="1325,403,1434,428"/>
-<area shape="poly" title=" " alt="" coords="1185,413,1310,413,1310,418,1185,418"/>
+<div class="center"><img src="group__primary__censored__vectorized_ga7bf306228dadd0b06abc4a583439cdc9_cgraph.png" border="0" usemap="#agroup__primary__censored__vectorized_ga7bf306228dadd0b06abc4a583439cdc9_cgraph" alt=""/></div>
+<map name="agroup__primary__censored__vectorized_ga7bf306228dadd0b06abc4a583439cdc9_cgraph" id="agroup__primary__censored__vectorized_ga7bf306228dadd0b06abc4a583439cdc9_cgraph">
+<area shape="rect" title=" " alt="" coords="5,186,157,227"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga11d79d0886e7c1828c78e68aa74e67dc" title=" " alt="" coords="205,186,356,227"/>
+<area shape="poly" title=" " alt="" coords="157,204,189,204,189,209,157,209"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gac677200fa47a95f644537be481450960" title=" " alt="" coords="1521,75,1694,101"/>
+<area shape="poly" title=" " alt="" coords="301,184,359,134,446,74,496,46,551,24,608,8,666,3,1140,3,1234,5,1306,13,1470,45,1553,67,1551,73,1469,51,1306,18,1233,10,1140,8,666,8,609,14,552,29,499,51,448,79,363,138,305,188"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9e88f6f30a8f32d8e4771826bf72e463" title=" " alt="" coords="404,194,548,220"/>
+<area shape="poly" title=" " alt="" coords="356,204,389,204,389,209,356,209"/>
+<area shape="rect" href="primarycensored_8stan.html#a265a7a4cb9d9f28774aa815d74570f47" title=" " alt="" coords="1309,550,1450,591"/>
+<area shape="poly" title=" " alt="" coords="291,226,331,326,365,393,407,462,459,528,488,557,519,582,552,603,588,619,626,630,666,633,888,633,998,629,1108,617,1293,586,1294,591,1109,622,999,634,888,639,666,639,625,635,586,624,550,608,516,586,484,560,455,531,403,465,360,396,326,328,286,228"/>
+<area shape="poly" title=" " alt="" coords="490,191,535,154,564,134,595,118,673,85,736,65,801,56,885,53,1140,53,1335,60,1506,74,1505,80,1334,66,1140,59,886,59,802,61,737,70,675,90,597,122,567,139,538,159,493,195"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#gafbcb39f95f9afcd6128039ece98c070a" title=" " alt="" coords="817,219,956,245"/>
+<area shape="poly" title=" " alt="" coords="549,208,802,224,802,229,548,214"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="1036,470,1241,496"/>
+<area shape="poly" title=" " alt="" coords="487,219,530,282,562,321,598,357,645,394,685,419,729,438,786,456,845,470,906,478,1021,484,1020,489,905,483,844,475,785,461,727,443,683,424,642,399,595,361,558,325,526,286,483,221"/>
+<area shape="rect" href="primarycensored_8stan.html#a1bd5e1e0fb7c8162729c535d4e1175d1" title=" " alt="" coords="1303,305,1456,346"/>
+<area shape="poly" title=" " alt="" coords="548,199,596,197,738,197,863,195,918,196,988,204,1078,222,1165,247,1312,296,1311,302,1164,252,1076,228,988,209,918,201,863,200,738,203,596,203,549,205"/>
+<area shape="poly" title=" " alt="" coords="483,219,493,263,515,325,549,390,572,420,598,446,638,475,680,500,771,539,867,566,964,581,1059,589,1148,590,1294,580,1294,585,1148,595,1059,594,963,587,865,571,769,544,677,505,635,479,595,450,568,424,545,393,510,327,488,265,477,221"/>
+<area shape="rect" href="primarycensored_8stan.html#ae87aca017577bc03680c5f0bca4637e6" title=" " alt="" coords="1289,98,1470,139"/>
+<area shape="poly" title=" " alt="" coords="533,191,596,172,687,156,781,143,968,128,1138,121,1274,120,1274,125,1138,127,968,133,782,148,688,161,597,177,535,196"/>
+<area shape="rect" href="group__primary__censored__single.html#ga1c048ace7a520e3d45670e4e4c14f585" title=" " alt="" coords="596,320,738,346"/>
+<area shape="poly" title=" " alt="" coords="499,218,635,309,632,314,496,222"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga3cc1a0a455342c3961224afe31db5416" title=" " alt="" coords="1291,470,1468,511"/>
+<area shape="poly" title=" " alt="" coords="1242,483,1275,485,1275,490,1242,489"/>
+<area shape="poly" title=" " alt="" coords="1217,467,1240,456,1255,445,1265,434,1287,406,1342,354,1346,358,1291,410,1269,437,1259,449,1243,461,1219,472"/>
+<area shape="poly" title=" " alt="" coords="1186,494,1242,512,1317,541,1315,546,1240,517,1184,499"/>
+<area shape="poly" title=" " alt="" coords="1225,467,1240,457,1256,438,1266,420,1273,383,1275,341,1279,318,1287,292,1322,216,1356,151,1361,154,1327,218,1292,294,1284,319,1280,342,1278,383,1271,421,1260,441,1243,461,1228,472"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560" title=" " alt="" coords="1524,470,1690,511"/>
+<area shape="poly" title=" " alt="" coords="1469,488,1509,488,1509,493,1469,493"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaa144386bb3c2a04524e4fe2e216c368d" title=" " alt="" coords="1518,536,1697,576"/>
+<area shape="poly" title=" " alt="" coords="1453,509,1520,528,1519,533,1452,514"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga435887da77ef71daacacddbaf3f1113f" title=" " alt="" coords="1526,405,1689,446"/>
+<area shape="poly" title=" " alt="" coords="1452,467,1519,448,1520,453,1453,472"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4" title=" " alt="" coords="1745,412,1844,438"/>
+<area shape="poly" title=" " alt="" coords="1690,423,1730,423,1730,428,1690,428"/>
+<area shape="poly" title=" " alt="" coords="1469,104,1505,99,1506,104,1470,109"/>
+<area shape="poly" title=" " alt="" coords="1289,110,1154,106,981,109,788,124,691,136,597,153,547,168,504,188,502,183,545,163,596,148,691,131,788,118,980,104,1154,101,1289,105"/>
+<area shape="poly" title=" " alt="" coords="687,318,730,290,785,262,820,248,822,253,787,266,733,295,689,322"/>
+<area shape="poly" title=" " alt="" coords="738,330,1287,324,1288,329,738,335"/>
+<area shape="poly" title=" " alt="" coords="679,345,720,400,751,431,787,456,827,474,882,490,1019,519,1167,542,1294,559,1294,564,1166,548,1018,524,881,495,826,479,784,461,748,435,716,404,674,348"/>
+<area shape="poly" title=" " alt="" coords="733,317,852,291,987,255,1163,197,1310,143,1312,148,1164,202,989,260,853,296,734,323"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="786,420,988,446"/>
+<area shape="poly" title=" " alt="" coords="686,344,730,376,787,407,803,413,801,418,785,412,727,380,683,349"/>
+<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="815,371,959,397"/>
+<area shape="poly" title=" " alt="" coords="727,344,814,365,813,370,725,349"/>
+<area shape="poly" title=" " alt="" coords="957,444,1055,464,1054,469,956,449"/>
+<area shape="rect" href="primarycensored__ode_8stan.html#a0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="1104,371,1174,397"/>
+<area shape="poly" title=" " alt="" coords="960,381,1088,381,1088,387,960,387"/>
+<area shape="rect" href="group__primary__distribution__log__pdfs.html#gacfee86fff92c3be55fc4bfe7e5ea8fd3" title=" " alt="" coords="1093,420,1184,446"/>
+<area shape="poly" title=" " alt="" coords="957,395,1078,419,1077,424,956,400"/>
+<area shape="poly" title=" " alt="" coords="1175,389,1235,397,1312,399,1353,396,1393,388,1432,374,1468,355,1497,331,1522,302,1543,269,1561,235,1585,169,1599,115,1604,117,1590,170,1566,237,1548,272,1527,305,1501,335,1471,360,1434,379,1395,393,1353,401,1312,404,1234,402,1174,394"/>
+<area shape="rect" href="group__exponential__growth__distributions.html#ga5aa3a650437bfdb837185cb79c829662" title=" " alt="" coords="1325,420,1434,446"/>
+<area shape="poly" title=" " alt="" coords="1185,431,1310,431,1310,436,1185,436"/>
 </map>
 </div>
 
