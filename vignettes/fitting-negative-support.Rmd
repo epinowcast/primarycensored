@@ -126,7 +126,7 @@ The MLE point estimates land close to the true `location = 2`, `scale = 1`.
 
 # Bayesian fit with `pcd_cmdstan_model()`
 
-We pass our left-truncation point through the `start_relative_obs_time` column.
+Now we use our packaged Bayesian model as a comparison. The only difference to usage elsewhere in the package is that here we pass our left-truncation point through the `start_relative_obs_time` column.
 
 We use weakly informative priors that are not centred on the simulation truth: a wide `Normal(0, 5)` on the location and `Normal(0, 2.5)` on the scale.
 The `priors` argument takes two vectors indexed by delay-distribution parameter position: `priors$location[i]` is the prior mean for parameter `i` and `priors$scale[i]` is the prior standard deviation.
