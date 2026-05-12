@@ -3,6 +3,7 @@ CmdStan
 CmdStanModel
 Codecov
 Cori
+Gumbel
 Inf
 Lifecycle
 Mba
@@ -44,7 +45,6 @@ fitdistrplus
 frac
 gammapartexp
 geq
-Gumbel
 hexsticker
 infty
 int
@@ -95,7 +95,6 @@ speedups
 stan
 stantools
 startpoint
-subprobability
 survgammaunifprim
 survivalfunc
 swindow
