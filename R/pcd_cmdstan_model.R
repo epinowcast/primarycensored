@@ -112,10 +112,12 @@ pcd_cmdstan_model <- function(
 #'   supplied, expects a list with elements:
 #'   * `K`: integer, number of bins.
 #'   * `boundaries`: numeric vector of length `K + 1`.
-#'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26),
-#'     `"hazard"` / `"hazardrw"` (random walk on logit hazards,
-#'     `dist_id` 27), or `"hazardre"` (IID logit random effects on the
-#'     hazards around a mean, `dist_id` 27 with `np_paramtype = 3`).
+#'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26) or
+#'     `"hazard"` (logit-hazard model, `dist_id` 27). For the hazard
+#'     family the variant is selected by `hazard_model`.
+#'   * `hazard_model`: one of `"rw"` (random walk on the logit hazards,
+#'     default) or `"re"` (IID logit random effects on the hazards
+#'     around a mean). Only consulted when `paramtype = "hazard"`.
 #'   * `dirichlet_alpha`: optional numeric vector of length `K`,
 #'     defaults to `rep(1, K)`.
 #'   * `hazard_priors`: optional list with elements `alpha_mean`,
@@ -301,14 +303,19 @@ pcd_as_stan_data <- function(
   }
   paramtype <- match.arg(
     nonparametric$paramtype,
-    choices = c("simplex", "hazard", "hazardrw", "hazardre")
+    choices = c("simplex", "hazard")
   )
-  np_paramtype <- switch(paramtype,
-    simplex = 1L,
-    hazard = 2L,
-    hazardrw = 2L,
-    hazardre = 3L
+  hazard_model <- match.arg(
+    nonparametric$hazard_model %||% "rw",
+    choices = c("rw", "re")
   )
+  np_paramtype <- if (paramtype == "simplex") {
+    1L
+  } else if (hazard_model == "rw") {
+    2L
+  } else {
+    3L
+  }
   dist_id <- if (paramtype == "simplex") 26L else 27L
   dirichlet_alpha <- nonparametric$dirichlet_alpha %||% rep(1, K)
   if (length(dirichlet_alpha) != K) {
@@ -341,4 +348,11 @@ pcd_as_stan_data <- function(
   )
 }
 
-`%||%` <- function(a, b) if (is.null(a)) b else a
+# Local NULL-coalescing helper. Base R 4.4 ships `%||%` natively, but
+# the package supports R >= 4.0 so we define it explicitly.
+`%||%` <- function(a, b) {
+  switch(is.null(a) + 1L,
+    a,
+    b
+  )
+}

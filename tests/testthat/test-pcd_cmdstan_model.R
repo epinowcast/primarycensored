@@ -504,7 +504,8 @@ test_that(
       priors = list(location = numeric(0), scale = numeric(0)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
       nonparametric = list(
-        K = K, boundaries = boundaries, paramtype = "hazardre"
+        K = K, boundaries = boundaries, paramtype = "hazard",
+        hazard_model = "re"
       )
     )
     expect_identical(stan_data_re$dist_id, 27L)

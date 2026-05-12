@@ -21,7 +21,7 @@ vignette: >
 ## What we will do
 
 In this vignette we fit a non-parametric delay distribution to doubly censored data using `primarycensored`.
-We simulate data from a known piecewise-constant PMF, fit it with MLE via `fitdistdoublecens()` and with Stan via the package model exposed by `pcd_cmdstan_model()`, then compare the four estimates against the truth.
+We discretise a mixture of two lognormals onto integer bins to obtain a bimodal PMF, then simulate from that distribution under primary and secondary censoring with right-truncation, fit it with MLE via `fitdistdoublecens()` and with Stan via the package model exposed by `pcd_cmdstan_model()`, then compare the four estimates against the truth.
 By the end you should be able to recognise when a non-parametric fit is appropriate and reproduce the workflow on your own data.
 
 ## What you might want to read first
@@ -73,7 +73,7 @@ $$
 f_i = h_i \prod_{j < i} (1 - h_j).
 $$
 The random walk regularises towards smooth hazards and is well behaved when bins are sparse.
-An alternative parameterisation drops the cumulative sum and instead places IID logit random effects around the intercept, $\text{logit}(h_i) = \alpha + \sigma\, \varepsilon_i$, giving independent draws on each bin (`distr = "discretehazardre"`).
+An alternative parameterisation drops the cumulative sum and instead places IID logit random effects around the intercept, $\text{logit}(h_i) = \alpha + \sigma\, \varepsilon_i$, giving independent draws on each bin (`distr = "discretehazard", hazard_model = "re"`).
 
 # Simulating censored data from a step distribution
 
@@ -234,15 +234,16 @@ haz_re_start <- c(
 fit_haz_re <- tryCatch(
   fitdistdoublecens(
     delay_data,
-    distr      = "discretehazardre",
-    start      = haz_re_start,
-    left       = "delay",
-    right      = "delay_upper",
-    pwindow    = "pwindow",
-    D          = "D",
-    boundaries = boundaries,
-    calcvcov   = FALSE,
-    control    = list(maxit = 50000)
+    distr        = "discretehazard",
+    hazard_model = "re",
+    start        = haz_re_start,
+    left         = "delay",
+    right        = "delay_upper",
+    pwindow      = "pwindow",
+    D            = "D",
+    boundaries   = boundaries,
+    calcvcov     = FALSE,
+    control      = list(maxit = 50000)
   ),
   error = function(e) {
     message("Could not fit RE variant: ", conditionMessage(e))

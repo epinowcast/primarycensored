@@ -2,15 +2,9 @@
 % Please edit documentation in R/pcens_cdf.R
 \name{pcens_cdf.pcens_pdiscretehazard}
 \alias{pcens_cdf.pcens_pdiscretehazard}
-\alias{pcens_cdf.pcens_pdiscretehazardrw}
-\alias{pcens_cdf.pcens_pdiscretehazardre}
 \title{Method for hazard CDF delay with general primary event distribution}
 \usage{
 \method{pcens_cdf}{pcens_pdiscretehazard}(object, q, pwindow, use_numeric = FALSE)
-
-\method{pcens_cdf}{pcens_pdiscretehazardrw}(object, q, pwindow, use_numeric = FALSE)
-
-\method{pcens_cdf}{pcens_pdiscretehazardre}(object, q, pwindow, use_numeric = FALSE)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by

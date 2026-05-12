@@ -81,10 +81,12 @@ supplied, expects a list with elements:
 \itemize{
 \item \code{K}: integer, number of bins.
 \item \code{boundaries}: numeric vector of length \code{K + 1}.
-\item \code{paramtype}: \code{"simplex"} (Dirichlet on the PMF, \code{dist_id} 26),
-\code{"hazard"} / \code{"hazardrw"} (random walk on logit hazards,
-\code{dist_id} 27), or \code{"hazardre"} (IID logit random effects on the
-hazards around a mean, \code{dist_id} 27 with \code{np_paramtype = 3}).
+\item \code{paramtype}: \code{"simplex"} (Dirichlet on the PMF, \code{dist_id} 26) or
+\code{"hazard"} (logit-hazard model, \code{dist_id} 27). For the hazard
+family the variant is selected by \code{hazard_model}.
+\item \code{hazard_model}: one of \code{"rw"} (random walk on the logit hazards,
+default) or \code{"re"} (IID logit random effects on the hazards
+around a mean). Only consulted when \code{paramtype = "hazard"}.
 \item \code{dirichlet_alpha}: optional numeric vector of length \code{K},
 defaults to \code{rep(1, K)}.
 \item \code{hazard_priors}: optional list with elements \code{alpha_mean},

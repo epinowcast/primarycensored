@@ -573,7 +573,7 @@ test_that(
 )
 
 test_that(
-  "fitdistdoublecens discretehazardre: produces valid PMF close to truth",
+  "fitdistdoublecens discretehazard re: produces valid PMF close to truth",
   {
     skip_if_not(
       exists("pdiscretestep"),
@@ -604,7 +604,8 @@ test_that(
     )
     fit <- fitdistdoublecens(
       haz_data,
-      distr = "discretehazardre",
+      distr = "discretehazard",
+      hazard_model = "re",
       start = haz_start,
       boundaries = 0:K,
       truncation_check_multiplier = NULL
@@ -631,7 +632,7 @@ test_that(
   }
 )
 
-test_that("fitdistdoublecens discretehazardrw alias matches discretehazard", {
+test_that("fitdistdoublecens discretehazard defaults to hazard_model = 'rw'", {
   skip_if_not(
     exists("pdiscretestep"),
     message = "pdiscretestep not yet available"
@@ -665,7 +666,8 @@ test_that("fitdistdoublecens discretehazardrw alias matches discretehazard", {
   ))
   fit_rw <- suppressWarnings(fitdistdoublecens(
     haz_data,
-    distr = "discretehazardrw",
+    distr = "discretehazard",
+    hazard_model = "rw",
     start = haz_start,
     boundaries = 0:K,
     truncation_check_multiplier = NULL

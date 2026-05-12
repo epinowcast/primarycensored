@@ -23,13 +23,13 @@
   distributions, with `K` (the number of bins) inferred from `start`. Hazard
   priors are user-settable via `prior = list(...)`.
 - Added a second discrete-hazard parameterisation alongside the existing
-  logit random walk. `distr = "discretehazardre"` (and `paramtype =
-  "hazardre"` in `pcd_as_stan_data()`) treats hazards as IID logit
-  random effects around a mean intercept,
-  `logit(h_i) = alpha + sigma * eps_i` with `eps_i ~ N(0, 1)`. The
-  existing logit random walk is also available as
-  `distr = "discretehazardrw"` (an alias of the default
-  `"discretehazard"`).
+  logit random walk. Both variants are selected through the single
+  `distr = "discretehazard"` family. In `fitdistdoublecens()` the new
+  `hazard_model` argument picks between `"rw"` (random walk on the
+  logit hazards, the default) and `"re"` (IID logit random effects
+  around a mean intercept, `logit(h_i) = alpha + sigma * eps_i` with
+  `eps_i ~ N(0, 1)`). In `pcd_as_stan_data()` the matching field on
+  the `nonparametric` list is also called `hazard_model`.
 - The `pdist` argument of `pprimarycensored()`, `dprimarycensored()`, and
   `qprimarycensored()` now accepts a character string, looked up via the
   `pcd_distributions` registry; passing a function still works as before.

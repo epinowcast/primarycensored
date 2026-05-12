@@ -28,23 +28,22 @@
 #'   `[0, 1]`); the last bin probability is `1 - sum(p1, ..., p_{K-1})`.
 #'   See [pdiscretestep()] for parameterisation details and the soft
 #'   simplex penalty applied when probabilities are infeasible.
-#' - `distr = "discretehazard"` (alias `"discretehazardrw"`): free
-#'   parameters `alpha`, `log_sigma`, `eps_1, ..., eps_{K-1}`. The hazard
-#'   form parameterises the same family of step distributions as
-#'   `"discretestep"`, but its free parameters drive a Gaussian random
-#'   walk on the logit hazard
-#'   (`logit(h_i) = alpha + sigma * cumsum(eps)`). The smoothing
-#'   regularises the recovered PMF against over-fitting in sparse data
-#'   and replaces the simplex constraint with an unconstrained
-#'   optimisation, which tends to be more stable.
-#' - `distr = "discretehazardre"`: same free parameters and prior, but
-#'   the innovations enter as IID logit random effects around the
-#'   intercept (`logit(h_i) = alpha + sigma * eps_i`,
-#'   `eps_i ~ N(0, 1)`). Hazards are independent draws around `alpha`
-#'   rather than a smoothed trajectory.
-#'   See [pdiscretehazard()] for full parameterisation details and the
-#'   MAP-equivalent prior penalty applied during fitting; pass `prior`
-#'   to override the default prior settings.
+#' - `distr = "discretehazard"`: free parameters `alpha`, `log_sigma`,
+#'   `eps_1, ..., eps_{K-1}`. The hazard form parameterises the same
+#'   family of step distributions as `"discretestep"`, but its free
+#'   parameters drive either a Gaussian random walk on the logit hazard
+#'   (`hazard_model = "rw"`, the default,
+#'   `logit(h_i) = alpha + sigma * cumsum(eps)`) or an IID logit
+#'   random-effect transform (`hazard_model = "re"`,
+#'   `logit(h_i) = alpha + sigma * eps_i` with `eps_i ~ N(0, 1)`). The
+#'   smoothing of the random walk regularises the recovered PMF against
+#'   over-fitting in sparse data and replaces the simplex constraint
+#'   with an unconstrained optimisation; the random-effect variant
+#'   models hazards as independent draws around `alpha` rather than a
+#'   smoothed trajectory. See [pdiscretehazard()] for full
+#'   parameterisation details and the MAP-equivalent prior penalty
+#'   applied during fitting; pass `prior` to override the default prior
+#'   settings.
 #'
 #' For non-parametric distributions `K` is implied by `length(start)`:
 #' `K = length(start) + 1` for `"discretestep"` and
@@ -57,8 +56,7 @@
 #'  upper or lower bounds.
 #'
 #' @param distr A character string naming the distribution to be fitted.
-#'  Special values `"discretestep"`, `"discretehazard"` (alias
-#'  `"discretehazardrw"`), and `"discretehazardre"` select the
+#'  Special values `"discretestep"` and `"discretehazard"` select the
 #'  non-parametric step-distribution fitting; see Details.
 #'
 #' @param left Column name for lower bound of observed values (default:
@@ -92,6 +90,12 @@
 #'   element is itself a list with `mean` and `sd` entries. Defaults are
 #'   used for any component not supplied. See [pdiscretehazard()] for
 #'   the default values.
+#'
+#' @param hazard_model One of `"rw"` (default) or `"re"`. Only consulted
+#'   when `distr = "discretehazard"`. `"rw"` selects the random-walk
+#'   transform `logit(h_i) = alpha + sigma * cumsum(eps)`; `"re"`
+#'   selects the IID logit random-effect transform
+#'   `logit(h_i) = alpha + sigma * eps_i`. See Details.
 #'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
 #'   For non-parametric distributions, `start` is required and determines
@@ -184,7 +188,9 @@ fitdistdoublecens <- function(
     dprimary_args = NULL,
     truncation_check_multiplier = 2,
     prior = NULL,
+    hazard_model = c("rw", "re"),
     ...) {
+  hazard_model <- match.arg(hazard_model)
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
       "Package 'fitdistrplus' is required but not installed for this function.",
@@ -276,6 +282,14 @@ fitdistdoublecens <- function(
   fit_penalty <- attr(ddist, "fit_penalty")
   param_transform <- attr(ddist, "param_transform")
   fit_bounds <- attr(ddist, "fit_bounds")
+
+  # For the hazard family the transform is selected at fit time from
+  # `hazard_model`; for other families it is whatever the dist function
+  # carries as a `param_transform` attribute (currently only the simplex
+  # transform on the discretestep family).
+  if (identical(vector_param, "hazards")) {
+    param_transform <- .make_hazard_transform(hazard_model)
+  }
 
   dots <- list(...)
 

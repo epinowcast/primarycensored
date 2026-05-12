@@ -18,6 +18,7 @@ fitdistdoublecens(
   dprimary_args = NULL,
   truncation_check_multiplier = 2,
   prior = NULL,
+  hazard_model = c("rw", "re"),
   ...
 )
 }
@@ -28,8 +29,7 @@ the lower and upper bounds of the censored observations. Unlike
 upper or lower bounds.}
 
 \item{distr}{A character string naming the distribution to be fitted.
-Special values \code{"discretestep"}, \code{"discretehazard"} (alias
-\code{"discretehazardrw"}), and \code{"discretehazardre"} select the
+Special values \code{"discretestep"} and \code{"discretehazard"} select the
 non-parametric step-distribution fitting; see Details.}
 
 \item{left}{Column name for lower bound of observed values (default:
@@ -96,6 +96,12 @@ element is itself a list with \code{mean} and \code{sd} entries. Defaults are
 used for any component not supplied. See \code{\link[=pdiscretehazard]{pdiscretehazard()}} for
 the default values.}
 
+\item{hazard_model}{One of \code{"rw"} (default) or \code{"re"}. Only consulted
+when \code{distr = "discretehazard"}. \code{"rw"} selects the random-walk
+transform \code{logit(h_i) = alpha + sigma * cumsum(eps)}; \code{"re"}
+selects the IID logit random-effect transform
+\code{logit(h_i) = alpha + sigma * eps_i}. See Details.}
+
 \item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.
 For non-parametric distributions, \code{start} is required and determines
 the number of bins; pass \code{boundaries} here to override the
@@ -134,23 +140,22 @@ vector argument.
 \verb{[0, 1]}); the last bin probability is \verb{1 - sum(p1, ..., p_\{K-1\})}.
 See \code{\link[=pdiscretestep]{pdiscretestep()}} for parameterisation details and the soft
 simplex penalty applied when probabilities are infeasible.
-\item \code{distr = "discretehazard"} (alias \code{"discretehazardrw"}): free
-parameters \code{alpha}, \code{log_sigma}, \verb{eps_1, ..., eps_\{K-1\}}. The hazard
-form parameterises the same family of step distributions as
-\code{"discretestep"}, but its free parameters drive a Gaussian random
-walk on the logit hazard
-(\code{logit(h_i) = alpha + sigma * cumsum(eps)}). The smoothing
-regularises the recovered PMF against over-fitting in sparse data
-and replaces the simplex constraint with an unconstrained
-optimisation, which tends to be more stable.
-\item \code{distr = "discretehazardre"}: same free parameters and prior, but
-the innovations enter as IID logit random effects around the
-intercept (\code{logit(h_i) = alpha + sigma * eps_i},
-\code{eps_i ~ N(0, 1)}). Hazards are independent draws around \code{alpha}
-rather than a smoothed trajectory.
-See \code{\link[=pdiscretehazard]{pdiscretehazard()}} for full parameterisation details and the
-MAP-equivalent prior penalty applied during fitting; pass \code{prior}
-to override the default prior settings.
+\item \code{distr = "discretehazard"}: free parameters \code{alpha}, \code{log_sigma},
+\verb{eps_1, ..., eps_\{K-1\}}. The hazard form parameterises the same
+family of step distributions as \code{"discretestep"}, but its free
+parameters drive either a Gaussian random walk on the logit hazard
+(\code{hazard_model = "rw"}, the default,
+\code{logit(h_i) = alpha + sigma * cumsum(eps)}) or an IID logit
+random-effect transform (\code{hazard_model = "re"},
+\code{logit(h_i) = alpha + sigma * eps_i} with \code{eps_i ~ N(0, 1)}). The
+smoothing of the random walk regularises the recovered PMF against
+over-fitting in sparse data and replaces the simplex constraint
+with an unconstrained optimisation; the random-effect variant
+models hazards as independent draws around \code{alpha} rather than a
+smoothed trajectory. See \code{\link[=pdiscretehazard]{pdiscretehazard()}} for full
+parameterisation details and the MAP-equivalent prior penalty
+applied during fitting; pass \code{prior} to override the default prior
+settings.
 }
 
 For non-parametric distributions \code{K} is implied by \code{length(start)}:

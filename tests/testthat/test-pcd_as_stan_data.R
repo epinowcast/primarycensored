@@ -298,7 +298,7 @@ test_that("pcd_as_stan_data populates np_* fields for hazard paramtype", {
   expect_identical(result$np_log_sigma_sd, 1)
 })
 
-test_that("pcd_as_stan_data populates np_* fields for hazardre paramtype", {
+test_that("pcd_as_stan_data populates np_* fields for hazard_model = 're'", {
   data <- data.frame(
     delay = c(1, 2, 3),
     delay_upper = c(2, 3, 4),
@@ -319,7 +319,8 @@ test_that("pcd_as_stan_data populates np_* fields for hazardre paramtype", {
       nonparametric = list(
         K = 4,
         boundaries = 0:4,
-        paramtype = "hazardre"
+        paramtype = "hazard",
+        hazard_model = "re"
       )
     )
   )
