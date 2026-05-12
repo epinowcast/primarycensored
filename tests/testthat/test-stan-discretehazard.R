@@ -36,7 +36,7 @@ test_that(
     # (which is itself validated against `pprimarycensored`).
     for (primary in list(
       list(id = 1L, params = numeric(0), w = 1.0),
-      list(id = 2L, params = c(0.3), w = 3.0)
+      list(id = 2L, params = 0.3, w = 3.0)
     )) {
       for (d in c(0.5, 1.0, 2.0, 2.99)) {
         cdf_27 <- primarycensored_cdf(

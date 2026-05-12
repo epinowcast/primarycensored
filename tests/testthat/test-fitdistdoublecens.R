@@ -539,10 +539,7 @@ test_that(
       D = rep(D_val, n)
     )
 
-    haz_start <- c(
-      list(alpha = -2, log_sigma = log(0.5)),
-      as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
-    )
+    haz_start <- discretehazard_start(K, log_sigma = log(0.5))
     fit <- fitdistdoublecens(
       haz_data,
       distr = "discretehazard",
@@ -598,10 +595,7 @@ test_that(
       D = rep(D_val, n)
     )
 
-    haz_start <- c(
-      list(alpha = -2, log_sigma = log(0.5)),
-      as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
-    )
+    haz_start <- discretehazard_start(K, log_sigma = log(0.5))
     fit <- fitdistdoublecens(
       haz_data,
       distr = "discretehazard",
@@ -653,10 +647,7 @@ test_that("fitdistdoublecens discretehazard defaults to hazard_model = 'rw'", {
     pwindow = rep(1, n),
     D = rep(D_val, n)
   )
-  haz_start <- c(
-    list(alpha = -2, log_sigma = log(0.5)),
-    as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
-  )
+  haz_start <- discretehazard_start(K, log_sigma = log(0.5))
   fit_default <- suppressWarnings(fitdistdoublecens(
     haz_data,
     distr = "discretehazard",
@@ -786,10 +777,7 @@ test_that("fitdistdoublecens discretehazard: prior argument changes penalty", {
     pwindow = rep(1, n),
     D = rep(D_val, n)
   )
-  haz_start <- c(
-    list(alpha = -2, log_sigma = log(0.5)),
-    as.list(stats::setNames(rep(0, K - 1L), paste0("eps_", seq_len(K - 1L))))
-  )
+  haz_start <- discretehazard_start(K, log_sigma = log(0.5))
   fit_default <- suppressWarnings(fitdistdoublecens(
     haz_data,
     distr = "discretehazard",

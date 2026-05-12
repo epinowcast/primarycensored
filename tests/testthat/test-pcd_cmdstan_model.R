@@ -445,7 +445,7 @@ test_that(
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = numeric(0), scale = numeric(0)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
-      nonparametric = list(
+      dist_options = list(
         K = K, boundaries = boundaries, paramtype = "simplex"
       )
     )
@@ -474,7 +474,7 @@ test_that(
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = numeric(0), scale = numeric(0)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
-      nonparametric = list(
+      dist_options = list(
         K = K, boundaries = boundaries, paramtype = "hazard"
       )
     )
@@ -503,7 +503,7 @@ test_that(
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = numeric(0), scale = numeric(0)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
-      nonparametric = list(
+      dist_options = list(
         K = K, boundaries = boundaries, paramtype = "hazard",
         hazard_model = "re"
       )

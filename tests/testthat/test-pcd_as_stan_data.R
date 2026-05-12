@@ -237,13 +237,13 @@ test_that("pcd_as_stan_data populates np_* fields for simplex paramtype", {
   expect_message(
     result <- pcd_as_stan_data( # nolint
       data,
-      dist_id = 1, # ignored when nonparametric is supplied
+      dist_id = 1, # ignored when dist_options is supplied
       primary_id = 1,
       param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 1), scale = c(1, 1)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
-      nonparametric = list(
+      dist_options = list(
         K = 5,
         boundaries = 0:5,
         paramtype = "simplex"
@@ -278,7 +278,7 @@ test_that("pcd_as_stan_data populates np_* fields for hazard paramtype", {
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 1), scale = c(1, 1)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
-      nonparametric = list(
+      dist_options = list(
         K = 4,
         boundaries = 0:4,
         paramtype = "hazard",
@@ -316,7 +316,7 @@ test_that("pcd_as_stan_data populates np_* fields for hazard_model = 're'", {
       primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
       priors = list(location = c(1, 1), scale = c(1, 1)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
-      nonparametric = list(
+      dist_options = list(
         K = 4,
         boundaries = 0:4,
         paramtype = "hazard",
@@ -330,7 +330,7 @@ test_that("pcd_as_stan_data populates np_* fields for hazard_model = 're'", {
   expect_identical(result$np_paramtype, 3L)
 })
 
-test_that("pcd_as_stan_data validates nonparametric input", {
+test_that("pcd_as_stan_data validates dist_options input", {
   data <- data.frame(
     delay = c(1, 2, 3),
     delay_upper = c(2, 3, 4),
@@ -350,20 +350,20 @@ test_that("pcd_as_stan_data validates nonparametric input", {
   # Wrong boundaries length.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      nonparametric = list(K = 3, boundaries = 0:2, paramtype = "simplex")
+      dist_options = list(K = 3, boundaries = 0:2, paramtype = "simplex")
     )))),
     "boundaries.*length K \\+ 1"
   )
   # Unknown paramtype.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      nonparametric = list(K = 3, boundaries = 0:3, paramtype = "wibble")
+      dist_options = list(K = 3, boundaries = 0:3, paramtype = "wibble")
     ))))
   )
   # Missing K.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      nonparametric = list(boundaries = 0:3, paramtype = "simplex")
+      dist_options = list(boundaries = 0:3, paramtype = "simplex")
     )))),
     "missing required elements"
   )

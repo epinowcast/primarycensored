@@ -106,10 +106,13 @@ pcd_cmdstan_model <- function(
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
-#' @param nonparametric Optional list configuring a non-parametric delay
+#' @param dist_options Optional list configuring a non-parametric delay
 #'   (`dist_id` 26 or 27). When `NULL` (the default) the model uses the
 #'   parametric path and all `np_*` Stan data fields are sized 0. When
 #'   supplied, expects a list with elements:
+#'   * `kind`: `"nonparametric"` (the only currently supported value).
+#'     Selects the discrete step / discrete hazard family of delay
+#'     distributions.
 #'   * `K`: integer, number of bins.
 #'   * `boundaries`: numeric vector of length `K + 1`.
 #'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26) or
@@ -167,9 +170,9 @@ pcd_as_stan_data <- function(
     compute_log_lik = FALSE,
     use_reduce_sum = FALSE,
     truncation_check_multiplier = 2,
-    nonparametric = NULL) {
-  np <- .build_np_stan_fields(nonparametric)
-  if (!is.null(nonparametric)) {
+    dist_options = NULL) {
+  np <- .build_np_stan_fields(dist_options)
+  if (!is.null(dist_options)) {
     dist_id <- np$dist_id
     param_bounds <- list(lower = numeric(0), upper = numeric(0))
     priors <- list(location = numeric(0), scale = numeric(0))
@@ -258,12 +261,12 @@ pcd_as_stan_data <- function(
   return(stan_data)
 }
 
-# Build the np_* Stan data fields. When `nonparametric` is NULL all fields
+# Build the np_* Stan data fields. When `dist_options` is NULL all fields
 # are sized 0 and `np_paramtype` defaults to 1 (a no-op for the parametric
 # path). When supplied, validates the list and returns Stan-shaped fields
 # plus the inferred `dist_id` (26 for "simplex", 27 for "hazard").
-.build_np_stan_fields <- function(nonparametric) {
-  if (is.null(nonparametric)) {
+.build_np_stan_fields <- function(dist_options) {
+  if (is.null(dist_options)) {
     # When the non-parametric path is off all np_* fields collapse to the
     # smallest valid size for their declared types. `np_boundaries` is
     # `vector[K_np + 1]` so it cannot be empty even when `K_np = 0`.
@@ -280,33 +283,42 @@ pcd_as_stan_data <- function(
       dist_id = NA_integer_
     ))
   }
+  kind_in <- if (is.null(dist_options$kind)) {
+    "nonparametric"
+  } else {
+    dist_options$kind
+  }
+  # Only `kind = "nonparametric"` is currently supported. Validate
+  # input via match.arg() so future kinds can hook in here.
+  match.arg(kind_in, choices = "nonparametric")
   required <- c("K", "boundaries", "paramtype")
-  missing_fields <- setdiff(required, names(nonparametric))
+  missing_fields <- setdiff(required, names(dist_options))
   if (length(missing_fields) > 0) {
     stop(
-      "`nonparametric` is missing required elements: ",
+      "`dist_options` is missing required elements: ",
       toString(missing_fields),
       call. = FALSE
     )
   }
-  K <- as.integer(nonparametric$K)
+  K <- as.integer(dist_options$K)
   if (!is.finite(K) || K < 1) {
-    stop("`nonparametric$K` must be a positive integer.", call. = FALSE)
+    stop("`dist_options$K` must be a positive integer.", call. = FALSE)
   }
-  boundaries <- as.numeric(nonparametric$boundaries)
+  boundaries <- as.numeric(dist_options$boundaries)
   if (length(boundaries) != K + 1L) {
     stop(
-      "`nonparametric$boundaries` must have length K + 1 (got ",
+      "`dist_options$boundaries` must have length K + 1 (got ",
       length(boundaries), ", expected ", K + 1L, ").",
       call. = FALSE
     )
   }
   paramtype <- match.arg(
-    nonparametric$paramtype,
+    dist_options$paramtype,
     choices = c("simplex", "hazard")
   )
+  hazard_model_in <- dist_options$hazard_model
   hazard_model <- match.arg(
-    nonparametric$hazard_model %||% "rw",
+    if (is.null(hazard_model_in)) "rw" else hazard_model_in,
     choices = c("rw", "re")
   )
   np_paramtype <- if (paramtype == "simplex") {
@@ -317,14 +329,22 @@ pcd_as_stan_data <- function(
     3L
   }
   dist_id <- if (paramtype == "simplex") 26L else 27L
-  dirichlet_alpha <- nonparametric$dirichlet_alpha %||% rep(1, K)
+  dirichlet_alpha <- if (is.null(dist_options$dirichlet_alpha)) {
+    rep(1, K)
+  } else {
+    dist_options$dirichlet_alpha
+  }
   if (length(dirichlet_alpha) != K) {
     stop(
-      "`nonparametric$dirichlet_alpha` must have length K.",
+      "`dist_options$dirichlet_alpha` must have length K.",
       call. = FALSE
     )
   }
-  hazard_priors <- nonparametric$hazard_priors %||% list()
+  hazard_priors <- if (is.null(dist_options$hazard_priors)) {
+    list()
+  } else {
+    dist_options$hazard_priors
+  }
   hp <- utils::modifyList(
     list(
       alpha_mean = 0,
@@ -345,14 +365,5 @@ pcd_as_stan_data <- function(
     np_log_sigma_mean = as.numeric(hp$log_sigma_mean),
     np_log_sigma_sd = as.numeric(hp$log_sigma_sd),
     dist_id = dist_id
-  )
-}
-
-# Local NULL-coalescing helper. Base R 4.4 ships `%||%` natively, but
-# the package supports R >= 4.0 so we define it explicitly.
-`%||%` <- function(a, b) {
-  switch(is.null(a) + 1L,
-    a,
-    b
   )
 }

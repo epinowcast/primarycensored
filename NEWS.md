@@ -8,10 +8,17 @@
 
 - The Stan model returned by `pcd_cmdstan_model()` now drives the
   non-parametric delay families directly. `pcd_as_stan_data()` accepts a
-  `nonparametric` list that selects either a Dirichlet on the simplex
-  (`paramtype = "simplex"`, `dist_id = 26`) or a random-walk on the
-  logit hazards (`paramtype = "hazard"`, `dist_id = 27`), with
-  `boundaries` carried as data; the parametric path is unchanged.
+  `dist_options` list that selects either a Dirichlet on the simplex
+  (`paramtype = "simplex"`, `dist_id = 26`) or a logit-hazard model
+  (`paramtype = "hazard"`, `dist_id = 27`) with random-walk or
+  random-effect transforms picked via `hazard_model`, with `boundaries`
+  carried as data; the parametric path is unchanged.
+- Added `discretehazard_start()` for building the named start-value list
+  expected by `fitdistdoublecens()` with `distr = "discretehazard"`.
+- Fixed the Stan step CDF so `pstep_lcdf()` matches R `pdiscretestep()`
+  at the right-edge boundary points (`t == boundaries[i + 1]`), which
+  previously advanced past the jump and returned the wrong cumulative
+  mass.
 - Added a non-parametric step CDF family. `pdiscretestep()`,
   `ddiscretestep()`, and `rdiscretestep()` represent a delay via a direct PMF
   over fixed bins, and the discrete-time hazard variant `pdiscretehazard()`,

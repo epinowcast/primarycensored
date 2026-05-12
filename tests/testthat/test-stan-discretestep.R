@@ -16,6 +16,24 @@ test_that("Stan dist_lcdf with dist_id 26 matches pstep_lcdf directly", {
   }
 })
 
+test_that("Stan pstep_lcdf matches R pdiscretestep at the bin edges", {
+  # Right-continuous CDF: F jumps up at each right edge, so
+  # F(boundaries[i + 1]) = cumsum(pmf)[i]. The previous Stan
+  # implementation advanced past the jump and returned cumsum[i + 1].
+  edges <- as.numeric(boundaries_vals[-1])
+  cum_pmf <- cumsum(pmf_vals)
+  for (i in seq_along(edges)) {
+    stan_val <- exp(pstep_lcdf(
+      edges[i], as.numeric(boundaries_vals), pmf_vals
+    ))
+    r_val <- pdiscretestep(
+      edges[i], boundaries_vals, pmf_vals
+    )
+    expect_equal(stan_val, cum_pmf[i], tolerance = 1e-9)
+    expect_equal(stan_val, r_val, tolerance = 1e-9)
+  }
+})
+
 test_that("Stan analytic step CDF matches R pprimarycensored", {
   # Cross-check the analytic Stan path against the R reference
   # `pprimarycensored` for both supported primaries.
@@ -40,7 +58,7 @@ test_that("Stan analytic step CDF matches R pprimarycensored", {
   # Exponential-growth primary, pwindow = 3, r = 0.3
   for (d in d_vals) {
     stan_val <- primarycensored_cdf(
-      d, 26L, packed_params, 3.0, 0, Inf, 2L, c(0.3)
+      d, 26L, packed_params, 3.0, 0, Inf, 2L, 0.3
     )
     r_ref <- pprimarycensored(
       d, pdiscretestep,

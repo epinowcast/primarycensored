@@ -27,10 +27,16 @@
   */
 real pstep_lcdf(real t, vector boundaries, vector pmf) {
   int K = num_elements(pmf);
-  if (t < boundaries[1]) return negative_infinity();
+  if (t < boundaries[2]) return negative_infinity();
   if (t >= boundaries[K + 1]) return 0;
+  // Right-continuous CDF with jumps at the right edges
+  // boundaries[2], ..., boundaries[K + 1]. F(t) = cum_pmf[k] for
+  // t in [boundaries[k + 1], boundaries[k + 2]); equivalently the
+  // largest k with boundaries[k + 1] <= t. Boundary-on-jump cases
+  // (t == boundaries[k + 1]) advance k, matching R's
+  // `findInterval(left.open = FALSE)`.
   int k = 1;
-  while (k < K && boundaries[k + 1] <= t) k += 1;
+  while (k < K && boundaries[k + 2] <= t) k += 1;
   return log(cumulative_sum(pmf)[k]);
 }
 

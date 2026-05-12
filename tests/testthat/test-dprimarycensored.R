@@ -358,3 +358,19 @@ test_that("dprimarycensored handles L not in unique_points", {
   expect_true(all(pmf >= 0))
   expect_equal(pmf, expected_pmf, tolerance = 1e-10)
 })
+
+test_that("dprimarycensored at the d=1 step boundary returns pmf[1]", {
+  # Regression for the lower-support boundary case under primary
+  # censoring with pwindow = 1. F_cens(1) is zero because F_step is
+  # zero on [0, 1) and the integral over a single jump point has zero
+  # measure, so the unnormalised PMF at d = 1 reduces to F_cens(2),
+  # which equals pmf[1] under the right-continuous step convention.
+  boundaries <- 0:3
+  pmf_vals <- c(0.25, 0.5, 0.25)
+  pm <- dprimarycensored(
+    x = 1, pdiscretestep,
+    pwindow = 1, swindow = 1,
+    boundaries = boundaries, pmf = pmf_vals
+  )
+  expect_equal(pm, pmf_vals[1], tolerance = 1e-10)
+})

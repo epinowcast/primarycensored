@@ -120,6 +120,58 @@ rdiscretehazard <- function(n, boundaries = NULL, hazards) {
 attr(rdiscretehazard, "name") <- "rdiscretehazard"
 attr(rdiscretehazard, "vector_param") <- "hazards"
 
+#' Start values for the logit-hazard parameterisation
+#'
+#' Builds a named list of starting values for [fitdistdoublecens()] with
+#' \code{distr = "discretehazard"}. The free parameters are the logit
+#' intercept \code{alpha}, the log random-walk (or random-effect) scale
+#' \code{log_sigma}, and the \code{K - 1} innovations \code{eps_1, ...,
+#' eps_{K-1}}. The final bin hazard is pinned to 1 inside the
+#' parameterisation so the implied PMF sums to 1.
+#'
+#' @param K Integer, number of bins in the hazard parameterisation.
+#' @param alpha Numeric, start value for the logit intercept.
+#' @param log_sigma Numeric, start value for the log scale.
+#' @param eps Numeric, scalar or length-\code{K - 1} vector of start
+#'   values for the innovations \code{eps_1, ..., eps_{K-1}}.
+#'
+#' @return Named list suitable for the \code{start} argument of
+#'   [fitdistdoublecens()].
+#'
+#' @family pdiscretehazard
+#' @concept pdiscretehazard
+#' @export
+#' @examples
+#' discretehazard_start(K = 5)
+discretehazard_start <- function(K, alpha = -2, log_sigma = log(1),
+                                 eps = 0) {
+  K <- as.integer(K)
+  if (!is.finite(K) || K < 1L) {
+    stop("`K` must be a positive integer.", call. = FALSE)
+  }
+  n_eps <- K - 1L
+  if (length(eps) == 1L) {
+    eps_vec <- rep(eps, n_eps)
+  } else if (length(eps) == n_eps) {
+    eps_vec <- eps
+  } else {
+    stop(
+      "`eps` must be a scalar or have length K - 1 (got ",
+      length(eps), ", expected ", n_eps, ").",
+      call. = FALSE
+    )
+  }
+  eps_list <- if (n_eps > 0L) {
+    stats::setNames(
+      as.list(eps_vec),
+      paste0("eps_", seq_len(n_eps))
+    )
+  } else {
+    list()
+  }
+  c(list(alpha = alpha, log_sigma = log_sigma), eps_list)
+}
+
 # Internal helpers (`.sort_eps_names`, `.resolve_hazard_prior`) now live
 # in R/nonparametric_helpers.R alongside the rest of the non-parametric
 # machinery.

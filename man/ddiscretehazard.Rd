@@ -38,6 +38,7 @@ ddiscretehazard(c(1, 2, 3), boundaries = 0:3, hazards = hazards)
 \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
 
 Other pdiscretehazard:
+\code{\link{discretehazard_start}()},
 \code{\link{pdiscretehazard}()},
 \code{\link{rdiscretehazard}()}
 }
