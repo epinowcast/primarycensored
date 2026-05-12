@@ -126,7 +126,6 @@ The MLE point estimates land close to the true `location = 2`, `scale = 1`.
 
 # Bayesian fit with `pcd_cmdstan_model()`
 
-Because the logistic has support on the real line, observed delays in the data may be negative; the data block now allows this and a `transformed data` check rejects rows where `d[i] < L[i]` or `d_upper[i] > D[i]`.
 We pass our left-truncation point through the `start_relative_obs_time` column.
 
 We use weakly informative priors that are not centred on the simulation truth: a wide `Normal(0, 5)` on the location and `Normal(0, 2.5)` on the scale.
