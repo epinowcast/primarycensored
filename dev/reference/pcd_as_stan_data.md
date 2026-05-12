@@ -51,13 +51,17 @@ pcd_as_stan_data(
 - start_relative_obs_time:
 
   Column name for start of relative observation time, used as the lower
-  truncation point L. If the column is not present in data, L = 0 is
-  assumed for all observations. (default: "start_relative_obs_time")
+  truncation point L. Values may be any finite real number (including
+  negatives) or `-Inf` to indicate no lower truncation. If the column is
+  not present in data, L = `-Inf` is assumed for all observations.
+  (default: "start_relative_obs_time")
 
 - relative_obs_time:
 
   Column name for relative observation time, used as the upper
-  truncation point D (default: "relative_obs_time")
+  truncation point D. Values may be any finite real number (including
+  negatives, paired with a smaller `start_relative_obs_time`) or `+Inf`
+  to indicate no upper truncation. (default: "relative_obs_time")
 
 - dist_id:
 

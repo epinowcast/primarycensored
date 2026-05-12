@@ -118,14 +118,17 @@ primarycensored Stan model.</p>
 
 <dt id="arg-start-relative-obs-time">start_relative_obs_time<a class="anchor" aria-label="anchor" href="#arg-start-relative-obs-time"></a></dt>
 <dd><p>Column name for start of relative observation
-time, used as the lower truncation point L. If the column is not present in
-data, L = 0 is assumed for all observations.
-(default: "start_relative_obs_time")</p></dd>
+time, used as the lower truncation point L. Values may be any finite real
+number (including negatives) or <code>-Inf</code> to indicate no lower truncation. If
+the column is not present in data, L = <code>-Inf</code> is assumed for all
+observations. (default: "start_relative_obs_time")</p></dd>
 
 
 <dt id="arg-relative-obs-time">relative_obs_time<a class="anchor" aria-label="anchor" href="#arg-relative-obs-time"></a></dt>
 <dd><p>Column name for relative observation time, used as
-the upper truncation point D (default: "relative_obs_time")</p></dd>
+the upper truncation point D. Values may be any finite real number
+(including negatives, paired with a smaller <code>start_relative_obs_time</code>) or
+<code>+Inf</code> to indicate no upper truncation. (default: "relative_obs_time")</p></dd>
 
 
 <dt id="arg-dist-id">dist_id<a class="anchor" aria-label="anchor" href="#arg-dist-id"></a></dt>

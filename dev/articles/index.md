@@ -17,6 +17,12 @@
   A guide on how to use primarycensored with Stan for Bayesian inference
   of epidemiological delay distributions.
 
+- [Fitting delay distributions with negative
+  support](https://primarycensored.epinowcast.org/dev/articles/fitting-negative-support.md):
+
+  Estimating a serial-interval-style distribution that can take negative
+  values, using both fitdistrplus and the bundled cmdstan model.
+
 - [Getting started with
   primarycensored](https://primarycensored.epinowcast.org/dev/articles/primarycensored.md):
 

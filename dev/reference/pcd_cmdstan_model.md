@@ -83,13 +83,16 @@ if (!is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))) {
 #> 
 #> data {
 #>   int<lower=0> N;  // number of observations
-#>   array[N] int<lower=0> d;     // observed delays
-#>   array[N] int<lower=0> d_upper;     // observed delays upper bound
+#>   // observed delays (may be negative for signed-support delays)
+#>   array[N] int d;
+#>   array[N] int d_upper;     // observed delays upper bound
 #>   array[N] int<lower=0> n;     // number of occurrences for each delay
 #>   array[N] int<lower=0> pwindow; // primary censoring window
-#>   array[N] real<lower=0> L; // minimum delay (lower truncation)
-#>   array[N] real<lower=0> D; // maximum delay (upper truncation)
-#>   int<lower=1, upper=17> dist_id; // distribution identifier
+#>   // lower truncation; -Inf for no lower truncation
+#>   array[N] real L;
+#>   // upper truncation; +Inf for no upper truncation
+#>   array[N] real D;
+#>   int<lower=1, upper=25> dist_id; // distribution identifier
 #>   int<lower=1, upper=2> primary_id; // primary distribution identifier
 #>   int<lower=0> n_params; // number of distribution parameters
 #>   int<lower=0> n_primary_params; // number of primary distribution parameters
@@ -107,6 +110,16 @@ if (!is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))) {
 #> 
 #> transformed data {
 #>   array[N] int indexes = linspaced_int_array(N, 1, N);
+#>   for (i in 1:N) {
+#>     if (d[i] < L[i]) {
+#>       reject("d[", i, "] = ", d[i], " is below the lower truncation L[", i,
+#>              "] = ", L[i]);
+#>     }
+#>     if (d_upper[i] > D[i]) {
+#>       reject("d_upper[", i, "] = ", d_upper[i],
+#>              " is above the upper truncation D[", i, "] = ", D[i]);
+#>     }
+#>   }
 #> }
 #> 
 #> parameters {

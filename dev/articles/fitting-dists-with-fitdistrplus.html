@@ -407,7 +407,7 @@ This means we’re using a subset of our simulated data for the estimation.</p>
 <li>
 <strong>Ignoring censoring causes bias</strong>: The naive model that ignores primary censoring and truncation substantially underestimates the true distribution parameters.</li>
 </ul>
-<p>For a more robust Bayesian approach to fitting distributions, see the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette. For more flexible delay distribution fitting, see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
+<p>For a more robust Bayesian approach to fitting distributions, see the <code><a href="../articles/fitting-dists-with-stan.html">vignette("fitting-dists-with-stan")</a></code> vignette. For fitting delay distributions that can take negative values (e.g. logistic-distributed serial intervals), see the <code><a href="../articles/fitting-negative-support.html">vignette("fitting-negative-support")</a></code> vignette. For more flexible delay distribution fitting, see the <a href="https://epidist.epinowcast.org" class="external-link"><code>epidist</code></a> package (which uses <code>primarycensored</code> under the hood).</p>
 </div>
 <div class="section level3" number="4.4">
 <h3 id="how-you-might-adapt-this-vignette">

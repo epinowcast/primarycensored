@@ -32,6 +32,7 @@ You can install the latest released version from CRAN using the standard
 `install.packages` function:
 
 ``` r
+
 install.packages("primarycensored")
 ```
 
@@ -39,6 +40,7 @@ Alternatively, you can install the latest release from our r-universe
 repository:
 
 ``` r
+
 install.packages("primarycensored", repos = "https://epinowcast.r-universe.dev")
 ```
 
@@ -47,6 +49,7 @@ may contain breaking changes and/or bugs), use the [`pak`
 package](https://pak.r-lib.org/):
 
 ``` r
+
 pak::pak("epinowcast/primarycensored")
 ```
 
@@ -55,6 +58,7 @@ tag (e.g.,
 [`v0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
 
 ``` r
+
 pak::pak("epinowcast/primarycensored@v0.2.0")
 ```
 
@@ -77,6 +81,7 @@ vignette](https://package.epinowcast.org/articles/stan-help.html#toolchain),
 but the brief version is:
 
 ``` r
+
 # if you not yet installed `primarycensored`, or you installed it without
 # `Suggests` dependencies
 install.packages(

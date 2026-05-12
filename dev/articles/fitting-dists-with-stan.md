@@ -49,6 +49,7 @@ package for interfacing with cmdstan. We will also use the `ggplot2`
 package for plotting and `dplyr` for data manipulation.
 
 ``` r
+
 library(primarycensored)
 library(cmdstanr)
 library(ggplot2)
@@ -62,6 +63,7 @@ data. We’ll use the `rprimarycensored` function (actually we will use
 the `rpcens` alias for brevity).
 
 ``` r
+
 set.seed(123) # For reproducibility
 
 # Define the number of samples to generate
@@ -112,6 +114,7 @@ head(delay_data)
     ## 6       2        8              4                    5
 
 ``` r
+
 # Aggregate to unique combinations and count occurrences
 delay_counts <- delay_data |>
   summarise(
@@ -131,6 +134,7 @@ head(delay_counts)
     ## 6       2        8              4                    5 43
 
 ``` r
+
 # Compare the samples with and without secondary event censoring to the true
 # distribution
 # Calculate empirical CDF
@@ -202,6 +206,7 @@ Stan](https://primarycensored.epinowcast.org/dev/articles/using-stan-tools.md)
 vignette.
 
 ``` r
+
 writeLines(
   "data {
     int<lower=0> N;  // number of observations
@@ -227,12 +232,14 @@ writeLines(
 Now let’s compile the model
 
 ``` r
+
 naive_model <- cmdstan_model(file.path(tempdir(), "naive_lognormal.stan"))
 ```
 
 and now let’s fit the compiled model.
 
 ``` r
+
 naive_fit <- naive_model$sample(
   data = list(
     # Add a small constant to avoid log(0)
@@ -281,6 +288,7 @@ documentation](https://primarycensored.epinowcast.org/stan/primary__censored__di
 for more details on the `primarycensored_lpdf` function.
 
 ``` r
+
 writeLines(
   "
   functions {
@@ -326,6 +334,7 @@ writeLines(
 Now let’s compile the model
 
 ``` r
+
 primarycensored_model <- cmdstan_model(
   file.path(tempdir(), "primarycensored_lognormal.stan"),
   include_paths = pcd_stan_path()
@@ -335,6 +344,7 @@ primarycensored_model <- cmdstan_model(
 Now let’s fit the compiled model.
 
 ``` r
+
 primarycensored_fit <- primarycensored_model$sample(
   data = list(
     y = delay_counts$observed_delay,
@@ -377,6 +387,7 @@ supply priors, bounds, and other settings.
 Let’s use this function to fit our data:
 
 ``` r
+
 # Compile the model with multithreading support
 pcd_model <- pcd_cmdstan_model(cpp_options = list(stan_threads = TRUE))
 
@@ -407,9 +418,9 @@ pcd_fit
 ```
 
     ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.78 -3422.46 1.03 0.74 -3424.78 -3421.80 1.00     1343     1412
-    ##  params[1]     1.55     1.54 0.05 0.05     1.48     1.63 1.00     1050     1003
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.01     1125     1034
+    ##  lp__      -3422.75 -3422.46 0.98 0.74 -3424.73 -3421.80 1.00     1490     1565
+    ##  params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1273     1499
+    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1262     1399
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and
@@ -451,6 +462,9 @@ In this vignette we have shown how to fit a delay distribution using
 
 For a faster MLE-based approach that doesn’t require Stan, see the
 [`vignette("fitting-dists-with-fitdistrplus")`](https://primarycensored.epinowcast.org/dev/articles/fitting-dists-with-fitdistrplus.md)
+vignette. For fitting delay distributions that can take negative values
+(e.g. logistic-distributed serial intervals), see the
+[`vignette("fitting-negative-support")`](https://primarycensored.epinowcast.org/dev/articles/fitting-negative-support.md)
 vignette. For more flexible delay distribution fitting, see the
 [`epidist`](https://epidist.epinowcast.org) package (which uses
 `primarycensored` under the hood).
@@ -474,7 +488,11 @@ work:
 - **Add lower truncation**: If you need to exclude delays below a
   minimum value (e.g., for generation intervals where day 0 is excluded
   in renewal models), add a `start_relative_obs_time` column to your
-  data specifying the lower truncation point L for each observation
+  data specifying the lower truncation point L for each observation.
+  Values may be any finite real number or `-Inf` (the default when the
+  column is absent), mirroring the R-side
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  interface.
 - **Modify priors**: Adjust the `priors` argument in
   [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/dev/reference/pcd_as_stan_data.md)
   to reflect your prior knowledge about the distribution parameters

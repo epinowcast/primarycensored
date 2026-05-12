@@ -33,15 +33,38 @@
   This lets delay distributions with support below zero (e.g. normal,
   logistic, Cauchy) be used with primary censoring. `L = -Inf` is the
   sentinel for “no left truncation”; any finite `L` left-truncates the
-  distribution at `L`. Stan functions still assume `L >= 0` and are
-  tracked as a follow-up.
+  distribution at `L`.
   ([\#267](https://github.com/epinowcast/primarycensored/issues/267))
+- The Stan functions and
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/dev/reference/pcd_as_stan_data.md)
+  mirror the R-side handling of `L`: negative and `-Inf` values are
+  accepted, and a missing `start_relative_obs_time` column defaults to
+  `-Inf`.
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md)
+  now accepts negative observed delays and fully-negative truncation
+  windows, letting distributions with support on the reals
+  (e.g. logistic, Cauchy, Gumbel) be fitted.
+  ([\#313](https://github.com/epinowcast/primarycensored/issues/313))
+- The `dist_id` upper bound in `pcens_model.stan` has been raised from
+  `17` to `25`, exposing every delay distribution that `dist_lcdf`
+  already dispatches (Normal, Double Exponential, Pareto, scaled inverse
+  chi-square, Student’s t, Uniform, von Mises) through
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
+  ([\#314](https://github.com/epinowcast/primarycensored/issues/314))
 
 ### Documentation
 
 - Added a CDF-direct form of the primary-censored analytic solutions to
   the “Why it works” and “Analytic solutions” vignettes alongside the
   existing survival-function form.
+- Added a “Fitting delay distributions with negative support” vignette
+  that walks through estimating a logistic-distributed serial interval
+  with both
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  and
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md)
+  from doubly-censored, right-truncated samples that include negative
+  observed delays.
 
 ### Bug fixes
 
