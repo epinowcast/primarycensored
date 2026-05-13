@@ -367,6 +367,43 @@ test_that("pcd_as_stan_data validates dist_options input", {
     )))),
     "missing required elements"
   )
+  # Non-positive / non-finite K.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
+      dist_options = list(K = 0, boundaries = 0:3, paramtype = "simplex")
+    )))),
+    "positive integer"
+  )
+  # Dirichlet alpha length must match K.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
+      dist_options = list(
+        K = 3, boundaries = 0:3, paramtype = "simplex",
+        dirichlet_alpha = c(1, 1)
+      )
+    )))),
+    "dirichlet_alpha.*length K"
+  )
+})
+
+test_that("pcd_as_stan_data accepts custom dirichlet_alpha of correct length", {
+  data <- data.frame(
+    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
+    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
+  )
+  result <- suppressMessages(pcd_as_stan_data(
+    data,
+    dist_id = 1, primary_id = 1,
+    param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = numeric(0), scale = numeric(0)),
+    primary_priors = list(location = numeric(0), scale = numeric(0)),
+    dist_options = list(
+      K = 4, boundaries = 0:4, paramtype = "simplex",
+      dirichlet_alpha = c(0.5, 1, 1, 2)
+    )
+  ))
+  expect_identical(result$np_dirichlet_alpha, c(0.5, 1, 1, 2))
 })
 
 test_that("pcd_as_stan_data accepts a fully-negative truncation window", {

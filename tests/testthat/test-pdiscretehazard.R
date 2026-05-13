@@ -110,3 +110,21 @@ test_that("user prior partially overrides defaults in discretehazard", {
   expect_s3_class(fit, "fitdist")
   expect_false(is.na(fit$loglik))
 })
+
+test_that("discretehazard_start validates K and the eps length", {
+  expect_error(discretehazard_start(K = 0), "positive integer")
+  expect_error(discretehazard_start(K = NA), "positive integer")
+  expect_error(
+    discretehazard_start(K = 4, eps = c(0.1, 0.2)),
+    "must be a scalar or have length K - 1"
+  )
+  # K = 1: no innovations, just alpha and log_sigma.
+  out <- discretehazard_start(K = 1)
+  expect_named(out, c("alpha", "log_sigma"))
+  # Vector eps of the right length flows through unchanged.
+  out2 <- discretehazard_start(K = 4, eps = c(-0.1, 0, 0.1))
+  expect_equal(
+    unname(unlist(out2[paste0("eps_", 1:3)])),
+    c(-0.1, 0, 0.1)
+  )
+})

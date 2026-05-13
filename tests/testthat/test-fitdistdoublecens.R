@@ -55,6 +55,30 @@ test_that("fitdistdoublecens works correctly with column names", {
   expect_false(is.na(fit$bic))
 })
 
+test_that(".build_pcens_closures infers parameter names from formals when start is NULL", {
+  # Parametric path: when `start` is NULL the closure builder reads the
+  # formals of the d<distr> function instead. (fitdistdoublecens always
+  # forwards `start` to fitdistrplus which insists on it for our synthetic
+  # `pcens_dist`, so this fallback only matters when the helper is invoked
+  # directly.)
+  closures <- primarycensored:::.build_pcens_closures(
+    pdist          = pgamma,
+    ddist          = dgamma,
+    params         = NULL,
+    dprimary       = stats::dunif,
+    primary_args   = list(),
+    pprimary       = stats::punif,
+    vector_param   = NULL,
+    fit_penalty    = NULL,
+    prior          = NULL,
+    N              = 10,
+    start          = NULL
+  )
+  expect_true(is.function(closures$dpcens_dist))
+  # Closure formals carry the parameter names from `dgamma` (minus x, log).
+  expect_true(all(c("shape", "rate") %in% names(formals(closures$dpcens_dist))))
+})
+
 test_that("fitdistdoublecens handles errors correctly", {
   # Test with missing columns
   expect_error(

@@ -106,9 +106,11 @@ add_name_attribute <- function(func, name) {
     return(NULL)
   }
   pprimary_name <- registry$pprimary[idx[[1L]]]
+  # nocov start: every shipped primary has a `pprimary` set
   if (is.na(pprimary_name)) {
     return(NULL)
   }
+  # nocov end
   fn <- tryCatch(get(pprimary_name, envir = asNamespace("primarycensored")),
     error = function(e) NULL
   )
@@ -177,6 +179,9 @@ add_name_attribute <- function(func, name) {
   }
   fn_name <- if (type == "p") base else sub("^p", "d", base)
   fn <- .lookup_dist_fn(fn_name)
+  # nocov start: defensive, the registry's `pdist` column is checked to
+  # resolve at package build time so this branch is unreachable in
+  # normal operation.
   if (is.null(fn)) {
     stop(
       "Could not find function '", fn_name, "' for distribution '",
@@ -184,6 +189,7 @@ add_name_attribute <- function(func, name) {
       call. = FALSE
     )
   }
+  # nocov end
   add_name_attribute(fn, fn_name)
 }
 
@@ -212,18 +218,11 @@ add_name_attribute <- function(func, name) {
     )
   }
   if (has_old) {
-    if (requireNamespace("lifecycle", quietly = TRUE)) {
-      lifecycle::deprecate_warn(
-        when = "1.5.0",
-        what = paste0(fn, "(dprimary_args)"),
-        with = paste0(fn, "(primary_args)")
-      )
-    } else {
-      warning(
-        "Argument `dprimary_args` is deprecated; use `primary_args`.",
-        call. = FALSE
-      )
-    }
+    lifecycle::deprecate_warn(
+      when = "1.5.0",
+      what = paste0(fn, "(dprimary_args)"),
+      with = paste0(fn, "(primary_args)")
+    )
     return(dprimary_args)
   }
   if (has_new) {
@@ -267,12 +266,16 @@ add_name_attribute <- function(func, name) {
       get(fn_name, envir = asNamespace("primarycensored")),
       error = function(e) tryCatch(get(fn_name), error = function(e2) NULL)
     )
+    # nocov start: `pcd_dist_name` already errors on unknown names, so a
+    # successful lookup followed by a missing p-counterpart is unreachable
+    # for any registry entry shipped with the package.
     if (is.null(fn)) {
       stop(
         "Could not find primary CDF function '", fn_name, "'.",
         call. = FALSE
       )
     }
+    # nocov end
     pprimary <- add_name_attribute(fn, fn_name)
   }
   if (!is.function(pprimary)) {

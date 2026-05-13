@@ -189,7 +189,6 @@ pcens_cdf.pcens_pdiscretestep <- function(
       for (j in seq_len(length(breaks) - 1L)) {
         a <- breaks[j]
         b <- breaks[j + 1L]
-        if ((b - a) <= 0) next
         mid <- 0.5 * (a + b)
         c_k <- .fstep(qi - mid)
         total <- total + c_k * (.F_primary(b) - .F_primary(a))
