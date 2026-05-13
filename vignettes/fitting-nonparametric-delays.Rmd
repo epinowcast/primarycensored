@@ -245,9 +245,8 @@ summary(fit_haz_rw)
 
 ## Discrete hazard --- random effect
 
-The RE variant uses the same start-value helper and the same data.
-The RE model drops the smoothing between adjacent bins, so its hazards are independent draws around the intercept rather than a smooth trajectory.
-With `K = 10` bins on this bimodal dataset the RE likelihood is flat in `log_sigma` at the eps-zero start (every bin equals the intercept), so optimisation through `fitdistrplus` may not converge from this initialisation; we wrap the call in `tryCatch()` and skip the RE estimate in the comparison plot if so.
+The RE variant uses the same data; we just switch `hazard_model = "re"`.
+Because the eps-zero start makes the RE likelihood flat in `log_sigma` (every bin equals the intercept), we offset the innovations from zero and start `log_sigma` away from the boundary.
 
 ```{r fit-haz-re, message = FALSE}
 haz_re_start <- discretehazard_start(
@@ -256,24 +255,18 @@ haz_re_start <- discretehazard_start(
   eps = 0.1 * seq_len(K - 1L)
 )
 
-fit_haz_re <- tryCatch(
-  fitdistdoublecens(
-    delay_data,
-    distr        = "discretehazard",
-    hazard_model = "re",
-    start        = haz_re_start,
-    left         = "delay",
-    right        = "delay_upper",
-    pwindow      = "pwindow",
-    D            = "D",
-    boundaries   = boundaries,
-    calcvcov     = FALSE,
-    control      = list(maxit = 50000)
-  ),
-  error = function(e) {
-    message("Could not fit RE variant: ", conditionMessage(e))
-    NULL
-  }
+fit_haz_re <- fitdistdoublecens(
+  delay_data,
+  distr        = "discretehazard",
+  hazard_model = "re",
+  start        = haz_re_start,
+  left         = "delay",
+  right        = "delay_upper",
+  pwindow      = "pwindow",
+  D            = "D",
+  boundaries   = boundaries,
+  calcvcov     = FALSE,
+  control      = list(maxit = 50000)
 )
 ```
 
@@ -447,96 +440,71 @@ We extract the four sets of PMF estimates and plot them on a single panel.
 We use shape to encode the parameterisation (step, hazard random walk, hazard random effect) and colour to encode the method (MLE vs Stan).
 Stan estimates are shown with `geom_pointrange` (median plus 90% credible interval); MLE estimates are shown with `geom_point`.
 
-```{r extract-mle}
-extract_step_pmf <- function(fit, K) {
-  p_free <- coef(fit)[paste0("p", seq_len(K - 1))]
-  c(p_free, 1 - sum(p_free))
-}
+We combine the three Stan fits and the three MLE fits into a single tidy data frame, with two small helpers that convert each fit to a per-bin PMF (point estimate for MLE, posterior median + 90% CI for Stan).
 
-extract_haz_pmf <- function(fit, K, model = c("rw", "re")) {
-  model <- match.arg(model)
-  alpha_hat <- coef(fit)[["alpha"]]
-  log_sigma_hat <- coef(fit)[["log_sigma"]]
-  sigma_hat <- exp(log_sigma_hat)
-  eps_hat <- coef(fit)[paste0("eps_", seq_len(K - 1))]
-  deltas <- if (model == "rw") cumsum(c(0, eps_hat)) else c(0, eps_hat)
-  logit_h <- alpha_hat + sigma_hat * deltas
-  h <- 1 / (1 + exp(-logit_h))
-  h[K] <- 1
+```{r combine-fits}
+# MLE point PMF.  `step` reads coefficients p1..p_{K-1} (last bin filled).
+# Hazard variants read alpha/log_sigma/eps_1..eps_{K-1}, build the logit
+# hazards (cumulative for RW, IID for RE), and apply hazards_to_pmf().
+mle_pmf <- function(fit, K, type, model = "rw") {
+  if (type == "step") {
+    p <- coef(fit)[paste0("p", seq_len(K - 1))]
+    return(c(p, 1 - sum(p)))
+  }
+  alpha <- coef(fit)[["alpha"]]
+  sigma <- exp(coef(fit)[["log_sigma"]])
+  eps   <- coef(fit)[paste0("eps_", seq_len(K - 1))]
+  delta <- if (model == "rw") cumsum(c(0, eps)) else c(0, eps)
+  h <- plogis(alpha + sigma * delta); h[K] <- 1
   hazards_to_pmf(h)
 }
 
-pmf_step <- extract_step_pmf(fit_step, K)
-pmf_haz_rw <- extract_haz_pmf(fit_haz_rw, K, "rw")
-pmf_haz_re <- if (!is.null(fit_haz_re)) {
-  extract_haz_pmf(fit_haz_re, K, "re")
-} else {
-  NULL
+# Stan posterior PMF.  `simplex` reads np_pmf directly; `hazard` reads
+# np_weights (= hazards) and converts each draw via hazards_to_pmf().
+stan_pmf_draws <- function(fit, K, paramtype) {
+  var <- if (paramtype == "simplex") "np_pmf" else "np_weights"
+  d <- fit$draws(variables = paste0(var, "[", seq_len(K), "]"),
+                 format = "matrix")
+  if (paramtype == "hazard") {
+    d <- t(apply(d, 1, function(h) { h[K] <- 1; hazards_to_pmf(h) }))
+  }
+  d
 }
-```
 
-```{r extract-stan-intervals}
-dirichlet_draws <- dirichlet_fit$draws(
-  variables = paste0("np_pmf[", seq_len(K), "]"),
-  format    = "matrix"
+mle_fits <- list(
+  list(fit = fit_step,   type = "step",   label = "step"),
+  list(fit = fit_haz_rw, type = "hazard", label = "hazard (RW)", model = "rw"),
+  list(fit = fit_haz_re, type = "hazard", label = "hazard (RE)", model = "re")
+)
+stan_fits <- list(
+  list(fit = dirichlet_fit, paramtype = "simplex", label = "step"),
+  list(fit = rw_fit,        paramtype = "hazard",  label = "hazard (RW)"),
+  list(fit = re_fit,        paramtype = "hazard",  label = "hazard (RE)")
 )
 
-dirichlet_summary <- data.frame(
-  bin    = seq_len(K),
-  median = apply(dirichlet_draws, 2, median),
-  lo90   = apply(dirichlet_draws, 2, quantile, 0.05),
-  hi90   = apply(dirichlet_draws, 2, quantile, 0.95)
-)
-
-stan_hazard_summary <- function(fit, K) {
-  hazard_draws <- fit$draws(
-    variables = paste0("np_weights[", seq_len(K), "]"),
-    format    = "matrix"
-  )
-  pmf_draws <- t(apply(hazard_draws, 1, function(h) {
-    h[K] <- 1
-    hazards_to_pmf(h)
-  }))
+mle_df <- do.call(rbind, lapply(mle_fits, function(x) {
   data.frame(
-    bin    = seq_len(K),
-    median = apply(pmf_draws, 2, median),
-    lo90   = apply(pmf_draws, 2, quantile, 0.05),
-    hi90   = apply(pmf_draws, 2, quantile, 0.95)
+    bin = seq_len(K),
+    pmf = mle_pmf(x$fit, K, x$type, model = if (is.null(x$model)) "rw" else x$model),
+    param = x$label, method = "MLE", row.names = NULL
   )
-}
+}))
 
-rw_summary <- stan_hazard_summary(rw_fit, K)
-re_summary <- stan_hazard_summary(re_fit, K)
+stan_df <- do.call(rbind, lapply(stan_fits, function(x) {
+  d <- stan_pmf_draws(x$fit, K, x$paramtype)
+  data.frame(
+    bin = seq_len(K),
+    median = apply(d, 2, median),
+    lo90   = apply(d, 2, quantile, 0.05),
+    hi90   = apply(d, 2, quantile, 0.95),
+    param  = x$label, method = "Stan", row.names = NULL
+  )
+}))
+
+truth_df <- data.frame(bin = seq_len(K), pmf = true_pmf)
 ```
 
 ```{r comparison-plot, fig.width = 8, fig.height = 5}
-mle_df <- rbind(
-  data.frame(
-    bin = seq_len(K), pmf = pmf_step,
-    param = "step", method = "MLE"
-  ),
-  data.frame(
-    bin = seq_len(K), pmf = pmf_haz_rw,
-    param = "hazard (RW)", method = "MLE"
-  )
-)
-if (!is.null(pmf_haz_re)) {
-  mle_df <- rbind(
-    mle_df,
-    data.frame(
-      bin = seq_len(K), pmf = pmf_haz_re,
-      param = "hazard (RE)", method = "MLE"
-    )
-  )
-}
-
-stan_df <- rbind(
-  transform(dirichlet_summary, param = "step", method = "Stan"),
-  transform(rw_summary, param = "hazard (RW)", method = "Stan"),
-  transform(re_summary, param = "hazard (RE)", method = "Stan")
-)
-
-truth_df <- data.frame(bin = seq_len(K), pmf = true_pmf)
 
 dodge <- position_dodge(width = 0.6)
 
@@ -575,9 +543,10 @@ ggplot() +
 ```
 
 All three parameterisations recover the bimodal shape of the truth.
-Bins 3 and 4 sit between the two modes and absorb most of the disagreement between methods: under primary censoring with `pwindow = 1` or `2` the mass that the convolution puts at days 2--3 leaks into days 3--4, which weakens identifiability for those middle bins.
-The Stan posterior intervals correctly widen there to reflect that the data are less informative about the trough than about the peaks.
-With more observations, narrower primary windows, or fewer bins around the trough, the disagreement between methods on those bins shrinks.
+The largest errors sit in the bins between the two modes (around bins 4--6): every method overshoots bin 4 a little and undershoots bins 5--6.
+This is where the truth departs most sharply from either component lognormal: the right tail of the first mode and the left tail of the second mode collide in the trough, so the convolution with the primary window pushes more mass than the truth has into bin 4 and away from bins 5--6.
+The Stan posterior intervals correctly widen in this region to reflect that the data are less informative about the trough than about the peaks.
+More observations, narrower primary windows, or fewer bins around the trough all shrink the disagreement.
 
 # When to choose each parameterisation
 
