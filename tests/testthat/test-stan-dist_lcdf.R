@@ -138,6 +138,23 @@ test_that(
 )
 
 test_that(
+  "Stan dist_lcdf handles uniform with a negative lower bound",
+  {
+    # Uniform on [-2, 5] evaluated at delays spanning the support, including
+    # negative ones. Without the new dispatch (treating uniform as
+    # signed-support) the d <= 0 short-circuit would return -Inf for delays
+    # in (-2, 0].
+    delays <- c(-1.5, -0.5, 0, 0.5, 2.5)
+    stan_result <- vapply(
+      delays, dist_lcdf,
+      params = c(-2.0, 5.0), dist_id = 24L, FUN.VALUE = numeric(1)
+    )
+    r_result <- punif(delays, -2.0, 5.0, log.p = TRUE)
+    expect_equal(stan_result, r_result, tolerance = 1e-6)
+  }
+)
+
+test_that(
   "Stan dist_lcdf IDs are consistent with pcd_stan_dist_id()",
   {
     delay <- 3.0

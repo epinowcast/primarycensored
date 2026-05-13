@@ -26,7 +26,7 @@ entry equal to 1.
 pmf_to_hazards(c(0.2, 0.3, 0.5))
 }
 \seealso{
-Other pdiscretestep:
+Other pdiscretestep: 
 \code{\link{ddiscretestep}()},
 \code{\link{hazards_to_pmf}()},
 \code{\link{pdiscretestep}()},

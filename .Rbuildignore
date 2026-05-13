@@ -26,6 +26,7 @@
 ^vignettes/fitting-dists-with-stan\.Rmd$
 ^vignettes/fitting-dists-with-fitdistrplus\.Rmd$
 ^vignettes/fitting-nonparametric-delays\.Rmd$
+^vignettes/fitting-negative-support\.Rmd$
 ^inst/pcens_model$
 ^inst/stan/pcens_model$
 ^touchstone$

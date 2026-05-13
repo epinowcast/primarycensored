@@ -2,12 +2,10 @@ skip_on_cran()
 
 test_that("pcd_cmdstan_model throws error when cmdstanr is not installed", {
   with_mocked_bindings(
-    {
-      expect_error(
-        pcd_cmdstan_model(),
-        "Package 'cmdstanr' is required but not installed for this function"
-      )
-    },
+    expect_error(
+      pcd_cmdstan_model(),
+      "Package 'cmdstanr' is required but not installed for this function"
+    ),
     requireNamespace = function(...) FALSE,
     .package = "base"
   )
@@ -524,5 +522,78 @@ test_that(
     )
     expect_identical(nrow(summary_re), as.integer(K))
     expect_true(all(is.finite(summary_re$mean)))
+  }
+)
+
+test_that(
+  "pcd_cmdstan_model recovers true values for a signed-support delay
+   (normal) with negative observed delays",
+  {
+    set.seed(789)
+    n <- 2000
+    true_mean <- 1
+    true_sd <- 2
+
+    simulated_delays <- rprimarycensored(
+      n = n,
+      rdist = rnorm,
+      mean = true_mean,
+      sd = true_sd,
+      pwindow = 1,
+      L = -5,
+      D = 8
+    )
+
+    simulated_data <- data.frame(
+      delay = simulated_delays,
+      delay_upper = simulated_delays + 1,
+      pwindow = 1,
+      start_relative_obs_time = -5,
+      relative_obs_time = 8
+    )
+
+    delay_counts <- simulated_data |>
+      dplyr::summarise(
+        n = dplyr::n(),
+        .by = c(
+          pwindow, start_relative_obs_time, relative_obs_time,
+          delay, delay_upper
+        )
+      )
+
+    stan_data <- pcd_as_stan_data(
+      delay_counts,
+      dist_id = pcd_stan_dist_id("normal", "delay"),
+      primary_id = 1,
+      param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+      priors = list(location = c(0, 0), scale = c(5, 2.5)),
+      primary_priors = list(location = numeric(0), scale = numeric(0))
+    )
+
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    fit <- suppressMessages(suppressWarnings(model$sample(
+      data = stan_data,
+      seed = 789,
+      chains = 2,
+      parallel_chains = 2,
+      refresh = 0,
+      show_messages = FALSE,
+      iter_warmup = 500,
+      iter_sampling = 500
+    )))
+
+    posterior <- fit$draws(c("params[1]", "params[2]"), format = "df")
+
+    expect_equal(mean(posterior$`params[1]`), true_mean, tolerance = 0.1)
+    expect_equal(mean(posterior$`params[2]`), true_sd, tolerance = 0.1)
+
+    ci_mean <- quantile(posterior$`params[1]`, c(0.05, 0.95))
+    ci_sd <- quantile(posterior$`params[2]`, c(0.05, 0.95))
+
+    expect_gt(true_mean, ci_mean[1])
+    expect_lt(true_mean, ci_mean[2])
+    expect_gt(true_sd, ci_sd[1])
+    expect_lt(true_sd, ci_sd[2])
   }
 )

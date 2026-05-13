@@ -32,7 +32,7 @@ parameterisation so the implied PMF sums to 1.
 discretehazard_start(K = 5)
 }
 \seealso{
-Other pdiscretehazard:
+Other pdiscretehazard: 
 \code{\link{ddiscretehazard}()},
 \code{\link{pdiscretehazard}()},
 \code{\link{rdiscretehazard}()}

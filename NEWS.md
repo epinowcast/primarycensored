@@ -6,74 +6,30 @@
 
 ## New features
 
-- The Stan model returned by `pcd_cmdstan_model()` now drives the
-  non-parametric delay families directly. `pcd_as_stan_data()` accepts a
-  `dist_options` list that selects either a Dirichlet on the simplex
-  (`paramtype = "simplex"`, `dist_id = 26`) or a logit-hazard model
-  (`paramtype = "hazard"`, `dist_id = 27`) with random-walk or
-  random-effect transforms picked via `hazard_model`, with `boundaries`
-  carried as data; the parametric path is unchanged.
-- Added `discretehazard_start()` for building the named start-value list
-  expected by `fitdistdoublecens()` with `distr = "discretehazard"`.
-- Fixed the Stan step CDF so `pstep_lcdf()` matches R `pdiscretestep()`
-  at the right-edge boundary points (`t == boundaries[i + 1]`), which
-  previously advanced past the jump and returned the wrong cumulative
-  mass.
-- Added a non-parametric step CDF family. `pdiscretestep()`,
-  `ddiscretestep()`, and `rdiscretestep()` represent a delay via a direct PMF
-  over fixed bins, and the discrete-time hazard variant `pdiscretehazard()`,
-  `ddiscretehazard()`, and `rdiscretehazard()` parameterises the same family
-  via per-bin hazards, with conversion utilities `hazards_to_pmf()` and
-  `pmf_to_hazards()`. (#218, EpiNow2#1338)
-- `fitdistdoublecens()` accepts `distr = "discretestep"` and
-  `distr = "discretehazard"` through the same code path as parametric
-  distributions, with `K` (the number of bins) inferred from `start`. Hazard
-  priors are user-settable via `prior = list(...)`.
-- Added a second discrete-hazard parameterisation alongside the existing
-  logit random walk. Both variants are selected through the single
-  `distr = "discretehazard"` family. In `fitdistdoublecens()` the new
-  `hazard_model` argument picks between `"rw"` (random walk on the
-  logit hazards, the default) and `"re"` (IID logit random effects
-  around a mean intercept, `logit(h_i) = alpha + sigma * eps_i` with
-  `eps_i ~ N(0, 1)`). In `pcd_as_stan_data()` the matching field on
-  the `nonparametric` list is also called `hazard_model`.
-- The `pdist` argument of `pprimarycensored()`, `dprimarycensored()`, and
-  `qprimarycensored()` now accepts a character string, looked up via the
-  `pcd_distributions` registry; passing a function still works as before.
-- `pprimary` is now a user-facing argument on `pprimarycensored()`,
-  `dprimarycensored()`, `qprimarycensored()`, and `fitdistdoublecens()`.
-  It accepts either a function or a character string naming a primary
-  distribution in `pcd_primary_distributions`. When omitted, the primary
-  CDF is looked up automatically from the registry using the `"name"`
-  attribute of `dprimary`. Supplying both `dprimary` and `pprimary` with
-  inconsistent names (e.g. `dunif` + `pexpgrowth`) now errors clearly.
-- `pdiscretehazard()`, `ddiscretehazard()`, and `rdiscretehazard()` are
-  retained as user-facing wrappers around their `pdiscretestep()`
-  counterparts; they use a hazard parameterisation that is identical at
-  evaluation time. Their main role is as a fitting parameterisation for
-  `fitdistdoublecens(distr = "discretehazard")`, where a Gaussian random
-  walk on the logit hazard regularises the recovered PMF and makes the
-  fit more stable in sparse data.
-- Deprecated `dprimary_args` in favour of `primary_args` (warns via
-  `lifecycle::deprecate_warn()`). The new name reflects that the arguments
-  are passed to both `dprimary` and the matching primary CDF.
-- Primary censored CDF dispatch now follows a two-layer S3 chain on `pcens`
-  objects: a specific method for a (delay, primary) pair is tried first, then
-  a delay-only general method, then a numerical default. The analytic primary
-  convolution path now works for any primary with a known CDF, with the
-  primary CDF plumbed through `pprimarycensored()`, `dprimarycensored()`, and
-  `qprimarycensored()` via the `pprimary` argument.
-- Added Stan support for `dist_id = 26` (step CDF, PMF supplied in `params`)
-  and `dist_id = 27` (discrete-time hazards, hazards supplied in `params`
-  with internal conversion to a PMF).
-- Added vignette `fitting-nonparametric-delays` demonstrating end-to-end
-  non-parametric delay estimation.
-- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. Stan functions still assume `L >= 0` and are tracked as a follow-up. (#267)
+- `L` may now be negative or `-Inf` in `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `rprimarycensored()`. This lets delay distributions with support below zero (e.g. normal, logistic, Cauchy) be used with primary censoring. `L = -Inf` is the sentinel for "no left truncation"; any finite `L` left-truncates the distribution at `L`. (#267)
+- The Stan functions and `pcd_as_stan_data()` mirror the R-side handling of `L`: negative and `-Inf` values are accepted, and a missing `start_relative_obs_time` column defaults to `-Inf`. `pcd_cmdstan_model()` now accepts negative observed delays and fully-negative truncation windows, letting distributions with support on the reals (e.g. logistic, Cauchy, Gumbel) be fitted. (#313)
+- The `dist_id` upper bound in `pcens_model.stan` has been raised from `17` to `25`, exposing every delay distribution that `dist_lcdf` already dispatches (Normal, Double Exponential, Pareto, scaled inverse chi-square, Student's t, Uniform, von Mises) through `pcd_cmdstan_model()`. (#314)
+- The Stan model returned by `pcd_cmdstan_model()` now drives the non-parametric delay families directly. `pcd_as_stan_data()` accepts a `dist_options` list that selects either a Dirichlet on the simplex (`paramtype = "simplex"`, `dist_id = 26`) or a logit-hazard model (`paramtype = "hazard"`, `dist_id = 27`) with random-walk or random-effect transforms picked via `hazard_model`, with `boundaries` carried as data; the parametric path is unchanged.
+- Added `discretehazard_start()` for building the named start-value list expected by `fitdistdoublecens()` with `distr = "discretehazard"`.
+- Added a non-parametric step CDF family. `pdiscretestep()`, `ddiscretestep()`, and `rdiscretestep()` represent a delay via a direct PMF over fixed bins, and the discrete-time hazard variant `pdiscretehazard()`, `ddiscretehazard()`, and `rdiscretehazard()` parameterises the same family via per-bin hazards, with conversion utilities `hazards_to_pmf()` and `pmf_to_hazards()`. (#218, EpiNow2#1338)
+- `fitdistdoublecens()` accepts `distr = "discretestep"` and `distr = "discretehazard"` through the same code path as parametric distributions, with `K` (the number of bins) inferred from `start`. Hazard priors are user-settable via `prior = list(...)`.
+- Added a second discrete-hazard parameterisation alongside the existing logit random walk. Both variants are selected through the single `distr = "discretehazard"` family. In `fitdistdoublecens()` the new `hazard_model` argument picks between `"rw"` (random walk on the logit hazards, the default) and `"re"` (IID logit random effects around a mean intercept, `logit(h_i) = alpha + sigma * eps_i` with `eps_i ~ N(0, 1)`). In `pcd_as_stan_data()` the matching field on the `dist_options` list is also called `hazard_model`.
+- The `pdist` argument of `pprimarycensored()`, `dprimarycensored()`, and `qprimarycensored()` now accepts a character string, looked up via the `pcd_distributions` registry; passing a function still works as before.
+- `pprimary` is now a user-facing argument on `pprimarycensored()`, `dprimarycensored()`, `qprimarycensored()`, and `fitdistdoublecens()`. It accepts either a function or a character string naming a primary distribution in `pcd_primary_distributions`. When omitted, the primary CDF is looked up automatically from the registry using the `"name"` attribute of `dprimary`. Supplying both `dprimary` and `pprimary` with inconsistent names (e.g. `dunif` + `pexpgrowth`) now errors clearly.
+- Deprecated `dprimary_args` in favour of `primary_args` (warns via `lifecycle::deprecate_warn()`). The new name reflects that the arguments are passed to both `dprimary` and the matching primary CDF.
+- Primary censored CDF dispatch now follows a two-layer S3 chain on `pcens` objects: a specific method for a (delay, primary) pair is tried first, then a delay-only general method, then a numerical default. The analytic primary convolution path now works for any primary with a known CDF, with the primary CDF plumbed through `pprimarycensored()`, `dprimarycensored()`, and `qprimarycensored()` via the `pprimary` argument.
+- Added Stan support for `dist_id = 26` (step CDF, PMF supplied in `params`) and `dist_id = 27` (discrete-time hazards, hazards supplied in `params` with internal conversion to a PMF).
+- Added vignette `fitting-nonparametric-delays` demonstrating end-to-end non-parametric delay estimation.
 - `dprimarycensored()` and `fitdistdoublecens()` now accept observations whose secondary censoring interval straddles `D` (`left < D <= right`). The upper endpoint is internally clipped to `D` and the likelihood becomes `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op when `right <= D` and removes the need to pad `D = K + 1` (or pre-clamp `right`) when fitting non-parametric delays whose support reaches `D` directly. Observations with `left >= D` are still rejected because under truncation at `D` no event with latent value `>= D` is observable. (#312)
+
+## Bug fixes
+
+- Fixed the Stan step CDF so `pstep_lcdf()` matches R `pdiscretestep()` at the right-edge boundary points (`t == boundaries[i + 1]`), which previously advanced past the jump and returned the wrong cumulative mass.
 
 ## Documentation
 
 - Added a CDF-direct form of the primary-censored analytic solutions to the "Why it works" and "Analytic solutions" vignettes alongside the existing survival-function form.
+- Added a "Fitting delay distributions with negative support" vignette that walks through estimating a logistic-distributed serial interval with both `fitdistdoublecens()` and `pcd_cmdstan_model()` from doubly-censored, right-truncated samples that include negative observed delays.
 
 ## Bug fixes
 

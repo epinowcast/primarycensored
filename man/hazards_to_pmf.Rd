@@ -28,7 +28,7 @@ hazard), 1 is appended automatically.
 hazards_to_pmf(c(0.2, 0.3, 1))
 }
 \seealso{
-Other pdiscretestep:
+Other pdiscretestep: 
 \code{\link{ddiscretestep}()},
 \code{\link{pdiscretestep}()},
 \code{\link{pmf_to_hazards}()},

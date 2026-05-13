@@ -39,23 +39,19 @@ test_that("check_truncation errors on non-numeric delays", {
   )
 })
 
-test_that("check_truncation errors on negative D", {
-  expect_error(
-    check_truncation(delays = c(1, 2, 3, 4), D = -1, multiplier = 2),
-    paste0(
-      "Invalid argument values. D must be positive and multiplier ",
-      "must be greater than 1."
-    )
+test_that("check_truncation is silent when D is non-positive", {
+  expect_silent(
+    check_truncation(delays = c(-3, -2, -1), D = -1, multiplier = 2)
+  )
+  expect_silent(
+    check_truncation(delays = c(-3, -2, -1), D = 0, multiplier = 2)
   )
 })
 
 test_that("check_truncation errors on multiplier <= 1", {
   expect_error(
     check_truncation(delays = c(1, 2, 3, 4), D = 10, multiplier = 0.5),
-    paste0(
-      "Invalid argument values. D must be positive and multiplier ",
-      "must be greater than 1."
-    )
+    "multiplier must be greater than 1"
   )
 })
 

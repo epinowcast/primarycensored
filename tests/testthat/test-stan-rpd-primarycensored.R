@@ -460,3 +460,96 @@ test_that(
     expect_equal(stan_lpmf, r_lpmf, tolerance = 1e-6)
   }
 )
+
+test_that(
+  "Stan primarycensored_lcdf matches R pprimarycensored for logistic
+   delays at negative d values",
+  {
+    d_values <- seq(-3, 8, by = 0.5)
+    dist_id <- 17 # Logistic
+    params <- c(2, 1) # location, scale
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- array(numeric(0))
+
+    for (D in list(Inf, 10)) {
+      stan_lcdf <- sapply(
+        d_values, primarycensored_lcdf, dist_id, params, pwindow,
+        -Inf, D, primary_id, primary_params
+      )
+      r_cdf <- pprimarycensored(
+        d_values, plogis,
+        pwindow = pwindow, D = D, L = -Inf,
+        location = params[1], scale = params[2]
+      )
+      expect_equal(
+        exp(stan_lcdf), r_cdf,
+        tolerance = 1e-5,
+        info = paste("D =", D)
+      )
+    }
+  }
+)
+
+test_that(
+  "Stan primarycensored_lpmf matches R dprimarycensored for logistic with
+   negative observed integer delays",
+  {
+    d_values <- -3:7
+    dist_id <- 17 # Logistic
+    params <- c(2, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- numeric(0)
+    L <- -3
+    D <- 10
+
+    stan_lpmf <- mapply(
+      primarycensored_lpmf,
+      d = d_values, d_upper = d_values + 1,
+      MoreArgs = list(
+        dist_id = dist_id, params = params, pwindow = pwindow,
+        L = L, D = D,
+        primary_id = primary_id, primary_params = primary_params
+      )
+    )
+    r_lpmf <- dprimarycensored(
+      d_values, plogis,
+      pwindow = pwindow, swindow = 1, D = D, L = L,
+      location = params[1], scale = params[2], log = TRUE
+    )
+    expect_equal(stan_lpmf, r_lpmf, tolerance = 1e-5)
+  }
+)
+
+test_that(
+  "Stan primarycensored_sone_lpmf_vectorized matches R dprimarycensored for
+   logistic delay with L <= 0 (covers the d == 1 branch where F(0) != 0)",
+  {
+    max_delay <- 8
+    dist_id <- 17 # Logistic (real support)
+    params <- c(2, 1)
+    pwindow <- 1
+    primary_id <- 1
+    primary_params <- numeric(0)
+
+    for (L in list(-Inf, -3)) {
+      for (D in list(Inf, 12)) {
+        stan_lpmf <- primarycensored_sone_lpmf_vectorized(
+          max_delay, L, D, dist_id, params, pwindow,
+          primary_id, primary_params
+        )
+        r_lpmf <- dprimarycensored(
+          0:max_delay, plogis,
+          pwindow = pwindow, swindow = 1, D = D, L = L,
+          location = params[1], scale = params[2], log = TRUE
+        )
+        expect_equal(
+          stan_lpmf, r_lpmf,
+          tolerance = 1e-5,
+          info = paste("L =", L, "D =", D)
+        )
+      }
+    }
+  }
+)
