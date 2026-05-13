@@ -3,40 +3,33 @@ test_that("pdiscretehazard carries name attribute", {
 })
 
 # `pdiscretehazard` is a thin wrapper around `pdiscretestep` (see roxygen).
-# These identity tests assert the wrapper relationship across the family;
-# the underlying behaviour and edge cases are exercised in
-# test-pdiscretestep.R rather than duplicated here.
-test_that("pdiscretehazard equals pdiscretestep with hazards_to_pmf", {
+# These identity tests assert the wrapper relationship across the p/d/r
+# family in one loop; the underlying behaviour and edge cases are
+# exercised in test-pdiscretestep.R rather than duplicated here.
+test_that("discretehazard p/d/r equal the step equivalents under hazards_to_pmf", {
   hazards <- c(0.3, 0.5, 1)
   boundaries <- 0:3
   pmf <- hazards_to_pmf(hazards)
   q <- c(-0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5)
-  expect_identical(
-    pdiscretehazard(q, boundaries, hazards),
-    pdiscretestep(q, boundaries, pmf)
+  identities <- list(
+    p = function() list(
+      pdiscretehazard(q, boundaries, hazards),
+      pdiscretestep(q, boundaries, pmf)
+    ),
+    d = function() list(
+      ddiscretehazard(c(0, 1, 1.5, 2, 3), boundaries, hazards),
+      ddiscretestep(c(0, 1, 1.5, 2, 3), boundaries, pmf)
+    ),
+    r = function() {
+      set.seed(1); s_h <- rdiscretehazard(20, boundaries, hazards)
+      set.seed(1); s_p <- rdiscretestep(20, boundaries, pmf)
+      list(s_h, s_p)
+    }
   )
-})
-
-test_that("ddiscretehazard equals ddiscretestep with hazards_to_pmf", {
-  hazards <- c(0.3, 0.5, 1)
-  boundaries <- 0:3
-  pmf <- hazards_to_pmf(hazards)
-  x <- c(0, 1, 1.5, 2, 3)
-  expect_identical(
-    ddiscretehazard(x, boundaries, hazards),
-    ddiscretestep(x, boundaries, pmf)
-  )
-})
-
-test_that("rdiscretehazard equals rdiscretestep with hazards_to_pmf", {
-  hazards <- c(0.3, 0.5, 1)
-  boundaries <- 0:3
-  pmf <- hazards_to_pmf(hazards)
-  set.seed(1)
-  s_h <- rdiscretehazard(20, boundaries, hazards)
-  set.seed(1)
-  s_p <- rdiscretestep(20, boundaries, pmf)
-  expect_identical(s_h, s_p)
+  for (nm in names(identities)) {
+    pair <- identities[[nm]]()
+    expect_identical(pair[[1]], pair[[2]], info = sprintf("variant: %s", nm))
+  }
 })
 
 test_that(

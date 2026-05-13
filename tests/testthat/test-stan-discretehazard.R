@@ -59,18 +59,6 @@ test_that(
   }
 )
 
-test_that("discretehazard_lcdf handles d=1 and d_upper=D boundary cases", {
-  # d at the lower support edge inherits the structural-zero short-circuit
-  # from `discretestep_lcdf`, so `primarycensored_lpmf` must still emit
-  # finite log mass.
-  stan_val <- primarycensored_lpmf(
-    1L, 27L, packed_params_27, 1.0, 2.0, 0.0, 3.0, 1L, numeric(0)
-  )
-  expect_true(is.finite(stan_val))
-
-  # d_upper = D: the cached upper cdf is reused.
-  stan_val <- primarycensored_lpmf(
-    2L, 27L, packed_params_27, 1.0, 3.0, 0.0, 3.0, 1L, numeric(0)
-  )
-  expect_true(is.finite(stan_val))
-})
+# The boundary cases (d=1, d_upper=D) are exercised on the step path in
+# test-stan-discretestep.R; the 27==26 identity above transports those
+# guarantees to the hazard path, so we don't repeat them here.
