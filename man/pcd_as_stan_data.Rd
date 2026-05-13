@@ -80,11 +80,9 @@ for each unique D value. Set to NULL to skip the check. Default is 2.}
 \item{dist_options}{Optional list configuring a non-parametric delay
 (\code{dist_id} 26 or 27). When \code{NULL} (the default) the model uses the
 parametric path and all \verb{np_*} Stan data fields are sized 0. When
-supplied, expects a list with elements:
+supplied (a non-\code{NULL} list), the non-parametric path is activated;
+the family is selected by \code{paramtype}. Expects a list with elements:
 \itemize{
-\item \code{kind}: \code{"nonparametric"} (the only currently supported value).
-Selects the discrete step / discrete hazard family of delay
-distributions.
 \item \code{K}: integer, number of bins.
 \item \code{boundaries}: numeric vector of length \code{K + 1}.
 \item \code{paramtype}: \code{"simplex"} (Dirichlet on the PMF, \code{dist_id} 26) or

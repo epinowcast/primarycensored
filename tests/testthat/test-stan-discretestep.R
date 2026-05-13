@@ -34,6 +34,40 @@ test_that("Stan pstep_lcdf matches R pdiscretestep at the bin edges", {
   }
 })
 
+test_that(
+  "Stan pstep_lcdf agrees with R pdiscretestep in an eps neighbourhood of every edge",
+  {
+    # Probes the exact failure mode of the old bug: at `t = b_{i+1}`
+    # Stan should still report the cumulative mass *up to and including*
+    # bin i, not the next bin's mass. Compare on the natural scale.
+    edges <- as.numeric(boundaries_vals[-1])
+    eps <- 1e-9
+    for (i in seq_along(edges)) {
+      for (t in c(edges[i] - eps, edges[i], edges[i] + eps)) {
+        stan_val <- exp(pstep_lcdf(
+          t, as.numeric(boundaries_vals), pmf_vals
+        ))
+        r_val <- pdiscretestep(t, boundaries_vals, pmf_vals)
+        expect_equal(
+          stan_val, r_val,
+          tolerance = 1e-9,
+          info = sprintf("Stan vs R at t = %.12g", t)
+        )
+      }
+    }
+    # At the rightmost edge `b_K` the CDF must be exactly 1, so the
+    # log CDF is exactly 0. Off-by-one would skip past and return -Inf.
+    expect_equal(
+      pstep_lcdf(
+        as.numeric(boundaries_vals[length(boundaries_vals)]),
+        as.numeric(boundaries_vals), pmf_vals
+      ),
+      0,
+      tolerance = 1e-12
+    )
+  }
+)
+
 test_that("Stan analytic step CDF matches R pprimarycensored", {
   # Cross-check the analytic Stan path against the R reference
   # `pprimarycensored` for both supported primaries.

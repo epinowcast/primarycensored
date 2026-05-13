@@ -112,10 +112,8 @@ pcd_cmdstan_model <- function(
 #' @param dist_options Optional list configuring a non-parametric delay
 #'   (`dist_id` 26 or 27). When `NULL` (the default) the model uses the
 #'   parametric path and all `np_*` Stan data fields are sized 0. When
-#'   supplied, expects a list with elements:
-#'   * `kind`: `"nonparametric"` (the only currently supported value).
-#'     Selects the discrete step / discrete hazard family of delay
-#'     distributions.
+#'   supplied (a non-`NULL` list), the non-parametric path is activated;
+#'   the family is selected by `paramtype`. Expects a list with elements:
 #'   * `K`: integer, number of bins.
 #'   * `boundaries`: numeric vector of length `K + 1`.
 #'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26) or
@@ -287,14 +285,6 @@ pcd_as_stan_data <- function(
       dist_id = NA_integer_
     ))
   }
-  kind_in <- if (is.null(dist_options$kind)) {
-    "nonparametric"
-  } else {
-    dist_options$kind
-  }
-  # Only `kind = "nonparametric"` is currently supported. Validate
-  # input via match.arg() so future kinds can hook in here.
-  match.arg(kind_in, choices = "nonparametric")
   required <- c("K", "boundaries", "paramtype")
   missing_fields <- setdiff(required, names(dist_options))
   if (length(missing_fields) > 0) {

@@ -52,6 +52,45 @@ test_that(
   }
 )
 
+test_that(
+  "pdiscretestep is right-continuous at every bin edge (eps neighbourhood)",
+  {
+    # Right-edge mass convention. For each right edge `r = b_{i+1}`:
+    #   F(r - eps) = sum(pmf[1:(i-1)])  (still in bin i, no mass yet)
+    #   F(r)       = sum(pmf[1:i])      (jump just landed)
+    #   F(r + eps) = sum(pmf[1:i])      (constant until the next edge)
+    # The Stan pstep_lcdf bug advanced past the jump at `t = r` and
+    # returned cum_pmf[i + 1] instead of cum_pmf[i] for any right edge
+    # `t` in `boundaries[-1]`.
+    boundaries <- c(0, 1.3, 2.7, 4.0, 5.5)
+    pmf <- c(0.1, 0.4, 0.3, 0.2)
+    cum_pmf <- cumsum(pmf)
+    eps <- 1e-9
+    right_edges <- boundaries[-1]
+    for (i in seq_along(right_edges)) {
+      r <- right_edges[i]
+      expect_equal(
+        pdiscretestep(r - eps, boundaries, pmf),
+        if (i == 1L) 0 else cum_pmf[i - 1L],
+        tolerance = 1e-9,
+        info = sprintf("just below right edge %s", r)
+      )
+      expect_equal(
+        pdiscretestep(r, boundaries, pmf),
+        cum_pmf[i],
+        tolerance = 1e-9,
+        info = sprintf("at right edge %s", r)
+      )
+      expect_equal(
+        pdiscretestep(r + eps, boundaries, pmf),
+        cum_pmf[i],
+        tolerance = 1e-9,
+        info = sprintf("just above right edge %s", r)
+      )
+    }
+  }
+)
+
 test_that("pdiscretestep carries name attribute", {
   expect_identical(attr(pdiscretestep, "name"), "pdiscretestep")
 })

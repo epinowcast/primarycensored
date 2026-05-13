@@ -91,9 +91,10 @@ This parameterisation assumes the hazards are exchangeable: it does not borrow s
 
 # Simulating censored data from a step distribution
 
-We build a bimodal true PMF as a mixture of two discretised lognormals.
+We build a bimodal true PMF as a mixture of two discretised lognormals, one at days 2--3 and one at days 6--7.
 The mixture has two components, `lognormal(meanlog = 0.7, sdlog = 0.4)` and `lognormal(meanlog = 1.9, sdlog = 0.2)`, with mixing weights 0.7 and 0.3.
-A bimodal shape like this is awkward to capture with a single parametric family and is a natural use case for the discrete step distribution.
+A shape like this (for example a primary infection peak followed by a secondary reporting bump) is awkward to capture with a single parametric family and is a natural use case for the discrete step distribution.
+Here a parametric mixture of two lognormals would also work; this vignette shows the more general non-parametric approach.
 
 ```{r truth}
 set.seed(123)
@@ -338,7 +339,6 @@ rw_data <- pcd_as_stan_data(
   priors = list(location = numeric(0), scale = numeric(0)),
   primary_priors = list(location = numeric(0), scale = numeric(0)),
   dist_options = list(
-    kind = "nonparametric",
     K = K,
     boundaries = boundaries,
     paramtype = "hazard",
@@ -379,7 +379,6 @@ re_data <- pcd_as_stan_data(
   priors = list(location = numeric(0), scale = numeric(0)),
   primary_priors = list(location = numeric(0), scale = numeric(0)),
   dist_options = list(
-    kind = "nonparametric",
     K = K,
     boundaries = boundaries,
     paramtype = "hazard",
@@ -421,7 +420,6 @@ dirichlet_data <- pcd_as_stan_data(
   priors = list(location = numeric(0), scale = numeric(0)),
   primary_priors = list(location = numeric(0), scale = numeric(0)),
   dist_options = list(
-    kind       = "nonparametric",
     K          = K,
     boundaries = boundaries,
     paramtype  = "simplex"
@@ -586,7 +584,6 @@ With more observations, narrower primary windows, or fewer bins around the troug
 The random-walk hazard parameterisation is the default in most cases: it smooths the recovered PMF and is more robust at both the MLE and the Stan stage.
 The random-effect variant is appropriate when you do not expect hazards at similar delay lengths to be related, but in our experience the random walk is usually a better starting point; your mileage may vary.
 The Dirichlet on the PMF is the most flexible but can be poorly identified for bins where the censored convolution has little leverage, which is exactly where you saw the `cov2cor` warning.
-This area is active research; for a recent overview see Charniga et al. [@Charniga2024].
 
 In many applied settings a parametric distribution is a better fit than a non-parametric one, both because it has fewer parameters and because the smoothness it assumes matches what we know about biological delays.
 For parametric alternatives see `vignette("fitting-dists-with-fitdistrplus")` and `vignette("fitting-dists-with-stan")`.
