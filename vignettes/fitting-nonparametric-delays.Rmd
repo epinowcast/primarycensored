@@ -248,7 +248,7 @@ summary(fit_haz_rw)
 
 The RE variant uses the same data; we just switch `hazard_model = "re"`.
 Because the eps-zero start makes the RE likelihood flat in `log_sigma` (every bin equals the intercept), we offset the innovations from zero and start `log_sigma` away from the boundary.
-On this bimodal dataset the RE optimisation is still fragile: with bins where the implied hazard is close to 0 or 1 the logit transform pushes the Hessian near singular, and `fitdistrplus` can return error code 10.
+On this bimodal dataset the RE optimisation is instead fragile: with bins where the implied hazard is close to 0 or 1 the logit transform pushes the Hessian near singular, and `fitdistrplus` can return error code 10.
 We wrap the call in `tryCatch()` so the rest of the vignette still renders, and report the MLE estimate only when it converges.
 The Stan RE fit is unaffected by this and is shown below.
 
