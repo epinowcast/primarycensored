@@ -248,6 +248,9 @@ summary(fit_haz_rw)
 
 The RE variant uses the same data; we just switch `hazard_model = "re"`.
 Because the eps-zero start makes the RE likelihood flat in `log_sigma` (every bin equals the intercept), we offset the innovations from zero and start `log_sigma` away from the boundary.
+On this bimodal dataset the RE optimisation is still fragile: with bins where the implied hazard is close to 0 or 1 the logit transform pushes the Hessian near singular, and `fitdistrplus` can return error code 10.
+We wrap the call in `tryCatch()` so the rest of the vignette still renders, and report the MLE estimate only when it converges.
+The Stan RE fit is unaffected by this and is shown below.
 
 ```{r fit-haz-re, message = FALSE}
 haz_re_start <- discretehazard_start(
@@ -256,18 +259,24 @@ haz_re_start <- discretehazard_start(
   eps = 0.1 * seq_len(K - 1L)
 )
 
-fit_haz_re <- fitdistdoublecens(
-  delay_data,
-  distr        = "discretehazard",
-  hazard_model = "re",
-  start        = haz_re_start,
-  left         = "delay",
-  right        = "delay_upper",
-  pwindow      = "pwindow",
-  D            = "D",
-  boundaries   = boundaries,
-  calcvcov     = FALSE,
-  control      = list(maxit = 50000)
+fit_haz_re <- tryCatch(
+  fitdistdoublecens(
+    delay_data,
+    distr        = "discretehazard",
+    hazard_model = "re",
+    start        = haz_re_start,
+    left         = "delay",
+    right        = "delay_upper",
+    pwindow      = "pwindow",
+    D            = "D",
+    boundaries   = boundaries,
+    calcvcov     = FALSE,
+    control      = list(maxit = 50000)
+  ),
+  error = function(e) {
+    message("RE MLE did not converge: ", conditionMessage(e))
+    NULL
+  }
 )
 ```
 
@@ -421,9 +430,13 @@ stan_pmf_draws <- function(fit, K, dist_id) {
 
 mle_fits <- list(
   list(fit = fit_step,   type = "step",   label = "step"),
-  list(fit = fit_haz_rw, type = "hazard", label = "hazard (RW)", model = "rw"),
-  list(fit = fit_haz_re, type = "hazard", label = "hazard (RE)", model = "re")
+  list(fit = fit_haz_rw, type = "hazard", label = "hazard (RW)", model = "rw")
 )
+if (!is.null(fit_haz_re)) {
+  mle_fits <- c(mle_fits, list(
+    list(fit = fit_haz_re, type = "hazard", label = "hazard (RE)", model = "re")
+  ))
+}
 stan_fits <- list(
   list(fit = dirichlet_fit, dist_id = 26, label = "step"),
   list(fit = rw_fit,        dist_id = 27, label = "hazard (RW)"),
