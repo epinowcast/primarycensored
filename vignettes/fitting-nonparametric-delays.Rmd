@@ -407,13 +407,13 @@ mle_pmf <- function(fit, K, type, model = "rw") {
   hazards_to_pmf(h)
 }
 
-# Stan posterior PMF.  `simplex` reads np_pmf directly; `hazard` reads
-# np_weights (= hazards) and converts each draw via hazards_to_pmf().
-stan_pmf_draws <- function(fit, K, paramtype) {
-  var <- if (paramtype == "simplex") "np_pmf" else "np_weights"
+# Stan posterior PMF.  `dist_id 26` reads np_pmf directly; `27` / `28`
+# read np_weights (= hazards) and convert each draw via hazards_to_pmf().
+stan_pmf_draws <- function(fit, K, dist_id) {
+  var <- if (dist_id == 26) "np_pmf" else "np_weights"
   d <- fit$draws(variables = paste0(var, "[", seq_len(K), "]"),
                  format = "matrix")
-  if (paramtype == "hazard") {
+  if (dist_id != 26) {
     d <- t(apply(d, 1, function(h) { h[K] <- 1; hazards_to_pmf(h) }))
   }
   d
@@ -425,9 +425,9 @@ mle_fits <- list(
   list(fit = fit_haz_re, type = "hazard", label = "hazard (RE)", model = "re")
 )
 stan_fits <- list(
-  list(fit = dirichlet_fit, paramtype = "simplex", label = "step"),
-  list(fit = rw_fit,        paramtype = "hazard",  label = "hazard (RW)"),
-  list(fit = re_fit,        paramtype = "hazard",  label = "hazard (RE)")
+  list(fit = dirichlet_fit, dist_id = 26, label = "step"),
+  list(fit = rw_fit,        dist_id = 27, label = "hazard (RW)"),
+  list(fit = re_fit,        dist_id = 28, label = "hazard (RE)")
 )
 
 mle_df <- do.call(rbind, lapply(mle_fits, function(x) {
@@ -439,7 +439,7 @@ mle_df <- do.call(rbind, lapply(mle_fits, function(x) {
 }))
 
 stan_df <- do.call(rbind, lapply(stan_fits, function(x) {
-  d <- stan_pmf_draws(x$fit, K, x$paramtype)
+  d <- stan_pmf_draws(x$fit, K, x$dist_id)
   data.frame(
     bin = seq_len(K),
     median = apply(d, 2, median),
