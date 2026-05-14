@@ -318,121 +318,68 @@ delay_counts <- delay_data |>
 np_model <- pcd_cmdstan_model()
 ```
 
+The non-parametric family is picked via `dist_id` (`26` for the Dirichlet/simplex prior, `27` for the random-walk hazard, `28` for the random-effect hazard); `dist_options` carries only the shape (`K` and `boundaries`).
+Priors flow through the regular `priors` argument, with semantics that depend on `dist_id`: for `dist_id = 26` the length-`K` `priors$scale` is the Dirichlet concentration; for `dist_id = 27` and `28` the length-`2` `priors$location` and `priors$scale` give the mean and sd for `alpha` and `log_sigma` respectively.
+We define a small helper to keep the three setups DRY.
+
+```{r np-helper}
+empty_bounds <- list(lower = numeric(0), upper = numeric(0))
+np_stan_data <- function(dist_id, priors) {
+  pcd_as_stan_data(
+    delay_counts,
+    dist_id = dist_id, primary_id = 1,
+    param_bounds = empty_bounds,
+    primary_param_bounds = empty_bounds,
+    priors = priors,
+    primary_priors = list(location = numeric(0), scale = numeric(0)),
+    dist_options = list(K = K, boundaries = boundaries)
+  )
+}
+np_sample <- function(stan_data, seed) {
+  np_model$sample(
+    data            = stan_data, seed = seed,
+    chains          = 4, parallel_chains = 4,
+    iter_warmup     = 500, iter_sampling = 500,
+    refresh         = ifelse(interactive(), 50, 0),
+    show_messages   = interactive()
+  )
+}
+hazard_priors <- list(location = c(0, 0), scale = c(5, 1))
+```
+
 ## Logit-hazard random walk
 
-The package model exposes the hazard random-walk parameterisation when `paramtype = "hazard"` and `hazard_model = "rw"`.
-The final bin hazard is pinned to 1 inside the model so the PMF sums to 1; only the prior hyperparameters are user-supplied.
+`dist_id = 27` selects the random-walk hazard parameterisation.
+The final bin hazard is pinned to 1 inside the model so the PMF sums to 1.
 
 ```{r rw-model-run, message = FALSE}
-rw_data <- pcd_as_stan_data(
-  delay_counts,
-  dist_id = 27,
-  primary_id = 1,
-  param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  priors = list(location = numeric(0), scale = numeric(0)),
-  primary_priors = list(location = numeric(0), scale = numeric(0)),
-  dist_options = list(
-    K = K,
-    boundaries = boundaries,
-    paramtype = "hazard",
-    hazard_model = "rw",
-    hazard_priors = list(
-      alpha_mean     = 0, alpha_sd     = 5,
-      log_sigma_mean = 0, log_sigma_sd = 1
-    )
-  )
-)
-
-rw_fit <- np_model$sample(
-  data            = rw_data,
-  chains          = 4,
-  parallel_chains = 4,
-  iter_warmup     = 500,
-  iter_sampling   = 500,
-  refresh         = ifelse(interactive(), 50, 0),
-  show_messages   = interactive()
-)
-
-rw_fit$summary(
-  variables = paste0("np_weights[", seq_len(K), "]")
-)
+rw_data <- np_stan_data(dist_id = 27, priors = hazard_priors)
+rw_fit  <- np_sample(rw_data, seed = 1)
+rw_fit$summary(variables = paste0("np_weights[", seq_len(K), "]"))
 ```
 
 ## Logit-hazard random effect
 
-The RE variant uses the same model object and the same priors; the only change is `hazard_model = "re"` in `dist_options`.
+`dist_id = 28` selects the IID random-effect hazard parameterisation; the priors are passed through the same `priors` slot as `dist_id = 27`.
 
 ```{r re-model-run, message = FALSE}
-re_data <- pcd_as_stan_data(
-  delay_counts,
-  dist_id = 27,
-  primary_id = 1,
-  param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  priors = list(location = numeric(0), scale = numeric(0)),
-  primary_priors = list(location = numeric(0), scale = numeric(0)),
-  dist_options = list(
-    K = K,
-    boundaries = boundaries,
-    paramtype = "hazard",
-    hazard_model = "re",
-    hazard_priors = list(
-      alpha_mean     = 0, alpha_sd     = 5,
-      log_sigma_mean = 0, log_sigma_sd = 1
-    )
-  )
-)
-
-re_fit <- np_model$sample(
-  data            = re_data,
-  chains          = 4,
-  parallel_chains = 4,
-  iter_warmup     = 500,
-  iter_sampling   = 500,
-  refresh         = ifelse(interactive(), 50, 0),
-  show_messages   = interactive()
-)
-
-re_fit$summary(
-  variables = paste0("np_weights[", seq_len(K), "]")
-)
+re_data <- np_stan_data(dist_id = 28, priors = hazard_priors)
+re_fit  <- np_sample(re_data, seed = 2)
+re_fit$summary(variables = paste0("np_weights[", seq_len(K), "]"))
 ```
 
 ## Dirichlet prior on the PMF
 
-We put a Dirichlet prior on the PMF.
-The package model declares the simplex parameter as `simplex[K] np_pmf` directly when `paramtype = "simplex"`, which avoids any normalisation trick.
+`dist_id = 26` selects the Dirichlet prior on the PMF.
+The length-`K` `priors$scale` is the Dirichlet concentration; below we pass `rep(1, K)` to get a uniform prior over the simplex.
 
 ```{r dirichlet-model-run, message = FALSE}
-dirichlet_data <- pcd_as_stan_data(
-  delay_counts,
+dirichlet_data <- np_stan_data(
   dist_id = 26,
-  primary_id = 1,
-  param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-  priors = list(location = numeric(0), scale = numeric(0)),
-  primary_priors = list(location = numeric(0), scale = numeric(0)),
-  dist_options = list(
-    K          = K,
-    boundaries = boundaries,
-    paramtype  = "simplex"
-  )
+  priors  = list(location = numeric(0), scale = rep(1, K))
 )
-
-dirichlet_fit <- np_model$sample(
-  data            = dirichlet_data,
-  chains          = 4,
-  parallel_chains = 4,
-  iter_warmup     = 500,
-  iter_sampling   = 500,
-  refresh         = ifelse(interactive(), 50, 0),
-  show_messages   = interactive()
-)
-
-dirichlet_fit$summary(
-  variables = paste0("np_pmf[", seq_len(K), "]")
-)
+dirichlet_fit <- np_sample(dirichlet_data, seed = 3)
+dirichlet_fit$summary(variables = paste0("np_pmf[", seq_len(K), "]"))
 ```
 
 # Comparing estimates against the truth

@@ -17,7 +17,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (dist_id == 1 && primary_id == 1) return 1; // Lognormal, Uniform
   if (dist_id == 3 && primary_id == 1) return 1; // Weibull, Uniform
   // Step and discrete-hazard delays support any registered primary.
-  if (dist_id == 26 || dist_id == 27) {
+  if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
   }
   return 0; // No analytical solution for other combinations
@@ -212,9 +212,10 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
           to_vector(segment(params, K + 2, K)),
           primary_id, primary_params, pwindow
     );
-  } else if (dist_id == 27) {
+  } else if (dist_id == 27 || dist_id == 28) {
     // params = [boundaries (K+1), hazards (K)]; length 2*K + 1. The last
-    // hazard must equal 1.
+    // hazard must equal 1. RW (27) and RE (28) only differ in their
+    // prior so they share this likelihood dispatch.
     int K = (size(params) - 1) %/% 2;
     return discretehazard_lcdf(
       d | to_vector(segment(params, 1, K + 1)),

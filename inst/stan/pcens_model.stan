@@ -34,7 +34,14 @@ data {
   array[N] real L;
   // upper truncation; +Inf for no upper truncation
   array[N] real D;
-  int<lower=1, upper=27> dist_id; // distribution identifier
+  // Distribution identifier. 1..25 = parametric families. The
+  // non-parametric step CDF has the same likelihood for all three of
+  // the entries below; they only differ in the prior on the PMF /
+  // hazards:
+  //   26 = step CDF, Dirichlet prior on the PMF;
+  //   27 = step CDF, Gaussian random walk on the logit hazards;
+  //   28 = step CDF, IID logit random effects on the hazards.
+  int<lower=1, upper=28> dist_id;
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters
@@ -48,17 +55,23 @@ data {
   array[n_params] real prior_scale; // scale parameters for priors
   array[n_primary_params] real primary_prior_location; // location parameters for primary priors
   array[n_primary_params] real primary_prior_scale; // scale parameters for primary priors
-  // Non-parametric block (dist_id 26 = discretestep, 27 = discretehazard).
-  // Sized 0 when nonparametric = 0 so the parametric path is unaffected.
+  // Non-parametric block. `dist_id` (26/27/28) selects the family;
+  // priors flow through `np_*` data fields populated from R by
+  // `pcd_as_stan_data()` from the user-facing `priors` argument.
+  //   dist_id == 26: Dirichlet on the simplex (concentration in
+  //                  `np_dirichlet_alpha`).
+  //   dist_id == 27: Gaussian random walk on the logit hazards
+  //                  (`alpha ~ N(mean, sd)`, `log_sigma ~ N(mean, sd)`).
+  //   dist_id == 28: IID logit random effects on the hazards (same
+  //                  priors as 27).
   int<lower=0, upper=1> nonparametric;
   int<lower=0> K_np; // number of bins
   vector[K_np + 1] np_boundaries; // bin boundaries (length K_np + 1)
-  int<lower=1, upper=3> np_paramtype; // 1 = simplex/Dirichlet, 2 = RW hazards, 3 = RE hazards
   vector<lower=0>[K_np] np_dirichlet_alpha; // Dirichlet concentration
   real np_alpha_mean; // hazard intercept prior mean (logit scale)
   real<lower=0> np_alpha_sd; // hazard intercept prior sd
-  real np_log_sigma_mean; // log RW sd prior mean
-  real<lower=0> np_log_sigma_sd; // log RW sd prior sd
+  real np_log_sigma_mean; // log_sigma prior mean
+  real<lower=0> np_log_sigma_sd; // log_sigma prior sd
 }
 
 transformed data {
@@ -66,13 +79,13 @@ transformed data {
   // Sizes for the non-parametric parameter branches. Exactly one is K_np;
   // both are 0 when nonparametric = 0. Stan forbids `simplex[0]`, so we
   // pad to size 1 when the simplex branch is inactive and ignore it.
-  int simplex_active = (nonparametric == 1 && np_paramtype == 1) ? 1 : 0;
+  int simplex_active = (nonparametric == 1 && dist_id == 26) ? 1 : 0;
   int K_simplex = simplex_active == 1 ? K_np : 1;
   // Both hazard parameterisations share the same set of unconstrained
-  // parameters (alpha, sigma, eps_1..eps_{K-1}); the only difference is
+  // parameters (alpha, sigma, eps_1..eps_{K-1}); they only differ in
   // how `np_weights` is assembled in `transformed parameters`.
-  int K_hazard = (nonparametric == 1 && (np_paramtype == 2
-                  || np_paramtype == 3)) ? K_np : 0;
+  int K_hazard = (nonparametric == 1 && (dist_id == 27
+                  || dist_id == 28)) ? K_np : 0;
   int n_eps = K_hazard > 0 ? K_hazard - 1 : 0;
   // Length of the params array consumed by primarycensored_lpmf:
   // - parametric path: n_params
@@ -102,23 +115,23 @@ parameters {
 
 transformed parameters {
   // Assemble the array consumed by primarycensored_lpmf. For parametric
-  // distributions this is just the parametric `params`; for dist_id 26/27
-  // it is [boundaries (K_np + 1), pmf or hazards (K_np)].
+  // distributions this is just the parametric `params`; for dist_id
+  // 26/27/28 it is [boundaries (K_np + 1), pmf or hazards (K_np)].
   array[n_lpmf_params] real lpmf_params;
-  vector[K_np] np_weights; // pmf for paramtype 1, hazards for paramtype 2
+  vector[K_np] np_weights; // pmf for dist_id 26, hazards for 27/28
   if (nonparametric == 1) {
-    if (np_paramtype == 1) {
+    if (dist_id == 26) {
       np_weights = np_pmf;
     } else {
       // Build hazards on the logit scale, pinning the final hazard to 1
-      // so the implied PMF sums to 1. paramtype 2 uses a Gaussian random
-      // walk (logit(h_i) = logit(h_{i-1}) + sigma * eps_i); paramtype 3
-      // uses IID logit random effects around the intercept
-      // (logit(h_i) = alpha + sigma * eps_i, eps_i ~ N(0, 1)).
+      // so the implied PMF sums to 1. dist_id == 27 uses a Gaussian
+      // random walk (logit(h_i) = logit(h_{i-1}) + sigma * eps_i);
+      // dist_id == 28 uses IID logit random effects around the
+      // intercept (logit(h_i) = alpha + sigma * eps_i, eps_i ~ N(0, 1)).
       vector[K_np] logit_h;
       logit_h[1] = np_alpha[1];
       if (K_np > 1) {
-        if (np_paramtype == 2) {
+        if (dist_id == 27) {
           for (i in 2:K_np) {
             logit_h[i] = logit_h[i - 1] + np_sigma[1] * np_eps[i - 1];
           }
@@ -152,7 +165,7 @@ model {
     }
   }
   if (nonparametric == 1) {
-    if (np_paramtype == 1) {
+    if (dist_id == 26) {
       np_pmf ~ dirichlet(np_dirichlet_alpha);
     } else {
       // Shared priors for both hazard parameterisations (RW and RE).

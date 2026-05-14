@@ -36,7 +36,9 @@ test_that("pcd_stan_dist_id returns 26L for discretestep distribution", {
   expect_identical(pcd_stan_dist_id("nonparametric"), 26L)
 })
 
-test_that("pcd_stan_dist_id returns 27L for discretehazard distribution", {
-  expect_identical(pcd_stan_dist_id("discretehazard"), 27L)
-  expect_identical(pcd_stan_dist_id("hazard"), 27L)
+test_that("pcd_stan_dist_id returns 27L/28L for the two hazard variants", {
+  expect_identical(pcd_stan_dist_id("discretehazard_rw"), 27L)
+  expect_identical(pcd_stan_dist_id("hazard random walk"), 27L)
+  expect_identical(pcd_stan_dist_id("discretehazard_re"), 28L)
+  expect_identical(pcd_stan_dist_id("hazard random effect"), 28L)
 })

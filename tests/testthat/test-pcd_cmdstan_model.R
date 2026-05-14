@@ -434,94 +434,38 @@ test_that(
         .by = c(pwindow, relative_obs_time, delay, delay_upper)
       )
 
-    # dist_id = 26: Dirichlet on the simplex.
-    stan_data <- pcd_as_stan_data(
-      delay_counts,
-      dist_id = 1, # ignored
-      primary_id = 1,
-      param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = numeric(0), scale = numeric(0)),
-      primary_priors = list(location = numeric(0), scale = numeric(0)),
-      dist_options = list(
-        K = K, boundaries = boundaries, paramtype = "simplex"
-      )
-    )
-    expect_identical(stan_data$dist_id, 26L)
-
+    empty_bounds <- list(lower = numeric(0), upper = numeric(0))
+    empty_priors <- list(location = numeric(0), scale = numeric(0))
+    np_opts <- list(K = K, boundaries = boundaries)
     model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
-    fit <- suppressMessages(suppressWarnings(model$sample(
-      data = stan_data,
-      seed = 1,
-      chains = 1,
-      iter_warmup = 200,
-      iter_sampling = 200,
-      refresh = 0,
-      show_messages = FALSE
-    )))
-    summary <- fit$summary(variables = paste0("np_pmf[", seq_len(K), "]"))
-    expect_identical(nrow(summary), as.integer(K))
-    expect_true(all(is.finite(summary$mean)))
-
-    # dist_id = 27: random walk on logit hazards.
-    stan_data_h <- pcd_as_stan_data(
-      delay_counts,
-      dist_id = 1,
-      primary_id = 1,
-      param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = numeric(0), scale = numeric(0)),
-      primary_priors = list(location = numeric(0), scale = numeric(0)),
-      dist_options = list(
-        K = K, boundaries = boundaries, paramtype = "hazard"
+    # Each row picks the np family by dist_id and exercises the fit.
+    np_specs <- list(
+      list(dist_id = 26L, seed = 1, weight_var = "np_pmf"),
+      list(dist_id = 27L, seed = 2, weight_var = "np_weights"),
+      list(dist_id = 28L, seed = 3, weight_var = "np_weights")
+    )
+    for (spec in np_specs) {
+      stan_data <- pcd_as_stan_data(
+        delay_counts,
+        dist_id = spec$dist_id, primary_id = 1,
+        param_bounds = empty_bounds,
+        primary_param_bounds = empty_bounds,
+        priors = empty_priors, primary_priors = empty_priors,
+        dist_options = np_opts
       )
-    )
-    expect_identical(stan_data_h$dist_id, 27L)
-    fit_h <- suppressMessages(suppressWarnings(model$sample(
-      data = stan_data_h,
-      seed = 2,
-      chains = 1,
-      iter_warmup = 200,
-      iter_sampling = 200,
-      refresh = 0,
-      show_messages = FALSE
-    )))
-    summary_h <- fit_h$summary(
-      variables = paste0("np_weights[", seq_len(K), "]")
-    )
-    expect_identical(nrow(summary_h), as.integer(K))
-    expect_true(all(is.finite(summary_h$mean)))
-
-    # dist_id = 27 with np_paramtype = 3: IID logit random effects.
-    stan_data_re <- pcd_as_stan_data(
-      delay_counts,
-      dist_id = 1,
-      primary_id = 1,
-      param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = numeric(0), scale = numeric(0)),
-      primary_priors = list(location = numeric(0), scale = numeric(0)),
-      dist_options = list(
-        K = K, boundaries = boundaries, paramtype = "hazard",
-        hazard_model = "re"
+      expect_identical(stan_data$dist_id, spec$dist_id)
+      fit <- suppressMessages(suppressWarnings(model$sample(
+        data = stan_data, seed = spec$seed, chains = 1,
+        iter_warmup = 200, iter_sampling = 200,
+        refresh = 0, show_messages = FALSE
+      )))
+      s <- fit$summary(
+        variables = paste0(spec$weight_var, "[", seq_len(K), "]")
       )
-    )
-    expect_identical(stan_data_re$dist_id, 27L)
-    expect_identical(stan_data_re$np_paramtype, 3L)
-    fit_re <- suppressMessages(suppressWarnings(model$sample(
-      data = stan_data_re,
-      seed = 3,
-      chains = 1,
-      iter_warmup = 200,
-      iter_sampling = 200,
-      refresh = 0,
-      show_messages = FALSE
-    )))
-    summary_re <- fit_re$summary(
-      variables = paste0("np_weights[", seq_len(K), "]")
-    )
-    expect_identical(nrow(summary_re), as.integer(K))
-    expect_true(all(is.finite(summary_re$mean)))
+      expect_identical(nrow(s), as.integer(K))
+      expect_true(all(is.finite(s$mean)),
+                  info = sprintf("dist_id %d", spec$dist_id))
+    }
   }
 )
 

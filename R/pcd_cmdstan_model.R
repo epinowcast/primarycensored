@@ -109,27 +109,27 @@ pcd_cmdstan_model <- function(
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
-#' @param dist_options Optional list configuring a non-parametric delay
-#'   (`dist_id` 26 or 27). When `NULL` (the default) the model uses the
-#'   parametric path and all `np_*` Stan data fields are sized 0. When
-#'   supplied (a non-`NULL` list), the non-parametric path is activated;
-#'   the family is selected by `paramtype`. Expects a list with elements:
-#'   * `K`: integer, number of bins.
+#' @param dist_options Optional list carrying the shape of a
+#'   non-parametric delay. When `dist_id` is one of `26` (step CDF,
+#'   Dirichlet prior on the PMF), `27` (step CDF, random walk on the
+#'   logit hazards) or `28` (step CDF, IID logit random effects on the
+#'   hazards), this list **must** be supplied and must contain:
+#'   * `K`: integer, the number of bins.
 #'   * `boundaries`: numeric vector of length `K + 1`.
-#'   * `paramtype`: `"simplex"` (Dirichlet on the PMF, `dist_id` 26) or
-#'     `"hazard"` (logit-hazard model, `dist_id` 27). For the hazard
-#'     family the variant is selected by `hazard_model`.
-#'   * `hazard_model`: one of `"rw"` (random walk on the logit hazards,
-#'     default) or `"re"` (IID logit random effects on the hazards
-#'     around a mean). Only consulted when `paramtype = "hazard"`.
-#'   * `dirichlet_alpha`: optional numeric vector of length `K`,
-#'     defaults to `rep(1, K)`.
-#'   * `hazard_priors`: optional list with elements `alpha_mean`,
-#'     `alpha_sd`, `log_sigma_mean`, `log_sigma_sd`. Defaults to
-#'     `list(alpha_mean = 0, alpha_sd = 5, log_sigma_mean = 0,
-#'     log_sigma_sd = 1)`.
-#'   When supplied, `param_bounds`, `priors`, and the parametric
-#'   `dist_id` argument are ignored (`dist_id` is set from `paramtype`).
+#'
+#'   Priors and `param_bounds` follow the same channel as the parametric
+#'   path: pass them through `priors` and `param_bounds`. The semantics
+#'   of `priors` depend on `dist_id`:
+#'   * `dist_id = 26`: `priors$scale` is the length-`K` Dirichlet
+#'     concentration vector; `priors$location` is unused.
+#'   * `dist_id = 27` or `28`: `priors$location = c(alpha_mean,
+#'     log_sigma_mean)` and `priors$scale = c(alpha_sd, log_sigma_sd)`.
+#'
+#'   `param_bounds` is unused for the non-parametric paths; pass
+#'   `list(lower = numeric(0), upper = numeric(0))`. If `priors` is
+#'   empty when a non-parametric `dist_id` is given, sensible defaults
+#'   are applied (`Dirichlet(1, ..., 1)` for `dist_id = 26`;
+#'   `N(0, 5)` on `alpha` and `N(0, 1)` on `log_sigma` for 27 and 28).
 #'
 #' @return A list containing the data formatted for use with
 #'   [pcd_cmdstan_model()]
@@ -172,9 +172,8 @@ pcd_as_stan_data <- function(
     use_reduce_sum = FALSE,
     truncation_check_multiplier = 2,
     dist_options = NULL) {
-  np <- .build_np_stan_fields(dist_options)
-  if (!is.null(dist_options)) {
-    dist_id <- np$dist_id
+  np <- .build_np_stan_fields(dist_id, dist_options, priors)
+  if (np$nonparametric == 1L) {
     param_bounds <- list(lower = numeric(0), upper = numeric(0))
     priors <- list(location = numeric(0), scale = numeric(0))
   }
@@ -252,7 +251,6 @@ pcd_as_stan_data <- function(
     nonparametric = np$nonparametric,
     K_np = np$K_np,
     np_boundaries = np$np_boundaries,
-    np_paramtype = np$np_paramtype,
     np_dirichlet_alpha = np$np_dirichlet_alpha,
     np_alpha_mean = np$np_alpha_mean,
     np_alpha_sd = np$np_alpha_sd,
@@ -263,29 +261,44 @@ pcd_as_stan_data <- function(
   return(stan_data)
 }
 
-# Build the np_* Stan data fields. When `dist_options` is NULL all fields
-# are sized 0 and `np_paramtype` defaults to 1 (a no-op for the parametric
-# path). When supplied, validates the list and returns Stan-shaped fields
-# plus the inferred `dist_id` (26 for "simplex", 27 for "hazard").
-.build_np_stan_fields <- function(dist_options) {
-  if (is.null(dist_options)) {
-    # When the non-parametric path is off all np_* fields collapse to the
-    # smallest valid size for their declared types. `np_boundaries` is
-    # `vector[K_np + 1]` so it cannot be empty even when `K_np = 0`.
+# Build the np_* Stan data fields. The non-parametric path is selected
+# by `dist_id`: 26 (step + Dirichlet on PMF), 27 (step + RW on logit
+# hazards), 28 (step + RE on logit hazards). For these `dist_id`s,
+# `dist_options` must carry `K` and `boundaries`, and `priors` is
+# interpreted as the prior on the implicit non-parametric parameters
+# (Dirichlet concentration for 26; (mean, sd) for `alpha` and
+# `log_sigma` for 27/28). For parametric `dist_id`s `dist_options` is
+# ignored; all np_* fields collapse to their smallest valid sizes.
+.build_np_stan_fields <- function(dist_id, dist_options, priors) {
+  nonparametric <- isTRUE(dist_id %in% c(26L, 27L, 28L))
+  if (!nonparametric) {
+    if (!is.null(dist_options)) {
+      stop(
+        "`dist_options` is only used with non-parametric `dist_id` ",
+        "(26, 27, or 28).",
+        call. = FALSE
+      )
+    }
+    # All np_* fields collapse to their smallest valid declared sizes.
     return(list(
       nonparametric = 0L,
       K_np = 0L,
       np_boundaries = 0,
-      np_paramtype = 1L,
       np_dirichlet_alpha = numeric(0),
       np_alpha_mean = 0,
       np_alpha_sd = 1,
       np_log_sigma_mean = 0,
-      np_log_sigma_sd = 1,
-      dist_id = NA_integer_
+      np_log_sigma_sd = 1
     ))
   }
-  required <- c("K", "boundaries", "paramtype")
+  if (is.null(dist_options)) {
+    stop(
+      "Non-parametric `dist_id` ", dist_id, " requires ",
+      "`dist_options = list(K = ..., boundaries = ...)`.",
+      call. = FALSE
+    )
+  }
+  required <- c("K", "boundaries")
   missing_fields <- setdiff(required, names(dist_options))
   if (length(missing_fields) > 0) {
     stop(
@@ -306,58 +319,42 @@ pcd_as_stan_data <- function(
       call. = FALSE
     )
   }
-  paramtype <- match.arg(
-    dist_options$paramtype,
-    choices = c("simplex", "hazard")
+  np_fields <- list(
+    nonparametric = 1L, K_np = K, np_boundaries = boundaries,
+    np_dirichlet_alpha = rep(1, K),
+    np_alpha_mean = 0, np_alpha_sd = 5,
+    np_log_sigma_mean = 0, np_log_sigma_sd = 1
   )
-  hazard_model_in <- dist_options$hazard_model
-  hazard_model <- match.arg(
-    if (is.null(hazard_model_in)) "rw" else hazard_model_in,
-    choices = c("rw", "re")
-  )
-  np_paramtype <- if (paramtype == "simplex") {
-    1L
-  } else if (hazard_model == "rw") {
-    2L
+  if (dist_id == 26L) {
+    # priors$scale is the Dirichlet concentration on the simplex.
+    if (!is.null(priors) && length(priors$scale) > 0L) {
+      if (length(priors$scale) != K) {
+        stop(
+          "For dist_id = 26, `priors$scale` must have length K (got ",
+          length(priors$scale), ", expected ", K, ").",
+          call. = FALSE
+        )
+      }
+      np_fields$np_dirichlet_alpha <- as.numeric(priors$scale)
+    }
   } else {
-    3L
+    # dist_id 27 or 28: priors$location / priors$scale are length-2
+    # (mean, sd) for alpha and log_sigma respectively.
+    if (!is.null(priors) && (length(priors$location) > 0L ||
+                             length(priors$scale) > 0L)) {
+      if (length(priors$location) != 2L || length(priors$scale) != 2L) {
+        stop(
+          "For dist_id ", dist_id, ", `priors$location` and ",
+          "`priors$scale` must each have length 2 (one entry for ",
+          "`alpha`, one for `log_sigma`).",
+          call. = FALSE
+        )
+      }
+      np_fields$np_alpha_mean <- as.numeric(priors$location[1])
+      np_fields$np_log_sigma_mean <- as.numeric(priors$location[2])
+      np_fields$np_alpha_sd <- as.numeric(priors$scale[1])
+      np_fields$np_log_sigma_sd <- as.numeric(priors$scale[2])
+    }
   }
-  dist_id <- if (paramtype == "simplex") 26L else 27L
-  dirichlet_alpha <- if (is.null(dist_options$dirichlet_alpha)) {
-    rep(1, K)
-  } else {
-    dist_options$dirichlet_alpha
-  }
-  if (length(dirichlet_alpha) != K) {
-    stop(
-      "`dist_options$dirichlet_alpha` must have length K.",
-      call. = FALSE
-    )
-  }
-  hazard_priors <- if (is.null(dist_options$hazard_priors)) {
-    list()
-  } else {
-    dist_options$hazard_priors
-  }
-  hp <- utils::modifyList(
-    list(
-      alpha_mean = 0,
-      alpha_sd = 5,
-      log_sigma_mean = 0,
-      log_sigma_sd = 1
-    ),
-    hazard_priors
-  )
-  list(
-    nonparametric = 1L,
-    K_np = K,
-    np_boundaries = boundaries,
-    np_paramtype = np_paramtype,
-    np_dirichlet_alpha = as.numeric(dirichlet_alpha),
-    np_alpha_mean = as.numeric(hp$alpha_mean),
-    np_alpha_sd = as.numeric(hp$alpha_sd),
-    np_log_sigma_mean = as.numeric(hp$log_sigma_mean),
-    np_log_sigma_sd = as.numeric(hp$log_sigma_sd),
-    dist_id = dist_id
-  )
+  np_fields
 }

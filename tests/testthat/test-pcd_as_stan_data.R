@@ -225,122 +225,97 @@ test_that("pcd_as_stan_data handles additional columns with custom names", {
   expect_null(result$metadata)
 })
 
-test_that("pcd_as_stan_data populates np_* fields for simplex paramtype", {
+test_that("pcd_as_stan_data populates np_* fields for dist_id 26 (simplex)", {
   data <- data.frame(
-    delay = c(1, 2, 3),
-    delay_upper = c(2, 3, 4),
-    n = c(10, 20, 15),
-    pwindow = c(1, 1, 2),
-    relative_obs_time = c(10, 10, 10)
+    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
+    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
   )
-
-  expect_message(
-    result <- pcd_as_stan_data( # nolint
-      data,
-      dist_id = 1, # ignored when dist_options is supplied
-      primary_id = 1,
-      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
-      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = c(1, 1), scale = c(1, 1)),
-      primary_priors = list(location = numeric(0), scale = numeric(0)),
-      dist_options = list(
-        K = 5,
-        boundaries = 0:5,
-        paramtype = "simplex"
-      )
-    )
-  )
-
+  result <- suppressMessages(pcd_as_stan_data(
+    data,
+    dist_id = 26L,
+    primary_id = 1,
+    param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = numeric(0), scale = numeric(0)),
+    primary_priors = list(location = numeric(0), scale = numeric(0)),
+    dist_options = list(K = 5, boundaries = 0:5)
+  ))
   expect_identical(result$nonparametric, 1L)
   expect_identical(result$dist_id, 26L)
   expect_identical(result$K_np, 5L)
-  expect_identical(result$np_paramtype, 1L)
   expect_identical(result$np_boundaries, as.numeric(0:5))
   expect_identical(result$np_dirichlet_alpha, rep(1, 5))
   expect_identical(result$n_params, 0L)
 })
 
-test_that("pcd_as_stan_data populates np_* fields for hazard paramtype", {
+test_that("pcd_as_stan_data routes priors$scale to Dirichlet alpha for dist_id 26", {
   data <- data.frame(
-    delay = c(1, 2, 3),
-    delay_upper = c(2, 3, 4),
-    n = c(10, 20, 15),
-    pwindow = c(1, 1, 2),
-    relative_obs_time = c(10, 10, 10)
+    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
+    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
   )
+  result <- suppressMessages(pcd_as_stan_data(
+    data,
+    dist_id = 26L, primary_id = 1,
+    param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = numeric(0), scale = c(0.5, 1, 1, 2)),
+    primary_priors = list(location = numeric(0), scale = numeric(0)),
+    dist_options = list(K = 4, boundaries = 0:4)
+  ))
+  expect_identical(result$np_dirichlet_alpha, c(0.5, 1, 1, 2))
+})
 
-  expect_message(
-    result <- pcd_as_stan_data( # nolint
-      data,
-      dist_id = 1,
-      primary_id = 1,
-      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
-      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = c(1, 1), scale = c(1, 1)),
-      primary_priors = list(location = numeric(0), scale = numeric(0)),
-      dist_options = list(
-        K = 4,
-        boundaries = 0:4,
-        paramtype = "hazard",
-        hazard_priors = list(alpha_mean = -1, alpha_sd = 2)
-      )
-    )
+test_that("pcd_as_stan_data populates np_* fields for dist_id 27 (hazard RW)", {
+  data <- data.frame(
+    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
+    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
   )
-
-  expect_identical(result$nonparametric, 1L)
+  result <- suppressMessages(pcd_as_stan_data(
+    data,
+    dist_id = 27L, primary_id = 1,
+    param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = c(-1, 0), scale = c(2, 1)),
+    primary_priors = list(location = numeric(0), scale = numeric(0)),
+    dist_options = list(K = 4, boundaries = 0:4)
+  ))
   expect_identical(result$dist_id, 27L)
   expect_identical(result$K_np, 4L)
-  expect_identical(result$np_paramtype, 2L)
   expect_identical(result$np_alpha_mean, -1)
   expect_identical(result$np_alpha_sd, 2)
-  # Defaults for unspecified hazard_priors entries.
   expect_identical(result$np_log_sigma_mean, 0)
   expect_identical(result$np_log_sigma_sd, 1)
 })
 
-test_that("pcd_as_stan_data populates np_* fields for hazard_model = 're'", {
+test_that("pcd_as_stan_data accepts dist_id 28 (hazard RE) and shares hazard priors with 27", {
   data <- data.frame(
-    delay = c(1, 2, 3),
-    delay_upper = c(2, 3, 4),
-    n = c(10, 20, 15),
-    pwindow = c(1, 1, 2),
-    relative_obs_time = c(10, 10, 10)
+    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
+    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
   )
-
-  expect_message(
-    result <- pcd_as_stan_data( # nolint
-      data,
-      dist_id = 1,
-      primary_id = 1,
-      param_bounds = list(lower = c(0, 0), upper = c(10, 10)),
-      primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-      priors = list(location = c(1, 1), scale = c(1, 1)),
-      primary_priors = list(location = numeric(0), scale = numeric(0)),
-      dist_options = list(
-        K = 4,
-        boundaries = 0:4,
-        paramtype = "hazard",
-        hazard_model = "re"
-      )
-    )
-  )
-
-  # Same dist_id as the RW hazard path; the data flag picks the variant.
-  expect_identical(result$dist_id, 27L)
-  expect_identical(result$np_paramtype, 3L)
+  result <- suppressMessages(pcd_as_stan_data(
+    data,
+    dist_id = 28L, primary_id = 1,
+    param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = numeric(0), scale = numeric(0)),
+    primary_priors = list(location = numeric(0), scale = numeric(0)),
+    dist_options = list(K = 4, boundaries = 0:4)
+  ))
+  expect_identical(result$dist_id, 28L)
+  # Defaults when priors empty: alpha ~ N(0, 5), log_sigma ~ N(0, 1).
+  expect_identical(result$np_alpha_mean, 0)
+  expect_identical(result$np_alpha_sd, 5)
+  expect_identical(result$np_log_sigma_mean, 0)
+  expect_identical(result$np_log_sigma_sd, 1)
 })
 
 test_that("pcd_as_stan_data validates dist_options input", {
   data <- data.frame(
-    delay = c(1, 2, 3),
-    delay_upper = c(2, 3, 4),
-    n = c(10, 20, 15),
-    pwindow = c(1, 1, 2),
-    relative_obs_time = c(10, 10, 10)
+    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
+    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
   )
   base_args <- list(
     data,
-    dist_id = 1,
     primary_id = 1,
     param_bounds = list(lower = numeric(0), upper = numeric(0)),
     primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
@@ -350,60 +325,56 @@ test_that("pcd_as_stan_data validates dist_options input", {
   # Wrong boundaries length.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      dist_options = list(K = 3, boundaries = 0:2, paramtype = "simplex")
+      dist_id = 26L, dist_options = list(K = 3, boundaries = 0:2)
     )))),
     "boundaries.*length K \\+ 1"
-  )
-  # Unknown paramtype.
-  expect_error(
-    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      dist_options = list(K = 3, boundaries = 0:3, paramtype = "wibble")
-    ))))
   )
   # Missing K.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      dist_options = list(boundaries = 0:3, paramtype = "simplex")
+      dist_id = 26L, dist_options = list(boundaries = 0:3)
     )))),
     "missing required elements"
   )
-  # Non-positive / non-finite K.
+  # Non-positive K.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      dist_options = list(K = 0, boundaries = 0:3, paramtype = "simplex")
+      dist_id = 26L, dist_options = list(K = 0, boundaries = 0:3)
     )))),
     "positive integer"
   )
-  # Dirichlet alpha length must match K.
+  # dist_id non-parametric but dist_options NULL.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
-      dist_options = list(
-        K = 3, boundaries = 0:3, paramtype = "simplex",
-        dirichlet_alpha = c(1, 1)
-      )
+      dist_id = 26L
     )))),
-    "dirichlet_alpha.*length K"
+    "requires .*dist_options"
   )
-})
-
-test_that("pcd_as_stan_data accepts custom dirichlet_alpha of correct length", {
-  data <- data.frame(
-    delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
-    pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
+  # Parametric dist_id but dist_options supplied.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args, list(
+      dist_id = 1L, dist_options = list(K = 3, boundaries = 0:3)
+    )))),
+    "only used with non-parametric"
   )
-  result <- suppressMessages(pcd_as_stan_data(
-    data,
-    dist_id = 1, primary_id = 1,
-    param_bounds = list(lower = numeric(0), upper = numeric(0)),
-    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-    priors = list(location = numeric(0), scale = numeric(0)),
-    primary_priors = list(location = numeric(0), scale = numeric(0)),
-    dist_options = list(
-      K = 4, boundaries = 0:4, paramtype = "simplex",
-      dirichlet_alpha = c(0.5, 1, 1, 2)
-    )
-  ))
-  expect_identical(result$np_dirichlet_alpha, c(0.5, 1, 1, 2))
+  # Dirichlet alpha length must match K (priors$scale for dist_id 26).
+  base_args_no_priors <- base_args
+  base_args_no_priors$priors <- NULL
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args_no_priors, list(
+      priors = list(location = numeric(0), scale = c(1, 1)),
+      dist_id = 26L, dist_options = list(K = 3, boundaries = 0:3)
+    )))),
+    "must have length K"
+  )
+  # Hazard prior length must be 2 for dist_id 27/28.
+  expect_error(
+    suppressMessages(do.call(pcd_as_stan_data, c(base_args_no_priors, list(
+      priors = list(location = c(0), scale = c(1)),
+      dist_id = 27L, dist_options = list(K = 4, boundaries = 0:4)
+    )))),
+    "must each have length 2"
+  )
 })
 
 test_that("pcd_as_stan_data accepts a fully-negative truncation window", {

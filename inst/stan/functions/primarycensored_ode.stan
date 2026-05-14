@@ -14,8 +14,10 @@
   *   24: Uniform, 25: von Mises,
   *   26: Non-parametric step (params = [boundaries (K+1), pmf (K)],
   *       length 2*K + 1),
-  *   27: Non-parametric discrete hazard (params = [boundaries (K+1),
-  *       hazards (K)], length 2*K + 1; hazards[K] must equal 1).
+  *   27/28: Non-parametric discrete hazard (params = [boundaries (K+1),
+  *       hazards (K)], length 2*K + 1; hazards[K] must equal 1). 27 and
+  *       28 share this likelihood and only differ in the prior on the
+  *       hazards (random walk for 27, IID random effect for 28).
   *
   * @return Log CDF of the delay distribution
   *
@@ -85,9 +87,10 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
               to_vector(segment(params, K + 2, K))
     );
   }
-  else if (dist_id == 27) {
+  else if (dist_id == 27 || dist_id == 28) {
     // Non-parametric discrete hazard: params = [boundaries (K+1),
-    // hazards (K)] with hazards[K] = 1.
+    // hazards (K)] with hazards[K] = 1. RW (27) and RE (28) share the
+    // same likelihood; they only differ in the prior.
     int K = (size(params) - 1) %/% 2;
     return phazard_lcdf(
       delay | to_vector(segment(params, 1, K + 1)),
