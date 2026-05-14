@@ -337,24 +337,22 @@ pcd_as_stan_data <- function(
       }
       np_fields$np_dirichlet_alpha <- as.numeric(priors$scale)
     }
-  } else {
+  } else if (!is.null(priors) && (length(priors$location) > 0L ||
+                                   length(priors$scale) > 0L)) {
     # dist_id 27 or 28: priors$location / priors$scale are length-2
     # (mean, sd) for alpha and log_sigma respectively.
-    if (!is.null(priors) && (length(priors$location) > 0L ||
-                             length(priors$scale) > 0L)) {
-      if (length(priors$location) != 2L || length(priors$scale) != 2L) {
-        stop(
-          "For dist_id ", dist_id, ", `priors$location` and ",
-          "`priors$scale` must each have length 2 (one entry for ",
-          "`alpha`, one for `log_sigma`).",
-          call. = FALSE
-        )
-      }
-      np_fields$np_alpha_mean <- as.numeric(priors$location[1])
-      np_fields$np_log_sigma_mean <- as.numeric(priors$location[2])
-      np_fields$np_alpha_sd <- as.numeric(priors$scale[1])
-      np_fields$np_log_sigma_sd <- as.numeric(priors$scale[2])
+    if (length(priors$location) != 2L || length(priors$scale) != 2L) {
+      stop(
+        "For dist_id ", dist_id, ", `priors$location` and ",
+        "`priors$scale` must each have length 2 (one entry for ",
+        "`alpha`, one for `log_sigma`).",
+        call. = FALSE
+      )
     }
+    np_fields$np_alpha_mean <- as.numeric(priors$location[1])
+    np_fields$np_log_sigma_mean <- as.numeric(priors$location[2])
+    np_fields$np_alpha_sd <- as.numeric(priors$scale[1])
+    np_fields$np_log_sigma_sd <- as.numeric(priors$scale[2])
   }
   np_fields
 }
