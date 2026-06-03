@@ -135,7 +135,18 @@ By substituting equation [(3.4)](#eq:gammapartexp) into equation
 \big\[ k \theta \Delta\_{w_P}F_T(t; k+1, \theta) - t \Delta\_{w_P}F_T(t;
 k, \theta) \big\]. \tag{3.5} \\
 
-#### 3.3.3 Gamma discrete censored delay distribution
+#### 3.3.3 CDF form of \\S\_{+}\\ for Gamma distribution
+
+Rearranging equation [(3.5)](#eq:survgammaunifprim) via \\F\_{S\_+} =
+1 - Q\_{S\_+}\\ gives the equivalent CDF-direct form
+
+\\ F\_{S\_+}(d; k, \theta) = \frac{1}{w_P}\Big\[ d\\ F_T(d; k, \theta) -
+q\\ F_T(q; k, \theta) - k\theta\big( F_T(d; k{+}1, \theta) - F_T(q;
+k{+}1, \theta) \big) \Big\], \\
+
+where \\q = \max(d - w_P, 0)\\.
+
+#### 3.3.4 Gamma discrete censored delay distribution
 
 By substituting [(3.5)](#eq:survgammaunifprim) into
 [(3.3)](#eq:disccensunifprim) we get the discrete censored delay
@@ -194,7 +205,19 @@ By substituting equation [(3.6)](#eq:lognormpartexp) into equation
 \Big\[ e^{\mu + \frac{1}{2} \sigma^2} \Delta\_{w_P}F_T(t; \mu +
 \sigma^2, \sigma) - t\Delta\_{w_P}F_T(t; \mu, \sigma) \Big\] \\
 
-#### 3.4.3 Log-Normal discrete censored delay distribution
+#### 3.4.3 CDF form of \\S\_{+}\\ for Log-Normal distribution
+
+Applying \\F\_{S\_+} = 1 - Q\_{S\_+}\\ to the preceding survival form
+gives the equivalent CDF-direct form
+
+\\ F\_{S\_+}(d; \mu, \sigma) = \frac{1}{w_P}\Big\[ d\\ F_T(d; \mu,
+\sigma) - q\\ F_T(q; \mu, \sigma) - e^{\mu + \sigma^2/2}\big( F_T(d;
+\mu{+}\sigma^2, \sigma) - F_T(q; \mu{+}\sigma^2, \sigma) \big) \Big\],
+\\
+
+where \\q = \max(d - w_P, 0)\\.
+
+#### 3.4.4 Log-Normal discrete censored delay distribution
 
 By substituting [(3.6)](#eq:lognormpartexp) into
 [(3.3)](#eq:disccensunifprim) we get the discrete censored delay
@@ -263,7 +286,19 @@ By substituting equation [(3.7)](#eq:weibullpartexp) into equation
 \Big\[ \lambda \Delta\_{w_P} g(t; \lambda,k) - t\Delta\_{w_P}F_T(t;
 \lambda,k)\Big\]. \\
 
-#### 3.6.1 Weibull discrete censored delay distribution
+#### 3.6.1 CDF form of \\S\_{+}\\ for Weibull distribution
+
+Applying \\F\_{S\_+} = 1 - Q\_{S\_+}\\ to the preceding survival form
+gives the equivalent CDF-direct form
+
+\\ F\_{S\_+}(d; \lambda, k) = \frac{1}{w_P}\Big\[ d\\ F_T(d; \lambda,
+k) - q\\ F_T(q; \lambda, k) - \lambda\big( g(d; \lambda, k) - g(q;
+\lambda, k) \big) \Big\], \\
+
+where \\q = \max(d - w_P, 0)\\ and \\g\\ is as defined in equation
+[(3.7)](#eq:weibullpartexp).
+
+#### 3.6.2 Weibull discrete censored delay distribution
 
 By substituting [(3.7)](#eq:weibullpartexp) into
 [(3.3)](#eq:disccensunifprim) we get the discrete censored delay

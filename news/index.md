@@ -1,5 +1,118 @@
 # Changelog
 
+## primarycensored 1.5.0
+
+This minor release extends the `L` (lower truncation) parameter to
+accept negative and `-Inf` values in both the R and Stan code, letting
+delay distributions with support below zero (e.g. normal, logistic,
+Cauchy, Gumbel) be used with primary censoring and fitted via
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+and
+[`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md).
+The default value of `L` has changed from `0` to `-Inf`, which leaves
+results unchanged for distributions with non-negative support
+(e.g. lognormal, gamma, Weibull). It also fixes a normalisation bug in
+the exponential growth primary distribution and rewrites the analytical
+CDFs in a CDF-direct form, dropping the `pracma` dependency.
+
+### Breaking changes
+
+- The default value of `L` in
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md),
+  [`rprimarycensored()`](https://primarycensored.epinowcast.org/reference/rprimarycensored.md),
+  and
+  [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md)
+  has changed from `0` to `-Inf`.
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  now treats a missing `L` column as `L = -Inf` to match. For delay
+  distributions with support on the non-negative reals (e.g. lognormal,
+  gamma, Weibull) `F_cens(0) = 0`, so the new default leaves results
+  unchanged. Callers that relied on the implicit left truncation at `0`
+  (for example to truncate signed-support delays such as `pnorm`) must
+  now pass `L = 0` explicitly (or add an `L` column in
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)).
+  ([\#267](https://github.com/epinowcast/primarycensored/issues/267))
+
+### New features
+
+- `L` may now be negative or `-Inf` in
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md),
+  and
+  [`rprimarycensored()`](https://primarycensored.epinowcast.org/reference/rprimarycensored.md).
+  This lets delay distributions with support below zero (e.g. normal,
+  logistic, Cauchy) be used with primary censoring. `L = -Inf` is the
+  sentinel for “no left truncation”; any finite `L` left-truncates the
+  distribution at `L`.
+  ([\#267](https://github.com/epinowcast/primarycensored/issues/267))
+- The Stan functions and
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/reference/pcd_as_stan_data.md)
+  mirror the R-side handling of `L`: negative and `-Inf` values are
+  accepted, and a missing `start_relative_obs_time` column defaults to
+  `-Inf`.
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
+  now accepts negative observed delays and fully-negative truncation
+  windows, letting distributions with support on the reals
+  (e.g. logistic, Cauchy, Gumbel) be fitted.
+  ([\#313](https://github.com/epinowcast/primarycensored/issues/313))
+- The `dist_id` upper bound in `pcens_model.stan` has been raised from
+  `17` to `25`, exposing every delay distribution that `dist_lcdf`
+  already dispatches (Normal, Double Exponential, Pareto, scaled inverse
+  chi-square, Student’s t, Uniform, von Mises) through
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md).
+  ([\#314](https://github.com/epinowcast/primarycensored/issues/314))
+
+### Documentation
+
+- Added a CDF-direct form of the primary-censored analytic solutions to
+  the “Why it works” and “Analytic solutions” vignettes alongside the
+  existing survival-function form.
+- Added a “Fitting delay distributions with negative support” vignette
+  that walks through estimating a logistic-distributed serial interval
+  with both
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  and
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md)
+  from doubly-censored, right-truncated samples that include negative
+  observed delays.
+
+### Bug fixes
+
+- Fixed incorrect normalisation in
+  [`dexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md),
+  [`pexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md),
+  and their Stan equivalents (`expgrowth_pdf`, `expgrowth_lpdf`,
+  `expgrowth_cdf`, `expgrowth_rng`) when `min` is non-zero. The PDF and
+  CDF formulas contained a stray `exp(-r * min)` factor from using
+  `exp(r * (x - min))` instead of `exp(r * x)`. The Stan RNG had a
+  compensating `xmin +` offset. The bug did not affect results when
+  `min = 0` (the default and only value used within the package’s
+  primary censoring functions). Thanks to
+  [@TimTaylor](https://github.com/TimTaylor) for reporting
+  ([\#290](https://github.com/epinowcast/primarycensored/issues/290)).
+
+### Internal
+
+- Rewrote the analytical primary-censored CDFs (Gamma, Log-Normal,
+  Weibull with uniform primary) in R and Stan to use a CDF-direct
+  algebraic form, \\F\_{S\_+}(d) = \[d F_T(d) - q F_T(q) - E(\tilde
+  F(d) - \tilde F(q))\]/w_P\\. In Stan this unifies the `q = 0` and
+  `q > 0` code paths (single algebraic expression, better for NUTS), the
+  outer `log_diff_exp` ordering is now mathematically guaranteed, and
+  the Gamma case uses the incomplete-gamma recursion \\P(k{+}1, y) =
+  P(k, y) - y^k e^{-y}/\Gamma(k{+}1)\\ to halve `gamma_lcdf`
+  evaluations. Behaviour and tests are unchanged.
+- Replaced `pracma::gammainc` with
+  [`stats::pgamma`](https://rdrr.io/r/stats/GammaDist.html) in the
+  Weibull `g()` helper, dropping the `pracma` dependency. The previous
+  `pwindow > 3` fallback to numeric integration (and the internal
+  overflow guard) is no longer needed — the base R implementation is
+  stable across the full parameter range. Closes
+  [\#127](https://github.com/epinowcast/primarycensored/issues/127).
+
 ## primarycensored 1.4.0
 
 CRAN release: 2026-03-06

@@ -60,22 +60,22 @@ The exponential growth distribution is defined on the interval \[min,
 max\] with rate parameter (r). Its probability density function (PDF)
 is:
 
-\$\$f(x) = \frac{r \cdot \exp(r \cdot (x - min))}{\exp(r \cdot max) -
-\exp(r \cdot min)}\$\$
+\$\$f(x) = \frac{r \cdot \exp(r \cdot x)}{\exp(r \cdot max) - \exp(r
+\cdot min)}\$\$
 
 The cumulative distribution function (CDF) is:
 
-\$\$F(x) = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{ \exp(r
-\cdot max) - \exp(r \cdot min)}\$\$
+\$\$F(x) = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{ \exp(r \cdot
+max) - \exp(r \cdot min)}\$\$
 
 For random number generation, we use the inverse transform sampling
 method:
 
 1.  Generate \\u \sim \text{Uniform}(0,1)\\
 
-2.  Set \\F(x) = u\\ and solve for \\x\\: \$\$ x = min + \frac{1}{r}
-    \cdot \log(u \cdot (\exp(r \cdot max) - \exp(r \cdot min)) + \exp(r
-    \cdot min)) \$\$
+2.  Set \\F(x) = u\\ and solve for \\x\\: \$\$ x = \frac{1}{r} \cdot
+    \log(u \cdot \exp(r \cdot max) + (1 - u) \cdot \exp(r \cdot min))
+    \$\$
 
 This method works because of the probability integral transform theorem,
 which states that if \\X\\ is a continuous random variable with CDF
@@ -89,8 +89,8 @@ In our case, we generate \\u\\ from \\\text{Uniform}(0,1)\\, then solve
 distribution. The formula for \\x\\ is derived by algebraically solving
 the equation:
 
-\$\$ u = \frac{\exp(r \cdot (x - min)) - \exp(r \cdot min)}{\exp(r \cdot
-max) - \exp(r \cdot min)} \$\$
+\$\$ u = \frac{\exp(r \cdot x) - \exp(r \cdot min)}{\exp(r \cdot max) -
+\exp(r \cdot min)} \$\$
 
 When \\r\\ is very close to 0 (\\\|r\| \< 1e-10\\), the distribution
 approximates a uniform distribution on \[min, max\], and we use a

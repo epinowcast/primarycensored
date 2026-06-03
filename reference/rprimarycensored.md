@@ -14,7 +14,7 @@ rprimarycensored(
   rdist,
   pwindow = 1,
   swindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
@@ -27,7 +27,7 @@ rpcens(
   rdist,
   pwindow = 1,
   swindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   rprimary = stats::runif,
   rprimary_args = list(),
@@ -59,10 +59,9 @@ rpcens(
 
 - L:
 
-  Minimum delay (lower truncation point). If greater than 0, the
-  distribution is left-truncated at L. This is useful for modelling
-  generation intervals where day 0 is excluded, particularly when used
-  in renewal models. Defaults to 0 (no left truncation).
+  Minimum delay (lower truncation point). Defaults to `-Inf`, meaning no
+  left truncation. For any finite value of L the distribution is
+  left-truncated at L.
 
 - D:
 
@@ -136,7 +135,7 @@ Primary event censored distribution functions
 ``` r
 # Example: Lognormal distribution with uniform primary events
 rprimarycensored(10, rlnorm, meanlog = 0, sdlog = 1)
-#>  [1] 1 0 0 0 4 3 2 3 1 2
+#>  [1] 1 2 1 0 1 1 4 1 1 0
 
 # Example: Lognormal distribution with exponential growth primary events
 rprimarycensored(
@@ -144,9 +143,9 @@ rprimarycensored(
   rprimary = rexpgrowth, rprimary_args = list(r = 0.2),
   meanlog = 0, sdlog = 1
 )
-#>  [1] 1 0 2 1 0 1 0 0 2 3
+#>  [1] 2 1 1 1 1 1 1 0 1 1
 
 # Example: Left-truncated distribution (e.g., for generation intervals)
 rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
-#>  [1] 1 1 2 2 1 1 3 3 1 1
+#>  [1] 1 1 1 2 2 2 2 1 1 1
 ```

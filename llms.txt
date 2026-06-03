@@ -32,6 +32,7 @@ You can install the latest released version from CRAN using the standard
 `install.packages` function:
 
 ``` r
+
 install.packages("primarycensored")
 ```
 
@@ -39,6 +40,7 @@ Alternatively, you can install the latest release from our r-universe
 repository:
 
 ``` r
+
 install.packages("primarycensored", repos = "https://epinowcast.r-universe.dev")
 ```
 
@@ -47,6 +49,7 @@ may contain breaking changes and/or bugs), use the [`pak`
 package](https://pak.r-lib.org/):
 
 ``` r
+
 pak::pak("epinowcast/primarycensored")
 ```
 
@@ -55,6 +58,7 @@ tag (e.g.,
 [`v0.2.0`](https://github.com/epinowcast/primarycensored/releases/tag/v0.2.0)):
 
 ``` r
+
 pak::pak("epinowcast/primarycensored@v0.2.0")
 ```
 
@@ -77,6 +81,7 @@ vignette](https://package.epinowcast.org/articles/stan-help.html#toolchain),
 but the brief version is:
 
 ``` r
+
 # if you not yet installed `primarycensored`, or you installed it without
 # `Suggests` dependencies
 install.packages(
@@ -170,7 +175,7 @@ By contributing to this project, you agree to abide by its terms.
 
 If making use of our methodology or the methodology on which ours is
 based, please cite the relevant papers from our [methods
-outline](https://primarycensored.epinowcast.org/articles//primarycensored.html).
+outline](https://primarycensored.epinowcast.org/articles/primarycensored.html).
 If you use `primarycensored` in your work, please consider citing it
 with `citation("primarycensored")`.
 
@@ -178,26 +183,27 @@ with `citation("primarycensored")`.
 
 All contributions to this project are gratefully acknowledged using the
 [`allcontributors` package](https://github.com/ropensci/allcontributors)
-following the [all-contributors](https://allcontributors.org)
+following the [allcontributors](https://allcontributors.org)
 specification. Contributions of any kind are welcome!
 
 ### Code
 
 [seabbs](https://github.com/epinowcast/primarycensored/commits?author=seabbs),
-[seabbs-bot](https://github.com/epinowcast/primarycensored/commits?author=seabbs-bot),
 [SamuelBrand1](https://github.com/epinowcast/primarycensored/commits?author=SamuelBrand1),
 [sbfnk](https://github.com/epinowcast/primarycensored/commits?author=sbfnk),
 [athowes](https://github.com/epinowcast/primarycensored/commits?author=athowes),
 [jamesmbaazam](https://github.com/epinowcast/primarycensored/commits?author=jamesmbaazam),
 [barbora-sobolova](https://github.com/epinowcast/primarycensored/commits?author=barbora-sobolova),
 [pearsonca](https://github.com/epinowcast/primarycensored/commits?author=pearsonca),
-[kaitejohnson](https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson)
+[kaitejohnson](https://github.com/epinowcast/primarycensored/commits?author=kaitejohnson),
+[TimTaylor](https://github.com/epinowcast/primarycensored/commits?author=TimTaylor)
 
 ### Issue Authors
 
 [zsusswein](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Azsusswein),
 [jcblemai](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Ajcblemai),
-[adamkucharski](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski)
+[adamkucharski](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3Aadamkucharski),
+[OvertonC2](https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+author%3AOvertonC2)
 
 ### Issue Contributors
 
@@ -338,6 +344,12 @@ distributions to doubly censored data
 
   A guide on how to use primarycensored with Stan for Bayesian inference
   of epidemiological delay distributions.
+
+- [Fitting delay distributions with negative
+  support](https://primarycensored.epinowcast.org/articles/fitting-negative-support.md):
+
+  Estimating a serial-interval-style distribution that can take negative
+  values, using both fitdistrplus and the bundled cmdstan model.
 
 - [Getting started with
   primarycensored](https://primarycensored.epinowcast.org/articles/primarycensored.md):

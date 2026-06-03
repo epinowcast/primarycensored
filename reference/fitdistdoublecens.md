@@ -58,11 +58,11 @@ fitdistdoublecens(
 
 - L:
 
-  Column name for minimum delay (lower truncation point). If greater
-  than 0, the distribution is left-truncated at L. This is useful for
-  modelling generation intervals where day 0 is excluded, particularly
-  when used in renewal models. (default: "L"). If the column is not
-  present in censdata, L = 0 is assumed.
+  Column name for minimum delay (lower truncation point). For any finite
+  L the distribution is left-truncated at L; use `L = -Inf` for no left
+  truncation. This is useful for modelling generation intervals where
+  day 0 is excluded, particularly when used in renewal models. (default:
+  "L"). If the column is not present in censdata, L = -Inf is assumed.
 
 - D:
 
@@ -190,12 +190,12 @@ summary(fit_norm)
 #> Fitting of the distribution ' pcens_dist ' by maximum likelihood 
 #> Parameters : 
 #>      estimate Std. Error
-#> mean 5.007126 0.07883554
-#> sd   2.020160 0.06962184
-#> Loglikelihood:  -1398.874   AIC:  2801.747   BIC:  2811.563 
+#> mean 5.003695 0.07759293
+#> sd   1.997836 0.06707002
+#> Loglikelihood:  -1401.056   AIC:  2806.112   BIC:  2815.927 
 #> Correlation matrix:
 #>           mean        sd
-#> mean 1.0000000 0.3248076
-#> sd   0.3248076 1.0000000
+#> mean 1.0000000 0.3174891
+#> sd   0.3174891 1.0000000
 #> 
 ```

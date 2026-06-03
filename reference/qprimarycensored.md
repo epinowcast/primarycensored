@@ -14,7 +14,7 @@ qprimarycensored(
   p,
   pdist,
   pwindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -25,7 +25,7 @@ qpcens(
   p,
   pdist,
   pwindow = 1,
-  L = 0,
+  L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
@@ -55,10 +55,9 @@ qpcens(
 
 - L:
 
-  Minimum delay (lower truncation point). If greater than 0, the
-  distribution is left-truncated at L. This is useful for modelling
-  generation intervals where day 0 is excluded, particularly when used
-  in renewal models. Defaults to 0 (no left truncation).
+  Minimum delay (lower truncation point). Defaults to `-Inf`, meaning no
+  left truncation. For any finite value of L the distribution is
+  left-truncated at L.
 
 - D:
 
@@ -137,7 +136,7 @@ Primary event censored distribution functions
 # Compute delays where 25%, 50%, and 75% of events occur by (quartiles)
 # Using lognormal delays with uniform primary events
 qprimarycensored(c(0.25, 0.5, 0.75), plnorm, meanlog = 0, sdlog = 1)
-#> [1] 1.022948 1.540771 2.498358
+#> [1] 1.022949 1.540771 2.498358
 
 # Same quartiles but with exponential growth in primary events
 qprimarycensored(
@@ -145,7 +144,7 @@ qprimarycensored(
   dprimary = dexpgrowth,
   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 )
-#> [1] 0.000000 1.557111 2.514701
+#> [1] 1.041285 1.557111 2.514701
 
 # Same quartiles but with truncation at 10
 qprimarycensored(
@@ -153,12 +152,12 @@ qprimarycensored(
   dprimary = dexpgrowth,
   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 )
-#> [1] 0.000000 1.541789 2.459511
+#> [1] 1.035312 1.541788 2.459511
 
 # Left-truncated distribution (e.g., for generation intervals)
 qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   L = 1, D = 10, meanlog = 0, sdlog = 1
 )
-#> [1] 1.368467 1.872762 2.856597
+#> [1] 1.368467 1.872762 2.856596
 ```

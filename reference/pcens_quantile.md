@@ -11,7 +11,7 @@ may be added.
 ## Usage
 
 ``` r
-pcens_quantile(object, p, pwindow, L = 0, D = Inf, use_numeric = FALSE, ...)
+pcens_quantile(object, p, pwindow, L = -Inf, D = Inf, use_numeric = FALSE, ...)
 ```
 
 ## Arguments
@@ -31,10 +31,9 @@ pcens_quantile(object, p, pwindow, L = 0, D = Inf, use_numeric = FALSE, ...)
 
 - L:
 
-  Minimum delay (lower truncation point). If greater than 0, the
-  distribution is left-truncated at L. This is useful for modelling
-  generation intervals where day 0 is excluded, particularly when used
-  in renewal models. Defaults to 0 (no left truncation).
+  Minimum delay (lower truncation point). Defaults to `-Inf`, meaning no
+  left truncation. For any finite value of L the distribution is
+  left-truncated at L.
 
 - D:
 

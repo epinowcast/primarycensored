@@ -57,6 +57,7 @@ package for fitting distributions. We will also use the `ggplot2`
 package for plotting and `dplyr` for data manipulation.
 
 ``` r
+
 library(primarycensored)
 library(fitdistrplus)
 library(ggplot2)
@@ -70,6 +71,7 @@ data. We’ll use the `rprimarycensored` function (actually we will use
 the `rpcens` alias for brevity).
 
 ``` r
+
 set.seed(123) # For reproducibility
 
 # Define the number of samples to generate
@@ -116,6 +118,7 @@ head(delay_data)
     ## 6     4           5       1                 9
 
 ``` r
+
 # Compare the samples with and without secondary censoring to the true
 # distribution
 # Calculate empirical CDF
@@ -181,6 +184,7 @@ function. This function is designed to handle secondary censored data
 but does not handle primary censoring or truncation without extension.
 
 ``` r
+
 fit <- delay_data |>
   dplyr::select(left = delay, right = delay_upper) |>
   fitdistcens(
@@ -233,6 +237,7 @@ rather than handling varying observation times. This means we’re using a
 subset of our simulated data for the estimation.
 
 ``` r
+
 # Define custom distribution functions using primarycensored
 # The try catch is required by fitdistrplus
 dpcens_gamma <- function(x, shape, rate) {
@@ -315,6 +320,7 @@ Key advantages of
   windows across observations are handled automatically
 
 ``` r
+
 fitdistdoublecens_fit <- fitdistdoublecens(
   delay_data,
   distr = "gamma",
@@ -360,6 +366,9 @@ are:
 
 For a more robust Bayesian approach to fitting distributions, see the
 [`vignette("fitting-dists-with-stan")`](https://primarycensored.epinowcast.org/articles/fitting-dists-with-stan.md)
+vignette. For fitting delay distributions that can take negative values
+(e.g. logistic-distributed serial intervals), see the
+[`vignette("fitting-negative-support")`](https://primarycensored.epinowcast.org/articles/fitting-negative-support.md)
 vignette. For more flexible delay distribution fitting, see the
 [`epidist`](https://epidist.epinowcast.org) package (which uses
 `primarycensored` under the hood).

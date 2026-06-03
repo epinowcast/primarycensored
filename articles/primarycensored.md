@@ -53,6 +53,7 @@ As well as the `primarycensored` package this vignette also uses
 `ggplot2` for plotting.
 
 ``` r
+
 # Load packages
 library(primarycensored)
 library(ggplot2)
@@ -109,6 +110,7 @@ However, the package supports any mix of censoring intervals and a wide
 range of primary and delay distributions.
 
 ``` r
+
 n <- 1e4
 meanlog <- 1.5
 sdlog <- 0.75
@@ -224,6 +226,7 @@ censoring to the theoretical CDF computed using
 [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md):
 
 ``` r
+
 empirical_cdf <- ecdf(samples)
 theoretical_cdf <- pprimarycensored(
   seq(0, obs_time, length.out = 100),
@@ -291,6 +294,7 @@ censoring to the theoretical PMF computed using
 [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md):
 
 ``` r
+
 # Calculate the theoretical PMF using dprimarycensored
 theoretical_pmf <- dprimarycensored(
   0:(obs_time - 1),
