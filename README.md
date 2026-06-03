@@ -39,7 +39,9 @@ data via optional dependencies.
 ## Installation
 
 <details>
+
 <summary>
+
 Installing the package
 </summary>
 
@@ -78,8 +80,11 @@ if needed, for example, if you want to try out a specific unreleased
 feature, but not the absolute latest developmental version.*
 
 </details>
+
 <details>
+
 <summary>
+
 Installing CmdStan (optional for Stan functionality)
 </summary>
 
@@ -119,7 +124,9 @@ We provide a range of other documentation, case studies, and community
 spaces to ask (and answer!) questions:
 
 <details>
+
 <summary>
+
 Package Website
 </summary>
 
@@ -130,8 +137,11 @@ find documentation for [the latest development
 version](https://primarycensored.epinowcast.org/dev/).
 
 </details>
+
 <details>
+
 <summary>
+
 Vignettes
 </summary>
 
@@ -141,8 +151,11 @@ get started with primarycensored and to highlight other features with
 case studies.
 
 </details>
+
 <details>
+
 <summary>
+
 Organisation Website
 </summary>
 
@@ -152,8 +165,11 @@ and [seminar schedule](https://www.epinowcast.org/seminars.html) for
 both upcoming and past recordings.
 
 </details>
+
 <details>
+
 <summary>
+
 Community Forum
 </summary>
 
@@ -215,7 +231,9 @@ with `citation("primarycensored")`.
 ## Contributors
 
 <!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+
 <!-- prettier-ignore-start -->
+
 <!-- markdownlint-disable -->
 
 All contributions to this project are gratefully acknowledged using the
@@ -250,5 +268,7 @@ specification. Contributions of any kind are welcome!
 <a href="https://github.com/epinowcast/primarycensored/issues?q=is%3Aissue+commenter%3AWardBrian">WardBrian</a>
 
 <!-- markdownlint-enable -->
+
 <!-- prettier-ignore-end -->
+
 <!-- ALL-CONTRIBUTORS-LIST:END -->
