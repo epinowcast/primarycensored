@@ -1,4 +1,6 @@
-# primarycensored 1.4.0.1000
+# primarycensored 1.5.0
+
+This minor release extends the `L` (lower truncation) parameter to accept negative and `-Inf` values in both the R and Stan code, letting delay distributions with support below zero (e.g. normal, logistic, Cauchy, Gumbel) be used with primary censoring and fitted via `fitdistdoublecens()` and `pcd_cmdstan_model()`. The default value of `L` has changed from `0` to `-Inf`, which leaves results unchanged for distributions with non-negative support (e.g. lognormal, gamma, Weibull). It also fixes a normalisation bug in the exponential growth primary distribution and rewrites the analytical CDFs in a CDF-direct form, dropping the `pracma` dependency.
 
 ## Breaking changes
 
