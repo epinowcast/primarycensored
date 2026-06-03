@@ -63,7 +63,7 @@ needed and handles infinite \code{L} or \code{D} without special casing.
 pcens_obj <- new_pcens(
   pdist = pgamma,
   dprimary = dunif,
-  dprimary_args = list(min = 0, max = 1),
+  primary_args = list(min = 0, max = 1),
   shape = 3,
   scale = 2
 )
@@ -85,6 +85,8 @@ Low level primary event censored distribution objects and methods
 \code{\link{new_pcens}()},
 \code{\link{pcens_cdf}()},
 \code{\link{pcens_cdf.default}()},
+\code{\link{pcens_cdf.pcens_pdiscretehazard}()},
+\code{\link{pcens_cdf.pcens_pdiscretestep}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},

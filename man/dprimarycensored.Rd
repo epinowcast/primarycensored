@@ -13,7 +13,9 @@ dprimarycensored(
   L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
-  dprimary_args = list(),
+  primary_args = NULL,
+  pprimary = NULL,
+  dprimary_args = NULL,
   log = FALSE,
   ...
 )
@@ -26,7 +28,9 @@ dpcens(
   L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
-  dprimary_args = list(),
+  primary_args = NULL,
+  pprimary = NULL,
+  dprimary_args = NULL,
   log = FALSE,
   ...
 )
@@ -62,10 +66,24 @@ base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
-\item{dprimary_args}{List of additional arguments to be passed to
-dprimary. For example, when using \code{dexpgrowth}, you would
-pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters}
+\item{primary_args}{List of additional arguments to be passed to
+dprimary (and the matching primary CDF). For example, when using
+\code{dexpgrowth}, you would pass \code{list(min = 0, max = pwindow, r = 0.2)} to
+set the minimum, maximum, and rate parameters. Replaces the deprecated
+\code{dprimary_args}; defaults to \code{NULL}.}
+
+\item{pprimary}{Optional CDF for the primary event distribution. May be
+a function or a character string naming a primary distribution in
+\code{pcd_primary_distributions}. Defaults to \code{NULL}, in which case the
+primary CDF is looked up automatically from the registry using the
+\code{"name"} attribute of \code{dprimary}. When both \code{dprimary} and \code{pprimary}
+carry a \code{"name"} attribute (or are base R functions whose name can be
+inferred), the two names must agree on everything other than the
+leading \code{d}/\code{p} prefix; mismatches such as \code{dunif} + \code{pexpgrowth} raise
+an error. Supplying \code{pprimary} explicitly is mainly useful when using a
+custom primary distribution whose CDF is not in the registry.}
+
+\item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
 
@@ -97,6 +115,21 @@ The function first computes the CDFs for all unique points (including both
 creates a lookup table for these CDFs to efficiently calculate the PMF for
 each input value. For delays less than L, the function returns 0.
 
+When the secondary censoring interval extends past the upper truncation
+point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
+\eqn{d < D}, the upper endpoint is internally clipped to \eqn{D} before
+evaluating the CDF. The likelihood for such an observation is
+\eqn{P(X \in [d, \min(d + \text{swindow}, D)] \mid L \le X \le D)}, which
+equals the usual interval probability when \eqn{d + \text{swindow} \le D}.
+This avoids erroring when an observation's secondary window straddles the
+truncation point (relevant for non-parametric delays such as
+\code{\link[=pdiscretestep]{pdiscretestep()}}).
+
+Observations with \eqn{d \ge D} are rejected with an error: under the
+truncation \eqn{X \le D}, no event with latent value \eqn{d \ge D} is
+observable, and accepting such inputs would otherwise yield a 0/0
+likelihood.
+
 The PMF is normalised to
 ensure it sums to 1 over the range [L, D\). This normalization uses:
 \deqn{
@@ -115,7 +148,7 @@ dprimarycensored(c(0.1, 0.5, 1), pweibull, shape = 1.5, scale = 2.0)
 dprimarycensored(
   c(0.1, 0.5, 1), pweibull,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
+  primary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 )
 
 # Example: Left-truncated distribution (e.g., for generation intervals)

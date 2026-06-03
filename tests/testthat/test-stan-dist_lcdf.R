@@ -229,7 +229,7 @@ test_that(
     )
 
     for (dist in dists) {
-      d <- dist$delay %||% delay
+      d <- if (is.null(dist$delay)) delay else dist$delay
       dist_id <- pcd_stan_dist_id(dist$name)
       stan_result <- dist_lcdf(d, dist$params, dist_id)
       r_result <- dist$r_cdf(d, dist$params)
