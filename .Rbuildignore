@@ -35,3 +35,4 @@
 ^\.claude$
 ^worktrees$
 ^pcd_functions\.stan$
+^revdep$
