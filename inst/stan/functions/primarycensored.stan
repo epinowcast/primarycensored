@@ -156,9 +156,7 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     result = ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
 
     // Apply truncation normalization on log scale for numerical stability.
-    // Skip the no-op case (see primarycensored_lcdf): positive-support delays
-    // pass L = 0 as the F(L) = 0 sentinel, so only normalise for a finite D, a
-    // strictly positive L, or a finite L on a real-support distribution.
+    // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
     if (!is_inf(D) || L > 0 ||
         (!is_inf(L) && !dist_has_positive_support(dist_id))) {
       real log_result = log(result);
@@ -242,12 +240,8 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
     ));
   }
 
-  // Handle truncation normalization. Skip the block when it is a no-op: for
-  // positive-support delays the internal lower bound is L = 0 (the sentinel
-  // that lets `d <= L` short-circuit F(L) = 0), so finite L <= 0 needs no
-  // normalisation. Only enter for a finite D, a strictly positive L, or a
-  // finite L on a real-support distribution (where F(L) is non-zero). This
-  // avoids autodiffing through the cancelling log_diff_exp on every call.
+  // Handle truncation normalization. Skip when F(L) = 0 makes it a no-op
+  // (positive support, L <= 0) to avoid the cancelling log_diff_exp.
   if (!is_inf(D) || L > 0 ||
       (!is_inf(L) && !dist_has_positive_support(dist_id))) {
     vector[2] bounds = primarycensored_truncation_bounds(
@@ -323,9 +317,7 @@ real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
   );
 
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L))).
-  // Skip the no-op case: for positive-support delays F(L) = 0 for L <= 0, so
-  // only normalise for a finite D, a strictly positive L, or a finite L on a
-  // real-support distribution.
+  // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
   if (!is_inf(D) || L > 0 ||
       (!is_inf(L) && !dist_has_positive_support(dist_id))) {
     real log_cdf_D;
