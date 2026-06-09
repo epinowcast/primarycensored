@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -62,7 +62,15 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.5.0" id="primarycensored-150">primarycensored 1.5.0<a class="anchor" aria-label="anchor" href="#primarycensored-150"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.5.1" id="primarycensored-151">primarycensored 1.5.1<a class="anchor" aria-label="anchor" href="#primarycensored-151"></a></h2>
+<p>This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.</p>
+<div class="section level3">
+<h3 id="bug-fixes-1-5-1">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-5-1"></a></h3>
+<ul><li>Fixed a performance regression in the Stan <code>primarycensored_lpmf</code> and <code>primarycensored_lcdf</code> functions for positive-support delays. After the lower-truncation guard was relaxed in 1.5.0 to support negative <code>L</code>, every likelihood evaluation for positive-support delays entered a truncation-normalisation block that cancels to a no-op but still adds gradient calculations (an <code>exp</code>/<code>log_diff_exp</code> per call), giving a roughly 30% slowdown on the likelihood block. The guard now skips this block unless there is a finite <code>D</code>, a strictly positive <code>L</code>, or a finite <code>L</code> on a real-support distribution, restoring 1.4.0 performance without changing results or losing the negative-support behaviour. Thanks to <a href="https://github.com/sbfnk" class="external-link">@sbfnk</a> for reporting (<a href="https://github.com/epinowcast/primarycensored/issues/323" class="external-link">#323</a>).</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.0" id="primarycensored-150">primarycensored 1.5.0<a class="anchor" aria-label="anchor" href="#primarycensored-150"></a></h2><p class="text-muted">CRAN release: 2026-06-04</p>
 <p>This minor release extends the <code>L</code> (lower truncation) parameter to accept negative and <code>-Inf</code> values in both the R and Stan code, letting delay distributions with support below zero (e.g. normal, logistic, Cauchy, Gumbel) be used with primary censoring and fitted via <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> and <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code>. The default value of <code>L</code> has changed from <code>0</code> to <code>-Inf</code>, which leaves results unchanged for distributions with non-negative support (e.g. lognormal, gamma, Weibull). It also fixes a normalisation bug in the exponential growth primary distribution and rewrites the analytical CDFs in a CDF-direct form, dropping the <code>pracma</code> dependency.</p>
 <div class="section level3">
 <h3 id="breaking-changes-1-5-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-5-0"></a></h3>

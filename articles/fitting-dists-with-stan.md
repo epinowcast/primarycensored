@@ -418,9 +418,9 @@ pcd_fit
 ```
 
     ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.75 -3422.45 0.99 0.71 -3424.83 -3421.79 1.00     1252     2065
-    ##  params[1]     1.54     1.54 0.05 0.04     1.48     1.62 1.01     1169     1241
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1107     1516
+    ##  lp__      -3422.73 -3422.43 0.99 0.71 -3424.70 -3421.79 1.00     1288     1654
+    ##  params[1]     1.55     1.54 0.05 0.04     1.48     1.63 1.01     1204     1128
+    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1264     1389
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and
