@@ -1,3 +1,14 @@
+# primarycensored 1.5.1
+
+This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.
+
+## Bug fixes
+
+- Fixed a performance regression in the Stan `primarycensored_lpmf` and `primarycensored_lcdf` functions for positive-support delays.
+  After the lower-truncation guard was relaxed in 1.5.0 to support negative `L`, every likelihood evaluation for positive-support delays entered a truncation-normalisation block that cancels to a no-op but still adds gradient calculations (an `exp`/`log_diff_exp` per call), giving a roughly 30% slowdown on the likelihood block.
+  The guard now skips this block unless there is a finite `D`, a strictly positive `L`, or a finite `L` on a real-support distribution, restoring 1.4.0 performance without changing results or losing the negative-support behaviour.
+  Thanks to @sbfnk for reporting (#323).
+
 # primarycensored 1.5.0
 
 This minor release extends the `L` (lower truncation) parameter to accept negative and `-Inf` values in both the R and Stan code, letting delay distributions with support below zero (e.g. normal, logistic, Cauchy, Gumbel) be used with primary censoring and fitted via `fitdistdoublecens()` and `pcd_cmdstan_model()`. The default value of `L` has changed from `0` to `-Inf`, which leaves results unchanged for distributions with non-negative support (e.g. lognormal, gamma, Weibull). It also fixes a normalisation bug in the exponential growth primary distribution and rewrites the analytical CDFs in a CDF-direct form, dropping the `pracma` dependency.
