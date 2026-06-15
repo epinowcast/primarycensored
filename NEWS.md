@@ -1,14 +1,3 @@
-# primarycensored 1.5.1
-
-This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.
-
-## Bug fixes
-
-- Fixed a performance regression in the Stan `primarycensored_lpmf` and `primarycensored_lcdf` functions for positive-support delays.
-  After the lower-truncation guard was relaxed in 1.5.0 to support negative `L`, every likelihood evaluation for positive-support delays entered a truncation-normalisation block that cancels to a no-op but still adds gradient calculations (an `exp`/`log_diff_exp` per call), giving a roughly 30% slowdown on the likelihood block.
-  The guard now skips this block unless there is a finite `D`, a strictly positive `L`, or a finite `L` on a real-support distribution, restoring 1.4.0 performance without changing results or losing the negative-support behaviour.
-  Thanks to @sbfnk for reporting (#323).
-
 # primarycensored 1.5.1.1000
 
 This development version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.
@@ -36,6 +25,17 @@ This development version adds non-parametric delay distributions, both a direct 
 
 - Consolidated non-parametric helper functions into `R/nonparametric_helpers.R`, unified the `left >= D` rejection wording in `fitdistdoublecens()` with `dprimarycensored()`, and trimmed verbose roxygen on the `discretehazard` family.
 - Routed the non-parametric path through the same `param_transform`-based closure machinery as parametric fits. `pdiscretestep()` now carries its simplex closure as a `param_transform` attribute, and dist functions expose default `lower`/`upper` via a `fit_bounds` attribute, so `fitdistdoublecens()` no longer special-cases `vector_param` values.
+
+# primarycensored 1.5.1
+
+This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.
+
+## Bug fixes
+
+- Fixed a performance regression in the Stan `primarycensored_lpmf` and `primarycensored_lcdf` functions for positive-support delays.
+  After the lower-truncation guard was relaxed in 1.5.0 to support negative `L`, every likelihood evaluation for positive-support delays entered a truncation-normalisation block that cancels to a no-op but still adds gradient calculations (an `exp`/`log_diff_exp` per call), giving a roughly 30% slowdown on the likelihood block.
+  The guard now skips this block unless there is a finite `D`, a strictly positive `L`, or a finite `L` on a real-support distribution, restoring 1.4.0 performance without changing results or losing the negative-support behaviour.
+  Thanks to @sbfnk for reporting (#323).
 
 # primarycensored 1.5.0
 
