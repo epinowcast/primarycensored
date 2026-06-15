@@ -13,11 +13,11 @@ A character string with the path to the Stan code
 Get the path to the Stan code
 }
 \seealso{
-Tools for working with package Stan functions
-\code{\link{pcd_load_stan_functions}()},
-\code{\link{pcd_stan_dist_id}()},
-\code{\link{pcd_stan_files}()},
-\code{\link{pcd_stan_function_deps}()},
-\code{\link{pcd_stan_functions}()}
+Tools for working with package Stan functions:
+\code{\link[=pcd_load_stan_functions]{pcd_load_stan_functions()}},
+\code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}},
+\code{\link[=pcd_stan_files]{pcd_stan_files()}},
+\code{\link[=pcd_stan_function_deps]{pcd_stan_function_deps()}},
+\code{\link[=pcd_stan_functions]{pcd_stan_functions()}}
 }
 \concept{stantools}

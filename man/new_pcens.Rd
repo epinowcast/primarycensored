@@ -66,15 +66,15 @@ new_pcens(
 )
 }
 \seealso{
-Low level primary event censored distribution objects and methods
-\code{\link{pcens_cdf}()},
-\code{\link{pcens_cdf.default}()},
-\code{\link{pcens_cdf.pcens_pdiscretehazard}()},
-\code{\link{pcens_cdf.pcens_pdiscretestep}()},
-\code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()},
-\code{\link{pcens_quantile}()},
-\code{\link{pcens_quantile.default}()}
+Low level primary event censored distribution objects and methods:
+\code{\link[=pcens_cdf]{pcens_cdf()}},
+\code{\link[=pcens_cdf.default]{pcens_cdf.default()}},
+\code{\link[=pcens_cdf.pcens_pdiscretehazard]{pcens_cdf.pcens_pdiscretehazard()}},
+\code{\link[=pcens_cdf.pcens_pdiscretestep]{pcens_cdf.pcens_pdiscretestep()}},
+\code{\link[=pcens_cdf.pcens_pgamma_dunif]{pcens_cdf.pcens_pgamma_dunif()}},
+\code{\link[=pcens_cdf.pcens_plnorm_dunif]{pcens_cdf.pcens_plnorm_dunif()}},
+\code{\link[=pcens_cdf.pcens_pweibull_dunif]{pcens_cdf.pcens_pweibull_dunif()}},
+\code{\link[=pcens_quantile]{pcens_quantile()}},
+\code{\link[=pcens_quantile.default]{pcens_quantile.default()}}
 }
 \concept{pcens}

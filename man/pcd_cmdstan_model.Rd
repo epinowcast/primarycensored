@@ -41,8 +41,8 @@ if (!is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))) {
 \dontshow{\}) # examplesIf}
 }
 \seealso{
-Modelling wrappers for external fitting packages
-\code{\link{fitdistdoublecens}()},
-\code{\link{pcd_as_stan_data}()}
+Modelling wrappers for external fitting packages:
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}},
+\code{\link[=pcd_as_stan_data]{pcd_as_stan_data()}}
 }
 \concept{modelhelpers}

@@ -6,6 +6,7 @@ Cori
 Dirichlet
 EpiNow
 Formals
+Gumbel
 HMC
 Inf
 Lifecycle
@@ -64,7 +65,6 @@ fitdistrplus
 frac
 gammapartexp
 geq
-Gumbel
 hexsticker
 infty
 int
@@ -131,7 +131,6 @@ speedups
 stan
 stantools
 startpoint
-subprobability
 survgammaunifprim
 survivalfunc
 swindow

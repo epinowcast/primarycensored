@@ -27,8 +27,8 @@ cost.
 check_truncation(delays = c(1, 2, 3, 4), D = 10, multiplier = 2)
 }
 \seealso{
-Distribution checking functions
-\code{\link{check_dprimary}()},
-\code{\link{check_pdist}()}
+Distribution checking functions:
+\code{\link[=check_dprimary]{check_dprimary()}},
+\code{\link[=check_pdist]{check_pdist()}}
 }
 \concept{check}

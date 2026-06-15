@@ -148,9 +148,9 @@ pprimarycensored(
 \seealso{
 \code{\link[=new_pcens]{new_pcens()}} and \code{\link[=pcens_cdf]{pcens_cdf()}}
 
-Primary event censored distribution functions
-\code{\link{dprimarycensored}()},
-\code{\link{qprimarycensored}()},
-\code{\link{rprimarycensored}()}
+Primary event censored distribution functions:
+\code{\link[=dprimarycensored]{dprimarycensored()}},
+\code{\link[=qprimarycensored]{qprimarycensored()}},
+\code{\link[=rprimarycensored]{rprimarycensored()}}
 }
 \concept{primarycensored}

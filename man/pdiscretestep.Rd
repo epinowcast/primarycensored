@@ -51,10 +51,10 @@ optimiser back to the feasible region.
 pdiscretestep(c(0.5, 1, 1.5, 2), boundaries = 0:2, pmf = c(0.3, 0.7))
 }
 \seealso{
-Other pdiscretestep: 
-\code{\link{ddiscretestep}()},
-\code{\link{hazards_to_pmf}()},
-\code{\link{pmf_to_hazards}()},
-\code{\link{rdiscretestep}()}
+Other pdiscretestep:
+\code{\link[=ddiscretestep]{ddiscretestep()}},
+\code{\link[=hazards_to_pmf]{hazards_to_pmf()}},
+\code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
+\code{\link[=rdiscretestep]{rdiscretestep()}}
 }
 \concept{pdiscretestep}

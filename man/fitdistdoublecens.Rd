@@ -233,8 +233,8 @@ fit_haz <- fitdistdoublecens(
 \seealso{
 \code{\link[=pdiscretestep]{pdiscretestep()}} \code{\link[=pdiscretehazard]{pdiscretehazard()}}
 
-Modelling wrappers for external fitting packages
-\code{\link{pcd_as_stan_data}()},
-\code{\link{pcd_cmdstan_model}()}
+Modelling wrappers for external fitting packages:
+\code{\link[=pcd_as_stan_data]{pcd_as_stan_data()}},
+\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}}
 }
 \concept{modelhelpers}

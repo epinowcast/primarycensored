@@ -37,9 +37,9 @@ ddiscretehazard(c(1, 2, 3), boundaries = 0:3, hazards = hazards)
 \code{\link[=ddiscretestep]{ddiscretestep()}}, \code{\link[=hazards_to_pmf]{hazards_to_pmf()}}, \code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
 \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}
 
-Other pdiscretehazard: 
-\code{\link{discretehazard_start}()},
-\code{\link{pdiscretehazard}()},
-\code{\link{rdiscretehazard}()}
+Other pdiscretehazard:
+\code{\link[=discretehazard_start]{discretehazard_start()}},
+\code{\link[=pdiscretehazard]{pdiscretehazard()}},
+\code{\link[=rdiscretehazard]{rdiscretehazard()}}
 }
 \concept{pdiscretehazard}

@@ -37,8 +37,8 @@ and if it takes the arguments min and max.
 check_dprimary(dunif, pwindow = 1)
 }
 \seealso{
-Distribution checking functions
-\code{\link{check_pdist}()},
-\code{\link{check_truncation}()}
+Distribution checking functions:
+\code{\link[=check_pdist]{check_pdist()}},
+\code{\link[=check_truncation]{check_truncation()}}
 }
 \concept{check}

@@ -129,8 +129,8 @@ stan_data <- pcd_as_stan_data(
 )
 }
 \seealso{
-Modelling wrappers for external fitting packages
-\code{\link{fitdistdoublecens}()},
-\code{\link{pcd_cmdstan_model}()}
+Modelling wrappers for external fitting packages:
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}},
+\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}}
 }
 \concept{modelhelpers}

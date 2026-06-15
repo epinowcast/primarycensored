@@ -28,10 +28,10 @@ hazard), 1 is appended automatically.
 hazards_to_pmf(c(0.2, 0.3, 1))
 }
 \seealso{
-Other pdiscretestep: 
-\code{\link{ddiscretestep}()},
-\code{\link{pdiscretestep}()},
-\code{\link{pmf_to_hazards}()},
-\code{\link{rdiscretestep}()}
+Other pdiscretestep:
+\code{\link[=ddiscretestep]{ddiscretestep()}},
+\code{\link[=pdiscretestep]{pdiscretestep()}},
+\code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
+\code{\link[=rdiscretestep]{rdiscretestep()}}
 }
 \concept{pdiscretestep}

@@ -1,4 +1,5 @@
 ^LICENSE\.md$
+^\.git$
 ^\.devcontainer$
 ^inst/stan/epinowcast$
 ^data-raw$
@@ -36,3 +37,4 @@
 ^\.claude$
 ^worktrees$
 ^pcd_functions\.stan$
+^revdep$

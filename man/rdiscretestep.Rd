@@ -30,10 +30,10 @@ set.seed(42)
 rdiscretestep(10, boundaries = 0:3, pmf = c(0.2, 0.5, 0.3))
 }
 \seealso{
-Other pdiscretestep: 
-\code{\link{ddiscretestep}()},
-\code{\link{hazards_to_pmf}()},
-\code{\link{pdiscretestep}()},
-\code{\link{pmf_to_hazards}()}
+Other pdiscretestep:
+\code{\link[=ddiscretestep]{ddiscretestep()}},
+\code{\link[=hazards_to_pmf]{hazards_to_pmf()}},
+\code{\link[=pdiscretestep]{pdiscretestep()}},
+\code{\link[=pmf_to_hazards]{pmf_to_hazards()}}
 }
 \concept{pdiscretestep}

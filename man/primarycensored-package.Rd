@@ -24,6 +24,7 @@ Useful links:
 
 Authors:
 \itemize{
+  \item Sam Abbott \email{contact@samabbott.co.uk} (\href{https://orcid.org/0000-0001-8057-8037}{ORCID}) [copyright holder]
   \item Sam Brand \email{usi1@cdc.gov} (\href{https://orcid.org/0000-0003-0645-5367}{ORCID})
   \item James Mba Azam \email{james.azam@lshtm.ac.uk} (\href{https://orcid.org/0000-0001-5782-7330}{ORCID})
   \item Carl Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID})

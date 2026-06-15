@@ -155,9 +155,9 @@ dprimarycensored(
 dprimarycensored(1:9, pweibull, L = 1, D = 10, shape = 1.5, scale = 2.0)
 }
 \seealso{
-Primary event censored distribution functions
-\code{\link{pprimarycensored}()},
-\code{\link{qprimarycensored}()},
-\code{\link{rprimarycensored}()}
+Primary event censored distribution functions:
+\code{\link[=pprimarycensored]{pprimarycensored()}},
+\code{\link[=qprimarycensored]{qprimarycensored()}},
+\code{\link[=rprimarycensored]{rprimarycensored()}}
 }
 \concept{primarycensored}

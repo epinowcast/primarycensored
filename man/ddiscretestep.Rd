@@ -39,10 +39,10 @@ call from inside \code{fitdistrplus::fitdist()} closures driven by
 ddiscretestep(c(0, 1, 2, 3), boundaries = 0:3, pmf = c(0.2, 0.5, 0.3))
 }
 \seealso{
-Other pdiscretestep: 
-\code{\link{hazards_to_pmf}()},
-\code{\link{pdiscretestep}()},
-\code{\link{pmf_to_hazards}()},
-\code{\link{rdiscretestep}()}
+Other pdiscretestep:
+\code{\link[=hazards_to_pmf]{hazards_to_pmf()}},
+\code{\link[=pdiscretestep]{pdiscretestep()}},
+\code{\link[=pmf_to_hazards]{pmf_to_hazards()}},
+\code{\link[=rdiscretestep]{rdiscretestep()}}
 }
 \concept{pdiscretestep}
