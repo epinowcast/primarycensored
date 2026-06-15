@@ -57,7 +57,7 @@ pcens_cdf <- function(
 #' pcens_obj <- new_pcens(
 #'   pdist = pgamma,
 #'   dprimary = dunif,
-#'   dprimary_args = list(min = 0, max = 1),
+#'   primary_args = list(min = 0, max = 1),
 #'   shape = 3,
 #'   scale = 2
 #' )
@@ -92,6 +92,165 @@ pcens_cdf.default <- function(
   result <- pmin(1, pmax(0, result))
 
   return(result)
+}
+
+#' Method for step CDF delay with general primary event distribution
+#'
+#' Computes the analytic primary event censored CDF for a piecewise-constant
+#' (step) delay distribution and an arbitrary primary event distribution
+#' whose CDF \eqn{F_{primary}} is available via \code{object$pprimary}.
+#'
+#' The observation CDF is
+#' \deqn{F_{obs}(q) = \int_0^{pwindow} F_{step}(q-p)\,dF_{primary}(p)}
+#' Because \eqn{F_{step}} is piecewise constant, the integral reduces to
+#' \deqn{F_{obs}(q) = \sum_k c_k \,[F_{primary}(p^{end}_k) -
+#'   F_{primary}(p^{start}_k)]}
+#' where \eqn{c_k} is the constant value of \eqn{F_{step}} on the
+#' \eqn{k}-th sub-interval of the primary event window induced by the
+#' step-function knots.
+#'
+#' Falls back to \code{pcens_cdf.default} when \code{use_numeric = TRUE}
+#' or when no primary CDF is available on the object.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+pcens_cdf.pcens_pdiscretestep <- function(
+    object,
+    q,
+    pwindow,
+    use_numeric = FALSE) {
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+
+  pprimary <- object$pprimary
+  if (is.null(pprimary)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+
+  boundaries <- object$args$boundaries
+  pmf <- object$args$pmf
+
+  if (is.null(boundaries) || is.null(pmf)) {
+    stop(
+      "boundaries and pmf are required for the step distribution.",
+      call. = FALSE
+    )
+  }
+
+  max_step <- max(diff(boundaries))
+  if (max_step > pwindow) {
+    stop(
+      "The largest step width (", max_step, ") exceeds pwindow (",
+      pwindow, "). All step widths must be <= pwindow for the ",
+      "analytic convolution to be valid.",
+      call. = FALSE
+    )
+  }
+
+  K <- length(pmf)
+  cum_pmf <- cumsum(pmf)
+  right_edges <- boundaries[-1L]
+  dprimary_args <- object$dprimary_args
+
+  # Evaluate F_primary(p) on [0, pwindow] via the stored pprimary function.
+  # dprimary_args may contain r, shape, etc.; translate min/max to the
+  # primary window.
+  .F_primary <- function(p) {
+    do.call(
+      pprimary,
+      c(list(q = p, min = 0, max = pwindow), dprimary_args)
+    )
+  }
+
+  # Helper: evaluate F_step at a single point (right-continuous).
+  .fstep <- function(x) {
+    idx <- findInterval(x, right_edges, left.open = FALSE)
+    if (idx == 0L) 0 else if (idx >= K) 1 else cum_pmf[idx]
+  }
+
+  result <- vapply(
+    q,
+    function(qi) {
+      if (qi <= 0) {
+        return(0)
+      }
+      # Breakpoints in primary-time p where F_step(qi - p) changes value:
+      # these are p = qi - right_edge[k], restricted to (0, pwindow).
+      p_knots <- qi - right_edges
+      inside <- p_knots[p_knots > 0 & p_knots < pwindow]
+      breaks <- sort(unique(c(0, inside, pwindow)))
+      total <- 0
+      for (j in seq_len(length(breaks) - 1L)) {
+        a <- breaks[j]
+        b <- breaks[j + 1L]
+        mid <- 0.5 * (a + b)
+        c_k <- .fstep(qi - mid)
+        total <- total + c_k * (.F_primary(b) - .F_primary(a))
+      }
+      total
+    },
+    numeric(1)
+  )
+
+  pmin(1, pmax(0, result))
+}
+
+#' Method for hazard CDF delay with general primary event distribution
+#'
+#' Computes the analytic primary event censored CDF for a hazard-parameterised
+#' piecewise-constant delay distribution. Converts hazards to a PMF via
+#' [hazards_to_pmf()] then dispatches back through [pcens_cdf()] using a
+#' freshly constructed step-distribution object. The same primary event
+#' distribution and arguments are preserved.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+pcens_cdf.pcens_pdiscretehazard <- function(
+    object,
+    q,
+    pwindow,
+    use_numeric = FALSE) {
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  hazards <- object$args$hazards
+  if (is.null(hazards)) {
+    stop(
+      "hazards are required for the hazard distribution.",
+      call. = FALSE
+    )
+  }
+  # `hazards_to_pmf()` is called exactly once per dispatch (cached into
+  # `new_args$pmf`); the recursive `pcens_cdf()` call below then sweeps the
+  # full q vector through the step method without re-running the
+  # hazards->pmf conversion per element.
+  new_args <- object$args
+  new_args$hazards <- NULL
+  new_args$pmf <- hazards_to_pmf(hazards)
+  step_obj <- do.call(
+    new_pcens,
+    c(
+      list(
+        pdist = pdiscretestep,
+        dprimary = object$dprimary,
+        primary_args = object$dprimary_args,
+        pprimary = object$pprimary
+      ),
+      new_args
+    )
+  )
+  pcens_cdf(step_obj, q, pwindow, use_numeric)
 }
 
 #' Method for Gamma delay with uniform primary

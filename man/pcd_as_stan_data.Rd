@@ -20,7 +20,8 @@ pcd_as_stan_data(
   primary_priors,
   compute_log_lik = FALSE,
   use_reduce_sum = FALSE,
-  truncation_check_multiplier = 2
+  truncation_check_multiplier = 2,
+  dist_options = NULL
 )
 }
 \arguments{
@@ -75,6 +76,31 @@ numeric vector specifying priors for the primary distribution parameters.}
 \item{truncation_check_multiplier}{Numeric multiplier to use for checking
 if the truncation time D is appropriate relative to the maximum delay
 for each unique D value. Set to NULL to skip the check. Default is 2.}
+
+\item{dist_options}{Optional list carrying the shape of a
+non-parametric delay. When \code{dist_id} is one of \code{26} (step CDF,
+Dirichlet prior on the PMF), \code{27} (step CDF, random walk on the
+logit hazards) or \code{28} (step CDF, IID logit random effects on the
+hazards), this list \strong{must} be supplied and must contain:
+\itemize{
+\item \code{K}: integer, the number of bins.
+\item \code{boundaries}: numeric vector of length \code{K + 1}.
+}
+
+Priors and \code{param_bounds} follow the same channel as the parametric
+path: pass them through \code{priors} and \code{param_bounds}. The semantics
+of \code{priors} depend on \code{dist_id}:
+\itemize{
+\item \code{dist_id = 26}: \code{priors$scale} is the length-\code{K} Dirichlet
+concentration vector; \code{priors$location} is unused.
+\item \code{dist_id = 27} or \code{28}: \code{priors$location = c(alpha_mean, log_sigma_mean)} and \code{priors$scale = c(alpha_sd, log_sigma_sd)}.
+}
+
+\code{param_bounds} is unused for the non-parametric paths; pass
+\code{list(lower = numeric(0), upper = numeric(0))}. If \code{priors} is
+empty when a non-parametric \code{dist_id} is given, sensible defaults
+are applied (\code{Dirichlet(1, ..., 1)} for \code{dist_id = 26};
+\code{N(0, 5)} on \code{alpha} and \code{N(0, 1)} on \code{log_sigma} for 27 and 28).}
 }
 \value{
 A list containing the data formatted for use with
@@ -103,8 +129,8 @@ stan_data <- pcd_as_stan_data(
 )
 }
 \seealso{
-Modelling wrappers for external fitting packages
-\code{\link{fitdistdoublecens}()},
-\code{\link{pcd_cmdstan_model}()}
+Modelling wrappers for external fitting packages:
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}},
+\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}}
 }
 \concept{modelhelpers}

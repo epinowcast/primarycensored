@@ -13,7 +13,9 @@ qprimarycensored(
   L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
-  dprimary_args = list(),
+  primary_args = NULL,
+  pprimary = NULL,
+  dprimary_args = NULL,
   ...
 )
 
@@ -24,7 +26,9 @@ qpcens(
   L = -Inf,
   D = Inf,
   dprimary = stats::dunif,
-  dprimary_args = list(),
+  primary_args = NULL,
+  pprimary = NULL,
+  dprimary_args = NULL,
   ...
 )
 }
@@ -58,10 +62,24 @@ base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
-\item{dprimary_args}{List of additional arguments to be passed to
-dprimary. For example, when using \code{dexpgrowth}, you would
-pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters}
+\item{primary_args}{List of additional arguments to be passed to
+dprimary (and the matching primary CDF). For example, when using
+\code{dexpgrowth}, you would pass \code{list(min = 0, max = pwindow, r = 0.2)} to
+set the minimum, maximum, and rate parameters. Replaces the deprecated
+\code{dprimary_args}; defaults to \code{NULL}.}
+
+\item{pprimary}{Optional CDF for the primary event distribution. May be
+a function or a character string naming a primary distribution in
+\code{pcd_primary_distributions}. Defaults to \code{NULL}, in which case the
+primary CDF is looked up automatically from the registry using the
+\code{"name"} attribute of \code{dprimary}. When both \code{dprimary} and \code{pprimary}
+carry a \code{"name"} attribute (or are base R functions whose name can be
+inferred), the two names must agree on everything other than the
+leading \code{d}/\code{p} prefix; mismatches such as \code{dunif} + \code{pexpgrowth} raise
+an error. Supplying \code{pprimary} explicitly is mainly useful when using a
+custom primary distribution whose CDF is not in the registry.}
+
+\item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }
@@ -104,14 +122,14 @@ qprimarycensored(c(0.25, 0.5, 0.75), plnorm, meanlog = 0, sdlog = 1)
 qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+  primary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 )
 
 # Same quartiles but with truncation at 10
 qprimarycensored(
   c(0.25, 0.5, 0.75), plnorm,
   dprimary = dexpgrowth,
-  dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
+  primary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 )
 
 # Left-truncated distribution (e.g., for generation intervals)
@@ -123,9 +141,9 @@ qprimarycensored(
 \seealso{
 \code{\link[=new_pcens]{new_pcens()}} and \code{\link[=pcens_quantile]{pcens_quantile()}}
 
-Primary event censored distribution functions
-\code{\link{dprimarycensored}()},
-\code{\link{pprimarycensored}()},
-\code{\link{rprimarycensored}()}
+Primary event censored distribution functions:
+\code{\link[=dprimarycensored]{dprimarycensored()}},
+\code{\link[=pprimarycensored]{pprimarycensored()}},
+\code{\link[=rprimarycensored]{rprimarycensored()}}
 }
 \concept{primarycensored}

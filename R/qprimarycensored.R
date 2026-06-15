@@ -52,14 +52,14 @@
 #' qprimarycensored(
 #'   c(0.25, 0.5, 0.75), plnorm,
 #'   dprimary = dexpgrowth,
-#'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1
+#'   primary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 #' )
 #'
 #' # Same quartiles but with truncation at 10
 #' qprimarycensored(
 #'   c(0.25, 0.5, 0.75), plnorm,
 #'   dprimary = dexpgrowth,
-#'   dprimary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
+#'   primary_args = list(r = 0.2), meanlog = 0, sdlog = 1, D = 10
 #' )
 #'
 #' # Left-truncated distribution (e.g., for generation intervals)
@@ -74,18 +74,29 @@ qprimarycensored <- function(
     L = -Inf,
     D = Inf,
     dprimary = stats::dunif,
-    dprimary_args = list(),
+    primary_args = NULL,
+    pprimary = NULL,
+    dprimary_args = NULL,
     ...) {
   .check_truncation_bounds(L, D)
 
+  primary_args <- .resolve_primary_args(
+    primary_args, dprimary_args, "qprimarycensored"
+  )
+  pdist <- .resolve_pdist(pdist, type = "p")
+  pprimary <- .resolve_pprimary(
+    dprimary, pprimary
+  )
+
   check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+  check_dprimary(dprimary, pwindow, primary_args)
 
   # Create a new primarycensored object
   pcens_obj <- new_pcens(
     pdist,
     dprimary,
-    dprimary_args,
+    primary_args = primary_args,
+    pprimary = pprimary,
     ...
   )
 

@@ -5,7 +5,7 @@
 \alias{pcd_distributions}
 \title{Supported delay distributions}
 \format{
-A data.frame with 17 rows and 4 columns:
+A data.frame with 27 rows and 4 columns:
 \describe{
 \item{name}{Distribution name}
 \item{pdist}{R distribution function name (e.g. plnorm), NA if there is no
@@ -24,9 +24,9 @@ those only available in Stan. Distributions beyond these are not supported
 in the stan code but any user functions can be used in the R code.
 }
 \seealso{
-Utility functions for working with distributions
-\code{\link{add_name_attribute}()},
-\code{\link{pcd_dist_name}()},
+Utility functions for working with distributions:
+\code{\link[=add_name_attribute]{add_name_attribute()}},
+\code{\link[=pcd_dist_name]{pcd_dist_name()}},
 \code{\link{pcd_primary_distributions}}
 }
 \concept{utils}

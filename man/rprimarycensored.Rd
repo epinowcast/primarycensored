@@ -35,7 +35,7 @@ rpcens(
 \item{n}{Number of random samples to generate.}
 
 \item{rdist}{Function to generate random samples from the delay distribution
-for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distribution.}
+for example \code{\link[stats:rlnorm]{stats::rlnorm()}} for lognormal distribution.}
 
 \item{pwindow}{Primary event window}
 
@@ -51,7 +51,7 @@ is truncated at D. If set to Inf, no upper truncation is applied. Defaults
 to Inf.}
 
 \item{rprimary}{Function to generate random samples from the primary
-distribution (default is \code{\link[stats:Uniform]{stats::runif()}}).}
+distribution (default is \code{\link[stats:runif]{stats::runif()}}).}
 
 \item{rprimary_args}{List of additional arguments to be passed to rprimary.}
 
@@ -113,9 +113,9 @@ rprimarycensored(
 rprimarycensored(10, rlnorm, L = 1, D = 10, meanlog = 0, sdlog = 1)
 }
 \seealso{
-Primary event censored distribution functions
-\code{\link{dprimarycensored}()},
-\code{\link{pprimarycensored}()},
-\code{\link{qprimarycensored}()}
+Primary event censored distribution functions:
+\code{\link[=dprimarycensored]{dprimarycensored()}},
+\code{\link[=pprimarycensored]{pprimarycensored()}},
+\code{\link[=qprimarycensored]{qprimarycensored()}}
 }
 \concept{primarycensored}
