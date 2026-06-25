@@ -2,6 +2,8 @@
 
 ## primarycensored 1.5.1
 
+CRAN release: 2026-06-15
+
 This patch release fixes a performance regression introduced in 1.5.0
 that slowed the Stan likelihood for positive-support delays.
 
