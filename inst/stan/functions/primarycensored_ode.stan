@@ -11,7 +11,13 @@
   *   18: Normal, 19: Inverse Chi-square,
   *   20: Double Exponential, 21: Pareto,
   *   22: Scaled Inverse Chi-square, 23: Student's t,
-  *   24: Uniform, 25: von Mises
+  *   24: Uniform, 25: von Mises,
+  *   26: Non-parametric step (params = [boundaries (K+1), pmf (K)],
+  *       length 2*K + 1),
+  *   27/28: Non-parametric discrete hazard (params = [boundaries (K+1),
+  *       hazards (K)], length 2*K + 1; hazards[K] must equal 1). 27 and
+  *       28 share this likelihood and only differ in the prior on the
+  *       hazards (random walk for 27, IID random effect for 28).
   *
   * @return Log CDF of the delay distribution
   *
@@ -73,7 +79,56 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 23) return student_t_lcdf(delay | params[1], params[2], params[3]);
   else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
   else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 26) {
+    // Non-parametric step: params = [boundaries (K+1), pmf (K)].
+    int K = (size(params) - 1) %/% 2;
+    return pstep_lcdf(
+      delay | to_vector(segment(params, 1, K + 1)),
+              to_vector(segment(params, K + 2, K))
+    );
+  }
+  else if (dist_id == 27 || dist_id == 28) {
+    // Non-parametric discrete hazard: params = [boundaries (K+1),
+    // hazards (K)] with hazards[K] = 1. RW (27) and RE (28) share the
+    // same likelihood; they only differ in the prior.
+    int K = (size(params) - 1) %/% 2;
+    return phazard_lcdf(
+      delay | to_vector(segment(params, 1, K + 1)),
+              to_vector(segment(params, K + 2, K))
+    );
+  }
   else reject("Invalid distribution identifier: ", dist_id);
+}
+
+/**
+  * Log CDF of the primary distribution on [0, pwindow]
+  * @ingroup primary_distribution_log_cdfs
+  *
+  * Returns log F_primary(p) for the primary event time p in [0, pwindow].
+  * Only primary_id values supported by `check_for_analytical` should be
+  * passed here. The Stan `_lcdf` convention requires the `|` syntax at
+  * call sites.
+  *
+  * @param p Primary event time in [0, pwindow]
+  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth)
+  * @param primary_params Distribution parameters (empty for uniform;
+  *   [r] for expgrowth)
+  * @param pwindow Primary event window width
+  *
+  * @return log(F_primary(p))
+  */
+real primary_lcdf(real p, int primary_id, array[] real primary_params,
+                  data real pwindow) {
+  if (primary_id == 1) {
+    // Uniform on [0, pwindow]: built-in uniform_lcdf matches the package
+    // primary semantics over [0, pwindow].
+    if (p <= 0) return negative_infinity();
+    if (p >= pwindow) return 0;
+    return uniform_lcdf(p | 0, pwindow);
+  } else if (primary_id == 2) {
+    return expgrowth_lcdf(p | 0, pwindow, primary_params[1]);
+  }
+  reject("primary_lcdf: unsupported primary_id ", primary_id);
 }
 
 /**
@@ -95,7 +150,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * array[0] real params = {}; // No additional parameters for uniform
   * real xmin = 0;
   * real xmax = 1;
-  * real log_pdf = primary_lpdf(x, primary_id, params, xmin, xmax);
+  * real log_pdf = primary_lpdf(x | primary_id, params, xmin, xmax);
   * @endcode
   */
 real primary_lpdf(real x, int primary_id, array[] real params, real xmin, real xmax) {

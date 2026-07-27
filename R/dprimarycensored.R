@@ -41,6 +41,21 @@
 #' creates a lookup table for these CDFs to efficiently calculate the PMF for
 #' each input value. For delays less than L, the function returns 0.
 #'
+#' When the secondary censoring interval extends past the upper truncation
+#' point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
+#' \eqn{d < D}, the upper endpoint is internally clipped to \eqn{D} before
+#' evaluating the CDF. The likelihood for such an observation is
+#' \eqn{P(X \in [d, \min(d + \text{swindow}, D)] \mid L \le X \le D)}, which
+#' equals the usual interval probability when \eqn{d + \text{swindow} \le D}.
+#' This avoids erroring when an observation's secondary window straddles the
+#' truncation point (relevant for non-parametric delays such as
+#' [pdiscretestep()]).
+#'
+#' Observations with \eqn{d \ge D} are rejected with an error: under the
+#' truncation \eqn{X \le D}, no event with latent value \eqn{d \ge D} is
+#' observable, and accepting such inputs would otherwise yield a 0/0
+#' likelihood.
+#'
 #' The PMF is normalised to
 #' ensure it sums to 1 over the range \[L, D\). This normalization uses:
 #' \deqn{
@@ -63,7 +78,7 @@
 #' dprimarycensored(
 #'   c(0.1, 0.5, 1), pweibull,
 #'   dprimary = dexpgrowth,
-#'   dprimary_args = list(r = 0.2), shape = 1.5, scale = 2.0
+#'   primary_args = list(r = 0.2), shape = 1.5, scale = 2.0
 #' )
 #'
 #' # Example: Left-truncated distribution (e.g., for generation intervals)
@@ -76,25 +91,23 @@ dprimarycensored <- function(
     L = -Inf,
     D = Inf,
     dprimary = stats::dunif,
-    dprimary_args = list(),
+    primary_args = NULL,
+    pprimary = NULL,
+    dprimary_args = NULL,
     log = FALSE,
     ...) {
   .check_truncation_bounds(L, D)
 
-  check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+  primary_args <- .resolve_primary_args(
+    primary_args, dprimary_args, "dprimarycensored"
+  )
+  pdist <- .resolve_pdist(pdist, type = "p")
+  pprimary <- .resolve_pprimary(
+    dprimary, pprimary
+  )
 
-  if (max(x + swindow) > D) {
-    stop(
-      "Upper truncation point is greater than D. It is ",
-      max(x + swindow),
-      " and D is ",
-      D,
-      ". Resolve this by increasing D to be the maximum",
-      " of x + swindow.",
-      call. = FALSE
-    )
-  }
+  check_pdist(pdist, D = D, ...)
+  check_dprimary(dprimary, pwindow, primary_args)
 
   if (min(x) < L) {
     stop(
@@ -107,8 +120,38 @@ dprimarycensored <- function(
     )
   }
 
+  if (is.finite(D) && max(x) >= D) {
+    stop(
+      "Upper truncation point is greater than D. Maximum x is ",
+      max(x),
+      " and D is ",
+      D,
+      ". Under truncation at D no event with latent value >= D is ",
+      "observable; resolve this by filtering x to values strictly less than D.",
+      call. = FALSE
+    )
+  }
+
+  # Clip the upper end of each secondary interval at D so observations with
+  # `x + swindow > D` (legitimate when the secondary censoring interval
+  # straddles D) are still valid. The likelihood becomes
+  # `P(X in [x, min(x + swindow, D)] | L <= X <= D)`, which equals the usual
+  # interval probability when `x + swindow <= D` (the parametric default) and
+  # captures the residual mass between `x` and `D` otherwise.
+  upper_raw <- x + swindow
+  upper <- pmin(upper_raw, D)
+  if (is.finite(D) && any(upper_raw > D)) {
+    message(
+      "Upper truncation point is greater than D. It is ",
+      max(upper_raw),
+      " and D is ",
+      D,
+      "; clipping the upper end of secondary intervals at D."
+    )
+  }
+
   # Compute CDFs for all unique points
-  unique_points <- sort(unique(c(x, x + swindow)))
+  unique_points <- sort(unique(c(x, upper)))
   if (length(unique_points) == 0) {
     return(rep(0, length(x)))
   }
@@ -122,7 +165,8 @@ dprimarycensored <- function(
     L = -Inf,
     D = Inf,
     dprimary = dprimary,
-    dprimary_args = dprimary_args,
+    primary_args = primary_args,
+    pprimary = pprimary,
     ...
   )
 
@@ -130,10 +174,10 @@ dprimarycensored <- function(
   cdf_lookup <- stats::setNames(cdfs, as.character(unique_points))
 
   result <- vapply(
-    x,
-    function(d) {
-      cdf_upper <- cdf_lookup[as.character(d + swindow)]
-      cdf_lower <- cdf_lookup[as.character(d)]
+    seq_along(x),
+    function(i) {
+      cdf_upper <- cdf_lookup[as.character(upper[i])]
+      cdf_lower <- cdf_lookup[as.character(x[i])]
       return(cdf_upper - cdf_lower)
     },
     numeric(1)
@@ -156,7 +200,8 @@ dprimarycensored <- function(
         L = -Inf,
         D = Inf,
         dprimary = dprimary,
-        dprimary_args = dprimary_args,
+        primary_args = primary_args,
+        pprimary = pprimary,
         ...
       )
     }
@@ -175,7 +220,8 @@ dprimarycensored <- function(
         L = -Inf,
         D = Inf,
         dprimary = dprimary,
-        dprimary_args = dprimary_args,
+        primary_args = primary_args,
+        pprimary = pprimary,
         ...
       )
     }

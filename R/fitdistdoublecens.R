@@ -9,44 +9,58 @@
 #' @details
 #' ## How distribution functions are resolved
 #'
-#' The `distr` parameter specifies the base name of the distribution. The
-#' function automatically looks up the corresponding density (`d`) and
-#' cumulative distribution (`p`) functions by prepending these prefixes to the
-#' distribution name. For example:
-#' - `distr = "gamma"` uses `dgamma()` and `pgamma()`
-#' - `distr = "lnorm"` uses `dlnorm()` and `plnorm()`
-#' - `distr = "weibull"` uses `dweibull()` and `pweibull()`
+#' The `distr` argument names a distribution. The function looks up the
+#' density and CDF functions by prepending `d` and `p` to the name (e.g.
+#' `distr = "gamma"` resolves to `dgamma()` and `pgamma()`). Custom
+#' distributions can be used as long as the corresponding `d<distr>()` and
+#' `p<distr>()` functions are defined.
 #'
-#' Any distribution available in base R or loaded packages can be used, as long
-#' as the corresponding `d<distr>` and `p<distr>` functions exist and follow
-#' standard R distribution function conventions (first argument is `x` for
-#' density, `q` for CDF).
+#' ## Non-parametric distributions
 #'
-#' ## What this function does internally
+#' Two non-parametric distributions are supported. They share a common
+#' fitting machinery: the dist function carries a `vector_param` attribute
+#' (`"pmf"` for [pdiscretestep()]/[ddiscretestep()], `"hazards"` for
+#' [pdiscretehazard()]/[ddiscretehazard()]) that drives this function to
+#' build a closure mapping flat scalar parameters into the underlying
+#' vector argument.
 #'
-#' This function creates custom density and CDF functions that account for
-#' primary censoring, secondary censoring, and truncation using
-#' [dprimarycensored()] and [pprimarycensored()]. These custom functions are
-#' then passed to [fitdistrplus::fitdist()] for maximum likelihood estimation.
+#' - `distr = "discretestep"`: free parameters `p1, ..., p_{K-1}` (in
+#'   `[0, 1]`); the last bin probability is `1 - sum(p1, ..., p_{K-1})`.
+#'   See [pdiscretestep()] for parameterisation details and the soft
+#'   simplex penalty applied when probabilities are infeasible.
+#' - `distr = "discretehazard"`: free parameters `alpha`, `log_sigma`,
+#'   `eps_1, ..., eps_{K-1}`. The hazard form parameterises the same
+#'   family of step distributions as `"discretestep"`, but its free
+#'   parameters drive either a Gaussian random walk on the logit hazard
+#'   (`hazard_model = "rw"`, the default,
+#'   `logit(h_i) = alpha + sigma * cumsum(eps)`) or an IID logit
+#'   random-effect transform (`hazard_model = "re"`,
+#'   `logit(h_i) = alpha + sigma * eps_i` with `eps_i ~ N(0, 1)`). The
+#'   smoothing of the random walk regularises the recovered PMF against
+#'   over-fitting in sparse data and replaces the simplex constraint
+#'   with an unconstrained optimisation; the random-effect variant
+#'   models hazards as independent draws around `alpha` rather than a
+#'   smoothed trajectory. See [pdiscretehazard()] for full
+#'   parameterisation details and the MAP-equivalent prior penalty
+#'   applied during fitting; pass `prior` to override the default prior
+#'   settings.
 #'
-#' The function handles varying observation windows across observations,
-#' making it suitable for real-world data where truncation times or censoring
-#' windows may differ between observations.
+#' For non-parametric distributions `K` is implied by `length(start)`:
+#' `K = length(start) + 1` for `"discretestep"` and
+#' `K = length(start) - 1` for `"discretehazard"`. `start` is therefore
+#' required.
 #'
 #' @param censdata A data frame with columns 'left' and 'right' representing
 #'  the lower and upper bounds of the censored observations. Unlike
 #'  [fitdistrplus::fitdistcens()] `NA` is not supported for either the
 #'  upper or lower bounds.
 #'
-#' @param distr A character string naming the distribution to be fitted. This
-#'  should be the base name of a distribution with corresponding `d` (density)
-#'  and `p` (cumulative distribution) functions available. For example, use
-#'  `"gamma"` (which will use `dgamma` and `pgamma`), `"lnorm"` (for `dlnorm`
-#'  and `plnorm`), `"weibull"`, `"norm"`, etc. Custom distributions can also
-#'  be used as long as the corresponding `d<distr>()` and `p<distr>()`
-#'  functions are defined and loaded.
+#' @param distr A character string naming the distribution to be fitted.
+#'  Special values `"discretestep"` and `"discretehazard"` select the
+#'  non-parametric step-distribution fitting; see Details.
 #'
-#' @param left Column name for lower bound of observed values (default: "left").
+#' @param left Column name for lower bound of observed values (default:
+#'  "left").
 #'
 #' @param right Column name for upper bound of observed values (default:
 #'  "right").
@@ -61,11 +75,32 @@
 #'
 #' @param D Column name for maximum delay (upper truncation point). If finite,
 #'  the distribution is truncated at D. If set to Inf, no upper truncation is
-#'  applied. (default: "D").
+#'  applied. (default: "D"). Observations whose secondary censoring interval
+#'  straddles `D` (`left < D <= right`) are accepted: the upper endpoint is
+#'  internally clipped to `D` and the likelihood becomes
+#'  `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op for the
+#'  standard parametric case where `right <= D`. Observations with
+#'  `left >= D` are rejected because under truncation at `D` no event with
+#'  latent value `>= D` is observable.
 #'
 #' @inheritParams pprimarycensored
 #'
+#' @param prior Optional list of prior settings used by the dist function's
+#'   `fit_penalty` attribute (currently only `"discretehazard"`). Each
+#'   element is itself a list with `mean` and `sd` entries. Defaults are
+#'   used for any component not supplied. See [pdiscretehazard()] for
+#'   the default values.
+#'
+#' @param hazard_model One of `"rw"` (default) or `"re"`. Only consulted
+#'   when `distr = "discretehazard"`. `"rw"` selects the random-walk
+#'   transform `logit(h_i) = alpha + sigma * cumsum(eps)`; `"re"`
+#'   selects the IID logit random-effect transform
+#'   `logit(h_i) = alpha + sigma * eps_i`. See Details.
+#'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
+#'   For non-parametric distributions, `start` is required and determines
+#'   the number of bins; pass `boundaries` here to override the
+#'   default `0:K` unit-width bins.
 #'
 #' @param truncation_check_multiplier Numeric multiplier to use for checking
 #'   if the truncation time D is appropriate relative to the maximum delay.
@@ -75,6 +110,7 @@
 #'
 #' @export
 #' @family modelhelpers
+#' @seealso [pdiscretestep()] [pdiscretehazard()]
 #' @examplesIf requireNamespace("fitdistrplus", quietly = TRUE)
 #' # Example with normal distribution
 #' set.seed(123)
@@ -104,6 +140,40 @@
 #' )
 #'
 #' summary(fit_norm)
+#'
+#' \donttest{
+#' # Example with discretestep (non-parametric PMF) distribution
+#' set.seed(42)
+#' true_pmf <- c(0.1, 0.3, 0.4, 0.15, 0.05)
+#' step_samples <- rprimarycensored(
+#'   500, rdiscretestep,
+#'   boundaries = 0:5, pmf = true_pmf,
+#'   pwindow = 1, swindow = 1, D = 6
+#' )
+#' step_data <- data.frame(
+#'   left = step_samples,
+#'   right = step_samples + 1,
+#'   pwindow = rep(1, 500),
+#'   D = rep(6, 500)
+#' )
+#' fit_step <- fitdistdoublecens(
+#'   step_data,
+#'   distr = "discretestep",
+#'   boundaries = 0:5,
+#'   start = as.list(setNames(rep(0.2, 4), paste0("p", 1:4)))
+#' )
+#'
+#' # Example with discretehazard (logit-hazard random walk) distribution
+#' fit_haz <- fitdistdoublecens(
+#'   step_data,
+#'   distr = "discretehazard",
+#'   boundaries = 0:5,
+#'   start = c(
+#'     list(alpha = -2, log_sigma = log(0.5)),
+#'     as.list(setNames(rep(0, 4), paste0("eps_", 1:4)))
+#'   )
+#' )
+#' }
 fitdistdoublecens <- function(
     censdata,
     distr,
@@ -113,17 +183,20 @@ fitdistdoublecens <- function(
     L = "L",
     D = "D",
     dprimary = stats::dunif,
-    dprimary_args = list(),
+    primary_args = NULL,
+    pprimary = NULL,
+    dprimary_args = NULL,
     truncation_check_multiplier = 2,
+    prior = NULL,
+    hazard_model = c("rw", "re"),
     ...) {
-  # Check if fitdistrplus is available
+  hazard_model <- match.arg(hazard_model)
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
       "Package 'fitdistrplus' is required but not installed for this function.",
       call. = FALSE
     )
   }
-
   if (!requireNamespace("withr", quietly = TRUE)) {
     stop(
       "Package 'withr' is required but not installed for this function.",
@@ -131,15 +204,16 @@ fitdistdoublecens <- function(
     )
   }
 
+  primary_args <- .resolve_primary_args(
+    primary_args, dprimary_args, "fitdistdoublecens"
+  )
+
   # Handle L column: if not present, default to -Inf (no left truncation).
   if (!L %in% names(censdata)) {
     censdata[[L]] <- -Inf
   }
 
-  # Validate truncation bounds: L must be less than D
   .check_truncation_bounds_df(censdata, L, D)
-
-  # Validate that observations are not below L
   invalid_obs <- which(censdata[[left]] < censdata[[L]])
   if (length(invalid_obs) > 0) {
     stop(
@@ -150,7 +224,25 @@ fitdistdoublecens <- function(
       call. = FALSE
     )
   }
-
+  invalid_upper <- which(
+    is.finite(censdata[[D]]) & censdata[[left]] >= censdata[[D]]
+  )
+  if (length(invalid_upper) > 0) {
+    bad_left <- censdata[[left]][invalid_upper[1]]
+    bad_D <- censdata[[D]][invalid_upper[1]]
+    stop(
+      "Upper truncation point is greater than D. Maximum ", left, " is ",
+      max(censdata[[left]][invalid_upper]),
+      " and D is ", bad_D,
+      ". Under truncation at D no event with latent value >= D is ",
+      "observable; resolve this by filtering ", left,
+      " to values strictly less than D. Found ", length(invalid_upper),
+      " observation(s) where ", left, " >= D; first invalid row: ",
+      invalid_upper[1], " (", left, " = ", bad_left,
+      ", D = ", bad_D, ").",
+      call. = FALSE
+    )
+  }
   required_cols <- c(left, right, pwindow, D)
   missing_cols <- setdiff(required_cols, names(censdata))
   if (length(missing_cols) > 0) {
@@ -160,7 +252,6 @@ fitdistdoublecens <- function(
       call. = FALSE
     )
   }
-
   if (!is.null(truncation_check_multiplier)) {
     unique_D <- unique(censdata[[D]])
     for (d in unique_D) {
@@ -173,72 +264,92 @@ fitdistdoublecens <- function(
     }
   }
 
-  # Get the distribution functions
   pdist_name <- paste0("p", distr)
+  ddist_name <- paste0("d", distr)
   pdist <- add_name_attribute(get(pdist_name), pdist_name)
+  ddist <- get(ddist_name)
+
   params <- data.frame(
     swindow = censdata[[right]] - censdata[[left]],
     pwindow = censdata[[pwindow]],
     L = censdata[[L]],
     D = censdata[[D]]
   )
-
-  # Create the function definition with named arguments for dpcens
-  dpcens_dist <- function() {
-    env_args <- as.list(environment())
-    do.call(
-      .dpcens,
-      c(
-        env_args,
-        list(
-          params = params,
-          pdist = pdist,
-          dprimary = dprimary,
-          dprimary_args = dprimary_args
-        )
-      )
-    )
-  }
-  formals(dpcens_dist) <- formals(get(paste0("d", distr)))
-
-  # Create the function definition with named arguments for ppcens
-  ppcens_dist <- function() {
-    env_args <- as.list(environment())
-    do.call(
-      .ppcens,
-      c(
-        env_args,
-        list(
-          params = params,
-          pdist = pdist,
-          dprimary = dprimary,
-          dprimary_args = dprimary_args
-        )
-      )
-    )
-  }
-  formals(ppcens_dist) <- formals(pdist)
-
   delays <- censdata[[left]]
-  # Create a clean environment with only the necessary objects
-  fit_env <- new.env(parent = emptyenv())
+  N <- length(delays)
 
-  # Copy only the required objects to the clean environment
-  fit_env$delays <- delays
-  fit_env$ppcens_dist <- ppcens_dist
-  fit_env$dpcens_dist <- dpcens_dist
+  vector_param <- attr(ddist, "vector_param")
+  fit_penalty <- attr(ddist, "fit_penalty")
+  param_transform <- attr(ddist, "param_transform")
+  fit_bounds <- attr(ddist, "fit_bounds")
 
-  # Perform the fitting in the clean environment
-  fit <- withr::with_environment(
-    fit_env,
-    fitdistrplus::fitdist(
-      delays,
-      distr = "pcens_dist",
-      ...
-    )
+  # For the hazard family the transform is selected at fit time from
+  # `hazard_model`; for other families it is whatever the dist function
+  # carries as a `param_transform` attribute (currently only the simplex
+  # transform on the discretestep family).
+  if (identical(vector_param, "hazards")) {
+    param_transform <- .make_hazard_transform(hazard_model)
+  }
+
+  dots <- list(...)
+
+  # Separate any extra distribution-level args (e.g. `boundaries` for the
+  # step distribution) from arguments destined for fitdistrplus::fitdist.
+  fitdist_arg_names <- c(
+    "start", "fix.arg", "lower", "upper", "method", "optim.method",
+    "custom.optim", "discrete", "weights", "silent", "calcvcov",
+    "checkstartfix", "keepdata", "keepdata.nb", "control"
   )
-  return(fit)
+  pdist_extras <- dots[setdiff(names(dots), fitdist_arg_names)]
+  dots <- dots[intersect(names(dots), fitdist_arg_names)]
+
+  closures <- .build_pcens_closures(
+    pdist = pdist,
+    ddist = ddist,
+    params = params,
+    dprimary = dprimary,
+    primary_args = primary_args,
+    pprimary = pprimary,
+    vector_param = vector_param,
+    param_transform = param_transform,
+    fit_penalty = fit_penalty,
+    prior = prior,
+    N = N,
+    start = dots$start,
+    pdist_extras = pdist_extras
+  )
+
+  # If the dist function carries a `fit_bounds` attribute, use it to fill
+  # in any `lower`/`upper` the caller did not supply.
+  if (!is.null(fit_bounds)) {
+    fb <- fit_bounds(closures$par_names)
+    if (is.null(dots$lower)) dots$lower <- fb$lower
+    if (is.null(dots$upper)) dots$upper <- fb$upper
+  }
+
+  fit_env <- new.env(parent = emptyenv())
+  fit_env$delays <- delays
+  fit_env$dpcens_dist <- closures$dpcens_dist
+  fit_env$ppcens_dist <- closures$ppcens_dist
+
+  fit_args <- c(
+    list(delays, distr = "pcens_dist"),
+    dots
+  )
+
+  withr::with_environment(
+    fit_env,
+    do.call(fitdistrplus::fitdist, fit_args)
+  )
 }
+
+# Closure builder (`.build_pcens_closures`) lives in
+# R/nonparametric_helpers.R alongside the rest of the non-parametric
+# machinery. Default `lower`/`upper` bounds are now declared by the
+# dist function itself via the `fit_bounds` attribute (see
+# `pdiscretestep()` and `pdiscretehazard()`).
+
+# ---- low-level wrappers ----------------------------------------------------
 
 #' Define a fitdistrplus compatible wrapper around dprimarycensored
 #' @inheritParams dprimarycensored
@@ -252,12 +363,14 @@ fitdistdoublecens <- function(
     params,
     pdist,
     dprimary,
-    dprimary_args,
+    primary_args,
+    pprimary = NULL,
     ...) {
-  tryCatch(
+  # Wrap in `suppressMessages` so the per-call upper-clip notice from
+  # dprimarycensored() is not emitted on every fitdistrplus iteration.
+  suppressMessages(tryCatch(
     {
       unique_params <- unique(params)
-      # Check if all parameters are constant
       if (nrow(unique_params) == 1) {
         dprimarycensored(
           x,
@@ -267,32 +380,31 @@ fitdistdoublecens <- function(
           L = unique_params$L[1],
           D = unique_params$D[1],
           dprimary = dprimary,
-          dprimary_args = dprimary_args,
+          primary_args = primary_args,
+          pprimary = pprimary,
           ...
         )
       } else {
-        # Group by unique combinations of parameters
         result <- numeric(length(x))
-
         for (i in seq_len(nrow(unique_params))) {
           sw <- unique_params$swindow[i]
           pw <- unique_params$pwindow[i]
-          Ds <- unique_params$D[i] # nolint
-          Ls <- unique_params$L[i] # nolint
+          d_i <- unique_params$D[i]
+          l_i <- unique_params$L[i]
           mask <- params$swindow == sw &
             params$pwindow == pw &
-            params$D == Ds &
-            params$L == Ls
-
+            params$D == d_i &
+            params$L == l_i
           result[mask] <- dprimarycensored(
             x[mask],
             pdist,
             pwindow = pw,
             swindow = sw,
-            L = Ls,
-            D = Ds,
+            L = l_i,
+            D = d_i,
             dprimary = dprimary,
-            dprimary_args = dprimary_args,
+            primary_args = primary_args,
+            pprimary = pprimary,
             ...
           )
         }
@@ -302,16 +414,16 @@ fitdistdoublecens <- function(
     error = function(e) {
       rep(NaN, length(x))
     }
-  )
+  ))
 }
 
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @keywords internal
-.ppcens <- function(q, params, pdist, dprimary, dprimary_args, ...) {
+.ppcens <- function(q, params, pdist, dprimary, primary_args, pprimary = NULL,
+                    ...) {
   tryCatch(
     {
-      # Vectorize the CDF calculation
       mapply(
         function(q_i, pw, L_i, D_i) {
           pprimarycensored(
@@ -321,7 +433,8 @@ fitdistdoublecens <- function(
             L = L_i,
             D = D_i,
             dprimary = dprimary,
-            dprimary_args = dprimary_args,
+            primary_args = primary_args,
+            pprimary = pprimary,
             ...
           )
         },

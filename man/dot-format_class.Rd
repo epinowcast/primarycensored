@@ -24,10 +24,11 @@ functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()
 functions if they wish to leverage analytical solutions.}
 }
 \value{
-a character string representing the combined distribution class
+A character vector of class names: specific (delay + primary),
+delay-only, and base class.
 }
 \description{
 This helper function attempts to determine distribution names and uses those
-to establish a class name for potential analytical solutions.
+to establish a class hierarchy for potential analytical solutions.
 }
 \keyword{internal}
