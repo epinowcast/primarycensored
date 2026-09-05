@@ -533,6 +533,17 @@ test_that("pcens_cdf for the Prentice generalised gamma uses the analytical
     tolerance = 1e-10
   )
 
+  # mu and sigma take the flexsurv defaults of 0 and 1 when omitted
+  obj_default <- new_pcens(flexsurv::pgengamma, dunif, list(), Q = 1.3)
+  obj_explicit <- new_pcens(
+    flexsurv::pgengamma, dunif, list(),
+    mu = 0, sigma = 1, Q = 1.3
+  )
+  expect_identical(
+    pcens_cdf(obj_default, q = q_values, pwindow = 2),
+    pcens_cdf(obj_explicit, q = q_values, pwindow = 2)
+  )
+
   # Q <= 0 falls back to numeric integration
   for (Q in c(0, -0.5)) {
     obj <- new_pcens(
