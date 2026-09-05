@@ -3,6 +3,8 @@ test_that("pcd_stan_dist_id works for valid distributions", {
   expect_identical(pcd_stan_dist_id("lnorm", "delay"), 1L)
   expect_identical(pcd_stan_dist_id("lognormal", "delay"), 1L)
   expect_identical(pcd_stan_dist_id("gamma", "delay"), 2L)
+  expect_identical(pcd_stan_dist_id("gengamma", "delay"), 5L)
+  expect_identical(pcd_stan_dist_id("generalized gamma", "delay"), 5L)
 
   # Test primary distributions
   expect_identical(pcd_stan_dist_id("unif", "primary"), 1L)
