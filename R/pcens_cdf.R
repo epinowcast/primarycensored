@@ -135,10 +135,10 @@ pcens_cdf.pcens_pgamma_dunif <- function(
   }
 
   partial_pgamma <- function(q) {
-    stats::pgamma(q, shape = shape, scale = scale)
+    pgamma(q, shape = shape, scale = scale)
   }
   partial_pgamm_k_1 <- function(q) {
-    stats::pgamma(q, shape = shape + 1, scale = scale)
+    pgamma(q, shape = shape + 1, scale = scale)
   }
   # Adjust q so that we have [q-pwindow, q]
   q <- q - pwindow
@@ -305,7 +305,7 @@ pcens_cdf.pcens_pweibull_dunif <- function(
   # unregularised series expansion would overflow.
   g <- function(t) {
     x <- (t * inv_scale)^shape
-    exp(stats::pgamma(x, shape = a, scale = 1, log.p = TRUE) + lgamma_a)
+    exp(pgamma(x, shape = a, scale = 1, log.p = TRUE) + lgamma_a)
   }
 
   # Adjust q so that we have [q-pwindow, q]
