@@ -2,6 +2,8 @@
 
 S3method(pcens_cdf,default)
 S3method(pcens_cdf,pcens_pgamma_dunif)
+S3method(pcens_cdf,pcens_pgengamma.orig_dunif)
+S3method(pcens_cdf,pcens_pgengamma_dunif)
 S3method(pcens_cdf,pcens_plnorm_dunif)
 S3method(pcens_cdf,pcens_pweibull_dunif)
 S3method(pcens_quantile,default)

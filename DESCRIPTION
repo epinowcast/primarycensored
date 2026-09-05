@@ -1,6 +1,6 @@
 Package: primarycensored
 Title: Primary Event Censored Distributions
-Version: 1.5.1
+Version: 1.5.1.1000
 Authors@R:
   c(person(given = "Sam",
            family = "Abbott",
@@ -59,6 +59,7 @@ Suggests:
     cmdstanr,
     dplyr,
     fitdistrplus,
+    flexsurv,
     knitr,
     ggplot2,
     rmarkdown,
@@ -75,5 +76,5 @@ Encoding: UTF-8
 Language: en-GB
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.3
 VignetteBuilder: knitr
+RoxygenNote: 7.3.3

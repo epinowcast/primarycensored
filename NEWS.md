@@ -1,3 +1,19 @@
+# primarycensored 1.5.1.1000
+
+## New features
+
+- Added analytical primary censored CDFs for the generalised gamma delay distribution with a uniform primary event, in R and Stan.
+  In R, `pcens_cdf()` gains methods for `flexsurv::pgengamma.orig()` (Stacy parameterisation, always analytical) and `flexsurv::pgengamma()` (Prentice parameterisation, analytical for `Q > 0` and numeric otherwise).
+  `pprimarycensored()` and related functions already worked with any `pdist`, including these, via numeric integration.
+  In Stan, `dist_lcdf()` now supports `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`) through a new `gengamma_lcdf()` function and `primarycensored_gengamma_uniform_lcdf()` provides the analytical solution used by `primarycensored_lpmf()` and related functions, including in `pcd_cmdstan_model()`.
+  `flexsurv` has been added to `Suggests`.
+- Functions exported by other packages (for example `flexsurv::pgengamma.orig()`) are now identified by name when passed as `pdist` or `dprimary`, so analytical solutions are used without needing `add_name_attribute()`.
+
+## Documentation
+
+- Added the generalised gamma derivation to the "Analytic solutions" vignette.
+  The gamma and Weibull solutions are recovered as special cases.
+
 # primarycensored 1.5.1
 
 This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.

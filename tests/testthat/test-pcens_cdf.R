@@ -399,3 +399,194 @@ test_that("new_pcens works with custom function with name attribute", {
   # Check arguments are preserved
   expect_identical(obj$args, list(shape = 2, rate = 1))
 })
+
+test_that("pcens_cdf for the generalised gamma matches numeric integration
+   and recovers the gamma and Weibull special cases", {
+  skip_if_not_installed("flexsurv")
+  q_values <- seq(0, 30, by = 1)
+  shapes <- c(0.5, 1, 2)
+  scales <- c(0.5, 2)
+  ks <- c(0.5, 1, 3)
+  pwindows <- c(1, 2, 5)
+
+  for (shape in shapes) {
+    for (scale in scales) {
+      for (k in ks) {
+        obj <- new_pcens(
+          flexsurv::pgengamma.orig,
+          dunif, list(),
+          shape = shape, scale = scale, k = k
+        )
+        expect_s3_class(obj, "pcens_pgengamma.orig_dunif")
+        # integrate() is less accurate when the density is unbounded at
+        # zero (shape * k < 1) so allow a looser tolerance there
+        tolerance <- if (shape * k < 1) 1e-3 else 1e-6
+        for (pwindow in pwindows) {
+          analytical <- pcens_cdf(obj, q = q_values, pwindow = pwindow)
+          numeric <- pcens_cdf(
+            obj,
+            q = q_values, pwindow = pwindow, use_numeric = TRUE
+          )
+          expect_equal(
+            analytical, numeric,
+            tolerance = tolerance,
+            info = sprintf(
+              "Mismatch for shape = %s, scale = %s, k = %s, pwindow = %s",
+              shape, scale, k, pwindow
+            )
+          )
+          expect_true(all(diff(analytical) >= -1e-12))
+          expect_true(all(analytical >= 0))
+          expect_true(all(analytical <= 1))
+        }
+      }
+    }
+  }
+
+  # For a density unbounded at zero the analytical solution matches a high
+  # precision numeric reference more closely than the default integration
+  obj <- new_pcens(
+    flexsurv::pgengamma.orig, dunif, list(),
+    shape = 0.5, scale = 0.5, k = 0.5
+  )
+  reference <- vapply(c(1, 2, 3), function(d) {
+    stats::integrate(
+      function(p) flexsurv::pgengamma.orig(d - p, 0.5, 0.5, 0.5),
+      lower = 0, upper = 5, rel.tol = 1e-12, subdivisions = 10000L
+    )$value / 5
+  }, numeric(1))
+  expect_equal(
+    pcens_cdf(obj, q = c(1, 2, 3), pwindow = 5), reference,
+    tolerance = 1e-8
+  )
+
+  # shape = 1 is the gamma distribution with the same k and scale
+  obj_gamma <- new_pcens(pgamma, dunif, list(), shape = 0.7, scale = 2)
+  obj_gg <- new_pcens(
+    flexsurv::pgengamma.orig, dunif, list(),
+    shape = 1, scale = 2, k = 0.7
+  )
+  expect_equal(
+    pcens_cdf(obj_gg, q = q_values, pwindow = 2),
+    pcens_cdf(obj_gamma, q = q_values, pwindow = 2),
+    tolerance = 1e-10
+  )
+
+  # k = 1 is the Weibull distribution with the same shape and scale
+  obj_weibull <- new_pcens(pweibull, dunif, list(), shape = 1.7, scale = 2)
+  obj_gg <- new_pcens(
+    flexsurv::pgengamma.orig, dunif, list(),
+    shape = 1.7, scale = 2, k = 1
+  )
+  expect_equal(
+    pcens_cdf(obj_gg, q = q_values, pwindow = 2),
+    pcens_cdf(obj_weibull, q = q_values, pwindow = 2),
+    tolerance = 1e-10
+  )
+})
+
+test_that("pcens_cdf for the generalised gamma errors when parameters are
+   missing", {
+  skip_if_not_installed("flexsurv")
+  args <- list(shape = 1.5, scale = 2, k = 0.8)
+  for (missing_arg in names(args)) {
+    obj <- do.call(
+      new_pcens,
+      c(
+        list(flexsurv::pgengamma.orig, dunif, list()),
+        args[setdiff(names(args), missing_arg)]
+      )
+    )
+    expect_error(
+      pcens_cdf(obj, q = 1, pwindow = 1),
+      sprintf(
+        "%s parameter is required for generalised gamma distribution",
+        missing_arg
+      )
+    )
+  }
+})
+
+test_that("pcens_cdf for the Prentice generalised gamma uses the analytical
+   solution for Q > 0 and numeric integration otherwise", {
+  skip_if_not_installed("flexsurv")
+  q_values <- seq(0, 20, by = 0.5)
+
+  obj <- new_pcens(
+    flexsurv::pgengamma, dunif, list(),
+    mu = 0.4, sigma = 0.6, Q = 1.3
+  )
+  expect_s3_class(obj, "pcens_pgengamma_dunif")
+  analytical <- pcens_cdf(obj, q = q_values, pwindow = 2)
+  numeric <- pcens_cdf(obj, q = q_values, pwindow = 2, use_numeric = TRUE)
+  expect_equal(analytical, numeric, tolerance = 1e-6)
+  expect_false(identical(analytical, numeric))
+
+  # Q > 0 maps onto the Stacy parameterisation
+  obj_stacy <- new_pcens(
+    flexsurv::pgengamma.orig, dunif, list(),
+    shape = 1.3 / 0.6, scale = exp(0.4) * 1.3^(2 * 0.6 / 1.3), k = 1.3^-2
+  )
+  expect_equal(
+    analytical,
+    pcens_cdf(obj_stacy, q = q_values, pwindow = 2),
+    tolerance = 1e-10
+  )
+
+  # mu and sigma take the flexsurv defaults of 0 and 1 when omitted
+  obj_default <- new_pcens(flexsurv::pgengamma, dunif, list(), Q = 1.3)
+  obj_explicit <- new_pcens(
+    flexsurv::pgengamma, dunif, list(),
+    mu = 0, sigma = 1, Q = 1.3
+  )
+  expect_identical(
+    pcens_cdf(obj_default, q = q_values, pwindow = 2),
+    pcens_cdf(obj_explicit, q = q_values, pwindow = 2)
+  )
+
+  # Q <= 0 falls back to numeric integration
+  for (Q in c(0, -0.5)) {
+    obj <- new_pcens(
+      flexsurv::pgengamma, dunif, list(),
+      mu = 0.4, sigma = 0.6, Q = Q
+    )
+    expect_identical(
+      pcens_cdf(obj, q = q_values, pwindow = 2),
+      pcens_cdf(obj, q = q_values, pwindow = 2, use_numeric = TRUE)
+    )
+  }
+})
+
+test_that("pprimarycensored and dprimarycensored work end to end with
+   flexsurv::pgengamma.orig", {
+  skip_if_not_installed("flexsurv")
+  pwindow <- 1
+  args <- list(shape = 1.5, scale = 2, k = 0.8)
+
+  cdf <- do.call(
+    pprimarycensored,
+    c(list(seq(0, 20, by = 0.5), flexsurv::pgengamma.orig, pwindow), args)
+  )
+  expect_true(all(diff(cdf) >= 0))
+  expect_identical(cdf[1], 0)
+  expect_lt(abs(cdf[length(cdf)] - 1), 1e-6)
+
+  # The analytical solution is used by default and agrees with a plain
+  # numeric pdist of the same distribution
+  pgengamma_numeric <- function(q, shape, scale, k) {
+    flexsurv::pgengamma.orig(q, shape = shape, scale = scale, k = k)
+  }
+  cdf_numeric <- do.call(
+    pprimarycensored,
+    c(list(seq(0, 20, by = 0.5), pgengamma_numeric, pwindow), args)
+  )
+  expect_equal(cdf, cdf_numeric, tolerance = 1e-6)
+  expect_false(identical(cdf, cdf_numeric))
+
+  pmf <- do.call(
+    dprimarycensored,
+    c(list(0:200, flexsurv::pgengamma.orig, pwindow), args)
+  )
+  expect_true(all(pmf >= 0))
+  expect_equal(sum(pmf), 1, tolerance = 1e-6)
+})
