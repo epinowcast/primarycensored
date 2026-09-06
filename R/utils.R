@@ -199,15 +199,26 @@ add_name_attribute <- function(func, name) {
 #' an empty list" so the deprecated \code{dprimary_args} path can be
 #' detected. The returned list is never \code{NULL}.
 #'
+#' The deprecation is soft (\code{lifecycle::deprecate_soft()}): a warning
+#' is shown when the exported function is called from the global
+#' environment or from the package under test, and calls from other
+#' packages stay silent.
+#'
 #' @param primary_args The new argument value (or \code{NULL}).
 #' @param dprimary_args The old argument value (or \code{NULL}).
 #' @param fn Character string identifying the calling function (used in
 #'   the deprecation message).
+#' @param env Environment of the exported function that owns the
+#'   deprecated argument. Defaults to the caller of this helper.
+#' @param user_env Environment the exported function was called from.
+#'   Defaults to the caller of the caller of this helper.
 #'
 #' @return A list (possibly empty) of primary distribution arguments.
 #'
 #' @keywords internal
-.resolve_primary_args <- function(primary_args, dprimary_args, fn) {
+.resolve_primary_args <- function(primary_args, dprimary_args, fn,
+                                  env = parent.frame(),
+                                  user_env = parent.frame(2)) {
   has_new <- !is.null(primary_args)
   has_old <- !is.null(dprimary_args)
   if (has_new && has_old) {
@@ -218,10 +229,12 @@ add_name_attribute <- function(func, name) {
     )
   }
   if (has_old) {
-    lifecycle::deprecate_warn(
-      when = "1.5.0",
+    lifecycle::deprecate_soft(
+      when = "1.6.0",
       what = paste0(fn, "(dprimary_args)"),
-      with = paste0(fn, "(primary_args)")
+      with = paste0(fn, "(primary_args)"),
+      env = env,
+      user_env = user_env
     )
     return(dprimary_args)
   }

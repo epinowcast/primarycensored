@@ -68,13 +68,44 @@ test_that(".resolve_primary_args errors when both new and old are supplied", {
 })
 
 test_that(".resolve_primary_args returns the dprimary_args value", {
+  withr::local_options(lifecycle_verbosity = "warning")
+  out <- suppressWarnings(
+    .resolve_primary_args(
+      NULL, list(r = 0.2), "fn",
+      user_env = globalenv()
+    )
+  )
+  expect_identical(out, list(r = 0.2))
   expect_warning(
-    out <- primarycensored:::.resolve_primary_args(
-      NULL, list(r = 0.2), "fn"
+    .resolve_primary_args(
+      NULL, list(r = 0.2), "fn",
+      user_env = globalenv()
     ),
     "deprecated"
   )
-  expect_identical(out, list(r = 0.2))
+})
+
+test_that("dprimary_args is soft deprecated on the exported functions", {
+  # Direct use warns and names the version the deprecation starts at.
+  withr::local_options(lifecycle_verbosity = "warning")
+  expect_warning(
+    new_pcens(
+      pdist = plnorm, dprimary = dunif, dprimary_args = list(),
+      meanlog = 0, sdlog = 1
+    ),
+    "primarycensored 1.6.0"
+  )
+  # A call from another package's namespace stays quiet at the default
+  # verbosity, so downstream packages do not warn on every evaluation.
+  withr::local_options(lifecycle_verbosity = "default")
+  from_pkg <- function() {
+    new_pcens(
+      pdist = plnorm, dprimary = dunif, dprimary_args = list(),
+      meanlog = 0, sdlog = 1
+    )
+  }
+  environment(from_pkg) <- asNamespace("stats")
+  expect_no_warning(from_pkg())
 })
 
 test_that(".resolve_pprimary errors on non-scalar character", {

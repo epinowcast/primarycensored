@@ -4,7 +4,13 @@
 \alias{.resolve_primary_args}
 \title{Resolve \code{primary_args} / \code{dprimary_args} with a deprecation}
 \usage{
-.resolve_primary_args(primary_args, dprimary_args, fn)
+.resolve_primary_args(
+  primary_args,
+  dprimary_args,
+  fn,
+  env = parent.frame(),
+  user_env = parent.frame(2)
+)
 }
 \arguments{
 \item{primary_args}{The new argument value (or \code{NULL}).}
@@ -13,6 +19,12 @@
 
 \item{fn}{Character string identifying the calling function (used in
 the deprecation message).}
+
+\item{env}{Environment of the exported function that owns the
+deprecated argument. Defaults to the caller of this helper.}
+
+\item{user_env}{Environment the exported function was called from.
+Defaults to the caller of the caller of this helper.}
 }
 \value{
 A list (possibly empty) of primary distribution arguments.
@@ -21,5 +33,11 @@ A list (possibly empty) of primary distribution arguments.
 The resolver distinguishes "user supplied nothing" from "user supplied
 an empty list" so the deprecated \code{dprimary_args} path can be
 detected. The returned list is never \code{NULL}.
+}
+\details{
+The deprecation is soft (\code{lifecycle::deprecate_soft()}): a warning
+is shown when the exported function is called from the global
+environment or from the package under test, and calls from other
+packages stay silent.
 }
 \keyword{internal}

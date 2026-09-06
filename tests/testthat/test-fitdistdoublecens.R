@@ -843,14 +843,13 @@ test_that(
       pwindow = rep(1, n),
       D = rep(8, n)
     )
-    expect_warning(
+    lifecycle::expect_deprecated(
       fitdistdoublecens(
         delay_data,
         distr = "gamma",
         start = list(shape = 1, rate = 1),
         dprimary_args = list()
-      ),
-      "deprecated"
+      )
     )
   }
 )
