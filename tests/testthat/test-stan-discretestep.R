@@ -156,3 +156,54 @@ test_that("discretestep_lcdf handles d=K and d_upper=D boundary cases", {
   )
   expect_true(is.finite(stan_val))
 })
+
+test_that(
+  "Stan analytic step CDF matches R for bins wider than pwindow and for
+   boundaries starting below zero",
+  {
+    # Bins wider than the primary window (uniform and exponential growth).
+    wide_boundaries <- c(0, 3, 4, 7)
+    wide_pmf <- c(0.5, 0.2, 0.3)
+    wide_params <- c(wide_boundaries, wide_pmf)
+    for (d in c(0.5, 1, 2.5, 3.2, 3.9, 4.5, 6.5)) {
+      stan_unif <- primarycensored_cdf(
+        d, 26L, wide_params, 1.0, -Inf, Inf, 1L, numeric(0)
+      )
+      r_unif <- pprimarycensored(
+        d, pdiscretestep,
+        pwindow = 1.0, boundaries = wide_boundaries, pmf = wide_pmf
+      )
+      expect_equal(stan_unif, r_unif, tolerance = 1e-6)
+      stan_exp <- primarycensored_cdf(
+        d, 26L, wide_params, 2.0, -Inf, Inf, 2L, 0.4
+      )
+      r_exp <- pprimarycensored(
+        d, pdiscretestep,
+        dprimary = dexpgrowth, primary_args = list(r = 0.4),
+        pwindow = 2.0, boundaries = wide_boundaries, pmf = wide_pmf
+      )
+      expect_equal(stan_exp, r_exp, tolerance = 1e-6)
+    }
+
+    # Boundaries starting below zero (delays with negative support).
+    neg_boundaries <- -2:3
+    neg_pmf <- c(0.1, 0.2, 0.3, 0.25, 0.15)
+    neg_params <- c(neg_boundaries, neg_pmf)
+    for (d in c(-1.5, -1, -0.5, 0, 0.5, 1.5, 2.5)) {
+      stan_val <- primarycensored_cdf(
+        d, 26L, neg_params, 1.0, -Inf, Inf, 1L, numeric(0)
+      )
+      r_ref <- pprimarycensored(
+        d, pdiscretestep,
+        pwindow = 1.0, boundaries = neg_boundaries, pmf = neg_pmf
+      )
+      expect_equal(stan_val, r_ref, tolerance = 1e-6)
+    }
+    expect_gt(
+      primarycensored_cdf(
+        -0.5, 26L, neg_params, 1.0, -Inf, Inf, 1L, numeric(0)
+      ),
+      0
+    )
+  }
+)

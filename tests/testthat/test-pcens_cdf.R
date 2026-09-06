@@ -449,22 +449,73 @@ test_that(
 )
 
 test_that(
-  "pcens_cdf.pcens_pdiscretestep_dunif errors for step width > pwindow",
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for bins wider
+   than pwindow",
   {
-    # boundaries 0, 3 — step width 3 > pwindow 1
-    boundaries <- c(0, 3, 4)
-    pmf <- c(0.6, 0.4)
+    # Bin widths 3, 1 and 3 with pwindow 1 (uniform) and pwindow 2
+    # (exponential growth): the knot partition is exact for any width.
+    boundaries <- c(0, 3, 4, 7)
+    pmf <- c(0.5, 0.2, 0.3)
+    q_values <- c(0.5, 1, 2.5, 3.2, 3.9, 4.5, 6.5, 7.5)
+    obj_unif <- new_pcens(
+      pdiscretestep, dunif, list(),
+      boundaries = boundaries, pmf = pmf
+    )
+    expect_equal(
+      pcens_cdf(obj_unif, q = q_values, pwindow = 1),
+      pcens_cdf(obj_unif, q = q_values, pwindow = 1, use_numeric = TRUE),
+      tolerance = 1e-8
+    )
+    obj_exp <- new_pcens(
+      pdiscretestep, dexpgrowth, list(r = 0.4),
+      boundaries = boundaries, pmf = pmf
+    )
+    # The numeric reference integrates a discontinuous integrand, so it
+    # is only accurate to about 1e-5 here.
+    expect_equal(
+      pcens_cdf(obj_exp, q = q_values, pwindow = 2),
+      pcens_cdf(obj_exp, q = q_values, pwindow = 2, use_numeric = TRUE),
+      tolerance = 1e-4
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for pwindow
+   narrower than the bins",
+  {
+    # Daily bins with a half-day primary window.
+    boundaries <- 0:5
+    pmf <- c(0.1, 0.3, 0.3, 0.2, 0.1)
+    q_values <- seq(0.25, 5.25, by = 0.5)
     obj <- new_pcens(
-      pdiscretestep,
-      dunif,
-      list(),
-      boundaries = boundaries,
-      pmf = pmf
+      pdiscretestep, dunif, list(),
+      boundaries = boundaries, pmf = pmf
     )
-    expect_error(
-      pcens_cdf(obj, q = 2, pwindow = 1),
-      "pwindow"
+    expect_equal(
+      pcens_cdf(obj, q = q_values, pwindow = 0.5),
+      pcens_cdf(obj, q = q_values, pwindow = 0.5, use_numeric = TRUE),
+      tolerance = 1e-8
     )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for boundaries
+   starting below zero",
+  {
+    boundaries <- -2:3
+    pmf <- c(0.1, 0.2, 0.3, 0.25, 0.15)
+    q_values <- c(-1.5, -1, -0.5, 0, 0.5, 1.5, 2.5, 3.5)
+    obj <- new_pcens(
+      pdiscretestep, dunif, list(),
+      boundaries = boundaries, pmf = pmf
+    )
+    analytic <- pcens_cdf(obj, q = q_values, pwindow = 1)
+    numeric <- pcens_cdf(obj, q = q_values, pwindow = 1, use_numeric = TRUE)
+    expect_equal(analytic, numeric, tolerance = 1e-8)
+    # Mass below zero is visible for negative q.
+    expect_gt(analytic[[3]], 0)
   }
 )
 

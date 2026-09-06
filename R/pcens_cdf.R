@@ -108,6 +108,8 @@ pcens_cdf.default <- function(
 #' where \eqn{c_k} is the constant value of \eqn{F_{step}} on the
 #' \eqn{k}-th sub-interval of the primary event window induced by the
 #' step-function knots.
+#' The partition is exact for any bin widths, so bins may be wider or
+#' narrower than \code{pwindow}, and for boundaries that start below zero.
 #'
 #' Falls back to \code{pcens_cdf.default} when \code{use_numeric = TRUE}
 #' or when no primary CDF is available on the object.
@@ -143,28 +145,18 @@ pcens_cdf.pcens_pdiscretestep <- function(
     )
   }
 
-  max_step <- max(diff(boundaries))
-  if (max_step > pwindow) {
-    stop(
-      "The largest step width (", max_step, ") exceeds pwindow (",
-      pwindow, "). All step widths must be <= pwindow for the ",
-      "analytic convolution to be valid.",
-      call. = FALSE
-    )
-  }
-
   K <- length(pmf)
   cum_pmf <- cumsum(pmf)
   right_edges <- boundaries[-1L]
-  dprimary_args <- object$dprimary_args
+  primary_args <- object$primary_args
 
   # Evaluate F_primary(p) on [0, pwindow] via the stored pprimary function.
-  # dprimary_args may contain r, shape, etc.; translate min/max to the
+  # primary_args may contain r, shape, etc.; translate min/max to the
   # primary window.
   .F_primary <- function(p) {
     do.call(
       pprimary,
-      c(list(q = p, min = 0, max = pwindow), dprimary_args)
+      c(list(q = p, min = 0, max = pwindow), primary_args)
     )
   }
 
@@ -177,11 +169,10 @@ pcens_cdf.pcens_pdiscretestep <- function(
   result <- vapply(
     q,
     function(qi) {
-      if (qi <= 0) {
-        return(0)
-      }
       # Breakpoints in primary-time p where F_step(qi - p) changes value:
       # these are p = qi - right_edge[k], restricted to (0, pwindow).
+      # Knots outside the window do not matter because F_step(qi - p) is
+      # then constant on the whole sub-interval, whatever the bin width.
       p_knots <- qi - right_edges
       inside <- p_knots[p_knots > 0 & p_knots < pwindow]
       breaks <- sort(unique(c(0, inside, pwindow)))

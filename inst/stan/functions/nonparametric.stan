@@ -107,7 +107,7 @@ vector primary_lcdf_vec(vector p, int primary_id,
   *
   * Computes log(F_obs(d)) where
   *   F_obs(d) = integral_q^d F_step(u) f_primary(d - u) du,
-  *   q = max(d - pwindow, 0).
+  *   q = d - pwindow.
   * Using f_primary(d - u) du = -d F_primary(d - u), the integral on each
   * sub-interval [lo, hi] where F_step is constant becomes
   *   cumulative * (F_primary(d - lo) - F_primary(d - hi)).
@@ -139,7 +139,11 @@ real discretestep_lcdf(
   int primary_id, array[] real primary_params, data real pwindow
 ) {
   int K = num_elements(pmf);
-  real u_min = fmax(d - pwindow, 0);
+  // Integration support in u = d - p for p in [0, pwindow]. It is not
+  // clipped at 0 so boundaries that start below zero (delays with negative
+  // support) are handled; for non-negative boundaries the per-bin clip to
+  // [boundaries[k], boundaries[k + 1]] below gives the same result.
+  real u_min = d - pwindow;
   real u_max = d;
 
   // Structural-zero short-circuit. Below `boundaries[2]` F_step is zero

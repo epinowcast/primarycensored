@@ -36,6 +36,8 @@ Because \eqn{F_{step}} is piecewise constant, the integral reduces to
 where \eqn{c_k} is the constant value of \eqn{F_{step}} on the
 \eqn{k}-th sub-interval of the primary event window induced by the
 step-function knots.
+The partition is exact for any bin widths, so bins may be wider or
+narrower than \code{pwindow}, and for boundaries that start below zero.
 
 Falls back to \code{pcens_cdf.default} when \code{use_numeric = TRUE}
 or when no primary CDF is available on the object.
