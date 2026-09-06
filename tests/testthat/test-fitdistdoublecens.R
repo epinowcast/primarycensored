@@ -55,13 +55,13 @@ test_that("fitdistdoublecens works correctly with column names", {
   expect_false(is.na(fit$bic))
 })
 
-test_that(".build_pcens_closures infers parameter names from formals when start is NULL", {
+test_that(".build_pcens_closures reads parameter names when start is NULL", {
   # Parametric path: when `start` is NULL the closure builder reads the
   # formals of the d<distr> function instead. (fitdistdoublecens always
   # forwards `start` to fitdistrplus which insists on it for our synthetic
   # `pcens_dist`, so this fallback only matters when the helper is invoked
   # directly.)
-  closures <- primarycensored:::.build_pcens_closures(
+  closures <- .build_pcens_closures(
     pdist          = pgamma,
     ddist          = dgamma,
     params         = NULL,
@@ -74,7 +74,7 @@ test_that(".build_pcens_closures infers parameter names from formals when start 
     N              = 10,
     start          = NULL
   )
-  expect_true(is.function(closures$dpcens_dist))
+  expect_type(closures$dpcens_dist, "closure")
   # Closure formals carry the parameter names from `dgamma` (minus x, log).
   expect_true(all(c("shape", "rate") %in% names(formals(closures$dpcens_dist))))
 })
@@ -687,7 +687,7 @@ test_that("fitdistdoublecens discretehazard defaults to hazard_model = 'rw'", {
     boundaries = 0:K,
     truncation_check_multiplier = NULL
   ))
-  expect_equal(unname(fit_default$estimate), unname(fit_rw$estimate))
+  expect_identical(unname(fit_default$estimate), unname(fit_rw$estimate))
 })
 
 test_that(

@@ -248,7 +248,7 @@ test_that("pcd_as_stan_data populates np_* fields for dist_id 26 (simplex)", {
   expect_identical(result$n_params, 0L)
 })
 
-test_that("pcd_as_stan_data routes priors$scale to Dirichlet alpha for dist_id 26", {
+test_that("pcd_as_stan_data uses priors$scale as Dirichlet alpha for 26", {
   data <- data.frame(
     delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
     pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
@@ -287,7 +287,7 @@ test_that("pcd_as_stan_data populates np_* fields for dist_id 27 (hazard RW)", {
   expect_identical(result$np_log_sigma_sd, 1)
 })
 
-test_that("pcd_as_stan_data accepts dist_id 28 (hazard RE) and shares hazard priors with 27", {
+test_that("pcd_as_stan_data accepts dist_id 28 with the priors of 27", {
   data <- data.frame(
     delay = c(1, 2, 3), delay_upper = c(2, 3, 4), n = c(10, 20, 15),
     pwindow = c(1, 1, 2), relative_obs_time = c(10, 10, 10)
@@ -370,7 +370,7 @@ test_that("pcd_as_stan_data validates dist_options input", {
   # Hazard prior length must be 2 for dist_id 27/28.
   expect_error(
     suppressMessages(do.call(pcd_as_stan_data, c(base_args_no_priors, list(
-      priors = list(location = c(0), scale = c(1)),
+      priors = list(location = 0, scale = 1),
       dist_id = 27L, dist_options = list(K = 4, boundaries = 0:4)
     )))),
     "must each have length 2"

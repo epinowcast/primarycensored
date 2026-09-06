@@ -36,7 +36,7 @@ MLE fitting goes through `fitdistdoublecens()` (which calls `fitdistrplus`).
 
 ```{r setup, message = FALSE}
 library(primarycensored)
-library(cmdstanr)
+library(cmdstanr) # nolint: unused_import_linter.
 library(ggplot2)
 library(dplyr)
 ```
@@ -194,7 +194,8 @@ theoretical_cdf <- pdiscretestep(
 cdf_data <- data.frame(
   x = rep(x_seq, 2),
   probability = c(empirical_cdf(x_seq), theoretical_cdf),
-  type = rep(c("Observed", "Theoretical"), each = length(x_seq))
+  type = rep(c("Observed", "Theoretical"), each = length(x_seq)),
+  stringsAsFactors = FALSE
 )
 
 ggplot(cdf_data, aes(x = x, y = probability, colour = type)) +
@@ -283,7 +284,7 @@ fit_haz_re <- tryCatch(
 ## Discrete step fit
 
 ```{r fit-step, message = FALSE}
-step_start <- as.list(stats::setNames(
+step_start <- as.list(setNames(
   rep(1 / K, K - 1L), paste0("p", seq_len(K - 1L))
 ))
 
@@ -413,18 +414,24 @@ mle_pmf <- function(fit, K, type, model = "rw") {
   sigma <- exp(coef(fit)[["log_sigma"]])
   eps   <- coef(fit)[paste0("eps_", seq_len(K - 1))]
   delta <- if (model == "rw") cumsum(c(0, eps)) else c(0, eps)
-  h <- plogis(alpha + sigma * delta); h[K] <- 1
+  h <- plogis(alpha + sigma * delta)
+  h[K] <- 1
   hazards_to_pmf(h)
 }
 
 # Stan posterior PMF.  `dist_id 26` reads np_pmf directly; `27` / `28`
 # read np_weights (= hazards) and convert each draw via hazards_to_pmf().
 stan_pmf_draws <- function(fit, K, dist_id) {
-  var <- if (dist_id == 26) "np_pmf" else "np_weights"
-  d <- fit$draws(variables = paste0(var, "[", seq_len(K), "]"),
-                 format = "matrix")
+  variable <- if (dist_id == 26) "np_pmf" else "np_weights"
+  d <- fit$draws(
+    variables = paste0(variable, "[", seq_len(K), "]"),
+    format = "matrix"
+  )
   if (dist_id != 26) {
-    d <- t(apply(d, 1, function(h) { h[K] <- 1; hazards_to_pmf(h) }))
+    d <- t(apply(d, 1, function(h) {
+      h[K] <- 1
+      hazards_to_pmf(h)
+    }))
   }
   d
 }
@@ -445,10 +452,12 @@ stan_fits <- list(
 )
 
 mle_df <- do.call(rbind, lapply(mle_fits, function(x) {
+  model <- if (is.null(x$model)) "rw" else x$model
   data.frame(
     bin = seq_len(K),
-    pmf = mle_pmf(x$fit, K, x$type, model = if (is.null(x$model)) "rw" else x$model),
-    param = x$label, method = "MLE", row.names = NULL
+    pmf = mle_pmf(x$fit, K, x$type, model = model),
+    param = x$label, method = "MLE", row.names = NULL,
+    stringsAsFactors = FALSE
   )
 }))
 
@@ -459,7 +468,8 @@ stan_df <- do.call(rbind, lapply(stan_fits, function(x) {
     median = apply(d, 2, median),
     lo90   = apply(d, 2, quantile, 0.05),
     hi90   = apply(d, 2, quantile, 0.95),
-    param  = x$label, method = "Stan", row.names = NULL
+    param  = x$label, method = "Stan", row.names = NULL,
+    stringsAsFactors = FALSE
   )
 }))
 

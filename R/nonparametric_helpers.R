@@ -215,7 +215,7 @@
     }
     par_named <- env_args[par_names]
     full_vec <- param_transform(par_named)
-    stats::setNames(list(full_vec), vector_param)
+    setNames(list(full_vec), vector_param)
   }
 
   dpcens_dist <- function() {

@@ -35,7 +35,7 @@ test_that("Stan pstep_lcdf matches R pdiscretestep at the bin edges", {
 })
 
 test_that(
-  "Stan pstep_lcdf agrees with R pdiscretestep in an eps neighbourhood of every edge",
+  "Stan pstep_lcdf agrees with R pdiscretestep around every edge",
   {
     # Probes the exact failure mode of the old bug: at `t = b_{i+1}`
     # Stan should still report the cumulative mass *up to and including*

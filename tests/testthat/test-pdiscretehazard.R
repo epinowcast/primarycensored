@@ -6,23 +6,29 @@ test_that("pdiscretehazard carries name attribute", {
 # These identity tests assert the wrapper relationship across the p/d/r
 # family in one loop; the underlying behaviour and edge cases are
 # exercised in test-pdiscretestep.R rather than duplicated here.
-test_that("discretehazard p/d/r equal the step equivalents under hazards_to_pmf", {
+test_that("discretehazard p, d and r equal the step versions of the pmf", {
   hazards <- c(0.3, 0.5, 1)
   boundaries <- 0:3
   pmf <- hazards_to_pmf(hazards)
   q <- c(-0.5, 0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5)
   identities <- list(
-    p = function() list(
-      pdiscretehazard(q, boundaries, hazards),
-      pdiscretestep(q, boundaries, pmf)
-    ),
-    d = function() list(
-      ddiscretehazard(c(0, 1, 1.5, 2, 3), boundaries, hazards),
-      ddiscretestep(c(0, 1, 1.5, 2, 3), boundaries, pmf)
-    ),
+    p = function() {
+      list(
+        pdiscretehazard(q, boundaries, hazards),
+        pdiscretestep(q, boundaries, pmf)
+      )
+    },
+    d = function() {
+      list(
+        ddiscretehazard(c(0, 1, 1.5, 2, 3), boundaries, hazards),
+        ddiscretestep(c(0, 1, 1.5, 2, 3), boundaries, pmf)
+      )
+    },
     r = function() {
-      set.seed(1); s_h <- rdiscretehazard(20, boundaries, hazards)
-      set.seed(1); s_p <- rdiscretestep(20, boundaries, pmf)
+      set.seed(1)
+      s_h <- rdiscretehazard(20, boundaries, hazards)
+      set.seed(1)
+      s_p <- rdiscretestep(20, boundaries, pmf)
       list(s_h, s_p)
     }
   )
@@ -69,10 +75,10 @@ test_that("default boundaries are 0:length(hazards) when omitted", {
 })
 
 test_that(".resolve_hazard_prior ignores unknown components", {
-  out <- primarycensored:::.resolve_hazard_prior(
+  out <- .resolve_hazard_prior(
     list(unknown = list(mean = 99))
   )
-  defaults <- primarycensored:::.resolve_hazard_prior(NULL)
+  defaults <- .resolve_hazard_prior(NULL)
   expect_identical(out, defaults)
 })
 

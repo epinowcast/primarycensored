@@ -162,7 +162,7 @@ discretehazard_start <- function(K, alpha = -2, log_sigma = log(1),
     )
   }
   eps_list <- if (n_eps > 0L) {
-    stats::setNames(
+    setNames(
       as.list(eps_vec),
       paste0("eps_", seq_len(n_eps))
     )
