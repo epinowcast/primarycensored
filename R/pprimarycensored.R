@@ -125,7 +125,7 @@ pprimarycensored <- function(
     pwindow = 1,
     L = -Inf,
     D = Inf,
-    dprimary = stats::dunif,
+    dprimary = dunif,
     primary_args = NULL,
     pprimary = NULL,
     dprimary_args = NULL,

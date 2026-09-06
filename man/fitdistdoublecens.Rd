@@ -12,7 +12,7 @@ fitdistdoublecens(
   pwindow = "pwindow",
   L = "L",
   D = "D",
-  dprimary = stats::dunif,
+  dprimary = dunif,
   primary_args = NULL,
   pprimary = NULL,
   dprimary_args = NULL,

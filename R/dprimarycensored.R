@@ -90,7 +90,7 @@ dprimarycensored <- function(
     swindow = 1,
     L = -Inf,
     D = Inf,
-    dprimary = stats::dunif,
+    dprimary = dunif,
     primary_args = NULL,
     pprimary = NULL,
     dprimary_args = NULL,
@@ -171,7 +171,7 @@ dprimarycensored <- function(
   )
 
   # Create a lookup table for CDFs
-  cdf_lookup <- stats::setNames(cdfs, as.character(unique_points))
+  cdf_lookup <- setNames(cdfs, as.character(unique_points))
 
   result <- vapply(
     seq_along(x),
