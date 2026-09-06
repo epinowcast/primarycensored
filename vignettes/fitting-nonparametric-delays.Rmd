@@ -309,9 +309,10 @@ The hazard fit avoids this because it parameterises the simplex through unconstr
 
 # Fitting via Stan
 
-The package model returned by `pcd_cmdstan_model()` accepts a `dist_options` block that selects either `dist_id = 26` (Dirichlet on the PMF) or `dist_id = 27` (logit-hazard model) directly, with `boundaries` carried as data and the simplex or hazard transform constructed inside the Stan model.
-For the hazard family the variant is picked by `hazard_model = "rw"` or `"re"`, matching the MLE interface.
-We use the same model object for all three fits below; only the `dist_options` argument to `pcd_as_stan_data()` changes.
+The package model returned by `pcd_cmdstan_model()` fits the non-parametric families directly.
+`dist_id = 26` selects the Dirichlet prior on the PMF, `dist_id = 27` the logit-hazard random walk and `dist_id = 28` the logit-hazard random effect.
+The bin `boundaries` are carried as data through `dist_options` and the simplex or hazard transform is constructed inside the Stan model.
+We use the same model object for all three fits below; only the `dist_id` and `priors` arguments to `pcd_as_stan_data()` change.
 We aggregate to unique `(pwindow, D, delay, delay_upper)` rows for efficiency.
 
 ```{r aggregate}
@@ -328,7 +329,7 @@ np_model <- pcd_cmdstan_model()
 ```
 
 The non-parametric family is picked via `dist_id` (`26` for the Dirichlet/simplex prior, `27` for the random-walk hazard, `28` for the random-effect hazard); `dist_options` carries only the shape (`K` and `boundaries`).
-Priors flow through the regular `priors` argument, with semantics that depend on `dist_id`: for `dist_id = 26` the length-`K` `priors$scale` is the Dirichlet concentration; for `dist_id = 27` and `28` the length-`2` `priors$location` and `priors$scale` give the mean and sd for `alpha` and `log_sigma` respectively.
+Priors flow through the regular `priors` argument, with semantics that depend on `dist_id`: for `dist_id = 26` the length-`K` `priors$scale` is the Dirichlet concentration; for `dist_id = 27` and `28` the length-`2` `priors$location` and `priors$scale` give the mean and standard deviation for `alpha` and `log_sigma` respectively.
 We define a small helper to keep the three setups DRY.
 
 ```{r np-helper}
