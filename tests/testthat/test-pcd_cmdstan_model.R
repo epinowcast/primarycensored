@@ -407,6 +407,69 @@ test_that("pcd_cmdstan_model recovers true values with no bound on D", {
 })
 
 test_that(
+  "pcd_cmdstan_model fits non-parametric delays via the package model",
+  {
+    set.seed(2024)
+    K <- 4
+    boundaries <- 0:K
+    true_pmf <- c(0.1, 0.4, 0.3, 0.2)
+    delays <- rpcens(
+      300,
+      rdiscretestep,
+      boundaries = boundaries, pmf = true_pmf,
+      pwindow = 1, swindow = 1, D = K
+    )
+    delay_data <- data.frame(
+      delay = delays,
+      delay_upper = delays + 1,
+      pwindow = 1,
+      relative_obs_time = K
+    )
+    # Drop delay = 1 to avoid log(0) on the lower edge of the analytic step
+    # CDF (tracked as a follow-up to the convolution semantics).
+    delay_data <- delay_data[delay_data$delay > 1, ]
+    delay_counts <- delay_data |>
+      dplyr::summarise(
+        n = dplyr::n(),
+        .by = c(pwindow, relative_obs_time, delay, delay_upper)
+      )
+
+    empty_bounds <- list(lower = numeric(0), upper = numeric(0))
+    empty_priors <- list(location = numeric(0), scale = numeric(0))
+    np_opts <- list(K = K, boundaries = boundaries)
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    # Each row picks the np family by dist_id and exercises the fit.
+    np_specs <- list(
+      list(dist_id = 26L, seed = 1, weight_var = "np_pmf"),
+      list(dist_id = 27L, seed = 2, weight_var = "np_weights"),
+      list(dist_id = 28L, seed = 3, weight_var = "np_weights")
+    )
+    for (spec in np_specs) {
+      stan_data <- pcd_as_stan_data(
+        delay_counts,
+        dist_id = spec$dist_id, primary_id = 1,
+        param_bounds = empty_bounds,
+        primary_param_bounds = empty_bounds,
+        priors = empty_priors, primary_priors = empty_priors,
+        dist_options = np_opts
+      )
+      expect_identical(stan_data$dist_id, spec$dist_id)
+      fit <- suppressMessages(suppressWarnings(model$sample(
+        data = stan_data, seed = spec$seed, chains = 1,
+        iter_warmup = 200, iter_sampling = 200,
+        refresh = 0, show_messages = FALSE
+      )))
+      s <- fit$summary(
+        variables = paste0(spec$weight_var, "[", seq_len(K), "]")
+      )
+      expect_identical(nrow(s), as.integer(K))
+      expect_true(all(is.finite(s$mean)),
+                  info = sprintf("dist_id %d", spec$dist_id))
+    }
+  }
+)
+
+test_that(
   "pcd_cmdstan_model recovers true values for a signed-support delay
    (normal) with negative observed delays",
   {

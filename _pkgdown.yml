@@ -37,6 +37,8 @@ navbar:
         href: articles/fitting-dists-with-stan.html
       - text: "Fitting distributions using primarycensored and fitdistrplus"
         href: articles/fitting-dists-with-fitdistrplus.html
+      - text: "Fitting non-parametric delay distributions"
+        href: articles/fitting-nonparametric-delays.html
       - text: "──── Stan development ────"
         href: null
       - text: "How to use primarycensored with Stan"
@@ -55,6 +57,13 @@ reference:
   desc: Probability density and random generation functions for primary event distributions
   contents:
   - has_concept("primaryeventdistributions")
+- title: Non-parametric delay distributions
+  desc: >
+    Step-CDF (direct PMF) and discrete-time hazard parameterisations
+    for non-parametric delay distributions, with conversion utilities.
+  contents:
+  - has_concept("pdiscretestep")
+  - has_concept("pdiscretehazard")
 - title: Primary censored distribution class and methods
   desc: S3 class and methods for computing primary event censored distributions, focusing on the internal machinery used by the package. Unlike the primary event distributions section which deals with specific distribution functions, this section covers the general framework for handling censored distributions.
   contents:

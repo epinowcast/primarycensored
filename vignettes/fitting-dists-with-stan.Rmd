@@ -47,9 +47,9 @@ Alongside the `primarycensored` package we will use the `cmdstanr` package for i
 
 ```{r setup, message = FALSE}
 library(primarycensored)
-library(cmdstanr)
-library(ggplot2)
-library(dplyr)
+library(cmdstanr) # nolint: missing_package_linter, object_usage_linter.
+library(ggplot2) # nolint: object_usage_linter.
+library(dplyr) # nolint: object_usage_linter.
 ```
 
 # Simulating censored and truncated delay distribution data
@@ -220,6 +220,7 @@ We'll now fit an improved model using the `primarycensored` package. The main im
 writeLines(
   "
   functions {
+    #include nonparametric.stan
     #include primarycensored.stan
     // These functions are required for the primarycensored_lpdf function
     #include primarycensored_ode.stan

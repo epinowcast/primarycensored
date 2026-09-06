@@ -32,6 +32,15 @@ if (!on_ci() || not_on_cran()) {
         )
       )
       model$expose_functions(global = TRUE)
+      # The Stan helper `hazards_to_pmf` has the same name as the R-side
+      # function but a different contract (Stan takes the full K-vector
+      # of hazards with the final entry already pinned to 1; R appends
+      # the trailing 1 if missing and validates inputs). Globally
+      # exposing the Stan version shadows the R one in tests, so we
+      # remove it from the global env to restore the R lookup.
+      if (exists("hazards_to_pmf", envir = .GlobalEnv, inherits = FALSE)) {
+        rm("hazards_to_pmf", envir = .GlobalEnv)
+      }
     }
   }
 }

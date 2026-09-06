@@ -399,3 +399,308 @@ test_that("new_pcens works with custom function with name attribute", {
   # Check arguments are preserved
   expect_identical(obj$args, list(shape = 2, rate = 1))
 })
+
+test_that("pcens_cdf.pcens_pdiscretestep_dunif dispatches and returns [0,1]", {
+  boundaries <- 0:3
+  pmf <- c(0.2, 0.5, 0.3)
+  obj <- new_pcens(
+    pdiscretestep,
+    dunif,
+    list(),
+    boundaries = boundaries,
+    pmf = pmf
+  )
+  expect_s3_class(obj, "pcens_pdiscretestep_dunif")
+  expect_s3_class(obj, "pcens_pdiscretestep")
+  expect_s3_class(obj, "pcens")
+  q_values <- seq(0, 4, by = 0.5)
+  result <- pcens_cdf(obj, q = q_values, pwindow = 1)
+  expect_true(all(result >= 0 & result <= 1))
+  expect_true(all(diff(result) >= 0))
+})
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep_dunif analytic matches numeric integration",
+  {
+    boundaries <- 0:3
+    pmf <- c(0.2, 0.5, 0.3)
+    obj <- new_pcens(
+      pdiscretestep,
+      dunif,
+      list(),
+      boundaries = boundaries,
+      pmf = pmf
+    )
+    pwindow <- 1
+    # Compute analytic result at points not on boundaries
+    q_values <- c(0.3, 0.7, 1.2, 1.7, 2.2, 2.7)
+    analytic <- pcens_cdf(obj, q = q_values, pwindow = pwindow)
+    # Compute numeric reference by hand:
+    # F_obs(q) = (1/pwindow) * integrate F_step(q-p) dp from 0 to pwindow
+    numeric_ref <- vapply(q_values, function(qi) {
+      stats::integrate(
+        function(p) pdiscretestep(qi - p, boundaries, pmf),
+        lower = 0,
+        upper = pwindow
+      )$value / pwindow
+    }, numeric(1))
+    expect_equal(analytic, numeric_ref, tolerance = 1e-8)
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for bins wider
+   than pwindow",
+  {
+    # Bin widths 3, 1 and 3 with pwindow 1 (uniform) and pwindow 2
+    # (exponential growth): the knot partition is exact for any width.
+    boundaries <- c(0, 3, 4, 7)
+    pmf <- c(0.5, 0.2, 0.3)
+    q_values <- c(0.5, 1, 2.5, 3.2, 3.9, 4.5, 6.5, 7.5)
+    obj_unif <- new_pcens(
+      pdiscretestep, dunif, list(),
+      boundaries = boundaries, pmf = pmf
+    )
+    expect_equal(
+      pcens_cdf(obj_unif, q = q_values, pwindow = 1),
+      pcens_cdf(obj_unif, q = q_values, pwindow = 1, use_numeric = TRUE),
+      tolerance = 1e-8
+    )
+    obj_exp <- new_pcens(
+      pdiscretestep, dexpgrowth, list(r = 0.4),
+      boundaries = boundaries, pmf = pmf
+    )
+    # The numeric reference integrates a discontinuous integrand, so it
+    # is only accurate to about 1e-5 here.
+    expect_equal(
+      pcens_cdf(obj_exp, q = q_values, pwindow = 2),
+      pcens_cdf(obj_exp, q = q_values, pwindow = 2, use_numeric = TRUE),
+      tolerance = 1e-4
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for pwindow
+   narrower than the bins",
+  {
+    # Daily bins with a half-day primary window.
+    boundaries <- 0:5
+    pmf <- c(0.1, 0.3, 0.3, 0.2, 0.1)
+    q_values <- seq(0.25, 5.25, by = 0.5)
+    obj <- new_pcens(
+      pdiscretestep, dunif, list(),
+      boundaries = boundaries, pmf = pmf
+    )
+    expect_equal(
+      pcens_cdf(obj, q = q_values, pwindow = 0.5),
+      pcens_cdf(obj, q = q_values, pwindow = 0.5, use_numeric = TRUE),
+      tolerance = 1e-8
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for boundaries
+   starting below zero",
+  {
+    boundaries <- -2:3
+    pmf <- c(0.1, 0.2, 0.3, 0.25, 0.15)
+    q_values <- c(-1.5, -1, -0.5, 0, 0.5, 1.5, 2.5, 3.5)
+    obj <- new_pcens(
+      pdiscretestep, dunif, list(),
+      boundaries = boundaries, pmf = pmf
+    )
+    analytic <- pcens_cdf(obj, q = q_values, pwindow = 1)
+    numeric <- pcens_cdf(obj, q = q_values, pwindow = 1, use_numeric = TRUE)
+    expect_equal(analytic, numeric, tolerance = 1e-8)
+    # Mass below zero is visible for negative q.
+    expect_gt(analytic[[3]], 0)
+  }
+)
+
+test_that("pcens_cdf.pcens_pdiscretestep_dunif handles two-bin PMF correctly", {
+  # Simplest case: two bins, pwindow = 1, hand-computed
+  # boundaries = 0:2, pmf = c(0.4, 0.6)
+  # right edges: 1, 2
+  # F_step: 0 for q < 1, 0.4 for 1 <= q < 2, 1 for q >= 2
+  # F_obs(q) = (1/1) * integral_0^1 F_step(q-p) dp
+  # For q = 1.5: integral_0^1 F_step(1.5-p) dp
+  #   F_step(1.5-p): p in [0, 0.5] -> 1.5-p in [1,1.5] -> F=0.4
+  #                  p in (0.5, 1] -> 1.5-p in [0.5,1) -> F=0
+  #   = 0.4 * 0.5 + 0 * 0.5 = 0.2
+  boundaries <- 0:2
+  pmf <- c(0.4, 0.6)
+  obj <- new_pcens(
+    pdiscretestep,
+    dunif,
+    list(),
+    boundaries = boundaries,
+    pmf = pmf
+  )
+  result <- pcens_cdf(obj, q = 1.5, pwindow = 1)
+  expect_equal(result, 0.2, tolerance = 1e-10)
+})
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep analytic matches numeric for expgrowth",
+  {
+    boundaries <- 0:3
+    pmf <- c(0.2, 0.5, 0.3)
+    pwindow <- 1
+    r <- 0.5
+    obj <- new_pcens(
+      pdiscretestep,
+      dexpgrowth,
+      list(r = r),
+      boundaries = boundaries,
+      pmf = pmf
+    )
+    # Verify pprimary was found in registry
+    expect_false(is.null(obj$pprimary))
+
+    q_values <- c(0.3, 0.7, 1.2, 1.7, 2.2, 2.7)
+    analytic <- pcens_cdf(obj, q = q_values, pwindow = pwindow)
+
+    # Reference: partition integral using pexpgrowth directly
+    ref <- vapply(q_values, function(qi) {
+      K <- length(pmf)
+      cum_pmf <- cumsum(pmf)
+      right_edges <- boundaries[-1L]
+      .fstep <- function(x) {
+        idx <- findInterval(x, right_edges, left.open = FALSE)
+        if (idx == 0L) 0 else if (idx >= K) 1 else cum_pmf[idx]
+      }
+      p_knots <- qi - right_edges
+      inside <- p_knots[p_knots > 0 & p_knots < pwindow]
+      breaks <- sort(unique(c(0, inside, pwindow)))
+      total <- 0
+      for (j in seq_len(length(breaks) - 1L)) {
+        a <- breaks[j]
+        b <- breaks[j + 1L]
+        if ((b - a) <= 0) next
+        mid <- 0.5 * (a + b)
+        c_k <- .fstep(qi - mid)
+        total <- total + c_k * (
+          pexpgrowth(b, min = 0, max = pwindow, r = r) -
+            pexpgrowth(a, min = 0, max = pwindow, r = r)
+        )
+      }
+      total
+    }, numeric(1))
+
+    expect_equal(analytic, ref, tolerance = 1e-8)
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep falls back to default when use_numeric",
+  {
+    boundaries <- 0:3
+    pmf <- c(0.2, 0.5, 0.3)
+    obj <- new_pcens(
+      pdiscretestep,
+      dunif,
+      list(),
+      boundaries = boundaries,
+      pmf = pmf
+    )
+    analytic <- pcens_cdf(obj, q = 1.5, pwindow = 1)
+    numeric <- pcens_cdf(obj, q = 1.5, pwindow = 1, use_numeric = TRUE)
+    expect_equal(analytic, numeric, tolerance = 1e-8)
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep falls back when no pprimary on object",
+  {
+    # Custom dprimary with no name attribute and not in the registry: the
+    # registry lookup returns NULL so the analytic step method must fall
+    # back to numeric integration.
+    custom_dprim <- function(x, min = 0, max = 1) {
+      stats::dunif(x, min = min, max = max)
+    }
+    obj <- new_pcens(
+      pdiscretestep,
+      custom_dprim,
+      list(),
+      boundaries = 0:3,
+      pmf = c(0.2, 0.5, 0.3)
+    )
+    expect_null(obj$pprimary)
+    expect_no_error(pcens_cdf(obj, q = 1.5, pwindow = 1))
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretestep errors when boundaries or pmf missing",
+  {
+    obj <- new_pcens(pdiscretestep, dunif, list())
+    expect_error(
+      pcens_cdf(obj, q = 1, pwindow = 1),
+      "boundaries and pmf"
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretehazard errors when hazards missing",
+  {
+    obj <- new_pcens(pdiscretehazard, dunif, list())
+    expect_error(
+      pcens_cdf(obj, q = 1, pwindow = 1),
+      "hazards are required"
+    )
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretehazard with use_numeric uses default method",
+  {
+    hazards <- c(0.2, 0.3, 1)
+    obj <- new_pcens(
+      pdiscretehazard, dunif, list(),
+      boundaries = 0:3, hazards = hazards
+    )
+    # `use_numeric = TRUE` skips the cached hazards->pmf path and runs
+    # `pcens_cdf.default`, which calls `object$pdist` directly.
+    res <- pcens_cdf(obj, q = c(0.5, 1.5), pwindow = 1, use_numeric = TRUE)
+    expect_length(res, 2)
+    expect_true(all(res >= 0 & res <= 1))
+  }
+)
+
+test_that(
+  "pcens_cdf.pcens_pdiscretehazard dispatch chain is correct",
+  {
+    hazards <- c(0.2, 0.3, 1)
+    boundaries <- 0:3
+    pmf_equiv <- hazards_to_pmf(hazards)
+    pwindow <- 1
+
+    obj_haz <- new_pcens(
+      pdiscretehazard,
+      dunif,
+      list(),
+      boundaries = boundaries,
+      hazards = hazards
+    )
+    expect_s3_class(obj_haz, "pcens_pdiscretehazard_dunif")
+    expect_s3_class(obj_haz, "pcens_pdiscretehazard")
+    expect_s3_class(obj_haz, "pcens")
+
+    obj_step <- new_pcens(
+      pdiscretestep,
+      dunif,
+      list(),
+      boundaries = boundaries,
+      pmf = pmf_equiv
+    )
+
+    q_values <- c(0.5, 1, 1.5, 2, 2.5)
+    result_haz <- pcens_cdf(obj_haz, q = q_values, pwindow = pwindow)
+    result_step <- pcens_cdf(obj_step, q = q_values, pwindow = pwindow)
+
+    expect_equal(result_haz, result_step, tolerance = 1e-12)
+  }
+)

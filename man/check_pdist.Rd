@@ -30,8 +30,8 @@ checking if it's monotonically increasing and bounded between 0 and 1.
 check_pdist(pnorm, D = 10)
 }
 \seealso{
-Distribution checking functions
-\code{\link{check_dprimary}()},
-\code{\link{check_truncation}()}
+Distribution checking functions:
+\code{\link[=check_dprimary]{check_dprimary()}},
+\code{\link[=check_truncation]{check_truncation()}}
 }
 \concept{check}

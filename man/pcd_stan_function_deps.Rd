@@ -33,11 +33,11 @@ pcd_stan_function_deps("primarycensored_lpmf")
 pcd_stan_function_deps("expgrowth_pdf")
 }
 \seealso{
-Tools for working with package Stan functions
-\code{\link{pcd_load_stan_functions}()},
-\code{\link{pcd_stan_dist_id}()},
-\code{\link{pcd_stan_files}()},
-\code{\link{pcd_stan_functions}()},
-\code{\link{pcd_stan_path}()}
+Tools for working with package Stan functions:
+\code{\link[=pcd_load_stan_functions]{pcd_load_stan_functions()}},
+\code{\link[=pcd_stan_dist_id]{pcd_stan_dist_id()}},
+\code{\link[=pcd_stan_files]{pcd_stan_files()}},
+\code{\link[=pcd_stan_functions]{pcd_stan_functions()}},
+\code{\link[=pcd_stan_path]{pcd_stan_path()}}
 }
 \concept{stantools}

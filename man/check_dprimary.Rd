@@ -20,10 +20,7 @@ functions if they wish to leverage analytical solutions.}
 
 \item{pwindow}{Primary event window}
 
-\item{dprimary_args}{List of additional arguments to be passed to
-dprimary. For example, when using \code{dexpgrowth}, you would
-pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
-and rate parameters}
+\item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
 \item{tolerance}{The tolerance for the integral to be considered close to 1}
 }
@@ -40,8 +37,8 @@ and if it takes the arguments min and max.
 check_dprimary(dunif, pwindow = 1)
 }
 \seealso{
-Distribution checking functions
-\code{\link{check_pdist}()},
-\code{\link{check_truncation}()}
+Distribution checking functions:
+\code{\link[=check_pdist]{check_pdist()}},
+\code{\link[=check_truncation]{check_truncation()}}
 }
 \concept{check}

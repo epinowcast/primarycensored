@@ -70,7 +70,7 @@ test_that(
       x_values, plnorm, pwindow,
       D = D,
       dprimary = dexpgrowth,
-      dprimary_args = list(r = r),
+      primary_args = list(r = r),
       meanlog = 1.5, sdlog = 0.5
     )
     theoretical_mean <- sum(x_values * pmf)
@@ -84,7 +84,7 @@ test_that(
       c(x_values[-1], D), plnorm,
       pwindow = pwindow, D = D,
       dprimary = dexpgrowth,
-      dprimary_args = list(r = r),
+      primary_args = list(r = r),
       meanlog = 1.5, sdlog = 0.5
     )
     expect_equal(empirical_cdf, theoretical_cdf, tolerance = 0.01)
@@ -120,7 +120,7 @@ test_that(
     pmf <- dpcens(
       x_values, pweibull, pwindow, swindow,
       dprimary = dexpgrowth,
-      dprimary_args = list(r = 0.5),
+      primary_args = list(r = 0.5),
       D = D, shape = shape, scale = scale
     )
     theoretical_mean <- sum(x_values * pmf)
@@ -140,7 +140,7 @@ test_that(
       c(x_values[-1], D), pweibull,
       pwindow = pwindow, D = D,
       dprimary = dexpgrowth,
-      dprimary_args = list(r = 0.5),
+      primary_args = list(r = 0.5),
       shape = shape, scale = scale
     )
     expect_equal(cumsum(pmf), theoretical_cdf, tolerance = 0.01)
@@ -277,7 +277,7 @@ test_that(
       x_values, plnorm, pwindow,
       D = D, L = L,
       dprimary = dexpgrowth,
-      dprimary_args = list(r = r),
+      primary_args = list(r = r),
       meanlog = 1.5, sdlog = 0.5
     )
     expect_equal(empirical_pmf, theoretical_pmf, tolerance = 0.02)
