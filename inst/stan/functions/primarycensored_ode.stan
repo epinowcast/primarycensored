@@ -46,6 +46,34 @@ int dist_has_positive_support(data int dist_id) {
 }
 
 /**
+  * Test whether `lognormal_lcdf` underflows to `-inf` at these arguments
+  * @ingroup delay_log_cdfs
+  *
+  * Underflow makes the autodiff partial `0 / 0`, and Stan's reverse pass
+  * chains that `NaN` into `mu` and `sigma` whatever weight the term is later
+  * given. Callers must therefore test this before calling `lognormal_lcdf`,
+  * rather than checking its result.
+  *
+  * The threshold is -38 on the standardised scale `(log(y) - mu) / sigma`,
+  * inside the region where the CDF is still representable: `log F(y)` is
+  * below -726 there, so a term dropped on this test cannot change a result
+  * at double precision.
+  *
+  * @param y Value at which the log CDF would be evaluated
+  * @param mu Location parameter on the log scale
+  * @param sigma Scale parameter on the log scale
+  *
+  * @return 1 if `lognormal_lcdf` would underflow or `y` is non-positive,
+  *   0 otherwise
+  */
+int lognormal_lcdf_underflows(real y, real mu, real sigma) {
+  if (y <= 0) {
+    return 1;
+  }
+  return (log(y) - mu) / sigma < -38 ? 1 : 0;
+}
+
+/**
   * Compute the log CDF of the delay distribution
   * @ingroup delay_log_cdfs
   *
@@ -82,7 +110,13 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   }
 
   // IDs match pcd_distributions$stan_id in R
-  if (dist_id == 1) return lognormal_lcdf(delay | params[1], params[2]);
+  // Guarded so a lower-tail underflow cannot put a NaN partial on the tape.
+  // The downstream `exp(-inf)` differentiates to 0.
+  if (dist_id == 1) {
+    return lognormal_lcdf_underflows(delay, params[1], params[2])
+           ? negative_infinity()
+           : lognormal_lcdf(delay | params[1], params[2]);
+  }
   else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
