@@ -28,7 +28,7 @@ Authors:
   \item James Mba Azam \email{james.azam@lshtm.ac.uk} (\href{https://orcid.org/0000-0001-5782-7330}{ORCID})
   \item Carl Pearson \email{carl.ab.pearson@gmail.com} (\href{https://orcid.org/0000-0003-0701-7860}{ORCID})
   \item Sebastian Funk \email{sebastian.funk@lshtm.ac.uk} (\href{https://orcid.org/0000-0002-2842-3406}{ORCID})
-  \item Kelly Charniga \email{ kelly.charniga@gmail.com} (\href{https://orcid.org/0000-0002-7648-7041}{ORCID})
+  \item Kelly Charniga \email{kelly.charniga@gmail.com} (\href{https://orcid.org/0000-0002-7648-7041}{ORCID})
 }
 
 Other contributors:

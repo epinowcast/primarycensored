@@ -36,7 +36,7 @@ cases.
 See \code{vignette("analytic-solutions")} for the derivation.
 }
 \examples{
-\dontshow{if (requireNamespace("flexsurv", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("flexsurv", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 pcens_obj <- new_pcens(
   pdist = flexsurv::pgengamma.orig,
   dprimary = dunif,
