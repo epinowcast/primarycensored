@@ -1,14 +1,3 @@
-# primarycensored 1.5.2.1000
-
-## New features
-
-- `pprimarycensored()`, `dprimarycensored()` and `qprimarycensored()` gain a `check` argument. It defaults to `TRUE`, which keeps the existing validation of `pdist` via `check_pdist()` and `dprimary` via `check_dprimary()`. Setting `check = FALSE` skips both, for callers that have already validated their functions. Because `check_pdist()` evaluates `pdist` at four points drawn with `runif()`, skipping it also leaves the random number stream untouched, so seeded code no longer depends on how many times these functions were called. `check` follows `...` so it must be given by its full name and cannot capture an argument intended for `pdist`. See #330.
-- `fitdistdoublecens()` gains a matching `check` argument.
-
-## Bug fixes
-
-- Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
-
 # primarycensored 1.5.2
 
 ## New features
@@ -19,11 +8,17 @@
   In Stan, `dist_lcdf()` now supports `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`) through a new `gengamma_lcdf()` function and `primarycensored_gengamma_uniform_lcdf()` provides the analytical solution used by `primarycensored_lpmf()` and related functions, including in `pcd_cmdstan_model()`.
   `flexsurv` has been added to `Suggests`.
 - Functions exported by other packages (for example `flexsurv::pgengamma.orig()`) are now identified by name when passed as `pdist` or `dprimary`, so analytical solutions are used without needing `add_name_attribute()`.
+- `pprimarycensored()`, `dprimarycensored()` and `qprimarycensored()` gain a `check` argument. It defaults to `TRUE`, which keeps the existing validation of `pdist` via `check_pdist()` and `dprimary` via `check_dprimary()`. Setting `check = FALSE` skips both, for callers that have already validated their functions. Because `check_pdist()` evaluates `pdist` at four points drawn with `runif()`, skipping it also leaves the random number stream untouched, so seeded code no longer depends on how many times these functions were called. `check` follows `...` so it must be given by its full name and cannot capture an argument intended for `pdist`. See #330.
+- `fitdistdoublecens()` gains a matching `check` argument.
 
 ## Documentation
 
 - Added the generalised gamma derivation to the "Analytic solutions" vignette.
   The gamma and Weibull solutions are recovered as special cases.
+
+## Bug fixes
+
+- Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
 
 # primarycensored 1.5.1
 
