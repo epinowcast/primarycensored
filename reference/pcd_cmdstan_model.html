@@ -41,6 +41,7 @@ user-specified Stan files."><meta property="og:image" content="https://primaryce
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -118,6 +119,7 @@ within chain parallelism).</p></li>
 <span class="r-in"><span>  <span class="va">model</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> functions {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include nonparametric.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_ode.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_analytical_cdf.stan</span>
@@ -152,7 +154,14 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real L;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   // upper truncation; +Inf for no upper truncation</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real D;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=25&gt; dist_id; // distribution identifier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Distribution identifier. 1..25 = parametric families. The</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // non-parametric step CDF has the same likelihood for all three of</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // the entries below; they only differ in the prior on the PMF /</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // hazards:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //   26 = step CDF, Dirichlet prior on the PMF;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //   27 = step CDF, Gaussian random walk on the logit hazards;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //   28 = step CDF, IID logit random effects on the hazards.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=28&gt; dist_id;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=2&gt; primary_id; // primary distribution identifier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_params; // number of distribution parameters</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_primary_params; // number of primary distribution parameters</span>
@@ -166,10 +175,42 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_params] real prior_scale; // scale parameters for priors</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_primary_params] real primary_prior_location; // location parameters for primary priors</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_primary_params] real primary_prior_scale; // scale parameters for primary priors</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Non-parametric block. `dist_id` (26/27/28) selects the family;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // priors flow through `np_*` data fields populated from R by</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // `pcd_as_stan_data()` from the user-facing `priors` argument.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //   dist_id == 26: Dirichlet on the simplex (concentration in</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //                  `np_dirichlet_alpha`).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //   dist_id == 27: Gaussian random walk on the logit hazards</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //                  (`alpha ~ N(mean, sd)`, `log_sigma ~ N(mean, sd)`).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //   dist_id == 28: IID logit random effects on the hazards (same</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   //                  priors as 27).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0, upper=1&gt; nonparametric;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; K_np; // number of bins</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[K_np + 1] np_boundaries; // bin boundaries (length K_np + 1)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=0&gt;[K_np] np_dirichlet_alpha; // Dirichlet concentration</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real np_alpha_mean; // hazard intercept prior mean (logit scale)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real&lt;lower=0&gt; np_alpha_sd; // hazard intercept prior sd</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real np_log_sigma_mean; // log_sigma prior mean</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   real&lt;lower=0&gt; np_log_sigma_sd; // log_sigma prior sd</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> transformed data {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] int indexes = linspaced_int_array(N, 1, N);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Sizes for the non-parametric parameter branches. Exactly one is K_np;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // both are 0 when nonparametric = 0. Stan forbids `simplex[0]`, so we</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // pad to size 1 when the simplex branch is inactive and ignore it.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int simplex_active = (nonparametric == 1 &amp;&amp; dist_id == 26) ? 1 : 0;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int K_simplex = simplex_active == 1 ? K_np : 1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Both hazard parameterisations share the same set of unconstrained</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // parameters (alpha, sigma, eps_1..eps_{K-1}); they only differ in</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // how `np_weights` is assembled in `transformed parameters`.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int K_hazard = (nonparametric == 1 &amp;&amp; (dist_id == 27</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                   || dist_id == 28)) ? K_np : 0;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int n_eps = K_hazard &gt; 0 ? K_hazard - 1 : 0;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Length of the params array consumed by primarycensored_lpmf:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // - parametric path: n_params</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // - non-parametric: 2 * K_np + 1 = (K_np + 1) boundaries + K_np weights</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int n_lpmf_params = nonparametric == 1 ? 2 * K_np + 1 : n_params;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   for (i in 1:N) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     if (d[i] &lt; L[i]) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       reject("d[", i, "] = ", d[i], " is below the lower truncation L[", i,</span>
@@ -185,8 +226,50 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span> parameters {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=param_lower_bounds, upper=param_upper_bounds&gt;[n_params] params; // distribution parameters</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   vector&lt;lower=primary_param_lower_bounds, upper=primary_param_upper_bounds&gt;[n_primary_params] primary_params; // primary distribution parameters</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Non-parametric parameters. At most one branch is active (size &gt; 0).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   simplex[K_simplex] np_pmf;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[K_hazard &gt; 0 ? 1 : 0] real np_alpha;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[K_hazard &gt; 0 ? 1 : 0] real&lt;lower=0&gt; np_sigma;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[n_eps] np_eps;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> transformed parameters {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Assemble the array consumed by primarycensored_lpmf. For parametric</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // distributions this is just the parametric `params`; for dist_id</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // 26/27/28 it is [boundaries (K_np + 1), pmf or hazards (K_np)].</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   array[n_lpmf_params] real lpmf_params;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   vector[K_np] np_weights; // pmf for dist_id 26, hazards for 27/28</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   if (nonparametric == 1) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     if (dist_id == 26) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       np_weights = np_pmf;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     } else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // Build hazards on the logit scale, pinning the final hazard to 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // so the implied PMF sums to 1. dist_id == 27 uses a Gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // random walk (logit(h_i) = logit(h_{i-1}) + sigma * eps_i);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // dist_id == 28 uses IID logit random effects around the</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // intercept (logit(h_i) = alpha + sigma * eps_i, eps_i ~ N(0, 1)).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       vector[K_np] logit_h;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       logit_h[1] = np_alpha[1];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       if (K_np &gt; 1) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         if (dist_id == 27) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           for (i in 2:K_np) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             logit_h[i] = logit_h[i - 1] + np_sigma[1] * np_eps[i - 1];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         } else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           for (i in 2:K_np) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>             logit_h[i] = np_alpha[1] + np_sigma[1] * np_eps[i - 1];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>           }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       np_weights = inv_logit(logit_h);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       np_weights[K_np] = 1;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (k in 1:(K_np + 1)) lpmf_params[k] = np_boundaries[k];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     for (k in 1:K_np) lpmf_params[K_np + 1 + k] = np_weights[k];</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   } else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     lpmf_params = to_array_1d(params);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> model {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   // Priors</span>
@@ -201,16 +284,27 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   if (nonparametric == 1) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     if (dist_id == 26) {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       np_pmf ~ dirichlet(np_dirichlet_alpha);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     } else {</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       // Shared priors for both hazard parameterisations (RW and RE).</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       np_alpha[1] ~ normal(np_alpha_mean, np_alpha_sd);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       log(np_sigma[1]) ~ normal(np_log_sigma_mean, np_log_sigma_sd);</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       target += -log(np_sigma[1]); // Jacobian for log transform</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       np_eps ~ std_normal();</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   // Likelihood</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   if (use_reduce_sum) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     target += reduce_sum(partial_sum, indexes, 1, d,</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                          d_upper, n, pwindow, L, D, dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                          d_upper, n, pwindow, L, D, dist_id, lpmf_params,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                          primary_id, to_array_1d(primary_params));</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   } else {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:N) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       target += n[i] * primarycensored_lpmf(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, lpmf_params,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], L[i], D[i],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, to_array_1d(primary_params)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>
@@ -223,7 +317,7 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   if (compute_log_lik) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     for (i in 1:N) {</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       log_lik[i] = primarycensored_lpmf(</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, to_array_1d(params),</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>         d[i] | dist_id, lpmf_params,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         pwindow[i], d_upper[i], L[i], D[i],</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>         primary_id, to_array_1d(primary_params)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>       );</span>

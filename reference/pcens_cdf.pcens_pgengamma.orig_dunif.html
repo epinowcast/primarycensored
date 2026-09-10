@@ -57,6 +57,7 @@ See vignette("analytic-solutions") for the derivation.'><meta property="og:image
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -136,6 +137,8 @@ breaks down.</p></dd>
 <code><a href="new_pcens.html">new_pcens()</a></code>,
 <code><a href="pcens_cdf.html">pcens_cdf()</a></code>,
 <code><a href="pcens_cdf.default.html">pcens_cdf.default()</a></code>,
+<code><a href="pcens_cdf.pcens_pdiscretehazard.html">pcens_cdf.pcens_pdiscretehazard()</a></code>,
+<code><a href="pcens_cdf.pcens_pdiscretestep.html">pcens_cdf.pcens_pdiscretestep()</a></code>,
 <code><a href="pcens_cdf.pcens_pgamma_dunif.html">pcens_cdf.pcens_pgamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
@@ -154,6 +157,9 @@ breaks down.</p></dd>
 <span class="r-in"><span>  scale <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>  k <span class="op">=</span> <span class="fl">0.8</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>The `dprimary_args` argument of `new_pcens()` is deprecated as of</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> primarycensored 1.6.0.</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> Please use the `primary_args` argument instead.</span>
 <span class="r-in"><span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">pcens_obj</span>, q <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span>, pwindow <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.1940835 0.9298869 0.9995685</span>
 </code></pre></div>

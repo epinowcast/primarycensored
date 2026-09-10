@@ -1,7 +1,7 @@
 # Extract and Combine Distribution Names
 
 This helper function attempts to determine distribution names and uses
-those to establish a class name for potential analytical solutions.
+those to establish a class hierarchy for potential analytical solutions.
 
 ## Usage
 
@@ -39,4 +39,5 @@ those to establish a class name for potential analytical solutions.
 
 ## Value
 
-a character string representing the combined distribution class
+A character vector of class names: specific (delay + primary),
+delay-only, and base class.

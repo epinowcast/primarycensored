@@ -29,6 +29,30 @@ distributions
   [`rexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md)
   : Exponential growth distribution functions
 
+## Non-parametric delay distributions
+
+Step-CDF (direct PMF) and discrete-time hazard parameterisations for
+non-parametric delay distributions, with conversion utilities.
+
+- [`ddiscretestep()`](https://primarycensored.epinowcast.org/reference/ddiscretestep.md)
+  : Step (piecewise-constant) PMF
+- [`hazards_to_pmf()`](https://primarycensored.epinowcast.org/reference/hazards_to_pmf.md)
+  : Convert discrete-time hazards to a PMF
+- [`pdiscretestep()`](https://primarycensored.epinowcast.org/reference/pdiscretestep.md)
+  : Step (piecewise-constant) CDF
+- [`pmf_to_hazards()`](https://primarycensored.epinowcast.org/reference/pmf_to_hazards.md)
+  : Convert a PMF to discrete-time hazards
+- [`rdiscretestep()`](https://primarycensored.epinowcast.org/reference/rdiscretestep.md)
+  : Sample from a step distribution
+- [`ddiscretehazard()`](https://primarycensored.epinowcast.org/reference/ddiscretehazard.md)
+  : Hazard-parameterised piecewise-constant PMF
+- [`discretehazard_start()`](https://primarycensored.epinowcast.org/reference/discretehazard_start.md)
+  : Start values for the logit-hazard parameterisation
+- [`pdiscretehazard()`](https://primarycensored.epinowcast.org/reference/pdiscretehazard.md)
+  : Hazard-parameterised piecewise-constant CDF
+- [`rdiscretehazard()`](https://primarycensored.epinowcast.org/reference/rdiscretehazard.md)
+  : Sample from a hazard-parameterised step distribution
+
 ## Primary censored distribution class and methods
 
 S3 class and methods for computing primary event censored distributions,
@@ -43,6 +67,10 @@ handling censored distributions.
   : Compute primary event censored CDF
 - [`pcens_cdf(`*`<default>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.default.md)
   : Default method for computing primary event censored CDF
+- [`pcens_cdf(`*`<pcens_pdiscretehazard>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretehazard.md)
+  : Method for hazard CDF delay with general primary event distribution
+- [`pcens_cdf(`*`<pcens_pdiscretestep>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretestep.md)
+  : Method for step CDF delay with general primary event distribution
 - [`pcens_cdf(`*`<pcens_pgamma_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgamma_dunif.md)
   : Method for Gamma delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pgengamma.orig_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md)

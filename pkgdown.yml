@@ -6,10 +6,11 @@ articles:
   fitting-dists-with-fitdistrplus: fitting-dists-with-fitdistrplus.html
   fitting-dists-with-stan: fitting-dists-with-stan.html
   fitting-negative-support: fitting-negative-support.html
+  fitting-nonparametric-delays: fitting-nonparametric-delays.html
   primarycensored: primarycensored.html
   using-stan-tools: using-stan-tools.html
   why-it-works: why-it-works.html
-last_built: 2026-09-10T14:49Z
+last_built: 2026-09-10T20:07Z
 urls:
   reference: https://primarycensored.epinowcast.org/reference
   article: https://primarycensored.epinowcast.org/articles

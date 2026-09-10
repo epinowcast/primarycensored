@@ -41,6 +41,7 @@ and if it takes the arguments min and max."><meta property="og:image" content="h
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -99,10 +100,7 @@ functions if they wish to leverage analytical solutions.</p></dd>
 
 
 <dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
-<dd><p>List of additional arguments to be passed to
-dprimary. For example, when using <code>dexpgrowth</code>, you would
-pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
-and rate parameters</p></dd>
+<dd><p>[Deprecated] Use <code>primary_args</code> instead.</p></dd>
 
 
 <dt id="arg-tolerance">tolerance<a class="anchor" aria-label="anchor" href="#arg-tolerance"></a></dt>

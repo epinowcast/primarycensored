@@ -45,6 +45,7 @@ truncation (when events are only observed within a delay range [L, D])."><meta p
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -88,9 +89,14 @@ truncation (when events are only observed within a delay range [L, D]).</p>
 <span>  pwindow <span class="op">=</span> <span class="st">"pwindow"</span>,</span>
 <span>  L <span class="op">=</span> <span class="st">"L"</span>,</span>
 <span>  D <span class="op">=</span> <span class="st">"D"</span>,</span>
-<span>  dprimary <span class="op">=</span> <span class="fu">stats</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">dunif</a></span>,</span>
-<span>  dprimary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  dprimary <span class="op">=</span> <span class="va">dunif</span>,</span>
+<span>  primary_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pprimary <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  dprimary_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  truncation_check_multiplier <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  prior <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  hazard_model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rw"</span>, <span class="st">"re"</span><span class="op">)</span>,</span>
+<span>  check <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -107,17 +113,14 @@ upper or lower bounds.</p></dd>
 
 
 <dt id="arg-distr">distr<a class="anchor" aria-label="anchor" href="#arg-distr"></a></dt>
-<dd><p>A character string naming the distribution to be fitted. This
-should be the base name of a distribution with corresponding <code>d</code> (density)
-and <code>p</code> (cumulative distribution) functions available. For example, use
-<code>"gamma"</code> (which will use <code>dgamma</code> and <code>pgamma</code>), <code>"lnorm"</code> (for <code>dlnorm</code>
-and <code>plnorm</code>), <code>"weibull"</code>, <code>"norm"</code>, etc. Custom distributions can also
-be used as long as the corresponding <code>d&lt;distr&gt;()</code> and <code>p&lt;distr&gt;()</code>
-functions are defined and loaded.</p></dd>
+<dd><p>A character string naming the distribution to be fitted.
+Special values <code>"discretestep"</code> and <code>"discretehazard"</code> select the
+non-parametric step-distribution fitting; see Details.</p></dd>
 
 
 <dt id="arg-left">left<a class="anchor" aria-label="anchor" href="#arg-left"></a></dt>
-<dd><p>Column name for lower bound of observed values (default: "left").</p></dd>
+<dd><p>Column name for lower bound of observed values (default:
+"left").</p></dd>
 
 
 <dt id="arg-right">right<a class="anchor" aria-label="anchor" href="#arg-right"></a></dt>
@@ -140,7 +143,13 @@ day 0 is excluded, particularly when used in renewal models. (default:
 <dt id="arg-d">D<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
 <dd><p>Column name for maximum delay (upper truncation point). If finite,
 the distribution is truncated at D. If set to Inf, no upper truncation is
-applied. (default: "D").</p></dd>
+applied. (default: "D"). Observations whose secondary censoring interval
+straddles <code>D</code> (<code>left &lt; D &lt;= right</code>) are accepted: the upper endpoint is
+internally clipped to <code>D</code> and the likelihood becomes
+<code>P(X in [left, min(right, D)] | L &lt;= X &lt;= D)</code>. This is a no-op for the
+standard parametric case where <code>right &lt;= D</code>. Observations with
+<code>left &gt;= D</code> are rejected because under truncation at <code>D</code> no event with
+latent value <code>&gt;= D</code> is observable.</p></dd>
 
 
 <dt id="arg-dprimary">dprimary<a class="anchor" aria-label="anchor" href="#arg-dprimary"></a></dt>
@@ -156,17 +165,61 @@ functions, users can apply <code><a href="add_name_attribute.html">add_name_attr
 functions if they wish to leverage analytical solutions.</p></dd>
 
 
-<dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
+<dt id="arg-primary-args">primary_args<a class="anchor" aria-label="anchor" href="#arg-primary-args"></a></dt>
 <dd><p>List of additional arguments to be passed to
-dprimary. For example, when using <code>dexpgrowth</code>, you would
-pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
-and rate parameters</p></dd>
+dprimary (and the matching primary CDF). For example, when using
+<code>dexpgrowth</code>, you would pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to
+set the minimum, maximum, and rate parameters. Replaces the deprecated
+<code>dprimary_args</code>; defaults to <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-pprimary">pprimary<a class="anchor" aria-label="anchor" href="#arg-pprimary"></a></dt>
+<dd><p>Optional CDF for the primary event distribution. May be
+a function or a character string naming a primary distribution in
+<code>pcd_primary_distributions</code>. Defaults to <code>NULL</code>, in which case the
+primary CDF is looked up automatically from the registry using the
+<code>"name"</code> attribute of <code>dprimary</code>. When both <code>dprimary</code> and <code>pprimary</code>
+carry a <code>"name"</code> attribute (or are base R functions whose name can be
+inferred), the two names must agree on everything other than the
+leading <code>d</code>/<code>p</code> prefix; mismatches such as <code>dunif</code> + <code>pexpgrowth</code> raise
+an error. Supplying <code>pprimary</code> explicitly is mainly useful when using a
+custom primary distribution whose CDF is not in the registry.</p></dd>
+
+
+<dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
+<dd><p>[Deprecated] Use <code>primary_args</code> instead.</p></dd>
 
 
 <dt id="arg-truncation-check-multiplier">truncation_check_multiplier<a class="anchor" aria-label="anchor" href="#arg-truncation-check-multiplier"></a></dt>
 <dd><p>Numeric multiplier to use for checking
 if the truncation time D is appropriate relative to the maximum delay.
 Set to NULL to skip the check. Default is 2.</p></dd>
+
+
+<dt id="arg-prior">prior<a class="anchor" aria-label="anchor" href="#arg-prior"></a></dt>
+<dd><p>Optional list of prior settings used by the dist function's
+<code>fit_penalty</code> attribute (currently only <code>"discretehazard"</code>). Each
+element is itself a list with <code>mean</code> and <code>sd</code> entries. Defaults are
+used for any component not supplied. See <code><a href="pdiscretehazard.html">pdiscretehazard()</a></code> for
+the default values.</p></dd>
+
+
+<dt id="arg-hazard-model">hazard_model<a class="anchor" aria-label="anchor" href="#arg-hazard-model"></a></dt>
+<dd><p>One of <code>"rw"</code> (default) or <code>"re"</code>. Only consulted
+when <code>distr = "discretehazard"</code>. <code>"rw"</code> selects the random-walk
+transform <code>logit(h_i) = alpha + sigma * cumsum(eps)</code>; <code>"re"</code>
+selects the IID logit random-effect transform
+<code>logit(h_i) = alpha + sigma * eps_i</code>. See Details.</p></dd>
+
+
+<dt id="arg-check">check<a class="anchor" aria-label="anchor" href="#arg-check"></a></dt>
+<dd><p>Logical; if <code>TRUE</code> (the default) <code>pdist</code> is validated with
+<code><a href="check_pdist.html">check_pdist()</a></code> and <code>dprimary</code> with <code><a href="check_dprimary.html">check_dprimary()</a></code>. Neither changes
+across a fit, so validation runs on the first likelihood evaluation
+only rather than on every one. Set to <code>FALSE</code> to skip it entirely.
+For non-parametric distributions, <code>start</code> is required and determines
+the number of bins; pass <code>boundaries</code> here to override the
+default <code>0:K</code> unit-width bins.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -184,35 +237,53 @@ Set to NULL to skip the check. Default is 2.</p></dd>
 <h3 id="how-distribution-functions-are-resolved">How distribution functions are resolved<a class="anchor" aria-label="anchor" href="#how-distribution-functions-are-resolved"></a></h3>
 
 
-<p>The <code>distr</code> parameter specifies the base name of the distribution. The
-function automatically looks up the corresponding density (<code>d</code>) and
-cumulative distribution (<code>p</code>) functions by prepending these prefixes to the
-distribution name. For example:</p><ul><li><p><code>distr = "gamma"</code> uses <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code></p></li>
-<li><p><code>distr = "lnorm"</code> uses <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">dlnorm()</a></code> and <code><a href="https://rdrr.io/r/stats/Lognormal.html" class="external-link">plnorm()</a></code></p></li>
-<li><p><code>distr = "weibull"</code> uses <code><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">dweibull()</a></code> and <code><a href="https://rdrr.io/r/stats/Weibull.html" class="external-link">pweibull()</a></code></p></li>
-</ul><p>Any distribution available in base R or loaded packages can be used, as long
-as the corresponding <code>d&lt;distr&gt;</code> and <code>p&lt;distr&gt;</code> functions exist and follow
-standard R distribution function conventions (first argument is <code>x</code> for
-density, <code>q</code> for CDF).</p>
+<p>The <code>distr</code> argument names a distribution. The function looks up the
+density and CDF functions by prepending <code>d</code> and <code>p</code> to the name (e.g.
+<code>distr = "gamma"</code> resolves to <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code>). Custom
+distributions can be used as long as the corresponding <code>d&lt;distr&gt;()</code> and
+<code>p&lt;distr&gt;()</code> functions are defined.</p>
 </div>
 
 <div class="section">
-<h3 id="what-this-function-does-internally">What this function does internally<a class="anchor" aria-label="anchor" href="#what-this-function-does-internally"></a></h3>
+<h3 id="non-parametric-distributions">Non-parametric distributions<a class="anchor" aria-label="anchor" href="#non-parametric-distributions"></a></h3>
 
 
-<p>This function creates custom density and CDF functions that account for
-primary censoring, secondary censoring, and truncation using
-<code><a href="dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="pprimarycensored.html">pprimarycensored()</a></code>. These custom functions are
-then passed to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code> for maximum likelihood estimation.</p>
-<p>The function handles varying observation windows across observations,
-making it suitable for real-world data where truncation times or censoring
-windows may differ between observations.</p>
+<p>Two non-parametric distributions are supported. They share a common
+fitting machinery: the dist function carries a <code>vector_param</code> attribute
+(<code>"pmf"</code> for <code><a href="pdiscretestep.html">pdiscretestep()</a></code>/<code><a href="ddiscretestep.html">ddiscretestep()</a></code>, <code>"hazards"</code> for
+<code><a href="pdiscretehazard.html">pdiscretehazard()</a></code>/<code><a href="ddiscretehazard.html">ddiscretehazard()</a></code>) that drives this function to
+build a closure mapping flat scalar parameters into the underlying
+vector argument.</p><ul><li><p><code>distr = "discretestep"</code>: free parameters <code>p1, ..., p_{K-1}</code> (in
+<code>[0, 1]</code>); the last bin probability is <code>1 - sum(p1, ..., p_{K-1})</code>.
+See <code><a href="pdiscretestep.html">pdiscretestep()</a></code> for parameterisation details and the soft
+simplex penalty applied when probabilities are infeasible.</p></li>
+<li><p><code>distr = "discretehazard"</code>: free parameters <code>alpha</code>, <code>log_sigma</code>,
+<code>eps_1, ..., eps_{K-1}</code>. The hazard form parameterises the same
+family of step distributions as <code>"discretestep"</code>, but its free
+parameters drive either a Gaussian random walk on the logit hazard
+(<code>hazard_model = "rw"</code>, the default,
+<code>logit(h_i) = alpha + sigma * cumsum(eps)</code>) or an IID logit
+random-effect transform (<code>hazard_model = "re"</code>,
+<code>logit(h_i) = alpha + sigma * eps_i</code> with <code>eps_i ~ N(0, 1)</code>). The
+smoothing of the random walk regularises the recovered PMF against
+over-fitting in sparse data and replaces the simplex constraint
+with an unconstrained optimisation; the random-effect variant
+models hazards as independent draws around <code>alpha</code> rather than a
+smoothed trajectory. See <code><a href="pdiscretehazard.html">pdiscretehazard()</a></code> for full
+parameterisation details and the MAP-equivalent prior penalty
+applied during fitting; pass <code>prior</code> to override the default prior
+settings.</p></li>
+</ul><p>For non-parametric distributions <code>K</code> is implied by <code>length(start)</code>:
+<code>K = length(start) + 1</code> for <code>"discretestep"</code> and
+<code>K = length(start) - 1</code> for <code>"discretehazard"</code>. <code>start</code> is therefore
+required.</p>
 </div>
 
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
-    <div class="dont-index"><p>Modelling wrappers for external fitting packages
+    <div class="dont-index"><p><code><a href="pdiscretestep.html">pdiscretestep()</a></code> <code><a href="pdiscretehazard.html">pdiscretehazard()</a></code></p>
+<p>Modelling wrappers for external fitting packages
 <code><a href="pcd_as_stan_data.html">pcd_as_stan_data()</a></code>,
 <code><a href="pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code></p></div>
     </div>
@@ -258,6 +329,42 @@ windows may differ between observations.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> mean 1.0000000 0.3174891</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> sd   0.3174891 1.0000000</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># \donttest{</span></span></span>
+<span class="r-in"><span><span class="co"># Example with discretestep (non-parametric PMF) distribution</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">42</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">true_pmf</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.1</span>, <span class="fl">0.3</span>, <span class="fl">0.4</span>, <span class="fl">0.15</span>, <span class="fl">0.05</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">step_samples</span> <span class="op">&lt;-</span> <span class="fu"><a href="rprimarycensored.html">rprimarycensored</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fl">500</span>, <span class="va">rdiscretestep</span>,</span></span>
+<span class="r-in"><span>  boundaries <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">5</span>, pmf <span class="op">=</span> <span class="va">true_pmf</span>,</span></span>
+<span class="r-in"><span>  pwindow <span class="op">=</span> <span class="fl">1</span>, swindow <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">6</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">step_data</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  left <span class="op">=</span> <span class="va">step_samples</span>,</span></span>
+<span class="r-in"><span>  right <span class="op">=</span> <span class="va">step_samples</span> <span class="op">+</span> <span class="fl">1</span>,</span></span>
+<span class="r-in"><span>  pwindow <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">500</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  D <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">6</span>, <span class="fl">500</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">fit_step</span> <span class="op">&lt;-</span> <span class="fu">fitdistdoublecens</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">step_data</span>,</span></span>
+<span class="r-in"><span>  distr <span class="op">=</span> <span class="st">"discretestep"</span>,</span></span>
+<span class="r-in"><span>  boundaries <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.2</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"p"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example with discretehazard (logit-hazard random walk) distribution</span></span></span>
+<span class="r-in"><span><span class="va">fit_haz</span> <span class="op">&lt;-</span> <span class="fu">fitdistdoublecens</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="va">step_data</span>,</span></span>
+<span class="r-in"><span>  distr <span class="op">=</span> <span class="st">"discretehazard"</span>,</span></span>
+<span class="r-in"><span>  boundaries <span class="op">=</span> <span class="fl">0</span><span class="op">:</span><span class="fl">5</span>,</span></span>
+<span class="r-in"><span>  start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>alpha <span class="op">=</span> <span class="op">-</span><span class="fl">2</span>, log_sigma <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">0.5</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"eps_"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>diag(V) had non-positive or NA entries; the non-finite result may be dubious</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
+<span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

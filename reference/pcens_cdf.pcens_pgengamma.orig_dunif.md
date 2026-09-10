@@ -52,6 +52,8 @@ Low level primary event censored distribution objects and methods
 [`new_pcens()`](https://primarycensored.epinowcast.org/reference/new_pcens.md),
 [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md),
 [`pcens_cdf.default()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.default.md),
+[`pcens_cdf.pcens_pdiscretehazard()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretehazard.md),
+[`pcens_cdf.pcens_pdiscretestep()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretestep.md),
 [`pcens_cdf.pcens_pgamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgamma_dunif.md),
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
@@ -70,6 +72,9 @@ pcens_obj <- new_pcens(
   scale = 2,
   k = 0.8
 )
+#> Warning: The `dprimary_args` argument of `new_pcens()` is deprecated as of
+#> primarycensored 1.6.0.
+#> ℹ Please use the `primary_args` argument instead.
 pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
 #> [1] 0.1940835 0.9298869 0.9995685
 ```

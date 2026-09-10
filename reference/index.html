@@ -37,6 +37,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -114,6 +115,78 @@
         </dt>
         <dd>Exponential growth distribution functions</dd>
       </dl></div><div class="section level2">
+      <h2 id="non-parametric-delay-distributions">Non-parametric delay distributions<a class="anchor" aria-label="anchor" href="#non-parametric-delay-distributions"></a></h2>
+
+      <div class="section-desc"><p>Step-CDF (direct PMF) and discrete-time hazard parameterisations for non-parametric delay distributions, with conversion utilities.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ddiscretestep.html">ddiscretestep()</a></code>
+
+        </dt>
+        <dd>Step (piecewise-constant) PMF</dd>
+
+        <dt>
+
+          <code><a href="hazards_to_pmf.html">hazards_to_pmf()</a></code>
+
+        </dt>
+        <dd>Convert discrete-time hazards to a PMF</dd>
+
+        <dt>
+
+          <code><a href="pdiscretestep.html">pdiscretestep()</a></code>
+
+        </dt>
+        <dd>Step (piecewise-constant) CDF</dd>
+
+        <dt>
+
+          <code><a href="pmf_to_hazards.html">pmf_to_hazards()</a></code>
+
+        </dt>
+        <dd>Convert a PMF to discrete-time hazards</dd>
+
+        <dt>
+
+          <code><a href="rdiscretestep.html">rdiscretestep()</a></code>
+
+        </dt>
+        <dd>Sample from a step distribution</dd>
+
+        <dt>
+
+          <code><a href="ddiscretehazard.html">ddiscretehazard()</a></code>
+
+        </dt>
+        <dd>Hazard-parameterised piecewise-constant PMF</dd>
+
+        <dt>
+
+          <code><a href="discretehazard_start.html">discretehazard_start()</a></code>
+
+        </dt>
+        <dd>Start values for the logit-hazard parameterisation</dd>
+
+        <dt>
+
+          <code><a href="pdiscretehazard.html">pdiscretehazard()</a></code>
+
+        </dt>
+        <dd>Hazard-parameterised piecewise-constant CDF</dd>
+
+        <dt>
+
+          <code><a href="rdiscretehazard.html">rdiscretehazard()</a></code>
+
+        </dt>
+        <dd>Sample from a hazard-parameterised step distribution</dd>
+      </dl></div><div class="section level2">
       <h2 id="primary-censored-distribution-class-and-methods">Primary censored distribution class and methods<a class="anchor" aria-label="anchor" href="#primary-censored-distribution-class-and-methods"></a></h2>
 
       <div class="section-desc"><p>S3 class and methods for computing primary event censored distributions, focusing on the internal machinery used by the package. Unlike the primary event distributions section which deals with specific distribution functions, this section covers the general framework for handling censored distributions.</p></div>
@@ -143,6 +216,20 @@
 
         </dt>
         <dd>Default method for computing primary event censored CDF</dd>
+
+        <dt>
+
+          <code><a href="pcens_cdf.pcens_pdiscretehazard.html">pcens_cdf(<i>&lt;pcens_pdiscretehazard&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Method for hazard CDF delay with general primary event distribution</dd>
+
+        <dt>
+
+          <code><a href="pcens_cdf.pcens_pdiscretestep.html">pcens_cdf(<i>&lt;pcens_pdiscretestep&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Method for step CDF delay with general primary event distribution</dd>
 
         <dt>
 

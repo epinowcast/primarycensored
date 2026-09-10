@@ -39,6 +39,7 @@ primarycensored Stan model."><meta property="og:image" content="https://primaryc
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -87,7 +88,8 @@ primarycensored Stan model.</p>
 <span>  <span class="va">primary_priors</span>,</span>
 <span>  compute_log_lik <span class="op">=</span> <span class="cn">FALSE</span>,</span>
 <span>  use_reduce_sum <span class="op">=</span> <span class="cn">FALSE</span>,</span>
-<span>  truncation_check_multiplier <span class="op">=</span> <span class="fl">2</span></span>
+<span>  truncation_check_multiplier <span class="op">=</span> <span class="fl">2</span>,</span>
+<span>  dist_options <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -177,6 +179,25 @@ numeric vector specifying priors for the primary distribution parameters.</p></d
 <dd><p>Numeric multiplier to use for checking
 if the truncation time D is appropriate relative to the maximum delay
 for each unique D value. Set to NULL to skip the check. Default is 2.</p></dd>
+
+
+<dt id="arg-dist-options">dist_options<a class="anchor" aria-label="anchor" href="#arg-dist-options"></a></dt>
+<dd><p>Optional list carrying the shape of a
+non-parametric delay. When <code>dist_id</code> is one of <code>26</code> (step CDF,
+Dirichlet prior on the PMF), <code>27</code> (step CDF, random walk on the
+logit hazards) or <code>28</code> (step CDF, IID logit random effects on the
+hazards), this list <strong>must</strong> be supplied and must contain:</p><ul><li><p><code>K</code>: integer, the number of bins.</p></li>
+<li><p><code>boundaries</code>: numeric vector of length <code>K + 1</code>.</p></li>
+</ul><p>Priors and <code>param_bounds</code> follow the same channel as the parametric
+path: pass them through <code>priors</code> and <code>param_bounds</code>. The semantics
+of <code>priors</code> depend on <code>dist_id</code>:</p><ul><li><p><code>dist_id = 26</code>: <code>priors$scale</code> is the length-<code>K</code> Dirichlet
+concentration vector; <code>priors$location</code> is unused.</p></li>
+<li><p><code>dist_id = 27</code> or <code>28</code>: <code>priors$location = c(alpha_mean, log_sigma_mean)</code> and <code>priors$scale = c(alpha_sd, log_sigma_sd)</code>.</p></li>
+</ul><p><code>param_bounds</code> is unused for the non-parametric paths; pass
+<code>list(lower = numeric(0), upper = numeric(0))</code>. If <code>priors</code> is
+empty when a non-parametric <code>dist_id</code> is given, sensible defaults
+are applied (<code>Dirichlet(1, ..., 1)</code> for <code>dist_id = 26</code>;
+<code>N(0, 5)</code> on <code>alpha</code> and <code>N(0, 1)</code> on <code>log_sigma</code> for 27 and 28).</p></dd>
 
 </dl></div>
     <div class="section level2">

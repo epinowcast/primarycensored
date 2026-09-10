@@ -213,8 +213,8 @@ pcd_fit$summary("params")
     ## # A tibble: 2 × 10
     ##   variable   mean median     sd    mad    q5   q95  rhat ess_bulk ess_tail
     ##   <chr>     <dbl>  <dbl>  <dbl>  <dbl> <dbl> <dbl> <dbl>    <dbl>    <dbl>
-    ## 1 params[1]  2.00   2.00 0.0438 0.0417 1.93   2.08  1.00    1146.     746.
-    ## 2 params[2]  1.01   1.01 0.0239 0.0244 0.972  1.05  1.00     686.     583.
+    ## 1 params[1]  2.01   2.01 0.0468 0.0494 1.93   2.08 0.999     770.     550.
+    ## 2 params[2]  1.01   1.01 0.0237 0.0230 0.971  1.05 1.00      868.     666.
 
 The posterior 90% credible intervals contain the true parameters and the
 chains mix well (`rhat` close to 1).

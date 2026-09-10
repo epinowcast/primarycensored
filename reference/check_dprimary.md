@@ -35,10 +35,7 @@ check_dprimary(dprimary, pwindow, dprimary_args = list(), tolerance = 0.001)
 
 - dprimary_args:
 
-  List of additional arguments to be passed to dprimary. For example,
-  when using `dexpgrowth`, you would pass
-  `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
-  and rate parameters
+  \[Deprecated\] Use `primary_args` instead.
 
 - tolerance:
 

@@ -23,6 +23,12 @@
   Estimating a serial-interval-style distribution that can take negative
   values, using both fitdistrplus and the bundled cmdstan model.
 
+- [Fitting non-parametric delay
+  distributions](https://primarycensored.epinowcast.org/articles/fitting-nonparametric-delays.md):
+
+  A guide on how to fit non-parametric delay distributions using
+  primarycensored, with both MLE and Bayesian approaches.
+
 - [Getting started with
   primarycensored](https://primarycensored.epinowcast.org/articles/primarycensored.md):
 
