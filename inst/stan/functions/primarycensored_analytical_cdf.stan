@@ -1,6 +1,14 @@
 /**
-  * Check if an analytical solution exists for the given distribution combination
+  * Check if an analytical solution exists for the given distribution
+  * combination
   * @ingroup analytical_solution_helpers
+  *
+  * The non-parametric step (26) and discrete-hazard (27, 28) delays are
+  * analytic for every primary `primary_lcdf` currently supports, the uniform
+  * (1) and exponential growth (2). That list is repeated by hand below, so
+  * adding a primary to `primary_lcdf` does not extend the analytic path on
+  * its own: without a matching update here the new primary silently falls
+  * back to numerical integration.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -8,10 +16,14 @@
   * @return 1 if an analytical solution exists, 0 otherwise
   */
 int check_for_analytical(int dist_id, int primary_id) {
-  if (dist_id == 2 && primary_id == 1) return 1; // Gamma delay with Uniform primary
-  if (dist_id == 1 && primary_id == 1) return 1; // Lognormal delay with Uniform primary
-  if (dist_id == 3 && primary_id == 1) return 1; // Weibull delay with Uniform primary
-  if (dist_id == 5 && primary_id == 1) return 1; // Generalised gamma delay with Uniform primary
+  if (dist_id == 2 && primary_id == 1) return 1; // Gamma, Uniform
+  if (dist_id == 1 && primary_id == 1) return 1; // Lognormal, Uniform
+  if (dist_id == 3 && primary_id == 1) return 1; // Weibull, Uniform
+  if (dist_id == 5 && primary_id == 1) return 1; // Generalised gamma, Uniform
+  // Keep this primary list in sync with `primary_lcdf`; see the note above.
+  if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
+    return primary_id == 1 || primary_id == 2;
+  }
   return 0; // No analytical solution for other combinations
 }
 
@@ -239,7 +251,8 @@ real primarycensored_gengamma_uniform_lcdf(data real d, real q, array[] real par
 real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
                                          array[] real params,
                                          data real pwindow,
-                                         int primary_id) {
+                                         int primary_id,
+                                         array[] real primary_params) {
   real q = max({d - pwindow, 0});
 
   if (dist_id == 2 && primary_id == 1) {
@@ -250,6 +263,24 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     return primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
   } else if (dist_id == 5 && primary_id == 1) {
     return primarycensored_gengamma_uniform_lcdf(d | q, params, pwindow);
+  } else if (dist_id == 26) {
+    // params = [boundaries (K+1), pmf (K)]; length 2*K + 1.
+    int K = (size(params) - 1) %/% 2;
+    return discretestep_lcdf(
+      d | to_vector(segment(params, 1, K + 1)),
+          to_vector(segment(params, K + 2, K)),
+          primary_id, primary_params, pwindow
+    );
+  } else if (dist_id == 27 || dist_id == 28) {
+    // params = [boundaries (K+1), hazards (K)]; length 2*K + 1. The last
+    // hazard must equal 1. RW (27) and RE (28) only differ in their
+    // prior so they share this likelihood dispatch.
+    int K = (size(params) - 1) %/% 2;
+    return discretehazard_lcdf(
+      d | to_vector(segment(params, 1, K + 1)),
+          to_vector(segment(params, K + 2, K)),
+          primary_id, primary_params, pwindow
+    );
   }
   return negative_infinity();
 }
@@ -279,7 +310,7 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
   if (d >= D) return 0;
 
   real result = primarycensored_analytical_lcdf_raw(
-    d, dist_id, params, pwindow, primary_id
+    d, dist_id, params, pwindow, primary_id, primary_params
   );
 
   // Apply truncation normalization
