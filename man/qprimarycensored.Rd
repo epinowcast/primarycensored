@@ -12,7 +12,7 @@ qprimarycensored(
   pwindow = 1,
   L = -Inf,
   D = Inf,
-  dprimary = stats::dunif,
+  dprimary = dunif,
   dprimary_args = list(),
   ...,
   check = TRUE
@@ -24,7 +24,7 @@ qpcens(
   pwindow = 1,
   L = -Inf,
   D = Inf,
-  dprimary = stats::dunif,
+  dprimary = dunif,
   dprimary_args = list(),
   ...,
   check = TRUE

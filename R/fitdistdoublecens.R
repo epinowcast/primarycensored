@@ -117,7 +117,7 @@ fitdistdoublecens <- function(
     pwindow = "pwindow",
     L = "L",
     D = "D",
-    dprimary = stats::dunif,
+    dprimary = dunif,
     dprimary_args = list(),
     truncation_check_multiplier = 2,
     check = TRUE,
