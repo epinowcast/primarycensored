@@ -128,16 +128,22 @@ test_that("primarycensored_lcdf has finite gradients in the lower tail of a
   }
 })
 
-test_that("a genuinely zero density is reported as log(0) rather than a
+test_that("deep in the tail the result is usable or log(0), never a
    non-finite gradient", {
   model <- gradient_probe_model()
 
-  # Further into the tail the density really is zero. That must surface as
-  # log(0), which points at the cause, not as a non-finite gradient.
+  # Further into the tail the density underflows to zero. Exactly where that
+  # happens depends on the platform's libm: this point is -inf on Linux and
+  # macOS but still representable under mingw. The invariant is therefore not
+  # that it is rejected, but that it is never rejected for a non-finite
+  # gradient. Either Stan gets a usable gradient, or it reports log(0), which
+  # points at the real cause.
   res <- gradient_at(model, d = 1.0, sigma = 0.03)
 
-  expect_true(res$rejected)
   expect_false(res$gradient_not_finite)
+  if (!res$rejected) {
+    expect_true(all(is.finite(res$gradient)))
+  }
 })
 
 test_that("the underflow guard leaves values in the normal range unchanged", {
