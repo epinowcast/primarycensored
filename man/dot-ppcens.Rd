@@ -4,7 +4,16 @@
 \alias{.ppcens}
 \title{Define a fitdistrplus compatible wrapper around pprimarycensored}
 \usage{
-.ppcens(q, params, pdist, dprimary, primary_args, pprimary = NULL, ...)
+.ppcens(
+  q,
+  params,
+  pdist,
+  dprimary,
+  primary_args,
+  pprimary = NULL,
+  check = TRUE,
+  ...
+)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -41,6 +50,13 @@ inferred), the two names must agree on everything other than the
 leading \code{d}/\code{p} prefix; mismatches such as \code{dunif} + \code{pexpgrowth} raise
 an error. Supplying \code{pprimary} explicitly is mainly useful when using a
 custom primary distribution whose CDF is not in the registry.}
+
+\item{check}{Logical; if \code{TRUE} (the default) \code{pdist} is validated with
+\code{\link[=check_pdist]{check_pdist()}} and \code{dprimary} with \code{\link[=check_dprimary]{check_dprimary()}}. Set to \code{FALSE} to
+skip both when they have already been validated. \code{\link[=check_pdist]{check_pdist()}} evaluates
+\code{pdist} at four points drawn with \code{\link[stats:Uniform]{stats::runif()}}, so skipping it avoids
+that cost and leaves the random number stream untouched. Must be given by
+its full name, as it follows \code{...}.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }

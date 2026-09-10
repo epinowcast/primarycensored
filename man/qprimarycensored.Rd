@@ -16,7 +16,8 @@ qprimarycensored(
   primary_args = NULL,
   pprimary = NULL,
   dprimary_args = NULL,
-  ...
+  ...,
+  check = TRUE
 )
 
 qpcens(
@@ -29,7 +30,8 @@ qpcens(
   primary_args = NULL,
   pprimary = NULL,
   dprimary_args = NULL,
-  ...
+  ...,
+  check = TRUE
 )
 }
 \arguments{
@@ -82,6 +84,13 @@ custom primary distribution whose CDF is not in the registry.}
 \item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
 \item{...}{Additional arguments to be passed to pdist}
+
+\item{check}{Logical; if \code{TRUE} (the default) \code{pdist} is validated with
+\code{\link[=check_pdist]{check_pdist()}} and \code{dprimary} with \code{\link[=check_dprimary]{check_dprimary()}}. Set to \code{FALSE} to
+skip both when they have already been validated. \code{\link[=check_pdist]{check_pdist()}} evaluates
+\code{pdist} at four points drawn with \code{\link[stats:Uniform]{stats::runif()}}, so skipping it avoids
+that cost and leaves the random number stream untouched. Must be given by
+its full name, as it follows \code{...}.}
 }
 \value{
 Vector of delay values (quantiles) corresponding to the input

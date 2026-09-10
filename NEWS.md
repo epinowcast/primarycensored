@@ -1,9 +1,15 @@
-# primarycensored 1.5.2.1000
+# primarycensored 1.5.2
 
-This development version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.
+This version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.
 
 ## New features
 
+- Added analytical primary censored CDFs for the generalised gamma delay distribution with a uniform primary event, in R and Stan.
+  In R, `pcens_cdf()` gains methods for `flexsurv::pgengamma.orig()` (Stacy parameterisation, always analytical) and `flexsurv::pgengamma()` (Prentice parameterisation, analytical for `Q > 0` and numeric otherwise).
+  `pprimarycensored()` and related functions already worked with any `pdist`, including these, via numeric integration.
+  In Stan, `dist_lcdf()` now supports `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`) through a new `gengamma_lcdf()` function and `primarycensored_gengamma_uniform_lcdf()` provides the analytical solution used by `primarycensored_lpmf()` and related functions, including in `pcd_cmdstan_model()`.
+  `flexsurv` has been added to `Suggests`.
+- Functions exported by other packages (for example `flexsurv::pgengamma.orig()`) are now identified by name when passed as `pdist` or `dprimary`, so analytical solutions are used without needing `add_name_attribute()`.
 - Added a non-parametric step CDF family. `pdiscretestep()`, `ddiscretestep()`, and `rdiscretestep()` represent a delay via a direct PMF over fixed bins, and the discrete-time hazard variant `pdiscretehazard()`, `ddiscretehazard()`, and `rdiscretehazard()` parameterises the same family via per-bin hazards, with conversion utilities `hazards_to_pmf()` and `pmf_to_hazards()`. See #218.
 - `fitdistdoublecens()` accepts `distr = "discretestep"` and `distr = "discretehazard"` through the same code path as parametric distributions, with `K` (the number of bins) inferred from `start`. Hazard priors are user-settable via `prior = list(...)`.
 - Added a second discrete-hazard parameterisation alongside the logit random walk. In `fitdistdoublecens()` the `hazard_model` argument picks between `"rw"` (random walk on the logit hazards, the default) and `"re"` (IID logit random effects around a mean intercept, `logit(h_i) = alpha + sigma * eps_i` with `eps_i ~ N(0, 1)`).
@@ -16,22 +22,17 @@ This development version adds non-parametric delay distributions, both a direct 
 - Primary censored CDF dispatch now follows a two-layer S3 chain on `pcens` objects: a specific method for a (delay, primary) pair is tried first, then a delay-only general method, then a numerical default. The analytic primary convolution path now works for any primary with a known CDF, with the primary CDF plumbed through `pprimarycensored()`, `dprimarycensored()`, and `qprimarycensored()` via the `pprimary` argument.
 - `dprimarycensored()` and `fitdistdoublecens()` now accept observations whose secondary censoring interval straddles `D` (`left < D <= right`). The upper endpoint is internally clipped to `D` and the likelihood becomes `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op when `right <= D` and removes the need to pad `D` when fitting non-parametric delays whose support reaches `D`. Observations with `left >= D` are still rejected because under truncation at `D` no event with latent value `>= D` is observable. See #312.
 - Added vignette `fitting-nonparametric-delays` demonstrating end-to-end non-parametric delay estimation.
-
-# primarycensored 1.5.2
-
-## New features
-
-- Added analytical primary censored CDFs for the generalised gamma delay distribution with a uniform primary event, in R and Stan.
-  In R, `pcens_cdf()` gains methods for `flexsurv::pgengamma.orig()` (Stacy parameterisation, always analytical) and `flexsurv::pgengamma()` (Prentice parameterisation, analytical for `Q > 0` and numeric otherwise).
-  `pprimarycensored()` and related functions already worked with any `pdist`, including these, via numeric integration.
-  In Stan, `dist_lcdf()` now supports `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`) through a new `gengamma_lcdf()` function and `primarycensored_gengamma_uniform_lcdf()` provides the analytical solution used by `primarycensored_lpmf()` and related functions, including in `pcd_cmdstan_model()`.
-  `flexsurv` has been added to `Suggests`.
-- Functions exported by other packages (for example `flexsurv::pgengamma.orig()`) are now identified by name when passed as `pdist` or `dprimary`, so analytical solutions are used without needing `add_name_attribute()`.
+- `pprimarycensored()`, `dprimarycensored()` and `qprimarycensored()` gain a `check` argument. It defaults to `TRUE`, which keeps the existing validation of `pdist` via `check_pdist()` and `dprimary` via `check_dprimary()`. Setting `check = FALSE` skips both, for callers that have already validated their functions. Because `check_pdist()` evaluates `pdist` at four points drawn with `runif()`, skipping it also leaves the random number stream untouched, so seeded code no longer depends on how many times these functions were called. `check` follows `...` so it must be given by its full name and cannot capture an argument intended for `pdist`. See #330.
+- `fitdistdoublecens()` gains a matching `check` argument.
 
 ## Documentation
 
 - Added the generalised gamma derivation to the "Analytic solutions" vignette.
   The gamma and Weibull solutions are recovered as special cases.
+
+## Bug fixes
+
+- Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
 
 # primarycensored 1.5.1
 

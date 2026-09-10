@@ -95,7 +95,8 @@ dprimarycensored <- function(
     pprimary = NULL,
     dprimary_args = NULL,
     log = FALSE,
-    ...) {
+    ...,
+    check = TRUE) {
   .check_truncation_bounds(L, D)
 
   primary_args <- .resolve_primary_args(
@@ -106,8 +107,10 @@ dprimarycensored <- function(
     dprimary, pprimary
   )
 
-  check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, primary_args)
+  if (isTRUE(check)) {
+    check_pdist(pdist, D = D, ...)
+    check_dprimary(dprimary, pwindow, primary_args)
+  }
 
   if (min(x) < L) {
     stop(
@@ -167,7 +170,8 @@ dprimarycensored <- function(
     dprimary = dprimary,
     primary_args = primary_args,
     pprimary = pprimary,
-    ...
+    ...,
+    check = FALSE
   )
 
   # Create a lookup table for CDFs
@@ -202,7 +206,8 @@ dprimarycensored <- function(
         dprimary = dprimary,
         primary_args = primary_args,
         pprimary = pprimary,
-        ...
+        ...,
+        check = FALSE
       )
     }
 
@@ -222,7 +227,8 @@ dprimarycensored <- function(
         dprimary = dprimary,
         primary_args = primary_args,
         pprimary = pprimary,
-        ...
+        ...,
+        check = FALSE
       )
     }
 

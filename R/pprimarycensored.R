@@ -56,6 +56,13 @@
 #'
 #' @param ... Additional arguments to be passed to pdist
 #'
+#' @param check Logical; if `TRUE` (the default) `pdist` is validated with
+#'   [check_pdist()] and `dprimary` with [check_dprimary()]. Set to `FALSE` to
+#'   skip both when they have already been validated. [check_pdist()] evaluates
+#'   `pdist` at four points drawn with [stats::runif()], so skipping it avoids
+#'   that cost and leaves the random number stream untouched. Must be given by
+#'   its full name, as it follows `...`.
+#'
 #' @return Vector of primary event censored CDFs, normalized over \[L, D\] if
 #'  truncation is applied
 #'
@@ -129,7 +136,8 @@ pprimarycensored <- function(
     primary_args = NULL,
     pprimary = NULL,
     dprimary_args = NULL,
-    ...) {
+    ...,
+    check = TRUE) {
   .check_truncation_bounds(L, D)
 
   primary_args <- .resolve_primary_args(
@@ -143,8 +151,10 @@ pprimarycensored <- function(
     dprimary, pprimary
   )
 
-  check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, primary_args)
+  if (isTRUE(check)) {
+    check_pdist(pdist, D = D, ...)
+    check_dprimary(dprimary, pwindow, primary_args)
+  }
 
   # Create a new primarycensored object
   pcens_obj <- new_pcens(
