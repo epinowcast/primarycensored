@@ -15,7 +15,8 @@ dprimarycensored(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  ...
+  ...,
+  check = TRUE
 )
 
 dpcens(
@@ -28,7 +29,8 @@ dpcens(
   dprimary = stats::dunif,
   dprimary_args = list(),
   log = FALSE,
-  ...
+  ...,
+  check = TRUE
 )
 }
 \arguments{
@@ -70,6 +72,13 @@ and rate parameters}
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
 
 \item{...}{Additional arguments to be passed to the distribution function}
+
+\item{check}{Logical; if \code{TRUE} (the default) \code{pdist} is validated with
+\code{\link[=check_pdist]{check_pdist()}} and \code{dprimary} with \code{\link[=check_dprimary]{check_dprimary()}}. Set to \code{FALSE} to
+skip both when they have already been validated. \code{\link[=check_pdist]{check_pdist()}} evaluates
+\code{pdist} at four points drawn with \code{\link[stats:Uniform]{stats::runif()}}, so skipping it avoids
+that cost and leaves the random number stream untouched. Must be given by
+its full name, as it follows \code{...}.}
 }
 \value{
 Vector of primary event censored PMFs, normalized over [L, D] if

@@ -78,11 +78,14 @@ dprimarycensored <- function(
     dprimary = stats::dunif,
     dprimary_args = list(),
     log = FALSE,
-    ...) {
+    ...,
+    check = TRUE) {
   .check_truncation_bounds(L, D)
 
-  check_pdist(pdist, D = D, ...)
-  check_dprimary(dprimary, pwindow, dprimary_args)
+  if (isTRUE(check)) {
+    check_pdist(pdist, D = D, ...)
+    check_dprimary(dprimary, pwindow, dprimary_args)
+  }
 
   if (max(x + swindow) > D) {
     stop(
@@ -123,7 +126,8 @@ dprimarycensored <- function(
     D = Inf,
     dprimary = dprimary,
     dprimary_args = dprimary_args,
-    ...
+    ...,
+    check = FALSE
   )
 
   # Create a lookup table for CDFs
@@ -157,7 +161,8 @@ dprimarycensored <- function(
         D = Inf,
         dprimary = dprimary,
         dprimary_args = dprimary_args,
-        ...
+        ...,
+        check = FALSE
       )
     }
 
@@ -176,7 +181,8 @@ dprimarycensored <- function(
         D = Inf,
         dprimary = dprimary,
         dprimary_args = dprimary_args,
-        ...
+        ...,
+        check = FALSE
       )
     }
 

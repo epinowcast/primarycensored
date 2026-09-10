@@ -13,7 +13,8 @@ pprimarycensored(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  ...
+  ...,
+  check = TRUE
 )
 
 ppcens(
@@ -24,7 +25,8 @@ ppcens(
   D = Inf,
   dprimary = stats::dunif,
   dprimary_args = list(),
-  ...
+  ...,
+  check = TRUE
 )
 }
 \arguments{
@@ -62,6 +64,13 @@ pass \code{list(min = 0, max = pwindow, r = 0.2)} to set the minimum, maximum,
 and rate parameters}
 
 \item{...}{Additional arguments to be passed to pdist}
+
+\item{check}{Logical; if \code{TRUE} (the default) \code{pdist} is validated with
+\code{\link[=check_pdist]{check_pdist()}} and \code{dprimary} with \code{\link[=check_dprimary]{check_dprimary()}}. Set to \code{FALSE} to
+skip both when they have already been validated. \code{\link[=check_pdist]{check_pdist()}} evaluates
+\code{pdist} at four points drawn with \code{\link[stats:Uniform]{stats::runif()}}, so skipping it avoids
+that cost and leaves the random number stream untouched. Must be given by
+its full name, as it follows \code{...}.}
 }
 \value{
 Vector of primary event censored CDFs, normalized over [L, D] if

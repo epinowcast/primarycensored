@@ -67,6 +67,11 @@
 #'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
 #'
+#' @param check Logical; if `TRUE` (the default) `pdist` is validated with
+#'   [check_pdist()] and `dprimary` with [check_dprimary()]. Neither changes
+#'   across a fit, so validation runs on the first likelihood evaluation only
+#'   rather than on every one. Set to `FALSE` to skip it entirely.
+#'
 #' @param truncation_check_multiplier Numeric multiplier to use for checking
 #'   if the truncation time D is appropriate relative to the maximum delay.
 #'   Set to NULL to skip the check. Default is 2.
@@ -115,6 +120,7 @@ fitdistdoublecens <- function(
     dprimary = stats::dunif,
     dprimary_args = list(),
     truncation_check_multiplier = 2,
+    check = TRUE,
     ...) {
   # Check if fitdistrplus is available
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
@@ -183,6 +189,20 @@ fitdistdoublecens <- function(
     D = censdata[[D]]
   )
 
+  # `pdist` and `dprimary` are fixed across the fit, so validate on the first
+  # likelihood evaluation and skip it thereafter. Revalidating on every
+  # evaluation costs four extra `pdist` calls each time and advances the RNG
+  # stream, which makes seeded runs depend on the number of evaluations.
+  validation <- new.env(parent = emptyenv())
+  validation$pending <- isTRUE(check)
+  check_once <- function() {
+    if (!validation$pending) {
+      return(FALSE)
+    }
+    validation$pending <- FALSE
+    TRUE
+  }
+
   # Create the function definition with named arguments for dpcens
   dpcens_dist <- function() {
     env_args <- as.list(environment())
@@ -194,7 +214,8 @@ fitdistdoublecens <- function(
           params = params,
           pdist = pdist,
           dprimary = dprimary,
-          dprimary_args = dprimary_args
+          dprimary_args = dprimary_args,
+          check = check_once()
         )
       )
     )
@@ -212,7 +233,8 @@ fitdistdoublecens <- function(
           params = params,
           pdist = pdist,
           dprimary = dprimary,
-          dprimary_args = dprimary_args
+          dprimary_args = dprimary_args,
+          check = check_once()
         )
       )
     )
@@ -253,9 +275,20 @@ fitdistdoublecens <- function(
     pdist,
     dprimary,
     dprimary_args,
+    check = TRUE,
     ...) {
   tryCatch(
     {
+      # Validate once for the whole vector. `pdist` and `dprimary` are the
+      # same for every observation, so the per-group calls below pass
+      # `check = FALSE`.
+      if (isTRUE(check)) {
+        check_pdist(pdist, D = max(params$D), ...)
+        for (pw in unique(params$pwindow)) {
+          check_dprimary(dprimary, pw, dprimary_args)
+        }
+      }
+
       unique_params <- unique(params)
       # Check if all parameters are constant
       if (nrow(unique_params) == 1) {
@@ -268,7 +301,8 @@ fitdistdoublecens <- function(
           D = unique_params$D[1],
           dprimary = dprimary,
           dprimary_args = dprimary_args,
-          ...
+          ...,
+          check = FALSE
         )
       } else {
         # Group by unique combinations of parameters
@@ -293,7 +327,8 @@ fitdistdoublecens <- function(
             D = Ds,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
-            ...
+            ...,
+            check = FALSE
           )
         }
         result
@@ -308,9 +343,25 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @keywords internal
-.ppcens <- function(q, params, pdist, dprimary, dprimary_args, ...) {
+.ppcens <- function(
+    q,
+    params,
+    pdist,
+    dprimary,
+    dprimary_args,
+    check = TRUE,
+    ...) {
   tryCatch(
     {
+      # Validate once for the whole vector rather than once per observation,
+      # so the `mapply` below passes `check = FALSE`.
+      if (isTRUE(check)) {
+        check_pdist(pdist, D = max(params$D), ...)
+        for (pw in unique(params$pwindow)) {
+          check_dprimary(dprimary, pw, dprimary_args)
+        }
+      }
+
       # Vectorize the CDF calculation
       mapply(
         function(q_i, pw, L_i, D_i) {
@@ -322,7 +373,8 @@ fitdistdoublecens <- function(
             D = D_i,
             dprimary = dprimary,
             dprimary_args = dprimary_args,
-            ...
+            ...,
+            check = FALSE
           )
         },
         q,

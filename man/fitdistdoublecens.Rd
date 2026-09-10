@@ -15,6 +15,7 @@ fitdistdoublecens(
   dprimary = stats::dunif,
   dprimary_args = list(),
   truncation_check_multiplier = 2,
+  check = TRUE,
   ...
 )
 }
@@ -68,6 +69,11 @@ and rate parameters}
 \item{truncation_check_multiplier}{Numeric multiplier to use for checking
 if the truncation time D is appropriate relative to the maximum delay.
 Set to NULL to skip the check. Default is 2.}
+
+\item{check}{Logical; if \code{TRUE} (the default) \code{pdist} is validated with
+\code{\link[=check_pdist]{check_pdist()}} and \code{dprimary} with \code{\link[=check_dprimary]{check_dprimary()}}. Neither changes
+across a fit, so validation runs on the first likelihood evaluation only
+rather than on every one. Set to \code{FALSE} to skip it entirely.}
 
 \item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.}
 }
