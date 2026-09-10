@@ -22,10 +22,8 @@ This version adds non-parametric delay distributions, both a direct PMF over fix
 - Primary censored CDF dispatch now follows a two-layer S3 chain on `pcens` objects: a specific method for a (delay, primary) pair is tried first, then a delay-only general method, then a numerical default. The analytic primary convolution path now works for any primary with a known CDF, with the primary CDF plumbed through `pprimarycensored()`, `dprimarycensored()`, and `qprimarycensored()` via the `pprimary` argument.
 - `dprimarycensored()` and `fitdistdoublecens()` now accept observations whose secondary censoring interval straddles `D` (`left < D <= right`). The upper endpoint is internally clipped to `D` and the likelihood becomes `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op when `right <= D` and removes the need to pad `D` when fitting non-parametric delays whose support reaches `D`. Observations with `left >= D` are still rejected because under truncation at `D` no event with latent value `>= D` is observable. See #312.
 - Added vignette `fitting-nonparametric-delays` demonstrating end-to-end non-parametric delay estimation.
-
-## Bug fixes
-
-- Fixed a `NaN` gradient in the Stan `primarycensored_lcdf()` deep in the lower tail of a narrow lognormal delay. `lognormal_lcdf()` underflows to `-inf` once the standardised value falls below about -38.6, and its autodiff partial is then `0 / 0`. Stan's reverse pass chains that `NaN` into `mu` and `sigma` even where the term carries zero weight, so the log density came back finite while the gradient did not. Models that evaluate the delay on a grid starting at zero reached this as soon as a proposal was narrow, and saw only `Gradient evaluated at the initial value is not finite`. Affected terms are now dropped before the underflowing call, in both the analytic uniform primary solution and the ODE path. Where the density really is zero the result is reported as `log(0)`. See #333.
+- `pprimarycensored()`, `dprimarycensored()` and `qprimarycensored()` gain a `check` argument. It defaults to `TRUE`, which keeps the existing validation of `pdist` via `check_pdist()` and `dprimary` via `check_dprimary()`. Setting `check = FALSE` skips both, for callers that have already validated their functions. Because `check_pdist()` evaluates `pdist` at four points drawn with `runif()`, skipping it also leaves the random number stream untouched, so seeded code no longer depends on how many times these functions were called. `check` follows `...` so it must be given by its full name and cannot capture an argument intended for `pdist`. See #330.
+- `fitdistdoublecens()` gains a matching `check` argument.
 
 ## Documentation
 
@@ -34,6 +32,7 @@ This version adds non-parametric delay distributions, both a direct PMF over fix
 
 ## Bug fixes
 
+- Fixed a `NaN` gradient in the Stan `primarycensored_lcdf()` deep in the lower tail of a narrow lognormal delay. `lognormal_lcdf()` underflows to `-inf` once the standardised value falls below about -38.6, and its autodiff partial is then `0 / 0`. Stan's reverse pass chains that `NaN` into `mu` and `sigma` even where the term carries zero weight, so the log density came back finite while the gradient did not. Models that evaluate the delay on a grid starting at zero reached this as soon as a proposal was narrow, and saw only `Gradient evaluated at the initial value is not finite`. Affected terms are now dropped before the underflowing call, in both the analytic uniform primary solution and the ODE path. Where the density really is zero the result is reported as `log(0)`. See #333.
 - Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
 
 # primarycensored 1.5.1
