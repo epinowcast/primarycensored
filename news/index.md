@@ -143,6 +143,33 @@ and
   [\#312](https://github.com/epinowcast/primarycensored/issues/312).
 - Added vignette `fitting-nonparametric-delays` demonstrating end-to-end
   non-parametric delay estimation.
+- [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md)
+  gain a `check` argument. It defaults to `TRUE`, which keeps the
+  existing validation of `pdist` via
+  [`check_pdist()`](https://primarycensored.epinowcast.org/reference/check_pdist.md)
+  and `dprimary` via
+  [`check_dprimary()`](https://primarycensored.epinowcast.org/reference/check_dprimary.md).
+  Setting `check = FALSE` skips both, for callers that have already
+  validated their functions. Because
+  [`check_pdist()`](https://primarycensored.epinowcast.org/reference/check_pdist.md)
+  evaluates `pdist` at four points drawn with
+  [`runif()`](https://rdrr.io/r/stats/Uniform.html), skipping it also
+  leaves the random number stream untouched, so seeded code no longer
+  depends on how many times these functions were called. `check` follows
+  `...` so it must be given by its full name and cannot capture an
+  argument intended for `pdist`. See
+  [\#330](https://github.com/epinowcast/primarycensored/issues/330).
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  gains a matching `check` argument.
+
+### Documentation
+
+- Added the generalised gamma derivation to the “Analytic solutions”
+  vignette. The gamma and Weibull solutions are recovered as special
+  cases.
 
 ### Bug fixes
 
@@ -159,15 +186,6 @@ and
   analytic uniform primary solution and the ODE path. Where the density
   really is zero the result is reported as `log(0)`. See
   [\#333](https://github.com/epinowcast/primarycensored/issues/333).
-
-### Documentation
-
-- Added the generalised gamma derivation to the “Analytic solutions”
-  vignette. The gamma and Weibull solutions are recovered as special
-  cases.
-
-### Bug fixes
-
 - Validation no longer runs more than once per call.
   [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
   validated four times, once directly and once inside each of its three
