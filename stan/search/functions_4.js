@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['log_5fweibull_5fg_0',['log_weibull_g',['../group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4',1,'primarycensored_analytical_cdf.stan']]]
+  ['hazards_5fto_5fpmf_0',['hazards_to_pmf',['../nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9',1,'nonparametric.stan']]]
 ];

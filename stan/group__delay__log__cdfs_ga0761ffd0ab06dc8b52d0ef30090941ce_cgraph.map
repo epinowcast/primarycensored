@@ -1,7 +1,14 @@
 <map id="dist_lcdf" name="dist_lcdf">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,31,76,56"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,80,76,106"/>
 <area shape="rect" id="Node000002" href="$group__delay__log__cdfs.html#gac677200fa47a95f644537be481450960" title=" " alt="" coords="124,5,296,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="76,36,108,31,109,36,76,41"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="58,77,88,58,123,40,137,34,139,39,125,45,90,63,61,82"/>
 <area shape="rect" id="Node000003" href="$group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="153,55,266,80"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="76,46,139,55,138,60,76,51"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="76,85,138,76,139,81,76,90"/>
+<area shape="rect" id="Node000004" href="$nonparametric_8stan.html#a03e3aad866bd81f69bc72da66bc5a184" title=" " alt="" coords="163,104,257,130"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="76,95,148,105,147,111,76,100"/>
+<area shape="rect" id="Node000006" href="$nonparametric_8stan.html#a2b6a89a9f545005b8ab818cfa32dd086" title=" " alt="" coords="360,153,441,179"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="60,104,89,123,125,140,182,154,241,162,344,166,344,171,240,167,181,159,123,145,87,128,57,109"/>
+<area shape="rect" id="Node000005" href="$nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9" title=" " alt="" coords="344,104,457,130"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="257,114,328,114,328,120,257,120"/>
+<area shape="poly" id="edge5_Node000004_Node000006" title=" " alt="" coords="258,126,345,149,344,154,257,131"/>
 </map>

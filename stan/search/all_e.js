@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['website_0',['primarycensored main website',['../index.html#autotoc_md2',1,'']]]
+  ['vectorized_0',['Primary Censored Distributions Functions (Vectorized)',['../group__primary__censored__vectorized.html',1,'']]]
 ];

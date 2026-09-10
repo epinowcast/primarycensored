@@ -219,7 +219,7 @@ Here is the caller graph for this function:</div>
   <table class="params">
     <tr><td class="paramname">delay</td><td>Time delay </td></tr>
     <tr><td class="paramname">params</td><td>Distribution parameters </td></tr>
-    <tr><td class="paramname">dist_id</td><td>Distribution identifier matching pcd_distributions in R: 1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential, 5: Generalised gamma, 9: Beta, 12: Cauchy, 13: Chi-square, 15: Gumbel, 16: Inverse Gamma, 17: Logistic, 18: Normal, 19: Inverse Chi-square, 20: Double Exponential, 21: Pareto, 22: Scaled Inverse Chi-square, 23: Student's t, 24: Uniform, 25: von Mises</td></tr>
+    <tr><td class="paramname">dist_id</td><td>Distribution identifier matching pcd_distributions in R: 1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential, 5: Generalised gamma, 9: Beta, 12: Cauchy, 13: Chi-square, 15: Gumbel, 16: Inverse Gamma, 17: Logistic, 18: Normal, 19: Inverse Chi-square, 20: Double Exponential, 21: Pareto, 22: Scaled Inverse Chi-square, 23: Student's t, 24: Uniform, 25: von Mises, 26: Non-parametric step (params = [boundaries (K+1), pmf (K)], length 2*K + 1), 27/28: Non-parametric discrete hazard (params = [boundaries (K+1), hazards (K)], length 2*K + 1; hazards[K] must equal 1). 27 and 28 share this likelihood and only differ in the prior on the hazards (random walk for 27, IID random effect for 28).</td></tr>
   </table>
   </dd>
 </dl>
@@ -229,19 +229,26 @@ Here is the caller graph for this function:</div>
 <div class="line">array[2] real params = {0.0, 1.0}; <span class="comment">// mean and standard deviation on log scale</span></div>
 <div class="line"><span class="keywordtype">int</span> dist_id = 1; <span class="comment">// Lognormal</span></div>
 <div class="line">real log_cdf = <a class="code hl_function" href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(delay, params, dist_id);</div>
-<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00073">primarycensored_ode.stan:73</a></div></div>
+<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00079">primarycensored_ode.stan:79</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00073">73</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00079">79</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="group__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph.png" border="0" usemap="#agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph" alt=""/></div>
 <map name="agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph" id="agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph">
-<area shape="rect" title=" " alt="" coords="5,31,76,56"/>
+<area shape="rect" title=" " alt="" coords="5,80,76,106"/>
 <area shape="rect" href="group__delay__log__cdfs.html#gac677200fa47a95f644537be481450960" title=" " alt="" coords="124,5,296,31"/>
-<area shape="poly" title=" " alt="" coords="76,36,108,31,109,36,76,41"/>
+<area shape="poly" title=" " alt="" coords="58,77,88,58,123,40,137,34,139,39,125,45,90,63,61,82"/>
 <area shape="rect" href="group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="153,55,266,80"/>
-<area shape="poly" title=" " alt="" coords="76,46,139,55,138,60,76,51"/>
+<area shape="poly" title=" " alt="" coords="76,85,138,76,139,81,76,90"/>
+<area shape="rect" href="nonparametric_8stan.html#a03e3aad866bd81f69bc72da66bc5a184" title=" " alt="" coords="163,104,257,130"/>
+<area shape="poly" title=" " alt="" coords="76,95,148,105,147,111,76,100"/>
+<area shape="rect" href="nonparametric_8stan.html#a2b6a89a9f545005b8ab818cfa32dd086" title=" " alt="" coords="360,153,441,179"/>
+<area shape="poly" title=" " alt="" coords="60,104,89,123,125,140,182,154,241,162,344,166,344,171,240,167,181,159,123,145,87,128,57,109"/>
+<area shape="rect" href="nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9" title=" " alt="" coords="344,104,457,130"/>
+<area shape="poly" title=" " alt="" coords="257,114,328,114,328,120,257,120"/>
+<area shape="poly" title=" " alt="" coords="258,126,345,149,344,154,257,131"/>
 </map>
 </div>
 <div class="dynheader">
@@ -355,7 +362,7 @@ Here is the caller graph for this function:</div>
 <area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="5,97,208,122"/>
 <area shape="poly" title=" " alt="" coords="307,189,142,125,144,120,309,184"/>
 <area shape="poly" title=" " alt="" coords="139,86,192,57,255,35,376,11,472,3,569,11,690,35,737,48,784,65,873,105,947,146,998,178,996,182,944,150,870,110,782,70,736,53,689,40,568,16,472,8,377,16,256,40,194,62,142,90"/>
-<area shape="rect" href="group__primary__event__analytical__distributions.html#ga3cc1a0a455342c3961224afe31db5416" title=" " alt="" coords="930,244,1107,285"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga9a23e4c237b331bc4de24caf05aa160c" title=" " alt="" coords="930,244,1107,285"/>
 <area shape="poly" title=" " alt="" coords="1332,267,1107,267,1107,262,1332,262"/>
 <area shape="poly" title=" " alt="" coords="915,279,827,286,725,288,616,284,508,269,439,248,382,221,385,216,441,243,510,264,616,279,725,283,827,280,914,274"/>
 </map>
