@@ -38,7 +38,7 @@ test_that("qprimarycensored works with custom primary distributions", {
     plnorm,
     pwindow,
     dprimary = dexpgrowth,
-    dprimary_args = list(r = 0.2),
+    primary_args = list(r = 0.2),
     meanlog = 2,
     sdlog = 1
   )

@@ -109,6 +109,28 @@ pcd_cmdstan_model <- function(
 #'   if the truncation time D is appropriate relative to the maximum delay
 #'   for each unique D value. Set to NULL to skip the check. Default is 2.
 #'
+#' @param dist_options Optional list carrying the shape of a
+#'   non-parametric delay. When `dist_id` is one of `26` (step CDF,
+#'   Dirichlet prior on the PMF), `27` (step CDF, random walk on the
+#'   logit hazards) or `28` (step CDF, IID logit random effects on the
+#'   hazards), this list **must** be supplied and must contain:
+#'   * `K`: integer, the number of bins.
+#'   * `boundaries`: numeric vector of length `K + 1`.
+#'
+#'   Priors and `param_bounds` follow the same channel as the parametric
+#'   path: pass them through `priors` and `param_bounds`. The semantics
+#'   of `priors` depend on `dist_id`:
+#'   * `dist_id = 26`: `priors$scale` is the length-`K` Dirichlet
+#'     concentration vector; `priors$location` is unused.
+#'   * `dist_id = 27` or `28`: `priors$location = c(alpha_mean,
+#'     log_sigma_mean)` and `priors$scale = c(alpha_sd, log_sigma_sd)`.
+#'
+#'   `param_bounds` is unused for the non-parametric paths; pass
+#'   `list(lower = numeric(0), upper = numeric(0))`. If `priors` is
+#'   empty when a non-parametric `dist_id` is given, sensible defaults
+#'   are applied (`Dirichlet(1, ..., 1)` for `dist_id = 26`;
+#'   `N(0, 5)` on `alpha` and `N(0, 1)` on `log_sigma` for 27 and 28).
+#'
 #' @return A list containing the data formatted for use with
 #'   [pcd_cmdstan_model()]
 #'
@@ -148,7 +170,13 @@ pcd_as_stan_data <- function(
     primary_priors,
     compute_log_lik = FALSE,
     use_reduce_sum = FALSE,
-    truncation_check_multiplier = 2) {
+    truncation_check_multiplier = 2,
+    dist_options = NULL) {
+  np <- .build_np_stan_fields(dist_id, dist_options, priors)
+  if (np$nonparametric == 1L) {
+    param_bounds <- list(lower = numeric(0), upper = numeric(0))
+    priors <- list(location = numeric(0), scale = numeric(0))
+  }
   required_cols <- c(delay, delay_upper, n, pwindow, relative_obs_time)
   missing_cols <- setdiff(required_cols, names(data))
   if (length(missing_cols) > 0) {
@@ -219,8 +247,112 @@ pcd_as_stan_data <- function(
     prior_location = priors$location,
     prior_scale = priors$scale,
     primary_prior_location = primary_priors$location,
-    primary_prior_scale = primary_priors$scale
+    primary_prior_scale = primary_priors$scale,
+    nonparametric = np$nonparametric,
+    K_np = np$K_np,
+    np_boundaries = np$np_boundaries,
+    np_dirichlet_alpha = np$np_dirichlet_alpha,
+    np_alpha_mean = np$np_alpha_mean,
+    np_alpha_sd = np$np_alpha_sd,
+    np_log_sigma_mean = np$np_log_sigma_mean,
+    np_log_sigma_sd = np$np_log_sigma_sd
   )
 
   return(stan_data)
+}
+
+# Build the np_* Stan data fields. The non-parametric path is selected
+# by `dist_id`: 26 (step + Dirichlet on PMF), 27 (step + RW on logit
+# hazards), 28 (step + RE on logit hazards). For these `dist_id`s,
+# `dist_options` must carry `K` and `boundaries`, and `priors` is
+# interpreted as the prior on the implicit non-parametric parameters
+# (Dirichlet concentration for 26; (mean, sd) for `alpha` and
+# `log_sigma` for 27/28). For parametric `dist_id`s `dist_options` is
+# ignored; all np_* fields collapse to their smallest valid sizes.
+.build_np_stan_fields <- function(dist_id, dist_options, priors) {
+  nonparametric <- isTRUE(dist_id %in% c(26L, 27L, 28L))
+  if (!nonparametric) {
+    if (!is.null(dist_options)) {
+      stop(
+        "`dist_options` is only used with non-parametric `dist_id` ",
+        "(26, 27, or 28).",
+        call. = FALSE
+      )
+    }
+    # All np_* fields collapse to their smallest valid declared sizes.
+    return(list(
+      nonparametric = 0L,
+      K_np = 0L,
+      np_boundaries = 0,
+      np_dirichlet_alpha = numeric(0),
+      np_alpha_mean = 0,
+      np_alpha_sd = 1,
+      np_log_sigma_mean = 0,
+      np_log_sigma_sd = 1
+    ))
+  }
+  if (is.null(dist_options)) {
+    stop(
+      "Non-parametric `dist_id` ", dist_id, " requires ",
+      "`dist_options = list(K = ..., boundaries = ...)`.",
+      call. = FALSE
+    )
+  }
+  required <- c("K", "boundaries")
+  missing_fields <- setdiff(required, names(dist_options))
+  if (length(missing_fields) > 0) {
+    stop(
+      "`dist_options` is missing required elements: ",
+      toString(missing_fields),
+      call. = FALSE
+    )
+  }
+  K <- as.integer(dist_options$K)
+  if (!is.finite(K) || K < 1) {
+    stop("`dist_options$K` must be a positive integer.", call. = FALSE)
+  }
+  boundaries <- as.numeric(dist_options$boundaries)
+  if (length(boundaries) != K + 1L) {
+    stop(
+      "`dist_options$boundaries` must have length K + 1 (got ",
+      length(boundaries), ", expected ", K + 1L, ").",
+      call. = FALSE
+    )
+  }
+  np_fields <- list(
+    nonparametric = 1L, K_np = K, np_boundaries = boundaries,
+    np_dirichlet_alpha = rep(1, K),
+    np_alpha_mean = 0, np_alpha_sd = 5,
+    np_log_sigma_mean = 0, np_log_sigma_sd = 1
+  )
+  if (dist_id == 26L) {
+    # priors$scale is the Dirichlet concentration on the simplex.
+    if (!is.null(priors) && length(priors$scale) > 0L) {
+      if (length(priors$scale) != K) {
+        stop(
+          "For dist_id = 26, `priors$scale` must have length K (got ",
+          length(priors$scale), ", expected ", K, ").",
+          call. = FALSE
+        )
+      }
+      np_fields$np_dirichlet_alpha <- as.numeric(priors$scale)
+    }
+  } else if (!is.null(priors) && (length(priors$location) > 0L ||
+                                   length(priors$scale) > 0L)) {
+    # dist_id 27 or 28: priors$location / priors$scale are length-2
+    # (mean, sd) for alpha and log_sigma respectively.
+    if (length(priors$location) != 2L || length(priors$scale) != 2L) {
+      stop(
+        "For dist_id ", dist_id, ", `priors$location` and ",
+        "`priors$scale` must each have length 2 (one entry for ",
+        "`alpha`, one for `log_sigma`).",
+        call. = FALSE
+      )
+    }
+    np_fields$np_alpha_mean <- as.numeric(priors$location[1])
+    np_fields$np_log_sigma_mean <- as.numeric(priors$location[2])
+    np_fields$np_alpha_sd <- as.numeric(priors$scale[1])
+    np_fields$np_log_sigma_sd <- as.numeric(priors$scale[2])
+  }
+  np_fields
 }
