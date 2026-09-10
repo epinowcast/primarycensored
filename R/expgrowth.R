@@ -137,3 +137,6 @@ rexpgrowth <- function(n, min = 0, max = 1, r) {
   }
   return(samples)
 }
+
+attr(dexpgrowth, "name") <- "dexpgrowth"
+attr(pexpgrowth, "name") <- "pexpgrowth"
