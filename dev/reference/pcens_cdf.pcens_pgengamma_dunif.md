@@ -1,0 +1,61 @@
+# Method for generalised gamma (Prentice parameterisation) delay with uniform primary
+
+Analytical solution for the generalised gamma distribution in the
+Prentice parameterisation used by
+[`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md),
+with parameters `mu`, `sigma` and `Q`. For `Q > 0` this is mapped to the
+Stacy parameterisation of
+[`pcens_cdf.pcens_pgengamma.orig_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md)
+via `shape = Q / sigma`, `scale = exp(mu) * Q^(2 * sigma / Q)` and
+`k = 1 / Q^2`. For `Q <= 0` (the lognormal and reflected cases) the
+numerical
+[`pcens_cdf.default()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.default.md)
+method is used.
+
+## Usage
+
+``` r
+# S3 method for class 'pcens_pgengamma_dunif'
+pcens_cdf(object, q, pwindow, use_numeric = FALSE)
+```
+
+## Arguments
+
+- object:
+
+  A `primarycensored` object as created by
+  [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md).
+
+- q:
+
+  Vector of quantiles
+
+- pwindow:
+
+  Primary event window
+
+- use_numeric:
+
+  Logical, if TRUE forces use of numeric integration even for
+  distributions with analytical solutions. This is primarily useful for
+  testing purposes or for settings where the analytical solution breaks
+  down.
+
+## Value
+
+Vector of computed primary event censored CDFs
+
+## See also
+
+Low level primary event censored distribution objects and methods
+[`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md),
+[`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md),
+[`pcens_cdf.default()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.default.md),
+[`pcens_cdf.pcens_pdiscretehazard()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pdiscretehazard.md),
+[`pcens_cdf.pcens_pdiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pdiscretestep.md),
+[`pcens_cdf.pcens_pgamma_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgamma_dunif.md),
+[`pcens_cdf.pcens_pgengamma.orig_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md),
+[`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_plnorm_dunif.md),
+[`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pweibull_dunif.md),
+[`pcens_quantile()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.md),
+[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.default.md)

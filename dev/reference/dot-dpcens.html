@@ -5,7 +5,7 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Define a fitdistrplus compatible wrapper around dprimarycensored — .dpcens"><meta name="description" content="Define a fitdistrplus compatible wrapper around dprimarycensored"><meta property="og:description" content="Define a fitdistrplus compatible wrapper around dprimarycensored"><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Define a fitdistrplus compatible wrapper around dprimarycensored — .dpcens"><meta name="description" content="Define a fitdistrplus compatible wrapper around dprimarycensored"><meta property="og:description" content="Define a fitdistrplus compatible wrapper around dprimarycensored"><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.2.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,6 +37,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul></li>
@@ -68,7 +69,7 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.dpcens</span><span class="op">(</span><span class="va">x</span>, <span class="va">params</span>, <span class="va">pdist</span>, <span class="va">dprimary</span>, <span class="va">dprimary_args</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.dpcens</span><span class="op">(</span><span class="va">x</span>, <span class="va">params</span>, <span class="va">pdist</span>, <span class="va">dprimary</span>, <span class="va">primary_args</span>, pprimary <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -105,11 +106,25 @@ functions, users can apply <code><a href="add_name_attribute.html">add_name_attr
 functions if they wish to leverage analytical solutions.</p></dd>
 
 
-<dt id="arg-dprimary-args">dprimary_args<a class="anchor" aria-label="anchor" href="#arg-dprimary-args"></a></dt>
+<dt id="arg-primary-args">primary_args<a class="anchor" aria-label="anchor" href="#arg-primary-args"></a></dt>
 <dd><p>List of additional arguments to be passed to
-dprimary. For example, when using <code>dexpgrowth</code>, you would
-pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to set the minimum, maximum,
-and rate parameters</p></dd>
+dprimary (and the matching primary CDF). For example, when using
+<code>dexpgrowth</code>, you would pass <code>list(min = 0, max = pwindow, r = 0.2)</code> to
+set the minimum, maximum, and rate parameters. Replaces the deprecated
+<code>dprimary_args</code>; defaults to <code>NULL</code>.</p></dd>
+
+
+<dt id="arg-pprimary">pprimary<a class="anchor" aria-label="anchor" href="#arg-pprimary"></a></dt>
+<dd><p>Optional CDF for the primary event distribution. May be
+a function or a character string naming a primary distribution in
+<code>pcd_primary_distributions</code>. Defaults to <code>NULL</code>, in which case the
+primary CDF is looked up automatically from the registry using the
+<code>"name"</code> attribute of <code>dprimary</code>. When both <code>dprimary</code> and <code>pprimary</code>
+carry a <code>"name"</code> attribute (or are base R functions whose name can be
+inferred), the two names must agree on everything other than the
+leading <code>d</code>/<code>p</code> prefix; mismatches such as <code>dunif</code> + <code>pexpgrowth</code> raise
+an error. Supplying <code>pprimary</code> explicitly is mainly useful when using a
+custom primary distribution whose CDF is not in the registry.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -126,7 +141,7 @@ and rate parameters</p></dd>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.9000.</p>
 </div>
 
     </footer></div>

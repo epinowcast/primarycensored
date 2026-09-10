@@ -51,9 +51,9 @@ package for plotting and `dplyr` for data manipulation.
 ``` r
 
 library(primarycensored)
-library(cmdstanr)
-library(ggplot2)
-library(dplyr)
+library(cmdstanr) # nolint: missing_package_linter, object_usage_linter.
+library(ggplot2) # nolint: object_usage_linter.
+library(dplyr) # nolint: object_usage_linter.
 ```
 
 ## 2 Simulating censored and truncated delay distribution data
@@ -292,6 +292,7 @@ for more details on the `primarycensored_lpdf` function.
 writeLines(
   "
   functions {
+    #include nonparametric.stan
     #include primarycensored.stan
     // These functions are required for the primarycensored_lpdf function
     #include primarycensored_ode.stan
@@ -417,10 +418,23 @@ pcd_fit <- pcd_model$sample(
 pcd_fit
 ```
 
-    ##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##  lp__      -3422.75 -3422.46 0.98 0.74 -3424.73 -3421.80 1.00     1490     1565
-    ##  params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1273     1499
-    ##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1262     1399
+    ## Warning: NAs introduced by coercion
+    ## Warning: NAs introduced by coercion
+
+    ##        variable     mean   median   sd  mad       q5      q95 rhat ess_bulk
+    ##  lp__           -3422.75 -3422.45 0.99 0.74 -3424.70 -3421.80 1.00     1369
+    ##  params[1]          1.55     1.54 0.05 0.05     1.47     1.63 1.00      998
+    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.83 1.00     1038
+    ##  np_pmf[1]          1.00     1.00 0.00 0.00     1.00     1.00   NA       NA
+    ##  lpmf_params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00      998
+    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1038
+    ##  ess_tail
+    ##      1531
+    ##      1131
+    ##      1249
+    ##        NA
+    ##      1131
+    ##      1249
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and

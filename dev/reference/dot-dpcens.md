@@ -5,7 +5,7 @@ Define a fitdistrplus compatible wrapper around dprimarycensored
 ## Usage
 
 ``` r
-.dpcens(x, params, pdist, dprimary, dprimary_args, ...)
+.dpcens(x, params, pdist, dprimary, primary_args, pprimary = NULL, ...)
 ```
 
 ## Arguments
@@ -47,12 +47,26 @@ Define a fitdistrplus compatible wrapper around dprimarycensored
   to yield properly tagged functions if they wish to leverage analytical
   solutions.
 
-- dprimary_args:
+- primary_args:
 
-  List of additional arguments to be passed to dprimary. For example,
-  when using `dexpgrowth`, you would pass
-  `list(min = 0, max = pwindow, r = 0.2)` to set the minimum, maximum,
-  and rate parameters
+  List of additional arguments to be passed to dprimary (and the
+  matching primary CDF). For example, when using `dexpgrowth`, you would
+  pass `list(min = 0, max = pwindow, r = 0.2)` to set the minimum,
+  maximum, and rate parameters. Replaces the deprecated `dprimary_args`;
+  defaults to `NULL`.
+
+- pprimary:
+
+  Optional CDF for the primary event distribution. May be a function or
+  a character string naming a primary distribution in
+  `pcd_primary_distributions`. Defaults to `NULL`, in which case the
+  primary CDF is looked up automatically from the registry using the
+  `"name"` attribute of `dprimary`. When both `dprimary` and `pprimary`
+  carry a `"name"` attribute (or are base R functions whose name can be
+  inferred), the two names must agree on everything other than the
+  leading `d`/`p` prefix; mismatches such as `dunif` + `pexpgrowth`
+  raise an error. Supplying `pprimary` explicitly is mainly useful when
+  using a custom primary distribution whose CDF is not in the registry.
 
 - ...:
 

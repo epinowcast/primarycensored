@@ -22,7 +22,8 @@ pcd_as_stan_data(
   primary_priors,
   compute_log_lik = FALSE,
   use_reduce_sum = FALSE,
-  truncation_check_multiplier = 2
+  truncation_check_multiplier = 2,
+  dist_options = NULL
 )
 ```
 
@@ -113,6 +114,35 @@ pcd_as_stan_data(
   Numeric multiplier to use for checking if the truncation time D is
   appropriate relative to the maximum delay for each unique D value. Set
   to NULL to skip the check. Default is 2.
+
+- dist_options:
+
+  Optional list carrying the shape of a non-parametric delay. When
+  `dist_id` is one of `26` (step CDF, Dirichlet prior on the PMF), `27`
+  (step CDF, random walk on the logit hazards) or `28` (step CDF, IID
+  logit random effects on the hazards), this list **must** be supplied
+  and must contain:
+
+  - `K`: integer, the number of bins.
+
+  - `boundaries`: numeric vector of length `K + 1`.
+
+  Priors and `param_bounds` follow the same channel as the parametric
+  path: pass them through `priors` and `param_bounds`. The semantics of
+  `priors` depend on `dist_id`:
+
+  - `dist_id = 26`: `priors$scale` is the length-`K` Dirichlet
+    concentration vector; `priors$location` is unused.
+
+  - `dist_id = 27` or `28`:
+    `priors$location = c(alpha_mean, log_sigma_mean)` and
+    `priors$scale = c(alpha_sd, log_sigma_sd)`.
+
+  `param_bounds` is unused for the non-parametric paths; pass
+  `list(lower = numeric(0), upper = numeric(0))`. If `priors` is empty
+  when a non-parametric `dist_id` is given, sensible defaults are
+  applied (`Dirichlet(1, ..., 1)` for `dist_id = 26`; `N(0, 5)` on
+  `alpha` and `N(0, 1)` on `log_sigma` for 27 and 28).
 
 ## Value
 

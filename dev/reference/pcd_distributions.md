@@ -14,7 +14,7 @@ pcd_distributions
 
 ## Format
 
-A data.frame with 17 rows and 4 columns:
+A data.frame with 28 rows and 4 columns:
 
 - name:
 

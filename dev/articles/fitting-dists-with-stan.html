@@ -18,8 +18,8 @@
     }
   };
 </script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Fitting distributions using primarycensored and cmdstan">
 <meta name="description" content="A guide on how to use primarycensored with Stan for Bayesian inference of epidemiological delay distributions.">
@@ -35,7 +35,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.4.0.1000</small>
+    <small class="nav-text text-danger me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="In-development version">1.5.2.1000</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,6 +63,7 @@
     <li><h6 class="dropdown-header" data-toc-skip>──── Fitting delay distributions ────</h6></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-stan.html">Fitting distributions using primarycensored and cmdstan</a></li>
     <li><a class="dropdown-item" href="../articles/fitting-dists-with-fitdistrplus.html">Fitting distributions using primarycensored and fitdistrplus</a></li>
+    <li><a class="dropdown-item" href="../articles/fitting-nonparametric-delays.html">Fitting non-parametric delay distributions</a></li>
     <li><h6 class="dropdown-header" data-toc-skip>──── Stan development ────</h6></li>
     <li><a class="dropdown-item" href="../articles/using-stan-tools.html">How to use primarycensored with Stan</a></li>
   </ul>
@@ -143,9 +144,9 @@
 <p>Alongside the <code>primarycensored</code> package we will use the <code>cmdstanr</code> package for interfacing with cmdstan. We will also use the <code>ggplot2</code> package for plotting and <code>dplyr</code> for data manipulation.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://primarycensored.epinowcast.org">primarycensored</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/" class="external-link">cmdstanr</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span></span></code></pre></div>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://mc-stan.org/cmdstanr/" class="external-link">cmdstanr</a></span><span class="op">)</span> <span class="co"># nolint: missing_package_linter, object_usage_linter.</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span> <span class="co"># nolint: object_usage_linter.</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://dplyr.tidyverse.org" class="external-link">dplyr</a></span><span class="op">)</span> <span class="co"># nolint: object_usage_linter.</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2" number="2">
@@ -330,6 +331,7 @@
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/writeLines.html" class="external-link">writeLines</a></span><span class="op">(</span></span>
 <span>  <span class="st">"</span></span>
 <span><span class="st">  functions {</span></span>
+<span><span class="st">    #include nonparametric.stan</span></span>
 <span><span class="st">    #include primarycensored.stan</span></span>
 <span><span class="st">    // These functions are required for the primarycensored_lpdf function</span></span>
 <span><span class="st">    #include primarycensored_ode.stan</span></span>
@@ -430,10 +432,22 @@
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">pcd_fit</span></span></code></pre></div>
-<pre><code><span><span class="co">##   variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail</span></span>
-<span><span class="co">##  lp__      -3422.75 -3422.46 0.98 0.74 -3424.73 -3421.80 1.00     1490     1565</span></span>
-<span><span class="co">##  params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1273     1499</span></span>
-<span><span class="co">##  params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1262     1399</span></span></code></pre>
+<pre><code><span><span class="co">## Warning: NAs introduced by coercion</span></span>
+<span><span class="co">## Warning: NAs introduced by coercion</span></span></code></pre>
+<pre><code><span><span class="co">##        variable     mean   median   sd  mad       q5      q95 rhat ess_bulk</span></span>
+<span><span class="co">##  lp__           -3422.75 -3422.45 0.99 0.74 -3424.70 -3421.80 1.00     1369</span></span>
+<span><span class="co">##  params[1]          1.55     1.54 0.05 0.05     1.47     1.63 1.00      998</span></span>
+<span><span class="co">##  params[2]          0.78     0.78 0.03 0.03     0.73     0.83 1.00     1038</span></span>
+<span><span class="co">##  np_pmf[1]          1.00     1.00 0.00 0.00     1.00     1.00   NA       NA</span></span>
+<span><span class="co">##  lpmf_params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00      998</span></span>
+<span><span class="co">##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1038</span></span>
+<span><span class="co">##  ess_tail</span></span>
+<span><span class="co">##      1531</span></span>
+<span><span class="co">##      1131</span></span>
+<span><span class="co">##      1249</span></span>
+<span><span class="co">##        NA</span></span>
+<span><span class="co">##      1131</span></span>
+<span><span class="co">##      1249</span></span></code></pre>
 <p>In this model we have a generic <code>params</code> vector that contains the parameters for the delay distribution. In this case these are <code>mu</code> and <code>sigma</code> from the last example (i.e. the meanlog and sdlog parameters of the lognormal distribution). We also have a <code>primary_params</code> vector that contains the parameters for the primary distribution. In this case this is empty as we are using a uniform distribution.</p>
 <p>We see again that the model has converged and the diagnostics look good. We also see that the posterior means are very near the true parameters and the 90% credible intervals include the true parameters as with the manually written model. <strong>Note that we have set <code>parallel_chains = 2</code> and <code>threads_per_chain = 2</code> to demonstrate within chain parallelisation. Usually however you would want to use <code>parallel_chains = &lt;number of chains&gt;</code> and then use the remainder of the available cores for within chain parallelisation by setting <code>threads_per_chain = &lt;remaining cores / number of chains&gt;</code> to ensure that you make best use of your machine’s resources.</strong></p>
 <div class="section level3" number="5.1">
@@ -484,7 +498,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.9000.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.9000.</p>
 </div>
 
     </footer>

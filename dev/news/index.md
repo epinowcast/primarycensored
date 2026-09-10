@@ -1,6 +1,198 @@
 # Changelog
 
-## primarycensored 1.4.0.1000
+## primarycensored 1.5.2.1000
+
+This development version adds non-parametric delay distributions, both a
+direct PMF over fixed bins (step CDF) and a discrete-time hazard
+parameterisation, with support for fitting them via
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+and
+[`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
+
+### New features
+
+- Added a non-parametric step CDF family.
+  [`pdiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/pdiscretestep.md),
+  [`ddiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/ddiscretestep.md),
+  and
+  [`rdiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/rdiscretestep.md)
+  represent a delay via a direct PMF over fixed bins, and the
+  discrete-time hazard variant
+  [`pdiscretehazard()`](https://primarycensored.epinowcast.org/dev/reference/pdiscretehazard.md),
+  [`ddiscretehazard()`](https://primarycensored.epinowcast.org/dev/reference/ddiscretehazard.md),
+  and
+  [`rdiscretehazard()`](https://primarycensored.epinowcast.org/dev/reference/rdiscretehazard.md)
+  parameterises the same family via per-bin hazards, with conversion
+  utilities
+  [`hazards_to_pmf()`](https://primarycensored.epinowcast.org/dev/reference/hazards_to_pmf.md)
+  and
+  [`pmf_to_hazards()`](https://primarycensored.epinowcast.org/dev/reference/pmf_to_hazards.md).
+  See [\#218](https://github.com/epinowcast/primarycensored/issues/218).
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  accepts `distr = "discretestep"` and `distr = "discretehazard"`
+  through the same code path as parametric distributions, with `K` (the
+  number of bins) inferred from `start`. Hazard priors are user-settable
+  via `prior = list(...)`.
+- Added a second discrete-hazard parameterisation alongside the logit
+  random walk. In
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  the `hazard_model` argument picks between `"rw"` (random walk on the
+  logit hazards, the default) and `"re"` (IID logit random effects
+  around a mean intercept, `logit(h_i) = alpha + sigma * eps_i` with
+  `eps_i ~ N(0, 1)`).
+- Added
+  [`discretehazard_start()`](https://primarycensored.epinowcast.org/dev/reference/discretehazard_start.md)
+  for building the named start-value list expected by
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  with `distr = "discretehazard"`.
+- Added Stan support for the non-parametric families. `dist_id = 26` is
+  the step CDF with the PMF supplied in `params` and `dist_id = 27` the
+  step CDF with the hazards supplied in `params`. Both take
+  `params = c(boundaries, weights)` of length `2 * K + 1`, so
+  `dist_lcdf()` and `primarycensored_lpmf()` evaluate them from `params`
+  alone. `dist_id = 28` shares the likelihood of `27` and only differs
+  in the prior used by the package model. The primary event censored CDF
+  is analytic for the uniform and exponential growth primaries, for any
+  bin widths and for boundaries that start below zero.
+- The Stan model returned by
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md)
+  fits the non-parametric families directly: `26` with a Dirichlet prior
+  on the PMF, `27` with a Gaussian random walk on the logit hazards and
+  `28` with IID logit random effects on the hazards.
+  [`pcd_as_stan_data()`](https://primarycensored.epinowcast.org/dev/reference/pcd_as_stan_data.md)
+  accepts `dist_options = list(K = ..., boundaries = ...)` to carry the
+  bin shape, and the existing `priors` argument carries the prior:
+  `priors$scale` is the length-`K` Dirichlet concentration for
+  `dist_id = 26`, and `priors$location` / `priors$scale` are length-`2`
+  `(mean, sd)` for `alpha` and `log_sigma` for `dist_id = 27` and `28`.
+- The `pdist` argument of
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  now accepts a character string, looked up via the `pcd_distributions`
+  registry; passing a function still works as before.
+- `pprimary` is now a user-facing argument on
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md),
+  and
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md).
+  It accepts either a function or a character string naming a primary
+  distribution in `pcd_primary_distributions`. When omitted, the primary
+  CDF is looked up automatically from the registry using the `"name"`
+  attribute of `dprimary`. Supplying both `dprimary` and `pprimary` with
+  inconsistent names (e.g. `dunif` + `pexpgrowth`) now errors clearly.
+- Soft-deprecated `dprimary_args` in favour of `primary_args` on
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md),
+  [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md),
+  and
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md).
+  The new name reflects that the arguments are passed to both `dprimary`
+  and the matching primary CDF. The deprecation uses
+  [`lifecycle::deprecate_soft()`](https://lifecycle.r-lib.org/reference/deprecate_soft.html),
+  so a warning is shown for direct use and during package tests, and
+  calls from other packages keep working quietly.
+- Primary censored CDF dispatch now follows a two-layer S3 chain on
+  `pcens` objects: a specific method for a (delay, primary) pair is
+  tried first, then a delay-only general method, then a numerical
+  default. The analytic primary convolution path now works for any
+  primary with a known CDF, with the primary CDF plumbed through
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  via the `pprimary` argument.
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  and
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  now accept observations whose secondary censoring interval straddles
+  `D` (`left < D <= right`). The upper endpoint is internally clipped to
+  `D` and the likelihood becomes
+  `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op when
+  `right <= D` and removes the need to pad `D` when fitting
+  non-parametric delays whose support reaches `D`. Observations with
+  `left >= D` are still rejected because under truncation at `D` no
+  event with latent value `>= D` is observable. See
+  [\#312](https://github.com/epinowcast/primarycensored/issues/312).
+- Added vignette `fitting-nonparametric-delays` demonstrating end-to-end
+  non-parametric delay estimation.
+
+## primarycensored 1.5.2
+
+### New features
+
+- Added analytical primary censored CDFs for the generalised gamma delay
+  distribution with a uniform primary event, in R and Stan. In R,
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
+  gains methods for
+  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md)
+  (Stacy parameterisation, always analytical) and
+  [`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md)
+  (Prentice parameterisation, analytical for `Q > 0` and numeric
+  otherwise).
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  and related functions already worked with any `pdist`, including
+  these, via numeric integration. In Stan, `dist_lcdf()` now supports
+  `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`)
+  through a new `gengamma_lcdf()` function and
+  `primarycensored_gengamma_uniform_lcdf()` provides the analytical
+  solution used by `primarycensored_lpmf()` and related functions,
+  including in
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
+  `flexsurv` has been added to `Suggests`.
+- Functions exported by other packages (for example
+  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md))
+  are now identified by name when passed as `pdist` or `dprimary`, so
+  analytical solutions are used without needing
+  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md).
+
+### Documentation
+
+- Added the generalised gamma derivation to the “Analytic solutions”
+  vignette. The gamma and Weibull solutions are recovered as special
+  cases.
+
+## primarycensored 1.5.1
+
+CRAN release: 2026-06-15
+
+This patch release fixes a performance regression introduced in 1.5.0
+that slowed the Stan likelihood for positive-support delays.
+
+### Bug fixes
+
+- Fixed a performance regression in the Stan `primarycensored_lpmf` and
+  `primarycensored_lcdf` functions for positive-support delays. After
+  the lower-truncation guard was relaxed in 1.5.0 to support negative
+  `L`, every likelihood evaluation for positive-support delays entered a
+  truncation-normalisation block that cancels to a no-op but still adds
+  gradient calculations (an `exp`/`log_diff_exp` per call), giving a
+  roughly 30% slowdown on the likelihood block. The guard now skips this
+  block unless there is a finite `D`, a strictly positive `L`, or a
+  finite `L` on a real-support distribution, restoring 1.4.0 performance
+  without changing results or losing the negative-support behaviour.
+  Thanks to [@sbfnk](https://github.com/sbfnk) for reporting
+  ([\#323](https://github.com/epinowcast/primarycensored/issues/323)).
+
+## primarycensored 1.5.0
+
+CRAN release: 2026-06-04
+
+This minor release extends the `L` (lower truncation) parameter to
+accept negative and `-Inf` values in both the R and Stan code, letting
+delay distributions with support below zero (e.g. normal, logistic,
+Cauchy, Gumbel) be used with primary censoring and fitted via
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+and
+[`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
+The default value of `L` has changed from `0` to `-Inf`, which leaves
+results unchanged for distributions with non-negative support
+(e.g. lognormal, gamma, Weibull). It also fixes a normalisation bug in
+the exponential growth primary distribution and rewrites the analytical
+CDFs in a CDF-direct form, dropping the `pracma` dependency.
 
 ### Breaking changes
 

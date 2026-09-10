@@ -54,7 +54,11 @@ computation.
 Low level primary event censored distribution objects and methods
 [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md),
 [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md),
+[`pcens_cdf.pcens_pdiscretehazard()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pdiscretehazard.md),
+[`pcens_cdf.pcens_pdiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pdiscretestep.md),
 [`pcens_cdf.pcens_pgamma_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgamma_dunif.md),
+[`pcens_cdf.pcens_pgengamma.orig_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md),
+[`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pweibull_dunif.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.md),
@@ -67,7 +71,7 @@ Low level primary event censored distribution objects and methods
 pcens_obj <- new_pcens(
   pdist = pgamma,
   dprimary = dunif,
-  dprimary_args = list(min = 0, max = 1),
+  primary_args = list(min = 0, max = 1),
   shape = 3,
   scale = 2
 )
