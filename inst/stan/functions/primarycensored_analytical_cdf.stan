@@ -88,28 +88,39 @@ real primarycensored_lognormal_uniform_lcdf(data real d, real q, array[] real pa
   // log E where E = exp(mu + sigma^2/2) is the mean of the delay
   real log_E = mu + 0.5 * square(sigma);
 
-  real log_F_T_d = lognormal_lcdf(d | mu, sigma);
-  real log_tF_T_d = lognormal_lcdf(d | mu_sigma2, sigma);
-
-  // q-dependent terms (guard only to avoid log(0); final algebra is unified).
-  real log_q_F_T_q;    // log(q * F_T(q))
-  real log_E_tF_T_q;   // log(E * tilde F_T(q))
-  if (q > 0) {
-    real log_F_T_q = lognormal_lcdf(q | mu, sigma);
-    real log_tF_T_q = lognormal_lcdf(q | mu_sigma2, sigma);
-    log_q_F_T_q = log(q) + log_F_T_q;
-    log_E_tF_T_q = log_E + log_tF_T_q;
-  } else {
-    log_q_F_T_q = negative_infinity();
-    log_E_tF_T_q = negative_infinity();
-  }
+  // Each of the four terms is formed whole, and dropped whole when its
+  // lognormal CDF would underflow. Adding a `-inf` log CDF to the
+  // parameter-dependent `log(d)` or `log_E` and only then reaching
+  // `log_sum_exp` is what puts a NaN partial on `mu` and `sigma`: the
+  // summand differentiates to `exp(-inf - -inf)`. Guarding the term as a
+  // whole keeps it a constant with no edge back to the parameters. The
+  // `q <= 0` case is the old guard against `log(0)`. See issue #333.
+  real log_d_F_T_d = lognormal_lcdf_underflows(d, mu, sigma)
+                     ? negative_infinity()
+                     : log(d) + lognormal_lcdf(d | mu, sigma);
+  real log_E_tF_T_d = lognormal_lcdf_underflows(d, mu_sigma2, sigma)
+                      ? negative_infinity()
+                      : log_E + lognormal_lcdf(d | mu_sigma2, sigma);
+  real log_q_F_T_q = lognormal_lcdf_underflows(q, mu, sigma)
+                     ? negative_infinity()
+                     : log(q) + lognormal_lcdf(q | mu, sigma);
+  real log_E_tF_T_q = lognormal_lcdf_underflows(q, mu_sigma2, sigma)
+                      ? negative_infinity()
+                      : log_E + lognormal_lcdf(q | mu_sigma2, sigma);
 
   // Unified form: F_{S+}(d) = (A - B) / w_P with
   //   A = d * F_T(d) + E * tilde F_T(q)
   //   B = q * F_T(q) + E * tilde F_T(d)
   // Ordering A >= B is guaranteed by F_{S+}(d) >= 0.
-  real log_A = log_sum_exp(log(d) + log_F_T_d, log_E_tF_T_q);
-  real log_B = log_sum_exp(log_q_F_T_q, log_E + log_tF_T_d);
+  real log_A = log_sum_exp(log_d_F_T_d, log_E_tF_T_q);
+  real log_B = log_sum_exp(log_q_F_T_q, log_E_tF_T_d);
+
+  // Deep enough into the lower tail every term underflows together. Both
+  // are then constant `-inf` and `log_diff_exp` would give NaN, so return
+  // the limit directly.
+  if (is_inf(log_A)) {
+    return negative_infinity();
+  }
 
   return log_diff_exp(log_A, log_B) - log_window;
 }

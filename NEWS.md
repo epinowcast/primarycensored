@@ -1,3 +1,9 @@
+# primarycensored 1.5.2.1000
+
+## Bug fixes
+
+- Fixed a `NaN` gradient in the Stan `primarycensored_lcdf()` deep in the lower tail of a narrow lognormal delay. `lognormal_lcdf()` underflows to `-inf` once the standardised value falls below about -38.6, and its autodiff partial is then `0 / 0`. Stan's reverse pass chains that `NaN` into `mu` and `sigma` even where `log_sum_exp()` gives the term zero weight, so the log density came back finite while the gradient did not. Models that evaluate the delay distribution on a grid starting at zero, rather than only at observed delays, hit this as soon as a proposal was narrow, and reported only `Gradient evaluated at the initial value is not finite`. The affected terms are now dropped whole before the underflowing call is made, for both the analytic uniform primary solution and the ODE solution used for other primaries. Where the density really is zero the result is now reported as `log(0)`, which points at the cause. See #333.
+
 # primarycensored 1.5.2
 
 ## New features
