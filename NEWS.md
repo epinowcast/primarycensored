@@ -25,14 +25,14 @@ This version adds non-parametric delay distributions, both a direct PMF over fix
 - `pprimarycensored()`, `dprimarycensored()` and `qprimarycensored()` gain a `check` argument. It defaults to `TRUE`, which keeps the existing validation of `pdist` via `check_pdist()` and `dprimary` via `check_dprimary()`. Setting `check = FALSE` skips both, for callers that have already validated their functions. Because `check_pdist()` evaluates `pdist` at four points drawn with `runif()`, skipping it also leaves the random number stream untouched, so seeded code no longer depends on how many times these functions were called. `check` follows `...` so it must be given by its full name and cannot capture an argument intended for `pdist`. See #330.
 - `fitdistdoublecens()` gains a matching `check` argument.
 
-## Bug fixes
-
-- Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
-
 ## Documentation
 
 - Added the generalised gamma derivation to the "Analytic solutions" vignette.
   The gamma and Weibull solutions are recovered as special cases.
+
+## Bug fixes
+
+- Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
 
 # primarycensored 1.5.1
 
