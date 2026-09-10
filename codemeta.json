@@ -239,9 +239,21 @@
       "name": "R",
       "version": ">= 4.0.0"
     },
+    "2": {
+      "@type": "SoftwareApplication",
+      "identifier": "lifecycle",
+      "name": "lifecycle",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=lifecycle"
+    },
     "SystemRequirements": null
   },
-  "fileSize": "715.569KB",
+  "fileSize": "908.128KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",
