@@ -31,7 +31,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -383,6 +383,62 @@ f_n &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^
 <p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">2</a>]</sup></span>.</p>
 </div>
 </div>
+<div class="section level3" number="3.7">
+<h3 id="generalised-gamma-distribution">
+<span class="header-section-number">3.7</span> Generalised gamma distribution<a class="anchor" aria-label="anchor" href="#generalised-gamma-distribution"></a>
+</h3>
+<p>The generalised gamma distribution, in the parameterisation of Stacy<span class="citation"><sup>[<a href="#ref-stacy1962generalization">3</a>]</sup></span> as implemented by <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.html" class="external-link">flexsurv::pgengamma.orig()</a></code>, has the density function:</p>
+<p><span class="math display">\[
+f_T(z; a, \theta, k) =
+\begin{cases}
+\frac{a}{\Gamma(k)\theta}\left(\frac{z}{\theta}\right)^{a k-1}e^{-(z/\theta)^{a}}, &amp; z\geq0 ,\\
+0, &amp; z&lt;0,
+\end{cases}
+\]</span>
+And distribution function:</p>
+<p><span class="math display">\[
+F_T(z; a, \theta, k) =\begin{cases} {\gamma\left(k, (z/\theta)^a\right) \over \Gamma(k)}, &amp; z\geq0,\\ 0, &amp; z&lt;0.\end{cases}
+\]</span>
+Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma function.
+The Gamma distribution is the special case <span class="math inline">\(a = 1\)</span> and the Weibull distribution is the special case <span class="math inline">\(k = 1\)</span>.</p>
+<div class="section level4" number="3.7.1">
+<h4 id="generalised-gamma-partial-expectation">
+<span class="header-section-number">3.7.1</span> Generalised gamma partial expectation<a class="anchor" aria-label="anchor" href="#generalised-gamma-partial-expectation"></a>
+</h4>
+<p>Using the integration substitution <span class="math inline">\(y = (z / \theta)^a\)</span> as for the Weibull distribution, the full expectation is <span class="math inline">\(\mathbb{E}[T] = \theta \Gamma(k + 1/a) / \Gamma(k)\)</span>.
+Doing the same integral for the partial expectation gives:</p>
+<p><span class="math display" id="eq:gengammapartexp">\[
+\begin{aligned}
+\int_{t}^{t+w_P} z~ f_T(z; a, \theta, k) dz  &amp;= \frac{\theta}{\Gamma(k)} \int_{(t / \theta)^a}^{((t + w_P) / \theta)^a} \mathbb{1}(y \geq 0)  y^{k + 1/a - 1} e^{-y} dy\\
+&amp;= \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta_{w_P} F_T(t; a, \theta, k + 1/a).
+\end{aligned} \tag{3.8}
+\]</span></p>
+<p>That is, the partial expectation distribution is the generalised gamma distribution with <span class="math inline">\(k\)</span> replaced by <span class="math inline">\(k + 1/a\)</span>.
+For <span class="math inline">\(a = 1\)</span> this recovers equation <a href="#eq:gammapartexp">(3.4)</a> and for <span class="math inline">\(k = 1\)</span> it recovers equation <a href="#eq:weibullpartexp">(3.7)</a>.</p>
+</div>
+<div class="section level4" number="3.7.2">
+<h4 id="survival-function-of-s_-for-generalised-gamma-distribution">
+<span class="header-section-number">3.7.2</span> Survival function of <span class="math inline">\(S_{+}\)</span> for generalised gamma distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-generalised-gamma-distribution"></a>
+</h4>
+<p>By substituting equation <a href="#eq:gengammapartexp">(3.8)</a> into equation <a href="#eq:unifprim">(3.1)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
+<p><span class="math display" id="eq:survgengammaunifprim">\[
+Q_{S_+}(t; a, \theta, k) = Q_T(t + w_P; a, \theta, k) + { 1 \over w_P} \Big[ \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta_{w_P}F_T(t; a, \theta, k + 1/a) - t \Delta_{w_P}F_T(t; a, \theta, k) \Big].
+\tag{3.9}
+\]</span></p>
+</div>
+<div class="section level4" number="3.7.3">
+<h4 id="cdf-form-of-s_-for-generalised-gamma-distribution">
+<span class="header-section-number">3.7.3</span> CDF form of <span class="math inline">\(S_{+}\)</span> for generalised gamma distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-generalised-gamma-distribution"></a>
+</h4>
+<p>Rearranging equation <a href="#eq:survgengammaunifprim">(3.9)</a> via <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> gives the equivalent CDF-direct form</p>
+<p><span class="math display">\[
+F_{S_+}(d; a, \theta, k) = \frac{1}{w_P}\Big[ d\, F_T(d; a, \theta, k) - q\, F_T(q; a, \theta, k) - \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \big( F_T(d; a, \theta, k + 1/a) - F_T(q; a, \theta, k + 1/a) \big) \Big],
+\]</span></p>
+<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.
+This is the form implemented in <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> and in the Stan function <code>primarycensored_gengamma_uniform_lcdf()</code>.
+The discrete censored delay distribution follows from equation <a href="#eq:disccensunifprim">(3.3)</a> exactly as for the Gamma distribution, with <span class="math inline">\(k\theta F_T(\cdot; k + 1, \theta)\)</span> replaced by <span class="math inline">\(\theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} F_T(\cdot; a, \theta, k + 1/a)\)</span>.</p>
+</div>
+</div>
 </div>
 <div class="section level2" number="4">
 <h2 id="learning-more">
@@ -405,6 +461,11 @@ f_n &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^
 <div id="ref-cori2013new" class="csl-entry">
 <div class="csl-left-margin">2. </div>
 <div class="csl-right-inline">Cori, A., Ferguson, N. M., Fraser, C., &amp; Cauchemez, S. (2013). A new framework and software to estimate time-varying reproduction numbers during epidemics. <em>American Journal of Epidemiology</em>, <em>178</em>(9), 1505–1512.</div>
+</div>
+<div id="ref-stacy1962generalization" class="csl-entry">
+<div class="csl-left-margin">3. </div>
+<div class="csl-right-inline">Stacy, E. W. (1962). A generalization of the gamma distribution. <em>Ann. Math. Stat.</em>, <em>33</em>(3), 1187–1192. <a href="https://doi.org/10.1214/aoms/1177704481" class="external-link">https://doi.org/10.1214/aoms/1177704481</a>
+</div>
 </div>
 </div>
 </div>

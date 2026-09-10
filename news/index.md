@@ -1,5 +1,40 @@
 # Changelog
 
+## primarycensored 1.5.2
+
+### New features
+
+- Added analytical primary censored CDFs for the generalised gamma delay
+  distribution with a uniform primary event, in R and Stan. In R,
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  gains methods for
+  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md)
+  (Stacy parameterisation, always analytical) and
+  [`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md)
+  (Prentice parameterisation, analytical for `Q > 0` and numeric
+  otherwise).
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md)
+  and related functions already worked with any `pdist`, including
+  these, via numeric integration. In Stan, `dist_lcdf()` now supports
+  `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`)
+  through a new `gengamma_lcdf()` function and
+  `primarycensored_gengamma_uniform_lcdf()` provides the analytical
+  solution used by `primarycensored_lpmf()` and related functions,
+  including in
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/reference/pcd_cmdstan_model.md).
+  `flexsurv` has been added to `Suggests`.
+- Functions exported by other packages (for example
+  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md))
+  are now identified by name when passed as `pdist` or `dprimary`, so
+  analytical solutions are used without needing
+  [`add_name_attribute()`](https://primarycensored.epinowcast.org/reference/add_name_attribute.md).
+
+### Documentation
+
+- Added the generalised gamma derivation to the “Analytic solutions”
+  vignette. The gamma and Weibull solutions are recovered as special
+  cases.
+
 ## primarycensored 1.5.1
 
 CRAN release: 2026-06-15

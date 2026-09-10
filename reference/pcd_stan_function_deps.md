@@ -52,12 +52,14 @@ pcd_stan_function_deps("primarycensored_lpmf")
 #>  [7] "primarycensored_lognormal_uniform_lcdf"
 #>  [8] "log_weibull_g"                         
 #>  [9] "primarycensored_weibull_uniform_lcdf"  
-#> [10] "primarycensored_analytical_lcdf_raw"   
-#> [11] "primarycensored_analytical_lcdf"       
-#> [12] "primarycensored_analytical_cdf"        
-#> [13] "primarycensored_cdf"                   
-#> [14] "primarycensored_lcdf"                  
-#> [15] "primarycensored_lpmf"                  
+#> [10] "gengamma_lcdf"                         
+#> [11] "primarycensored_gengamma_uniform_lcdf" 
+#> [12] "primarycensored_analytical_lcdf_raw"   
+#> [13] "primarycensored_analytical_lcdf"       
+#> [14] "primarycensored_analytical_cdf"        
+#> [15] "primarycensored_cdf"                   
+#> [16] "primarycensored_lcdf"                  
+#> [17] "primarycensored_lpmf"                  
 
 # A function with no dependencies
 pcd_stan_function_deps("expgrowth_pdf")

@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.1</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -61,6 +61,18 @@
       <small>Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.2" id="primarycensored-152">primarycensored 1.5.2<a class="anchor" aria-label="anchor" href="#primarycensored-152"></a></h2>
+<div class="section level3">
+<h3 id="new-features-1-5-2">New features<a class="anchor" aria-label="anchor" href="#new-features-1-5-2"></a></h3>
+<ul><li>Added analytical primary censored CDFs for the generalised gamma delay distribution with a uniform primary event, in R and Stan. In R, <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> gains methods for <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.html" class="external-link">flexsurv::pgengamma.orig()</a></code> (Stacy parameterisation, always analytical) and <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.html" class="external-link">flexsurv::pgengamma()</a></code> (Prentice parameterisation, analytical for <code>Q &gt; 0</code> and numeric otherwise). <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code> and related functions already worked with any <code>pdist</code>, including these, via numeric integration. In Stan, <code>dist_lcdf()</code> now supports <code>dist_id = 5</code> (generalised gamma, parameters <code>[shape, scale, k]</code>) through a new <code>gengamma_lcdf()</code> function and <code>primarycensored_gengamma_uniform_lcdf()</code> provides the analytical solution used by <code>primarycensored_lpmf()</code> and related functions, including in <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code>. <code>flexsurv</code> has been added to <code>Suggests</code>.</li>
+<li>Functions exported by other packages (for example <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.html" class="external-link">flexsurv::pgengamma.orig()</a></code>) are now identified by name when passed as <code>pdist</code> or <code>dprimary</code>, so analytical solutions are used without needing <code><a href="../reference/add_name_attribute.html">add_name_attribute()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-1-5-2">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-5-2"></a></h3>
+<ul><li>Added the generalised gamma derivation to the “Analytic solutions” vignette. The gamma and Weibull solutions are recovered as special cases.</li>
+</ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.5.1" id="primarycensored-151">primarycensored 1.5.1<a class="anchor" aria-label="anchor" href="#primarycensored-151"></a></h2><p class="text-muted">CRAN release: 2026-06-15</p>
 <p>This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.</p>

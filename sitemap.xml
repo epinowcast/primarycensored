@@ -24,6 +24,7 @@
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-extract_stan_functions.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-format_class.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-normalise_cdf.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-pcens_cdf_gengamma_unif.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-ppcens.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dprimarycensored.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/expgrowth.html</loc></url>
@@ -44,6 +45,8 @@
 <url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.default.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgamma_dunif.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma.orig_dunif.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/pcens_quantile.default.html</loc></url>

@@ -45,6 +45,11 @@ handling censored distributions.
   : Default method for computing primary event censored CDF
 - [`pcens_cdf(`*`<pcens_pgamma_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgamma_dunif.md)
   : Method for Gamma delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pgengamma.orig_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md)
+  : Method for generalised gamma delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pgengamma_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md)
+  : Method for generalised gamma (Prentice parameterisation) delay with
+  uniform primary
 - [`pcens_cdf(`*`<pcens_plnorm_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md)
   : Method for Log-Normal delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pweibull_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md)
