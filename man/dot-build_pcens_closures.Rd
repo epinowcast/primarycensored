@@ -17,8 +17,14 @@
   prior,
   N,
   start,
-  pdist_extras = list()
+  pdist_extras = list(),
+  check_once = function() FALSE
 )
+}
+\arguments{
+\item{check_once}{A function returning \code{TRUE} the first time it is
+called and \code{FALSE} afterwards, used to validate \code{pdist} and
+\code{dprimary} on the first likelihood evaluation only.}
 }
 \description{
 Single path: scalar named parameters are gathered from the closure's

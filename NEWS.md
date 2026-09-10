@@ -32,6 +32,10 @@ This version adds non-parametric delay distributions, both a direct PMF over fix
 - Added the generalised gamma derivation to the "Analytic solutions" vignette.
   The gamma and Weibull solutions are recovered as special cases.
 
+## Bug fixes
+
+- Validation no longer runs more than once per call. `dprimarycensored()` validated four times, once directly and once inside each of its three internal `pprimarycensored()` calls. Inside `fitdistdoublecens()` validation ran once per observation per likelihood evaluation, so a 100 row fit validated several hundred times. It now runs once per fit.
+
 # primarycensored 1.5.1
 
 This patch release fixes a performance regression introduced in 1.5.0 that slowed the Stan likelihood for positive-support delays.

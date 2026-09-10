@@ -98,6 +98,11 @@
 #'   `logit(h_i) = alpha + sigma * eps_i`. See Details.
 #'
 #' @param ... Additional arguments to be passed to [fitdistrplus::fitdist()].
+#'
+#' @param check Logical; if `TRUE` (the default) `pdist` is validated with
+#'   [check_pdist()] and `dprimary` with [check_dprimary()]. Neither changes
+#'   across a fit, so validation runs on the first likelihood evaluation
+#'   only rather than on every one. Set to `FALSE` to skip it entirely.
 #'   For non-parametric distributions, `start` is required and determines
 #'   the number of bins; pass `boundaries` here to override the
 #'   default `0:K` unit-width bins.
@@ -189,6 +194,7 @@ fitdistdoublecens <- function(
     truncation_check_multiplier = 2,
     prior = NULL,
     hazard_model = c("rw", "re"),
+    check = TRUE,
     ...) {
   hazard_model <- match.arg(hazard_model)
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
@@ -303,6 +309,20 @@ fitdistdoublecens <- function(
   pdist_extras <- dots[setdiff(names(dots), fitdist_arg_names)]
   dots <- dots[intersect(names(dots), fitdist_arg_names)]
 
+  # `pdist` and `dprimary` are fixed across the fit, so validate on the first
+  # likelihood evaluation and skip it thereafter. Revalidating on every
+  # evaluation costs four extra `pdist` calls each time and advances the RNG
+  # stream, which makes seeded runs depend on the number of evaluations.
+  validation <- new.env(parent = emptyenv())
+  validation$pending <- isTRUE(check)
+  check_once <- function() {
+    if (!validation$pending) {
+      return(FALSE)
+    }
+    validation$pending <- FALSE
+    TRUE
+  }
+
   closures <- .build_pcens_closures(
     pdist = pdist,
     ddist = ddist,
@@ -316,7 +336,8 @@ fitdistdoublecens <- function(
     prior = prior,
     N = N,
     start = dots$start,
-    pdist_extras = pdist_extras
+    pdist_extras = pdist_extras,
+    check_once = check_once
   )
 
   # If the dist function carries a `fit_bounds` attribute, use it to fill
@@ -365,11 +386,22 @@ fitdistdoublecens <- function(
     dprimary,
     primary_args,
     pprimary = NULL,
+    check = TRUE,
     ...) {
   # Wrap in `suppressMessages` so the per-call upper-clip notice from
   # dprimarycensored() is not emitted on every fitdistrplus iteration.
   suppressMessages(tryCatch(
     {
+      # Validate once for the whole vector. `pdist` and `dprimary` are the
+      # same for every observation, so the per-observation calls below pass
+      # `check = FALSE`.
+      if (isTRUE(check)) {
+        check_pdist(pdist, D = max(params$D), ...)
+        for (pw in unique(params$pwindow)) {
+          check_dprimary(dprimary, pw, primary_args)
+        }
+      }
+
       unique_params <- unique(params)
       if (nrow(unique_params) == 1) {
         dprimarycensored(
@@ -382,7 +414,8 @@ fitdistdoublecens <- function(
           dprimary = dprimary,
           primary_args = primary_args,
           pprimary = pprimary,
-          ...
+          ...,
+          check = FALSE
         )
       } else {
         result <- numeric(length(x))
@@ -405,7 +438,8 @@ fitdistdoublecens <- function(
             dprimary = dprimary,
             primary_args = primary_args,
             pprimary = pprimary,
-            ...
+            ...,
+            check = FALSE
           )
         }
         result
@@ -421,9 +455,19 @@ fitdistdoublecens <- function(
 #' @inheritParams pprimarycensored
 #' @keywords internal
 .ppcens <- function(q, params, pdist, dprimary, primary_args, pprimary = NULL,
-                    ...) {
+                    check = TRUE, ...) {
   tryCatch(
     {
+      # Validate once for the whole vector. `pdist` and `dprimary` are the
+      # same for every observation, so the per-observation calls below pass
+      # `check = FALSE`.
+      if (isTRUE(check)) {
+        check_pdist(pdist, D = max(params$D), ...)
+        for (pw in unique(params$pwindow)) {
+          check_dprimary(dprimary, pw, primary_args)
+        }
+      }
+
       mapply(
         function(q_i, pw, L_i, D_i) {
           pprimarycensored(
@@ -435,7 +479,8 @@ fitdistdoublecens <- function(
             dprimary = dprimary,
             primary_args = primary_args,
             pprimary = pprimary,
-            ...
+            ...,
+            check = FALSE
           )
         },
         q,

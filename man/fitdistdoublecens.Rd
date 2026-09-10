@@ -19,6 +19,7 @@ fitdistdoublecens(
   truncation_check_multiplier = 2,
   prior = NULL,
   hazard_model = c("rw", "re"),
+  check = TRUE,
   ...
 )
 }
@@ -102,10 +103,15 @@ transform \code{logit(h_i) = alpha + sigma * cumsum(eps)}; \code{"re"}
 selects the IID logit random-effect transform
 \code{logit(h_i) = alpha + sigma * eps_i}. See Details.}
 
-\item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.
+\item{check}{Logical; if \code{TRUE} (the default) \code{pdist} is validated with
+\code{\link[=check_pdist]{check_pdist()}} and \code{dprimary} with \code{\link[=check_dprimary]{check_dprimary()}}. Neither changes
+across a fit, so validation runs on the first likelihood evaluation
+only rather than on every one. Set to \code{FALSE} to skip it entirely.
 For non-parametric distributions, \code{start} is required and determines
 the number of bins; pass \code{boundaries} here to override the
 default \code{0:K} unit-width bins.}
+
+\item{...}{Additional arguments to be passed to \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}.}
 }
 \value{
 An object of class "fitdist" as returned by fitdistrplus::fitdist.

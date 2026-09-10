@@ -169,6 +169,10 @@
 #' are derived from the supplied \code{start} list (parametric) or from a
 #' \code{vector_param}-aware naming convention (non-parametric).
 #'
+#' @param check_once A function returning `TRUE` the first time it is
+#'   called and `FALSE` afterwards, used to validate `pdist` and
+#'   `dprimary` on the first likelihood evaluation only.
+#'
 #' @keywords internal
 .build_pcens_closures <- function(
     pdist,
@@ -183,7 +187,8 @@
     prior,
     N,
     start,
-    pdist_extras = list()) {
+    pdist_extras = list(),
+    check_once = function() FALSE) {
   if (is.null(vector_param)) {
     # Parametric path: parameter names come from start, or fall back to
     # the formals of the d<distr> function.
@@ -230,7 +235,8 @@
           pdist = pdist,
           dprimary = dprimary,
           primary_args = primary_args,
-          pprimary = pprimary
+          pprimary = pprimary,
+          check = check_once()
         ),
         pdist_extras,
         extra
@@ -259,7 +265,8 @@
           pdist = pdist,
           dprimary = dprimary,
           primary_args = primary_args,
-          pprimary = pprimary
+          pprimary = pprimary,
+          check = check_once()
         ),
         pdist_extras,
         extra
