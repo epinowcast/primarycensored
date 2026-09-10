@@ -3,9 +3,12 @@
   * combination
   * @ingroup analytical_solution_helpers
   *
-  * The non-parametric step (26) and discrete-hazard (27) delays support any
-  * primary for which `primary_lcdf` is defined. New primaries are picked up
-  * automatically when added to that dispatch.
+  * The non-parametric step (26) and discrete-hazard (27, 28) delays are
+  * analytic for every primary `primary_lcdf` currently supports, the uniform
+  * (1) and exponential growth (2). That list is repeated by hand below, so
+  * adding a primary to `primary_lcdf` does not extend the analytic path on
+  * its own: without a matching update here the new primary silently falls
+  * back to numerical integration.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -17,7 +20,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (dist_id == 1 && primary_id == 1) return 1; // Lognormal, Uniform
   if (dist_id == 3 && primary_id == 1) return 1; // Weibull, Uniform
   if (dist_id == 5 && primary_id == 1) return 1; // Generalised gamma, Uniform
-  // Step and discrete-hazard delays support any registered primary.
+  // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
   }
