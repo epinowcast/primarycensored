@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['log_5fweibull_5fg_0',['log_weibull_g',['../group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4',1,'primarycensored_analytical_cdf.stan']]]
+  ['gengamma_5flcdf_0',['gengamma_lcdf',['../group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3',1,'primarycensored_ode.stan']]]
 ];
