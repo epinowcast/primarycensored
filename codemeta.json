@@ -8,13 +8,13 @@
   "codeRepository": "https://github.com/epinowcast/primarycensored",
   "issueTracker": "https://github.com/epinowcast/primarycensored/issues",
   "license": "https://spdx.org/licenses/MIT",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "programmingLanguage": {
     "@type": "ComputerLanguage",
     "name": "R",
     "url": "https://r-project.org"
   },
-  "runtimePlatform": "R version 4.6.0 (2026-04-24)",
+  "runtimePlatform": "R version 4.6.1 (2026-06-24)",
   "provider": {
     "@id": "https://cran.r-project.org",
     "@type": "Organization",
@@ -136,6 +136,18 @@
     },
     {
       "@type": "SoftwareApplication",
+      "identifier": "flexsurv",
+      "name": "flexsurv",
+      "provider": {
+        "@id": "https://cran.r-project.org",
+        "@type": "Organization",
+        "name": "Comprehensive R Archive Network (CRAN)",
+        "url": "https://cran.r-project.org"
+      },
+      "sameAs": "https://CRAN.R-project.org/package=flexsurv"
+    },
+    {
+      "@type": "SoftwareApplication",
       "identifier": "knitr",
       "name": "knitr",
       "provider": {
@@ -229,7 +241,7 @@
     },
     "SystemRequirements": null
   },
-  "fileSize": "683.91KB",
+  "fileSize": "715.569KB",
   "citation": [
     {
       "@type": "SoftwareSourceCode",

@@ -1,4 +1,51 @@
 /**
+  * Compute the log CDF of the generalised gamma distribution
+  * @ingroup delay_log_cdfs
+  *
+  * Uses the Stacy parameterisation of `flexsurv::pgengamma.orig()` in R.
+  * The CDF is the regularised lower incomplete gamma function
+  * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
+  * distributions are special cases.
+  *
+  * @param y Value at which to evaluate the log CDF (y > 0)
+  * @param shape Shape (power) parameter
+  * @param scale Scale parameter
+  * @param k Shape parameter of the underlying Gamma distribution
+  *
+  * @return Log CDF of the generalised gamma distribution
+  */
+real gengamma_lcdf(real y, real shape, real scale, real k) {
+  return gamma_lcdf(pow(y / scale, shape) | k, 1);
+}
+
+/**
+  * Test whether a delay distribution has support only on the non-negative reals
+  * @ingroup delay_log_cdfs
+  *
+  * Used internally to decide whether to short-circuit `dist_lcdf` at
+  * `delay <= 0` and whether the ODE / nested CDF calls need to integrate over
+  * negative arguments. Returns 1 for distributions with strictly non-negative
+  * support, 0 otherwise. IDs match `pcd_distributions$stan_id` in R.
+  *
+  * @param dist_id Distribution identifier
+  * @return 1 if the delay distribution has non-negative support, 0 otherwise.
+  */
+int dist_has_positive_support(data int dist_id) {
+  if (dist_id == 1) return 1;   // Lognormal
+  if (dist_id == 2) return 1;   // Gamma
+  if (dist_id == 3) return 1;   // Weibull
+  if (dist_id == 4) return 1;   // Exponential
+  if (dist_id == 5) return 1;   // Generalised gamma
+  if (dist_id == 9) return 1;   // Beta (support on [0, 1])
+  if (dist_id == 13) return 1;  // Chi-square
+  if (dist_id == 16) return 1;  // Inverse Gamma
+  if (dist_id == 19) return 1;  // Inverse Chi-square
+  if (dist_id == 21) return 1;  // Pareto
+  if (dist_id == 22) return 1;  // Scaled inverse Chi-square
+  return 0;
+}
+
+/**
   * Compute the log CDF of the delay distribution
   * @ingroup delay_log_cdfs
   *
@@ -6,7 +53,7 @@
   * @param params Distribution parameters
   * @param dist_id Distribution identifier matching pcd_distributions in R:
   *   1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential,
-  *   9: Beta, 12: Cauchy, 13: Chi-square,
+  *   5: Generalised gamma, 9: Beta, 12: Cauchy, 13: Chi-square,
   *   15: Gumbel, 16: Inverse Gamma, 17: Logistic,
   *   18: Normal, 19: Inverse Chi-square,
   *   20: Double Exponential, 21: Pareto,
@@ -29,32 +76,6 @@
   * real log_cdf = dist_lcdf(delay, params, dist_id);
   * @endcode
   */
-/**
-  * Test whether a delay distribution has support only on the non-negative reals
-  * @ingroup delay_log_cdfs
-  *
-  * Used internally to decide whether to short-circuit `dist_lcdf` at
-  * `delay <= 0` and whether the ODE / nested CDF calls need to integrate over
-  * negative arguments. Returns 1 for distributions with strictly non-negative
-  * support, 0 otherwise. IDs match `pcd_distributions$stan_id` in R.
-  *
-  * @param dist_id Distribution identifier
-  * @return 1 if the delay distribution has non-negative support, 0 otherwise.
-  */
-int dist_has_positive_support(data int dist_id) {
-  if (dist_id == 1) return 1;   // Lognormal
-  if (dist_id == 2) return 1;   // Gamma
-  if (dist_id == 3) return 1;   // Weibull
-  if (dist_id == 4) return 1;   // Exponential
-  if (dist_id == 9) return 1;   // Beta (support on [0, 1])
-  if (dist_id == 13) return 1;  // Chi-square
-  if (dist_id == 16) return 1;  // Inverse Gamma
-  if (dist_id == 19) return 1;  // Inverse Chi-square
-  if (dist_id == 21) return 1;  // Pareto
-  if (dist_id == 22) return 1;  // Scaled inverse Chi-square
-  return 0;
-}
-
 real dist_lcdf(real delay, array[] real params, int dist_id) {
   if (dist_has_positive_support(dist_id) && delay <= 0) {
     return negative_infinity();
@@ -65,6 +86,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
+  else if (dist_id == 5) return gengamma_lcdf(delay | params[1], params[2], params[3]);
   else if (dist_id == 9) return beta_lcdf(delay | params[1], params[2]);
   else if (dist_id == 12) return cauchy_lcdf(delay | params[1], params[2]);
   else if (dist_id == 13) return chi_square_lcdf(delay | params[1]);

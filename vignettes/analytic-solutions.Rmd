@@ -302,6 +302,61 @@ $$
 
 Which was also found by Cori _et al_ [@cori2013new].
 
+## Generalised gamma distribution
+
+The generalised gamma distribution, in the parameterisation of Stacy [@stacy1962generalization] as implemented by `flexsurv::pgengamma.orig()`, has the density function:
+
+$$
+f_T(z; a, \theta, k) =
+\begin{cases}
+\frac{a}{\Gamma(k)\theta}\left(\frac{z}{\theta}\right)^{a k-1}e^{-(z/\theta)^{a}}, & z\geq0 ,\\
+0, & z<0,
+\end{cases}
+$$
+And distribution function:
+
+$$
+F_T(z; a, \theta, k) =\begin{cases} {\gamma\left(k, (z/\theta)^a\right) \over \Gamma(k)}, & z\geq0,\\ 0, & z<0.\end{cases}
+$$
+Where $\gamma$ is the lower incomplete gamma function.
+The Gamma distribution is the special case $a = 1$ and the Weibull distribution is the special case $k = 1$.
+
+### Generalised gamma partial expectation
+
+Using the integration substitution $y = (z / \theta)^a$ as for the Weibull distribution, the full expectation is $\mathbb{E}[T] = \theta \Gamma(k + 1/a) / \Gamma(k)$.
+Doing the same integral for the partial expectation gives:
+
+$$
+\begin{aligned}
+\int_{t}^{t+w_P} z~ f_T(z; a, \theta, k) dz  &= \frac{\theta}{\Gamma(k)} \int_{(t / \theta)^a}^{((t + w_P) / \theta)^a} \mathbb{1}(y \geq 0)  y^{k + 1/a - 1} e^{-y} dy\\
+&= \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta_{w_P} F_T(t; a, \theta, k + 1/a).
+\end{aligned} (\#eq:gengammapartexp)
+$$
+
+That is, the partial expectation distribution is the generalised gamma distribution with $k$ replaced by $k + 1/a$.
+For $a = 1$ this recovers equation \@ref(eq:gammapartexp) and for $k = 1$ it recovers equation \@ref(eq:weibullpartexp).
+
+### Survival function of $S_{+}$ for generalised gamma distribution
+
+By substituting equation \@ref(eq:gengammapartexp) into equation \@ref(eq:unifprim) we can solve for the survival function of $S_+$ in terms of analytically available functions:
+
+$$
+Q_{S_+}(t; a, \theta, k) = Q_T(t + w_P; a, \theta, k) + { 1 \over w_P} \Big[ \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta_{w_P}F_T(t; a, \theta, k + 1/a) - t \Delta_{w_P}F_T(t; a, \theta, k) \Big].
+(\#eq:survgengammaunifprim)
+$$
+
+### CDF form of $S_{+}$ for generalised gamma distribution
+
+Rearranging equation \@ref(eq:survgengammaunifprim) via $F_{S_+} = 1 - Q_{S_+}$ gives the equivalent CDF-direct form
+
+$$
+F_{S_+}(d; a, \theta, k) = \frac{1}{w_P}\Big[ d\, F_T(d; a, \theta, k) - q\, F_T(q; a, \theta, k) - \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \big( F_T(d; a, \theta, k + 1/a) - F_T(q; a, \theta, k + 1/a) \big) \Big],
+$$
+
+where $q = \max(d - w_P, 0)$.
+This is the form implemented in `pcens_cdf()` and in the Stan function `primarycensored_gengamma_uniform_lcdf()`.
+The discrete censored delay distribution follows from equation \@ref(eq:disccensunifprim) exactly as for the Gamma distribution, with $k\theta F_T(\cdot; k + 1, \theta)$ replaced by $\theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} F_T(\cdot; a, \theta, k + 1/a)$.
+
 # Learning more
 
 - For more mathematical background on the analytic solutions see the `vignette("why-it-works")`.

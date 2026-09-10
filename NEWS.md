@@ -1,4 +1,4 @@
-# primarycensored 1.5.1.1000
+# primarycensored 1.5.2.1000
 
 This development version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.
 
@@ -16,6 +16,22 @@ This development version adds non-parametric delay distributions, both a direct 
 - Primary censored CDF dispatch now follows a two-layer S3 chain on `pcens` objects: a specific method for a (delay, primary) pair is tried first, then a delay-only general method, then a numerical default. The analytic primary convolution path now works for any primary with a known CDF, with the primary CDF plumbed through `pprimarycensored()`, `dprimarycensored()`, and `qprimarycensored()` via the `pprimary` argument.
 - `dprimarycensored()` and `fitdistdoublecens()` now accept observations whose secondary censoring interval straddles `D` (`left < D <= right`). The upper endpoint is internally clipped to `D` and the likelihood becomes `P(X in [left, min(right, D)] | L <= X <= D)`. This is a no-op when `right <= D` and removes the need to pad `D` when fitting non-parametric delays whose support reaches `D`. Observations with `left >= D` are still rejected because under truncation at `D` no event with latent value `>= D` is observable. See #312.
 - Added vignette `fitting-nonparametric-delays` demonstrating end-to-end non-parametric delay estimation.
+
+# primarycensored 1.5.2
+
+## New features
+
+- Added analytical primary censored CDFs for the generalised gamma delay distribution with a uniform primary event, in R and Stan.
+  In R, `pcens_cdf()` gains methods for `flexsurv::pgengamma.orig()` (Stacy parameterisation, always analytical) and `flexsurv::pgengamma()` (Prentice parameterisation, analytical for `Q > 0` and numeric otherwise).
+  `pprimarycensored()` and related functions already worked with any `pdist`, including these, via numeric integration.
+  In Stan, `dist_lcdf()` now supports `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`) through a new `gengamma_lcdf()` function and `primarycensored_gengamma_uniform_lcdf()` provides the analytical solution used by `primarycensored_lpmf()` and related functions, including in `pcd_cmdstan_model()`.
+  `flexsurv` has been added to `Suggests`.
+- Functions exported by other packages (for example `flexsurv::pgengamma.orig()`) are now identified by name when passed as `pdist` or `dprimary`, so analytical solutions are used without needing `add_name_attribute()`.
+
+## Documentation
+
+- Added the generalised gamma derivation to the "Analytic solutions" vignette.
+  The gamma and Weibull solutions are recovered as special cases.
 
 # primarycensored 1.5.1
 
