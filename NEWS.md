@@ -1,4 +1,4 @@
-# primarycensored 1.5.1.1000
+# primarycensored 1.5.2
 
 ## New features
 
