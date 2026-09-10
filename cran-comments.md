@@ -1,12 +1,13 @@
 ## Submission
 
-This is a patch release fixing a performance regression in the Stan
-likelihood that we identified after the 1.5.0 release. A change in 1.5.0
-caused positive-support delay distributions to evaluate a redundant
-truncation-normalisation term on every likelihood call, slowing the Stan
-model by around 30%. 1.5.1 removes the redundant computation. No
-user-facing API has changed and results are unchanged. This explains the
-short interval since the 1.5.0 release.
+This release adds non-parametric delay distributions, both a direct PMF
+over fixed bins and a discrete-time hazard parameterisation, and analytical
+primary event censored solutions for the generalised gamma delay
+distribution. It also fixes a gradient bug in the Stan likelihood, where
+the log CDF returned a finite value with a non-finite gradient deep in the
+lower tail of a narrow lognormal delay.
+
+All additions are backwards compatible.
 
 ## R CMD check results
 
@@ -14,8 +15,10 @@ short interval since the 1.5.0 release.
 
 ## Reverse dependencies
 
-Checked 1 reverse dependency (EpiNow2) using
-r-devel/recheck. No issues found.
+Checked 2 reverse dependencies (distspec, EpiNow2) with r-devel/recheck,
+comparing against 1.5.1. No regressions. The one NOTE on EpiNow2
+(checking compiled code) is raised by both versions and is unrelated to
+this release.
 
 ## Comments
 
