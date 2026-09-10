@@ -1,28 +1,23 @@
 /**
-  * Compute the log CDF of the delay distribution
+  * Compute the log CDF of the generalised gamma distribution
   * @ingroup delay_log_cdfs
   *
-  * @param delay Time delay
-  * @param params Distribution parameters
-  * @param dist_id Distribution identifier matching pcd_distributions in R:
-  *   1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential,
-  *   9: Beta, 12: Cauchy, 13: Chi-square,
-  *   15: Gumbel, 16: Inverse Gamma, 17: Logistic,
-  *   18: Normal, 19: Inverse Chi-square,
-  *   20: Double Exponential, 21: Pareto,
-  *   22: Scaled Inverse Chi-square, 23: Student's t,
-  *   24: Uniform, 25: von Mises
+  * Uses the Stacy parameterisation of `flexsurv::pgengamma.orig()` in R.
+  * The CDF is the regularised lower incomplete gamma function
+  * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
+  * distributions are special cases.
   *
-  * @return Log CDF of the delay distribution
+  * @param y Value at which to evaluate the log CDF (y > 0)
+  * @param shape Shape (power) parameter
+  * @param scale Scale parameter
+  * @param k Shape parameter of the underlying Gamma distribution
   *
-  * @code
-  * // Example: Lognormal distribution
-  * real delay = 5.0;
-  * array[2] real params = {0.0, 1.0}; // mean and standard deviation on log scale
-  * int dist_id = 1; // Lognormal
-  * real log_cdf = dist_lcdf(delay, params, dist_id);
-  * @endcode
+  * @return Log CDF of the generalised gamma distribution
   */
+real gengamma_lcdf(real y, real shape, real scale, real k) {
+  return gamma_lcdf(pow(y / scale, shape) | k, 1);
+}
+
 /**
   * Test whether a delay distribution has support only on the non-negative reals
   * @ingroup delay_log_cdfs
@@ -40,6 +35,7 @@ int dist_has_positive_support(data int dist_id) {
   if (dist_id == 2) return 1;   // Gamma
   if (dist_id == 3) return 1;   // Weibull
   if (dist_id == 4) return 1;   // Exponential
+  if (dist_id == 5) return 1;   // Generalised gamma
   if (dist_id == 9) return 1;   // Beta (support on [0, 1])
   if (dist_id == 13) return 1;  // Chi-square
   if (dist_id == 16) return 1;  // Inverse Gamma
@@ -49,6 +45,31 @@ int dist_has_positive_support(data int dist_id) {
   return 0;
 }
 
+/**
+  * Compute the log CDF of the delay distribution
+  * @ingroup delay_log_cdfs
+  *
+  * @param delay Time delay
+  * @param params Distribution parameters
+  * @param dist_id Distribution identifier matching pcd_distributions in R:
+  *   1: Lognormal, 2: Gamma, 3: Weibull, 4: Exponential,
+  *   5: Generalised gamma, 9: Beta, 12: Cauchy, 13: Chi-square,
+  *   15: Gumbel, 16: Inverse Gamma, 17: Logistic,
+  *   18: Normal, 19: Inverse Chi-square,
+  *   20: Double Exponential, 21: Pareto,
+  *   22: Scaled Inverse Chi-square, 23: Student's t,
+  *   24: Uniform, 25: von Mises
+  *
+  * @return Log CDF of the delay distribution
+  *
+  * @code
+  * // Example: Lognormal distribution
+  * real delay = 5.0;
+  * array[2] real params = {0.0, 1.0}; // mean and standard deviation on log scale
+  * int dist_id = 1; // Lognormal
+  * real log_cdf = dist_lcdf(delay, params, dist_id);
+  * @endcode
+  */
 real dist_lcdf(real delay, array[] real params, int dist_id) {
   if (dist_has_positive_support(dist_id) && delay <= 0) {
     return negative_infinity();
@@ -59,6 +80,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
+  else if (dist_id == 5) return gengamma_lcdf(delay | params[1], params[2], params[3]);
   else if (dist_id == 9) return beta_lcdf(delay | params[1], params[2]);
   else if (dist_id == 12) return cauchy_lcdf(delay | params[1], params[2]);
   else if (dist_id == 13) return chi_square_lcdf(delay | params[1]);

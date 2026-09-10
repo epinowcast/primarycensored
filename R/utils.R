@@ -2,19 +2,34 @@
 #'
 #' This helper function extracts the base name of a function, removing
 #' namespace prefixes.
+#' Base R distribution functions are identified from the C routine they call.
+#' Functions exported by another package (for example
+#' `flexsurv::pgengamma.orig()`) are identified by their exported name.
 #'
 #' @inheritParams add_name_attribute
 #'
-#' @return Character string representing the base name of the function.
+#' @return Character string representing the base name of the function, or
+#'  `"unknown"` if it cannot be determined.
 #'
 #' @keywords internal
 .extract_function_name <- function(func) {
   bd <- grep(".Call", deparse(body(func)), value = TRUE, fixed = TRUE)
   if (length(bd) == 1) {
     return(sub("^.*\\.Call\\(C_(\\w+),.+$", "\\1", x = bd))
-  } else {
-    return("unknown")
   }
+  env <- environment(func)
+  if (!is.null(env) && isNamespace(env)) {
+    exports <- getNamespaceExports(env)
+    matched <- vapply(
+      mget(exports, envir = env, inherits = TRUE, ifnotfound = list(NULL)),
+      identical, logical(1),
+      y = func
+    )
+    if (sum(matched) == 1) {
+      return(exports[matched])
+    }
+  }
+  return("unknown")
 }
 
 #' Helper method for custom distributions

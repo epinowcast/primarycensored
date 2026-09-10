@@ -11,10 +11,14 @@
 function.}
 }
 \value{
-Character string representing the base name of the function.
+Character string representing the base name of the function, or
+\code{"unknown"} if it cannot be determined.
 }
 \description{
 This helper function extracts the base name of a function, removing
 namespace prefixes.
+Base R distribution functions are identified from the C routine they call.
+Functions exported by another package (for example
+\code{flexsurv::pgengamma.orig()}) are identified by their exported name.
 }
 \keyword{internal}

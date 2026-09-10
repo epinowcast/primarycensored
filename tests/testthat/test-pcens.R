@@ -28,3 +28,29 @@ test_that("new_pcens creates object with correct structure", {
   )
   expect_identical(obj, new_obj)
 })
+
+test_that("new_pcens identifies functions exported by other packages", {
+  skip_if_not_installed("flexsurv")
+  obj <- new_pcens(
+    flexsurv::pgengamma.orig,
+    dunif,
+    list(),
+    shape = 1.5,
+    scale = 2,
+    k = 0.8
+  )
+  expect_s3_class(obj, "pcens_pgengamma.orig_dunif")
+
+  obj <- new_pcens(
+    flexsurv::pgengamma,
+    dunif,
+    list(),
+    mu = 0,
+    sigma = 1,
+    Q = 1
+  )
+  expect_s3_class(obj, "pcens_pgengamma_dunif")
+
+  obj <- new_pcens(function(q, ...) q, dunif, list())
+  expect_s3_class(obj, "pcens_unknown_dunif")
+})

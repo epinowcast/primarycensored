@@ -44,6 +44,7 @@ fitdist
 fitdistrplus
 frac
 gammapartexp
+gengammapartexp
 geq
 hexsticker
 infty
@@ -96,6 +97,7 @@ stan
 stantools
 startpoint
 survgammaunifprim
+survgengammaunifprim
 survivalfunc
 swindow
 u
