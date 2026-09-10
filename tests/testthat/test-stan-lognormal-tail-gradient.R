@@ -12,8 +12,10 @@ skip_on_cran()
 # exit-status handling varies across cmdstanr versions.
 
 gradient_probe_model <- function() {
-  skip_if_not_installed("cmdstanr")
-  skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
 
   functions <- pcd_load_stan_functions(
     wrap_in_block = TRUE, write_to_file = FALSE
@@ -69,10 +71,16 @@ gradient_at <- function(model, d, sigma, mu = 1.8, pwindow = 1,
     stdout = TRUE, stderr = TRUE
   ))
 
-  rejected <- any(grepl("Rejecting initial value", out))
-  not_finite <- any(grepl("Gradient evaluated at the initial value", out))
-  rows <- grep("^\\s+\\d+\\s+", out, value = TRUE)
-  parsed <- lapply(strsplit(trimws(rows), "\\s+"), as.numeric)
+  rejected <- any(grepl("Rejecting initial value", out, fixed = TRUE))
+  not_finite <- any(grepl(
+    "Gradient evaluated at the initial value", out,
+    fixed = TRUE
+  ))
+  # Gradient rows are "idx value model finite-diff error", indented. Matching
+  # on a leading digit after trimming avoids backslash escapes in the pattern.
+  trimmed <- trimws(out)
+  rows <- trimmed[grepl("^[0-9]", trimmed)]
+  parsed <- lapply(strsplit(rows, " +"), as.numeric)
 
   list(
     rejected = rejected,
