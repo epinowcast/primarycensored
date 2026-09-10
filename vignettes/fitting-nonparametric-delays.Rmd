@@ -329,7 +329,6 @@ delay_counts <- delay_data |>
 np_model <- pcd_cmdstan_model()
 ```
 
-The non-parametric family is picked via `dist_id` (`26` for the Dirichlet/simplex prior, `27` for the random-walk hazard, `28` for the random-effect hazard); `dist_options` carries only the shape (`K` and `boundaries`).
 Priors flow through the regular `priors` argument, with semantics that depend on `dist_id`: for `dist_id = 26` the length-`K` `priors$scale` is the Dirichlet concentration; for `dist_id = 27` and `28` the length-`2` `priors$location` and `priors$scale` give the mean and standard deviation for `alpha` and `log_sigma` respectively.
 We define a small helper to keep the three setups DRY.
 
