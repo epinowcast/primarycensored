@@ -135,6 +135,8 @@ test_that("update.pcens errors on invalid parameters", {
   obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
   expect_error(update(obj, 2), "must be named")
   expect_error(update(obj, shap = 2), "shap")
+  # The first argument of pdist is the evaluation point, not a parameter
+  expect_error(update(obj, q = 5), "Unknown delay parameter")
   expect_error(
     update(obj, primary_args = 0.5),
     "primary_args must be a list"
