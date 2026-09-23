@@ -52,3 +52,18 @@ test_that("pcens_pmf gives zero mass at infinite x", {
   expect_identical(pmf[c(1, 3)], c(0, 0))
   expect_identical(pmf[2], pcens_cdf(obj, 1, pwindow = 1))
 })
+
+test_that("pcens_pmf dispatches to the default method", {
+  obj <- new_pcens(pgamma, dunif, list(), shape = 2, scale = 1.5)
+  expect_true(is.function(pcens_pmf.default))
+  expect_identical(
+    pcens_pmf(obj, 0:5, pwindow = 1, D = 10),
+    pcens_pmf.default(obj, 0:5, pwindow = 1, D = 10)
+  )
+  # A method for a more specific class takes precedence over the default
+  pcens_pmf.pcens_test <- function(object, x, pwindow, ...) {
+    rep(-1, length(x))
+  }
+  class(obj) <- c("pcens_test", class(obj))
+  expect_identical(pcens_pmf(obj, 0:2, pwindow = 1), c(-1, -1, -1))
+})
