@@ -13,8 +13,14 @@ test_that("pcens_pmf matches dprimarycensored", {
 
 test_that("pcens_pmf sums to one over [L, D)", {
   obj <- new_pcens(pgamma, dunif, list(), shape = 2, scale = 1.5)
-  expect_equal(sum(pcens_pmf(obj, 0:14, pwindow = 1, D = 15)), 1)
-  expect_equal(sum(pcens_pmf(obj, 2:14, pwindow = 1, L = 2, D = 15)), 1)
+  expect_equal(
+    sum(pcens_pmf(obj, 0:14, pwindow = 1, D = 15)), 1,
+    tolerance = 1e-10
+  )
+  expect_equal(
+    sum(pcens_pmf(obj, 2:14, pwindow = 1, L = 2, D = 15)), 1,
+    tolerance = 1e-10
+  )
 })
 
 test_that("pcens_pmf clips the secondary window at D", {
@@ -27,7 +33,7 @@ test_that("pcens_pmf clips the secondary window at D", {
     pcens_pmf(obj, 9, pwindow = 1, swindow = 2, D = 10)
   )
   cdf <- pcens_cdf(obj, c(9, 10), pwindow = 1)
-  expect_equal(pmf, diff(cdf) / cdf[2])
+  expect_equal(pmf, diff(cdf) / cdf[2], tolerance = 1e-10)
 })
 
 test_that("pcens_pmf errors for x outside [L, D)", {

@@ -29,7 +29,7 @@ test_that("update.pcens matches a freshly built object", {
       c(list(case$pdist, case$dprimary, case$primary_args), case$new)
     )
     expect_identical(updated, fresh)
-    expect_identical(class(updated), class(obj))
+    expect_s3_class(updated, class(obj), exact = TRUE)
   }
 })
 

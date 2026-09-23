@@ -1,3 +1,16 @@
+# primarycensored (development version)
+
+## New features
+
+- Added an `update()` method for `pcens` objects.
+  It replaces the delay distribution parameters, and optionally `primary_args`, without looking up distributions by name or rebuilding the object.
+  This makes it cheaper to evaluate one distribution for many parameter sets, such as posterior draws.
+  See #348.
+- Added `pcens_pmf()`, the PMF counterpart of `pcens_cdf()`.
+  It works from a `pcens` object and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
+  See #348.
+- Documented the fields of a `pcens` object in `new_pcens()`.
+
 # primarycensored 1.5.2
 
 This version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.
