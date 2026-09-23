@@ -119,10 +119,10 @@ f_{\text{cens}}(d) = F_{\text{cens}}(d + \text{swindow}) - F_{\text{cens}}(d)
 }
 where \eqn{F_{\text{cens}}} is the primary event censored CDF.
 
-The function first computes the CDFs for all unique points (including both
-\eqn{d} and \eqn{d + \text{swindow}}) using \code{\link[=pprimarycensored]{pprimarycensored()}}. It then
-creates a lookup table for these CDFs to efficiently calculate the PMF for
-each input value. For delays less than L, the function returns 0.
+The function creates a \code{pcens} object with \code{\link[=new_pcens]{new_pcens()}} and computes
+the PMF with \code{\link[=pcens_pmf]{pcens_pmf()}}. This evaluates the CDF once for all unique
+points (including both \eqn{d} and \eqn{d + \text{swindow}}) and
+reuses these values to calculate the PMF for each input value.
 
 When the secondary censoring interval extends past the upper truncation
 point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
