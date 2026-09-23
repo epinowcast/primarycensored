@@ -25,6 +25,7 @@ fitdistdoublecens(
   truncation_check_multiplier = 2,
   prior = NULL,
   hazard_model = c("rw", "re"),
+  check = TRUE,
   ...
 )
 ```
@@ -141,13 +142,22 @@ fitdistdoublecens(
   logit random-effect transform `logit(h_i) = alpha + sigma * eps_i`.
   See Details.
 
+- check:
+
+  Logical; if `TRUE` (the default) `pdist` is validated with
+  [`check_pdist()`](https://primarycensored.epinowcast.org/dev/reference/check_pdist.md)
+  and `dprimary` with
+  [`check_dprimary()`](https://primarycensored.epinowcast.org/dev/reference/check_dprimary.md).
+  Neither changes across a fit, so validation runs on the first
+  likelihood evaluation only rather than on every one. Set to `FALSE` to
+  skip it entirely. For non-parametric distributions, `start` is
+  required and determines the number of bins; pass `boundaries` here to
+  override the default `0:K` unit-width bins.
+
 - ...:
 
   Additional arguments to be passed to
   [`fitdistrplus::fitdist()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html).
-  For non-parametric distributions, `start` is required and determines
-  the number of bins; pass `boundaries` here to override the default
-  `0:K` unit-width bins.
 
 ## Value
 
@@ -164,6 +174,15 @@ density and CDF functions by prepending `d` and `p` to the name (e.g.
 [`pgamma()`](https://rdrr.io/r/stats/GammaDist.html)). Custom
 distributions can be used as long as the corresponding `d<distr>()` and
 `p<distr>()` functions are defined.
+
+Parametric distributions are fitted in the parameterisation named by
+`start`, and the returned estimates and covariance matrix use the same
+names. For example, gamma can be fitted with either
+`start = list(shape = , rate = )` or `start = list(shape = , scale = )`.
+Parameters can be held fixed by passing `fix.arg` to
+[`fitdistrplus::fitdist()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html)
+through `...`, either as a named list or as a function of the delays
+returning one.
 
 ### Non-parametric distributions
 
@@ -289,5 +308,7 @@ fit_haz <- fitdistdoublecens(
     as.list(setNames(rep(0, 4), paste0("eps_", 1:4)))
   )
 )
+#> Warning: diag(V) had non-positive or NA entries; the non-finite result may be dubious
+#> Warning: NaNs produced
 # }
 ```

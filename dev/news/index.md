@@ -1,16 +1,53 @@
 # Changelog
 
-## primarycensored 1.5.2.1000
+## primarycensored (development version)
 
-This development version adds non-parametric delay distributions, both a
-direct PMF over fixed bins (step CDF) and a discrete-time hazard
-parameterisation, with support for fitting them via
+### Bug fixes
+
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  again accepts parameters held fixed through `fix.arg`, given either as
+  a list or as a function of the data. These had failed because fixed
+  parameters were missing from the synthetic density’s arguments. Tests
+  now also cover fitting gamma with `start = list(shape = , scale = )`.
+  See [\#301](https://github.com/epinowcast/primarycensored/issues/301).
+
+## primarycensored 1.5.2
+
+CRAN release: 2026-09-11
+
+This version adds non-parametric delay distributions, both a direct PMF
+over fixed bins (step CDF) and a discrete-time hazard parameterisation,
+with support for fitting them via
 [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
 and
 [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
 
 ### New features
 
+- Added analytical primary censored CDFs for the generalised gamma delay
+  distribution with a uniform primary event, in R and Stan. In R,
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
+  gains methods for
+  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md)
+  (Stacy parameterisation, always analytical) and
+  [`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md)
+  (Prentice parameterisation, analytical for `Q > 0` and numeric
+  otherwise).
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  and related functions already worked with any `pdist`, including
+  these, via numeric integration. In Stan, `dist_lcdf()` now supports
+  `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`)
+  through a new `gengamma_lcdf()` function and
+  `primarycensored_gengamma_uniform_lcdf()` provides the analytical
+  solution used by `primarycensored_lpmf()` and related functions,
+  including in
+  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
+  `flexsurv` has been added to `Suggests`.
+- Functions exported by other packages (for example
+  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md))
+  are now identified by name when passed as `pdist` or `dprimary`, so
+  analytical solutions are used without needing
+  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md).
 - Added a non-parametric step CDF family.
   [`pdiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/pdiscretestep.md),
   [`ddiscretestep()`](https://primarycensored.epinowcast.org/dev/reference/ddiscretestep.md),
@@ -119,41 +156,58 @@ and
   [\#312](https://github.com/epinowcast/primarycensored/issues/312).
 - Added vignette `fitting-nonparametric-delays` demonstrating end-to-end
   non-parametric delay estimation.
-
-## primarycensored 1.5.2
-
-### New features
-
-- Added analytical primary censored CDFs for the generalised gamma delay
-  distribution with a uniform primary event, in R and Stan. In R,
-  [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
-  gains methods for
-  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md)
-  (Stacy parameterisation, always analytical) and
-  [`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md)
-  (Prentice parameterisation, analytical for `Q > 0` and numeric
-  otherwise).
-  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
-  and related functions already worked with any `pdist`, including
-  these, via numeric integration. In Stan, `dist_lcdf()` now supports
-  `dist_id = 5` (generalised gamma, parameters `[shape, scale, k]`)
-  through a new `gengamma_lcdf()` function and
-  `primarycensored_gengamma_uniform_lcdf()` provides the analytical
-  solution used by `primarycensored_lpmf()` and related functions,
-  including in
-  [`pcd_cmdstan_model()`](https://primarycensored.epinowcast.org/dev/reference/pcd_cmdstan_model.md).
-  `flexsurv` has been added to `Suggests`.
-- Functions exported by other packages (for example
-  [`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md))
-  are now identified by name when passed as `pdist` or `dprimary`, so
-  analytical solutions are used without needing
-  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md).
+- [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  gain a `check` argument. It defaults to `TRUE`, which keeps the
+  existing validation of `pdist` via
+  [`check_pdist()`](https://primarycensored.epinowcast.org/dev/reference/check_pdist.md)
+  and `dprimary` via
+  [`check_dprimary()`](https://primarycensored.epinowcast.org/dev/reference/check_dprimary.md).
+  Setting `check = FALSE` skips both, for callers that have already
+  validated their functions. Because
+  [`check_pdist()`](https://primarycensored.epinowcast.org/dev/reference/check_pdist.md)
+  evaluates `pdist` at four points drawn with
+  [`runif()`](https://rdrr.io/r/stats/Uniform.html), skipping it also
+  leaves the random number stream untouched, so seeded code no longer
+  depends on how many times these functions were called. `check` follows
+  `...` so it must be given by its full name and cannot capture an
+  argument intended for `pdist`. See
+  [\#330](https://github.com/epinowcast/primarycensored/issues/330).
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  gains a matching `check` argument.
 
 ### Documentation
 
 - Added the generalised gamma derivation to the “Analytic solutions”
   vignette. The gamma and Weibull solutions are recovered as special
   cases.
+
+### Bug fixes
+
+- Fixed a `NaN` gradient in the Stan `primarycensored_lcdf()` deep in
+  the lower tail of a narrow lognormal delay. `lognormal_lcdf()`
+  underflows to `-inf` once the standardised value falls below about
+  -38.6, and its autodiff partial is then `0 / 0`. Stan’s reverse pass
+  chains that `NaN` into `mu` and `sigma` even where the term carries
+  zero weight, so the log density came back finite while the gradient
+  did not. Models that evaluate the delay on a grid starting at zero
+  reached this as soon as a proposal was narrow, and saw only
+  `Gradient evaluated at the initial value is not finite`. Affected
+  terms are now dropped before the underflowing call, in both the
+  analytic uniform primary solution and the ODE path. Where the density
+  really is zero the result is reported as `log(0)`. See
+  [\#333](https://github.com/epinowcast/primarycensored/issues/333).
+- Validation no longer runs more than once per call.
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  validated four times, once directly and once inside each of its three
+  internal
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  calls. Inside
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  validation ran once per observation per likelihood evaluation, so a
+  100 row fit validated several hundred times. It now runs once per fit.
 
 ## primarycensored 1.5.1
 

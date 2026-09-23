@@ -10,12 +10,18 @@ environment, optionally folded into the vector argument named by
 vector_param via the distribution's param_transform, and
 dispatched through .dpcens/.ppcens. Formals on the closures
 are derived from the supplied start list (parametric) or from a
-vector_param-aware naming convention (non-parametric)."><meta property="og:description" content="Single path: scalar named parameters are gathered from the closure's
+vector_param-aware naming convention (non-parametric).
+Only the supplied parameters become closure arguments, so a distribution
+with redundant parameterisations (e.g. gamma with rate and
+scale) is fitted in whichever one start uses."><meta property="og:description" content="Single path: scalar named parameters are gathered from the closure's
 environment, optionally folded into the vector argument named by
 vector_param via the distribution's param_transform, and
 dispatched through .dpcens/.ppcens. Formals on the closures
 are derived from the supplied start list (parametric) or from a
-vector_param-aware naming convention (non-parametric)."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
+vector_param-aware naming convention (non-parametric).
+Only the supplied parameters become closure arguments, so a distribution
+with redundant parameterisations (e.g. gamma with rate and
+scale) is fitted in whichever one start uses."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"><meta name="robots" content="noindex"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -79,7 +85,10 @@ environment, optionally folded into the vector argument named by
 <code>vector_param</code> via the distribution's <code>param_transform</code>, and
 dispatched through <code>.dpcens</code>/<code>.ppcens</code>. Formals on the closures
 are derived from the supplied <code>start</code> list (parametric) or from a
-<code>vector_param</code>-aware naming convention (non-parametric).</p>
+<code>vector_param</code>-aware naming convention (non-parametric).
+Only the supplied parameters become closure arguments, so a distribution
+with redundant parameterisations (e.g. gamma with <code>rate</code> and
+<code>scale</code>) is fitted in whichever one <code>start</code> uses.</p>
     </div>
 
     <div class="section level2">
@@ -97,12 +106,32 @@ are derived from the supplied <code>start</code> list (parametric) or from a
 <span>  <span class="va">prior</span>,</span>
 <span>  <span class="va">N</span>,</span>
 <span>  <span class="va">start</span>,</span>
-<span>  pdist_extras <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span></span>
+<span>  fix_names <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  pdist_extras <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  check_once <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="op">)</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
+    <div class="section level2">
+    <h2 id="arguments">Arguments<a class="anchor" aria-label="anchor" href="#arguments"></a></h2>
 
-  </main></div>
+
+<dl><dt id="arg-fix-names">fix_names<a class="anchor" aria-label="anchor" href="#arg-fix-names"></a></dt>
+<dd><p>Character vector of parameter names held fixed through
+the <code>fix.arg</code> argument of <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code>, or
+<code>NULL</code>. For parametric distributions these are added to the
+closure arguments so fixed parameters reach <code>pdist</code>.</p></dd>
+
+
+<dt id="arg-check-once">check_once<a class="anchor" aria-label="anchor" href="#arg-check-once"></a></dt>
+<dd><p>A function returning <code>TRUE</code> the first time it is
+called and <code>FALSE</code> afterwards, used to validate <code>pdist</code> and
+<code>dprimary</code> on the first likelihood evaluation only.</p></dd>
+
+</dl></div>
+
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

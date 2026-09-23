@@ -94,7 +94,8 @@ event timing distribution.</p>
 <span>  primary_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pprimary <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  check <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">qpcens</span><span class="op">(</span></span>
@@ -107,7 +108,8 @@ event timing distribution.</p>
 <span>  primary_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  pprimary <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  dprimary_args <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  check <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -183,6 +185,15 @@ custom primary distribution whose CDF is not in the registry.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments to be passed to pdist</p></dd>
+
+
+<dt id="arg-check">check<a class="anchor" aria-label="anchor" href="#arg-check"></a></dt>
+<dd><p>Logical; if <code>TRUE</code> (the default) <code>pdist</code> is validated with
+<code><a href="check_pdist.html">check_pdist()</a></code> and <code>dprimary</code> with <code><a href="check_dprimary.html">check_dprimary()</a></code>. Set to <code>FALSE</code> to
+skip both when they have already been validated. <code><a href="check_pdist.html">check_pdist()</a></code> evaluates
+<code>pdist</code> at four points drawn with <code><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">stats::runif()</a></code>, so skipping it avoids
+that cost and leaves the random number stream untouched. Must be given by
+its full name, as it follows <code>...</code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

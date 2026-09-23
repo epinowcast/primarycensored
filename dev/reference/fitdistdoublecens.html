@@ -96,6 +96,7 @@ truncation (when events are only observed within a delay range [L, D]).</p>
 <span>  truncation_check_multiplier <span class="op">=</span> <span class="fl">2</span>,</span>
 <span>  prior <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  hazard_model <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"rw"</span>, <span class="st">"re"</span><span class="op">)</span>,</span>
+<span>  check <span class="op">=</span> <span class="cn">TRUE</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -211,11 +212,18 @@ selects the IID logit random-effect transform
 <code>logit(h_i) = alpha + sigma * eps_i</code>. See Details.</p></dd>
 
 
-<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Additional arguments to be passed to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code>.
+<dt id="arg-check">check<a class="anchor" aria-label="anchor" href="#arg-check"></a></dt>
+<dd><p>Logical; if <code>TRUE</code> (the default) <code>pdist</code> is validated with
+<code><a href="check_pdist.html">check_pdist()</a></code> and <code>dprimary</code> with <code><a href="check_dprimary.html">check_dprimary()</a></code>. Neither changes
+across a fit, so validation runs on the first likelihood evaluation
+only rather than on every one. Set to <code>FALSE</code> to skip it entirely.
 For non-parametric distributions, <code>start</code> is required and determines
 the number of bins; pass <code>boundaries</code> here to override the
 default <code>0:K</code> unit-width bins.</p></dd>
+
+
+<dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
+<dd><p>Additional arguments to be passed to <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -234,6 +242,13 @@ density and CDF functions by prepending <code>d</code> and <code>p</code> to the
 <code>distr = "gamma"</code> resolves to <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code>). Custom
 distributions can be used as long as the corresponding <code>d&lt;distr&gt;()</code> and
 <code>p&lt;distr&gt;()</code> functions are defined.</p>
+<p>Parametric distributions are fitted in the parameterisation named by
+<code>start</code>, and the returned estimates and covariance matrix use the same
+names. For example, gamma can be fitted with either
+<code>start = list(shape = , rate = )</code> or <code>start = list(shape = , scale = )</code>.
+Parameters can be held fixed by passing <code>fix.arg</code> to
+<code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code> through <code>...</code>, either as a named list or as a
+function of the delays returning one.</p>
 </div>
 
 <div class="section">
@@ -354,6 +369,8 @@ required.</p>
 <span class="r-in"><span>    <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">as.list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/setNames.html" class="external-link">setNames</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"eps_"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span>  <span class="op">)</span></span></span>
 <span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>diag(V) had non-positive or NA entries; the non-finite result may be dubious</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>NaNs produced</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

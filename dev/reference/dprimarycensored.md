@@ -22,7 +22,8 @@ dprimarycensored(
   pprimary = NULL,
   dprimary_args = NULL,
   log = FALSE,
-  ...
+  ...,
+  check = TRUE
 )
 
 dpcens(
@@ -37,7 +38,8 @@ dpcens(
   pprimary = NULL,
   dprimary_args = NULL,
   log = FALSE,
-  ...
+  ...,
+  check = TRUE
 )
 ```
 
@@ -125,6 +127,19 @@ dpcens(
 - ...:
 
   Additional arguments to be passed to the distribution function
+
+- check:
+
+  Logical; if `TRUE` (the default) `pdist` is validated with
+  [`check_pdist()`](https://primarycensored.epinowcast.org/dev/reference/check_pdist.md)
+  and `dprimary` with
+  [`check_dprimary()`](https://primarycensored.epinowcast.org/dev/reference/check_dprimary.md).
+  Set to `FALSE` to skip both when they have already been validated.
+  [`check_pdist()`](https://primarycensored.epinowcast.org/dev/reference/check_pdist.md)
+  evaluates `pdist` at four points drawn with
+  [`stats::runif()`](https://rdrr.io/r/stats/Uniform.html), so skipping
+  it avoids that cost and leaves the random number stream untouched.
+  Must be given by its full name, as it follows `...`.
 
 ## Value
 
