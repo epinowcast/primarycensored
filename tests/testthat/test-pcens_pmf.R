@@ -55,7 +55,6 @@ test_that("pcens_pmf gives zero mass at infinite x", {
 
 test_that("pcens_pmf dispatches to the default method", {
   obj <- new_pcens(pgamma, dunif, list(), shape = 2, scale = 1.5)
-  expect_type(pcens_pmf.default, "closure")
   expect_identical(
     pcens_pmf(obj, 0:5, pwindow = 1, D = 10),
     pcens_pmf.default(obj, 0:5, pwindow = 1, D = 10)
