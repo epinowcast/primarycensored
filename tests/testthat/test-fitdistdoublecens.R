@@ -55,6 +55,88 @@ test_that("fitdistdoublecens works correctly with column names", {
   expect_false(is.na(fit$bic))
 })
 
+test_that("fitdistdoublecens fits gamma with a (shape, scale) start", {
+  # Covers the (shape, scale) parameterisation of gamma: the fit uses the
+  set.seed(1)
+  n <- 1000
+  shape <- 4
+  scale <- 1.5
+  samples <- rprimarycensored(
+    n,
+    rgamma,
+    shape = shape,
+    scale = scale,
+    pwindow = 1,
+    swindow = 1,
+    D = 15
+  )
+  delay_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = 1,
+    L = 0,
+    D = 15
+  )
+
+  fit <- fitdistdoublecens(
+    delay_data,
+    distr = "gamma",
+    start = list(shape = 4, scale = 1.5)
+  )
+
+  expect_s3_class(fit, "fitdist")
+  expect_named(fit$estimate, c("shape", "scale"))
+  expect_identical(colnames(fit$vcov), c("shape", "scale"))
+  expect_identical(rownames(fit$vcov), c("shape", "scale"))
+  expect_equal(unname(fit$estimate["shape"]), shape, tolerance = 0.2)
+  expect_equal(unname(fit$estimate["scale"]), scale, tolerance = 0.2)
+})
+
+test_that("fitdistdoublecens accepts parameters fixed via fix.arg", {
+  set.seed(1)
+  n <- 1000
+  shape <- 4
+  scale <- 1.5
+  samples <- rprimarycensored(
+    n,
+    rgamma,
+    shape = shape,
+    scale = scale,
+    pwindow = 1,
+    swindow = 1,
+    D = 15
+  )
+  delay_data <- data.frame(
+    left = samples,
+    right = samples + 1,
+    pwindow = 1,
+    D = 15
+  )
+
+  fit <- fitdistdoublecens(
+    delay_data,
+    distr = "gamma",
+    start = list(shape = 2),
+    fix.arg = list(scale = scale)
+  )
+
+  expect_s3_class(fit, "fitdist")
+  expect_named(fit$estimate, "shape")
+  expect_identical(fit$fix.arg, list(scale = scale))
+  expect_equal(unname(fit$estimate["shape"]), shape, tolerance = 0.2)
+
+  # fitdistrplus also accepts fix.arg as a function of the data.
+  fit_fun <- fitdistdoublecens(
+    delay_data,
+    distr = "gamma",
+    start = list(shape = 2),
+    fix.arg = function(x) list(scale = scale)
+  )
+  expect_named(fit_fun$estimate, "shape")
+  expect_identical(fit_fun$fix.arg, list(scale = scale))
+  expect_identical(fit_fun$estimate, fit$estimate)
+})
+
 test_that(".build_pcens_closures reads parameter names when start is NULL", {
   # Parametric path: when `start` is NULL the closure builder reads the
   # formals of the d<distr> function instead. (fitdistdoublecens always
