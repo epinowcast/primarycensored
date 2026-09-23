@@ -11,6 +11,12 @@
   See #348.
 - Documented the fields of a `pcens` object in `new_pcens()`.
 
+## Bug fixes
+
+- `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, given either as a list or as a function of the data.
+  These had failed because fixed parameters were missing from the synthetic density's arguments.
+  Tests now also cover fitting gamma with `start = list(shape = , scale = )`. See #301.
+
 # primarycensored 1.5.2
 
 This version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.
