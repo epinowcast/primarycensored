@@ -193,23 +193,9 @@ pprimarycensored <- function(
 #'
 #' @keywords internal
 .normalise_cdf <- function(result, q, L, D, pcens_obj, pwindow) {
-  # Get CDF at upper truncation point D
-  if (any(q == D)) {
-    cdf_D <- result[which.max(q == D)]
-  } else if (is.infinite(D)) {
-    cdf_D <- 1
-  } else {
-    cdf_D <- pcens_cdf(pcens_obj, D, pwindow)
-  }
-
-  # Get CDF at lower truncation point L. `L = -Inf` skips the integral.
-  if (is.infinite(L)) {
-    cdf_L <- 0
-  } else if (any(q == L)) {
-    cdf_L <- result[which.max(q == L)]
-  } else {
-    cdf_L <- pcens_cdf(pcens_obj, L, pwindow)
-  }
+  # Get CDF at the truncation points, reusing `result` where possible
+  cdf_D <- .pcens_cdf_at(pcens_obj, D, pwindow, q, result, 1)
+  cdf_L <- .pcens_cdf_at(pcens_obj, L, pwindow, q, result, 0)
 
   # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
   # Skip the division when cdf_L = 0 and normaliser = 1 leave result unchanged.

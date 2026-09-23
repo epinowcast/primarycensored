@@ -16,6 +16,8 @@
 - `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, given either as a list or as a function of the data.
   These had failed because fixed parameters were missing from the synthetic density's arguments.
   Tests now also cover fitting gamma with `start = list(shape = , scale = )`. See #301.
+- `pprimarycensored()` no longer errors when `q` contains `Inf` and the delay has an analytical solution.
+  It now returns 1 there. See #348.
 
 # primarycensored 1.5.2
 
