@@ -135,7 +135,7 @@ test_that("fitdistdoublecens accepts parameters fixed via fix.arg", {
   )
   expect_named(fit_fun$estimate, "shape")
   expect_identical(fit_fun$fix.arg, list(scale = scale))
-  expect_equal(fit_fun$estimate, fit$estimate)
+  expect_identical(fit_fun$estimate, fit$estimate)
 })
 
 test_that(".build_pcens_closures reads parameter names when start is NULL", {

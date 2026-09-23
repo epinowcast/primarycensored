@@ -168,14 +168,14 @@
 #' dispatched through \code{.dpcens}/\code{.ppcens}. Formals on the closures
 #' are derived from the supplied \code{start} list (parametric) or from a
 #' \code{vector_param}-aware naming convention (non-parametric).
-#' Only the supplied parameters appear in the formals, so a distribution with
-#' redundant parameterisations (e.g. gamma with \code{rate} and \code{scale})
-#' is fitted in whichever one \code{start} uses.
+#' Only the supplied parameters become closure arguments, so a distribution
+#' with redundant parameterisations (e.g. gamma with \code{rate} and
+#' \code{scale}) is fitted in whichever one \code{start} uses.
 #'
-#' @param fix_arg The \code{fix.arg} list passed to
-#'   [fitdistrplus::fitdist()], or \code{NULL}. For parametric distributions
-#'   its names are added to the closure formals so fixed parameters reach
-#'   \code{pdist}.
+#' @param fix_names Character vector of parameter names held fixed through
+#'   the \code{fix.arg} argument of [fitdistrplus::fitdist()], or
+#'   \code{NULL}. For parametric distributions these are added to the
+#'   closure arguments so fixed parameters reach \code{pdist}.
 #'
 #' @param check_once A function returning `TRUE` the first time it is
 #'   called and `FALSE` afterwards, used to validate `pdist` and
@@ -195,7 +195,7 @@
     prior,
     N,
     start,
-    fix_arg = NULL,
+    fix_names = NULL,
     pdist_extras = list(),
     check_once = function() FALSE) {
   if (is.null(vector_param)) {
@@ -206,9 +206,7 @@
     } else {
       par_names <- setdiff(names(formals(ddist)), c("x", "log"))
     }
-    if (is.list(fix_arg)) {
-      par_names <- union(par_names, names(fix_arg))
-    }
+    par_names <- union(par_names, fix_names)
   } else {
     if (is.null(start)) {
       stop(

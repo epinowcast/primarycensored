@@ -137,7 +137,8 @@ Parametric distributions are fitted in the parameterisation named by
 names. For example, gamma can be fitted with either
 \code{start = list(shape = , rate = )} or \code{start = list(shape = , scale = )}.
 Parameters can be held fixed by passing \code{fix.arg} to
-\code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}} through \code{...}.
+\code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}} through \code{...}, either as a named list or as a
+function of the delays returning one.
 }
 
 \subsection{Non-parametric distributions}{

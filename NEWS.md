@@ -2,8 +2,9 @@
 
 ## Bug fixes
 
-- `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, which had failed because fixed parameters were missing from the synthetic density's arguments.
-- Added tests confirming that gamma fits with `start = list(shape = , scale = )` work and return estimates and a covariance matrix named by `start`. See #301.
+- `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, given either as a list or as a function of the data.
+  These had failed because fixed parameters were missing from the synthetic density's arguments.
+  Tests now also cover fitting gamma with `start = list(shape = , scale = )`. See #301.
 
 # primarycensored 1.5.2
 

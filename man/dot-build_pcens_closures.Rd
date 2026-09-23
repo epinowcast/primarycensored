@@ -17,16 +17,16 @@
   prior,
   N,
   start,
-  fix_arg = NULL,
+  fix_names = NULL,
   pdist_extras = list(),
   check_once = function() FALSE
 )
 }
 \arguments{
-\item{fix_arg}{The \code{fix.arg} list passed to
-\code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}, or \code{NULL}. For parametric distributions
-its names are added to the closure formals so fixed parameters reach
-\code{pdist}.}
+\item{fix_names}{Character vector of parameter names held fixed through
+the \code{fix.arg} argument of \code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}}, or
+\code{NULL}. For parametric distributions these are added to the
+closure arguments so fixed parameters reach \code{pdist}.}
 
 \item{check_once}{A function returning \code{TRUE} the first time it is
 called and \code{FALSE} afterwards, used to validate \code{pdist} and
@@ -39,8 +39,8 @@ environment, optionally folded into the vector argument named by
 dispatched through \code{.dpcens}/\code{.ppcens}. Formals on the closures
 are derived from the supplied \code{start} list (parametric) or from a
 \code{vector_param}-aware naming convention (non-parametric).
-Only the supplied parameters appear in the formals, so a distribution with
-redundant parameterisations (e.g. gamma with \code{rate} and \code{scale})
-is fitted in whichever one \code{start} uses.
+Only the supplied parameters become closure arguments, so a distribution
+with redundant parameterisations (e.g. gamma with \code{rate} and
+\code{scale}) is fitted in whichever one \code{start} uses.
 }
 \keyword{internal}

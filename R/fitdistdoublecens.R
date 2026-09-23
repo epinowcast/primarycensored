@@ -20,7 +20,8 @@
 #' names. For example, gamma can be fitted with either
 #' `start = list(shape = , rate = )` or `start = list(shape = , scale = )`.
 #' Parameters can be held fixed by passing `fix.arg` to
-#' [fitdistrplus::fitdist()] through `...`.
+#' [fitdistrplus::fitdist()] through `...`, either as a named list or as a
+#' function of the delays returning one.
 #'
 #' ## Non-parametric distributions
 #'
@@ -316,6 +317,15 @@ fitdistdoublecens <- function(
   pdist_extras <- dots[setdiff(names(dots), fitdist_arg_names)]
   dots <- dots[intersect(names(dots), fitdist_arg_names)]
 
+  # fitdistrplus accepts `fix.arg` as a list or as a function of the data
+  # returning one. Either way the fixed names must be arguments of the
+  # synthetic density.
+  fix_arg <- dots$fix.arg
+  if (is.function(fix_arg)) {
+    fix_arg <- fix_arg(delays)
+  }
+  fix_names <- names(fix_arg)
+
   # `pdist` and `dprimary` are fixed across the fit, so validate on the first
   # likelihood evaluation and skip it thereafter. Revalidating on every
   # evaluation costs four extra `pdist` calls each time and advances the RNG
@@ -343,7 +353,7 @@ fitdistdoublecens <- function(
     prior = prior,
     N = N,
     start = dots$start,
-    fix_arg = dots$fix.arg,
+    fix_names = fix_names,
     pdist_extras = pdist_extras,
     check_once = check_once
   )
