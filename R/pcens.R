@@ -132,7 +132,7 @@ update.pcens <- function(object, ..., primary_args = NULL) {
   new_args <- list(...)
   if (length(new_args) > 0L) {
     .check_named_list(new_args, "Delay parameters passed to update()")
-    # `%in%` rather than `setdiff()` keeps this cheap in repeated use.
+    # Kept cheap as update() is often called once per parameter draw.
     nms <- names(new_args)
     unknown <- nms[!nms %in% names(object$args)]
     if (length(unknown) > 0L) {
