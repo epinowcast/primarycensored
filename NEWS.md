@@ -6,8 +6,8 @@
   It replaces the delay distribution parameters, and optionally `primary_args`, without looking up distributions by name or rebuilding the object.
   This makes it cheaper to evaluate one distribution for many parameter sets, such as posterior draws.
   See #348.
-- Added `pcens_pmf()`, the PMF counterpart of `pcens_cdf()`.
-  It works from a `pcens` object and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
+- Added `pcens_pmf()`, an S3 generic for the primary event censored PMF of a `pcens` object.
+  The default method differences `pcens_cdf()` and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
   See #348.
 - Documented the fields of a `pcens` object in `new_pcens()`.
 

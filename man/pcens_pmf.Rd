@@ -2,9 +2,9 @@
 % Please edit documentation in R/pcens_pmf.R
 \name{pcens_pmf}
 \alias{pcens_pmf}
-\title{Compute the primary event censored PMF from a pcens object}
+\title{Compute primary event censored PMF}
 \usage{
-pcens_pmf(object, x, pwindow, swindow = 1, L = -Inf, D = Inf, log = FALSE)
+pcens_pmf(object, x, pwindow, swindow = 1, L = -Inf, D = Inf, log = FALSE, ...)
 }
 \arguments{
 \item{object}{A \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
@@ -24,41 +24,19 @@ is truncated at D. If set to Inf, no upper truncation is applied. Defaults
 to Inf.}
 
 \item{log}{Logical; if TRUE, probabilities p are given as log(p)}
+
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
 Vector of primary event censored PMFs, normalized over [L, D] if
 truncation is applied
 }
 \description{
-This is the PMF counterpart of \code{\link[=pcens_cdf]{pcens_cdf()}}. It computes the primary
-event censored PMF from a \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}} or
-\code{\link[=update.pcens]{update.pcens()}}. It handles secondary event windows and truncation in the
-same way as \code{\link[=dprimarycensored]{dprimarycensored()}}, so callers do not need to difference
-CDFs themselves. Unlike \code{\link[=dprimarycensored]{dprimarycensored()}}, it does not look up
-distributions by name or validate \code{pdist} and \code{dprimary}, which makes it
-cheaper when one distribution is evaluated many times.
-}
-\details{
-The PMF at \code{x} is the difference of the primary event censored CDF at
-\code{min(x + swindow, D)} and at \code{x}, normalised by
-\eqn{F_{\text{cens}}(D) - F_{\text{cens}}(L)}. Values of \code{x} below \code{L}
-and, for finite \code{D}, values of \code{x} at or above \code{D} raise an error. See
-\code{\link[=dprimarycensored]{dprimarycensored()}} for the details.
-}
-\examples{
-obj <- new_pcens(
-  pdist = pgamma, dprimary = dunif,
-  primary_args = list(min = 0, max = 1),
-  shape = 3, scale = 2
-)
-pcens_pmf(obj, x = 0:9, pwindow = 1, D = 10)
-
-# Evaluate the same distribution for a new parameter set
-pcens_pmf(update(obj, shape = 2), x = 0:9, pwindow = 1, D = 10)
+Computes the primary event censored PMF for a \code{pcens} object as created
+by \code{\link[=new_pcens]{new_pcens()}}. Secondary event windows and truncation are handled as in
+\code{\link[=dprimarycensored]{dprimarycensored()}}.
 }
 \seealso{
-\code{\link[=dprimarycensored]{dprimarycensored()}}, \code{\link[=pcens_cdf]{pcens_cdf()}} and \code{\link[=update.pcens]{update.pcens()}}
-
 Low level primary event censored distribution objects and methods
 \code{\link{new_pcens}()},
 \code{\link{pcens_cdf}()},
@@ -70,6 +48,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
+\code{\link{pcens_pmf.default}()},
 \code{\link{pcens_quantile}()},
 \code{\link{pcens_quantile.default}()},
 \code{\link{update.pcens}()}
