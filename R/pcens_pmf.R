@@ -100,7 +100,8 @@ pcens_pmf <- function(
     return(rep(0, length(x)))
   }
   cdfs <- pcens_cdf(object, unique_points, pwindow)
-  # Match `pprimarycensored(L = -Inf, D = Inf)` at infinite points.
+  # Match `pprimarycensored(L = -Inf, D = Inf)` at infinite points. Some
+  # analytical `pcens_cdf()` methods return NaN at Inf.
   cdfs[unique_points == -Inf] <- 0
   cdfs[unique_points == Inf] <- 1
 

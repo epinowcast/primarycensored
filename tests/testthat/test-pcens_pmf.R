@@ -43,3 +43,12 @@ test_that("pcens_pmf errors for x outside [L, D)", {
   expect_error(pcens_pmf(obj, 1, pwindow = 1, L = 5, D = 2), "less than D")
   expect_error(pcens_pmf(list(), 1, pwindow = 1), "pcens")
 })
+
+test_that("pcens_pmf gives zero mass at infinite x", {
+  # Analytical CDF methods return NaN at Inf, so pcens_pmf() sets the CDF to
+  # 0 and 1 at -Inf and Inf as pprimarycensored() does.
+  obj <- new_pcens(pgamma, dunif, list(), shape = 2, scale = 1.5)
+  pmf <- pcens_pmf(obj, c(-Inf, 0, Inf), pwindow = 1)
+  expect_identical(pmf[c(1, 3)], c(0, 0))
+  expect_identical(pmf[2], pcens_cdf(obj, 1, pwindow = 1))
+})
