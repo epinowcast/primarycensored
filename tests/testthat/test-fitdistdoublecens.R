@@ -56,8 +56,8 @@ test_that("fitdistdoublecens works correctly with column names", {
 })
 
 test_that("fitdistdoublecens fits gamma with a (shape, scale) start", {
-  # Regression test for #301: `dgamma` has both `rate` and `scale`, so the
-  # fit must not pass a default `rate` alongside a supplied `scale`.
+  # Covers the (shape, scale) parameterisation of gamma: the fit uses the
+  # parameter names in `start` (see #301).
   set.seed(1)
   n <- 1000
   shape <- 4
@@ -125,6 +125,17 @@ test_that("fitdistdoublecens accepts parameters fixed via fix.arg", {
   expect_named(fit$estimate, "shape")
   expect_identical(fit$fix.arg, list(scale = scale))
   expect_equal(unname(fit$estimate["shape"]), shape, tolerance = 0.2)
+
+  # fitdistrplus also accepts fix.arg as a function of the data.
+  fit_fun <- fitdistdoublecens(
+    delay_data,
+    distr = "gamma",
+    start = list(shape = 2),
+    fix.arg = function(x) list(scale = scale)
+  )
+  expect_named(fit_fun$estimate, "shape")
+  expect_identical(fit_fun$fix.arg, list(scale = scale))
+  expect_equal(fit_fun$estimate, fit$estimate)
 })
 
 test_that(".build_pcens_closures reads parameter names when start is NULL", {
