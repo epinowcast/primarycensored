@@ -131,6 +131,13 @@ density and CDF functions by prepending \code{d} and \code{p} to the name (e.g.
 \code{distr = "gamma"} resolves to \code{dgamma()} and \code{pgamma()}). Custom
 distributions can be used as long as the corresponding \verb{d<distr>()} and
 \verb{p<distr>()} functions are defined.
+
+Parametric distributions are fitted in the parameterisation named by
+\code{start}, and the returned estimates and covariance matrix use the same
+names. For example, gamma can be fitted with either
+\code{start = list(shape = , rate = )} or \code{start = list(shape = , scale = )}.
+Parameters can be held fixed by passing \code{fix.arg} to
+\code{\link[fitdistrplus:fitdist]{fitdistrplus::fitdist()}} through \code{...}.
 }
 
 \subsection{Non-parametric distributions}{

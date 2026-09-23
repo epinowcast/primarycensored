@@ -15,6 +15,13 @@
 #' distributions can be used as long as the corresponding `d<distr>()` and
 #' `p<distr>()` functions are defined.
 #'
+#' Parametric distributions are fitted in the parameterisation named by
+#' `start`, and the returned estimates and covariance matrix use the same
+#' names. For example, gamma can be fitted with either
+#' `start = list(shape = , rate = )` or `start = list(shape = , scale = )`.
+#' Parameters can be held fixed by passing `fix.arg` to
+#' [fitdistrplus::fitdist()] through `...`.
+#'
 #' ## Non-parametric distributions
 #'
 #' Two non-parametric distributions are supported. They share a common
@@ -336,6 +343,7 @@ fitdistdoublecens <- function(
     prior = prior,
     N = N,
     start = dots$start,
+    fix_arg = dots$fix.arg,
     pdist_extras = pdist_extras,
     check_once = check_once
   )

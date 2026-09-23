@@ -1,3 +1,10 @@
+# primarycensored (development version)
+
+## Bug fixes
+
+- `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, which had failed because fixed parameters were missing from the synthetic density's arguments.
+- Added tests confirming that gamma fits with `start = list(shape = , scale = )` work and return estimates and a covariance matrix named by `start`. See #301.
+
 # primarycensored 1.5.2
 
 This version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via `fitdistdoublecens()` and `pcd_cmdstan_model()`.

@@ -168,6 +168,14 @@
 #' dispatched through \code{.dpcens}/\code{.ppcens}. Formals on the closures
 #' are derived from the supplied \code{start} list (parametric) or from a
 #' \code{vector_param}-aware naming convention (non-parametric).
+#' Only the supplied parameters appear in the formals, so a distribution with
+#' redundant parameterisations (e.g. gamma with \code{rate} and \code{scale})
+#' is fitted in whichever one \code{start} uses.
+#'
+#' @param fix_arg The \code{fix.arg} list passed to
+#'   [fitdistrplus::fitdist()], or \code{NULL}. For parametric distributions
+#'   its names are added to the closure formals so fixed parameters reach
+#'   \code{pdist}.
 #'
 #' @param check_once A function returning `TRUE` the first time it is
 #'   called and `FALSE` afterwards, used to validate `pdist` and
@@ -187,6 +195,7 @@
     prior,
     N,
     start,
+    fix_arg = NULL,
     pdist_extras = list(),
     check_once = function() FALSE) {
   if (is.null(vector_param)) {
@@ -196,6 +205,9 @@
       par_names <- names(start)
     } else {
       par_names <- setdiff(names(formals(ddist)), c("x", "log"))
+    }
+    if (is.list(fix_arg)) {
+      par_names <- union(par_names, names(fix_arg))
     }
   } else {
     if (is.null(start)) {
