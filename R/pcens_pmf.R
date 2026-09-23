@@ -4,7 +4,6 @@
 #' by [new_pcens()]. Secondary event windows and truncation are handled as in
 #' [dprimarycensored()].
 #'
-#' @inheritParams pcens_cdf
 #' @inheritParams dprimarycensored
 #'
 #' @param object A `pcens` object as created by [new_pcens()].
@@ -35,6 +34,7 @@ pcens_pmf <- function(
 #' for the details.
 #'
 #' @inheritParams pcens_pmf
+#' @inheritParams dprimarycensored
 #'
 #' @inherit dprimarycensored return
 #'
