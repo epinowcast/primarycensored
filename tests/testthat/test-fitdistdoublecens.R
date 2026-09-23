@@ -57,7 +57,6 @@ test_that("fitdistdoublecens works correctly with column names", {
 
 test_that("fitdistdoublecens fits gamma with a (shape, scale) start", {
   # Covers the (shape, scale) parameterisation of gamma: the fit uses the
-  # parameter names in `start` (see #301).
   set.seed(1)
   n <- 1000
   shape <- 4
