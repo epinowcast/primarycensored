@@ -132,11 +132,13 @@ update.pcens <- function(object, ..., primary_args = NULL) {
   new_args <- list(...)
   if (length(new_args) > 0L) {
     .check_named_list(new_args, "Delay parameters passed to update()")
-    unknown <- setdiff(names(new_args), names(object$args))
+    # `%in%` rather than `setdiff()` keeps this cheap in repeated use.
+    nms <- names(new_args)
+    unknown <- nms[!nms %in% names(object$args)]
     if (length(unknown) > 0L) {
       pdist_args <- names(formals(object$pdist))
       if (!is.null(pdist_args) && !"..." %in% pdist_args) {
-        unknown <- setdiff(unknown, pdist_args)
+        unknown <- unknown[!unknown %in% pdist_args]
         if (length(unknown) > 0L) {
           stop(
             "Unknown delay parameter(s) for pdist: ", toString(unknown), ".",
@@ -145,7 +147,7 @@ update.pcens <- function(object, ..., primary_args = NULL) {
         }
       }
     }
-    object$args[names(new_args)] <- new_args
+    object$args[nms] <- new_args
   }
   if (!is.null(primary_args)) {
     if (!is.list(primary_args)) {
