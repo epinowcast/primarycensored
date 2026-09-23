@@ -100,8 +100,9 @@ new_pcens <- function(
 #' parameters. Parameters cannot be removed; use [new_pcens()] for that.
 #'
 #' A name in `...` that is not already in `object$args` must be an argument
-#' of `object$pdist`, unless `pdist` takes `...`. Otherwise an error is
-#' raised. Names in `primary_args` are not checked against `dprimary`.
+#' of `object$pdist` other than its first, unless `pdist` takes `...`.
+#' Otherwise an error is raised. Names in `primary_args` are not checked
+#' against `dprimary`.
 #'
 #' @return A `pcens` object with the same class as `object` and updated
 #'   `args`, `primary_args` and `dprimary_args` fields. See [new_pcens()] for
@@ -136,7 +137,8 @@ update.pcens <- function(object, ..., primary_args = NULL) {
     nms <- names(new_args)
     unknown <- nms[!nms %in% names(object$args)]
     if (length(unknown) > 0L) {
-      pdist_args <- names(formals(object$pdist))
+      # Drop the first formal, the point at which pdist is evaluated
+      pdist_args <- names(formals(object$pdist))[-1]
       if (!is.null(pdist_args) && !"..." %in% pdist_args) {
         unknown <- unknown[!unknown %in% pdist_args]
         if (length(unknown) > 0L) {
