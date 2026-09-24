@@ -368,9 +368,13 @@ test_that("fitdistdoublecens does not warn when all rows have pwindow = 0", {
     left = floor(delays), right = floor(delays) + 1, pwindow = 0, D = Inf
   )
   exact <- data.frame(left = delays, right = delays, pwindow = 0, D = Inf)
+  # fitdistrplus probes the functions with invalid parameters, which gives
+  # "NaNs produced" warnings for base R distributions too, so only the
+  # recycling and missing value warnings are checked.
   for (data in list(interval, exact)) {
     expect_no_warning(
-      fitdistdoublecens(data, "gamma", start = list(shape = 2, rate = 0.5))
+      fitdistdoublecens(data, "gamma", start = list(shape = 2, rate = 0.5)),
+      message = "multiple of|missing values"
     )
   }
 })

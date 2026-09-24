@@ -442,12 +442,16 @@ fitdistdoublecens <- function(
       state <- .fit_pcens_state(
         pcens_cache, pdist, dprimary, primary_args, pprimary, list(...)
       )
-      if (is.null(state$dgroups)) {
-        state$dgroups <- .param_groups(
-          params, c("swindow", "pwindow", "L", "D")
-        )
+      dcols <- c("swindow", "pwindow", "L", "D")
+      if (length(x) != nrow(params)) {
+        # fitdistrplus checks the density on short test vectors
+        groups <- .param_groups(.recycle_params(params, length(x)), dcols)
+      } else {
+        if (is.null(state$dgroups)) {
+          state$dgroups <- .param_groups(params, dcols)
+        }
+        groups <- state$dgroups
       }
-      groups <- state$dgroups
       if (length(groups) == 1L) {
         g <- groups[[1L]]
         pcens_pmf(
@@ -500,9 +504,11 @@ fitdistdoublecens <- function(
       }
 
       if (length(q) != nrow(params)) {
-        # Recycle as mapply() does
+        # fitdistrplus checks the CDF on short test vectors, so return one
+        # value per element of `q`
+        rows <- .recycle_params(params, length(q))
         return(mapply(
-          cdf, q, params$pwindow, params$L, params$D,
+          cdf, q, rows$pwindow, rows$L, rows$D,
           SIMPLIFY = TRUE
         ))
       }
@@ -579,4 +585,17 @@ fitdistdoublecens <- function(
     group$mask <- mask
     group
   })
+}
+
+#' Recycle observation settings to a given length
+#'
+#' @param params A data frame of per-observation settings.
+#'
+#' @param n Number of rows to return.
+#'
+#' @return `params` with its rows recycled or cut to `n` rows.
+#'
+#' @keywords internal
+.recycle_params <- function(params, n) {
+  params[rep_len(seq_len(nrow(params)), n), , drop = FALSE]
 }
