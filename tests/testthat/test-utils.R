@@ -225,6 +225,50 @@ test_that("a primary named by a registry alias gets the registry CDF", {
   )
 })
 
+test_that("registry aliases get the analytical pcens class", {
+  dprim <- add_name_attribute(
+    function(x, min, max) dunif(x, min, max), "uniform"
+  )
+  obj <- new_pcens(pgamma, dprim, shape = 3, scale = 2)
+  ref <- new_pcens(pgamma, dunif, shape = 3, scale = 2)
+  expect_s3_class(
+    obj, c("pcens_pgamma_dunif", "pcens_pgamma", "pcens"),
+    exact = TRUE
+  )
+  x <- c(0.5, 1:10)
+  expect_identical(pcens_cdf(obj, x, 1), pcens_cdf(ref, x, 1))
+  expect_identical(pcens_pmf(obj, 0:10, 1), pcens_pmf(ref, 0:10, 1))
+  expect_identical(
+    dprimarycensored(0:10, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    dprimarycensored(0:10, pgamma, dprimary = dunif, shape = 3, scale = 2)
+  )
+
+  ref <- new_pcens(plnorm, dunif, meanlog = 1, sdlog = 0.5)
+  for (name in c("lognormal", "lnorm")) {
+    obj <- new_pcens(
+      add_name_attribute(plnorm, name), dprim,
+      meanlog = 1, sdlog = 0.5
+    )
+    expect_s3_class(
+      obj, c("pcens_plnorm_dunif", "pcens_plnorm", "pcens"),
+      exact = TRUE
+    )
+    expect_identical(pcens_cdf(obj, x, 1), pcens_cdf(ref, x, 1))
+  }
+})
+
+test_that("unregistered names keep their literal pcens class", {
+  obj <- new_pcens(
+    add_name_attribute(pnorm, "pmynorm"),
+    add_name_attribute(dunif, "dmyunif"),
+    mean = 1, sd = 1
+  )
+  expect_s3_class(
+    obj, c("pcens_pmynorm_dmyunif", "pcens_pmynorm", "pcens"),
+    exact = TRUE
+  )
+})
+
 test_that(".same_primary matches names, aliases and function names", {
   expect_true(.same_primary("uniform", "punif"))
   expect_true(.same_primary("dexpgrowth", "expgrowth"))
