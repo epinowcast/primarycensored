@@ -474,8 +474,7 @@ vector primarycensored_sone_lpmf_vectorized(
   // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0;
   // for L <= 0 (including -inf) start at 1 since F(d) = 0 for d <= 0.
   int start_idx = (!is_inf(L) && L > 0) ? max(1, to_int(floor(L))) : 1;
-  if (primary_id == 1 &&
-      (dist_id == 1 || dist_id == 2 || dist_id == 3 || dist_id == 5) &&
+  if (primary_id == 1 && primarycensored_has_uniform_terms(dist_id) &&
       pwindow >= 1 && floor(pwindow) == pwindow) {
     // Each node's terms are computed once and reused as both d and q.
     int pw = to_int(pwindow);

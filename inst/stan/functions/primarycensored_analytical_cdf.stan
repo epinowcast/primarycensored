@@ -1,4 +1,21 @@
 /**
+  * Check if a delay has uniform primary terms
+  * @ingroup analytical_solution_helpers
+  *
+  * These delays have an analytical CDF with a uniform primary built from
+  * primarycensored_uniform_terms(), which must handle every dist_id listed
+  * here.
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  *
+  * @return 1 for Lognormal (1), Gamma (2), Weibull (3) and generalised gamma
+  * (5), 0 otherwise
+  */
+int primarycensored_has_uniform_terms(int dist_id) {
+  return dist_id == 1 || dist_id == 2 || dist_id == 3 || dist_id == 5;
+}
+
+/**
   * Check if an analytical solution exists for the given distribution
   * combination
   * @ingroup analytical_solution_helpers
@@ -16,10 +33,9 @@
   * @return 1 if an analytical solution exists, 0 otherwise
   */
 int check_for_analytical(int dist_id, int primary_id) {
-  if (dist_id == 2 && primary_id == 1) return 1; // Gamma, Uniform
-  if (dist_id == 1 && primary_id == 1) return 1; // Lognormal, Uniform
-  if (dist_id == 3 && primary_id == 1) return 1; // Weibull, Uniform
-  if (dist_id == 5 && primary_id == 1) return 1; // Generalised gamma, Uniform
+  if (primary_id == 1 && primarycensored_has_uniform_terms(dist_id)) {
+    return 1;
+  }
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
