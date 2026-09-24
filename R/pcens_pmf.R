@@ -89,9 +89,10 @@ pcens_pmf.default <- function(
   }
 
   # Clip the upper end of each secondary interval at D
-  upper_raw <- x + swindow
-  upper <- pmin(upper_raw, D)
-  if (is.finite(D) && any(upper_raw > D)) {
+  upper <- x + swindow
+  if (is.finite(D) && any(upper > D)) {
+    upper_raw <- upper
+    upper <- pmin(upper_raw, D)
     message(
       "Upper truncation point is greater than D. It is ",
       max(upper_raw),
@@ -102,7 +103,11 @@ pcens_pmf.default <- function(
   }
 
   # Compute CDFs for all unique points
-  unique_points <- sort(unique(c(x, upper)))
+  unique_points <- unique(c(x, upper))
+  # Skip the sort when the points are already in order (e.g. x = 0:n)
+  if (anyNA(unique_points) || is.unsorted(unique_points)) {
+    unique_points <- sort(unique_points)
+  }
   if (length(unique_points) == 0) {
     return(rep(0, length(x)))
   }
