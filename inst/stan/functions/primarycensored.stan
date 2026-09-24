@@ -403,6 +403,48 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
 }
 
 /**
+  * Compute the primary event censored log CDF at integer delays
+  * @ingroup primary_censored_vectorized
+  *
+  * Uses primarycensored_analytical_lcdf_vectorized() when
+  * check_for_analytical_vectorized() is 1, and otherwise calls
+  * primarycensored_lcdf() at each delay. No truncation is applied.
+  *
+  * @param start First delay to compute
+  * @param n Last delay to compute, and the length of the result
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return Vector whose element d is the log CDF at d, for d in start:n.
+  * Elements before start are not computed.
+  */
+vector primarycensored_lcdf_vectorized(data int start, data int n,
+                                       data int dist_id, array[] real params,
+                                       data real pwindow, data int primary_id,
+                                       array[] real primary_params) {
+  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
+    return primarycensored_analytical_lcdf_vectorized(
+      start, n, dist_id, params, pwindow
+    );
+  }
+  vector[n] log_cdfs;
+  // The internal lower bound below is 0 for positive-support delays and -inf
+  // otherwise; it is inlined rather than bound to a local so Stan's type
+  // checker treats it as data-only.
+  for (d in start:n) {
+    log_cdfs[d] = primarycensored_lcdf(
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+  }
+  return log_cdfs;
+}
+
+/**
   * Compute the primary event censored log PMF for integer delays up to max_delay
   * @ingroup primary_censored_vectorized
   *
@@ -424,6 +466,10 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * 2. Assumes integer delays (swindow = 1)
   * 3. Is more computationally efficient for multiple delay calculation as it
   *    reduces the number of integration calls.
+  *
+  * The log CDFs at the integer delays come from
+  * primarycensored_lcdf_vectorized(), which uses the analytical solution
+  * where check_for_analytical_vectorized() allows it.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
@@ -459,20 +505,14 @@ vector primarycensored_sone_lpmf_vectorized(
     reject("D must be at least max_delay + 1");
   }
 
-  // Compute log CDFs (without truncation normalization). The internal lower
-  // bound below is 0 for positive-support delays and -inf otherwise; it is
-  // inlined rather than bound to a local so Stan's type checker treats it as
-  // data-only.
+  // Compute log CDFs (without truncation normalization).
   // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0;
   // for L <= 0 (including -inf) start at 1 since F(d) = 0 for d <= 0.
   int start_idx = (!is_inf(L) && L > 0) ? max(1, to_int(floor(L))) : 1;
-  for (d in start_idx:upper_interval) {
-    log_cdfs[d] = primarycensored_lcdf(
-      d | dist_id, params, pwindow,
-      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-      positive_infinity(), primary_id, primary_params
-    );
-  }
+  log_cdfs = primarycensored_lcdf_vectorized(
+    start_idx, upper_interval, dist_id, params, pwindow, primary_id,
+    primary_params
+  );
 
   // Get CDF at lower truncation point L
   real log_cdf_L;
