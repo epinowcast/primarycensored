@@ -392,7 +392,7 @@ add_name_attribute <- function(func, name) {
   p_name <- .dist_name(pprimary)
   if (!is.null(d_name) && !is.null(p_name) &&
     d_name != "unknown" && p_name != "unknown" &&
-    .strip_prefix(d_name, "d") != .strip_prefix(p_name, "p") &&
+    sub("^d", "", d_name) != sub("^p", "", p_name) &&
     !.same_primary(d_name, p_name)) {
     stop(
       "dprimary and pprimary refer to different distributions: '",
@@ -422,24 +422,6 @@ add_name_attribute <- function(func, name) {
   }
   d_row <- row_of(d_name)
   !is.na(d_row) && identical(d_row, row_of(p_name))
-}
-
-#' Remove a one letter prefix from a distribution name
-#'
-#' Same as `sub(paste0("^", prefix), "", name)`, without a regular
-#' expression for the usual single string.
-#'
-#' @param name Distribution name.
-#' @param prefix Single character prefix, `"d"` or `"p"`.
-#'
-#' @return `name` without a leading `prefix`.
-#'
-#' @keywords internal
-.strip_prefix <- function(name, prefix) {
-  if (!is.character(name) || length(name) != 1L || is.na(name)) {
-    return(sub(paste0("^", prefix), "", name))
-  }
-  if (startsWith(name, prefix)) substring(name, 2L) else name
 }
 
 #' Get distribution function cdf or pdf name
