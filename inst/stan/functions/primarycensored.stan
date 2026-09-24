@@ -425,6 +425,14 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * 3. Is more computationally efficient for multiple delay calculation as it
   *    reduces the number of integration calls.
   *
+  * For the analytical Lognormal, Gamma, Weibull and generalised gamma delays
+  * with a uniform primary and an integer pwindow, the CDF at d combines
+  * terms at d and at q = d - pwindow (see
+  * primarycensored_uniform_lcdf_from_terms()). Both are integer nodes, so
+  * the terms are computed once per node and shared, halving the CDF
+  * evaluations. The result is the same as calling primarycensored_lcdf() at
+  * each d.
+  *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
   * int max_delay = 10;
@@ -466,12 +474,29 @@ vector primarycensored_sone_lpmf_vectorized(
   // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0;
   // for L <= 0 (including -inf) start at 1 since F(d) = 0 for d <= 0.
   int start_idx = (!is_inf(L) && L > 0) ? max(1, to_int(floor(L))) : 1;
-  for (d in start_idx:upper_interval) {
-    log_cdfs[d] = primarycensored_lcdf(
-      d | dist_id, params, pwindow,
-      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-      positive_infinity(), primary_id, primary_params
-    );
+  if (primary_id == 1 &&
+      (dist_id == 1 || dist_id == 2 || dist_id == 3 || dist_id == 5) &&
+      pwindow >= 1 && floor(pwindow) == pwindow) {
+    // Each node's terms are computed once and reused as both d and q.
+    int pw = to_int(pwindow);
+    array[upper_interval + 1] vector[2] terms; // terms[t + 1] is at t
+    terms[1] = rep_vector(negative_infinity(), 2);
+    for (t in max(start_idx - pw, 1):upper_interval) {
+      terms[t + 1] = primarycensored_uniform_terms(t, dist_id, params);
+    }
+    for (d in start_idx:upper_interval) {
+      log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
+        terms[d + 1], terms[max(d - pw, 0) + 1], pwindow, dist_id
+      );
+    }
+  } else {
+    for (d in start_idx:upper_interval) {
+      log_cdfs[d] = primarycensored_lcdf(
+        d | dist_id, params, pwindow,
+        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+        positive_infinity(), primary_id, primary_params
+      );
+    }
   }
 
   // Get CDF at lower truncation point L
