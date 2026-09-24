@@ -1,7 +1,35 @@
-# primarycensored (development version)
+# primarycensored 1.6.0
+
+This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.
+The vectorised Stan PMF is also faster for common delays with a uniform primary.
+It also adds support for zero-width primary and secondary censoring windows, so exact, single interval censored and doubly interval censored data can be fitted together, and adds `update()` and `pcens_pmf()` for `pcens` objects.
+
+## Performance
+
+- `dprimarycensored()`, `pprimarycensored()` and `new_pcens()` have much lower per-call overhead, with unchanged results.
+  These functions and `qprimarycensored()` look up distribution names once per call.
+  Base R functions listed in `pcd_distributions` or `pcd_primary_distributions` are identified by comparing them with the registry functions, without deparsing their bodies.
+  See #347.
+- `fitdistdoublecens()` fits are several times faster, with the same estimates.
+  Each fit builds one `pcens` object and updates its parameters with `update()` for each likelihood evaluation.
+  Observations are grouped by their censoring and truncation settings once per fit, and the fitted CDF is evaluated per group rather than per observation.
+  See #347.
+- `update()` followed by `pcens_cdf()` or `pcens_pmf()` is a fast path for evaluating one distribution over many parameter sets, such as posterior draws.
+  See #348.
+- The vectorised Stan PMF functions `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` are faster for lognormal, gamma, Weibull and generalised gamma delays with a uniform primary and an integer `pwindow`.
+  The analytical CDF terms at each integer delay are now computed once and shared between neighbouring windows.
+  Values are unchanged and gradients match to rounding.
+  See #101 and #356.
 
 ## New features
 
+- Zero-width censoring windows are now supported.
+  With `pwindow = 0` the primary event time is exact and `pprimarycensored()`, `dprimarycensored()` and `pcens_cdf()` use the delay CDF directly, for all delay distributions.
+  With `swindow = 0` the secondary event time is exact and `dprimarycensored()` and `pcens_pmf()` return the primary event censored density rather than a probability.
+  Previously they silently returned 0 for `swindow = 0`, so this is a change in behaviour.
+  `fitdistdoublecens()` accepts rows with `pwindow = 0` and rows with `left == right`, and these can be mixed with interval censored rows in one fit.
+  This matches the exact, single interval censored and doubly interval censored data used by `coarseDataTools::dic.fit()`.
+  See #345.
 - Added an `update()` method for `pcens` objects.
   It replaces the delay distribution parameters, and optionally `primary_args`, without looking up distributions by name or rebuilding the object.
   This makes it cheaper to evaluate one distribution for many parameter sets, such as posterior draws.
@@ -9,39 +37,24 @@
 - Added `pcens_pmf()`, an S3 generic for the primary event censored PMF of a `pcens` object.
   The default method differences `pcens_cdf()` and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
   See #348.
+
+## Documentation
+
 - Documented the fields of a `pcens` object in `new_pcens()`.
-- `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` are faster in Stan for lognormal, gamma, Weibull and generalised gamma delays with a uniform primary and an integer `pwindow`.
-  The terms of the analytical CDF at each integer delay are computed once and shared, rather than once as the upper and again as the lower end of the primary window.
-  Values are unchanged and gradients match to rounding.
-  Gradient evaluations are about 1.3 times faster for lognormal and 1.7 times faster for gamma and Weibull delays.
-  See #101 and #356.
-- Zero-width censoring windows are now supported.
-  With `pwindow = 0` the primary event time is exact and `pprimarycensored()`, `dprimarycensored()` and `pcens_cdf()` use the delay CDF directly, for all delay distributions.
-  With `swindow = 0` the secondary event time is exact and `dprimarycensored()` and `pcens_pmf()` return the primary event censored density rather than a probability.
-  `fitdistdoublecens()` accepts rows with `pwindow = 0` and rows with `left == right`, and these can be mixed with interval censored rows in one fit.
-  This matches the exact, single interval censored and doubly interval censored data used by `coarseDataTools::dic.fit()`.
-  See #345.
-
-## Performance
-
-- `dprimarycensored()`, `pprimarycensored()`, `qprimarycensored()` and `new_pcens()` look up distribution names once per call.
-  Base R functions listed in `pcd_distributions` or `pcd_primary_distributions` are identified by comparing them with the registry functions, without deparsing their bodies.
-  This makes `new_pcens()` about 5 times faster and `dprimarycensored()` and `pprimarycensored()` about 2.5 times faster for a gamma delay with a uniform primary.
-  Results are unchanged. See #347.
-- `fitdistdoublecens()` builds one `pcens` object per fit and updates its parameters with `update()` for each likelihood evaluation.
-  It also groups observations by their censoring and truncation settings once per fit, and evaluates the fitted CDF per group rather than per observation.
-  A gamma fit to 100 observations is about 3.5 times faster, with the same estimates. See #347.
 
 ## Bug fixes
 
 - `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, given either as a list or as a function of the data.
   These had failed because fixed parameters were missing from the synthetic density's arguments.
-  Tests now also cover fitting gamma with `start = list(shape = , scale = )`. See #301.
+  Tests now also cover fitting gamma with `start = list(shape = , scale = )`.
+  See #301.
 - `pprimarycensored()` no longer errors when `q` contains `Inf` and the delay has an analytical solution.
-  It now returns 1 there. See #348.
+  It now returns 1 there.
+  See #348.
 - `dprimarycensored()`, `pprimarycensored()` and `qprimarycensored()` no longer error for a `dprimary` named by a registry alias, such as `add_name_attribute(fn, "uniform")`.
   They now use the registry primary CDF, as `new_pcens()` already did.
-  The check that `dprimary` and `pprimary` refer to the same distribution also accepts registry aliases. See #347.
+  The check that `dprimary` and `pprimary` refer to the same distribution also accepts registry aliases.
+  See #347.
 
 # primarycensored 1.5.2
 
