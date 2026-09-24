@@ -20,6 +20,17 @@
   See [\#348](https://github.com/epinowcast/primarycensored/issues/348).
 - Documented the fields of a `pcens` object in
   [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md).
+- `primarycensored_sone_lpmf_vectorized()` and
+  `primarycensored_sone_pmf_vectorized()` are faster in Stan for
+  lognormal, gamma, Weibull and generalised gamma delays with a uniform
+  primary and an integer `pwindow`. The terms of the analytical CDF at
+  each integer delay are computed once and shared, rather than once as
+  the upper and again as the lower end of the primary window. Values are
+  unchanged and gradients match to rounding. Gradient evaluations are
+  about 1.3 times faster for lognormal and 1.7 times faster for gamma
+  and Weibull delays. See
+  [\#101](https://github.com/epinowcast/primarycensored/issues/101) and
+  [\#356](https://github.com/epinowcast/primarycensored/issues/356).
 - Zero-width censoring windows are now supported. With `pwindow = 0` the
   primary event time is exact and
   [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
