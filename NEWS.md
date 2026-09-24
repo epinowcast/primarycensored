@@ -10,6 +10,11 @@
   The default method differences `pcens_cdf()` and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
   See #348.
 - Documented the fields of a `pcens` object in `new_pcens()`.
+- `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` are faster in Stan for lognormal, gamma, Weibull and generalised gamma delays with a uniform primary and an integer `pwindow`.
+  The terms of the analytical CDF at each integer delay are computed once and shared, rather than once as the upper and again as the lower end of the primary window.
+  Values are unchanged and gradients match to rounding.
+  Gradient evaluations are about 1.3 times faster for lognormal and 1.7 times faster for gamma and Weibull delays.
+  See #101 and #356.
 
 ## Bug fixes
 
