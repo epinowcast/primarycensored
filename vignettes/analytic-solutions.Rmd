@@ -354,7 +354,7 @@ F_{S_+}(d; a, \theta, k) = \frac{1}{w_P}\Big[ d\, F_T(d; a, \theta, k) - q\, F_T
 $$
 
 where $q = \max(d - w_P, 0)$.
-This is the form implemented in `pcens_cdf()` and in the Stan function `primarycensored_gengamma_uniform_lcdf()`.
+This is the form implemented in `pcens_cdf()` and in the Stan function `primarycensored_gengamma_uniform_terms()`.
 The discrete censored delay distribution follows from equation \@ref(eq:disccensunifprim) exactly as for the Gamma distribution, with $k\theta F_T(\cdot; k + 1, \theta)$ replaced by $\theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} F_T(\cdot; a, \theta, k + 1/a)$.
 
 # Learning more

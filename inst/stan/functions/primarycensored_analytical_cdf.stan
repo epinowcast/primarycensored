@@ -67,7 +67,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   */
 real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
                                              data real pwindow,
-                                             data int dist_id) {
+                                             int dist_id) {
   real log_A = log_sum_exp(terms_d[1], terms_q[2]);
   real log_B = log_sum_exp(terms_q[1], terms_d[2]);
   // Deep enough into the lognormal lower tail every term underflows
@@ -227,7 +227,7 @@ vector primarycensored_gengamma_uniform_terms(real t,
   * @return Vector of the two terms at t, see
   * primarycensored_uniform_lcdf_from_terms()
   */
-vector primarycensored_uniform_terms(real t, data int dist_id,
+vector primarycensored_uniform_terms(real t, int dist_id,
                                      array[] real params) {
   if (dist_id == 1) {
     return primarycensored_lognormal_uniform_terms(t, params);
@@ -242,91 +242,6 @@ vector primarycensored_uniform_terms(real t, data int dist_id,
 }
 
 /**
-  * Compute the primary event censored log CDF analytically for Gamma delay with Uniform primary
-  * @ingroup primary_event_analytical_distributions
-  *
-  * @param d Delay time
-  * @param q Lower bound of integration (max(d - pwindow, 0))
-  * @param params Array of Gamma distribution parameters [shape, rate]
-  * @param pwindow Primary event window
-  *
-  * @return Log of the primary event censored CDF for Gamma delay with Uniform
-  * primary
-  */
-real primarycensored_gamma_uniform_lcdf(data real d, real q,
-                                        array[] real params,
-                                        data real pwindow) {
-  return primarycensored_uniform_lcdf_from_terms(
-    primarycensored_gamma_uniform_terms(d, params),
-    primarycensored_gamma_uniform_terms(q, params), pwindow, 2
-  );
-}
-
-/**
-  * Compute the primary event censored log CDF analytically for Lognormal delay with Uniform primary
-  * @ingroup primary_event_analytical_distributions
-  *
-  * @param d Delay time
-  * @param q Lower bound of integration (max(d - pwindow, 0))
-  * @param params Array of Lognormal distribution parameters [mu, sigma]
-  * @param pwindow Primary event window
-  *
-  * @return Log of the primary event censored CDF for Lognormal delay with
-  * Uniform primary
-  */
-real primarycensored_lognormal_uniform_lcdf(data real d, real q,
-                                            array[] real params,
-                                            data real pwindow) {
-  return primarycensored_uniform_lcdf_from_terms(
-    primarycensored_lognormal_uniform_terms(d, params),
-    primarycensored_lognormal_uniform_terms(q, params), pwindow, 1
-  );
-}
-
-/**
-  * Compute the primary event censored log CDF analytically for Weibull delay with Uniform primary
-  * @ingroup primary_event_analytical_distributions
-  *
-  * @param d Delay time
-  * @param q Lower bound of integration (max(d - pwindow, 0))
-  * @param params Array of Weibull distribution parameters [shape, scale]
-  * @param pwindow Primary event window
-  *
-  * @return Log of the primary event censored CDF for Weibull delay with
-  * Uniform primary
-  */
-real primarycensored_weibull_uniform_lcdf(data real d, real q,
-                                          array[] real params,
-                                          data real pwindow) {
-  return primarycensored_uniform_lcdf_from_terms(
-    primarycensored_weibull_uniform_terms(d, params),
-    primarycensored_weibull_uniform_terms(q, params), pwindow, 3
-  );
-}
-
-/**
-  * Compute the primary event censored log CDF analytically for generalised gamma delay with Uniform primary
-  * @ingroup primary_event_analytical_distributions
-  *
-  * @param d Delay time
-  * @param q Lower bound of integration (max(d - pwindow, 0))
-  * @param params Array of generalised gamma distribution parameters
-  * [shape, scale, k]
-  * @param pwindow Primary event window
-  *
-  * @return Log of the primary event censored CDF for generalised gamma delay
-  * with Uniform primary
-  */
-real primarycensored_gengamma_uniform_lcdf(data real d, real q,
-                                           array[] real params,
-                                           data real pwindow) {
-  return primarycensored_uniform_lcdf_from_terms(
-    primarycensored_gengamma_uniform_terms(d, params),
-    primarycensored_gengamma_uniform_terms(q, params), pwindow, 5
-  );
-}
-
-/**
   * Compute the primary event censored log CDF analytically for a single delay
   * (internal version without truncation)
   * @ingroup primary_event_analytical_distributions
@@ -336,16 +251,12 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
                                          data real pwindow,
                                          int primary_id,
                                          array[] real primary_params) {
-  real q = max({d - pwindow, 0});
-
-  if (dist_id == 2 && primary_id == 1) {
-    return primarycensored_gamma_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 1 && primary_id == 1) {
-    return primarycensored_lognormal_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 3 && primary_id == 1) {
-    return primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 5 && primary_id == 1) {
-    return primarycensored_gengamma_uniform_lcdf(d | q, params, pwindow);
+  if (primary_id == 1 && primarycensored_has_uniform_terms(dist_id)) {
+    real q = max({d - pwindow, 0});
+    return primarycensored_uniform_lcdf_from_terms(
+      primarycensored_uniform_terms(d, dist_id, params),
+      primarycensored_uniform_terms(q, dist_id, params), pwindow, dist_id
+    );
   } else if (dist_id == 26) {
     // params = [boundaries (K+1), pmf (K)]; length 2*K + 1.
     int K = (size(params) - 1) %/% 2;
