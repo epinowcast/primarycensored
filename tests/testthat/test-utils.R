@@ -188,3 +188,39 @@ test_that(".lookup_pprimary finds registry primary CDFs", {
   expect_identical(.lookup_pprimary(dexpgrowth), pexpgrowth)
   expect_null(.lookup_pprimary(function(x) x))
 })
+
+test_that("a primary named by a registry alias gets the registry CDF", {
+  dprim <- add_name_attribute(
+    function(x, min, max) dunif(x, min, max), "uniform"
+  )
+  obj <- new_pcens(pgamma, dprim, shape = 3, scale = 2)
+  expect_identical(obj$pprimary, punif)
+  x <- 0:10
+  expect_identical(
+    dprimarycensored(x, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    pcens_pmf(obj, x, 1)
+  )
+  expect_identical(
+    pprimarycensored(x, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    pcens_cdf(obj, x, 1)
+  )
+  expect_identical(
+    qprimarycensored(0.5, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    pcens_quantile(obj, 0.5, 1)
+  )
+  # An alias also matches an explicit primary CDF
+  expect_identical(
+    dprimarycensored(
+      x, pgamma,
+      dprimary = dprim, pprimary = punif, shape = 3, scale = 2
+    ),
+    pcens_pmf(obj, x, 1)
+  )
+  expect_error(
+    dprimarycensored(
+      x, pgamma,
+      dprimary = dprim, pprimary = pexpgrowth, shape = 3, scale = 2
+    ),
+    "refer to different distributions"
+  )
+})
