@@ -359,3 +359,39 @@ test_that("fitdistdoublecens matches coarseDataTools::dic.fit", {
     tolerance = 1e-2
   )
 })
+
+test_that("fitdistdoublecens does not warn when all rows have pwindow = 0", {
+  skip_if_not_installed("fitdistrplus")
+  set.seed(101)
+  delays <- rgamma(50, shape = 3, rate = 1)
+  interval <- data.frame(
+    left = floor(delays), right = floor(delays) + 1, pwindow = 0, D = Inf
+  )
+  exact <- data.frame(left = delays, right = delays, pwindow = 0, D = Inf)
+  for (data in list(interval, exact)) {
+    expect_no_warning(
+      fitdistdoublecens(data, "gamma", start = list(shape = 2, rate = 0.5))
+    )
+  }
+})
+
+test_that(".ppcens and .dpcens return one value per input value", {
+  params <- data.frame(
+    swindow = rep(c(0, 1), 25), pwindow = 0, L = -Inf, D = Inf
+  )
+  p <- .ppcens(
+    c(0, 1, NA), params, pgamma, dunif, list(),
+    shape = 2, rate = 1
+  )
+  expect_length(p, 3)
+  expect_equal(p[1:2], pgamma(c(0, 1), 2, 1), tolerance = 1e-12)
+  expect_true(is.na(p[3]))
+  d <- .dpcens(
+    c(1, 2, 3), params, pgamma, dunif, list(),
+    shape = 2, rate = 1
+  )
+  expect_equal(
+    d, c(dgamma(1, 2, 1), pgamma(3, 2, 1) - pgamma(2, 2, 1), dgamma(3, 2, 1)),
+    tolerance = 1e-12
+  )
+})
