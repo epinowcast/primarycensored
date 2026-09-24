@@ -65,6 +65,9 @@ pcens_pmf.default <- function(
     )
   }
   .check_truncation_bounds(L, D)
+  if (length(x) == 0) {
+    return(numeric(0))
+  }
 
   if (min(x) < L) {
     stop(
@@ -103,9 +106,6 @@ pcens_pmf.default <- function(
     )
   }
 
-  if (length(x) == 0) {
-    return(numeric(0))
-  }
   # Rows with a zero-width secondary window contribute a density
   exact <- rep_len(swindow == 0, length(x))
   result <- numeric(length(x))
