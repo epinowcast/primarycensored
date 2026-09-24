@@ -59,6 +59,7 @@ Imports:
 Suggests:
     bookdown,
     cmdstanr,
+    coarseDataTools,
     dplyr,
     fitdistrplus,
     flexsurv,
