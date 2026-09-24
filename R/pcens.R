@@ -118,7 +118,6 @@ new_pcens <- function(
                          pwindow, D, check) {
   pdist <- .resolve_pdist(pdist, type = "p")
   dprim_name <- .dist_name(dprimary)
-  looked_up <- is.null(pprimary)
   # Resolve `pprimary` before the checks so name-mismatch errors surface
   # before the delay/primary checks, which may otherwise fail first with a
   # less specific message.
@@ -129,10 +128,6 @@ new_pcens <- function(
     check_dprimary(dprimary, pwindow, primary_args)
   }
 
-  # A looked-up primary CDF is checked against the name of `dprimary`
-  if (looked_up) {
-    .check_primary_names(dprim_name, pprimary)
-  }
   .new_pcens(
     pdist, dprimary, primary_args, pprimary, args,
     dprim_name = dprim_name

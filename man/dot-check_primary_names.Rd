@@ -10,7 +10,7 @@
 \item{d_name}{Name of the primary density function, as given by
 \code{\link[=.dist_name]{.dist_name()}}.}
 
-\item{pprimary}{The primary CDF function, or \code{NULL}.}
+\item{pprimary}{The primary CDF function.}
 }
 \value{
 \code{NULL} invisibly. Called for its error.

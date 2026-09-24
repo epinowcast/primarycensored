@@ -383,19 +383,17 @@ add_name_attribute <- function(func, name) {
 #'
 #' @param d_name Name of the primary density function, as given by
 #'   [.dist_name()].
-#' @param pprimary The primary CDF function, or \code{NULL}.
+#' @param pprimary The primary CDF function.
 #'
 #' @return \code{NULL} invisibly. Called for its error.
 #'
 #' @keywords internal
 .check_primary_names <- function(d_name, pprimary) {
-  if (is.null(pprimary)) {
-    return(invisible(NULL))
-  }
   p_name <- .dist_name(pprimary)
   if (!is.null(d_name) && !is.null(p_name) &&
     d_name != "unknown" && p_name != "unknown" &&
-    .strip_prefix(d_name, "d") != .strip_prefix(p_name, "p")) {
+    .strip_prefix(d_name, "d") != .strip_prefix(p_name, "p") &&
+    !.same_primary(d_name, p_name)) {
     stop(
       "dprimary and pprimary refer to different distributions: '",
       d_name, "' vs '", p_name, "'.",
@@ -403,6 +401,27 @@ add_name_attribute <- function(func, name) {
     )
   }
   invisible(NULL)
+}
+
+#' Check whether two names refer to the same registry primary distribution
+#'
+#' @param d_name,p_name Names of a primary density and CDF. Each may be a
+#'   name, alias, density or CDF name from [pcd_primary_distributions].
+#'
+#' @return `TRUE` if both names match the same row of
+#'   [pcd_primary_distributions], otherwise `FALSE`.
+#'
+#' @keywords internal
+.same_primary <- function(d_name, p_name) {
+  registry <- primarycensored::pcd_primary_distributions
+  row_of <- function(name) {
+    which(
+      registry$name == name | registry$aliases == name |
+        registry$dprimary == name | registry$pprimary == name
+    )[1L]
+  }
+  d_row <- row_of(d_name)
+  !is.na(d_row) && identical(d_row, row_of(p_name))
 }
 
 #' Remove a one letter prefix from a distribution name

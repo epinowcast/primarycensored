@@ -14,12 +14,12 @@
 ## Performance
 
 - `dprimarycensored()`, `pprimarycensored()`, `qprimarycensored()` and `new_pcens()` look up distribution names once per call.
-  Names of base R and other namespace functions, and primary CDFs found in the registry, are cached for later calls.
-  This makes `new_pcens()` about 15 times faster and `dprimarycensored()` and `pprimarycensored()` about 3 times faster for a gamma delay with a uniform primary.
+  Base R functions listed in `pcd_distributions` or `pcd_primary_distributions` are identified by comparing them with the registry functions, without deparsing their bodies.
+  This makes `new_pcens()` about 5 times faster and `dprimarycensored()` and `pprimarycensored()` about 2.5 times faster for a gamma delay with a uniform primary.
   Results are unchanged. See #347.
 - `fitdistdoublecens()` builds one `pcens` object per fit and updates its parameters with `update()` for each likelihood evaluation.
   It also groups observations by their censoring and truncation settings once per fit, and evaluates the fitted CDF per group rather than per observation.
-  A gamma fit to 100 observations is about 4 times faster, with the same estimates. See #347.
+  A gamma fit to 100 observations is about 3.5 times faster, with the same estimates. See #347.
 
 ## Bug fixes
 
@@ -28,6 +28,9 @@
   Tests now also cover fitting gamma with `start = list(shape = , scale = )`. See #301.
 - `pprimarycensored()` no longer errors when `q` contains `Inf` and the delay has an analytical solution.
   It now returns 1 there. See #348.
+- `dprimarycensored()`, `pprimarycensored()` and `qprimarycensored()` no longer error for a `dprimary` named by a registry alias, such as `add_name_attribute(fn, "uniform")`.
+  They now use the registry primary CDF, as `new_pcens()` already did.
+  The check that `dprimary` and `pprimary` refer to the same distribution also accepts registry aliases. See #347.
 
 # primarycensored 1.5.2
 

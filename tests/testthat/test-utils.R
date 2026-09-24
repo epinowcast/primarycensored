@@ -224,3 +224,16 @@ test_that("a primary named by a registry alias gets the registry CDF", {
     "refer to different distributions"
   )
 })
+
+test_that(".strip_prefix matches sub() for one or more names", {
+  for (name in list("dunif", "unif", "", c("dunif", "pgamma"), NA_character_)) {
+    expect_identical(.strip_prefix(name, "d"), sub("^d", "", name))
+  }
+})
+
+test_that(".same_primary matches names, aliases and function names", {
+  expect_true(.same_primary("uniform", "punif"))
+  expect_true(.same_primary("dexpgrowth", "expgrowth"))
+  expect_false(.same_primary("uniform", "pexpgrowth"))
+  expect_false(.same_primary("dfoo", "pbar"))
+})
