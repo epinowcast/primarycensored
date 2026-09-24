@@ -15,7 +15,7 @@ The registry name of \code{func}, or \code{NULL} if it is not found.
 }
 \description{
 Takes the C routine called at the end of the body of a \code{stats} function
-(for example \code{C_pgamma} for \code{\link[stats:pgamma]{stats::pgamma()}}) as the candidate name. The
+(for example \code{C_pgamma} for \code{\link[stats:GammaDist]{stats::pgamma()}}) as the candidate name. The
 name is returned if it is in \link{pcd_distributions} or
 \link{pcd_primary_distributions} and \code{func} is identical to the \code{stats}
 function of that name.
