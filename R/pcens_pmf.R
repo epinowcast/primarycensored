@@ -203,6 +203,8 @@ pcens_pmf.default <- function(
 #' @keywords internal
 .pcens_density <- function(object, x, pwindow) {
   exact_primary <- .is_exact_window(pwindow)
+  # The class ends in "_dunif" for a uniform primary, as set by
+  # .format_class() and used to dispatch the analytical pcens_cdf() methods
   if (!exact_primary && endsWith(class(object)[1], "_dunif")) {
     return(
       (.delay_cdf(object, x) - .delay_cdf(object, x - pwindow)) / pwindow

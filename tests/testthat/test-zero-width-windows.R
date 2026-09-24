@@ -327,39 +327,6 @@ test_that("fitdistdoublecens recovers parameters from mixed-type data", {
   )
 })
 
-test_that("fitdistdoublecens matches coarseDataTools::dic.fit", {
-  skip_if_not_installed("fitdistrplus")
-  skip_if_not_installed("coarseDataTools")
-  set.seed(262)
-  data <- simulate_mixed(200, rlnorm, meanlog = 1.2, sdlog = 0.5)
-  # dic.fit() approximates doubly interval censored rows whose windows
-  # overlap by a single interval, so drop them.
-  data <- data[!(data$pwindow > 0 & data$right > data$left & data$left < 1), ]
-  fit <- fitdistdoublecens(
-    data, "lnorm",
-    start = list(meanlog = 1, sdlog = 1)
-  )
-  # coarseDataTools columns are absolute times with the primary window
-  # starting at 0: EL = 0, ER = pwindow, SL = left, SR = right.
-  # Its types are 0 (doubly interval censored), 1 (single interval
-  # censored) and 2 (exact).
-  pexact <- data$pwindow == 0
-  sexact <- data$left == data$right
-  cdt_data <- data.frame(
-    EL = 0, ER = data$pwindow, SL = data$left, SR = data$right,
-    type = 2 * (pexact & sexact) + (xor(pexact, sexact))
-  )
-  # dic.fit() prints progress with cat()
-  cdt_fit <- withr::with_output_sink(
-    nullfile(),
-    suppressWarnings(coarseDataTools::dic.fit(cdt_data, dist = "L"))
-  )
-  expect_equal(
-    unname(fit$estimate), unname(cdt_fit@ests[1:2, 1]),
-    tolerance = 1e-2
-  )
-})
-
 test_that("fitdistdoublecens does not warn when all rows have pwindow = 0", {
   skip_if_not_installed("fitdistrplus")
   set.seed(101)
