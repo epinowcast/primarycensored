@@ -14,7 +14,8 @@
 #'  users can apply [add_name_attribute()] to yield properly tagged
 #'  functions if they wish to leverage the analytical solutions.
 #'
-#' @param pwindow Primary event window
+#' @param pwindow Primary event window. Use `pwindow = 0` for an exactly
+#'  observed primary event, in which case the delay CDF is used directly.
 #'
 #' @param L Minimum delay (lower truncation point). Defaults to `-Inf`,
 #'  meaning no left truncation. For any finite value of L the distribution
@@ -143,26 +144,9 @@ pprimarycensored <- function(
   primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "pprimarycensored"
   )
-  pdist <- .resolve_pdist(pdist, type = "p")
-  # Resolve `pprimary` early so name-mismatch errors surface before the
-  # delay/primary checks (which may otherwise fail first with a less
-  # specific message).
-  pprimary <- .resolve_pprimary(
-    dprimary, pprimary
-  )
-
-  if (isTRUE(check)) {
-    check_pdist(pdist, D = D, ...)
-    check_dprimary(dprimary, pwindow, primary_args)
-  }
-
-  # Create a new primarycensored object
-  pcens_obj <- new_pcens(
-    pdist,
-    dprimary,
-    primary_args = primary_args,
-    pprimary = pprimary,
-    ...
+  pcens_obj <- .build_pcens(
+    pdist, dprimary, primary_args, pprimary, list(...),
+    pwindow = pwindow, D = D, check = check
   )
 
   # Compute the CDF using the S3 method

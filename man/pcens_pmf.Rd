@@ -11,9 +11,12 @@ pcens_pmf(object, x, pwindow, swindow = 1, L = -Inf, D = Inf, log = FALSE, ...)
 
 \item{x}{Vector of quantiles}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
-\item{swindow}{Secondary event window (default: 1)}
+\item{swindow}{Secondary event window (default: 1). Use \code{swindow = 0} for
+an exactly observed secondary event, in which case a density is returned
+rather than a probability (see Details).}
 
 \item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
 meaning no left truncation. For any finite value of L the distribution

@@ -146,3 +146,88 @@ test_that(".sort_eps_names orders by trailing index, not lexicographically", {
     .sort_eps_names(character(0)), character(0)
   )
 })
+
+test_that(".dist_name prefers the name attribute", {
+  expect_identical(.dist_name(stats::pgamma), "pgamma")
+  expect_identical(
+    .dist_name(add_name_attribute(stats::pgamma, "pmygamma")), "pmygamma"
+  )
+  expect_identical(.dist_name(stats::pgamma), "pgamma")
+})
+
+test_that(".registry_name matches .extract_function_name", {
+  delays <- pcd_distributions$pdist
+  names <- c(
+    delays, sub("^p", "d", delays),
+    pcd_primary_distributions$dprimary, pcd_primary_distributions$pprimary
+  )
+  found <- 0L
+  for (nm in unique(names[!is.na(names)])) {
+    fn <- get0(nm, envir = asNamespace("stats"), inherits = FALSE)
+    if (is.null(fn)) next
+    name <- .registry_name(fn)
+    if (!is.null(name)) {
+      found <- found + 1L
+      expect_identical(name, .extract_function_name(fn))
+    }
+  }
+  expect_gt(found, 10L)
+  expect_identical(.registry_name(stats::pgamma), "pgamma")
+  expect_identical(.registry_name(stats::dunif), "dunif")
+})
+
+test_that(".registry_name returns NULL outside the registries", {
+  expect_null(.registry_name(function(q, ...) stats::pgamma(q, ...)))
+  expect_null(.registry_name(stats::ptukey))
+  expect_null(.registry_name(dexpgrowth))
+  expect_null(.registry_name(sum))
+})
+
+test_that(".lookup_pprimary finds registry primary CDFs", {
+  expect_identical(.lookup_pprimary(stats::dunif), punif)
+  expect_identical(.lookup_pprimary(dexpgrowth), pexpgrowth)
+  expect_null(.lookup_pprimary(function(x) x))
+})
+
+test_that("a primary named by a registry alias gets the registry CDF", {
+  dprim <- add_name_attribute(
+    function(x, min, max) dunif(x, min, max), "uniform"
+  )
+  obj <- new_pcens(pgamma, dprim, shape = 3, scale = 2)
+  expect_identical(obj$pprimary, punif)
+  x <- 0:10
+  expect_identical(
+    dprimarycensored(x, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    pcens_pmf(obj, x, 1)
+  )
+  expect_identical(
+    pprimarycensored(x, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    pcens_cdf(obj, x, 1)
+  )
+  expect_identical(
+    qprimarycensored(0.5, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    pcens_quantile(obj, 0.5, 1)
+  )
+  # An alias also matches an explicit primary CDF
+  expect_identical(
+    dprimarycensored(
+      x, pgamma,
+      dprimary = dprim, pprimary = punif, shape = 3, scale = 2
+    ),
+    pcens_pmf(obj, x, 1)
+  )
+  expect_error(
+    dprimarycensored(
+      x, pgamma,
+      dprimary = dprim, pprimary = pexpgrowth, shape = 3, scale = 2
+    ),
+    "refer to different distributions"
+  )
+})
+
+test_that(".same_primary matches names, aliases and function names", {
+  expect_true(.same_primary("uniform", "punif"))
+  expect_true(.same_primary("dexpgrowth", "expgrowth"))
+  expect_false(.same_primary("uniform", "pexpgrowth"))
+  expect_false(.same_primary("dfoo", "pbar"))
+})

@@ -27,7 +27,8 @@ fitdistdoublecens(
 \item{censdata}{A data frame with columns 'left' and 'right' representing
 the lower and upper bounds of the censored observations. Unlike
 \code{\link[fitdistrplus:fitdistcens]{fitdistrplus::fitdistcens()}} \code{NA} is not supported for either the
-upper or lower bounds.}
+upper or lower bounds. Use \code{left == right} for an exactly observed
+secondary event.}
 
 \item{distr}{A character string naming the distribution to be fitted.
 Special values \code{"discretestep"} and \code{"discretehazard"} select the
@@ -39,7 +40,8 @@ non-parametric step-distribution fitting; see Details.}
 \item{right}{Column name for upper bound of observed values (default:
 "right").}
 
-\item{pwindow}{Column name for primary window (default: "pwindow").}
+\item{pwindow}{Column name for primary window (default: "pwindow"). Use
+a primary window of 0 for an exactly observed primary event.}
 
 \item{L}{Column name for minimum delay (lower truncation point). For any
 finite L the distribution is left-truncated at L; use \code{L = -Inf} for no
@@ -176,6 +178,18 @@ For non-parametric distributions \code{K} is implied by \code{length(start)}:
 \code{K = length(start) + 1} for \code{"discretestep"} and
 \code{K = length(start) - 1} for \code{"discretehazard"}. \code{start} is therefore
 required.
+}
+
+\subsection{Exact observations}{
+
+Rows with \code{pwindow = 0} have an exactly known primary event time. Rows
+with \code{left == right} have an exactly known secondary event time and
+contribute a density rather than a probability to the likelihood (see
+\code{\link[=dprimarycensored]{dprimarycensored()}}). Rows of different types can be mixed in one fit,
+as for the exact, single interval censored and doubly interval censored
+observations of \code{coarseDataTools::dic.fit()}. Data with the primary
+event in [\code{EL}, \code{ER}] and the secondary event in [\code{SL}, \code{SR}] map
+to \code{left = SL - EL}, \code{right = SR - EL} and \code{pwindow = ER - EL}.
 }
 }
 \examples{

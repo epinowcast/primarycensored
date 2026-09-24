@@ -55,9 +55,36 @@ new_pcens <- function(
   primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "new_pcens"
   )
-  pprimary <- .resolve_pprimary(
-    dprimary, pprimary
+  dprim_name <- .dist_name(dprimary)
+  pprimary <- .resolve_pprimary(dprimary, pprimary, dprim_name)
+  .new_pcens(
+    pdist, dprimary, primary_args, pprimary, list(...),
+    dprim_name = dprim_name
   )
+}
+
+#' Build a pcens object from resolved inputs
+#'
+#' Internal constructor used by [new_pcens()] and the functions that build a
+#' `pcens` object for each call. It does no validation or lookups other than
+#' the names used for the class.
+#'
+#' @inheritParams new_pcens
+#'
+#' @param primary_args List of primary event distribution arguments.
+#'
+#' @param pprimary The primary event CDF, or `NULL`.
+#'
+#' @param args Named list of delay distribution parameters.
+#'
+#' @inheritParams .format_class
+#'
+#' @return A `pcens` object. See [new_pcens()].
+#'
+#' @keywords internal
+.new_pcens <- function(pdist, dprimary, primary_args, pprimary, args,
+                       pdist_name = .dist_name(pdist),
+                       dprim_name = .dist_name(dprimary)) {
   obj <- list(
     pdist = pdist,
     dprimary = dprimary,
@@ -66,10 +93,45 @@ new_pcens <- function(
     # consumers that read object$dprimary_args directly.
     dprimary_args = primary_args,
     pprimary = pprimary,
-    args = list(...)
+    args = args
   )
-  class(obj) <- .format_class(pdist, dprimary)
+  class(obj) <- .format_class(pdist, dprimary, pdist_name, dprim_name)
   obj
+}
+
+#' Resolve, validate and build the pcens object for one call
+#'
+#' Shared by [dprimarycensored()], [pprimarycensored()] and
+#' [qprimarycensored()]. Distribution names are looked up once here and
+#' reused for the primary CDF and the class.
+#'
+#' @inheritParams pprimarycensored
+#'
+#' @param primary_args List of primary event distribution arguments.
+#'
+#' @param args Named list of delay distribution parameters.
+#'
+#' @return A `pcens` object. See [new_pcens()].
+#'
+#' @keywords internal
+.build_pcens <- function(pdist, dprimary, primary_args, pprimary, args,
+                         pwindow, D, check) {
+  pdist <- .resolve_pdist(pdist, type = "p")
+  dprim_name <- .dist_name(dprimary)
+  # Resolve `pprimary` before the checks so name-mismatch errors surface
+  # before the delay/primary checks, which may otherwise fail first with a
+  # less specific message.
+  pprimary <- .resolve_pprimary(dprimary, pprimary, dprim_name)
+
+  if (isTRUE(check)) {
+    do.call(check_pdist, c(list(pdist, D = D), args))
+    check_dprimary(dprimary, pwindow, primary_args)
+  }
+
+  .new_pcens(
+    pdist, dprimary, primary_args, pprimary, args,
+    dprim_name = dprim_name
+  )
 }
 
 #' Update the parameters of a pcens object
