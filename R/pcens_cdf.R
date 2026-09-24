@@ -16,6 +16,12 @@
 #' useful for testing purposes or for settings where the analytical solution
 #' breaks down.
 #'
+#' @details
+#' When `pwindow = 0` the primary event time is known exactly and the
+#' primary event censored CDF is the delay CDF. This case is handled before
+#' dispatch, so every method returns `pdist(q)` without integrating over the
+#' primary event window.
+#'
 #' @return Vector of computed primary event censored CDFs
 #'
 #' @family pcens
@@ -27,7 +33,37 @@ pcens_cdf <- function(
   pwindow,
   use_numeric = FALSE
 ) {
+  if (.is_exact_window(pwindow)) {
+    return(.delay_cdf(object, q))
+  }
   UseMethod("pcens_cdf")
+}
+
+#' Test for a zero-width censoring window
+#'
+#' @param window A censoring window width.
+#'
+#' @return `TRUE` if `window` is a single value equal to zero.
+#'
+#' @keywords internal
+.is_exact_window <- function(window) {
+  length(window) == 1L && !is.na(window) && window == 0
+}
+
+#' Delay CDF of a pcens object
+#'
+#' Evaluates the delay distribution CDF of a `pcens` object with its stored
+#' parameters. This is the primary event censored CDF when `pwindow = 0`.
+#'
+#' @param object A `pcens` object as created by [new_pcens()].
+#'
+#' @param q Vector of quantiles.
+#'
+#' @return Vector of delay CDF values.
+#'
+#' @keywords internal
+.delay_cdf <- function(object, q) {
+  do.call(object$pdist, c(list(q), object$args))
 }
 
 #' Default method for computing primary event censored CDF

@@ -10,6 +10,12 @@
   The default method differences `pcens_cdf()` and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
   See #348.
 - Documented the fields of a `pcens` object in `new_pcens()`.
+- Zero-width censoring windows are now supported.
+  With `pwindow = 0` the primary event time is exact and `pprimarycensored()`, `dprimarycensored()` and `pcens_cdf()` use the delay CDF directly, for all delay distributions.
+  With `swindow = 0` the secondary event time is exact and `dprimarycensored()` and `pcens_pmf()` return the primary event censored density rather than a probability.
+  `fitdistdoublecens()` accepts rows with `pwindow = 0` and rows with `left == right`, and these can be mixed with interval censored rows in one fit.
+  This matches the exact, single interval censored and doubly interval censored data used by `coarseDataTools::dic.fit()`.
+  See #345.
 
 ## Performance
 

@@ -14,7 +14,8 @@
 #'  users can apply [add_name_attribute()] to yield properly tagged
 #'  functions if they wish to leverage the analytical solutions.
 #'
-#' @param pwindow Primary event window
+#' @param pwindow Primary event window. Use `pwindow = 0` for an exactly
+#'  observed primary event, in which case the delay CDF is used directly.
 #'
 #' @param L Minimum delay (lower truncation point). Defaults to `-Inf`,
 #'  meaning no left truncation. For any finite value of L the distribution

@@ -38,7 +38,8 @@ custom primary distribution whose CDF is not in the registry.}
 
 \item{args}{Named list of delay distribution parameters.}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{D}{Maximum delay (upper truncation point). If finite, the distribution
 is truncated at D. If set to Inf, no upper truncation is applied. Defaults

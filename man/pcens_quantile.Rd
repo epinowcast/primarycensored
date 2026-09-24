@@ -11,7 +11,8 @@ pcens_quantile(object, p, pwindow, L = -Inf, D = Inf, use_numeric = FALSE, ...)
 
 \item{p}{A vector of probabilities at which to compute the quantiles.}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
 meaning no left truncation. For any finite value of L the distribution
