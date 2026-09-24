@@ -146,3 +146,42 @@ test_that(".sort_eps_names orders by trailing index, not lexicographically", {
     .sort_eps_names(character(0)), character(0)
   )
 })
+
+test_that(".dist_name prefers the name attribute", {
+  expect_identical(.dist_name(stats::pgamma), "pgamma")
+  expect_identical(
+    .dist_name(add_name_attribute(stats::pgamma, "pmygamma")), "pmygamma"
+  )
+  expect_identical(.dist_name(stats::pgamma), "pgamma")
+})
+
+test_that(".dist_name caches names of namespace functions only", {
+  calls <- new.env(parent = emptyenv())
+  calls$n <- 0L
+  extract <- .extract_function_name
+  testthat::local_mocked_bindings(
+    .extract_function_name = function(func) {
+      calls$n <- calls$n + 1L
+      extract(func)
+    }
+  )
+  expect_identical(.dist_name(stats::pbeta), "pbeta")
+  n_first <- calls$n
+  expect_identical(.dist_name(stats::pbeta), "pbeta")
+  expect_identical(calls$n, n_first)
+
+  # Closures outside a namespace are looked up every time
+  fn <- function(q, ...) stats::pbeta(q, ...)
+  expect_identical(.dist_name(fn), "unknown")
+  expect_identical(.dist_name(fn), "unknown")
+  expect_identical(calls$n, n_first + 2L)
+})
+
+test_that(".lookup_pprimary gives the same result when repeated", {
+  expect_identical(.lookup_pprimary(stats::dunif), punif)
+  expect_identical(.lookup_pprimary(stats::dunif), punif)
+  expect_identical(.lookup_pprimary(dexpgrowth), pexpgrowth)
+  expect_identical(.lookup_pprimary(dexpgrowth), pexpgrowth)
+  expect_null(.lookup_pprimary(function(x) x))
+  expect_null(.lookup_pprimary(function(x) x))
+})

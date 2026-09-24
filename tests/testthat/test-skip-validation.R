@@ -260,3 +260,30 @@ test_that("fitdistdoublecens skips validation with check = FALSE", {
 
   expect_identical(counts$pdist, 0L)
 })
+
+test_that("fitdistdoublecens builds the pcens object once per fit", {
+  skip_if_not_installed("fitdistrplus")
+  withr::local_seed(123)
+  n <- 50
+  delays <- rprimarycensored(
+    n, rgamma,
+    shape = 3, scale = 2, pwindow = 1, swindow = 1, D = Inf
+  )
+  censdata <- data.frame(
+    left = delays, right = delays + 1, pwindow = 1, D = Inf
+  )
+  calls <- new.env(parent = emptyenv())
+  calls$n <- 0L
+  build <- .new_pcens
+  testthat::local_mocked_bindings(
+    .new_pcens = function(...) {
+      calls$n <- calls$n + 1L
+      build(...)
+    }
+  )
+  fitdistdoublecens(
+    censdata, "gamma",
+    start = list(shape = 1, scale = 1), truncation_check_multiplier = NULL
+  )
+  expect_identical(calls$n, 1L)
+})
