@@ -1,18 +1,20 @@
 /**
-  * Check if a delay has uniform primary terms
+  * Check if the analytical solution is built from uniform primary terms
   * @ingroup analytical_solution_helpers
   *
-  * These delays have an analytical CDF with a uniform primary built from
-  * primarycensored_uniform_terms(), which must handle every dist_id listed
-  * here.
+  * These are the delays whose censored CDF with a uniform primary is
+  * primarycensored_uniform_lcdf_from_terms() applied to
+  * primarycensored_uniform_terms() at d and q.
   *
   * @param dist_id Distribution identifier for the delay distribution
+  * @param primary_id Distribution identifier for the primary distribution
   *
-  * @return 1 for Lognormal (1), Gamma (2), Weibull (3) and generalised gamma
-  * (5), 0 otherwise
+  * @return 1 if the solution is built from uniform primary terms, 0
+  * otherwise
   */
-int primarycensored_has_uniform_terms(int dist_id) {
-  return dist_id == 1 || dist_id == 2 || dist_id == 3 || dist_id == 5;
+int check_for_uniform_terms(int dist_id, int primary_id) {
+  if (primary_id != 1) return 0;
+  return dist_id == 2 || dist_id == 1 || dist_id == 3 || dist_id == 5;
 }
 
 /**
@@ -33,9 +35,8 @@ int primarycensored_has_uniform_terms(int dist_id) {
   * @return 1 if an analytical solution exists, 0 otherwise
   */
 int check_for_analytical(int dist_id, int primary_id) {
-  if (primary_id == 1 && primarycensored_has_uniform_terms(dist_id)) {
-    return 1;
-  }
+  // Gamma, Lognormal, Weibull and generalised gamma with a Uniform primary
+  if (check_for_uniform_terms(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
@@ -61,19 +62,17 @@ int check_for_analytical(int dist_id, int primary_id) {
   * @param terms_d Terms at d from primarycensored_uniform_terms()
   * @param terms_q Terms at q from primarycensored_uniform_terms()
   * @param pwindow Primary event window
-  * @param dist_id Distribution identifier
   *
   * @return Log of the primary event censored CDF at d
   */
 real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
-                                             data real pwindow,
-                                             data int dist_id) {
+                                             data real pwindow) {
   real log_A = log_sum_exp(terms_d[1], terms_q[2]);
   real log_B = log_sum_exp(terms_q[1], terms_d[2]);
-  // Deep enough into the lognormal lower tail every term underflows
-  // together. Both are then constant `-inf` and `log_diff_exp` would give
-  // NaN, so return the limit directly.
-  if (dist_id == 1 && is_inf(log_A)) {
+  // Deep enough into the lower tail every term underflows together. Both
+  // are then `-inf` and `log_diff_exp` would give NaN, so return the limit
+  // directly.
+  if (log_A == negative_infinity() && log_B == negative_infinity()) {
     return negative_infinity();
   }
   return log_diff_exp(log_A, log_B) - log(pwindow);
@@ -221,7 +220,7 @@ vector primarycensored_gengamma_uniform_terms(real t,
   *
   * @param t Time (d or q)
   * @param dist_id Distribution identifier (1: Lognormal, 2: Gamma,
-  *   3: Weibull, 5: Generalised gamma)
+  *   3: Weibull, 5: Generalised gamma), see check_for_uniform_terms()
   * @param params Array of distribution parameters
   *
   * @return Vector of the two terms at t, see
@@ -229,16 +228,16 @@ vector primarycensored_gengamma_uniform_terms(real t,
   */
 vector primarycensored_uniform_terms(real t, data int dist_id,
                                      array[] real params) {
-  if (dist_id == 1) {
-    return primarycensored_lognormal_uniform_terms(t, params);
-  } else if (dist_id == 2) {
+  if (dist_id == 2) {
     return primarycensored_gamma_uniform_terms(t, params);
+  } else if (dist_id == 1) {
+    return primarycensored_lognormal_uniform_terms(t, params);
   } else if (dist_id == 3) {
     return primarycensored_weibull_uniform_terms(t, params);
   } else if (dist_id == 5) {
     return primarycensored_gengamma_uniform_terms(t, params);
   }
-  reject("No uniform primary terms for dist_id ", dist_id);
+  reject("Invalid distribution identifier: ", dist_id);
 }
 
 /**
@@ -258,7 +257,7 @@ real primarycensored_gamma_uniform_lcdf(data real d, real q,
                                         data real pwindow) {
   return primarycensored_uniform_lcdf_from_terms(
     primarycensored_gamma_uniform_terms(d, params),
-    primarycensored_gamma_uniform_terms(q, params), pwindow, 2
+    primarycensored_gamma_uniform_terms(q, params), pwindow
   );
 }
 
@@ -279,7 +278,7 @@ real primarycensored_lognormal_uniform_lcdf(data real d, real q,
                                             data real pwindow) {
   return primarycensored_uniform_lcdf_from_terms(
     primarycensored_lognormal_uniform_terms(d, params),
-    primarycensored_lognormal_uniform_terms(q, params), pwindow, 1
+    primarycensored_lognormal_uniform_terms(q, params), pwindow
   );
 }
 
@@ -300,7 +299,7 @@ real primarycensored_weibull_uniform_lcdf(data real d, real q,
                                           data real pwindow) {
   return primarycensored_uniform_lcdf_from_terms(
     primarycensored_weibull_uniform_terms(d, params),
-    primarycensored_weibull_uniform_terms(q, params), pwindow, 3
+    primarycensored_weibull_uniform_terms(q, params), pwindow
   );
 }
 
@@ -322,7 +321,7 @@ real primarycensored_gengamma_uniform_lcdf(data real d, real q,
                                            data real pwindow) {
   return primarycensored_uniform_lcdf_from_terms(
     primarycensored_gengamma_uniform_terms(d, params),
-    primarycensored_gengamma_uniform_terms(q, params), pwindow, 5
+    primarycensored_gengamma_uniform_terms(q, params), pwindow
   );
 }
 

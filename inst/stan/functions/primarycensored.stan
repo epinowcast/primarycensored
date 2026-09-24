@@ -403,6 +403,80 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
 }
 
 /**
+  * Compute the primary event censored log CDF at each integer node
+  * @ingroup primary_censored_vectorized
+  *
+  * Calls primarycensored_lcdf() at each node without truncation.
+  *
+  * @param start First node to compute
+  * @param n Last node to compute, and the length of the result
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return Vector whose element d is the log CDF at d, for d in start:n.
+  * Elements before start are not computed.
+  */
+vector primarycensored_node_log_cdfs(data int start, data int n,
+                                     data int dist_id, array[] real params,
+                                     data real pwindow, data int primary_id,
+                                     array[] real primary_params) {
+  vector[n] log_cdfs;
+  // The internal lower bound below is 0 for positive-support delays and -inf
+  // otherwise; it is inlined rather than bound to a local so Stan's type
+  // checker treats it as data-only.
+  for (d in start:n) {
+    log_cdfs[d] = primarycensored_lcdf(
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+  }
+  return log_cdfs;
+}
+
+/**
+  * Compute the primary event censored log CDF at each integer node, sharing
+  * uniform primary terms between nodes
+  * @ingroup primary_censored_vectorized
+  *
+  * With a uniform primary, the log CDF at d combines terms at d and at
+  * q = max(d - pwindow, 0) (see primarycensored_uniform_lcdf_from_terms()).
+  * With an integer pwindow both are integer nodes, so the terms are computed
+  * once per node and used for both, halving the CDF evaluations. Use only
+  * when check_for_uniform_terms() is 1. The values are the same as from
+  * primarycensored_node_log_cdfs().
+  *
+  * @param start First node to compute
+  * @param n Last node to compute, and the length of the result
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window, a positive integer
+  *
+  * @return Vector whose element d is the log CDF at d, for d in start:n.
+  * Elements before start are not computed.
+  */
+vector primarycensored_uniform_node_log_cdfs(data int start, data int n,
+                                             data int dist_id,
+                                             array[] real params,
+                                             data int pwindow) {
+  vector[n] log_cdfs;
+  // terms[t + 1] holds the terms at node t
+  array[n + 1] vector[2] terms;
+  for (t in max(start - pwindow, 0):n) {
+    terms[t + 1] = primarycensored_uniform_terms(t, dist_id, params);
+  }
+  for (d in start:n) {
+    log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
+      terms[d + 1], terms[max(d - pwindow, 0) + 1], pwindow
+    );
+  }
+  return log_cdfs;
+}
+
+/**
   * Compute the primary event censored log PMF for integer delays up to max_delay
   * @ingroup primary_censored_vectorized
   *
@@ -426,12 +500,10 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   *    reduces the number of integration calls.
   *
   * For the analytical Lognormal, Gamma, Weibull and generalised gamma delays
-  * with a uniform primary and an integer pwindow, the CDF at d combines
-  * terms at d and at q = d - pwindow (see
-  * primarycensored_uniform_lcdf_from_terms()). Both are integer nodes, so
-  * the terms are computed once per node and shared, halving the CDF
-  * evaluations. The result is the same as calling primarycensored_lcdf() at
-  * each d.
+  * with a uniform primary and an integer pwindow, the log CDFs come from
+  * primarycensored_uniform_node_log_cdfs(), which shares terms between
+  * nodes. Otherwise they come from primarycensored_node_log_cdfs(). Both
+  * give the same values.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
@@ -467,35 +539,20 @@ vector primarycensored_sone_lpmf_vectorized(
     reject("D must be at least max_delay + 1");
   }
 
-  // Compute log CDFs (without truncation normalization). The internal lower
-  // bound below is 0 for positive-support delays and -inf otherwise; it is
-  // inlined rather than bound to a local so Stan's type checker treats it as
-  // data-only.
+  // Compute log CDFs (without truncation normalization).
   // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0;
   // for L <= 0 (including -inf) start at 1 since F(d) = 0 for d <= 0.
   int start_idx = (!is_inf(L) && L > 0) ? max(1, to_int(floor(L))) : 1;
-  if (primary_id == 1 && primarycensored_has_uniform_terms(dist_id) &&
+  if (check_for_uniform_terms(dist_id, primary_id) &&
       pwindow >= 1 && floor(pwindow) == pwindow) {
-    // Each node's terms are computed once and reused as both d and q.
-    int pw = to_int(pwindow);
-    array[upper_interval + 1] vector[2] terms; // terms[t + 1] is at t
-    terms[1] = rep_vector(negative_infinity(), 2);
-    for (t in max(start_idx - pw, 1):upper_interval) {
-      terms[t + 1] = primarycensored_uniform_terms(t, dist_id, params);
-    }
-    for (d in start_idx:upper_interval) {
-      log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
-        terms[d + 1], terms[max(d - pw, 0) + 1], pwindow, dist_id
-      );
-    }
+    log_cdfs = primarycensored_uniform_node_log_cdfs(
+      start_idx, upper_interval, dist_id, params, to_int(pwindow)
+    );
   } else {
-    for (d in start_idx:upper_interval) {
-      log_cdfs[d] = primarycensored_lcdf(
-        d | dist_id, params, pwindow,
-        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-        positive_infinity(), primary_id, primary_params
-      );
-    }
+    log_cdfs = primarycensored_node_log_cdfs(
+      start_idx, upper_interval, dist_id, params, pwindow, primary_id,
+      primary_params
+    );
   }
 
   // Get CDF at lower truncation point L
