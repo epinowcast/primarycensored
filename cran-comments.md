@@ -1,13 +1,23 @@
 ## Submission
 
-This release adds non-parametric delay distributions, both a direct PMF
-over fixed bins and a discrete-time hazard parameterisation, and analytical
-primary event censored solutions for the generalised gamma delay
-distribution. It also fixes a gradient bug in the Stan likelihood, where
-the log CDF returned a finite value with a non-finite gradient deep in the
-lower tail of a narrow lognormal delay.
+This release follows 1.5.2 (on CRAN since 2026-09-11) quickly because 1.5.2
+introduced a regression where `fitdistdoublecens()` no longer accepted
+`fix.arg`. This release fixes it, alongside other bug fixes and new features.
 
-All additions are backwards compatible.
+It also makes the main R functions and `fitdistdoublecens()` substantially
+faster, adds support for zero-width primary and secondary censoring
+windows, and adds an `update()` method and a `pcens_pmf()` generic for
+`pcens` objects.
+
+The one change in behaviour is that `dprimarycensored()` with
+`swindow = 0` now returns the primary event censored density. It
+previously returned 0.
+
+## Test environments
+
+- Local macOS (aarch64), R 4.6.1, `R CMD check --as-cran`
+- GitHub Actions: Ubuntu (R release and oldrel-1), macOS and Windows
+  (R release), and an `--as-cran` check on Ubuntu
 
 ## R CMD check results
 
@@ -16,9 +26,12 @@ All additions are backwards compatible.
 ## Reverse dependencies
 
 Checked 2 reverse dependencies (distspec, EpiNow2) with r-devel/recheck,
-comparing against 1.5.1. No regressions. The one NOTE on EpiNow2
-(checking compiled code) is raised by both versions and is unrelated to
-this release.
+comparing against 1.5.2. No changes between the two versions. distspec is
+OK. EpiNow2 raises one NOTE (checking compiled code) under both versions,
+so it is unrelated to this release.
+
+We also ran the tests of epidist (not on CRAN) against both versions, with
+the same results.
 
 ## Comments
 
