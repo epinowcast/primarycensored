@@ -155,12 +155,13 @@ PMF, \\f\_{\text{cens}}(d)\\, is given by: \$\$ f\_{\text{cens}}(d) =
 F\_{\text{cens}}(d + \text{swindow}) - F\_{\text{cens}}(d) \$\$ where
 \\F\_{\text{cens}}\\ is the primary event censored CDF.
 
-The function first computes the CDFs for all unique points (including
-both \\d\\ and \\d + \text{swindow}\\) using
-[`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md).
-It then creates a lookup table for these CDFs to efficiently calculate
-the PMF for each input value. For delays less than L, the function
-returns 0.
+The function creates a `pcens` object with
+[`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md)
+and computes the PMF with
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_pmf.md).
+This evaluates the CDF once for all unique points (including both \\d\\
+and \\d + \text{swindow}\\) and reuses these values to calculate the PMF
+for each input value.
 
 When the secondary censoring interval extends past the upper truncation
 point (\\d + \text{swindow} \> D\\) but the lower endpoint satisfies \\d

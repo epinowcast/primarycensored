@@ -70,11 +70,40 @@ new_pcens(
 
 An object with class hierarchy
 `c("pcens_{pdist_name}_{dprimary_name}", "pcens_{pdist_name}", "pcens")`.
-This contains the primary event distribution, the delay distribution,
-the delay distribution arguments, the primary event CDF (if available),
-and any additional arguments. It can be used with the
+It is a list with the fields:
+
+- `pdist`:
+
+  The delay distribution CDF.
+
+- `dprimary`:
+
+  The primary event distribution density.
+
+- `primary_args`:
+
+  A list of arguments passed to `dprimary` and `pprimary`.
+
+- `dprimary_args`:
+
+  A copy of `primary_args`, kept for backward compatibility.
+
+- `pprimary`:
+
+  The primary event CDF, or `NULL` if none is available.
+
+- `args`:
+
+  A named list of the delay distribution parameters passed through
+  `...`.
+
+It can be used with
 [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
-function to compute the primary event censored CDF.
+to compute the primary event censored CDF and with
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_pmf.md)
+to compute the PMF. Use
+[update()](https://primarycensored.epinowcast.org/dev/reference/update.pcens.md)
+to change its parameters.
 
 ## See also
 
@@ -88,8 +117,11 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.pcens_pweibull_dunif.md),
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_pmf.md),
+[`pcens_pmf.default()`](https://primarycensored.epinowcast.org/dev/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.md),
-[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.default.md)
+[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/dev/reference/pcens_quantile.default.md),
+[`update.pcens()`](https://primarycensored.epinowcast.org/dev/reference/update.pcens.md)
 
 ## Examples
 
@@ -110,13 +142,13 @@ new_pcens(
 #>     }
 #>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)
 #> }
-#> <bytecode: 0x55de6e334038>
+#> <bytecode: 0x5614c0b781b0>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary
 #> function (x, min = 0, max = 1, log = FALSE) 
 #> .Call(C_dunif, x, min, max, log)
-#> <bytecode: 0x55de6a7e5620>
+#> <bytecode: 0x5614bb6ee738>
 #> <environment: namespace:stats>
 #> 
 #> $primary_args
@@ -138,7 +170,7 @@ new_pcens(
 #> $pprimary
 #> function (q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE) 
 #> .Call(C_punif, q, min, max, lower.tail, log.p)
-#> <bytecode: 0x55de6e283120>
+#> <bytecode: 0x5614c0b105b0>
 #> <environment: namespace:stats>
 #> 
 #> $args

@@ -2,6 +2,25 @@
 
 ## primarycensored (development version)
 
+### New features
+
+- Added an [`update()`](https://rdrr.io/r/stats/update.html) method for
+  `pcens` objects. It replaces the delay distribution parameters, and
+  optionally `primary_args`, without looking up distributions by name or
+  rebuilding the object. This makes it cheaper to evaluate one
+  distribution for many parameter sets, such as posterior draws. See
+  [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+- Added
+  [`pcens_pmf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_pmf.md),
+  an S3 generic for the primary event censored PMF of a `pcens` object.
+  The default method differences
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
+  and handles `swindow`, `L` and `D` in the same way as
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md).
+  See [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+- Documented the fields of a `pcens` object in
+  [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md).
+
 ### Bug fixes
 
 - [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
@@ -10,6 +29,10 @@
   parameters were missing from the synthetic density’s arguments. Tests
   now also cover fitting gamma with `start = list(shape = , scale = )`.
   See [\#301](https://github.com/epinowcast/primarycensored/issues/301).
+- [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  no longer errors when `q` contains `Inf` and the delay has an
+  analytical solution. It now returns 1 there. See
+  [\#348](https://github.com/epinowcast/primarycensored/issues/348).
 
 ## primarycensored 1.5.2
 
