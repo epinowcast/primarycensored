@@ -11,7 +11,7 @@ analytical_delays <- list(
 
 vectorized_lpmf <- function(delay, max_delay, L, D, pwindow,
                             primary_id = 1, primary_params = numeric(0)) {
-  primarycensored_sone_lpmf_vectorized(
+  primarycensored_sone_lpmf_vectorized( # nolint: object_usage_linter.
     max_delay, L, D, delay$dist_id, delay$params, pwindow, primary_id,
     primary_params
   )
