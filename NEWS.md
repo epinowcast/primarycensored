@@ -11,6 +11,16 @@
   See #348.
 - Documented the fields of a `pcens` object in `new_pcens()`.
 
+## Performance
+
+- `dprimarycensored()`, `pprimarycensored()`, `qprimarycensored()` and `new_pcens()` look up distribution names once per call.
+  Names of base R and other namespace functions, and primary CDFs found in the registry, are cached for later calls.
+  This makes `new_pcens()` about 15 times faster and `dprimarycensored()` and `pprimarycensored()` about 3 times faster for a gamma delay with a uniform primary.
+  Results are unchanged. See #347.
+- `fitdistdoublecens()` builds one `pcens` object per fit and updates its parameters with `update()` for each likelihood evaluation.
+  It also groups observations by their censoring and truncation settings once per fit, and evaluates the fitted CDF per group rather than per observation.
+  A gamma fit to 100 observations is about 4 times faster, with the same estimates. See #347.
+
 ## Bug fixes
 
 - `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, given either as a list or as a function of the data.
