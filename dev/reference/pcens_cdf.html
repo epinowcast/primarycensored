@@ -98,7 +98,8 @@ delay with uniform primary event distributions.</p>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Primary event window</p></dd>
+<dd><p>Primary event window. Use <code>pwindow = 0</code> for an exactly
+observed primary event, in which case the delay CDF is used directly.</p></dd>
 
 
 <dt id="arg-use-numeric">use_numeric<a class="anchor" aria-label="anchor" href="#arg-use-numeric"></a></dt>
@@ -111,6 +112,13 @@ breaks down.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>Vector of computed primary event censored CDFs</p>
+    </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>When <code>pwindow = 0</code> the primary event time is known exactly and the
+primary event censored CDF is the delay CDF. This case is handled before
+dispatch, so every method returns <code>pdist(q)</code> without integrating over the
+primary event window.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

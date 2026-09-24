@@ -2,7 +2,9 @@
 
 Computes the PMF by differencing
 [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
-at `x` and `min(x + swindow, D)`, normalised over \[L, D\]. See
+at `x` and `min(x + swindow, D)`, normalised over \[L, D\]. Where
+`swindow = 0` the primary event censored density at `x` is returned
+instead. See
 [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
 for the details.
 
@@ -26,11 +28,14 @@ pcens_pmf(object, x, pwindow, swindow = 1, L = -Inf, D = Inf, log = FALSE, ...)
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - swindow:
 
-  Secondary event window (default: 1)
+  Secondary event window (default: 1). Use `swindow = 0` for an exactly
+  observed secondary event, in which case a density is returned rather
+  than a probability (see Details).
 
 - L:
 

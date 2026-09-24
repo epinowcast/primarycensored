@@ -72,7 +72,12 @@ to establish a class hierarchy for potential analytical solutions.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.format_class</span><span class="op">(</span><span class="va">pdist</span>, <span class="va">dprimary</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.format_class</span><span class="op">(</span></span>
+<span>  <span class="va">pdist</span>,</span>
+<span>  <span class="va">dprimary</span>,</span>
+<span>  pdist_name <span class="op">=</span> <span class="fu"><a href="dot-dist_name.html">.dist_name</a></span><span class="op">(</span><span class="va">pdist</span><span class="op">)</span>,</span>
+<span>  dprim_name <span class="op">=</span> <span class="fu"><a href="dot-dist_name.html">.dist_name</a></span><span class="op">(</span><span class="va">dprimary</span><span class="op">)</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -97,6 +102,14 @@ See <code><a href="pcd_primary_distributions.html">pcd_primary_distributions()</
 base R distributions for potential analytical solutions. For non-base R
 functions, users can apply <code><a href="add_name_attribute.html">add_name_attribute()</a></code> to yield properly tagged
 functions if they wish to leverage analytical solutions.</p></dd>
+
+
+<dt id="arg-pdist-name">pdist_name<a class="anchor" aria-label="anchor" href="#arg-pdist-name"></a></dt>
+<dd><p>Name of <code>pdist</code>, as given by <code><a href="dot-dist_name.html">.dist_name()</a></code>.</p></dd>
+
+
+<dt id="arg-dprim-name">dprim_name<a class="anchor" aria-label="anchor" href="#arg-dprim-name"></a></dt>
+<dd><p>Name of <code>dprimary</code>, as given by <code><a href="dot-dist_name.html">.dist_name()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

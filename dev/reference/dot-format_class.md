@@ -6,7 +6,12 @@ those to establish a class hierarchy for potential analytical solutions.
 ## Usage
 
 ``` r
-.format_class(pdist, dprimary)
+.format_class(
+  pdist,
+  dprimary,
+  pdist_name = .dist_name(pdist),
+  dprim_name = .dist_name(dprimary)
+)
 ```
 
 ## Arguments
@@ -36,6 +41,16 @@ those to establish a class hierarchy for potential analytical solutions.
   [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
   to yield properly tagged functions if they wish to leverage analytical
   solutions.
+
+- pdist_name:
+
+  Name of `pdist`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/dev/reference/dot-dist_name.md).
+
+- dprim_name:
+
+  Name of `dprimary`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/dev/reference/dot-dist_name.md).
 
 ## Value
 

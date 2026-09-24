@@ -20,6 +20,52 @@
   See [\#348](https://github.com/epinowcast/primarycensored/issues/348).
 - Documented the fields of a `pcens` object in
   [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md).
+- Zero-width censoring windows are now supported. With `pwindow = 0` the
+  primary event time is exact and
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  and
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_cdf.md)
+  use the delay CDF directly, for all delay distributions. With
+  `swindow = 0` the secondary event time is exact and
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  and
+  [`pcens_pmf()`](https://primarycensored.epinowcast.org/dev/reference/pcens_pmf.md)
+  return the primary event censored density rather than a probability.
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  accepts rows with `pwindow = 0` and rows with `left == right`, and
+  these can be mixed with interval censored rows in one fit. This
+  matches the exact, single interval censored and doubly interval
+  censored data used by `coarseDataTools::dic.fit()`. See
+  [\#345](https://github.com/epinowcast/primarycensored/issues/345).
+
+### Performance
+
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md),
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  and
+  [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md)
+  look up distribution names once per call. Base R functions listed in
+  `pcd_distributions` or `pcd_primary_distributions` are identified by
+  comparing them with the registry functions, without deparsing their
+  bodies. This makes
+  [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md)
+  about 5 times faster and
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)
+  and
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  about 2.5 times faster for a gamma delay with a uniform primary.
+  Results are unchanged. See
+  [\#347](https://github.com/epinowcast/primarycensored/issues/347).
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/dev/reference/fitdistdoublecens.md)
+  builds one `pcens` object per fit and updates its parameters with
+  [`update()`](https://rdrr.io/r/stats/update.html) for each likelihood
+  evaluation. It also groups observations by their censoring and
+  truncation settings once per fit, and evaluates the fitted CDF per
+  group rather than per observation. A gamma fit to 100 observations is
+  about 3.5 times faster, with the same estimates. See
+  [\#347](https://github.com/epinowcast/primarycensored/issues/347).
 
 ### Bug fixes
 
@@ -33,6 +79,17 @@
   no longer errors when `q` contains `Inf` and the delay has an
   analytical solution. It now returns 1 there. See
   [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md),
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md)
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/qprimarycensored.md)
+  no longer error for a `dprimary` named by a registry alias, such as
+  `add_name_attribute(fn, "uniform")`. They now use the registry primary
+  CDF, as
+  [`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md)
+  already did. The check that `dprimary` and `pprimary` refer to the
+  same distribution also accepts registry aliases. See
+  [\#347](https://github.com/epinowcast/primarycensored/issues/347).
 
 ## primarycensored 1.5.2
 

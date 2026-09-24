@@ -14,7 +14,7 @@ which may return `NULL`.
 ## Usage
 
 ``` r
-.resolve_pprimary(dprimary, pprimary = NULL)
+.resolve_pprimary(dprimary, pprimary = NULL, d_name = .dist_name(dprimary))
 ```
 
 ## Arguments
@@ -26,6 +26,11 @@ which may return `NULL`.
 - pprimary:
 
   Optional user-supplied primary CDF (function or string).
+
+- d_name:
+
+  Name of `dprimary`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/dev/reference/dot-dist_name.md).
 
 ## Value
 

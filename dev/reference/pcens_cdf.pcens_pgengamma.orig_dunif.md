@@ -33,7 +33,8 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - use_numeric:
 

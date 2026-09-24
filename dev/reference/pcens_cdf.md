@@ -26,7 +26,8 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - use_numeric:
 
@@ -38,6 +39,13 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 ## Value
 
 Vector of computed primary event censored CDFs
+
+## Details
+
+When `pwindow = 0` the primary event time is known exactly and the
+primary event censored CDF is the delay CDF. This case is handled before
+dispatch, so every method returns `pdist(q)` without integrating over
+the primary event window.
 
 ## See also
 

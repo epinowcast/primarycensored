@@ -130,11 +130,14 @@ functions if they wish to leverage the analytical solutions.</p></dd>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Primary event window</p></dd>
+<dd><p>Primary event window. Use <code>pwindow = 0</code> for an exactly
+observed primary event, in which case the delay CDF is used directly.</p></dd>
 
 
 <dt id="arg-swindow">swindow<a class="anchor" aria-label="anchor" href="#arg-swindow"></a></dt>
-<dd><p>Secondary event window (default: 1)</p></dd>
+<dd><p>Secondary event window (default: 1). Use <code>swindow = 0</code> for
+an exactly observed secondary event, in which case a density is returned
+rather than a probability (see Details).</p></dd>
 
 
 <dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
@@ -244,7 +247,27 @@ f_{\text{cens,norm}}(d) = \frac{f_{\text{cens}}(d)}{
 $$
 where \(f_{\text{cens,norm}}(d)\) is the normalized PMF. For the
 explanation and mathematical details of the CDF, refer to the documentation
-of <code><a href="pprimarycensored.html">pprimarycensored()</a></code>.</p>
+of <code><a href="pprimarycensored.html">pprimarycensored()</a></code>.</p><div class="section">
+<h3 id="zero-width-windows">Zero-width windows<a class="anchor" aria-label="anchor" href="#zero-width-windows"></a></h3>
+
+
+<p>With <code>pwindow = 0</code> the primary event time is known exactly and the
+primary event censored CDF is the delay CDF, so the PMF is
+\(F(d + \text{swindow}) - F(d)\).</p>
+<p>With <code>swindow = 0</code> the secondary event time is known exactly. The
+probability of the interval is then zero, so the density of the primary
+event censored delay at \(d\) is returned instead. This is the
+derivative of \(F_{\text{cens}}\) at \(d\), the limit of the PMF
+divided by <code>swindow</code> as <code>swindow</code> goes to zero. With <code>pwindow = 0</code> as well
+it is the delay density. With a uniform primary event distribution it is
+\((F(d) - F(d - \text{pwindow})) / \text{pwindow}\). Otherwise the
+delay density is integrated against the primary event density. The delay
+density is found from the name of <code>pdist</code> (for example <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> for
+<code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code>) and an error is raised if it cannot be found. Densities are
+normalised for truncation in the same way as probabilities. <code>swindow</code> may
+be a vector, so densities and probabilities can be mixed in one call.</p>
+</div>
+
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -272,6 +295,15 @@ of <code><a href="pprimarycensored.html">pprimarycensored()</a></code>.</p>
 <span class="r-in"><span><span class="fu">dprimarycensored</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">9</span>, <span class="va">pweibull</span>, L <span class="op">=</span> <span class="fl">1</span>, D <span class="op">=</span> <span class="fl">10</span>, shape <span class="op">=</span> <span class="fl">1.5</span>, scale <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.3967387124 0.3138303103 0.1723520068 0.0760439783 0.0283706839</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [6] 0.0091967620 0.0026354003 0.0006757134 0.0001564326</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Example: exact primary events, and exact secondary events (a density)</span></span></span>
+<span class="r-in"><span><span class="fu">dprimarycensored</span><span class="op">(</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="va">pweibull</span>, pwindow <span class="op">=</span> <span class="fl">0</span>, shape <span class="op">=</span> <span class="fl">1.5</span>, scale <span class="op">=</span> <span class="fl">2.0</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.3343091 0.2086035 0.1001702</span>
+<span class="r-in"><span><span class="fu">dprimarycensored</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  <span class="fl">1</span><span class="op">:</span><span class="fl">3</span>, <span class="va">pweibull</span>,</span></span>
+<span class="r-in"><span>  pwindow <span class="op">=</span> <span class="fl">1</span>, swindow <span class="op">=</span> <span class="fl">0</span>, shape <span class="op">=</span> <span class="fl">1.5</span>, scale <span class="op">=</span> <span class="fl">2.0</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.2978115 0.3343091 0.2086035</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

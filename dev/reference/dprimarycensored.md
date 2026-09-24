@@ -60,11 +60,14 @@ dpcens(
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - swindow:
 
-  Secondary event window (default: 1)
+  Secondary event window (default: 1). Use `swindow = 0` for an exactly
+  observed secondary event, in which case a density is returned rather
+  than a probability (see Details).
 
 - L:
 
@@ -186,6 +189,27 @@ explanation and mathematical details of the CDF, refer to the
 documentation of
 [`pprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/pprimarycensored.md).
 
+### Zero-width windows
+
+With `pwindow = 0` the primary event time is known exactly and the
+primary event censored CDF is the delay CDF, so the PMF is \\F(d +
+\text{swindow}) - F(d)\\.
+
+With `swindow = 0` the secondary event time is known exactly. The
+probability of the interval is then zero, so the density of the primary
+event censored delay at \\d\\ is returned instead. This is the
+derivative of \\F\_{\text{cens}}\\ at \\d\\, the limit of the PMF
+divided by `swindow` as `swindow` goes to zero. With `pwindow = 0` as
+well it is the delay density. With a uniform primary event distribution
+it is \\(F(d) - F(d - \text{pwindow})) / \text{pwindow}\\. Otherwise the
+delay density is integrated against the primary event density. The delay
+density is found from the name of `pdist` (for example
+[`dgamma()`](https://rdrr.io/r/stats/GammaDist.html) for
+[`pgamma()`](https://rdrr.io/r/stats/GammaDist.html)) and an error is
+raised if it cannot be found. Densities are normalised for truncation in
+the same way as probabilities. `swindow` may be a vector, so densities
+and probabilities can be mixed in one call.
+
 ## See also
 
 Primary event censored distribution functions
@@ -212,4 +236,13 @@ dprimarycensored(
 dprimarycensored(1:9, pweibull, L = 1, D = 10, shape = 1.5, scale = 2.0)
 #> [1] 0.3967387124 0.3138303103 0.1723520068 0.0760439783 0.0283706839
 #> [6] 0.0091967620 0.0026354003 0.0006757134 0.0001564326
+
+# Example: exact primary events, and exact secondary events (a density)
+dprimarycensored(1:3, pweibull, pwindow = 0, shape = 1.5, scale = 2.0)
+#> [1] 0.3343091 0.2086035 0.1001702
+dprimarycensored(
+  1:3, pweibull,
+  pwindow = 1, swindow = 0, shape = 1.5, scale = 2.0
+)
+#> [1] 0.2978115 0.3343091 0.2086035
 ```

@@ -91,11 +91,14 @@ by <code><a href="new_pcens.html">new_pcens()</a></code>. Secondary event window
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Primary event window</p></dd>
+<dd><p>Primary event window. Use <code>pwindow = 0</code> for an exactly
+observed primary event, in which case the delay CDF is used directly.</p></dd>
 
 
 <dt id="arg-swindow">swindow<a class="anchor" aria-label="anchor" href="#arg-swindow"></a></dt>
-<dd><p>Secondary event window (default: 1)</p></dd>
+<dd><p>Secondary event window (default: 1). Use <code>swindow = 0</code> for
+an exactly observed secondary event, in which case a density is returned
+rather than a probability (see Details).</p></dd>
 
 
 <dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>

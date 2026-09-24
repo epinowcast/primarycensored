@@ -37,7 +37,8 @@ fitdistdoublecens(
   A data frame with columns 'left' and 'right' representing the lower
   and upper bounds of the censored observations. Unlike
   [`fitdistrplus::fitdistcens()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html)
-  `NA` is not supported for either the upper or lower bounds.
+  `NA` is not supported for either the upper or lower bounds. Use
+  `left == right` for an exactly observed secondary event.
 
 - distr:
 
@@ -55,7 +56,8 @@ fitdistdoublecens(
 
 - pwindow:
 
-  Column name for primary window (default: "pwindow").
+  Column name for primary window (default: "pwindow"). Use a primary
+  window of 0 for an exactly observed primary event.
 
 - L:
 
@@ -223,6 +225,18 @@ parameters into the underlying vector argument.
 For non-parametric distributions `K` is implied by `length(start)`:
 `K = length(start) + 1` for `"discretestep"` and `K = length(start) - 1`
 for `"discretehazard"`. `start` is therefore required.
+
+### Exact observations
+
+Rows with `pwindow = 0` have an exactly known primary event time. Rows
+with `left == right` have an exactly known secondary event time and
+contribute a density rather than a probability to the likelihood (see
+[`dprimarycensored()`](https://primarycensored.epinowcast.org/dev/reference/dprimarycensored.md)).
+Rows of different types can be mixed in one fit, as for the exact,
+single interval censored and doubly interval censored observations of
+`coarseDataTools::dic.fit()`. Data with the primary event in \[`EL`,
+`ER`\] and the secondary event in \[`SL`, `SR`\] map to
+`left = SL - EL`, `right = SR - EL` and `pwindow = ER - EL`.
 
 ## See also
 

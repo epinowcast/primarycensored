@@ -1,0 +1,75 @@
+# Build a pcens object from resolved inputs
+
+Internal constructor used by
+[`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md)
+and the functions that build a `pcens` object for each call. It does no
+validation or lookups other than the names used for the class.
+
+## Usage
+
+``` r
+.new_pcens(
+  pdist,
+  dprimary,
+  primary_args,
+  pprimary,
+  args,
+  pdist_name = .dist_name(pdist),
+  dprim_name = .dist_name(dprimary)
+)
+```
+
+## Arguments
+
+- pdist:
+
+  Distribution function (CDF). The package can identify base R
+  distributions for potential analytical solutions. For non-base R
+  functions, users can apply
+  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
+  to yield properly tagged functions if they wish to leverage the
+  analytical solutions.
+
+- dprimary:
+
+  Function to generate the probability density function (PDF) of primary
+  event times. This function should take a value `x` and a `pwindow`
+  parameter, and return a probability density. It should be normalized
+  to integrate to 1 over \[0, pwindow\]. Defaults to a uniform
+  distribution over \[0, pwindow\]. Users can provide custom functions
+  or use helper functions like `dexpgrowth` for an exponential growth
+  distribution. See
+  [`pcd_primary_distributions()`](https://primarycensored.epinowcast.org/dev/reference/pcd_primary_distributions.md)
+  for examples. The package can identify base R distributions for
+  potential analytical solutions. For non-base R functions, users can
+  apply
+  [`add_name_attribute()`](https://primarycensored.epinowcast.org/dev/reference/add_name_attribute.md)
+  to yield properly tagged functions if they wish to leverage analytical
+  solutions.
+
+- primary_args:
+
+  List of primary event distribution arguments.
+
+- pprimary:
+
+  The primary event CDF, or `NULL`.
+
+- args:
+
+  Named list of delay distribution parameters.
+
+- pdist_name:
+
+  Name of `pdist`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/dev/reference/dot-dist_name.md).
+
+- dprim_name:
+
+  Name of `dprimary`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/dev/reference/dot-dist_name.md).
+
+## Value
+
+A `pcens` object. See
+[`new_pcens()`](https://primarycensored.epinowcast.org/dev/reference/new_pcens.md).

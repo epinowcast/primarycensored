@@ -13,6 +13,7 @@ Define a fitdistrplus compatible wrapper around dprimarycensored
   primary_args,
   pprimary = NULL,
   check = TRUE,
+  pcens_cache = NULL,
   ...
 )
 ```
@@ -89,6 +90,16 @@ Define a fitdistrplus compatible wrapper around dprimarycensored
   [`stats::runif()`](https://rdrr.io/r/stats/Uniform.html), so skipping
   it avoids that cost and leaves the random number stream untouched.
   Must be given by its full name, as it follows `...`.
+
+- pcens_cache:
+
+  Optional environment shared across calls with the same `params`,
+  `pdist` and `dprimary`, as made by
+  [`.build_pcens_closures()`](https://primarycensored.epinowcast.org/dev/reference/dot-build_pcens_closures.md).
+  The `pcens` object and the grouping of `params` are built on the first
+  call and kept in it, and later calls only
+  [update()](https://primarycensored.epinowcast.org/dev/reference/update.pcens.md)
+  the parameters. `NULL` (the default) builds them on every call.
 
 - ...:
 
