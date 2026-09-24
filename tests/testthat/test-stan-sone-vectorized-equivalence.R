@@ -81,13 +81,16 @@ equivalence_model <- function() {
 
 run_cmdstan <- function(model, args) {
   out <- file.path(tempdir(), "pcd_equivalence_out.csv")
-  status <- suppressWarnings(system2(
+  cmdstan_log <- suppressWarnings(system2(
     model$exe_file(),
     c(args, "output", paste0("file=", out), "sig_figs=18"),
-    stdout = FALSE, stderr = FALSE
+    stdout = TRUE, stderr = TRUE
   ))
-  if (!identical(status, 0L)) {
-    return(NULL)
+  if (!is.null(attr(cmdstan_log, "status"))) {
+    stop(
+      "CmdStan failed:\n", paste(cmdstan_log, collapse = "\n"),
+      call. = FALSE
+    )
   }
   csv <- readLines(out)
   utils::read.csv(text = csv[!startsWith(csv, "#")])
