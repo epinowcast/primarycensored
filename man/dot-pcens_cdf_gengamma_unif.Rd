@@ -9,7 +9,8 @@
 \arguments{
 \item{q}{Vector of quantiles}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{shape, scale, k}{Generalised gamma parameters in the Stacy
 parameterisation of \code{flexsurv::pgengamma.orig()}.}

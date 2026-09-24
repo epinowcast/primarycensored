@@ -12,7 +12,8 @@
 
 \item{q}{Vector of quantiles}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{use_numeric}{Logical, if TRUE forces use of numeric integration
 even for distributions with analytical solutions. This is primarily

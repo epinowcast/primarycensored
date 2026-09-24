@@ -11,7 +11,9 @@
 #'
 #' @param x Vector of quantiles
 #'
-#' @param swindow Secondary event window (default: 1)
+#' @param swindow Secondary event window (default: 1). Use `swindow = 0` for
+#'  an exactly observed secondary event, in which case a density is returned
+#'  rather than a probability (see Details).
 #'
 #' @param log Logical; if TRUE, probabilities p are given as log(p)
 #'
@@ -66,6 +68,25 @@
 #' explanation and mathematical details of the CDF, refer to the documentation
 #' of [pprimarycensored()].
 #'
+#' ## Zero-width windows
+#'
+#' With `pwindow = 0` the primary event time is known exactly and the
+#' primary event censored CDF is the delay CDF, so the PMF is
+#' \eqn{F(d + \text{swindow}) - F(d)}.
+#'
+#' With `swindow = 0` the secondary event time is known exactly. The
+#' probability of the interval is then zero, so the density of the primary
+#' event censored delay at \eqn{d} is returned instead. This is the
+#' derivative of \eqn{F_{\text{cens}}} at \eqn{d}, the limit of the PMF
+#' divided by `swindow` as `swindow` goes to zero. With `pwindow = 0` as well
+#' it is the delay density. With a uniform primary event distribution it is
+#' \eqn{(F(d) - F(d - \text{pwindow})) / \text{pwindow}}. Otherwise the
+#' delay density is integrated against the primary event density. The delay
+#' density is found from the name of `pdist` (for example `dgamma()` for
+#' `pgamma()`) and an error is raised if it cannot be found. Densities are
+#' normalised for truncation in the same way as probabilities. `swindow` may
+#' be a vector, so densities and probabilities can be mixed in one call.
+#'
 #' @family primarycensored
 #'
 #' @importFrom stats setNames
@@ -83,6 +104,13 @@
 #'
 #' # Example: Left-truncated distribution (e.g., for generation intervals)
 #' dprimarycensored(1:9, pweibull, L = 1, D = 10, shape = 1.5, scale = 2.0)
+#'
+#' # Example: exact primary events, and exact secondary events (a density)
+#' dprimarycensored(1:3, pweibull, pwindow = 0, shape = 1.5, scale = 2.0)
+#' dprimarycensored(
+#'   1:3, pweibull,
+#'   pwindow = 1, swindow = 0, shape = 1.5, scale = 2.0
+#' )
 dprimarycensored <- function(
     x,
     pdist,

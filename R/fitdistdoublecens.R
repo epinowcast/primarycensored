@@ -58,10 +58,22 @@
 #' `K = length(start) - 1` for `"discretehazard"`. `start` is therefore
 #' required.
 #'
+#' ## Exact observations
+#'
+#' Rows with `pwindow = 0` have an exactly known primary event time. Rows
+#' with `left == right` have an exactly known secondary event time and
+#' contribute a density rather than a probability to the likelihood (see
+#' [dprimarycensored()]). Rows of different types can be mixed in one fit,
+#' as for the exact, single interval censored and doubly interval censored
+#' observations of `coarseDataTools::dic.fit()`. Data with the primary
+#' event in \[`EL`, `ER`\] and the secondary event in \[`SL`, `SR`\] map
+#' to `left = SL - EL`, `right = SR - EL` and `pwindow = ER - EL`.
+#'
 #' @param censdata A data frame with columns 'left' and 'right' representing
 #'  the lower and upper bounds of the censored observations. Unlike
 #'  [fitdistrplus::fitdistcens()] `NA` is not supported for either the
-#'  upper or lower bounds.
+#'  upper or lower bounds. Use `left == right` for an exactly observed
+#'  secondary event.
 #'
 #' @param distr A character string naming the distribution to be fitted.
 #'  Special values `"discretestep"` and `"discretehazard"` select the
@@ -73,7 +85,8 @@
 #' @param right Column name for upper bound of observed values (default:
 #'  "right").
 #'
-#' @param pwindow Column name for primary window (default: "pwindow").
+#' @param pwindow Column name for primary window (default: "pwindow"). Use
+#'  a primary window of 0 for an exactly observed primary event.
 #'
 #' @param L Column name for minimum delay (lower truncation point). For any
 #'  finite L the distribution is left-truncated at L; use `L = -Inf` for no

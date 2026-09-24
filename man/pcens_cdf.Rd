@@ -12,7 +12,8 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 
 \item{q}{Vector of quantiles}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{use_numeric}{Logical, if TRUE forces use of numeric integration
 even for distributions with analytical solutions. This is primarily
@@ -28,6 +29,12 @@ numerical integration via the default method. To see which combinations have
 analytical solutions implemented, use \code{methods(pcens_cdf)}. For example,
 \code{pcens_cdf.gamma_unif} indicates an analytical solution exists for gamma
 delay with uniform primary event distributions.
+}
+\details{
+When \code{pwindow = 0} the primary event time is known exactly and the
+primary event censored CDF is the delay CDF. This case is handled before
+dispatch, so every method returns \code{pdist(q)} without integrating over the
+primary event window.
 }
 \seealso{
 Low level primary event censored distribution objects and methods

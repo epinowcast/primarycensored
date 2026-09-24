@@ -349,9 +349,11 @@ test_that("fitdistdoublecens matches coarseDataTools::dic.fit", {
     EL = 0, ER = data$pwindow, SL = data$left, SR = data$right,
     type = 2 * (pexact & sexact) + (xor(pexact, sexact))
   )
-  cdt_fit <- suppressMessages(suppressWarnings(
-    coarseDataTools::dic.fit(cdt_data, dist = "L")
-  ))
+  # dic.fit() prints progress with cat()
+  cdt_fit <- withr::with_output_sink(
+    nullfile(),
+    suppressWarnings(coarseDataTools::dic.fit(cdt_data, dist = "L"))
+  )
   expect_equal(
     unname(fit$estimate), unname(cdt_fit@ests[1:2, 1]),
     tolerance = 1e-2
