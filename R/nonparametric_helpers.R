@@ -233,6 +233,10 @@
     setNames(list(full_vec), vector_param)
   }
 
+  # The pcens object is built on the first evaluation and then only has its
+  # parameters updated, as `pdist`, `dprimary` and `params` are fixed.
+  pcens_cache <- new.env(parent = emptyenv())
+
   dpcens_dist <- function() {
     env_args <- as.list(environment())
     extra <- build_call_args(env_args)
@@ -246,7 +250,8 @@
           dprimary = dprimary,
           primary_args = primary_args,
           pprimary = pprimary,
-          check = check_once()
+          check = check_once(),
+          pcens_cache = pcens_cache
         ),
         pdist_extras,
         extra
@@ -276,7 +281,8 @@
           dprimary = dprimary,
           primary_args = primary_args,
           pprimary = pprimary,
-          check = check_once()
+          check = check_once(),
+          pcens_cache = pcens_cache
         ),
         pdist_extras,
         extra

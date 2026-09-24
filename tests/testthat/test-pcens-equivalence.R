@@ -330,3 +330,24 @@ test_that("a primary CDF found by alias fails the name check", {
     msg
   )
 })
+
+test_that(".dpcens and .ppcens give NaN when any input errors", {
+  # fitdistrplus probes the fitted functions with inputs like these
+  params <- data.frame(
+    swindow = 1, pwindow = rep(c(1, 2), 3), L = -Inf,
+    D = rep(c(Inf, 10), each = 3)
+  )
+  for (x in list(c(0, 1, NA), c(0, 1, Inf, NaN, -1))) {
+    nans <- rep(NaN, length(x))
+    expect_identical(
+      .dpcens(x, params, pgamma, dunif, list(), shape = 2, scale = 1), nans
+    )
+    expect_identical(
+      .ppcens(x, params, pgamma, dunif, list(), shape = 2, scale = 1), nans
+    )
+  }
+  expect_length(
+    .ppcens(numeric(0), params, pgamma, dunif, list(), shape = 2, scale = 1),
+    0L
+  )
+})
