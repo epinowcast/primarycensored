@@ -351,3 +351,30 @@ test_that(".dpcens and .ppcens give NaN when any input errors", {
     0L
   )
 })
+
+test_that("a custom primary without a CDF uses numerical integration", {
+  dprim <- function(x, min, max) dunif(x, min, max)
+  obj <- ref_pcens(
+    equiv_delays$gamma,
+    list(dprimary = dprim, pprimary = NULL, name = "unknown", args = list())
+  )
+  x <- 0:10
+  expect_identical(
+    dprimarycensored(x, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    ref_pmf(obj, x, 1, 1, -Inf, Inf)
+  )
+  expect_identical(
+    pprimarycensored(x, pgamma, dprimary = dprim, shape = 3, scale = 2),
+    ref_cdf(obj, x, 1, -Inf, Inf)
+  )
+})
+
+test_that(".dpcens and .ppcens treat NULL primary_args as an empty list", {
+  x <- c(1, 4, 2, 6, 3, 8)
+  for (fn in list(.dpcens, .ppcens)) {
+    expect_identical(
+      fn(x, equiv_fit_params, pgamma, dunif, NULL, shape = 3, scale = 2),
+      fn(x, equiv_fit_params, pgamma, dunif, list(), shape = 3, scale = 2)
+    )
+  }
+})
