@@ -4,12 +4,14 @@
 \alias{.resolve_pprimary}
 \title{Resolve the primary CDF, validating against \code{dprimary} if both supplied}
 \usage{
-.resolve_pprimary(dprimary, pprimary = NULL)
+.resolve_pprimary(dprimary, pprimary = NULL, d_name = .dist_name(dprimary))
 }
 \arguments{
 \item{dprimary}{The primary density function.}
 
 \item{pprimary}{Optional user-supplied primary CDF (function or string).}
+
+\item{d_name}{Name of \code{dprimary}, as given by \code{\link[=.dist_name]{.dist_name()}}.}
 }
 \value{
 A primary CDF function, or \code{NULL} if no match was found.
