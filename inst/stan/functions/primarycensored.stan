@@ -403,13 +403,15 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
 }
 
 /**
-  * Compute the primary event censored log CDF at each integer node
+  * Compute the primary event censored log CDF at integer delays
   * @ingroup primary_censored_vectorized
   *
-  * Calls primarycensored_lcdf() at each node without truncation.
+  * Uses primarycensored_analytical_lcdf_vectorized() when
+  * check_for_analytical_vectorized() is 1, and otherwise calls
+  * primarycensored_lcdf() at each delay. No truncation is applied.
   *
-  * @param start First node to compute
-  * @param n Last node to compute, and the length of the result
+  * @param start First delay to compute
+  * @param n Last delay to compute, and the length of the result
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
@@ -419,10 +421,15 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * @return Vector whose element d is the log CDF at d, for d in start:n.
   * Elements before start are not computed.
   */
-vector primarycensored_node_log_cdfs(data int start, data int n,
-                                     data int dist_id, array[] real params,
-                                     data real pwindow, data int primary_id,
-                                     array[] real primary_params) {
+vector primarycensored_lcdf_vectorized(data int start, data int n,
+                                       data int dist_id, array[] real params,
+                                       data real pwindow, data int primary_id,
+                                       array[] real primary_params) {
+  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
+    return primarycensored_analytical_lcdf_vectorized(
+      start, n, dist_id, params, pwindow
+    );
+  }
   vector[n] log_cdfs;
   // The internal lower bound below is 0 for positive-support delays and -inf
   // otherwise; it is inlined rather than bound to a local so Stan's type
@@ -432,45 +439,6 @@ vector primarycensored_node_log_cdfs(data int start, data int n,
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
       positive_infinity(), primary_id, primary_params
-    );
-  }
-  return log_cdfs;
-}
-
-/**
-  * Compute the primary event censored log CDF at each integer node, sharing
-  * uniform primary terms between nodes
-  * @ingroup primary_censored_vectorized
-  *
-  * With a uniform primary, the log CDF at d combines terms at d and at
-  * q = max(d - pwindow, 0) (see primarycensored_uniform_lcdf_from_terms()).
-  * With an integer pwindow both are integer nodes, so the terms are computed
-  * once per node and used for both, halving the CDF evaluations. Use only
-  * when check_for_uniform_terms() is 1. The values are the same as from
-  * primarycensored_node_log_cdfs().
-  *
-  * @param start First node to compute
-  * @param n Last node to compute, and the length of the result
-  * @param dist_id Distribution identifier
-  * @param params Array of distribution parameters
-  * @param pwindow Primary event window, a positive integer
-  *
-  * @return Vector whose element d is the log CDF at d, for d in start:n.
-  * Elements before start are not computed.
-  */
-vector primarycensored_uniform_node_log_cdfs(data int start, data int n,
-                                             data int dist_id,
-                                             array[] real params,
-                                             data int pwindow) {
-  vector[n] log_cdfs;
-  // terms[t + 1] holds the terms at node t
-  array[n + 1] vector[2] terms;
-  for (t in max(start - pwindow, 0):n) {
-    terms[t + 1] = primarycensored_uniform_terms(t, dist_id, params);
-  }
-  for (d in start:n) {
-    log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
-      terms[d + 1], terms[max(d - pwindow, 0) + 1], pwindow
     );
   }
   return log_cdfs;
@@ -499,11 +467,9 @@ vector primarycensored_uniform_node_log_cdfs(data int start, data int n,
   * 3. Is more computationally efficient for multiple delay calculation as it
   *    reduces the number of integration calls.
   *
-  * For the analytical Lognormal, Gamma, Weibull and generalised gamma delays
-  * with a uniform primary and an integer pwindow, the log CDFs come from
-  * primarycensored_uniform_node_log_cdfs(), which shares terms between
-  * nodes. Otherwise they come from primarycensored_node_log_cdfs(). Both
-  * give the same values.
+  * The log CDFs at the integer delays come from
+  * primarycensored_lcdf_vectorized(), which uses the analytical solution
+  * where check_for_analytical_vectorized() allows it.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
@@ -543,17 +509,10 @@ vector primarycensored_sone_lpmf_vectorized(
   // Start from max(1, floor(L)) to avoid computing unused CDFs when L > 0;
   // for L <= 0 (including -inf) start at 1 since F(d) = 0 for d <= 0.
   int start_idx = (!is_inf(L) && L > 0) ? max(1, to_int(floor(L))) : 1;
-  if (check_for_uniform_terms(dist_id, primary_id) &&
-      pwindow >= 1 && floor(pwindow) == pwindow) {
-    log_cdfs = primarycensored_uniform_node_log_cdfs(
-      start_idx, upper_interval, dist_id, params, to_int(pwindow)
-    );
-  } else {
-    log_cdfs = primarycensored_node_log_cdfs(
-      start_idx, upper_interval, dist_id, params, pwindow, primary_id,
-      primary_params
-    );
-  }
+  log_cdfs = primarycensored_lcdf_vectorized(
+    start_idx, upper_interval, dist_id, params, pwindow, primary_id,
+    primary_params
+  );
 
   // Get CDF at lower truncation point L
   real log_cdf_L;
