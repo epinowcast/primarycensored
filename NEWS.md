@@ -2,7 +2,8 @@
 
 This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.
 The vectorised Stan PMF is also faster for common delays with a uniform primary.
-It also adds support for zero-width primary and secondary censoring windows, so exact, single interval censored and doubly interval censored data can be fitted together, and adds `update()` and `pcens_pmf()` for `pcens` objects.
+It adds support for zero-width primary and secondary censoring windows, so exact, single interval censored and doubly interval censored data can be fitted together, and adds `update()` and `pcens_pmf()` for `pcens` objects.
+The one breaking change is that `dprimarycensored()` and `pcens_pmf()` with `swindow = 0` now return a density rather than 0.
 
 ## Performance
 
@@ -21,12 +22,18 @@ It also adds support for zero-width primary and secondary censoring windows, so 
   Values are unchanged and gradients match to rounding.
   See #101 and #356.
 
+## Breaking changes
+
+- `dprimarycensored()` and `pcens_pmf()` with `swindow = 0` now return the primary event censored density.
+  They previously returned 0 without a warning.
+  Code that relied on a zero result for `swindow = 0` should drop those rows or use a positive `swindow`.
+  See #345.
+
 ## New features
 
 - Zero-width censoring windows are now supported.
   With `pwindow = 0` the primary event time is exact and `pprimarycensored()`, `dprimarycensored()` and `pcens_cdf()` use the delay CDF directly, for all delay distributions.
   With `swindow = 0` the secondary event time is exact and `dprimarycensored()` and `pcens_pmf()` return the primary event censored density rather than a probability.
-  Previously they silently returned 0 for `swindow = 0`, so this is a change in behaviour.
   `fitdistdoublecens()` accepts rows with `pwindow = 0` and rows with `left == right`, and these can be mixed with interval censored rows in one fit.
   This matches the exact, single interval censored and doubly interval censored data used by `coarseDataTools::dic.fit()`.
   See #345.
