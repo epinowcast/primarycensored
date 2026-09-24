@@ -1,10 +1,23 @@
 # primarycensored (development version)
 
+## New features
+
+- Added an `update()` method for `pcens` objects.
+  It replaces the delay distribution parameters, and optionally `primary_args`, without looking up distributions by name or rebuilding the object.
+  This makes it cheaper to evaluate one distribution for many parameter sets, such as posterior draws.
+  See #348.
+- Added `pcens_pmf()`, an S3 generic for the primary event censored PMF of a `pcens` object.
+  The default method differences `pcens_cdf()` and handles `swindow`, `L` and `D` in the same way as `dprimarycensored()`.
+  See #348.
+- Documented the fields of a `pcens` object in `new_pcens()`.
+
 ## Bug fixes
 
 - `fitdistdoublecens()` again accepts parameters held fixed through `fix.arg`, given either as a list or as a function of the data.
   These had failed because fixed parameters were missing from the synthetic density's arguments.
   Tests now also cover fitting gamma with `start = list(shape = , scale = )`. See #301.
+- `pprimarycensored()` no longer errors when `q` contains `Inf` and the delay has an analytical solution.
+  It now returns 1 there. See #348.
 
 # primarycensored 1.5.2
 

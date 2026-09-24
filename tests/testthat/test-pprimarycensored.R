@@ -271,3 +271,12 @@ test_that("pprimarycensored rejects mismatched dprimary and pprimary", {
     "different distributions"
   )
 })
+
+test_that("pprimarycensored returns 1 at q = Inf with an analytical CDF", {
+  # The analytical gamma method returns NaN at Inf, which should not be used
+  # as the normalising constant when D = Inf.
+  expect_identical(
+    pprimarycensored(c(1, Inf), pgamma, shape = 2, scale = 3),
+    c(pprimarycensored(1, pgamma, shape = 2, scale = 3), 1)
+  )
+})

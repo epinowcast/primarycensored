@@ -36,10 +36,10 @@
 #' }
 #' where \eqn{F_{\text{cens}}} is the primary event censored CDF.
 #'
-#' The function first computes the CDFs for all unique points (including both
-#' \eqn{d} and \eqn{d + \text{swindow}}) using [pprimarycensored()]. It then
-#' creates a lookup table for these CDFs to efficiently calculate the PMF for
-#' each input value. For delays less than L, the function returns 0.
+#' The function creates a `pcens` object with [new_pcens()] and computes
+#' the PMF with [pcens_pmf()]. This evaluates the CDF once for all unique
+#' points (including both \eqn{d} and \eqn{d + \text{swindow}}) and
+#' reuses these values to calculate the PMF for each input value.
 #'
 #' When the secondary censoring interval extends past the upper truncation
 #' point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
@@ -112,144 +112,18 @@ dprimarycensored <- function(
     check_dprimary(dprimary, pwindow, primary_args)
   }
 
-  if (min(x) < L) {
-    stop(
-      "Some values of x are below L. Minimum x is ",
-      min(x),
-      " and L is ",
-      L,
-      ". Resolve this by filtering x to only include values >= L.",
-      call. = FALSE
-    )
-  }
-
-  if (is.finite(D) && max(x) >= D) {
-    stop(
-      "Upper truncation point is greater than D. Maximum x is ",
-      max(x),
-      " and D is ",
-      D,
-      ". Under truncation at D no event with latent value >= D is ",
-      "observable; resolve this by filtering x to values strictly less than D.",
-      call. = FALSE
-    )
-  }
-
-  # Clip the upper end of each secondary interval at D so observations with
-  # `x + swindow > D` (legitimate when the secondary censoring interval
-  # straddles D) are still valid. The likelihood becomes
-  # `P(X in [x, min(x + swindow, D)] | L <= X <= D)`, which equals the usual
-  # interval probability when `x + swindow <= D` (the parametric default) and
-  # captures the residual mass between `x` and `D` otherwise.
-  upper_raw <- x + swindow
-  upper <- pmin(upper_raw, D)
-  if (is.finite(D) && any(upper_raw > D)) {
-    message(
-      "Upper truncation point is greater than D. It is ",
-      max(upper_raw),
-      " and D is ",
-      D,
-      "; clipping the upper end of secondary intervals at D."
-    )
-  }
-
-  # Compute CDFs for all unique points
-  unique_points <- sort(unique(c(x, upper)))
-  if (length(unique_points) == 0) {
-    return(rep(0, length(x)))
-  }
-
-  # Compute raw (unnormalised) CDFs via `L = -Inf, D = Inf` so PMF differences
-  # below can be normalised with the truncation-aware F_cens(L) and F_cens(D).
-  cdfs <- pprimarycensored(
-    unique_points,
+  pcens_obj <- new_pcens(
     pdist,
-    pwindow = pwindow,
-    L = -Inf,
-    D = Inf,
-    dprimary = dprimary,
+    dprimary,
     primary_args = primary_args,
     pprimary = pprimary,
-    ...,
-    check = FALSE
+    ...
   )
 
-  # Create a lookup table for CDFs
-  cdf_lookup <- setNames(cdfs, as.character(unique_points))
-
-  result <- vapply(
-    seq_along(x),
-    function(i) {
-      cdf_upper <- cdf_lookup[as.character(upper[i])]
-      cdf_lower <- cdf_lookup[as.character(x[i])]
-      return(cdf_upper - cdf_lower)
-    },
-    numeric(1)
+  pcens_pmf(
+    pcens_obj, x, pwindow,
+    swindow = swindow, L = L, D = D, log = log
   )
-
-  # Fast path: with no truncation on either side the raw PMF needs no
-  # renormalisation, so skip the two extra `pprimarycensored` lookups below.
-  if (!(is.infinite(L) && is.infinite(D))) {
-    # F_cens(D). Reuse the existing `unique_points` lookup when D lands on
-    # one of them; otherwise compute on demand.
-    if (is.infinite(D)) {
-      cdf_D <- 1
-    } else if (D %in% unique_points) {
-      cdf_D <- cdf_lookup[[as.character(D)]]
-    } else {
-      cdf_D <- pprimarycensored(
-        D,
-        pdist,
-        pwindow = pwindow,
-        L = -Inf,
-        D = Inf,
-        dprimary = dprimary,
-        primary_args = primary_args,
-        pprimary = pprimary,
-        ...,
-        check = FALSE
-      )
-    }
-
-    # F_cens(L). `L = -Inf` is the "no left truncation" sentinel so we skip
-    # the integral; otherwise reuse the lookup when L is already in it.
-    if (is.infinite(L)) {
-      cdf_L <- 0
-    } else if (L %in% unique_points) {
-      cdf_L <- cdf_lookup[[as.character(L)]]
-    } else {
-      cdf_L <- pprimarycensored(
-        L,
-        pdist,
-        pwindow = pwindow,
-        L = -Inf,
-        D = Inf,
-        dprimary = dprimary,
-        primary_args = primary_args,
-        pprimary = pprimary,
-        ...,
-        check = FALSE
-      )
-    }
-
-    # Divide by (F(D) - F(L)). Skip the division when the normaliser is 1
-    # (e.g. a finite `L` that sits below the support of the delay, so
-    # `F_cens(L) = 0`, paired with `D = Inf` where `F_cens(D) = 1`).
-    normaliser <- cdf_D - cdf_L
-    if (normaliser != 1) {
-      result <- result / normaliser
-    }
-  }
-
-  # Ensure non-negative values (can become slightly negative due to
-  # floating-point precision when computing CDF differences)
-  result <- pmax(0, result)
-
-  if (log) {
-    return(log(result))
-  } else {
-    return(result)
-  }
 }
 
 #' @rdname dprimarycensored

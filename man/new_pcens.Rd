@@ -50,10 +50,22 @@ than the leading \code{d}/\code{p} prefix; mismatches such as
 \value{
 An object with class hierarchy
 \code{c("pcens_{pdist_name}_{dprimary_name}", "pcens_{pdist_name}",
-  "pcens")}. This contains the primary event distribution, the delay
-distribution, the delay distribution arguments, the primary event CDF
-(if available), and any additional arguments. It can be used with the
-\code{pcens_cdf()} function to compute the primary event censored CDF.
+  "pcens")}. It is a list with the fields:
+\describe{
+\item{\code{pdist}}{The delay distribution CDF.}
+\item{\code{dprimary}}{The primary event distribution density.}
+\item{\code{primary_args}}{A list of arguments passed to
+\code{dprimary} and \code{pprimary}.}
+\item{\code{dprimary_args}}{A copy of \code{primary_args}, kept for
+backward compatibility.}
+\item{\code{pprimary}}{The primary event CDF, or \code{NULL} if none
+is available.}
+\item{\code{args}}{A named list of the delay distribution parameters
+passed through \code{...}.}
+}
+It can be used with \code{\link[=pcens_cdf]{pcens_cdf()}} to compute the primary event
+censored CDF and with \code{\link[=pcens_pmf]{pcens_pmf()}} to compute the PMF. Use
+\link[=update.pcens]{update()} to change its parameters.
 }
 \description{
 S3 class for primary event censored distribution computation
@@ -76,7 +88,10 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
+\code{\link{pcens_pmf}()},
+\code{\link{pcens_pmf.default}()},
 \code{\link{pcens_quantile}()},
-\code{\link{pcens_quantile.default}()}
+\code{\link{pcens_quantile.default}()},
+\code{\link{update.pcens}()}
 }
 \concept{pcens}
