@@ -155,33 +155,36 @@ test_that(".dist_name prefers the name attribute", {
   expect_identical(.dist_name(stats::pgamma), "pgamma")
 })
 
-test_that(".dist_name caches names of namespace functions only", {
-  calls <- new.env(parent = emptyenv())
-  calls$n <- 0L
-  extract <- .extract_function_name
-  testthat::local_mocked_bindings(
-    .extract_function_name = function(func) {
-      calls$n <- calls$n + 1L
-      extract(func)
-    }
+test_that(".registry_name matches .extract_function_name", {
+  delays <- pcd_distributions$pdist
+  names <- c(
+    delays, sub("^p", "d", delays),
+    pcd_primary_distributions$dprimary, pcd_primary_distributions$pprimary
   )
-  expect_identical(.dist_name(stats::pbeta), "pbeta")
-  n_first <- calls$n
-  expect_identical(.dist_name(stats::pbeta), "pbeta")
-  expect_identical(calls$n, n_first)
-
-  # Closures outside a namespace are looked up every time
-  fn <- function(q, ...) stats::pbeta(q, ...)
-  expect_identical(.dist_name(fn), "unknown")
-  expect_identical(.dist_name(fn), "unknown")
-  expect_identical(calls$n, n_first + 2L)
+  found <- 0L
+  for (nm in unique(names[!is.na(names)])) {
+    fn <- get0(nm, envir = asNamespace("stats"), inherits = FALSE)
+    if (is.null(fn)) next
+    name <- .registry_name(fn)
+    if (!is.null(name)) {
+      found <- found + 1L
+      expect_identical(name, .extract_function_name(fn))
+    }
+  }
+  expect_gt(found, 10L)
+  expect_identical(.registry_name(stats::pgamma), "pgamma")
+  expect_identical(.registry_name(stats::dunif), "dunif")
 })
 
-test_that(".lookup_pprimary gives the same result when repeated", {
-  expect_identical(.lookup_pprimary(stats::dunif), punif)
+test_that(".registry_name returns NULL outside the registries", {
+  expect_null(.registry_name(function(q, ...) stats::pgamma(q, ...)))
+  expect_null(.registry_name(stats::ptukey))
+  expect_null(.registry_name(dexpgrowth))
+  expect_null(.registry_name(sum))
+})
+
+test_that(".lookup_pprimary finds registry primary CDFs", {
   expect_identical(.lookup_pprimary(stats::dunif), punif)
   expect_identical(.lookup_pprimary(dexpgrowth), pexpgrowth)
-  expect_identical(.lookup_pprimary(dexpgrowth), pexpgrowth)
-  expect_null(.lookup_pprimary(function(x) x))
   expect_null(.lookup_pprimary(function(x) x))
 })

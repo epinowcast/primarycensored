@@ -32,20 +32,13 @@
   return("unknown")
 }
 
-# Cache of names found by .extract_function_name() for namespace functions,
-# and of primary CDFs found by .lookup_pprimary(), so repeated calls avoid
-# deparsing function bodies and searching the registry.
-.pcens_cache <- new.env(parent = emptyenv())
-.pcens_cache$funcs <- list()
-.pcens_cache$names <- character()
-.pcens_cache$pprimary <- list()
-
 #' Get the distribution name of a function
 #'
-#' Returns the `"name"` attribute of `func` if set. Otherwise the name is
-#' found with [.extract_function_name()]. Names of functions defined in a
-#' namespace (for example `stats::pgamma`) are cached, so later calls with
-#' an identical function skip the lookup.
+#' Returns the `"name"` attribute of `func` if set. A `stats` function that
+#' is identical to one named in [pcd_distributions] or
+#' [pcd_primary_distributions] gets that name. Otherwise the name is found
+#' with [.extract_function_name()], which deparses the function body and is
+#' slower.
 #'
 #' @inheritParams add_name_attribute
 #'
@@ -57,21 +50,52 @@
   if (!is.null(name)) {
     return(name)
   }
-  env <- environment(func)
-  if (!is.environment(env) || !isNamespace(env)) {
-    return(.extract_function_name(func))
+  name <- .registry_name(func)
+  if (!is.null(name)) {
+    return(name)
   }
-  funcs <- .pcens_cache$funcs
-  for (i in seq_along(funcs)) {
-    if (identical(funcs[[i]], func)) {
-      return(.pcens_cache$names[[i]])
-    }
+  .extract_function_name(func)
+}
+
+#' Name a stats function found in the distribution registries
+#'
+#' Takes the C routine called at the end of the body of a `stats` function
+#' (for example `C_pgamma` for [stats::pgamma()]) as the candidate name. The
+#' name is returned if it is in [pcd_distributions] or
+#' [pcd_primary_distributions] and `func` is identical to the `stats`
+#' function of that name.
+#'
+#' @inheritParams add_name_attribute
+#'
+#' @return The registry name of `func`, or `NULL` if it is not found.
+#'
+#' @keywords internal
+.registry_name <- function(func) {
+  stats_ns <- asNamespace("stats")
+  if (!identical(environment(func), stats_ns)) {
+    return(NULL)
   }
-  name <- .extract_function_name(func)
-  # Bound the cache in case many namespace functions are seen
-  if (length(funcs) < 100L) {
-    .pcens_cache$funcs <- c(funcs, list(func))
-    .pcens_cache$names <- c(.pcens_cache$names, name)
+  expr <- body(func)
+  if (is.call(expr) && identical(expr[[1L]], as.name("{"))) {
+    expr <- expr[[length(expr)]]
+  }
+  if (!is.call(expr) || !identical(expr[[1L]], as.name(".Call")) ||
+    !is.name(expr[[2L]])) {
+    return(NULL)
+  }
+  # Avoids regular expressions, which are slow relative to the rest
+  name <- substring(as.character(expr[[2L]]), 3L)
+  # Registered delays are listed by CDF, so match densities by their CDF
+  cdf_name <- name
+  if (startsWith(name, "d")) {
+    cdf_name <- paste0("p", substring(name, 2L))
+  }
+  primaries <- primarycensored::pcd_primary_distributions
+  known <- cdf_name %in% primarycensored::pcd_distributions$pdist ||
+    name %in% primaries$dprimary || name %in% primaries$pprimary
+  if (!known ||
+    !identical(get0(name, envir = stats_ns, inherits = FALSE), func)) {
+    return(NULL)
   }
   name
 }
@@ -151,29 +175,6 @@ add_name_attribute <- function(func, name) {
   if (is.null(dprim_name) || dprim_name == "unknown") {
     return(NULL)
   }
-  cacheable <- is.character(dprim_name) && length(dprim_name) == 1L &&
-    nzchar(dprim_name)
-  if (cacheable) {
-    hit <- .pcens_cache$pprimary[[dprim_name]]
-    if (!is.null(hit)) {
-      return(hit[[1L]])
-    }
-  }
-  fn <- .find_pprimary(dprim_name)
-  if (cacheable) {
-    .pcens_cache$pprimary[[dprim_name]] <- list(fn)
-  }
-  fn
-}
-
-#' Find the primary event CDF for a name in the registry
-#'
-#' @param dprim_name Name of the primary event density function.
-#'
-#' @return A function (the primary CDF) or \code{NULL}.
-#'
-#' @keywords internal
-.find_pprimary <- function(dprim_name) {
   registry <- primarycensored::pcd_primary_distributions
   idx <- which(
     registry$name == dprim_name |
@@ -189,10 +190,7 @@ add_name_attribute <- function(func, name) {
     return(NULL)
   }
   # nocov end
-  fn <- tryCatch(get(pprimary_name, envir = asNamespace("primarycensored")),
-    error = function(e) NULL
-  )
-  fn
+  get0(pprimary_name, envir = asNamespace("primarycensored"))
 }
 
 #' Resolve a delay distribution function from a name or function
@@ -397,7 +395,7 @@ add_name_attribute <- function(func, name) {
   p_name <- .dist_name(pprimary)
   if (!is.null(d_name) && !is.null(p_name) &&
     d_name != "unknown" && p_name != "unknown" &&
-    sub("^d", "", d_name) != sub("^p", "", p_name)) {
+    .strip_prefix(d_name, "d") != .strip_prefix(p_name, "p")) {
     stop(
       "dprimary and pprimary refer to different distributions: '",
       d_name, "' vs '", p_name, "'.",
@@ -405,6 +403,24 @@ add_name_attribute <- function(func, name) {
     )
   }
   invisible(NULL)
+}
+
+#' Remove a one letter prefix from a distribution name
+#'
+#' Same as `sub(paste0("^", prefix), "", name)`, without a regular
+#' expression for the usual single string.
+#'
+#' @param name Distribution name.
+#' @param prefix Single character prefix, `"d"` or `"p"`.
+#'
+#' @return `name` without a leading `prefix`.
+#'
+#' @keywords internal
+.strip_prefix <- function(name, prefix) {
+  if (!is.character(name) || length(name) != 1L || is.na(name)) {
+    return(sub(paste0("^", prefix), "", name))
+  }
+  if (startsWith(name, prefix)) substring(name, 2L) else name
 }
 
 #' Get distribution function cdf or pdf name

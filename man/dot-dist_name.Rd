@@ -14,9 +14,10 @@ function.}
 Character string with the name of the function, or \code{"unknown"}.
 }
 \description{
-Returns the \code{"name"} attribute of \code{func} if set. Otherwise the name is
-found with \code{\link[=.extract_function_name]{.extract_function_name()}}. Names of functions defined in a
-namespace (for example \code{stats::pgamma}) are cached, so later calls with
-an identical function skip the lookup.
+Returns the \code{"name"} attribute of \code{func} if set. A \code{stats} function that
+is identical to one named in \link{pcd_distributions} or
+\link{pcd_primary_distributions} gets that name. Otherwise the name is found
+with \code{\link[=.extract_function_name]{.extract_function_name()}}, which deparses the function body and is
+slower.
 }
 \keyword{internal}
