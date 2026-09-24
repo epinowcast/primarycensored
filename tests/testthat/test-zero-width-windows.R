@@ -366,3 +366,12 @@ test_that(".ppcens and .dpcens return one value per input value", {
     tolerance = 1e-12
   )
 })
+
+test_that("pcens_pmf returns an empty vector for empty x", {
+  obj <- new_pcens(pgamma, dunif, list(), shape = 2, rate = 0.5)
+  expect_no_warning(
+    expect_identical(
+      pcens_pmf(obj, numeric(0), pwindow = 1, D = 10), numeric(0)
+    )
+  )
+})
