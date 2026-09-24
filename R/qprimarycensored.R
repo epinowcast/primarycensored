@@ -84,23 +84,9 @@ qprimarycensored <- function(
   primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "qprimarycensored"
   )
-  pdist <- .resolve_pdist(pdist, type = "p")
-  pprimary <- .resolve_pprimary(
-    dprimary, pprimary
-  )
-
-  if (isTRUE(check)) {
-    check_pdist(pdist, D = D, ...)
-    check_dprimary(dprimary, pwindow, primary_args)
-  }
-
-  # Create a new primarycensored object
-  pcens_obj <- new_pcens(
-    pdist,
-    dprimary,
-    primary_args = primary_args,
-    pprimary = pprimary,
-    ...
+  pcens_obj <- .build_pcens(
+    pdist, dprimary, primary_args, pprimary, list(...),
+    pwindow = pwindow, D = D, check = check
   )
 
   # Compute the quantiles using the S3 method

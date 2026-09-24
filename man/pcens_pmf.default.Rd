@@ -11,9 +11,12 @@
 
 \item{x}{Vector of quantiles}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
-\item{swindow}{Secondary event window (default: 1)}
+\item{swindow}{Secondary event window (default: 1). Use \code{swindow = 0} for
+an exactly observed secondary event, in which case a density is returned
+rather than a probability (see Details).}
 
 \item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
 meaning no left truncation. For any finite value of L the distribution
@@ -33,8 +36,9 @@ truncation is applied
 }
 \description{
 Computes the PMF by differencing \code{\link[=pcens_cdf]{pcens_cdf()}} at \code{x} and
-\code{min(x + swindow, D)}, normalised over [L, D]. See \code{\link[=dprimarycensored]{dprimarycensored()}}
-for the details.
+\code{min(x + swindow, D)}, normalised over [L, D]. Where \code{swindow = 0} the
+primary event censored density at \code{x} is returned instead. See
+\code{\link[=dprimarycensored]{dprimarycensored()}} for the details.
 }
 \examples{
 obj <- new_pcens(

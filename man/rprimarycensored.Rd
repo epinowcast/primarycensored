@@ -37,7 +37,8 @@ rpcens(
 \item{rdist}{Function to generate random samples from the delay distribution
 for example \code{\link[stats:Lognormal]{stats::rlnorm()}} for lognormal distribution.}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{swindow}{Integer specifying the window size for rounding the delay
 (default is 1). If \code{swindow = 0} then no rounding is applied.}

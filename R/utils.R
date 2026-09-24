@@ -32,6 +32,74 @@
   return("unknown")
 }
 
+#' Get the distribution name of a function
+#'
+#' Returns the `"name"` attribute of `func` if set. A `stats` function that
+#' is identical to one named in [pcd_distributions] or
+#' [pcd_primary_distributions] gets that name. Otherwise the name is found
+#' with [.extract_function_name()], which deparses the function body and is
+#' slower.
+#'
+#' @inheritParams add_name_attribute
+#'
+#' @return Character string with the name of the function, or `"unknown"`.
+#'
+#' @keywords internal
+.dist_name <- function(func) {
+  name <- attr(func, "name")
+  if (!is.null(name)) {
+    return(name)
+  }
+  name <- .registry_name(func)
+  if (!is.null(name)) {
+    return(name)
+  }
+  .extract_function_name(func)
+}
+
+#' Name a stats function found in the distribution registries
+#'
+#' Takes the C routine called at the end of the body of a `stats` function
+#' (for example `C_pgamma` for [stats::pgamma()]) as the candidate name. The
+#' name is returned if it is in [pcd_distributions] or
+#' [pcd_primary_distributions] and `func` is identical to the `stats`
+#' function of that name.
+#'
+#' @inheritParams add_name_attribute
+#'
+#' @return The registry name of `func`, or `NULL` if it is not found.
+#'
+#' @keywords internal
+.registry_name <- function(func) {
+  stats_ns <- asNamespace("stats")
+  if (!identical(environment(func), stats_ns)) {
+    return(NULL)
+  }
+  expr <- body(func)
+  if (is.call(expr) && identical(expr[[1L]], as.name("{"))) {
+    expr <- expr[[length(expr)]]
+  }
+  if (!is.call(expr) || !identical(expr[[1L]], as.name(".Call")) ||
+    !is.name(expr[[2L]])) {
+    return(NULL)
+  }
+  # Avoids regular expressions, which are slow relative to the rest
+  name <- substring(as.character(expr[[2L]]), 3L)
+  # Registered delays are listed by CDF, so match densities by their CDF
+  cdf_name <- name
+  if (startsWith(name, "d")) {
+    cdf_name <- paste0("p", substring(name, 2L))
+  }
+  primaries <- primarycensored::pcd_primary_distributions
+  known <- cdf_name %in% primarycensored::pcd_distributions$pdist ||
+    name %in% primaries$dprimary || name %in% primaries$pprimary
+  if (!known ||
+    !identical(get0(name, envir = stats_ns, inherits = FALSE), func)) {
+    return(NULL)
+  }
+  name
+}
+
 #' Helper method for custom distributions
 #'
 #' [pprimarycensored()] and related functions can identify which distributions
@@ -71,19 +139,17 @@ add_name_attribute <- function(func, name) {
 #'
 #' @inheritParams pprimarycensored
 #'
+#' @param pdist_name Name of `pdist`, as given by [.dist_name()].
+#'
+#' @param dprim_name Name of `dprimary`, as given by [.dist_name()].
+#'
 #' @return A character vector of class names: specific (delay + primary),
 #'   delay-only, and base class.
 #'
 #' @keywords internal
-.format_class <- function(pdist, dprimary) {
-  pdist_name <- attr(pdist, "name")
-  if (is.null(pdist_name)) {
-    pdist_name <- .extract_function_name(pdist)
-  }
-  dprim_name <- attr(dprimary, "name")
-  if (is.null(dprim_name)) {
-    dprim_name <- .extract_function_name(dprimary)
-  }
+.format_class <- function(pdist, dprimary,
+                          pdist_name = .dist_name(pdist),
+                          dprim_name = .dist_name(dprimary)) {
   c(
     sprintf("pcens_%s_%s", pdist_name, dprim_name),
     sprintf("pcens_%s", pdist_name),
@@ -100,14 +166,12 @@ add_name_attribute <- function(func, name) {
 #'
 #' @param dprimary Function. The primary event density function.
 #'
+#' @param dprim_name Name of `dprimary`, as given by [.dist_name()].
+#'
 #' @return A function (the primary CDF) or \code{NULL}.
 #'
 #' @keywords internal
-.lookup_pprimary <- function(dprimary) {
-  dprim_name <- attr(dprimary, "name")
-  if (is.null(dprim_name)) {
-    dprim_name <- .extract_function_name(dprimary)
-  }
+.lookup_pprimary <- function(dprimary, dprim_name = .dist_name(dprimary)) {
   if (is.null(dprim_name) || dprim_name == "unknown") {
     return(NULL)
   }
@@ -126,10 +190,7 @@ add_name_attribute <- function(func, name) {
     return(NULL)
   }
   # nocov end
-  fn <- tryCatch(get(pprimary_name, envir = asNamespace("primarycensored")),
-    error = function(e) NULL
-  )
-  fn
+  get0(pprimary_name, envir = asNamespace("primarycensored"))
 }
 
 #' Resolve a delay distribution function from a name or function
@@ -148,10 +209,10 @@ add_name_attribute <- function(func, name) {
 #'
 #' @keywords internal
 .resolve_pdist <- function(pdist, type = c("p", "d")) {
-  type <- match.arg(type)
   if (is.function(pdist)) {
     return(pdist)
   }
+  type <- match.arg(type)
   if (!is.character(pdist) || length(pdist) != 1L) {
     stop(
       "pdist must be a function or a single character string.",
@@ -273,13 +334,15 @@ add_name_attribute <- function(func, name) {
 #'
 #' @param dprimary The primary density function.
 #' @param pprimary Optional user-supplied primary CDF (function or string).
+#' @param d_name Name of `dprimary`, as given by [.dist_name()].
 #'
 #' @return A primary CDF function, or \code{NULL} if no match was found.
 #'
 #' @keywords internal
-.resolve_pprimary <- function(dprimary, pprimary = NULL) {
+.resolve_pprimary <- function(dprimary, pprimary = NULL,
+                              d_name = .dist_name(dprimary)) {
   if (is.null(pprimary)) {
-    return(.lookup_pprimary(dprimary))
+    return(.lookup_pprimary(dprimary, d_name))
   }
   if (is.character(pprimary)) {
     if (length(pprimary) != 1L) {
@@ -312,20 +375,53 @@ add_name_attribute <- function(func, name) {
       call. = FALSE
     )
   }
-  d_name <- attr(dprimary, "name")
-  if (is.null(d_name)) d_name <- .extract_function_name(dprimary)
-  p_name <- attr(pprimary, "name")
-  if (is.null(p_name)) p_name <- .extract_function_name(pprimary)
+  .check_primary_names(d_name, pprimary)
+  pprimary
+}
+
+#' Check that the primary density and CDF refer to the same distribution
+#'
+#' @param d_name Name of the primary density function, as given by
+#'   [.dist_name()].
+#' @param pprimary The primary CDF function.
+#'
+#' @return \code{NULL} invisibly. Called for its error.
+#'
+#' @keywords internal
+.check_primary_names <- function(d_name, pprimary) {
+  p_name <- .dist_name(pprimary)
   if (!is.null(d_name) && !is.null(p_name) &&
     d_name != "unknown" && p_name != "unknown" &&
-    sub("^d", "", d_name) != sub("^p", "", p_name)) {
+    sub("^d", "", d_name) != sub("^p", "", p_name) &&
+    !.same_primary(d_name, p_name)) {
     stop(
       "dprimary and pprimary refer to different distributions: '",
       d_name, "' vs '", p_name, "'.",
       call. = FALSE
     )
   }
-  pprimary
+  invisible(NULL)
+}
+
+#' Check whether two names refer to the same registry primary distribution
+#'
+#' @param d_name,p_name Names of a primary density and CDF. Each may be a
+#'   name, alias, density or CDF name from [pcd_primary_distributions].
+#'
+#' @return `TRUE` if both names match the same row of
+#'   [pcd_primary_distributions], otherwise `FALSE`.
+#'
+#' @keywords internal
+.same_primary <- function(d_name, p_name) {
+  registry <- primarycensored::pcd_primary_distributions
+  row_of <- function(name) {
+    which(
+      registry$name == name | registry$aliases == name |
+        registry$dprimary == name | registry$pprimary == name
+    )[1L]
+  }
+  d_row <- row_of(d_name)
+  !is.na(d_row) && identical(d_row, row_of(p_name))
 }
 
 #' Get distribution function cdf or pdf name

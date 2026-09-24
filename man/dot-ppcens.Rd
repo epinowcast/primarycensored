@@ -12,11 +12,16 @@
   primary_args,
   pprimary = NULL,
   check = TRUE,
+  pcens_cache = NULL,
   ...
 )
 }
 \arguments{
 \item{q}{Vector of quantiles}
+
+\item{params}{A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
+corresponding to the secondary window sizes, primary window sizes, upper
+truncation times, and lower truncation times for each element in x.}
 
 \item{pdist}{Distribution function (CDF). The package can identify base R
 distributions for potential analytical solutions. For non-base R functions,
@@ -57,6 +62,12 @@ skip both when they have already been validated. \code{\link[=check_pdist]{check
 \code{pdist} at four points drawn with \code{\link[stats:Uniform]{stats::runif()}}, so skipping it avoids
 that cost and leaves the random number stream untouched. Must be given by
 its full name, as it follows \code{...}.}
+
+\item{pcens_cache}{Optional environment shared across calls with the same
+\code{params}, \code{pdist} and \code{dprimary}, as made by \code{\link[=.build_pcens_closures]{.build_pcens_closures()}}.
+The \code{pcens} object and the grouping of \code{params} are built on the first
+call and kept in it, and later calls only \link[=update.pcens]{update()} the
+parameters. \code{NULL} (the default) builds them on every call.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }

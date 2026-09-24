@@ -43,7 +43,8 @@ distributions for potential analytical solutions. For non-base R functions,
 users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage the analytical solutions.}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
 meaning no left truncation. For any finite value of L the distribution

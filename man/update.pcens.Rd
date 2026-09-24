@@ -40,7 +40,8 @@ parameters. Parameters cannot be removed; use \code{\link[=new_pcens]{new_pcens(
 
 A name in \code{...} that is not already in \code{object$args} must be an argument
 of \code{object$pdist} other than its first, unless \code{pdist} takes \code{...}.
-Otherwise an error is raised. Names in \code{primary_args} are not checked against \code{dprimary}.
+Otherwise an error is raised. Names in \code{primary_args} are not checked
+against \code{dprimary}.
 }
 \examples{
 obj <- new_pcens(

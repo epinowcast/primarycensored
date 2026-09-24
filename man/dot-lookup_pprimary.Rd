@@ -4,10 +4,12 @@
 \alias{.lookup_pprimary}
 \title{Look up the primary event CDF from the registry}
 \usage{
-.lookup_pprimary(dprimary)
+.lookup_pprimary(dprimary, dprim_name = .dist_name(dprimary))
 }
 \arguments{
 \item{dprimary}{Function. The primary event density function.}
+
+\item{dprim_name}{Name of \code{dprimary}, as given by \code{\link[=.dist_name]{.dist_name()}}.}
 }
 \value{
 A function (the primary CDF) or \code{NULL}.

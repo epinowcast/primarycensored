@@ -18,7 +18,8 @@ base R distributions for potential analytical solutions. For non-base R
 functions, users can apply \code{\link[=add_name_attribute]{add_name_attribute()}} to yield properly tagged
 functions if they wish to leverage analytical solutions.}
 
-\item{pwindow}{Primary event window}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
 \item{dprimary_args}{[Deprecated] Use \code{primary_args} instead.}
 
@@ -26,7 +27,8 @@ functions if they wish to leverage analytical solutions.}
 }
 \value{
 NULL. The function will stop execution with an error message if
-dprimary is not a valid PDF.
+dprimary is not a valid PDF. With \code{pwindow = 0} the primary event
+time is exact and only the arguments of \code{dprimary} are checked.
 }
 \description{
 This function tests whether a given function behaves like a valid PDF by

@@ -50,7 +50,8 @@ check_pdist <- function(pdist, D = Inf, ...) {
 #' @param tolerance The tolerance for the integral to be considered close to 1
 #'
 #' @return NULL. The function will stop execution with an error message if
-#'         dprimary is not a valid PDF.
+#'         dprimary is not a valid PDF. With `pwindow = 0` the primary event
+#'         time is exact and only the arguments of `dprimary` are checked.
 #' @export
 #'
 #' @family check
@@ -65,6 +66,11 @@ check_dprimary <- function(
   # check if dprimary takes min and max as arguments
   if (!all(c("min", "max") %in% names(formals(dprimary)))) {
     stop("dprimary must take min and max as arguments", call. = FALSE)
+  }
+  # A zero-width window is an exact primary event, so there is no density
+  # to check.
+  if (.is_exact_window(pwindow)) {
+    return(invisible(NULL))
   }
 
   integrand <- function(x) {
