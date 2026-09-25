@@ -166,12 +166,14 @@ test_that("primarycensored_sone_lpmf_vectorized matches primarycensored_lpmf
           )
         }, numeric(1))
         expect_equal(
-          vectorised[full], per_delay, tolerance = 1e-10, info = info
+          vectorised[full], per_delay,
+          tolerance = 1e-10, info = info
         )
         expect_identical(vectorised[below], rep(-Inf, sum(below)))
         if (s$D == s$max_delay + 1) {
           expect_equal(
-            sum(exp(vectorised)), 1, tolerance = 1e-10, info = info
+            sum(exp(vectorised)), 1,
+            tolerance = 1e-10, info = info
           )
         }
       }
@@ -259,26 +261,9 @@ vectorized_gradient_model <- function() {
 }
 
 vectorized_gradient_at <- function(model, stan_data, params) {
-  data_file <- tempfile(fileext = ".json")
-  cmdstanr::write_stan_json(stan_data, data_file)
-  init_file <- tempfile(fileext = ".json")
-  cmdstanr::write_stan_json(list(params = params), init_file)
-  out <- suppressWarnings(system2(
-    model$exe_file(),
-    c(
-      "diagnose", "test=gradient",
-      paste0("data file=", data_file),
-      paste0("init=", init_file),
-      "output", paste0("file=", tempfile(fileext = ".csv"))
-    ),
-    stdout = TRUE, stderr = TRUE
-  ))
-  trimmed <- trimws(out)
-  rows <- trimmed[grepl("^[0-9]", trimmed)]
-  parsed <- lapply(strsplit(rows, " +"), as.numeric)
-  list(
-    gradient = vapply(parsed, function(x) x[3], numeric(1)),
-    finite_diff = vapply(parsed, function(x) x[4], numeric(1))
+  stan_gradient_at( # nolint: object_usage_linter.
+    model,
+    data = stan_data, init = list(params = params)
   )
 }
 
@@ -304,7 +289,8 @@ test_that("primarycensored_sone_pmf_vectorized gradients match finite
         expect_length(res$gradient, 2)
         expect_true(all(is.finite(res$gradient)), info = info)
         expect_equal(
-          res$gradient, res$finite_diff, tolerance = 1e-4, info = info
+          res$gradient, res$finite_diff,
+          tolerance = 1e-4, info = info
         )
       }
     }

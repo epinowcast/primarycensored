@@ -137,6 +137,10 @@ add_name_attribute <- function(func, name) {
 #' This helper function attempts to determine distribution names and uses those
 #' to establish a class hierarchy for potential analytical solutions.
 #'
+#' Registry names and aliases are resolved to the function names used by the
+#' `pcens_cdf()` methods, for example `"lognormal"` to `"plnorm"` and
+#' `"uniform"` to `"dunif"`. Other names are used as they are.
+#'
 #' @inheritParams pprimarycensored
 #'
 #' @param pdist_name Name of `pdist`, as given by [.dist_name()].
@@ -150,11 +154,46 @@ add_name_attribute <- function(func, name) {
 .format_class <- function(pdist, dprimary,
                           pdist_name = .dist_name(pdist),
                           dprim_name = .dist_name(dprimary)) {
+  pdist_name <- .canonical_name(
+    pdist_name, primarycensored::pcd_distributions, "pdist"
+  )
+  dprim_name <- .canonical_name(
+    dprim_name, primarycensored::pcd_primary_distributions, "dprimary"
+  )
   c(
     sprintf("pcens_%s_%s", pdist_name, dprim_name),
     sprintf("pcens_%s", pdist_name),
     "pcens"
   )
+}
+
+#' Resolve a registry name or alias to its function name
+#'
+#' @param name Character string, a distribution name as given by
+#'   [.dist_name()].
+#'
+#' @param registry A registry data frame, [pcd_distributions] or
+#'   [pcd_primary_distributions].
+#'
+#' @param column The registry column holding the function names, `"pdist"`
+#'   or `"dprimary"`.
+#'
+#' @return The function name in `column` for the registry row whose `name`
+#'   or `aliases` is `name`, or `name` itself if it is already a function
+#'   name or is not in the registry.
+#'
+#' @keywords internal
+.canonical_name <- function(name, registry, column) {
+  functions <- registry[[column]]
+  if (name %in% functions) {
+    return(name)
+  }
+  idx <- which(registry$name == name | registry$aliases == name)
+  idx <- idx[!is.na(functions[idx])]
+  if (length(idx) == 0L) {
+    return(name)
+  }
+  functions[idx[[1L]]]
 }
 
 #' Look up the primary event CDF from the registry

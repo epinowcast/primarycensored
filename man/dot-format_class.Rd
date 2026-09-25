@@ -40,4 +40,9 @@ delay-only, and base class.
 This helper function attempts to determine distribution names and uses those
 to establish a class hierarchy for potential analytical solutions.
 }
+\details{
+Registry names and aliases are resolved to the function names used by the
+\code{pcens_cdf()} methods, for example \code{"lognormal"} to \code{"plnorm"} and
+\code{"uniform"} to \code{"dunif"}. Other names are used as they are.
+}
 \keyword{internal}

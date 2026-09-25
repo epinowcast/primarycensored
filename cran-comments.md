@@ -1,13 +1,10 @@
 ## Submission
 
-This release adds non-parametric delay distributions, both a direct PMF
-over fixed bins and a discrete-time hazard parameterisation, and analytical
-primary event censored solutions for the generalised gamma delay
-distribution. It also fixes a gradient bug in the Stan likelihood, where
-the log CDF returned a finite value with a non-finite gradient deep in the
-lower tail of a narrow lognormal delay.
-
-All additions are backwards compatible.
+This release follows 1.5.2 quickly because 1.5.2 introduced a regression
+where `fitdistdoublecens()` no longer accepted `fix.arg`, which is fixed
+here. It also makes the main R functions and `fitdistdoublecens()`
+substantially faster, adds support for zero-width censoring windows, and
+adds `update()` and `pcens_pmf()` for `pcens` objects.
 
 ## R CMD check results
 
@@ -16,7 +13,7 @@ All additions are backwards compatible.
 ## Reverse dependencies
 
 Checked 2 reverse dependencies (distspec, EpiNow2) with r-devel/recheck,
-comparing against 1.5.1. No regressions. The one NOTE on EpiNow2
+comparing against 1.5.2. No regressions. The one NOTE on EpiNow2
 (checking compiled code) is raised by both versions and is unrelated to
 this release.
 
