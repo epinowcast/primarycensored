@@ -7,9 +7,8 @@ skip_on_cran()
 # finite log density with a non-finite gradient.
 #
 # Gradients are only observable from a compiled model, so this builds a
-# minimal one whose whole target is `primarycensored_lcdf` and drives
-# `diagnose test=gradient` directly rather than through `$diagnose()`, whose
-# exit-status handling varies across cmdstanr versions.
+# minimal one whose whole target is `primarycensored_lcdf` and runs
+# `stan_gradient_at()` from helper-stan-gradient.R.
 
 gradient_probe_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
@@ -45,48 +44,17 @@ gradient_probe_model <- function() {
   suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
 }
 
-# Returns the log density and the analytic and finite-difference gradients.
+# Returns the analytic and finite-difference gradients at one point.
 gradient_at <- function(model, d, sigma, mu = 1.8, pwindow = 1,
                         primary_id = 1, primary_params = numeric(0)) {
-  data_file <- tempfile(fileext = ".json")
-  cmdstanr::write_stan_json(
-    list(
+  stan_gradient_at( # nolint: object_usage_linter.
+    model,
+    data = list(
       d = d, pwindow = pwindow, primary_id = primary_id,
       n_primary = length(primary_params),
       primary_params = as.array(primary_params)
     ),
-    data_file
-  )
-  init_file <- tempfile(fileext = ".json")
-  cmdstanr::write_stan_json(list(mu = mu, sigma = sigma), init_file)
-
-  out <- suppressWarnings(system2(
-    model$exe_file(),
-    c(
-      "diagnose", "test=gradient",
-      paste0("data file=", data_file),
-      paste0("init=", init_file),
-      "output", paste0("file=", tempfile(fileext = ".csv"))
-    ),
-    stdout = TRUE, stderr = TRUE
-  ))
-
-  rejected <- any(grepl("Rejecting initial value", out, fixed = TRUE))
-  not_finite <- any(grepl(
-    "Gradient evaluated at the initial value", out,
-    fixed = TRUE
-  ))
-  # Gradient rows are "idx value model finite-diff error", indented. Matching
-  # on a leading digit after trimming avoids backslash escapes in the pattern.
-  trimmed <- trimws(out)
-  rows <- trimmed[grepl("^[0-9]", trimmed)]
-  parsed <- lapply(strsplit(rows, " +"), as.numeric)
-
-  list(
-    rejected = rejected,
-    gradient_not_finite = not_finite,
-    gradient = vapply(parsed, function(x) x[3], numeric(1)),
-    finite_diff = vapply(parsed, function(x) x[4], numeric(1))
+    init = list(mu = mu, sigma = sigma)
   )
 }
 
@@ -119,6 +87,7 @@ test_that("primarycensored_lcdf has finite gradients in the lower tail of a
 
     expect_false(res$gradient_not_finite, info = label)
     expect_false(res$rejected, info = label)
+    expect_length(res$gradient, 2)
     expect_true(all(is.finite(res$gradient)), info = label)
     # The analytic gradient must agree with the finite difference.
     expect_equal(
