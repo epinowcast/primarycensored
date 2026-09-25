@@ -37,7 +37,8 @@ fitdistdoublecens(
   A data frame with columns 'left' and 'right' representing the lower
   and upper bounds of the censored observations. Unlike
   [`fitdistrplus::fitdistcens()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html)
-  `NA` is not supported for either the upper or lower bounds.
+  `NA` is not supported for either the upper or lower bounds. Use
+  `left == right` for an exactly observed secondary event.
 
 - distr:
 
@@ -55,7 +56,8 @@ fitdistdoublecens(
 
 - pwindow:
 
-  Column name for primary window (default: "pwindow").
+  Column name for primary window (default: "pwindow"). Use a primary
+  window of 0 for an exactly observed primary event.
 
 - L:
 
@@ -175,6 +177,15 @@ density and CDF functions by prepending `d` and `p` to the name (e.g.
 distributions can be used as long as the corresponding `d<distr>()` and
 `p<distr>()` functions are defined.
 
+Parametric distributions are fitted in the parameterisation named by
+`start`, and the returned estimates and covariance matrix use the same
+names. For example, gamma can be fitted with either
+`start = list(shape = , rate = )` or `start = list(shape = , scale = )`.
+Parameters can be held fixed by passing `fix.arg` to
+[`fitdistrplus::fitdist()`](https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html)
+through `...`, either as a named list or as a function of the delays
+returning one.
+
 ### Non-parametric distributions
 
 Two non-parametric distributions are supported. They share a common
@@ -214,6 +225,18 @@ parameters into the underlying vector argument.
 For non-parametric distributions `K` is implied by `length(start)`:
 `K = length(start) + 1` for `"discretestep"` and `K = length(start) - 1`
 for `"discretehazard"`. `start` is therefore required.
+
+### Exact observations
+
+Rows with `pwindow = 0` have an exactly known primary event time. Rows
+with `left == right` have an exactly known secondary event time and
+contribute a density rather than a probability to the likelihood (see
+[`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)).
+Rows of different types can be mixed in one fit, as for the exact,
+single interval censored and doubly interval censored observations of
+`coarseDataTools::dic.fit()`. Data with the primary event in \[`EL`,
+`ER`\] and the secondary event in \[`SL`, `SR`\] map to
+`left = SL - EL`, `right = SR - EL` and `pwindow = ER - EL`.
 
 ## See also
 

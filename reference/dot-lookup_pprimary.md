@@ -8,7 +8,7 @@ that callers can fall back to numerical integration.
 ## Usage
 
 ``` r
-.lookup_pprimary(dprimary)
+.lookup_pprimary(dprimary, dprim_name = .dist_name(dprimary))
 ```
 
 ## Arguments
@@ -16,6 +16,11 @@ that callers can fall back to numerical integration.
 - dprimary:
 
   Function. The primary event density function.
+
+- dprim_name:
+
+  Name of `dprimary`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/reference/dot-dist_name.md).
 
 ## Value
 

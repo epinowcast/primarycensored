@@ -27,7 +27,7 @@ pcens_cdf.default() method is used."><meta property="og:image" content="https://
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -108,7 +108,8 @@ For <code>Q &lt;= 0</code> (the lognormal and reflected cases) the numerical
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Primary event window</p></dd>
+<dd><p>Primary event window. Use <code>pwindow = 0</code> for an exactly
+observed primary event, in which case the delay CDF is used directly.</p></dd>
 
 
 <dt id="arg-use-numeric">use_numeric<a class="anchor" aria-label="anchor" href="#arg-use-numeric"></a></dt>
@@ -134,8 +135,11 @@ breaks down.</p></dd>
 <code><a href="pcens_cdf.pcens_pgengamma.orig_dunif.html">pcens_cdf.pcens_pgengamma.orig_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
+<code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
+<code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,
-<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code></p></div>
+<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code>,
+<code><a href="update.pcens.html">update.pcens()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -27,7 +27,8 @@ pcens_quantile(object, p, pwindow, L = -Inf, D = Inf, use_numeric = FALSE, ...)
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - L:
 
@@ -67,4 +68,7 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
-[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.default.md)
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
+[`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
+[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.default.md),
+[`update.pcens()`](https://primarycensored.epinowcast.org/reference/update.pcens.md)

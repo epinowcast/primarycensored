@@ -21,7 +21,7 @@ truncation (when events are only observed within a delay range [L, D])."><meta p
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -109,7 +109,8 @@ truncation (when events are only observed within a delay range [L, D]).</p>
 <dd><p>A data frame with columns 'left' and 'right' representing
 the lower and upper bounds of the censored observations. Unlike
 <code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdistcens.html" class="external-link">fitdistrplus::fitdistcens()</a></code> <code>NA</code> is not supported for either the
-upper or lower bounds.</p></dd>
+upper or lower bounds. Use <code>left == right</code> for an exactly observed
+secondary event.</p></dd>
 
 
 <dt id="arg-distr">distr<a class="anchor" aria-label="anchor" href="#arg-distr"></a></dt>
@@ -129,7 +130,8 @@ non-parametric step-distribution fitting; see Details.</p></dd>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Column name for primary window (default: "pwindow").</p></dd>
+<dd><p>Column name for primary window (default: "pwindow"). Use
+a primary window of 0 for an exactly observed primary event.</p></dd>
 
 
 <dt id="arg-l">L<a class="anchor" aria-label="anchor" href="#arg-l"></a></dt>
@@ -242,6 +244,13 @@ density and CDF functions by prepending <code>d</code> and <code>p</code> to the
 <code>distr = "gamma"</code> resolves to <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">dgamma()</a></code> and <code><a href="https://rdrr.io/r/stats/GammaDist.html" class="external-link">pgamma()</a></code>). Custom
 distributions can be used as long as the corresponding <code>d&lt;distr&gt;()</code> and
 <code>p&lt;distr&gt;()</code> functions are defined.</p>
+<p>Parametric distributions are fitted in the parameterisation named by
+<code>start</code>, and the returned estimates and covariance matrix use the same
+names. For example, gamma can be fitted with either
+<code>start = list(shape = , rate = )</code> or <code>start = list(shape = , scale = )</code>.
+Parameters can be held fixed by passing <code>fix.arg</code> to
+<code><a href="https://lbbe-software.github.io/fitdistrplus/reference/fitdist.html" class="external-link">fitdistrplus::fitdist()</a></code> through <code>...</code>, either as a named list or as a
+function of the delays returning one.</p>
 </div>
 
 <div class="section">
@@ -277,6 +286,20 @@ settings.</p></li>
 <code>K = length(start) + 1</code> for <code>"discretestep"</code> and
 <code>K = length(start) - 1</code> for <code>"discretehazard"</code>. <code>start</code> is therefore
 required.</p>
+</div>
+
+<div class="section">
+<h3 id="exact-observations">Exact observations<a class="anchor" aria-label="anchor" href="#exact-observations"></a></h3>
+
+
+<p>Rows with <code>pwindow = 0</code> have an exactly known primary event time. Rows
+with <code>left == right</code> have an exactly known secondary event time and
+contribute a density rather than a probability to the likelihood (see
+<code><a href="dprimarycensored.html">dprimarycensored()</a></code>). Rows of different types can be mixed in one fit,
+as for the exact, single interval censored and doubly interval censored
+observations of <code>coarseDataTools::dic.fit()</code>. Data with the primary
+event in [<code>EL</code>, <code>ER</code>] and the secondary event in [<code>SL</code>, <code>SR</code>] map
+to <code>left = SL - EL</code>, <code>right = SR - EL</code> and <code>pwindow = ER - EL</code>.</p>
 </div>
 
     </div>

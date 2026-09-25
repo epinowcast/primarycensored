@@ -1,6 +1,142 @@
 # Changelog
 
+## primarycensored 1.6.0
+
+This release makes
+[`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+[`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+[`new_pcens()`](https://primarycensored.epinowcast.org/reference/new_pcens.md)
+and
+[`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+substantially faster. The vectorised Stan PMF is also faster for common
+delays with a uniform primary. It adds support for zero-width primary
+and secondary censoring windows, so exact, single interval censored and
+doubly interval censored data can be fitted together, and adds
+[`update()`](https://rdrr.io/r/stats/update.html) and
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
+for `pcens` objects. The one breaking change is that
+[`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+and
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
+with `swindow = 0` now return a density rather than 0.
+
+### Performance
+
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md)
+  and
+  [`new_pcens()`](https://primarycensored.epinowcast.org/reference/new_pcens.md)
+  have much lower per-call overhead, with unchanged results. These
+  functions and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md)
+  look up distribution names once per call. Base R functions listed in
+  `pcd_distributions` or `pcd_primary_distributions` are identified by
+  comparing them with the registry functions, without deparsing their
+  bodies. See
+  [\#347](https://github.com/epinowcast/primarycensored/issues/347).
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  fits are several times faster, with the same estimates. Each fit
+  builds one `pcens` object and updates its parameters with
+  [`update()`](https://rdrr.io/r/stats/update.html) for each likelihood
+  evaluation. Observations are grouped by their censoring and truncation
+  settings once per fit, and the fitted CDF is evaluated per group
+  rather than per observation. See
+  [\#347](https://github.com/epinowcast/primarycensored/issues/347).
+- [`update()`](https://rdrr.io/r/stats/update.html) followed by
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  or
+  [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
+  is a fast path for evaluating one distribution over many parameter
+  sets, such as posterior draws. See
+  [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+- The vectorised Stan PMF functions
+  `primarycensored_sone_lpmf_vectorized()` and
+  `primarycensored_sone_pmf_vectorized()` are faster for lognormal,
+  gamma, Weibull and generalised gamma delays with a uniform primary and
+  an integer `pwindow`. The analytical CDF terms at each integer delay
+  are now computed once and shared between neighbouring windows. Values
+  are unchanged and gradients match to rounding. See
+  [\#101](https://github.com/epinowcast/primarycensored/issues/101) and
+  [\#356](https://github.com/epinowcast/primarycensored/issues/356).
+
+### Breaking changes
+
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+  and
+  [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
+  with `swindow = 0` now return the primary event censored density. They
+  previously returned 0 without a warning. Code that relied on a zero
+  result for `swindow = 0` should drop those rows or use a positive
+  `swindow`. See
+  [\#345](https://github.com/epinowcast/primarycensored/issues/345).
+
+### New features
+
+- Zero-width censoring windows are now supported. With `pwindow = 0` the
+  primary event time is exact and
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md),
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+  and
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  use the delay CDF directly, for all delay distributions. With
+  `swindow = 0` the secondary event time is exact and
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+  and
+  [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
+  return the primary event censored density rather than a probability.
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  accepts rows with `pwindow = 0` and rows with `left == right`, and
+  these can be mixed with interval censored rows in one fit. This
+  matches the exact, single interval censored and doubly interval
+  censored data used by `coarseDataTools::dic.fit()`. See
+  [\#345](https://github.com/epinowcast/primarycensored/issues/345).
+- Added an [`update()`](https://rdrr.io/r/stats/update.html) method for
+  `pcens` objects. It replaces the delay distribution parameters, and
+  optionally `primary_args`, without looking up distributions by name or
+  rebuilding the object. This makes it cheaper to evaluate one
+  distribution for many parameter sets, such as posterior draws. See
+  [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+- Added
+  [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
+  an S3 generic for the primary event censored PMF of a `pcens` object.
+  The default method differences
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  and handles `swindow`, `L` and `D` in the same way as
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md).
+  See [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+
+### Documentation
+
+- Documented the fields of a `pcens` object in
+  [`new_pcens()`](https://primarycensored.epinowcast.org/reference/new_pcens.md).
+
+### Bug fixes
+
+- [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  again accepts parameters held fixed through `fix.arg`, given either as
+  a list or as a function of the data. These had failed because fixed
+  parameters were missing from the synthetic density’s arguments. Tests
+  now also cover fitting gamma with `start = list(shape = , scale = )`.
+  See [\#301](https://github.com/epinowcast/primarycensored/issues/301).
+- [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md)
+  no longer errors when `q` contains `Inf` and the delay has an
+  analytical solution. It now returns 1 there. See
+  [\#348](https://github.com/epinowcast/primarycensored/issues/348).
+- [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md),
+  [`pprimarycensored()`](https://primarycensored.epinowcast.org/reference/pprimarycensored.md)
+  and
+  [`qprimarycensored()`](https://primarycensored.epinowcast.org/reference/qprimarycensored.md)
+  no longer error for a `dprimary` named by a registry alias, such as
+  `add_name_attribute(fn, "uniform")`. They now use the registry primary
+  CDF, as
+  [`new_pcens()`](https://primarycensored.epinowcast.org/reference/new_pcens.md)
+  already did. The check that `dprimary` and `pprimary` refer to the
+  same distribution also accepts registry aliases. See
+  [\#347](https://github.com/epinowcast/primarycensored/issues/347).
+
 ## primarycensored 1.5.2
+
+CRAN release: 2026-09-11
 
 This version adds non-parametric delay distributions, both a direct PMF
 over fixed bins (step CDF) and a discrete-time hazard parameterisation,

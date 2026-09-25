@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -77,6 +77,7 @@
 <span>  <span class="va">primary_args</span>,</span>
 <span>  pprimary <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  check <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  pcens_cache <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  <span class="va">...</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -87,6 +88,12 @@
 
 <dl><dt id="arg-q">q<a class="anchor" aria-label="anchor" href="#arg-q"></a></dt>
 <dd><p>Vector of quantiles</p></dd>
+
+
+<dt id="arg-params">params<a class="anchor" aria-label="anchor" href="#arg-params"></a></dt>
+<dd><p>A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
+corresponding to the secondary window sizes, primary window sizes, upper
+truncation times, and lower truncation times for each element in x.</p></dd>
 
 
 <dt id="arg-pdist">pdist<a class="anchor" aria-label="anchor" href="#arg-pdist"></a></dt>
@@ -137,6 +144,14 @@ skip both when they have already been validated. <code><a href="check_pdist.html
 <code>pdist</code> at four points drawn with <code><a href="https://rdrr.io/r/stats/Uniform.html" class="external-link">stats::runif()</a></code>, so skipping it avoids
 that cost and leaves the random number stream untouched. Must be given by
 its full name, as it follows <code>...</code>.</p></dd>
+
+
+<dt id="arg-pcens-cache">pcens_cache<a class="anchor" aria-label="anchor" href="#arg-pcens-cache"></a></dt>
+<dd><p>Optional environment shared across calls with the same
+<code>params</code>, <code>pdist</code> and <code>dprimary</code>, as made by <code><a href="dot-build_pcens_closures.html">.build_pcens_closures()</a></code>.
+The <code>pcens</code> object and the grouping of <code>params</code> are built on the first
+call and kept in it, and later calls only <a href="update.pcens.html">update()</a> the
+parameters. <code>NULL</code> (the default) builds them on every call.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

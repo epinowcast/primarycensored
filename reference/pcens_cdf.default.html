@@ -17,7 +17,7 @@ a numeric integration method."><meta property="og:image" content="https://primar
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,7 +93,8 @@ a numeric integration method.</p>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Primary event window</p></dd>
+<dd><p>Primary event window. Use <code>pwindow = 0</code> for an exactly
+observed primary event, in which case the delay CDF is used directly.</p></dd>
 
 
 <dt id="arg-use-numeric">use_numeric<a class="anchor" aria-label="anchor" href="#arg-use-numeric"></a></dt>
@@ -128,8 +129,11 @@ primary event censored CDF computation.</p>
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
+<code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
+<code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,
-<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code></p></div>
+<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code>,
+<code><a href="update.pcens.html">update.pcens()</a></code></p></div>
     </div>
 
     <div class="section level2">

@@ -6,7 +6,12 @@ those to establish a class hierarchy for potential analytical solutions.
 ## Usage
 
 ``` r
-.format_class(pdist, dprimary)
+.format_class(
+  pdist,
+  dprimary,
+  pdist_name = .dist_name(pdist),
+  dprim_name = .dist_name(dprimary)
+)
 ```
 
 ## Arguments
@@ -37,7 +42,25 @@ those to establish a class hierarchy for potential analytical solutions.
   to yield properly tagged functions if they wish to leverage analytical
   solutions.
 
+- pdist_name:
+
+  Name of `pdist`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/reference/dot-dist_name.md).
+
+- dprim_name:
+
+  Name of `dprimary`, as given by
+  [`.dist_name()`](https://primarycensored.epinowcast.org/reference/dot-dist_name.md).
+
 ## Value
 
 A character vector of class names: specific (delay + primary),
 delay-only, and base class.
+
+## Details
+
+Registry names and aliases are resolved to the function names used by
+the
+[`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+methods, for example `"lognormal"` to `"plnorm"` and `"uniform"` to
+`"dunif"`. Other names are used as they are.

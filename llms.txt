@@ -296,10 +296,16 @@ handling censored distributions.
   : Method for Log-Normal delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pweibull_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md)
   : Method for Weibull delay with uniform primary
+- [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
+  : Compute primary event censored PMF
+- [`pcens_pmf(`*`<default>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md)
+  : Default method for computing primary event censored PMF
 - [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md)
   : Compute primary event censored quantiles
 - [`pcens_quantile(`*`<default>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_quantile.default.md)
   : Default method for computing primary event censored quantiles
+- [`update(`*`<pcens>`*`)`](https://primarycensored.epinowcast.org/reference/update.pcens.md)
+  : Update the parameters of a pcens object
 
 ## Utility functions
 

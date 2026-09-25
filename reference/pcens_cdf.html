@@ -21,7 +21,7 @@ delay with uniform primary event distributions."><meta property="og:image" conte
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -98,7 +98,8 @@ delay with uniform primary event distributions.</p>
 
 
 <dt id="arg-pwindow">pwindow<a class="anchor" aria-label="anchor" href="#arg-pwindow"></a></dt>
-<dd><p>Primary event window</p></dd>
+<dd><p>Primary event window. Use <code>pwindow = 0</code> for an exactly
+observed primary event, in which case the delay CDF is used directly.</p></dd>
 
 
 <dt id="arg-use-numeric">use_numeric<a class="anchor" aria-label="anchor" href="#arg-use-numeric"></a></dt>
@@ -113,6 +114,13 @@ breaks down.</p></dd>
     <p>Vector of computed primary event censored CDFs</p>
     </div>
     <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>When <code>pwindow = 0</code> the primary event time is known exactly and the
+primary event censored CDF is the delay CDF. This case is handled before
+dispatch, so every method returns <code>pdist(q)</code> without integrating over the
+primary event window.</p>
+    </div>
+    <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>Low level primary event censored distribution objects and methods
 <code><a href="new_pcens.html">new_pcens()</a></code>,
@@ -124,8 +132,11 @@ breaks down.</p></dd>
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
+<code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
+<code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,
-<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code></p></div>
+<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code>,
+<code><a href="update.pcens.html">update.pcens()</a></code></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

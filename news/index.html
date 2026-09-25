@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,45 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.5.2" id="primarycensored-152">primarycensored 1.5.2<a class="anchor" aria-label="anchor" href="#primarycensored-152"></a></h2>
+<h2 class="pkg-version" data-toc-text="1.6.0" id="primarycensored-160">primarycensored 1.6.0<a class="anchor" aria-label="anchor" href="#primarycensored-160"></a></h2>
+<p>This release makes <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>, <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>, <code><a href="../reference/new_pcens.html">new_pcens()</a></code> and <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> substantially faster. The vectorised Stan PMF is also faster for common delays with a uniform primary. It adds support for zero-width primary and secondary censoring windows, so exact, single interval censored and doubly interval censored data can be fitted together, and adds <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> and <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> for <code>pcens</code> objects. The one breaking change is that <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> with <code>swindow = 0</code> now return a density rather than 0.</p>
+<div class="section level3">
+<h3 id="performance-1-6-0">Performance<a class="anchor" aria-label="anchor" href="#performance-1-6-0"></a></h3>
+<ul><li>
+<code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>, <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code> and <code><a href="../reference/new_pcens.html">new_pcens()</a></code> have much lower per-call overhead, with unchanged results. These functions and <code><a href="../reference/qprimarycensored.html">qprimarycensored()</a></code> look up distribution names once per call. Base R functions listed in <code>pcd_distributions</code> or <code>pcd_primary_distributions</code> are identified by comparing them with the registry functions, without deparsing their bodies. See <a href="https://github.com/epinowcast/primarycensored/issues/347" class="external-link">#347</a>.</li>
+<li>
+<code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> fits are several times faster, with the same estimates. Each fit builds one <code>pcens</code> object and updates its parameters with <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> for each likelihood evaluation. Observations are grouped by their censoring and truncation settings once per fit, and the fitted CDF is evaluated per group rather than per observation. See <a href="https://github.com/epinowcast/primarycensored/issues/347" class="external-link">#347</a>.</li>
+<li>
+<code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> followed by <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> or <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> is a fast path for evaluating one distribution over many parameter sets, such as posterior draws. See <a href="https://github.com/epinowcast/primarycensored/issues/348" class="external-link">#348</a>.</li>
+<li>The vectorised Stan PMF functions <code>primarycensored_sone_lpmf_vectorized()</code> and <code>primarycensored_sone_pmf_vectorized()</code> are faster for lognormal, gamma, Weibull and generalised gamma delays with a uniform primary and an integer <code>pwindow</code>. The analytical CDF terms at each integer delay are now computed once and shared between neighbouring windows. Values are unchanged and gradients match to rounding. See <a href="https://github.com/epinowcast/primarycensored/issues/101" class="external-link">#101</a> and <a href="https://github.com/epinowcast/primarycensored/issues/356" class="external-link">#356</a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-1-6-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-1-6-0"></a></h3>
+<ul><li>
+<code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> with <code>swindow = 0</code> now return the primary event censored density. They previously returned 0 without a warning. Code that relied on a zero result for <code>swindow = 0</code> should drop those rows or use a positive <code>swindow</code>. See <a href="https://github.com/epinowcast/primarycensored/issues/345" class="external-link">#345</a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-1-6-0">New features<a class="anchor" aria-label="anchor" href="#new-features-1-6-0"></a></h3>
+<ul><li>Zero-width censoring windows are now supported. With <code>pwindow = 0</code> the primary event time is exact and <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>, <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> use the delay CDF directly, for all delay distributions. With <code>swindow = 0</code> the secondary event time is exact and <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> return the primary event censored density rather than a probability. <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> accepts rows with <code>pwindow = 0</code> and rows with <code>left == right</code>, and these can be mixed with interval censored rows in one fit. This matches the exact, single interval censored and doubly interval censored data used by <code>coarseDataTools::dic.fit()</code>. See <a href="https://github.com/epinowcast/primarycensored/issues/345" class="external-link">#345</a>.</li>
+<li>Added an <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> method for <code>pcens</code> objects. It replaces the delay distribution parameters, and optionally <code>primary_args</code>, without looking up distributions by name or rebuilding the object. This makes it cheaper to evaluate one distribution for many parameter sets, such as posterior draws. See <a href="https://github.com/epinowcast/primarycensored/issues/348" class="external-link">#348</a>.</li>
+<li>Added <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code>, an S3 generic for the primary event censored PMF of a <code>pcens</code> object. The default method differences <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> and handles <code>swindow</code>, <code>L</code> and <code>D</code> in the same way as <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>. See <a href="https://github.com/epinowcast/primarycensored/issues/348" class="external-link">#348</a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-1-6-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-1-6-0"></a></h3>
+<ul><li>Documented the fields of a <code>pcens</code> object in <code><a href="../reference/new_pcens.html">new_pcens()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-1-6-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-1-6-0"></a></h3>
+<ul><li>
+<code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> again accepts parameters held fixed through <code>fix.arg</code>, given either as a list or as a function of the data. These had failed because fixed parameters were missing from the synthetic density’s arguments. Tests now also cover fitting gamma with <code>start = list(shape = , scale = )</code>. See <a href="https://github.com/epinowcast/primarycensored/issues/301" class="external-link">#301</a>.</li>
+<li>
+<code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code> no longer errors when <code>q</code> contains <code>Inf</code> and the delay has an analytical solution. It now returns 1 there. See <a href="https://github.com/epinowcast/primarycensored/issues/348" class="external-link">#348</a>.</li>
+<li>
+<code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>, <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code> and <code><a href="../reference/qprimarycensored.html">qprimarycensored()</a></code> no longer error for a <code>dprimary</code> named by a registry alias, such as <code>add_name_attribute(fn, "uniform")</code>. They now use the registry primary CDF, as <code><a href="../reference/new_pcens.html">new_pcens()</a></code> already did. The check that <code>dprimary</code> and <code>pprimary</code> refer to the same distribution also accepts registry aliases. See <a href="https://github.com/epinowcast/primarycensored/issues/347" class="external-link">#347</a>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.5.2" id="primarycensored-152">primarycensored 1.5.2<a class="anchor" aria-label="anchor" href="#primarycensored-152"></a></h2><p class="text-muted">CRAN release: 2026-09-11</p>
 <p>This version adds non-parametric delay distributions, both a direct PMF over fixed bins (step CDF) and a discrete-time hazard parameterisation, with support for fitting them via <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> and <code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code>.</p>
 <div class="section level3">
 <h3 id="new-features-1-5-2">New features<a class="anchor" aria-label="anchor" href="#new-features-1-5-2"></a></h3>

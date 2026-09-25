@@ -26,7 +26,8 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - use_numeric:
 
@@ -38,6 +39,13 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 ## Value
 
 Vector of computed primary event censored CDFs
+
+## Details
+
+When `pwindow = 0` the primary event time is known exactly and the
+primary event censored CDF is the delay CDF. This case is handled before
+dispatch, so every method returns `pdist(q)` without integrating over
+the primary event window.
 
 ## See also
 
@@ -51,5 +59,8 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
+[`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
+[`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),
-[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.default.md)
+[`pcens_quantile.default()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.default.md),
+[`update.pcens()`](https://primarycensored.epinowcast.org/reference/update.pcens.md)

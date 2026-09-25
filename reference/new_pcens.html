@@ -13,7 +13,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">primarycensored</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.5.2</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -132,10 +132,32 @@ than the leading <code>d</code>/<code>p</code> prefix; mismatches such as
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>An object with class hierarchy
 <code>c("pcens_{pdist_name}_{dprimary_name}", "pcens_{pdist_name}",
-  "pcens")</code>. This contains the primary event distribution, the delay
-distribution, the delay distribution arguments, the primary event CDF
-(if available), and any additional arguments. It can be used with the
-<code><a href="pcens_cdf.html">pcens_cdf()</a></code> function to compute the primary event censored CDF.</p>
+  "pcens")</code>. It is a list with the fields:</p><dl><dt><code>pdist</code></dt>
+<dd><p>The delay distribution CDF.</p></dd>
+
+<dt><code>dprimary</code></dt>
+<dd><p>The primary event distribution density.</p></dd>
+
+<dt><code>primary_args</code></dt>
+<dd><p>A list of arguments passed to
+<code>dprimary</code> and <code>pprimary</code>.</p></dd>
+
+<dt><code>dprimary_args</code></dt>
+<dd><p>A copy of <code>primary_args</code>, kept for
+backward compatibility.</p></dd>
+
+<dt><code>pprimary</code></dt>
+<dd><p>The primary event CDF, or <code>NULL</code> if none
+is available.</p></dd>
+
+<dt><code>args</code></dt>
+<dd><p>A named list of the delay distribution parameters
+passed through <code>...</code>.</p></dd>
+
+
+</dl><p>It can be used with <code><a href="pcens_cdf.html">pcens_cdf()</a></code> to compute the primary event
+censored CDF and with <code><a href="pcens_pmf.html">pcens_pmf()</a></code> to compute the PMF. Use
+<a href="update.pcens.html">update()</a> to change its parameters.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -149,8 +171,11 @@ distribution, the delay distribution arguments, the primary event CDF
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
+<code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
+<code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,
-<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code></p></div>
+<code><a href="pcens_quantile.default.html">pcens_quantile.default()</a></code>,
+<code><a href="update.pcens.html">update.pcens()</a></code></p></div>
     </div>
 
     <div class="section level2">
@@ -171,13 +196,13 @@ distribution, the delay distribution arguments, the primary event CDF
 <span class="r-out co"><span class="r-pr">#&gt;</span>     }</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x560398d64a10&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x55aecf9d77f0&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $dprimary</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> function (x, min = 0, max = 1, log = FALSE) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> .Call(C_dunif, x, min, max, log)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x5603933744a8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x55aec90097d8&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $primary_args</span>
@@ -199,7 +224,7 @@ distribution, the delay distribution arguments, the primary event CDF
 <span class="r-out co"><span class="r-pr">#&gt;</span> $pprimary</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> function (q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> .Call(C_punif, q, min, max, lower.tail, log.p)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x560398c6edf8&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x55aecfa232a0&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:stats&gt;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> $args</span>

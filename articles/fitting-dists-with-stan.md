@@ -364,9 +364,9 @@ primarycensored_fit
 ```
 
     ##  variable     mean   median   sd  mad       q5      q95 rhat ess_bulk ess_tail
-    ##     lp__  -3422.74 -3422.44 0.99 0.71 -3424.71 -3421.79 1.00     1369     1861
-    ##     mu        1.55     1.54 0.05 0.05     1.48     1.62 1.00     1122     1213
-    ##     sigma     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1063     1227
+    ##     lp__  -3422.77 -3422.47 1.01 0.74 -3424.70 -3421.80 1.00     1338     1847
+    ##     mu        1.55     1.54 0.05 0.05     1.47     1.63 1.00     1239     1369
+    ##     sigma     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1232     1365
 
 We see that the model has converged and the diagnostics look good. We
 also see that the posterior means are very near the true parameters and
@@ -422,19 +422,19 @@ pcd_fit
     ## Warning: NAs introduced by coercion
 
     ##        variable     mean   median   sd  mad       q5      q95 rhat ess_bulk
-    ##  lp__           -3422.73 -3422.44 0.95 0.72 -3424.63 -3421.80 1.00     1557
-    ##  params[1]          1.54     1.54 0.04 0.04     1.48     1.62 1.00     1073
-    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.83 1.00     1069
+    ##  lp__           -3422.75 -3422.44 1.03 0.72 -3424.85 -3421.80 1.00     1530
+    ##  params[1]          1.54     1.54 0.05 0.05     1.47     1.62 1.00     1019
+    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.83 1.00      901
     ##  np_pmf[1]          1.00     1.00 0.00 0.00     1.00     1.00   NA       NA
-    ##  lpmf_params[1]     1.54     1.54 0.04 0.04     1.48     1.62 1.00     1073
-    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1069
+    ##  lpmf_params[1]     1.54     1.54 0.05 0.05     1.47     1.62 1.00     1019
+    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00      901
     ##  ess_tail
-    ##      1971
-    ##      1328
-    ##      1291
+    ##      1727
+    ##      1358
+    ##      1292
     ##        NA
-    ##      1328
-    ##      1291
+    ##      1358
+    ##      1292
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and

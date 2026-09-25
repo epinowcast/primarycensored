@@ -31,7 +31,8 @@ check_dprimary(dprimary, pwindow, dprimary_args = list(), tolerance = 0.001)
 
 - pwindow:
 
-  Primary event window
+  Primary event window. Use `pwindow = 0` for an exactly observed
+  primary event, in which case the delay CDF is used directly.
 
 - dprimary_args:
 
@@ -44,7 +45,8 @@ check_dprimary(dprimary, pwindow, dprimary_args = list(), tolerance = 0.001)
 ## Value
 
 NULL. The function will stop execution with an error message if dprimary
-is not a valid PDF.
+is not a valid PDF. With `pwindow = 0` the primary event time is exact
+and only the arguments of `dprimary` are checked.
 
 ## See also
 
