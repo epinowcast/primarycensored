@@ -3,7 +3,7 @@
 ## Bug fixes
 
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
-  Reverse-mode `gamma_p()` in Stan Math drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
+  Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
 
 # primarycensored 1.6.0
