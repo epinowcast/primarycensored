@@ -238,7 +238,7 @@ The table gives $T_f$ and $M$ for each delay family with a transform in the pack
 $\gamma(\alpha, x)$ is the lower incomplete gamma function and $P(\alpha, x) = \gamma(\alpha, x) / \Gamma(\alpha)$.
 $\Phi$ and $\phi$ are the standard normal CDF and density.
 The classes are those of the transform paper [@TransformPaperPlaceholder].
-A transform is analytic if it is a closed form, semi-analytic if it is evaluated by special functions or series, and numerical if it needs quadrature.
+A transform is analytic if it is a closed form in elementary or standard functions such as $P$ and $\Phi$, semi-analytic if it needs a convergent series of special functions, and numerical if it needs quadrature.
 The numerical class is distinct from the numerical method, which integrates equation \@ref(eq:cens) directly.
 
 | Family (R; Stan id) | $T_f(\xi; \tau)$ | $M(\tau)$ | Class | Transform used when |
@@ -374,8 +374,9 @@ The exponential, gamma and normal have upper transforms for every admissible til
 ## Weibull and generalised gamma series
 
 These series are evaluated as $T_f - F_{\mathrm{IP}}$, so the $n = 0$ term does not cancel.
-For $\xi < 0$ they are used only where the sum of the absolute terms is below $10^5$ times the result.
-Stan makes this check on the CDF only, so upper tail probability masses below about $10^{-13}$ are not reliable.
+For $\xi < 0$ they are used only where the sum of the absolute terms is below $10^5$ times the result, and otherwise the numerical method is used.
+In R the result in this check is the smaller of the CDF and the survival function.
+In Stan it is the CDF, so upper tail probability masses below about $10^{-9}$ lose relative accuracy and the log probability mass can be NaN below about $10^{-13}$.
 
 ## Log-logistic series
 
@@ -398,7 +399,7 @@ In Stan a gamma delay also needs the error in the gradient with respect to the s
 
 # Departures from the paper
 
-1. The exponential and gamma transforms are finite for every $\xi$, but the package has no stable form for $\xi \geq \lambda$ ([#388](https://github.com/epinowcast/primarycensored/issues/388), [#399](https://github.com/epinowcast/primarycensored/issues/399)).
+1. The exponential and gamma transforms are finite for every $\xi$, but the package has no stable form for $\xi \geq \lambda$.
 2. The lognormal transform is semi-analytic for $\xi > 0$, where the transform paper evaluates it by quadrature.
 3. The transform paper states the logistic regimes with strict inequalities.
    The package includes the boundaries as above.
