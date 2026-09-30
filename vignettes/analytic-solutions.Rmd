@@ -27,6 +27,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
 5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays
+6. Derive a series solution for a truncated Gumbel primary event time from the same transforms, and find where it is accurate
 
 
 # Analytic solutions for exponentially tilted primary event times
@@ -431,6 +432,58 @@ $$
 is used instead.
 The moments $G_1$ and $G_2$ come from the CDFs of gamma distributions with the shape raised by one and two for the exponential and the gamma, and from the standard normal density and CDF for the normal.
 The truncation error of both forms is below $10^{-9}$ at the threshold, where the error of equation \@ref(eq:exptilt) is also below $10^{-9}$.
+
+# Transform based solutions for a truncated Gumbel primary event time
+
+A Gumbel window describes exposure that builds up and decays unevenly within the window, for example from an environmental source.
+The primary event time has the Gumbel distribution with location $\mu_G$ and scale $\beta$ truncated to $[0, w_P]$, which is the `dtgumbel()` distribution.
+Write $G(z) = \exp[-\exp\{-(z - \mu_G) / \beta\}]$, $D = G(w_P) - G(0)$ and $c(d) = \exp\{-(d - \mu_G) / \beta\}$.
+The window CDF is $\{G(z) - G(0)\} / D$ and, with $q = d - w_P$, the reversed window on $u \in [q, d]$ is the power series
+
+$$
+G(d - u) = \exp\{-c(d) e^{u / \beta}\} = \sum_{n = 0}^\infty \frac{\{-c(d)\}^n}{n!} e^{n u / \beta}.
+$$
+
+Each term is a transform at the tilt $\xi = n / \beta$, so
+
+$$
+F_{S_+}(d) = F_T(q) + \frac{1}{D} \left[ \sum_{n = 0}^\infty \frac{\{-c(d)\}^n}{n!} \{T_f(n / \beta; d) - T_f(n / \beta; q)\} - G(0) \{F_T(d) - F_T(q)\} \right].
+(\#eq:gumbel)
+$$
+
+This is the form given in the draft paper, which we checked against numerical integration.
+The $n = 0$ term is $F_T(d) - F_T(q)$, so the package evaluates the bracket as $(1 - G(0)) \{F_T(d) - F_T(q)\}$ plus the terms with $n \geq 1$.
+This keeps precision when $\mu_G$ is far below the window and $D$ is small.
+As for the exponentially tilted window, every transform depends on $d$ or on $q$ alone.
+In Stan, `primarycensored_gumbel_terms()` returns the transforms at every tilt for one endpoint, so `primarycensored_gumbel_lcdf_vectorized()` computes them once per integer delay and uses them for the two windows that share the endpoint.
+The factor $c(d)$ depends on $d$ only, so it is applied when the terms at $d$ and $q$ are combined.
+
+## Where the series is accurate
+
+The series alternates.
+With $s(z) = e^{(\mu_G - z) / \beta}$ the $n$th term is $\int s(z)^n f_T(d - z)~dz / n!$, which is at most $s_0^n / n!$ times the delay mass in the window, where $s_0 = e^{\mu_G / \beta}$ is the largest value of $s$ in the window.
+It does not depend on $d$ beyond this bound, as $c(d)$ grows where the transforms shrink, so the terms are evaluated on the log scale and do not overflow.
+The terms reach about $e^{s_0}$ while the sum is of order 1, so the precision lost is about $e^{s_0}$ times the rounding error of the log terms.
+The series is truncated when the next term is below $10^{-18} \max(s_0, 1)$, which takes 20 terms at $s_0 = 1$ and 60 at $s_0 = 12$.
+The package therefore uses the series only for $s_0 \leq 15$, and estimates the relative error at every $d$.
+The estimate is the machine precision, times the sum of the absolute terms over the bracket, times one plus the largest magnitude of a log term, plus the truncation bound over the bracket.
+Where it is above $10^{-9}$ the method uses the numerical path for that $d$.
+This catches a large $s_0$ and a window that is narrow relative to the scale, $w_P \ll \beta$, where the bracket is a small difference of large terms and the loss is about $\beta / w_P$.
+In tests the estimate is above the error against a tight reference integral, allowing for the accuracy of the reference of about $10^{-13}$, and the accepted values agree with the reference to better than $10^{-8}$.
+
+For the normal delay with $\mu_G$ in $\{-0.5, 0, 0.5, 1, 1.5\}$, $\beta$ in $\{0.1, 0.2, 1\}$ and $w_P$ in $\{1, 2\}$, the series is accepted for $\mu_G / \beta \leq 1.5$, which is every $\mu_G$ at $\beta = 1$ and $\mu_G \leq 0$ at $\beta = 0.2$ and $0.1$.
+For larger $\mu_G / \beta$ the window density rises sharply within the window and the numerical path is used.
+A very negative $\mu_G / \beta$ is close to the exponentially tilted window with $r = -1 / \beta$, which has closed forms that need fewer transforms.
+
+## Admissibility
+
+The transform is needed at the positive tilts $n / \beta$ for $n$ up to the number of terms.
+The exponential and gamma forms need the tilted delay to exist, so a rate above $N / \beta$ for $N$ terms.
+For delays measured in days the rate is usually of order 1, which is below $N / \beta$ unless $\mu_G / \beta$ is very negative and $\beta$ is large, so these delays use the numerical path.
+The series is useful for exponential and gamma delays that are short relative to the window, and for the normal delay, which has no restriction.
+In Stan `check_for_gumbel_params()` makes the choice from the parameters and `check_for_analytical_params()` uses it.
+The same bound holds for any delay added to the transform generics.
+A closed form of the transform for tilts above the rate, which exists for the exponential delay as $T_f(\xi; \tau) = \lambda \{e^{(\xi - \lambda)\tau} - 1\} / (\xi - \lambda)$, would remove the bound for that delay.
 
 # Learning more
 
