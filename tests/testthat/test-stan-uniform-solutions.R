@@ -774,7 +774,9 @@ test_that("the new analytical solutions have finite gradients that match
       tol = 1e-3, delays = c(0.3, 1, 5, 50)
     ),
     list(
-      name = "pareto", id = 21L, params = c(0.5, 2), tol = 1e-4,
+      # The gradients are about 4e-4 here, so finite difference noise of
+      # about 5e-8 is a relative 1e-4
+      name = "pareto", id = 21L, params = c(0.5, 2), tol = 5e-4,
       delays = c(0.6, 1, 5, 50)
     ),
     list(
