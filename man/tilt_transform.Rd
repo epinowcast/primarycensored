@@ -4,11 +4,13 @@
 \alias{tilt_transform}
 \alias{.pcens_tilt_transform}
 \alias{.pcens_tilt_available}
+\alias{.pcens_tilt_fits}
 \alias{.pcens_tilt_lower}
 \alias{.pcens_tilt_moments}
 \alias{.pcens_tilt_pair}
 \alias{.pcens_tilt_pair.default}
 \alias{.pcens_tilt_available.default}
+\alias{.pcens_tilt_fits.default}
 \alias{.pcens_tilt_transform.default}
 \alias{.pcens_tilt_lower.default}
 \alias{.pcens_tilt_moments.default}
@@ -26,6 +28,7 @@
 \alias{.pcens_tilt_moments.pcens_pnorm}
 \alias{.pcens_tilt_lower.pcens_plnorm}
 \alias{.pcens_tilt_available.pcens_plnorm}
+\alias{.pcens_tilt_fits.pcens_plnorm}
 \alias{.pcens_tilt_transform.pcens_plnorm}
 \alias{.pcens_tilt_pair.pcens_plnorm}
 \alias{.pcens_tilt_moments.pcens_plnorm}
@@ -34,6 +37,8 @@
 .pcens_tilt_transform(object, t, xi, upper = FALSE)
 
 .pcens_tilt_available(object, xi)
+
+.pcens_tilt_fits(object, xi, t)
 
 .pcens_tilt_lower(object)
 
@@ -44,6 +49,8 @@
 \method{.pcens_tilt_pair}{default}(object, t, xi)
 
 \method{.pcens_tilt_available}{default}(object, xi)
+
+\method{.pcens_tilt_fits}{default}(object, xi, t)
 
 \method{.pcens_tilt_transform}{default}(object, t, xi, upper = FALSE)
 
@@ -79,6 +86,8 @@
 
 \method{.pcens_tilt_available}{pcens_plnorm}(object, xi)
 
+\method{.pcens_tilt_fits}{pcens_plnorm}(object, xi, t)
+
 \method{.pcens_tilt_transform}{pcens_plnorm}(object, t, xi, upper = FALSE)
 
 \method{.pcens_tilt_pair}{pcens_plnorm}(object, t, xi)
@@ -111,6 +120,9 @@ delay with \code{xi > 0}, and callers then use the lower transform alone.
 \item \code{.pcens_tilt_available()}: \code{TRUE} if the transform is closed form and the
 tilted delay distribution exists for \code{xi}, otherwise \code{FALSE}. Callers use
 the numerical method when it is \code{FALSE}.
+\item \code{.pcens_tilt_fits()}: a logical for each \code{t}, \code{TRUE} if the transform
+can be evaluated at \code{t} for \code{xi}. Callers use the numerical method for
+the points where it is \code{FALSE}.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
 \item \code{.pcens_tilt_moments()}: a matrix with two columns, the log of the first
 and second moments of the delay about \code{t}, see
@@ -135,6 +147,9 @@ A family is added by defining
 \item \code{.pcens_tilt_lower()}, the lower end of the support.
 \item \code{.pcens_tilt_available()}, whether the closed form applies for a tilt.
 \item \code{.pcens_tilt_transform()}, the transform on the log scale.
+\item Optionally \code{.pcens_tilt_fits()}, for transforms that cannot be evaluated
+at every point, as for the series of the lognormal. The default is
+\code{TRUE} at every point.
 \item Optionally \code{.pcens_tilt_moments()}, which is only needed by the small
 tilt forms of \code{\link[=pcens_cdf.pcens_pexp_dexpgrowth]{pcens_cdf.pcens_pexp_dexpgrowth()}}.
 \item Optionally \code{.pcens_tilt_pair()}, the lower and the upper transform

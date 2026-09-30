@@ -15,6 +15,9 @@
 #' * `.pcens_tilt_lower()`, the lower end of the support.
 #' * `.pcens_tilt_available()`, whether the closed form applies for a tilt.
 #' * `.pcens_tilt_transform()`, the transform on the log scale.
+#' * Optionally `.pcens_tilt_fits()`, for transforms that cannot be evaluated
+#'   at every point, as for the series of the lognormal. The default is
+#'   `TRUE` at every point.
 #' * Optionally `.pcens_tilt_moments()`, which is only needed by the small
 #'   tilt forms of [pcens_cdf.pcens_pexp_dexpgrowth()].
 #' * Optionally `.pcens_tilt_pair()`, the lower and the upper transform
@@ -49,6 +52,9 @@
 #' * `.pcens_tilt_available()`: `TRUE` if the transform is closed form and the
 #'   tilted delay distribution exists for `xi`, otherwise `FALSE`. Callers use
 #'   the numerical method when it is `FALSE`.
+#' * `.pcens_tilt_fits()`: a logical for each `t`, `TRUE` if the transform
+#'   can be evaluated at `t` for `xi`. Callers use the numerical method for
+#'   the points where it is `FALSE`.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix with two columns, the log of the first
 #'   and second moments of the delay about `t`, see
@@ -68,6 +74,11 @@ NULL
 #' @rdname tilt_transform
 .pcens_tilt_available <- function(object, xi) {
   UseMethod(".pcens_tilt_available")
+}
+
+#' @rdname tilt_transform
+.pcens_tilt_fits <- function(object, xi, t) {
+  UseMethod(".pcens_tilt_fits")
 }
 
 #' @rdname tilt_transform
@@ -98,6 +109,12 @@ NULL
 #' @exportS3Method
 .pcens_tilt_available.default <- function(object, xi) {
   FALSE
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_fits.default <- function(object, xi, t) {
+  rep(TRUE, length(t))
 }
 
 #' @rdname tilt_transform

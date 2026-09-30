@@ -16,6 +16,8 @@
 #'   partial moments \eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2}
 #'   \Phi(z_t - k \sigma)}, see `.lnorm_tilt_series()`.
 #'   The total diverges, so the tail transform is `Inf` on the log scale.
+#'   The series is limited to 20000 terms, about \eqn{\xi t} up to 18700,
+#'   and `.pcens_tilt_fits()` is `FALSE` beyond that.
 #'
 #' @inheritParams tilt_transform
 #'
@@ -248,8 +250,10 @@
 #' e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
 #' Past \eqn{k = \xi t} the terms fall by at least a factor
 #' \eqn{\xi t / (k + 1)} each. The number of terms starts at about
-#' \eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles until the last term is below
-#' \eqn{e^{-40}} of the largest for every point.
+#' \eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles, up to `.lnorm_max_terms`,
+#' until the last term is below \eqn{e^{-40}} of the largest for every point.
+#' It stops with an error where that needs more than `.lnorm_max_terms`, so
+#' callers check `.pcens_tilt_fits()` first.
 #'
 #' @inheritParams .lnorm_tilt_quadrature
 #'
@@ -267,16 +271,18 @@
   z <- (log(t[positive]) - meanlog) / sdlog
   # The terms fall below e^-40 of the largest within about 9 sqrt(xi t)
   # of xi t, which the check below confirms
-  lambda <- xi * max(t[positive])
-  n_terms <- ceiling(lambda + 9 * sqrt(lambda) + 30)
+  n_terms <- .lnorm_series_terms(xi, max(t[positive]))
+  too_long <- function() {
+    stop(
+      "The lognormal tilt transform needs more than ", .lnorm_max_terms,
+      " terms. Use use_numeric = TRUE.",
+      call. = FALSE
+    )
+  }
+  if (n_terms > .lnorm_max_terms) {
+    too_long()
+  }
   repeat {
-    if (n_terms > .lnorm_max_terms) {
-      stop(
-        "The lognormal tilt transform needs more than ", .lnorm_max_terms,
-        " terms. Use use_numeric = TRUE.",
-        call. = FALSE
-      )
-    }
     k <- seq_len(n_terms + 1L) - 1L
     log_terms <- .lnorm_log_pnorm(z, k * sdlog) +
       rep(
@@ -291,13 +297,35 @@
     if (all(last < -40)) {
       break
     }
-    n_terms <- 2L * n_terms
+    if (n_terms >= .lnorm_max_terms) {
+      too_long()
+    }
+    n_terms <- min(2 * n_terms, .lnorm_max_terms)
   }
   out[positive] <- peak + log(rowSums(exp(log_terms - peak)))
   out
 }
 
 .lnorm_max_terms <- 20000L
+
+#' Number of terms the lognormal series starts with
+#'
+#' The terms \eqn{\xi^k m_k(t) / k!} are below \eqn{e^{-40}} of the largest
+#' for \eqn{k} beyond \eqn{\xi t + 9 \sqrt{\xi t} + 30}, see
+#' `.lnorm_tilt_series()`. The series is used only where this is at most
+#' `.lnorm_max_terms`, which is for \eqn{\xi t} up to about 18700.
+#'
+#' @param xi Tilt, positive.
+#'
+#' @param t Numeric vector of points.
+#'
+#' @return Numeric vector of the number of terms.
+#'
+#' @keywords internal
+.lnorm_series_terms <- function(xi, t) {
+  lambda <- xi * pmax(t, 0)
+  ceiling(lambda + 9 * sqrt(lambda) + 30)
+}
 
 # The quadrature and the series have a fixed cost of about 0.2 ms that the
 # numerical method of `pcens_cdf.default()` beats for fewer than about 10
@@ -349,6 +377,16 @@
   }
   # The mode of the integrand needs rho sdlog^2 exp(meanlog) to be finite
   xi >= 0 || log(-xi) + 2 * log(p$sdlog) + p$meanlog < 690
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_fits.pcens_plnorm <- function(object, xi, t) {
+  # The series for a positive tilt has a limit on the number of terms
+  if (xi <= 0) {
+    return(rep(TRUE, length(t)))
+  }
+  .lnorm_series_terms(xi, t) <= .lnorm_max_terms
 }
 
 #' @rdname tilt_transform

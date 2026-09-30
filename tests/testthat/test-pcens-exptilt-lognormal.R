@@ -343,7 +343,8 @@ test_that("the lognormal CDF uses the numerical method where the series is
   # The quantiles that fit keep the accuracy of the series
   expect_lt(max_rel_diff(actual[1:6], expected[1:6]), 1e-7)
   expect_no_error(dprimarycensored(
-    q, plnorm, pwindow = 1, dprimary = dexpgrowth,
+    q, plnorm,
+    pwindow = 1, dprimary = dexpgrowth,
     primary_args = list(r = -20), meanlog = 6, sdlog = 0.5
   ))
 })

@@ -23,7 +23,9 @@ terms \eqn{\xi^k m_k(t) / k!} over the partial moments
 e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
 Past \eqn{k = \xi t} the terms fall by at least a factor
 \eqn{\xi t / (k + 1)} each. The number of terms starts at about
-\eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles until the last term is below
-\eqn{e^{-40}} of the largest for every point.
+\eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles, up to \code{.lnorm_max_terms},
+until the last term is below \eqn{e^{-40}} of the largest for every point.
+It stops with an error where that needs more than \code{.lnorm_max_terms}, so
+callers check \code{.pcens_tilt_fits()} first.
 }
 \keyword{internal}

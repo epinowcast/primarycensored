@@ -95,17 +95,19 @@ the expm1 closed form for the exponential and a Kummer series for the gamma,
 are not implemented, see #388.
 The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
 the transform is truncated at \eqn{t}. It falls back to the numerical
-method where \eqn{\rho \sigma^2 e^\mu} overflows, above about
-\eqn{e^{690}}, and stops with an error where the series for
-\eqn{\rho < 0} needs more than 20000 terms, which is for \eqn{|\rho| q}
-above about 15000.
+method for every \code{q} where \eqn{\rho \sigma^2 e^\mu} overflows, above
+about \eqn{e^{690}}. For \eqn{\rho < 0} the series needs about
+\eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms and is limited to 20000,
+which is for \eqn{|\rho| q} up to about 18700. The numerical method is
+used for the \code{q} above that, and the series for the others.
 
 \strong{Tilts close to zero.} The expression above cancels as \eqn{\rho \to 0}.
 Two forms replace it where the cancellation would lose precision. With
 \eqn{G_k(t) = \int (t - u)^k f(u) du} over the support up to \eqn{t}:
 \itemize{
-\item If \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
-order correction in \eqn{\rho} is used,
+\item If \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}, the
+uniform window limit with its first order correction in \eqn{\rho} is
+used,
 \deqn{F_\rho(q) = \frac{G_1(q) - G_1(q - w)}{w} +
     \rho \frac{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)}{2 w} +
     O((\rho w)^2).}
@@ -119,6 +121,12 @@ close to zero.
 
 Away from these regions the error of the direct form is below 1e-9. The
 truncation error of the two forms is below 1e-9 at their thresholds.
+The first form subtracts terms of the size of \eqn{|q| + w}, so its
+rounding error grows as \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
+w))}. The second factor makes it worse than the direct form, whose error
+is about \eqn{10^{-15} / (|\rho| w)} whatever the distance from the
+origin, once \eqn{|\rho| (|q| + w)} is above about 0.1. The direct form
+is used there.
 
 \strong{Precision.} The R CDF agrees with numerical integration (\code{integrate()}
 at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or

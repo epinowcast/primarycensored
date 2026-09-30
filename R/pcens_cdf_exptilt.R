@@ -62,16 +62,18 @@
 #' are not implemented, see #388.
 #' The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
 #' the transform is truncated at \eqn{t}. It falls back to the numerical
-#' method where \eqn{\rho \sigma^2 e^\mu} overflows, above about
-#' \eqn{e^{690}}, and stops with an error where the series for
-#' \eqn{\rho < 0} needs more than 20000 terms, which is for \eqn{|\rho| q}
-#' above about 15000.
+#' method for every `q` where \eqn{\rho \sigma^2 e^\mu} overflows, above
+#' about \eqn{e^{690}}. For \eqn{\rho < 0} the series needs about
+#' \eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms and is limited to 20000,
+#' which is for \eqn{|\rho| q} up to about 18700. The numerical method is
+#' used for the `q` above that, and the series for the others.
 #'
 #' **Tilts close to zero.** The expression above cancels as \eqn{\rho \to 0}.
 #' Two forms replace it where the cancellation would lose precision. With
 #' \eqn{G_k(t) = \int (t - u)^k f(u) du} over the support up to \eqn{t}:
-#' * If \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
-#'   order correction in \eqn{\rho} is used,
+#' * If \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}, the
+#'   uniform window limit with its first order correction in \eqn{\rho} is
+#'   used,
 #'   \deqn{F_\rho(q) = \frac{G_1(q) - G_1(q - w)}{w} +
 #'     \rho \frac{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)}{2 w} +
 #'     O((\rho w)^2).}
@@ -84,6 +86,12 @@
 #'
 #' Away from these regions the error of the direct form is below 1e-9. The
 #' truncation error of the two forms is below 1e-9 at their thresholds.
+#' The first form subtracts terms of the size of \eqn{|q| + w}, so its
+#' rounding error grows as \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
+#' w))}. The second factor makes it worse than the direct form, whose error
+#' is about \eqn{10^{-15} / (|\rho| w)} whatever the distance from the
+#' origin, once \eqn{|\rho| (|q| + w)} is above about 0.1. The direct form
+#' is used there.
 #'
 #' **Precision.** The R CDF agrees with numerical integration (`integrate()`
 #' at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
@@ -234,6 +242,12 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 # which balance at about 1e-4 with both below 1e-9.
 .exptilt_small <- 1e-4
 
+# The small window form cancels by about 1e-14 * (|q| + w) / w * (1 + |rho|
+# (|q| + w)), and the direct form by about 1e-15 / (|rho| w). The small
+# window form has the smaller error while |rho| (|q| + w) is below about 0.1,
+# whatever the window. Beyond that the direct form is used.
+.exptilt_small_reach <- 0.1
+
 #' Tilt of the exponentially tilted primary of a pcens object
 #'
 #' @inheritParams pcens_cdf
@@ -298,7 +312,17 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   result[!is.na(q) & q == -Inf] <- 0
   finite <- which(is.finite(q))
   if (length(finite) > 0L) {
-    result[finite] <- .exptilt_cdf_finite(object, q[finite], pwindow, rho)
+    # Transforms that cannot be evaluated at a large q use the numerical
+    # method for that q alone
+    fits <- .pcens_tilt_fits(object, -rho, q[finite])
+    result[finite[fits]] <- .exptilt_cdf_finite(
+      object, q[finite[fits]], pwindow, rho
+    )
+    if (!all(fits)) {
+      result[finite[!fits]] <- pcens_cdf.default(
+        object, q[finite[!fits]], pwindow, use_numeric
+      )
+    }
   }
   result
 }
@@ -316,6 +340,9 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 #'
 #' @keywords internal
 .exptilt_cdf_finite <- function(object, q, pwindow, rho) {
+  if (length(q) == 0L) {
+    return(numeric(0))
+  }
   lower <- .pcens_tilt_lower(object)
   positive <- is.finite(lower)
   log_cdf <- rep(-Inf, length(q))
@@ -323,7 +350,10 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   # Below the support of the delay no mass has arrived
   active <- !positive | q > lower
   if (abs(rho) * pwindow < .exptilt_small) {
-    small_window <- active
+    # The small window form cancels far from the origin, see
+    # `.exptilt_small_reach`
+    small_window <- active &
+      abs(rho) * (abs(q) + pwindow) < .exptilt_small_reach
     tiny_delay <- rep(FALSE, length(q))
   } else {
     small_window <- rep(FALSE, length(q))
@@ -471,7 +501,8 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 #' Small window form of the exponentially tilted log CDF
 #'
 #' The uniform window limit with its first order correction in the tilt,
-#' used for \eqn{|\rho| w < 10^{-4}}. It needs only the moments
+#' used for \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}.
+#' It needs only the moments
 #' \eqn{G_1} and \eqn{G_2} at the endpoints, see [pcens_cdf_exptilt].
 #'
 #' @inheritParams .exptilt_lcdf_direct

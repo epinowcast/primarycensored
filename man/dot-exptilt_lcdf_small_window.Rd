@@ -24,7 +24,8 @@ Vector of log CDFs.
 }
 \description{
 The uniform window limit with its first order correction in the tilt,
-used for \eqn{|\rho| w < 10^{-4}}. It needs only the moments
+used for \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}.
+It needs only the moments
 \eqn{G_1} and \eqn{G_2} at the endpoints, see \link{pcens_cdf_exptilt}.
 }
 \keyword{internal}
