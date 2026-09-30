@@ -156,6 +156,12 @@ new_pcens <- function(
 #'   as `...` is merged into `object$args`. Defaults to `NULL`, which leaves
 #'   the primary event distribution arguments unchanged.
 #'
+#' @param .check Logical. If `FALSE`, `...` and `primary_args` are merged
+#'   into the object without any validation. Use this when one object is
+#'   updated many times with parameter names that have already been checked,
+#'   for example in an optimiser or a loop over posterior draws.
+#'   Only an explicit `FALSE` turns the checks off. Defaults to `TRUE`.
+#'
 #' @details
 #' Parameters are merged rather than replaced as a whole, so
 #' `update(object, scale = 3)` changes `scale` and keeps all other
@@ -165,6 +171,10 @@ new_pcens <- function(
 #' of `object$pdist` other than its first, unless `pdist` takes `...`.
 #' Otherwise an error is raised. Names in `primary_args` are not checked
 #' against `dprimary`.
+#'
+#' With `.check = FALSE` none of these checks are run.
+#' Unnamed or misspelt parameters are then added to the object as given and
+#' only fail, or are ignored, when the object is evaluated.
 #'
 #' @return A `pcens` object with the same class as `object` and updated
 #'   `args`, `primary_args` and `dprimary_args` fields. See [new_pcens()] for
@@ -191,37 +201,44 @@ new_pcens <- function(
 #' )
 #' obj <- update(obj, primary_args = list(r = 0.5))
 #' pcens_pmf(obj, x = 0:5, pwindow = 1)
-update.pcens <- function(object, ..., primary_args = NULL) {
+update.pcens <- function(object, ..., primary_args = NULL, .check = TRUE) {
   new_args <- list(...)
-  if (length(new_args) > 0L) {
-    .check_named_list(new_args, "Delay parameters passed to update()")
-    # Kept cheap as update() is often called once per parameter draw.
-    nms <- names(new_args)
-    unknown <- nms[!nms %in% names(object$args)]
-    if (length(unknown) > 0L) {
-      # Drop the first formal, the point at which pdist is evaluated
-      pdist_args <- names(formals(object$pdist))[-1]
-      if (!is.null(pdist_args) && !"..." %in% pdist_args) {
-        unknown <- unknown[!unknown %in% pdist_args]
-        if (length(unknown) > 0L) {
-          stop(
-            "Unknown delay parameter(s) for pdist: ", toString(unknown), ".",
-            call. = FALSE
-          )
+  nms <- names(new_args)
+  # Kept cheap as update() is often called once per parameter draw.
+  if (!identical(.check, FALSE)) {
+    if (length(new_args) > 0L) {
+      .check_named_list(new_args, "Delay parameters passed to update()")
+      unknown <- nms[!nms %in% names(object$args)]
+      if (length(unknown) > 0L) {
+        # Drop the first formal, the point at which pdist is evaluated
+        pdist_args <- names(formals(object$pdist))[-1]
+        if (!is.null(pdist_args) && !"..." %in% pdist_args) {
+          unknown <- unknown[!unknown %in% pdist_args]
+          if (length(unknown) > 0L) {
+            stop(
+              "Unknown delay parameter(s) for pdist: ", toString(unknown),
+              ".",
+              call. = FALSE
+            )
+          }
         }
       }
     }
+    if (!is.null(primary_args)) {
+      if (!is.list(primary_args)) {
+        stop("primary_args must be a list.", call. = FALSE)
+      }
+      if (length(primary_args) > 0L) {
+        .check_named_list(primary_args, "primary_args")
+      }
+    }
+  }
+  if (length(new_args) > 0L) {
     object$args[nms] <- new_args
   }
-  if (!is.null(primary_args)) {
-    if (!is.list(primary_args)) {
-      stop("primary_args must be a list.", call. = FALSE)
-    }
-    if (length(primary_args) > 0L) {
-      .check_named_list(primary_args, "primary_args")
-      object$primary_args[names(primary_args)] <- primary_args
-      object$dprimary_args <- object$primary_args
-    }
+  if (length(primary_args) > 0L) {
+    object$primary_args[names(primary_args)] <- primary_args
+    object$dprimary_args <- object$primary_args
   }
   object
 }

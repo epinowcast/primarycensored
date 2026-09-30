@@ -175,7 +175,7 @@ test_that("update.pcens with .check = FALSE matches for primary_args", {
   expect_identical(unchecked$dprimary_args, list(r = 0.5))
 })
 
-test_that("update.pcens with .check = FALSE leaves the object with no updates", {
+test_that("update.pcens with .check = FALSE and no updates is a no-op", {
   obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
   expect_identical(update(obj, .check = FALSE), obj)
 })

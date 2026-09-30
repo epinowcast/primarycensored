@@ -531,7 +531,8 @@ fitdistdoublecens <- function(
 #' Get the pcens object for a likelihood evaluation
 #'
 #' Builds a `pcens` object with [.build_pcens()], or, when `cache` already
-#' holds one, updates its delay parameters with [update()][update.pcens()].
+#' holds one, updates its delay parameters with [update()][update.pcens()]
+#' and `.check = FALSE`.
 #'
 #' @inheritParams .dpcens
 #'
@@ -546,7 +547,11 @@ fitdistdoublecens <- function(
 .fit_pcens_state <- function(cache, pdist, dprimary, primary_args, pprimary,
                              args) {
   if (!is.null(cache) && !is.null(cache$obj)) {
-    cache$obj <- do.call(update, c(list(cache$obj), args))
+    # Parameter names are the same on every evaluation of a fit, so skip
+    # the checks made by `update()`.
+    cache$obj <- do.call(
+      update, c(list(cache$obj), args, list(.check = FALSE))
+    )
     return(cache)
   }
   state <- cache
