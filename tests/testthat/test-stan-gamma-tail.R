@@ -1,17 +1,10 @@
 skip_on_cran()
 
-# Regression tests for #381. The Gamma delay (dist_id 2) called
-# `gamma_lcdf`, which underflows to -inf deep in the lower tail. The
-# uniform terms then subtracted two -inf values with `log_diff_exp`, giving
-# NaN. The same fix as for the generalised gamma in #363 applies, via
-# `gamma_lcdf_logx()`.
-#
-# The reference is R's `pgamma(log.p = TRUE)`, which is accurate in the
-# tails, so the tolerance is relative 1e-9 unless stated.
+# The reference is `pgamma(log.p = TRUE)`, with relative tolerance 1e-9
+# unless stated.
 
-# Relative error of a log CDF, with an absolute allowance of 1e-15. Where
-# the CDF is within 1e-8 of 1 the log CDF is below 1e-8 in size, and
-# `gamma_lcdf` rounds the CDF itself to about 1e-16.
+# Relative error of a log CDF, with an absolute allowance of 1e-15 for where
+# the CDF is within 1e-8 of 1
 expect_lcdf_close <- function(actual, expected, label, tolerance = 1e-9) {
   testthat::expect_lte(
     abs(actual - expected), tolerance * abs(expected) + 1e-15,
@@ -19,8 +12,7 @@ expect_lcdf_close <- function(actual, expected, label, tolerance = 1e-9) {
   )
 }
 
-# Shape, rate and a delay that puts the log CDF well below -10, the
-# smallest at -2400
+# Shapes and rates that put the log CDF below -10 at the delays used
 gamma_tail_cases <- data.frame(
   shape = c(400, 100, 60, 250, 40, 12),
   rate = c(1 / 5, 1 / 5, 1 / 4, 1 / 6, 1 / 10, 1 / 4)
@@ -28,7 +20,6 @@ gamma_tail_cases <- data.frame(
 
 test_that("dist_lcdf for a Gamma delay is finite and accurate deep in the
    lower tail", {
-  # log F_T(2) for shape 400 and rate 1 / 5 is about -2367
   expect_equal(
     dist_lcdf(2, c(400, 0.2), 2),
     pgamma(0.4, 400, log.p = TRUE),
@@ -49,9 +40,9 @@ test_that("dist_lcdf for a Gamma delay is finite and accurate deep in the
   expect_identical(dist_lcdf(0, c(3, 1), 2), -Inf)
 })
 
-test_that("dist_lcdf for a Gamma delay is unchanged in the body and the
+test_that("dist_lcdf for a Gamma delay is accurate in the body and the
    upper tail", {
-  # shape above and below the point where the evaluation rule changes
+  # Shapes either side of 10, where the evaluation rule changes
   for (shape in c(0.3, 2, 9.5, 10, 10.5, 75, 400, 3000)) {
     mu <- shape / 1.5
     for (frac in c(0.3, 0.7, 0.95, 1, 1.05, 1.3, 2, 5, 50)) {
@@ -145,11 +136,8 @@ test_that("gamma truncation normalisers stay finite when the CDF is deep in
 })
 
 test_that("analytical gamma matches Stan's numerical path", {
-  # The Stan numerical path integrates exp(dist_lcdf(t)) / pwindow over
-  # [d - pwindow, d] with `primarycensored_ode()`. Integrate that same
-  # right hand side so the analytical path is checked against the delay CDF
-  # that the numerical path uses, from deep in the lower tail to the upper
-  # tail.
+  # Integrate the right hand side of `primarycensored_ode()` over
+  # [d - pwindow, d]
   stan_numeric <- function(d, pwindow, params) {
     rhs <- function(t) {
       vapply(t, function(ti) {
@@ -182,8 +170,58 @@ test_that("analytical gamma matches Stan's numerical path", {
   }
 })
 
+test_that("Stan analytical gamma matches the R implementation for shapes
+   of 10 or more", {
+  for (shape in c(10, 30, 400, 1500)) {
+    for (rate in c(0.2, 10)) {
+      obj <- new_pcens(pgamma, dunif, list(), shape = shape, rate = rate)
+      q <- shape / rate * c(0.3, 0.6, 0.9, 1, 1.1, 1.5, 3)
+      for (pwindow in c(0.5, 1, 3)) {
+        r_result <- pcens_cdf(obj, q = q, pwindow = pwindow)
+        stan_result <- vapply(q, function(d) {
+          exp(primarycensored_analytical_lcdf(
+            d, 2, c(shape, rate), pwindow, 0, Inf, 1, numeric(0)
+          ))
+        }, numeric(1))
+        expect_equal(
+          stan_result, r_result,
+          tolerance = 1e-6,
+          info = sprintf(
+            "shape = %g, rate = %g, pwindow = %g", shape, rate, pwindow
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("Stan analytical gamma matches rprimarycensored samples", {
+  set.seed(381)
+  n <- 2e5
+  for (case in list(list(30, 1), list(400, 2), list(2000, 1))) {
+    shape <- case[[1]]
+    rate <- case[[2]]
+    pwindow <- 2
+    samples <- rprimarycensored(
+      n, rgamma,
+      pwindow = pwindow, swindow = 0, shape = shape, rate = rate
+    )
+    probs <- c(0.05, 0.25, 0.5, 0.75, 0.95)
+    for (d in unname(quantile(samples, probs))) {
+      empirical <- mean(samples <= d)
+      analytic <- exp(primarycensored_lcdf(
+        d, 2L, c(shape, rate), pwindow, 0, Inf, 1L, numeric(0)
+      ))
+      expect_lt(
+        abs(analytic - empirical),
+        4 * sqrt(empirical * (1 - empirical) / n),
+        label = sprintf("shape = %g, rate = %g, d = %g", shape, rate, d)
+      )
+    }
+  }
+})
+
 test_that("analytical gamma lcdf is accurate for large shapes", {
-  # Shapes of 1000 or more, where the CDF is a narrow step
   cases <- list(
     list(d = 1400, pwindow = 10, p = c(1500, 1)),
     list(d = 1510, pwindow = 10, p = c(1500, 1)),
@@ -207,9 +245,7 @@ test_that("analytical gamma lcdf is accurate for large shapes", {
 })
 
 test_that("gamma_lcdf_logx matches pgamma across the evaluation rules", {
-  # a spans the body, the point where the rule changes at 10, and the large
-  # shapes. frac = x / (a + 1) covers the lower tail, the body and the upper
-  # tail on both sides of x = a + 1.
+  # frac = x / (a + 1) spans the lower tail, the body and the upper tail
   for (a in c(0.1, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 30000, 1e5)) {
     for (frac in c(
       1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.89, 0.9, 0.99, 1, 1.01, 1.05, 1.2,
@@ -226,8 +262,8 @@ test_that("gamma_lcdf_logx matches pgamma across the evaluation rules", {
 })
 
 test_that("gamma_lcdf_logx is accurate either side of the rule changes", {
-  # x = a + 1 switches between the series and the continued fraction, and
-  # a = 10 between Stan's gamma_lcdf and the series and fraction
+  # x = a + 1 switches the series and the continued fraction, and a = 10
+  # switches `gamma_lcdf`
   for (a in c(1.5, 9.99, 10.01, 150.5)) {
     for (x in c(a + 1 - 1e-7, a + 1 + 1e-7)) {
       expect_lcdf_close(
@@ -241,8 +277,7 @@ test_that("gamma_lcdf_logx is accurate either side of the rule changes", {
 })
 
 test_that("gamma_lcdf_logx is exact for integer shapes", {
-  # The continued fraction terminates at i = a, so its derivative needs the
-  # rest of the fraction. The value is checked here, gradients elsewhere.
+  # The continued fraction terminates at i = a
   for (a in c(2, 20, 21, 100, 1000)) {
     for (frac in c(1.01, 1.5, 4)) {
       x <- frac * (a + 1)
@@ -256,8 +291,7 @@ test_that("gamma_lcdf_logx is exact for integer shapes", {
 })
 
 test_that("gamma_lcdf_logx does not underflow when x does", {
-  # exp(-800) underflows to 0 here, but the log CDF is finite. The
-  # relative error of 1e-12 is the rounding error of the leading term.
+  # exp(-800) underflows to 0 but the log CDF is finite
   expect_equal(
     gamma_lcdf_logx(-800, 30.5), 30.5 * -800 - lgamma(31.5),
     tolerance = 1e-12
@@ -266,9 +300,8 @@ test_that("gamma_lcdf_logx does not underflow when x does", {
 })
 
 test_that("gamma_lcdf_logx_pair matches pgamma for a and a + 1", {
-  # Shapes either side of the rule change at 10 and the large shapes.
-  # frac = x / (a + 1) covers the regions where the pair comes from the
-  # series, from the continued fraction and from `gamma_lcdf`.
+  # frac = x / (a + 1) covers the series, the continued fraction and
+  # `gamma_lcdf`
   for (a in c(0.05, 0.5, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 3e4)) {
     for (frac in c(
       1e-8, 1e-4, 0.01, 0.1, 0.3, 0.49, 0.5, 0.51, 0.7, 0.89, 0.9, 0.99, 1,
@@ -289,8 +322,7 @@ test_that("gamma_lcdf_logx_pair matches pgamma for a and a + 1", {
 })
 
 test_that("gamma_lcdf_logx_pair does not underflow when x does", {
-  # P(a + 1, x) is about x^(a + 1) in the far lower tail. Both are finite
-  # here although x = exp(-800) is 0.
+  # x = exp(-800) is 0 but both log CDFs are finite
   for (a in c(0.5, 9.5, 30.5)) {
     expect_equal(
       gamma_lcdf_logx_pair(-800, a),
@@ -304,8 +336,7 @@ test_that("gamma_lcdf_logx_pair does not underflow when x does", {
 
 test_that("gamma_lcdf_logx_pair keeps P(a + 1) accurate when it is far
    below P(a)", {
-  # x << a + 1, where P(a + 1) = P(a) - x^a exp(-x) / Gamma(a + 1)
-  # subtracts two terms that agree to about x / (a + 1)
+  # x much less than a + 1, where the recursion would cancel
   for (a in c(0.2, 3, 8)) {
     for (x in c(1e-12, 1e-9, 1e-6, 1e-3)) {
       expect_equal(
@@ -346,9 +377,7 @@ test_that("the gamma log CDFs reject a rate that is not positive and finite", {
 
 test_that("gamma_log_lead_logx agrees with the Poisson log PMF for large
    shapes", {
-  # dpois() uses the Stirling error and bd0, so it is accurate near x = a.
-  # The direct expression a log(x) - x - lgamma(a + 1) is off by about
-  # 1e-10 at a = 1e5, which the log CDF difference amplifies.
+  # dpois() is accurate near x = a
   for (a in c(50, 99, 100, 150, 1e3, 1e4, 1e5, 1e6, 1e7)) {
     for (r in c(1e-6, 0.01, 0.3, 0.5, 0.6, 0.9, 0.999, 1, 1.001, 1.5,
                 1.99, 2.1, 5, 30)) {
@@ -365,9 +394,7 @@ test_that("gamma_log_lead_logx agrees with the Poisson log PMF for large
 
 test_that("primarycensored_lcdf is accurate for a large Gamma shape when
    the delay is long compared with the primary window", {
-  # The two terms are subtracted and the result is divided by pwindow, so
-  # their rounding error is amplified by about d / pwindow. References are
-  # integrals of pgamma() from ref_lcdf_unif_gamma().
+  # Rounding error is amplified by about d / pwindow
   cases <- list(
     list(d = 1e7, shape = 1e5, rate = 0.01, pwindow = 0.01, tol = 1e-5),
     list(d = 1e6, shape = 1e4, rate = 0.01, pwindow = 0.01, tol = 1e-6),
