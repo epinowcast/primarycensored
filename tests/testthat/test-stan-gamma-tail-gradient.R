@@ -214,7 +214,7 @@ test_that("gamma_lcdf_logx gradient with respect to the shape is accurate", {
   model <- gamma_logx_probe_model()
   # Non-integer and integer shapes, from the lower tail to the upper tail
   for (a in c(0.7, 2, 5.5, 9.5, 10, 10.5, 20.5, 100, 700.5, 1000, 1500.5,
-              3000, 10000)) {
+              3000, 10000, 1e5, 1e6)) {
     for (frac in c(0.3, 0.8, 0.95, 1, 1.02, 1.1, 1.5, 3)) {
       x <- frac * a
       res <- stan_gradient_at(
@@ -280,7 +280,8 @@ test_that("gamma_lcdf_logx_pair gradients with respect to the shape are
     )
     # The second component is the CDF of a + 1
     shift <- component - 1
-    for (a in c(0.3, 2, 5.5, 9.5, 10.5, 20.5, 100, 700.5, 3000, 10000)) {
+    for (a in c(0.3, 2, 5.5, 9.5, 10.5, 20.5, 100, 700.5, 3000, 10000,
+                1e5)) {
       for (frac in c(1e-4, 0.05, 0.3, 0.6, 0.95, 1, 1.05, 1.5, 3)) {
         x <- frac * (a + 1)
         res <- stan_gradient_at(

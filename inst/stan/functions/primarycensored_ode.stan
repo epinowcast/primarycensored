@@ -35,6 +35,45 @@ real gamma_lseries_sum_logx(real log_x, real a) {
 }
 
 /**
+  * Compute the log of the leading term of the incomplete gamma series
+  * @ingroup delay_log_cdfs
+  *
+  * Returns log(x^a exp(-x) / Gamma(a + 1)) for x = exp(log_x). The direct
+  * expression a log(x) - x - lgamma(a + 1) subtracts terms of size a, so
+  * its rounding error grows with a, about 1e-10 at a = 1e5. For `a >= 100`
+  * it is written as
+  *   a (log(r) - (r - 1)) - log(2 pi a) / 2 - delta(a),  r = x / a,
+  * where delta(a) is the Stirling series of lgamma(a + 1) less
+  * (a + 1 / 2) log(a) - a + log(2 pi) / 2, taken to the term in a^-7. The
+  * omitted term is below 1e-21 for `a >= 100`. The bracket is small near
+  * x = a, so the rounding error there is about a |r - 1| times machine
+  * precision and not a times the size of log(x). log(r) is evaluated as
+  * log1p(r - 1) for r between 0.5 and 2, where r - 1 is exact, and as
+  * log(x) - log(a) otherwise.
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return log(x^a exp(-x) / Gamma(a + 1))
+  */
+real gamma_log_lead_logx(real log_x, real a) {
+  real x = exp(log_x);
+  if (a < 100) {
+    return a * log_x - x - lgamma(a + 1);
+  }
+  real inv_a = inv(a);
+  real inv_a2 = square(inv_a);
+  real delta = inv_a * (1.0 / 12
+                        - inv_a2 * (1.0 / 360
+                                    - inv_a2 * (1.0 / 1260
+                                                - inv_a2 / 1680)));
+  real r = x / a;
+  real log_r = r > 0.5 && r < 2 ? log1p(r - 1) : log_x - log(a);
+  return a * (log_r - (r - 1))
+         - 0.5 * (log(a) + log(2 * pi())) - delta;
+}
+
+/**
   * Compute log Q(a, x) by the incomplete gamma continued fraction
   * @ingroup delay_log_cdfs
   *
@@ -83,7 +122,7 @@ real gamma_lccdf_cf_logx(real log_x, real a) {
     real delta = d * c;
     h *= delta;
     if (abs(delta - 1) < 1e-15) {
-      return a * log_x - x - lgamma(a) + log(h);
+      return gamma_log_lead_logx(log_x, a) + log(a) + log(h);
     }
   }
   return not_a_number();
@@ -128,10 +167,12 @@ real gamma_lccdf_cf_logx(real log_x, real a) {
   * from 0.01 a to 30 a. The log CDF has a relative error of 1e-9 or below,
   * except for a < 10 where x > 5 a puts log P below 1e-12 in size, and
   * `gamma_lcdf` returns an absolute error of 1e-16 in it. The derivative
-  * with respect to `a` has a relative error of 5e-9 or below for a up to
-  * 3e4, 1.4e-6 at 1e5 and 2e-8 at 1e6, ignoring derivatives below 1e-13 in
-  * size. The error comes from the leading term, which is formed from terms
-  * of size a log(x).
+  * with respect to `a` has a relative error of 3e-9 or below for a up to
+  * 1e6, ignoring derivatives below 1e-13 in size. It was measured against
+  * a fifth order central difference of `pgamma()` in log a, with a step of
+  * min(1e-5, 1e-3 / sqrt(a)). A fixed step of 1e-4 is too coarse for a of
+  * 1e5 or more and overstates the error there. The leading term comes from
+  * `gamma_log_lead_logx()`, so the error does not grow with a.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -151,15 +192,13 @@ real gamma_lcdf_logx(real log_x, real a) {
   }
   real x = exp(log_x);
   real result = not_a_number();
+  real log_lead = gamma_log_lead_logx(log_x, a);
   if (a >= 10) {
     result = x < a + 1
-             ? a * log_x - x - lgamma(a + 1)
-               + gamma_lseries_sum_logx(log_x, a)
+             ? log_lead + gamma_lseries_sum_logx(log_x, a)
              : log1m_exp(gamma_lccdf_cf_logx(log_x, a));
-  } else if (x < 0.9 * (a + 1)
-             && a * log_x - x - lgamma(a + 1) < -10) {
-    result = a * log_x - x - lgamma(a + 1)
-             + gamma_lseries_sum_logx(log_x, a);
+  } else if (x < 0.9 * (a + 1) && log_lead < -10) {
+    result = log_lead + gamma_lseries_sum_logx(log_x, a);
   } else {
     return gamma_lcdf(x | a, 1);
   }
@@ -210,7 +249,7 @@ vector gamma_lcdf_logx_pair(real log_x, real a) {
     return rep_vector(0, 2);
   }
   real x = exp(log_x);
-  real log_lead = a * log_x - x - lgamma(a + 1);
+  real log_lead = gamma_log_lead_logx(log_x, a);
   vector[2] result = rep_vector(not_a_number(), 2);
   if (x < a + 1
       && (a >= 10 || x < 0.5 * (a + 1)

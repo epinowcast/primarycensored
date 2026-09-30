@@ -89,8 +89,15 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * terms, which amplifies their rounding error by about d / pwindow. On a
   * grid with shape 3 to 1e5, rate 0.05 and 1, pwindow 0.5 to 50 and d from
   * 12 standard deviations below to 10 above the mean, the absolute error
-  * of the log result was at most 3e-12 for a shape up to 30, 2e-10 at 300,
-  * 2e-9 at 3000, 2e-8 at 1e4 and 1.3e-6 at 1e5.
+  * of the log result was at most 4e-13 for a shape of 3, 3e-12 at 30,
+  * 5e-11 at 300, 2e-9 at 3000, 6e-9 at 1e4 and 2e-8 at 1e5. The error grows
+  * with d / pwindow. At pwindow 0.01 and d from 1e6 to 1e7, where d / pwindow
+  * is 1e8 to 1e9, it reached 4e-7 at a shape of 1e4 and 3e-6 at 1e5. It
+  * does not grow with the shape otherwise, because the leading term comes
+  * from `gamma_log_lead_logx()`.
+  *
+  * Rejects a rate that is not positive and finite, since only its log
+  * enters the log CDFs.
   *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
@@ -214,6 +221,12 @@ vector primarycensored_weibull_uniform_terms(real t,
   * The subtraction in `primarycensored_uniform_lcdf_from_terms()` loses
   * precision for large `k * shape`, with errors above 1e-6 possible once it
   * exceeds about 12000.
+  * Each of the two terms is evaluated with `gamma_lcdf_logx()`, separately
+  * because the shapes k and k + 1 / shape differ by more than one. They
+  * do not share an evaluation as in `primarycensored_gamma_uniform_terms()`.
+  * Gradients are finite and have a relative error of 1e-6 or below in the
+  * body of the distribution for k up to 1e5 with shape 1. They are less
+  * accurate in the extreme upper tail, where the log CDF is above -1e-7.
   *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters

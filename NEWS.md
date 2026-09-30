@@ -13,13 +13,16 @@
   They now come from a new `gamma_lcdf_logx_pair()`, which gives the log CDFs for shapes `a` and `a + 1` from one evaluation with no subtraction.
   `dist_lcdf()` for a Gamma delay also uses `gamma_lcdf_logx()`, so the numerical path is finite in the same region.
   See #381.
-- Stan gradients for Gamma and generalised gamma delays with a large shape are now accurate.
+- Stan gradients for Gamma delays with a large shape are now accurate, and are finite for generalised gamma delays.
   Stan's `gamma_lcdf()` has a gradient with respect to its shape that is `NaN` or throws "n (internal counter) exceeded 100000 iterations" for a shape of about 700 or more, anywhere in the body or the tail.
   It is also off by about 1e-14 and then `NaN` in the upper tail for a shape of about 10 or more.
   This affects gamma and generalised gamma delays with `k` above about 1000 (coefficient of variation below about 3%), whose fits rejected proposals in the body of the distribution.
   `gamma_lcdf_logx()` now evaluates the incomplete gamma series for x below the shape plus one and a continued fraction above it, both on the log scale, for a shape of 10 or more.
-  They have a relative error of 1e-9 or below in the value and 5e-9 or below in the gradient for a shape up to 3e4.
-  For a shape below 10 it is unchanged, except in the lower tail from #363.
+  They have a relative error of 1e-9 or below in the value and 3e-9 or below in the gradient for a shape up to 1e6.
+  The leading term of the series is written with a Stirling series for a shape of 100 or more, so its rounding error does not grow with the shape.
+  Generalised gamma gradients have a relative error of about 1e-6 or below in the body for `k` up to 1e5 with `shape` 1, and are less accurate in the extreme upper tail.
+  For a shape below 10 the Gamma log CDF is unchanged, except in the lower tail from #363.
+  `dist_lcdf()` and the analytical solution now reject a Gamma rate that is not positive and finite, since only its log is used.
   The analytical solution takes about 1.0 to 2 times as long for a shape below 100 and is faster above, see #381.
 
 # primarycensored 1.6.0
