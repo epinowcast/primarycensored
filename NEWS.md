@@ -25,6 +25,27 @@
 - The vectorised Stan PMF functions `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` use shared terms for the exponentially tilted solutions with an integer `pwindow`.
   The terms at each integer delay are computed once and used by the two windows that share it, in `primarycensored_exptilt_lcdf_vectorized()`.
   The gradient is about 5 to 15 times faster than with the ODE in a short benchmark, see #367.
+- Added the truncated logistic primary event distribution, `dtlogis()`, `ptlogis()` and `rtlogis()`, with `min`, `max`, `location` and `scale` as for `dexpgrowth()`, and in Stan `tlogis_lpdf()`, `tlogis_lcdf()`, `tlogis_cdf()` and `tlogis_rng()`.
+  It is registered in `pcd_primary_distributions` as `tlogis` with Stan `primary_id` 3, so it works with the numerical path and with the non-parametric delays.
+  The densities are evaluated on the log scale from the tails nearer the window, so the mass stays accurate far from the location.
+  See #370.
+- Added transform based analytical solutions for a truncated logistic primary and exponential, gamma and normal delays.
+  The primary event censored CDF is a sum of finite horizon transforms at the tilts `+/- n / scale` from the geometric expansion of the logistic function, split at the location when it is inside the window.
+  In R, `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dtlogis()`, `pcens_cdf.pcens_pgamma_dtlogis()` and `pcens_cdf.pcens_pnorm_dtlogis()`.
+  In Stan the CDF is `primarycensored_tlogis_lcdf()`.
+  The series are summed with binomial taper weights (the Euler transform after a number of direct terms), which converges near the location where the plain series does not.
+  The number of terms comes from a bound on the truncation error, with a tolerance of 1e-12 relative to the mass of the window.
+  Results agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails and for delays close to 0.
+  The exponential and gamma forms need the largest positive tilt of the series to be below the rate, so they apply for a location after the window or for a large rate, and otherwise use the numerical path.
+  Stan chooses the path with the new `check_for_analytical_window()`, as the choice depends on the window.
+  The normal form has no restriction.
+  See #370.
+- The exponential and gamma tilt transforms in R accept a vector of tilts, marked by the new internal generic `.pcens_tilt_vectorised()`, so that the tilts of a series are evaluated at the endpoints in one call.
+  In Stan the log of the upper tail of a gamma far beyond its mean is finite rather than `-inf`, and the normal tilt terms have an exact derivative far into the lower tail.
+  See #370.
+- The vectorised Stan PMF functions use shared terms for the truncated logistic solutions with an integer `pwindow`, in `primarycensored_tlogis_lcdf_vectorized()`.
+  The split points are shared too for an integer location, and otherwise each delay is evaluated on its own.
+  See #370.
 
 ## Bug fixes
 

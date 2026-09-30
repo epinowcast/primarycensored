@@ -342,3 +342,19 @@ test_that("each endpoint is evaluated once for integer delays", {
     expect_gte(counts$points, 23)
   }
 })
+
+test_that("non-parametric delays use the truncated logistic CDF", {
+  boundaries <- c(0, 1, 3, 6, 10)
+  pmf <- c(0.2, 0.3, 0.35, 0.15)
+  obj <- new_pcens(
+    pdist = pdiscretestep, dprimary = dtlogis,
+    primary_args = list(location = 0.5, scale = 0.3),
+    boundaries = boundaries, pmf = pmf
+  )
+  q <- c(0.5, 1.5, 3, 5, 8, 12)
+  expect_equal(
+    pcens_cdf(obj, q, 2),
+    pcens_cdf(obj, q, 2, use_numeric = TRUE),
+    tolerance = 1e-6
+  )
+})
