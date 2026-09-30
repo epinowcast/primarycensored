@@ -146,3 +146,74 @@ test_that("update.pcens errors on invalid parameters", {
     "primary_args must be named"
   )
 })
+
+test_that("update.pcens with .check = FALSE matches the checked result", {
+  for (case in update_cases) {
+    obj <- do.call(
+      new_pcens,
+      c(list(case$pdist, case$dprimary, case$primary_args), case$old)
+    )
+    checked <- do.call(update, c(list(obj), case$new))
+    unchecked <- do.call(update, c(list(obj), case$new, list(.check = FALSE)))
+    expect_identical(unchecked, checked)
+    expect_identical(
+      pcens_cdf(unchecked, c(0.5, 2, 10), 1),
+      pcens_cdf(checked, c(0.5, 2, 10), 1)
+    )
+  }
+})
+
+test_that("update.pcens with .check = FALSE matches for primary_args", {
+  obj <- new_pcens(
+    pgamma, dexpgrowth, list(r = 0.2), shape = 2, scale = 3
+  )
+  checked <- update(obj, scale = 1, primary_args = list(r = 0.5))
+  unchecked <- update(
+    obj, scale = 1, primary_args = list(r = 0.5), .check = FALSE
+  )
+  expect_identical(unchecked, checked)
+  expect_identical(unchecked$dprimary_args, list(r = 0.5))
+})
+
+test_that("update.pcens with .check = FALSE leaves the object with no updates", {
+  obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
+  expect_identical(update(obj, .check = FALSE), obj)
+})
+
+test_that("update.pcens with .check = FALSE skips validation", {
+  obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
+  expect_error(update(obj, shap = 2), "shap")
+  expect_no_error(update(obj, shap = 2, .check = FALSE))
+  expect_identical(
+    update(obj, shap = 2, .check = FALSE)$args,
+    list(shape = 1.5, scale = 2, shap = 2)
+  )
+  expect_no_error(
+    update(obj, primary_args = list(0.5), .check = FALSE)
+  )
+})
+
+test_that("update.pcens checks by default and unless .check is FALSE", {
+  obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
+  expect_error(update(obj, shap = 2, .check = TRUE), "shap")
+  # Only an explicit FALSE turns the checks off
+  expect_error(update(obj, shap = 2, .check = NA), "shap")
+  expect_error(update(obj, shap = 2, .check = "no"), "shap")
+})
+
+test_that(".fit_pcens_state updates the cached object without checks", {
+  cache <- new.env(parent = emptyenv())
+  state <- .fit_pcens_state(
+    cache, pgamma, dunif, list(), NULL, list(shape = 1.5, scale = 2)
+  )
+  expect_identical(state$obj$args, list(shape = 1.5, scale = 2))
+  state <- .fit_pcens_state(
+    cache, pgamma, dunif, list(), NULL, list(shape = 3, scale = 0.7)
+  )
+  expect_identical(state$obj$args, list(shape = 3, scale = 0.7))
+  # Names are validated once at set-up, not on every update
+  state <- .fit_pcens_state(
+    cache, pgamma, dunif, list(), NULL, list(shap = 3)
+  )
+  expect_true("shap" %in% names(state$obj$args))
+})
