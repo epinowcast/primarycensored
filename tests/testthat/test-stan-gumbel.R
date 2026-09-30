@@ -330,7 +330,9 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
           reference <- gumbel_reference(
             case$d, pwindow, mu, beta, cdf, positive
           )
-          expect_lt(gumbel_error(ode, reference), 1e-7, label = info)
+          expect_lt(
+            gumbel_error(ode, reference, floor = 1e-8), 1e-7, label = info
+          )
           accepted <- rep(FALSE, length(case$d))
           if (analytic) {
             fit <- .gumbel_lcdf(
@@ -342,7 +344,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
           # The series is accurate to 1e-8 and so is the ODE path, at every
           # mu / beta, where the density can be a narrow spike
           expect_lt(
-            gumbel_error(plain, reference), 1e-7, label = info
+            gumbel_error(plain, reference, floor = 1e-8), 1e-7, label = info
           )
           expect_lt(
             max(0, abs(plain - reference)[accepted]), 1e-8,
@@ -398,6 +400,9 @@ test_that("points where the series loses accuracy use the ODE", {
   )
 })
 
+# The ODE path is accurate to about 1e-15 absolute for a small CDF, so it is
+# compared with a floor of 1e-8 on the reference, see gumbel_error().
+
 # Delays long relative to the window, for which the series does not apply,
 # with the matching family of gumbel_spike_families()
 gumbel_spike_stan_cases <- list(
@@ -423,13 +428,17 @@ test_that("the ODE path resolves a narrow spike of the window density", {
         family$q, primarycensored_numeric_cdf, numeric(1),
         case$dist_id, case$params, s[["w"]], 4L, primary
       )
-      expect_lt(gumbel_error(ode, reference), 1e-7, label = label)
+      expect_lt(
+        gumbel_error(ode, reference, floor = 1e-8), 1e-7, label = label
+      )
       plain <- vapply(
         family$q, primarycensored_cdf, numeric(1),
         case$dist_id, case$params, s[["w"]],
         if (family$positive) 0 else -Inf, Inf, 4L, primary
       )
-      expect_lt(gumbel_error(plain, reference), 1e-7, label = label)
+      expect_lt(
+        gumbel_error(plain, reference, floor = 1e-8), 1e-7, label = label
+      )
       lcdf <- vapply(
         family$q, primarycensored_lcdf, numeric(1),
         case$dist_id, case$params, s[["w"]],
@@ -458,7 +467,7 @@ test_that("the ODE path is accurate for a large mu over beta", {
         18L, c(3, 2), pwindow, 4L, c(mu, beta)
       )
       expect_lt(
-        gumbel_error(ode, reference), 1e-7,
+        gumbel_error(ode, reference, floor = 1e-8), 1e-7,
         label = sprintf("mu over beta %g, pwindow %g", ratio, pwindow)
       )
     }
@@ -486,7 +495,10 @@ test_that("the ODE path handles a location far below the window", {
       )$value
     }, numeric(1))
     expect_true(all(ode >= 0 & ode <= 1), info = toString(s))
-    expect_lt(gumbel_error(ode, reference), 1e-7, label = toString(s))
+    expect_lt(
+      gumbel_error(ode, reference, floor = 1e-8), 1e-7,
+      label = toString(s)
+    )
   }
 })
 
@@ -574,7 +586,7 @@ test_that("a series rejected by the estimate is replaced by an accurate ODE", {
   )
 })
 
-test_that("Stan tgumbel functions are accurate for a spike and a far location", {
+test_that("Stan tgumbel is accurate for a spike and a far location", {
   # s(xmax) = exp(25), so the density needs the difference of s
   t <- c(0, 1e-13, 1e-12, 5e-12)
   x <- 1 - t
@@ -923,6 +935,56 @@ test_that("the vectorised Gumbel log PMF has finite gradients matching
   }
 })
 
+# The compiled model is shared by the tests that sample from it
+gumbel_pcens_model_cache <- new.env()
+gumbel_pcens_model <- function() {
+  if (is.null(gumbel_pcens_model_cache$model)) {
+    gumbel_pcens_model_cache$model <- suppressMessages(
+      suppressWarnings(pcd_cmdstan_model())
+    )
+  }
+  gumbel_pcens_model_cache$model
+}
+
+test_that("the model rejects the reserved primary identifier 3", {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if_not_installed("dplyr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  delay_counts <- data.frame(
+    delay = 1:3, delay_upper = 2:4, n = 5L, pwindow = 1L,
+    start_relative_obs_time = 0, relative_obs_time = 10
+  )
+  stan_data <- pcd_as_stan_data(
+    delay_counts,
+    dist_id = pcd_stan_dist_id("lognormal", "delay"),
+    primary_id = 1,
+    param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
+    priors = list(location = c(0, 1), scale = c(5, 2.5)),
+    primary_priors = list(location = numeric(0), scale = numeric(0))
+  )
+  model <- gumbel_pcens_model()
+  # The identifier 3 is reserved and has no primary distribution
+  stan_data$primary_id <- 3L
+  messages <- character()
+  withCallingHandlers(
+    suppressWarnings(tryCatch(
+      model$sample(
+        data = stan_data, chains = 1, iter_warmup = 1, iter_sampling = 1,
+        refresh = 0, show_messages = TRUE
+      ),
+      error = function(e) NULL
+    )),
+    message = function(m) {
+      messages <<- c(messages, conditionMessage(m))
+      invokeRestart("muffleMessage")
+    }
+  )
+  expect_true(any(grepl("primary_id 3 is reserved", messages)))
+})
+
 test_that(
   "pcd_cmdstan_model recovers true values for a normal delay with a
    truncated Gumbel primary",
@@ -976,7 +1038,7 @@ test_that(
       primary_priors = list(location = c(-0.5, 1), scale = c(0.1, 0.1))
     )
 
-    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    model <- gumbel_pcens_model()
     fit <- suppressMessages(suppressWarnings(model$sample(
       data = stan_data,
       seed = 321,

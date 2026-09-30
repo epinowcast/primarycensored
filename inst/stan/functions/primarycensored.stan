@@ -127,6 +127,13 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
                                  array[] real params, data real pwindow,
                                  data int primary_id,
                                  array[] real primary_params) {
+  // The truncated Gumbel window can be a narrow spike, which this integration
+  // over the window would step over, so it integrates in another variable
+  if (primary_id == 4) {
+    return primarycensored_gumbel_numeric_cdf(
+      d | dist_id, params, pwindow, primary_params[1], primary_params[2]
+    );
+  }
   // The integration variable ranges over the primary-event time, so the
   // natural lower bound is d - pwindow. For positive-support delays the
   // integrand `F_delay(t)` is 0 for t <= 0. Starting at 0 when d < pwindow
@@ -269,12 +276,15 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
       positive_infinity(), primary_id, primary_params
     );
   } else {
-    // Use numerical integration
-    result = log(primarycensored_cdf(
+    // Use numerical integration. A CDF at or below 0, below the solver
+    // tolerance, is -inf, and one above 1 is capped, so the result is never
+    // NaN or above 0.
+    real cdf = primarycensored_cdf(
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
       positive_infinity(), primary_id, primary_params
-    ));
+    );
+    result = cdf > 0 ? fmin(log(cdf), 0) : negative_infinity();
   }
 
   // Handle truncation normalization. Skip when F(L) = 0 makes it a no-op
