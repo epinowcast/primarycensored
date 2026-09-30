@@ -20,6 +20,6 @@ zero-width windows and secondary intervals that extend past \code{D}.}
 \code{NULL} invisibly. Called for its errors.
 }
 \description{
-Validate the per-observation inputs of pcens_loglik_fn()
+Validate the per-observation inputs of \code{pcens_loglik_fn()}
 }
 \keyword{internal}
