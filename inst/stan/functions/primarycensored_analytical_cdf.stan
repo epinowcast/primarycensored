@@ -29,20 +29,13 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * its own: without a matching update here the new primary silently falls
   * back to numerical integration.
   *
-  * The exponential (4), gamma (2) and normal (18) delays with an
-  * exponentially tilted primary (2) have an analytical solution built from
-  * tilt transforms, see check_for_exptilt(). So do they with a truncated
-  * Gumbel primary (4), see check_for_gumbel(). They apply only where the
-  * tilted delay exists, which depends on the parameters. Use
-  * check_for_analytical_params() to choose between the analytical and the
-  * numerical path.
+  * The exponentially tilted and truncated Gumbel solutions may not apply for
+  * given parameters, see check_for_analytical_params().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
   *
-  * @return 1 if an analytical solution exists, 0 otherwise. For the
-  * exponentially tilted solutions it may still not apply for given
-  * parameters, see check_for_analytical_params().
+  * @return 1 if an analytical solution exists, 0 otherwise
   */
 int check_for_analytical(int dist_id, int primary_id) {
   // Gamma, Lognormal, Weibull and generalised gamma with a Uniform primary
@@ -62,11 +55,9 @@ int check_for_analytical(int dist_id, int primary_id) {
   * Check if the analytical solution applies for the given parameters
   * @ingroup analytical_solution_helpers
   *
-  * This is check_for_analytical() and, for solutions that depend on the
-  * parameters, their admissibility. The exponentially tilted solutions need
-  * the tilted delay distribution to exist, see check_for_tilt_transform().
-  * Where it does not, the numerical path is used. This is the check used to
-  * choose the path in primarycensored_cdf() and primarycensored_lcdf().
+  * This is check_for_analytical() and, for the exponentially tilted
+  * solutions, that the tilted delay exists, see check_for_tilt_transform().
+  * It chooses the path in primarycensored_cdf() and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
@@ -200,7 +191,11 @@ vector primarycensored_lognormal_uniform_terms(real t,
 real log_weibull_g(real t, real shape, real scale) {
   real x = pow(t * inv(scale), shape);
   real a = 1 + inv(shape);
-  return log(gamma_p(a, x)) + lgamma(a);
+  // gamma_lcdf(x | a, 1) is log(gamma_p(a, x)), but reverse-mode gamma_p()
+  // returns zero gradients for x / a > 10
+  // (https://github.com/stan-dev/math/issues/2006). gamma_lcdf() has the
+  // same value and computes its own gradients without that cutoff.
+  return gamma_lcdf(x | a, 1) + lgamma(a);
 }
 
 /**
@@ -385,10 +380,6 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
   real q = max({d - pwindow, 0});
 
   if (check_for_exptilt(dist_id, primary_id)) {
-    // The delay must have a tilt transform for this tilt, otherwise the
-    // caller should have used the numerical path, see
-    // check_for_analytical_params(). The delays here have support on the
-    // non-negative reals or on the reals, so q is not clipped at 0.
     if (!check_for_tilt_transform(dist_id, -primary_params[1], params)) {
       reject(
         "The tilted delay distribution does not exist for tilt ",
@@ -476,8 +467,8 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
     d, dist_id, params, pwindow, primary_id, primary_params
   );
 
-  // Apply truncation normalization. Delays with support on the reals need it
-  // for a finite negative L too, as F(L) is not zero there.
+  // Apply truncation normalization, also for a finite negative L for delays
+  // on the reals
   if (!is_inf(D) || L > 0
       || (!is_inf(L) && !dist_has_positive_support(dist_id))) {
     vector[2] bounds = primarycensored_truncation_bounds(

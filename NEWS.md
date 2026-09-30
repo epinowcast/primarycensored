@@ -2,74 +2,31 @@
 
 ## New features
 
-- Added transform based analytical solutions for an exponentially tilted primary event window (`dexpgrowth()` with `r` as the tilt) and exponential, gamma and normal delays.
-  The solutions are built from the truncated exponential-moment transform of the delay density, which later windows and delay families reuse.
-  In R, `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dexpgrowth()`, `pcens_cdf.pcens_pgamma_dexpgrowth()` and `pcens_cdf.pcens_pnorm_dexpgrowth()`, and a new delay is added by methods of the internal generics `.pcens_tilt_transform()`, `.pcens_tilt_available()`, `.pcens_tilt_lower()` and `.pcens_tilt_moments()`.
-  In Stan the transforms are `check_for_tilt_transform()`, `log_tilt_transform()`, `log_tilt_transform_upper()` and `log_tilt_transform_pair()`, and the CDF is `primarycensored_exptilt_lcdf()`.
-  All terms are evaluated on the log scale and agree with numerical integration to a relative difference of about 1e-9 or better (up to 5e-9 in Stan for windows of 1e-3), except for the normal deep lower tail with a small tilt (about 1e-7) and windows below about 1e-5 of the delay (see `?pcens_cdf_exptilt`).
-  Forms for a tilt or a delay close to zero keep the precision that the direct form loses as the tilt goes to zero.
-  The exponential and gamma forms need the tilted delay to exist, `rate + r > 0`, and otherwise use the numerical path.
-  The Stan ODE path is less accurate in the lower tail of a gamma with a shape below 1, see `?pcens_cdf_exptilt`.
-  The Stan gradients of the gamma solution are exact for any shape.
-  The incomplete gamma function comes from a series and a continued fraction, as the shape derivatives of Stan's `gamma_lcdf()` and `gamma_lccdf()` are inaccurate in parts of the bulk and NaN for shapes of about 200 or more.
-  The derivative in the rate of a log CDF close to 0 no longer loses the tail to the log of the total.
-  The small tilt forms have a derivative in the tilt with a relative error of up to about 2e-5 at their thresholds, see `?pcens_cdf_exptilt`.
-  The gamma solution for the uniform primary still uses `gamma_lcdf()` and has that inaccuracy in the shape gradient, see #395.
-  In R a gamma delay with only a `shape` has rate 1, as in `pgamma()`.
-  The R method is about 2 to 2.5 times faster than `use_numeric = TRUE` for 10 `q`, about 10 to 17 times faster for 100 `q` and about 1.5 to 3 times slower for a single `q`, which is kept on accuracy grounds.
-  In Stan a primary window of width 0 gives the delay CDF.
+- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan.
+  `pcens_cdf()` and the vectorised Stan PMF use them in place of numerical integration, with the numerical path kept as a fallback outside their valid region, see `?pcens_cdf_exptilt`.
+  The normal delay is the first analytical solution for a delay on the reals.
   See #367.
-- Added a truncated Gumbel primary event distribution, `dtgumbel()`, `ptgumbel()` and `rtgumbel()`, registered as primary distribution 4 with `primary_params = [mu, beta]`.
-  It is the Gumbel distribution with location `mu` and scale `beta` truncated to the primary window, for exposure that builds up and decays unevenly within the window.
-  The Stan equivalents are `tgumbel_lpdf()`, `tgumbel_lcdf()` and `tgumbel_rng()`, and the ODE path and the dispatch accept `primary_id = 4`.
-  The CDFs are evaluated on the log scale and stay precise when `mu` is far from the window.
-  See #371.
-- Added a series solution for the truncated Gumbel primary with exponential, gamma and normal delays, built from the transform of the delay at the tilts `n / beta`.
-  In R `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dtgumbel()`, `pcens_cdf.pcens_pgamma_dtgumbel()` and `pcens_cdf.pcens_pnorm_dtgumbel()`, and in Stan the solution is `primarycensored_gumbel_lcdf()` and the vectorised `primarycensored_gumbel_lcdf_vectorized()`, which computes the transforms once per integer delay and shares them between the two windows that use the endpoint.
-  The series alternates, so the terms are accumulated on the log scale with the odd and even terms separate, and the relative error is estimated for each delay.
-  The numerical path is used for delays where it is above 1e-8, the accuracy of the numerical path, and for parameters where `mu / beta` is above `log(15)` or the delay has no transform at the largest tilt (`check_for_gumbel_params()` in Stan).
-  The numerical path integrates in the variable in which a narrow window density is smooth, so it is accurate for any `mu / beta`, and in Stan it does not return a CDF above 1 or a NaN log CDF.
-  The exponential and gamma delays need a rate above the number of terms over `beta`, so in practice the series is for normal delays and for short exponential and gamma delays.
-  This limit comes from the upper tail form of the transform and not from the mathematics, as the transform over a bounded interval is finite for every tilt, see #399.
-  Accepted values agree with numerical integration to a relative difference of about 1e-8, at most 2e-8 in tests.
-  In Stan a single log CDF from the series takes 5 to 10 microseconds and from the numerical path 80 to 180 microseconds, which is 8 to 36 times faster, and in R `pcens_cdf()` is 2 to 4 times faster than `use_numeric = TRUE`.
-  The gradient of ten log CDFs of a normal delay is about 3.5 times faster than with the numerical path in a short sampling benchmark, and the gradient of the vectorised log PMF was 3 to 5 times faster in an earlier benchmark.
-  The gradients match finite differences to a relative 1e-4 over the parameter grid of the tests.
-  The normal transform uses an asymptotic form of `log(Phi(z))` with an exact derivative below `z = -37`, where `std_normal_lcdf()` has a derivative that is off by 1e-5 to 1e-2 and that the alternating sum had amplified to gradients that were wrong by up to a factor of 6.
-  The gamma shape gradient of Stan is approximate, so for the gamma the series is used only where the ratio of the sum of the absolute terms to the sum is at most 200, see `gumbel_series_accepted()`.
-  See #371.
-- The normal delay is the first analytical solution for a delay with support on the reals.
-  Its terms are not zero for negative delays, and the analytical truncation now normalises a finite negative lower bound for such delays.
-  See #367.
-- The vectorised Stan PMF functions `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` use shared terms for the exponentially tilted solutions with an integer `pwindow`.
-  The terms at each integer delay are computed once and used by the two windows that share it, in `primarycensored_exptilt_lcdf_vectorized()`.
-  The gradient is about 5 to 15 times faster than with the ODE in a short benchmark, see #367.
 
 ## Bug fixes
 
-- The Stan numerical path of the truncated Gumbel primary is evaluated on the log scale in pieces, so the lower tail is no longer returned as `-Inf` or as a wrong value.
-  This gave `-Inf` log PMFs, and rejected initial values, for short delays with a window that is late relative to them, for example a gamma(5, 1) delay.
-  It starts at the point where the delay CDF leaves 0 for delays on the non-negative reals, integrates on in pieces while the mass of the window is still there for a normal delay, and for a location below the window end integrates from the peak of the integrand to each end of the range.
-  `primarycensored_lcdf()` uses it directly for the truncated Gumbel, so a CDF below 1e-300 is not lost.
-  A normal delay so far below the window that the log CDF is below about -1000 is rejected with an explicit message, rather than returning a bound.
-  See #371.
-- The Stan numerical path of the truncated Gumbel primary with `mu` below the window end passes an upper limit at the window end or at `d` to the ODE solver as data.
-  The sensitivity to that limit is singular for a gamma or Weibull delay with shape below 1, and the gradient failed with `max_num_steps` after about 15 seconds, including for the vectorised daily PMF.
-  It now takes about 0.1 seconds.
-  See #371.
+- A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
+  Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
+  See #364.
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.
   See #367.
-- The Stan numerical path starts integrating at 0 for delays on the non-negative reals when `d < pwindow`, rather than at the negative `d - pwindow`.
-  The solver stepped over the kink at 0 with a relative error of order 1e-3 for small `d`.
-  It is now `primarycensored_numeric_cdf()`, used by `primarycensored_cdf()`.
-  See #367.
+
+## Performance
+
+- `update()` for `pcens` objects has a new `check` argument.
+  With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names.
+  The default, `check = TRUE`, is unchanged.
+  `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
+  See #379.
 
 ## Breaking changes
 
-- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`, and also `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`, which the dispatch now uses.
-- `primarycensored_cdf()` and `primarycensored_lcdf()` choose the analytical path with `check_for_analytical_params()`, which adds the parameters to `check_for_analytical()`.
-  `check_for_analytical()` still checks the distribution identifiers only.
+- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`.
 
 # primarycensored 1.6.0
 
