@@ -159,6 +159,9 @@ pcens_cdf.default <- function(
 #' edge of the window nearest to it when the location is outside. This
 #' returns break points at multiples of the scale from that centre, for
 #' [pcens_cdf.default()] to integrate between. Other primaries have none.
+#' The primary is the truncated logistic if it is [dtlogis()] or if the
+#' class of `object` names it, as for a function with the name attribute
+#' `"dtlogis"`, which S3 dispatch treats as [dtlogis()].
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -167,7 +170,9 @@ pcens_cdf.default <- function(
 #'
 #' @keywords internal
 .primary_spike_breaks <- function(object, pwindow) {
-  if (!identical(object$dprimary, dtlogis)) {
+  is_tlogis <- identical(object$dprimary, dtlogis) ||
+    endsWith(class(object)[1L], "_dtlogis")
+  if (!is_tlogis) {
     return(numeric(0))
   }
   primary <- .tlogis_primary_args(object)

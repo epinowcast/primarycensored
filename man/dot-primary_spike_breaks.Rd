@@ -25,5 +25,8 @@ small, without a warning. For the truncated logistic primary
 edge of the window nearest to it when the location is outside. This
 returns break points at multiples of the scale from that centre, for
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} to integrate between. Other primaries have none.
+The primary is the truncated logistic if it is \code{\link[=dtlogis]{dtlogis()}} or if the
+class of \code{object} names it, as for a function with the name attribute
+\code{"dtlogis"}, which S3 dispatch treats as \code{\link[=dtlogis]{dtlogis()}}.
 }
 \keyword{internal}
