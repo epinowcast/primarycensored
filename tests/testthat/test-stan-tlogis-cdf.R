@@ -797,7 +797,7 @@ test_that("the gamma shape gradient is accurate where the series cancel", {
   # heavily, which amplifies any error in the gradient of the shape of the
   # terms. These points had errors of 2% to 7%, and 2.6 times at the last.
   points <- list(
-    list(shape = 2, rate = 5, d = 1.7, pwindow = 1, location = 0.5, scale = 50),
+    list(shape = 2.1, rate = 5, d = 1.7, pwindow = 1, location = 0.5, scale = 50),
     list(shape = 6, rate = 2, d = 4, pwindow = 1, location = -1, scale = 50),
     list(shape = 6, rate = 2, d = 4, pwindow = 1, location = 3, scale = 2),
     list(shape = 2, rate = 20, d = 0.3, pwindow = 1, location = 0.5, scale = 2),
