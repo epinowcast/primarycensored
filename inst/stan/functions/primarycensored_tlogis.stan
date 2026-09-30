@@ -563,8 +563,7 @@ real primarycensored_tlogis_small_delay_lcdf(data real d, int dist_id,
   *
   * The gradient with respect to the shape of a gamma delay comes from the
   * gamma tilt transforms, see log_tilt_transform_pair(), which avoid the
-  * inaccurate gradients of Stan's `gamma_lccdf()` and of `gamma_lcdf()` in
-  * the tails. It agrees with the gradient of a reference integral to a
+  * inaccurate gradients of Stan's `gamma_lccdf()` and of `gamma_lcdf()`. It agrees with the gradient of a reference integral to a
   * relative 1e-5 or so for shapes from 2 to 250 (checked), in the body
   * and in both tails, including where the series cancel for a scale that is
   * large relative to the window.

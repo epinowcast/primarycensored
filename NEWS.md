@@ -37,10 +37,8 @@
   The number of terms comes from a bound on the truncation error, with a tolerance of 1e-10 relative to the mass of the window.
   Results agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails and for delays close to 0.
   The gradient of the gamma shape agrees with the gradient of a reference integral to a relative 1e-5 or so, checked for shapes of 2 to 250 over the body and both tails, and at windows and scales up to 50 times the window.
-  Stan's gradients of `gamma_lccdf()` and of `gamma_lcdf()` in the shape are not that accurate.
-  They have relative errors of up to 1e-2 in the body and of 80% for probabilities below 1e-10 for `gamma_lcdf()`, and of 1e-4 to 2e-3 at shapes of 50 to 150 far into the upper tail for `gamma_lccdf()`, which is NaN from a shape of about 200.
-  Smaller errors of up to 6e-6 for `gamma_lcdf()` in the lower tail were amplified by the cancellation in the series, to errors of up to 5% at shape 150.
-  So the gamma tilt transform sums the lower incomplete gamma function as a series in autodiff below half of the shape plus one, takes the upper tail from a continued fraction in autodiff where it is below about 1e-7, and otherwise uses `gamma_lcdf()`.
+  Stan's gradients of `gamma_lccdf()` and of `gamma_lcdf()` in the shape are not accurate enough for the series, which amplify their errors.
+  The gamma tilt transform, shared with the exponentially tilted solutions, uses a series and a continued fraction in autodiff for the smaller tail, see #367.
   The exponential and gamma forms need the largest positive tilt of the series to be below the rate, so they apply for a location after the window or for a large rate, and otherwise use the numerical path.
   Stan chooses the path with the new `check_for_analytical_window()`, as the choice depends on the window.
   The normal form has no restriction.
