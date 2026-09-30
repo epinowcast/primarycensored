@@ -1,3 +1,38 @@
+# primarycensored (development version)
+
+## New features
+
+- Added transform based analytical solutions for an exponentially tilted primary event window (`dexpgrowth()` with `r` as the tilt) and exponential, gamma and normal delays.
+  The solutions are built from the truncated exponential-moment transform of the delay density, which later windows and delay families reuse.
+  In R, `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dexpgrowth()`, `pcens_cdf.pcens_pgamma_dexpgrowth()` and `pcens_cdf.pcens_pnorm_dexpgrowth()`, and a new delay is added by methods of the internal generics `.pcens_tilt_transform()`, `.pcens_tilt_available()`, `.pcens_tilt_lower()` and `.pcens_tilt_moments()`.
+  In Stan the transforms are `check_for_tilt_transform()`, `log_tilt_transform()`, `log_tilt_transform_upper()` and `log_tilt_transform_pair()`, and the CDF is `primarycensored_exptilt_lcdf()`.
+  All terms are evaluated on the log scale and agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails.
+  Forms for a tilt or a delay close to zero keep the precision that the direct form loses as the tilt goes to zero.
+  The exponential and gamma forms need the tilted delay to exist, `rate + r > 0`, and otherwise use the numerical path.
+  See #367.
+- The normal delay is the first analytical solution for a delay with support on the reals.
+  Its terms are not zero for negative delays, and the analytical truncation now normalises a finite negative lower bound for such delays.
+  See #367.
+- The vectorised Stan PMF functions `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` use shared terms for the exponentially tilted solutions with an integer `pwindow`.
+  The terms at each integer delay are computed once and used by the two windows that share it, in `primarycensored_exptilt_lcdf_vectorized()`.
+  The gradient is about 5 to 15 times faster than with the ODE in a short benchmark, see #367.
+
+## Bug fixes
+
+- `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
+  A single integral returned 0 or an error for delays that are small relative to the primary window.
+  See #367.
+- The Stan numerical path starts integrating at 0 for delays on the non-negative reals when `d < pwindow`, rather than at the negative `d - pwindow`.
+  The solver stepped over the kink at 0 with a relative error of order 1e-3 for small `d`.
+  It is now `primarycensored_numeric_cdf()`, used by `primarycensored_cdf()`.
+  See #367.
+
+## Breaking changes
+
+- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`.
+- `primarycensored_cdf()` and `primarycensored_lcdf()` choose the analytical path with `check_for_analytical_params()`, which adds the parameters to `check_for_analytical()`.
+  `check_for_analytical()` still checks the distribution identifiers only.
+
 # primarycensored 1.6.0
 
 This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.
