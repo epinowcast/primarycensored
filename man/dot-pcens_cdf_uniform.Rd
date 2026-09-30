@@ -13,14 +13,12 @@
 observed primary event, in which case the delay CDF is used directly.}
 
 \item{terms_fn}{Function of a numeric vector of delays, all greater than or
-equal to zero, returning \eqn{G} at each.
-Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
-delay, is done inside \code{terms_fn}.}
+equal to zero, returning \eqn{G} at each.}
 
-\item{upper_fn}{Function of a numeric vector of delays, all
-greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
-at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
-and partial expectation distributions.}
+\item{upper_fn}{Function of a numeric vector of delays, all greater than or
+equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where
+\eqn{S} and \eqn{\tilde S} are the upper tails of \eqn{F} and
+\eqn{\tilde F}.}
 
 \item{switch_at}{Delay above which the window start may use \code{upper_fn}.}
 
@@ -32,20 +30,15 @@ Numeric vector of CDF values in [0, 1].
 }
 \description{
 For a delay with mean \eqn{E} and a uniform primary event window of width
-\eqn{w}, the primary event censored CDF at \eqn{d} is
-\eqn{(G(d) - G(q)) / w} with \eqn{q = \max(d - w, 0)} and
-\eqn{G(t) = t F(t) - E \tilde F(t)}, where \eqn{F} is the delay CDF and
-\eqn{\tilde F} is the CDF of the partial expectation distribution.
-A delay distribution with an analytical solution of this form is added by
-supplying \code{terms_fn}, with \code{upper_fn} and \code{delay_cdf} for the far upper
-tail and very narrow windows, see \code{.uniform_window_cdf()}.
+\eqn{w}, the CDF at \eqn{d} is \eqn{(G(d) - G(q)) / w} with
+\eqn{q = \max(d - w, 0)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
+\eqn{F} is the delay CDF and \eqn{\tilde F} is the CDF of the partial
+expectation distribution.
 }
 \details{
 Delays at or below zero give 0 and delays of \code{Inf} give 1.
-Missing delays are an error, which \code{.dpcens()} and \code{.ppcens()} turn into
-\code{NaN}.
-Elements of \code{pwindow} equal to 0 are exact primary events and give the
-delay CDF, from \code{delay_cdf}.
+Missing delays are an error.
+Elements of \code{pwindow} equal to 0 give the delay CDF.
 \code{q} and \code{pwindow} are recycled against each other, with a warning if the
 longer length is not a multiple of the shorter.
 }

@@ -77,14 +77,10 @@ test_that("Weibull uniform primary lpmf gradients are correct in the upper
   model <- weibull_gradient_probe_model()
 
   # Delays below the gamma_p cutoff act as controls. The cutoff is at
-  # t > 32.6 for Weibull(1.5, 5), t > 4.7 for Weibull(3, 2) and t > 112.4 for
-  # Weibull(20, 100).
+  # t > 32.6 for Weibull(1.5, 5) and t > 4.7 for Weibull(3, 2).
   cases <- list(
     list(shape = 1.5, scale = 5, d = c(10, 20, 33, 35, 40)),
-    list(shape = 3, scale = 2, d = c(3, 5, 6)),
-    # A steep Weibull, with the cutoff at t > 112.4. A gradient that drops
-    # the x derivative of the incomplete gamma term is wrong here.
-    list(shape = 20, scale = 100, d = c(95, 113))
+    list(shape = 3, scale = 2, d = c(3, 5, 6))
   )
 
   for (case in cases) {

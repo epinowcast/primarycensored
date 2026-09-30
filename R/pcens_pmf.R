@@ -119,7 +119,7 @@ pcens_pmf.default <- function(
   cdfs <- numeric(0)
   if (length(unique_points) > 0) {
     cdfs <- pcens_cdf(object, unique_points, pwindow)
-    # Set the infinite points directly rather than rely on each method
+    # Some analytical methods return NaN at Inf
     cdfs[unique_points == -Inf] <- 0
     cdfs[unique_points == Inf] <- 1
 

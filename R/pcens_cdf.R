@@ -285,19 +285,14 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #' Uniform primary event censored CDF from terms at the window ends
 #'
 #' For a delay with mean \eqn{E} and a uniform primary event window of width
-#' \eqn{w}, the primary event censored CDF at \eqn{d} is
-#' \eqn{(G(d) - G(q)) / w} with \eqn{q = \max(d - w, 0)} and
-#' \eqn{G(t) = t F(t) - E \tilde F(t)}, where \eqn{F} is the delay CDF and
-#' \eqn{\tilde F} is the CDF of the partial expectation distribution.
-#' A delay distribution with an analytical solution of this form is added by
-#' supplying `terms_fn`, with `upper_fn` and `delay_cdf` for the far upper
-#' tail and very narrow windows, see `.uniform_window_cdf()`.
+#' \eqn{w}, the CDF at \eqn{d} is \eqn{(G(d) - G(q)) / w} with
+#' \eqn{q = \max(d - w, 0)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
+#' \eqn{F} is the delay CDF and \eqn{\tilde F} is the CDF of the partial
+#' expectation distribution.
 #'
 #' Delays at or below zero give 0 and delays of `Inf` give 1.
-#' Missing delays are an error, which `.dpcens()` and `.ppcens()` turn into
-#' `NaN`.
-#' Elements of `pwindow` equal to 0 are exact primary events and give the
-#' delay CDF, from `delay_cdf`.
+#' Missing delays are an error.
+#' Elements of `pwindow` equal to 0 give the delay CDF.
 #' `q` and `pwindow` are recycled against each other, with a warning if the
 #' longer length is not a multiple of the shorter.
 #'
@@ -305,13 +300,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'
 #' @param terms_fn Function of a numeric vector of delays, all greater than or
 #'  equal to zero, returning \eqn{G} at each.
-#'  Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
-#'  delay, is done inside `terms_fn`.
 #'
-#' @param upper_fn Function of a numeric vector of delays, all
-#'  greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
-#'  at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
-#'  and partial expectation distributions.
+#' @param upper_fn Function of a numeric vector of delays, all greater than or
+#'  equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where
+#'  \eqn{S} and \eqn{\tilde S} are the upper tails of \eqn{F} and
+#'  \eqn{\tilde F}.
 #'
 #' @param switch_at Delay above which the window start may use `upper_fn`.
 #'
@@ -323,7 +316,7 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #' @keywords internal
 .pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn, switch_at,
                                delay_cdf) {
-  check_pwindow(q, pwindow)
+  .check_pwindow(q, pwindow)
   if (length(pwindow) > 1L && length(q) != length(pwindow)) {
     if (length(q) == 0L) {
       return(numeric(0))
@@ -335,7 +328,6 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   has_exact <- any(pwindow == 0)
   active <- q > 0 & q < Inf
   if (!has_exact && all(active)) {
-    # The common case, with every delay positive and finite
     result <- .uniform_window_cdf(
       q, pwindow, terms_fn, upper_fn, switch_at, delay_cdf
     )
@@ -345,7 +337,6 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   result <- numeric(length(q))
   result[q == Inf] <- 1
   if (has_exact) {
-    # Exact primary events are the delay CDF
     exact <- active & pwindow == 0
     if (any(exact)) {
       result[exact] <- delay_cdf(q[exact])
@@ -358,7 +349,6 @@ pcens_cdf.pcens_pdiscretehazard <- function(
       terms_fn, upper_fn, switch_at, delay_cdf
     )
   }
-  # Ensure the result is in [0, 1] (accounts for numerical errors)
   pmin.int(1, pmax.int(0, result))
 }
 
@@ -367,15 +357,13 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 
 #' Check the delays and window widths of a uniform primary CDF
 #'
-#' Errors if `q` has missing values or `pwindow` is empty, has missing values
-#' or is negative.
-#'
 #' @inheritParams .pcens_cdf_uniform
 #'
-#' @return `NULL`, invisibly.
+#' @return `NULL`, invisibly. Errors if `q` has missing values or `pwindow` is
+#'  empty, has missing values or is negative.
 #'
 #' @keywords internal
-check_pwindow <- function(q, pwindow) {
+.check_pwindow <- function(q, pwindow) {
   if (anyNA(q)) {
     stop("q must not contain missing values.", call. = FALSE)
   }
@@ -406,10 +394,9 @@ check_pwindow <- function(q, pwindow) {
   list(q = rep_len(q, n), pwindow = rep_len(pwindow, n))
 }
 
-# Delays more than `.upper_tail_ratio` windows wide may use the survival form,
-# and delays more than `.narrow_window_ratio` windows wide use the mean of the
-# delay CDF over the window
+# Delays more than this many windows wide may use the survival form
 .upper_tail_ratio <- 1e3
+# Delays more than this many windows wide use the mean of the delay CDF
 .narrow_window_ratio <- 1e6
 
 #' Uniform primary CDF for positive, finite delays and positive windows
@@ -427,11 +414,8 @@ check_pwindow <- function(q, pwindow) {
 #' @keywords internal
 .uniform_window_cdf <- function(d, w, terms_fn, upper_fn, switch_at,
                                 delay_cdf) {
-  # Both tail forms below lose about 1e-16 * max(|G|, |H|) / w, so they are
-  # not accurate for windows much narrower than the delay. Beyond
-  # `.narrow_window_ratio` the result is the mean of the delay CDF over the
-  # window instead. The error model gives about 1e-10 at that ratio. This
-  # needs d > w, so the window starts above 0.
+  # Both forms lose about 1e-16 * d / w for narrow windows (1e-10 at the
+  # cutoff), so the mean of the delay CDF over the window is used instead
   narrow <- d > .narrow_window_ratio * w
   if (any(narrow)) {
     if (all(narrow)) {
@@ -447,12 +431,8 @@ check_pwindow <- function(q, pwindow) {
     return(result)
   }
   lo <- pmax.int(d - w, 0)
-  # Far into the upper tail G(d) and G(lo) are both close to t - E, so their
-  # difference loses all precision and can return 0 where the answer is 1.
-  # With H(t) = t S(t) - E S~(t), G(t) = t - E - H(t), so for d >= w the CDF
-  # is 1 - (H(d) - H(lo)) / w, which has no far tail cancellation. It is only
-  # needed for delays more than `.upper_tail_ratio` windows wide whose window
-  # starts above the delay mean, which keeps it off the usual path.
+  # In the far upper tail G(d) - G(lo) cancels. With G(t) = t - E - H(t),
+  # 1 - (H(d) - H(lo)) / w does not.
   up <- lo > switch_at & d > .upper_tail_ratio * w
   if (!any(up)) {
     return((terms_fn(d) - terms_fn(lo)) / w)
@@ -468,8 +448,8 @@ check_pwindow <- function(q, pwindow) {
 
 #' Mean of the delay CDF over a narrow uniform primary window
 #'
-#' Applies a 5 point Gauss-Legendre rule to
-#' \eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
+#' Applies a 5 point Gauss-Legendre rule to the mean of the delay CDF over
+#' \eqn{[d - w, d]}.
 #'
 #' @param d Numeric vector of delays with `d > w`.
 #'
@@ -481,8 +461,7 @@ check_pwindow <- function(q, pwindow) {
 #'
 #' @keywords internal
 .narrow_window_cdf <- function(d, w, delay_cdf) {
-  # Nodes and weights of the 5 point rule on [-1, 1], with weights scaled to
-  # sum to 1 so the result is the mean of F over the window
+  # Weights are halved so they sum to 1
   nodes <- c(-0.906179845938664, -0.5384693101056831, 0,
              0.5384693101056831, 0.906179845938664)
   gl_weights <- c(0.2369268850561891, 0.4786286704993665, 0.5688888888888889,
@@ -531,14 +510,12 @@ pcens_cdf.pcens_pgamma_dunif <- function(
     )
   }
 
-  # G(t) = t F_T(t) - E_T F~_T(t), where F~_T is the CDF of the partial
-  # expectation distribution, a gamma with shape + 1, and E_T = shape * scale.
+  # The partial expectation distribution is a gamma with shape + 1
   E_T <- shape * scale
   terms_fn <- function(t) {
     t * pgamma(t, shape, scale = scale) -
       E_T * pgamma(t, shape + 1, scale = scale)
   }
-  # H(t) = t S(t) - E_T S~(t) from the upper tails, for the far upper tail
   upper_fn <- function(t) {
     t * pgamma(t, shape, scale = scale, lower.tail = FALSE) -
       E_T * pgamma(t, shape + 1, scale = scale, lower.tail = FALSE)
@@ -585,10 +562,8 @@ pcens_cdf.pcens_plnorm_dunif <- function(
     )
   }
 
-  # G(t) = t F_T(t) - E_T F~_T(t), where F~_T is the lognormal CDF shifted to
-  # meanlog + sdlog^2 and E_T = exp(meanlog + sdlog^2 / 2). Both CDFs share
-  # the standardised log delay z, as (log(t) - meanlog - sdlog^2) / sdlog
-  # is z - sdlog.
+  # The partial expectation distribution has meanlog + sdlog^2, which gives
+  # z - sdlog for the standardised log delay z
   E_T <- exp(mu + 0.5 * sigma^2)
   terms_fn <- function(t) {
     z <- (log(t) - mu) / sigma
@@ -642,18 +617,13 @@ pcens_cdf.pcens_pweibull_dunif <- function(
   a <- 1 + 1 / shape
   lgamma_a <- lgamma(a)
 
-  # G(t) = t F_T(t) - scale g(t), with E[T] F~_T(t) = scale g(t), where
-  # g(t) = gamma(a, x) is the lower incomplete gamma function at
-  # x = (t / scale)^shape and F_T(t) = 1 - exp(-x) shares x. g is formed on
-  # the log scale from the regularised stats::pgamma, which is stable for
-  # large x where an unregularised series expansion would overflow.
+  # E[T] F~_T(t) = scale * gamma(a, x) with x = (t / scale)^shape, formed on
+  # the log scale from the regularised pgamma to avoid overflow
   terms_fn <- function(t) {
     x <- (t * inv_scale)^shape
     t * -expm1(-x) -
       scale * exp(pgamma(x, a, log.p = TRUE) + lgamma_a)
   }
-  # H(t) = t S(t) - scale * Gamma(a, x) from the upper tails, for the far
-  # upper tail
   upper_fn <- function(t) {
     x <- (t * inv_scale)^shape
     t * exp(-x) -
@@ -798,13 +768,10 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 #'
 #' @keywords internal
 .pcens_cdf_gengamma_unif <- function(q, pwindow, shape, scale, k) {
-  # F_T(t; k) = P(k, x) with x = (t / scale)^shape, and the partial
-  # expectation distribution is F_T(t; k + 1 / shape). Both share x.
+  # The partial expectation distribution has shape k + 1 / shape
   k_shift <- k + 1 / shape
-  # E[T] = scale * Gamma(k + 1 / shape) / Gamma(k).
   E_T <- scale * exp(lgamma(k_shift) - lgamma(k))
 
-  # G(t) = t F_T(t) - E_T F~_T(t)
   terms_fn <- function(t) {
     x <- (t / scale)^shape
     t * pgamma(x, k) - E_T * pgamma(x, k_shift)

@@ -1,10 +1,6 @@
-# Shared by the R and Stan tests of the uniform primary analytical CDFs, see
-# test-pcens_cdf-uniform.R and test-stan-uniform-terms.R.
-
-# Numerical reference: integrate the delay CDF over the primary window with
-# a much tighter tolerance than `pcens_cdf.default()` uses. The upper limit
-# is min(pwindow, q) because the delay CDF is 0 beyond it, which would put a
-# kink inside the interval.
+# Reference for the uniform primary analytical CDFs, integrating the delay CDF
+# over the primary window at a tighter tolerance than `pcens_cdf.default()`.
+# The upper limit is min(pwindow, q) as the delay CDF is 0 beyond it.
 unif_reference <- function(pdist, q, pwindow, ...) {
   vapply(
     q,
@@ -23,8 +19,7 @@ unif_reference <- function(pdist, q, pwindow, ...) {
   )
 }
 
-# Relative agreement with an absolute floor for values that are zero to
-# working precision.
+# Relative agreement with an absolute floor
 expect_close <- function(object, expected, rtol = 1e-6, atol = 1e-13,
                          info = NULL) {
   testthat::expect_true(
@@ -36,8 +31,7 @@ expect_close <- function(object, expected, rtol = 1e-6, atol = 1e-13,
 unif_cases <- function() {
   cases <- list(
     list(
-      name = "gamma", pdist = pgamma, stan_id = 2L,
-      stan_params = function(a) c(a$shape, 1 / a$scale),
+      name = "gamma", pdist = pgamma, rdist = rgamma,
       grid = list(
         list(shape = 0.5, scale = 2), list(shape = 1, scale = 1),
         list(shape = 3, scale = 2), list(shape = 20, scale = 0.5),
@@ -45,8 +39,7 @@ unif_cases <- function() {
       )
     ),
     list(
-      name = "lognormal", pdist = plnorm, stan_id = 1L,
-      stan_params = function(a) c(a$meanlog, a$sdlog),
+      name = "lognormal", pdist = plnorm, rdist = rlnorm,
       grid = list(
         list(meanlog = 0, sdlog = 1), list(meanlog = 1.5, sdlog = 0.6),
         list(meanlog = 2, sdlog = 0.2), list(meanlog = -1, sdlog = 1.5),
@@ -54,8 +47,7 @@ unif_cases <- function() {
       )
     ),
     list(
-      name = "weibull", pdist = pweibull, stan_id = 3L,
-      stan_params = function(a) c(a$shape, a$scale),
+      name = "weibull", pdist = pweibull, rdist = rweibull,
       grid = list(
         list(shape = 0.7, scale = 3), list(shape = 1, scale = 2),
         list(shape = 1.6, scale = 6), list(shape = 4, scale = 5),
@@ -65,8 +57,8 @@ unif_cases <- function() {
   )
   if (requireNamespace("flexsurv", quietly = TRUE)) {
     cases[[4]] <- list(
-      name = "gengamma", pdist = flexsurv::pgengamma.orig, stan_id = 5L,
-      stan_params = function(a) c(a$shape, a$scale, a$k),
+      name = "gengamma", pdist = flexsurv::pgengamma.orig,
+      rdist = flexsurv::rgengamma.orig,
       grid = list(
         list(shape = 1.5, scale = 4, k = 1.2),
         list(shape = 0.8, scale = 2, k = 0.5),

@@ -18,7 +18,7 @@ CDF, used for zero-width and very narrow windows.}
 Numeric vector of CDF values.
 }
 \description{
-Applies a 5 point Gauss-Legendre rule to
-\eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
+Applies a 5 point Gauss-Legendre rule to the mean of the delay CDF over
+\eqn{[d - w, d]}.
 }
 \keyword{internal}

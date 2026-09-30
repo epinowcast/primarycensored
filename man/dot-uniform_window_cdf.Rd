@@ -12,14 +12,12 @@
 \item{w}{Window width, a single value or one per delay, greater than 0.}
 
 \item{terms_fn}{Function of a numeric vector of delays, all greater than or
-equal to zero, returning \eqn{G} at each.
-Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
-delay, is done inside \code{terms_fn}.}
+equal to zero, returning \eqn{G} at each.}
 
-\item{upper_fn}{Function of a numeric vector of delays, all
-greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
-at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
-and partial expectation distributions.}
+\item{upper_fn}{Function of a numeric vector of delays, all greater than or
+equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where
+\eqn{S} and \eqn{\tilde S} are the upper tails of \eqn{F} and
+\eqn{\tilde F}.}
 
 \item{switch_at}{Delay above which the window start may use \code{upper_fn}.}
 

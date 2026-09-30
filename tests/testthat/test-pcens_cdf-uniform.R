@@ -1,8 +1,7 @@
 # The analytical uniform primary CDFs for the gamma, lognormal, Weibull and
-# generalised gamma delays share `.pcens_cdf_uniform()`. It combines terms
-# G(t) = t F(t) - E tilde F(t) at both ends of the primary window.
-# These tests check the solutions against numerical integration at a tight
-# tolerance, including tails, `q < pwindow`, `q` near 0 and edge parameters.
+# generalised gamma delays share `.pcens_cdf_uniform()`.
+# These tests check them against numerical integration at a tight tolerance.
+# The agreement with Stan is in test-stan-primarycensored_analytical_cdf.R.
 
 test_that("uniform primary analytical CDFs match tight numerical
   integration across parameters, windows and tails", {
@@ -73,15 +72,11 @@ test_that("uniform primary analytical CDFs recycle a vector pwindow
 
 test_that(".pcens_cdf_uniform combines the terms at both ends of the window
   for a new delay family", {
-  # An exponential delay is not a package analytical solution. Its CDF is
-  # F(t) = 1 - exp(-rate t) and its partial expectation, the integral of
-  # x f(x) from 0 to t, is (1 - exp(-rate t) (1 + rate t)) / rate. The
-  # terms are G(t) = t F(t) - partial expectation.
+  # Exponential delay, with partial expectation (1 - exp(-rt) (1 + rt)) / r
   rate <- 0.4
   terms_fn <- function(t) {
     t * -expm1(-rate * t) - (1 - exp(-rate * t) * (1 + rate * t)) / rate
   }
-  # The upper tail terms are H(t) = t S(t) - E tilde S(t) = -exp(-rate t) / rate
   upper_fn <- function(t) -exp(-rate * t) / rate
   q <- c(-1, 0, 0.2, 0.9, 1, 3, 10, 40)
   for (pwindow in c(0.5, 1, 4)) {
@@ -102,7 +97,6 @@ test_that("uniform primary analytical CDFs are 1 at Inf and 0 at -Inf", {
       expect_identical(
         pcens_cdf(obj, c(-Inf, Inf), 1), c(0, 1), info = case$name
       )
-      # Infinite delays sit alongside finite ones and a vector pwindow
       expect_equal(
         pcens_cdf(obj, c(Inf, 2, -Inf, Inf), c(1, 1, 2, 0.5))[c(1, 3, 4)],
         c(1, 0, 1),
@@ -131,7 +125,6 @@ test_that("uniform primary analytical CDFs are 1 far into the upper tail,
 
 test_that("uniform primary analytical CDFs match numerical integration
   across the switch to the upper tail form and with narrow windows", {
-  # Windows start above and below the delay mean for each case.
   q <- c(0.5, 2, 5, 8, 15, 30, 60, 150)
   for (case in unif_cases()) {
     for (args in case$grid[1:3]) {
@@ -151,8 +144,6 @@ test_that("uniform primary analytical CDFs match numerical integration
 
 test_that("uniform primary analytical CDFs match numerical integration for
   windows many orders of magnitude narrower than the delay", {
-  # Both tail forms lose about 1e-16 * d / w here. These cases include heavy
-  # tailed Weibulls whose window starts just above the mean.
   cases <- list(
     list(pgamma, list(shape = 500, scale = 100), 49967, 1e-6),
     list(pgamma, list(shape = 500, scale = 100), c(4.9e4, 5.1e4), 1e-5),
@@ -194,12 +185,12 @@ test_that("uniform primary analytical CDFs handle a vector pwindow with both
   }
 })
 
-test_that("check_pwindow errors for missing q and invalid pwindow", {
-  expect_null(check_pwindow(c(1, 2), c(0, 1)))
-  expect_error(check_pwindow(NA_real_, 1), "q must not")
-  expect_error(check_pwindow(1, numeric(0)), "pwindow")
-  expect_error(check_pwindow(1, NA_real_), "pwindow")
-  expect_error(check_pwindow(1, -1), "pwindow")
+test_that(".check_pwindow errors for missing q and invalid pwindow", {
+  expect_null(.check_pwindow(c(1, 2), c(0, 1)))
+  expect_error(.check_pwindow(NA_real_, 1), "q must not")
+  expect_error(.check_pwindow(1, numeric(0)), "pwindow")
+  expect_error(.check_pwindow(1, NA_real_), "pwindow")
+  expect_error(.check_pwindow(1, -1), "pwindow")
 })
 
 test_that("uniform primary analytical CDFs warn when q and a vector pwindow
@@ -228,7 +219,6 @@ test_that("uniform primary analytical CDFs check pwindow", {
     expect_error(pcens_cdf(obj, c(1, 2), NA_real_), "pwindow")
     expect_error(pcens_cdf(obj, c(1, 2), c(1, NA)), "pwindow")
     expect_error(pcens_cdf(obj, c(1, 2), -1), "pwindow")
-    # A vector pwindow is recycled against a scalar q
     expect_equal(
       pcens_cdf(obj, 2, c(1, 2)),
       vapply(c(1, 2), function(w) pcens_cdf(obj, 2, w), numeric(1)),
@@ -277,5 +267,29 @@ test_that("uniform primary analytical CDFs with a vector pwindow match
       info = case$name
     )
     expect_equal(expected[c(2, 4)], c(1, 1), tolerance = 1e-9)
+  }
+})
+
+test_that("uniform primary analytical CDFs match the empirical CDF of
+  rprimarycensored samples", {
+  set.seed(378)
+  n <- 2e5
+  for (case in unif_cases()) {
+    for (pwindow in c(0.5, 3)) {
+      args <- case$grid[[3]]
+      obj <- do.call(new_pcens, c(list(case$pdist, dunif), args))
+      draws <- do.call(
+        rprimarycensored,
+        c(list(n, case$rdist, pwindow = pwindow, swindow = 0), args)
+      )
+      q <- stats::quantile(draws, c(0.02, 0.1, 0.5, 0.9, 0.98))
+      # Within five standard errors of the empirical CDF
+      expect_close(
+        unname(pcens_cdf(obj, q, pwindow)),
+        vapply(q, function(x) mean(draws <= x), numeric(1)),
+        rtol = 0, atol = 6e-3,
+        info = paste(case$name, "pwindow", pwindow)
+      )
+    }
   }
 })
