@@ -1,10 +1,6 @@
-# Helpers for the lognormal tilt transform tests.
-#
-# The reference integrates the exponentially tilted lognormal density in the
-# standardised log variable z, where the integrand is smooth, with tight
-# tolerances on the log scale. It splits the range into many pieces around the
-# part of the integrand that is within e^-60 of its peak, so it does not share
-# the panels of the implementation.
+# Helpers for the lognormal tilt transform tests. The reference integrates
+# the tilted density in z = (log u - meanlog) / sdlog over many pieces around
+# the part within e^-60 of its peak.
 
 # Lognormal delay parameter sets with a small, a typical and a large sdlog
 # and a negative and a positive meanlog.

@@ -1,12 +1,8 @@
 skip_on_cran()
 
-# Stan solution for the lognormal delay (dist_id 1) with an exponentially
-# tilted primary (primary_id 2 with primary_params = r). The transform is
-# evaluated by Gauss-Legendre panels for a tilt xi = -r < 0 and by a series of
-# partial moments for xi > 0. These tests check the transforms against the R
-# implementation and a reference integral, the CDF against the reference
-# integral and the ODE path, the shared endpoint vectorised form, and
-# gradients.
+# Stan lognormal delay (dist_id 1) with an exponentially tilted primary
+# (primary_id 2), checked against R, reference integrals, the ODE path,
+# simulated delays, the vectorised form and gradients.
 
 lnorm_stan_cases <- exptilt_lnorm_cases()
 
@@ -284,8 +280,6 @@ test_that("the lognormal tilted CDF is accurate far from the origin", {
 
 test_that("the lognormal series limit depends on the tilt and the delay", {
   params <- c(1.6, 0.5)
-  # The series is used up to xi t of 60, where it costs as much as an ODE at
-  # a tolerance of 1e-10, see the NEWS
   expect_identical(
     vapply(
       c(1, 59, 61, 1e3, 1e6),
@@ -294,9 +288,6 @@ test_that("the lognormal series limit depends on the tilt and the delay", {
     ),
     c(1L, 1L, 0L, 0L, 0L)
   )
-  # A window that is wide in tilt terms (xi w above 2) keeps the series,
-  # where the ODE is less accurate, up to xi t + 9 sqrt(xi t) + 30 terms, at
-  # most 20000
   expect_identical(
     vapply(
       c(61, 1e3, 1.8e4, 1.9e4, 1e6),
@@ -405,8 +396,7 @@ test_that("the lognormal uses the ODE path where the series is too long", {
 
 test_that("the vectorised lognormal tilted CDF matches the per delay CDF far
   from the origin", {
-  # With |r| w below 1e-4 the small window form applies up to |r| (d + w) of
-  # 0.1 and the direct form beyond, so ranges that cross it mix both forms.
+  # Ranges that cross |r| (d + w) of 0.1 mix the small window and direct forms
   # Each endpoint has its terms computed once for the delays that need them
   pwindow <- 1
   params <- c(log(1e4), 0.5)
@@ -680,8 +670,6 @@ test_that("the vectorised lognormal tilted log PMF has finite gradients
 })
 
 test_that("the lognormal tilted CDF is accurate for a large sdlog", {
-  # One panel per side lost accuracy for sdlog above about 2. Panels are
-  # split in proportion to sdlog
   for (sdlog in c(4, 6, 10, 15)) {
     for (meanlog in c(0, 4)) {
       case <- list(meanlog = meanlog, sdlog = sdlog)
@@ -724,5 +712,34 @@ test_that("lognormal tilted log CDFs have finite gradients for a large
     expect_false(res$rejected, info = label)
     expect_true(all(is.finite(res$gradient)), info = label)
     expect_lnorm_gradient_close(res, label)
+  }
+})
+
+test_that("the Stan lognormal tilted CDF matches simulated delays", {
+  set.seed(369)
+  n <- 1e4
+  probs <- c(0.05, 0.25, 0.5, 0.75, 0.95)
+  for (case in lnorm_stan_cases[c(1, 2)]) {
+    params <- lnorm_params(case)
+    for (pwindow in c(1, 3)) {
+      for (rho in c(-1, 0.4)) {
+        primary <- vapply(
+          seq_len(n), function(i) expgrowth_rng(0, pwindow, rho), numeric(1)
+        )
+        samples <- primary + rlnorm(n, case$meanlog, case$sdlog)
+        q <- unname(quantile(samples, probs))
+        cdf <- vapply(
+          q, primarycensored_cdf, numeric(1),
+          1L, params, pwindow, 0, Inf, 2L, rho
+        )
+        expect_true(
+          all(abs(cdf - probs) < 5 * sqrt(probs * (1 - probs) / n)),
+          info = sprintf(
+            "meanlog %g, sdlog %g, pwindow %g, r %g",
+            case$meanlog, case$sdlog, pwindow, rho
+          )
+        )
+      }
+    }
   }
 })

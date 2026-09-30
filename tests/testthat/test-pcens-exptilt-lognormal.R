@@ -1,8 +1,5 @@
-# The lognormal delay with an exponentially tilted primary. The tilt
-# transform has no closed form, so it is evaluated by quadrature for a tilt
-# rho = -xi > 0 and by a series of partial moments for rho < 0. These tests
-# check the transform against a reference integral, and the CDF against the
-# reference integral of [exptilt_reference()] and the numerical path.
+# Lognormal delay with an exponentially tilted primary, checked against
+# reference integrals, the numerical path and simulated delays.
 
 cases <- exptilt_lnorm_cases()
 
@@ -186,9 +183,7 @@ test_that("the lognormal CDF matches a reference integral", {
           q, pwindow, rho, exptilt_lnorm_cdf(case)
         )
         actual <- .pcens_cdf_exptilt(obj, q, pwindow)
-        # Deep in the lower tail the direct form cancels, by about a factor
-        # 1 / (rho q) times the gap between q and the mean of the delays
-        # below q. The error is below 1e-7 in relative terms.
+        # The direct form cancels deep in the lower tail
         expect_lt(
           max_rel_diff(actual, expected), 1e-7,
           label = exptilt_label(family, pwindow, rho)
@@ -317,9 +312,6 @@ test_that("the lognormal series needs to fit the terms it is given", {
   obj <- lnorm_object(cases[[2]], 0.1)
   expect_true(all(.pcens_tilt_fits(obj, 0.5, c(1, 300), 1)))
   expect_true(all(.pcens_tilt_fits(obj, -0.5, c(1, 1e8), 1)))
-  # A positive tilt needs about xi t + 9 sqrt(xi t) + 30 terms, at most
-  # 20000, where the window is wide in tilt terms (xi w above 2) and the
-  # numerical method is not accurate
   expect_identical(
     .pcens_tilt_fits(obj, 1, c(1.8e4, 1.9e4, 1e6), 3), c(TRUE, FALSE, FALSE)
   )
@@ -332,9 +324,6 @@ test_that("the lognormal series needs to fit the terms it is given", {
 
 test_that("the lognormal series is kept only up to the point where the
   numerical method is faster", {
-  # The series costs about xi t terms per quantile and the numerical method
-  # a fixed cost per quantile, which cross at xi t of about 200, see
-  # `.lnorm_series_max_xt`
   expect_identical(.lnorm_series_max_xt, 200)
   obj <- lnorm_object(cases[[2]], 0.1)
   expect_identical(
@@ -345,8 +334,6 @@ test_that("the lognormal series is kept only up to the point where the
   expect_identical(
     .pcens_tilt_fits(obj, 1, c(190, 210)), c(TRUE, FALSE)
   )
-  # The numerical method is less accurate where the window is wide in tilt
-  # terms (xi w above 2), so the series is kept there up to the term limit
   expect_identical(
     .pcens_tilt_fits(obj, 1, c(210, 500, 1e4, 2e4), 2.5),
     c(TRUE, TRUE, TRUE, FALSE)
@@ -371,8 +358,6 @@ test_that("the lognormal CDF uses the numerical method past the series
   expect_identical(actual[9:16], pcens_cdf.default(obj, q[9:16], 1))
   expected <- exptilt_reference(q, 1, -1, exptilt_cdf(delay))
   expect_lt(max_rel_diff(actual, expected), 1e-7)
-  # A window that is wide in tilt terms keeps the series, which is accurate
-  # in the lower tail where the numerical method is not
   delay <- list(pdist = plnorm, args = list(meanlog = log(50), sdlog = 0.3))
   obj <- exptilt_object(delay, -30)
   q <- 50 * c(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.5, 2, 3) + 0.5
@@ -382,8 +367,7 @@ test_that("the lognormal CDF uses the numerical method past the series
 
 test_that("the lognormal CDF uses the numerical method where the series is
   too long", {
-  # xi q above about 1.9e4 needs too many terms. The quantiles that fit use
-  # the series and the rest use the numerical method, so nothing errors.
+  # Quantiles that need too many terms use the numerical method
   delay <- list(pdist = plnorm, args = list(meanlog = 6, sdlog = 0.5))
   obj <- exptilt_object(delay, -20)
   q <- c(seq(200, 900, length.out = 6), seq(950, 1100, length.out = 6))
@@ -586,9 +570,6 @@ test_that("a few quantiles use the transform where the numerical method is
 })
 
 test_that("the lognormal transform is accurate for a large sdlog", {
-  # One panel per side lost accuracy for sdlog above about 2, as the
-  # integrand is a step of width about 1 / sdlog. Panels are split in
-  # proportion to sdlog
   expect_identical(.lnorm_n_panels(1), 1L)
   expect_identical(.lnorm_n_panels(1.8), 1L)
   expect_identical(.lnorm_n_panels(4), 3L)
@@ -632,6 +613,33 @@ test_that("the lognormal CDF is accurate for a large sdlog", {
           1e-8,
           label = sprintf(
             "sdlog %g, meanlog %g, r %g", sdlog, meanlog, rho
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("the lognormal CDF matches rprimarycensored samples", {
+  set.seed(369)
+  n <- 1e5
+  probs <- c(0.01, 0.05, 0.25, 0.5, 0.75, 0.95, 0.99)
+  for (case in cases[c(1, 2, 4)]) {
+    for (pwindow in c(1, 4)) {
+      for (rho in c(-1.5, 0.3, 2)) {
+        samples <- rprimarycensored(
+          n, rlnorm,
+          pwindow = pwindow, swindow = 0,
+          rprimary = rexpgrowth, rprimary_args = list(r = rho),
+          meanlog = case$meanlog, sdlog = case$sdlog
+        )
+        q <- unname(quantile(samples, probs))
+        cdf <- pcens_cdf(lnorm_object(case, rho), q, pwindow)
+        expect_true(
+          all(abs(cdf - probs) < 5 * sqrt(probs * (1 - probs) / n)),
+          info = sprintf(
+            "meanlog %g, sdlog %g, pwindow %g, r %g",
+            case$meanlog, case$sdlog, pwindow, rho
           )
         )
       }
