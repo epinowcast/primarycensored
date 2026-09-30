@@ -22,7 +22,9 @@ the primary event distribution arguments unchanged.}
 into the object without any validation. Use this when one object is
 updated many times with parameter names that have already been checked,
 for example in an optimiser or a loop over posterior draws.
-Only an explicit \code{FALSE} turns the checks off. Defaults to \code{TRUE}.}
+Only an explicit \code{FALSE} turns the checks off. Defaults to \code{TRUE}.
+As \code{check} comes after \code{...}, it is reserved. A delay parameter of
+\code{pdist} called \code{check} cannot be set through \code{update()}.}
 }
 \value{
 A \code{pcens} object with the same class as \code{object} and updated

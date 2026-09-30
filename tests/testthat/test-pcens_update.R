@@ -211,9 +211,9 @@ test_that(".fit_pcens_state updates the cached object without checks", {
     cache, pgamma, dunif, list(), NULL, list(shape = 3, scale = 0.7)
   )
   expect_identical(state$obj$args, list(shape = 3, scale = 0.7))
-  # Names are validated once at set-up, not on every update
-  state <- .fit_pcens_state(
-    cache, pgamma, dunif, list(), NULL, list(shap = 3)
+  fresh <- new_pcens(pgamma, dunif, list(), shape = 3, scale = 0.7)
+  expect_identical(
+    pcens_cdf(state$obj, q = c(1, 5), pwindow = 1),
+    pcens_cdf(fresh, q = c(1, 5), pwindow = 1)
   )
-  expect_true("shap" %in% names(state$obj$args))
 })

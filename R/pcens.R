@@ -161,6 +161,8 @@ new_pcens <- function(
 #'   updated many times with parameter names that have already been checked,
 #'   for example in an optimiser or a loop over posterior draws.
 #'   Only an explicit `FALSE` turns the checks off. Defaults to `TRUE`.
+#'   As `check` comes after `...`, it is reserved. A delay parameter of
+#'   `pdist` called `check` cannot be set through `update()`.
 #'
 #' @details
 #' Parameters are merged rather than replaced as a whole, so
@@ -204,34 +206,8 @@ new_pcens <- function(
 update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   new_args <- list(...)
   nms <- names(new_args)
-  # Kept cheap as update() is often called once per parameter draw.
   if (!identical(check, FALSE)) {
-    if (length(new_args) > 0L) {
-      .check_named_list(new_args, "Delay parameters passed to update()")
-      unknown <- nms[!nms %in% names(object$args)]
-      if (length(unknown) > 0L) {
-        # Drop the first formal, the point at which pdist is evaluated
-        pdist_args <- names(formals(object$pdist))[-1]
-        if (!is.null(pdist_args) && !"..." %in% pdist_args) {
-          unknown <- unknown[!unknown %in% pdist_args]
-          if (length(unknown) > 0L) {
-            stop(
-              "Unknown delay parameter(s) for pdist: ", toString(unknown),
-              ".",
-              call. = FALSE
-            )
-          }
-        }
-      }
-    }
-    if (!is.null(primary_args)) {
-      if (!is.list(primary_args)) {
-        stop("primary_args must be a list.", call. = FALSE)
-      }
-      if (length(primary_args) > 0L) {
-        .check_named_list(primary_args, "primary_args")
-      }
-    }
+    .check_update_args(object, new_args, primary_args)
   }
   if (length(new_args) > 0L) {
     object$args[nms] <- new_args
@@ -241,6 +217,44 @@ update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
     object$dprimary_args <- object$primary_args
   }
   object
+}
+
+#' Validate the arguments passed to `update.pcens()`
+#'
+#' @inheritParams update.pcens
+#'
+#' @param new_args Named list of delay parameters, from `...`.
+#'
+#' @return `NULL` invisibly. Called for its errors.
+#'
+#' @keywords internal
+.check_update_args <- function(object, new_args, primary_args) {
+  if (length(new_args) > 0L) {
+    .check_named_list(new_args, "Delay parameters passed to update()")
+    unknown <- names(new_args)[!names(new_args) %in% names(object$args)]
+    if (length(unknown) > 0L) {
+      # Drop the first formal, the point at which pdist is evaluated
+      pdist_args <- names(formals(object$pdist))[-1]
+      if (!is.null(pdist_args) && !"..." %in% pdist_args) {
+        unknown <- unknown[!unknown %in% pdist_args]
+        if (length(unknown) > 0L) {
+          stop(
+            "Unknown delay parameter(s) for pdist: ", toString(unknown), ".",
+            call. = FALSE
+          )
+        }
+      }
+    }
+  }
+  if (!is.null(primary_args)) {
+    if (!is.list(primary_args)) {
+      stop("primary_args must be a list.", call. = FALSE)
+    }
+    if (length(primary_args) > 0L) {
+      .check_named_list(primary_args, "primary_args")
+    }
+  }
+  invisible(NULL)
 }
 
 #' Check that every element of a list is named
