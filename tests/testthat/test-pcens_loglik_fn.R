@@ -326,6 +326,18 @@ test_that("pcens_loglik_fn rejects non-numeric settings", {
   expect_error(pcens_loglik_fn(0:3, plnorm, dunif), "pwindow must be numeric")
 })
 
+test_that("pcens_loglik_fn rejects missing settings", {
+  for (nm in c("pwindow", "swindow", "L", "D")) {
+    args <- list(x = 0:3, pdist = plnorm)
+    args[[nm]] <- NA_real_
+    expect_error(do.call(pcens_loglik_fn, args), paste(nm, "must not contain"))
+  }
+})
+
+test_that(".param_groups returns no groups for empty settings", {
+  expect_identical(.param_groups(list(pwindow = numeric(0)), "pwindow"), list())
+})
+
 test_that("pcens_loglik_fn supports non-parametric delays", {
   boundaries <- 0:5
   pmf1 <- c(0.1, 0.2, 0.3, 0.25, 0.15)
