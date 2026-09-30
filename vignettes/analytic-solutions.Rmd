@@ -143,6 +143,10 @@ $$
 
 where $q = \max(d - w_P, 0)$.
 
+In the lower tail, with $y = d / \theta$ below $(k + 1) / 2$, the Stan implementation evaluates $F_T(d; k, \theta)$ and $F_T(d; k{+}1, \theta)$ from the series $F_T(d; k, \theta) = \frac{y^k e^{-y}}{\Gamma(k + 1)} \sum_{n \geq 0} \frac{y^n}{(k + 1) \cdots (k + n)}$ on the log scale.
+This does not underflow where the incomplete gamma function does, and it gives an accurate derivative with respect to $k$ where Stan's incomplete gamma function does not.
+The Chi-square distribution below uses it too.
+
 ### Gamma discrete censored delay distribution
 
 By substituting \@ref(eq:survgammaunifprim) into \@ref(eq:disccensunifprim) we get the discrete censored delay distribution in terms of analytically available functions:
