@@ -4,7 +4,7 @@
 \alias{.pcens_cdf_uniform}
 \title{Uniform primary event censored CDF from terms at the window ends}
 \usage{
-.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, switch_at, delay_cdf)
+.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, mean, delay_cdf)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -12,18 +12,16 @@
 \item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
 observed primary event, in which case the delay CDF is used directly.}
 
-\item{terms_fn}{Function of a numeric vector of delays, all greater than or
-equal to zero, returning \eqn{G} at each.}
+\item{terms_fn}{Function of delays greater than or equal to zero returning
+\eqn{G}.}
 
-\item{upper_fn}{Function of a numeric vector of delays, all greater than or
-equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where
-\eqn{S} and \eqn{\tilde S} are the upper tails of \eqn{F} and
-\eqn{\tilde F}.}
+\item{upper_fn}{Function of delays greater than or equal to zero returning
+\eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and \eqn{\tilde S} are
+the upper tails of \eqn{F} and \eqn{\tilde F}.}
 
-\item{switch_at}{Delay above which the window start may use \code{upper_fn}.}
+\item{mean}{Mean of the delay distribution, \eqn{E}.}
 
-\item{delay_cdf}{Function of a numeric vector of delays returning the delay
-CDF, used for zero-width and very narrow windows.}
+\item{delay_cdf}{Function of delays returning the delay CDF.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -36,10 +34,9 @@ For a delay with mean \eqn{E} and a uniform primary event window of width
 expectation distribution.
 }
 \details{
-Delays at or below zero give 0 and delays of \code{Inf} give 1.
-Missing delays are an error.
-Elements of \code{pwindow} equal to 0 give the delay CDF.
-\code{q} and \code{pwindow} are recycled against each other, with a warning if the
-longer length is not a multiple of the shorter.
+Delays at or below zero give 0, delays of \code{Inf} give 1 and missing delays
+are an error.
+Zero-width windows give the delay CDF.
+\code{q} and \code{pwindow} are recycled against each other.
 }
 \keyword{internal}
