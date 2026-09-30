@@ -33,7 +33,8 @@
   * given parameters is check_for_analytical_params().
   */
 int check_for_exptilt(int dist_id, int primary_id) {
-  return primary_id == 2 && (dist_id == 2 || dist_id == 4 || dist_id == 18);
+  return primary_id == 2
+         && (dist_id == 1 || dist_id == 2 || dist_id == 4 || dist_id == 18);
 }
 
 /**
@@ -118,13 +119,16 @@ vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
   * @param upper_d Log upper tail quantity at d
   * @param upper_q Log upper tail quantity at q
   *
-  * @return Log of the difference, `-inf` if it is zero to rounding
+  * @return Log of the difference, `-inf` if it is zero to rounding. The
+  * lower tail terms are used where the upper tail terms are `inf`, as for a
+  * lognormal delay with a positive tilt, whose total diverges.
   */
 real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
                                real upper_q) {
   // Lower tail terms that both underflow give NaN, taken as a zero
   // difference
-  if (is_nan(lower_q - lower_d) || lower_q - lower_d <= upper_d - upper_q) {
+  if (is_nan(lower_q - lower_d) || is_inf(upper_q)
+      || lower_q - lower_d <= upper_d - upper_q) {
     return primarycensored_log_diff_exp(lower_d, lower_q);
   }
   return primarycensored_log_diff_exp(upper_q, upper_d);

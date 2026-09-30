@@ -144,7 +144,10 @@ test_that("Stan lognormal moments match the R moments", {
       ts, primarycensored_tilt_moments, numeric(2), 1L, params
     ))
     keep <- is.finite(expected[, 1]) & expected[, 1] > -700
-    expect_equal(actual[keep, ], expected[keep, ], tolerance = 1e-9)
+    expect_equal(
+      actual[keep, ], unname(expected[keep, ]),
+      tolerance = 1e-9
+    )
   }
   params <- c(1.6, 0.5)
   expect_identical(primarycensored_tilt_moments(0, 1L, params), c(-Inf, -Inf))

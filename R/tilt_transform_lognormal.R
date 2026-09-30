@@ -216,7 +216,7 @@
   left <- which(positive & z < bump$z0)
   if (length(left) > 0L) {
     zl <- z[left]
-    width <- -slope[left] + sqrt(slope[left]^2 + 80)
+    width <- 80 / (slope[left] + sqrt(slope[left]^2 + 80))
     lower[left] <- .lnorm_panel(zl - width, zl, meanlog, sdlog, rho, rule)
     # Below lo the upper transform is the whole bump to rounding
     inner <- left[zl > bump$lo]
@@ -233,8 +233,7 @@
   if (length(right) > 0L) {
     zr <- z[right]
     curvature <- 1 + rho * sdlog^2 * t[right]
-    width <- (-abs(slope[right]) +
-      sqrt(slope[right]^2 + 80 * curvature)) / curvature
+    width <- 80 / (abs(slope[right]) + sqrt(slope[right]^2 + 80 * curvature))
     # The integrand is less than e^-40 of its value at the point beyond the
     # point where the tilt alone has decayed by 40
     width <- pmin(
@@ -350,7 +349,7 @@ pnorm_matrix <- function(z, shift) {
     return(FALSE)
   }
   # The mode of the integrand needs rho sdlog^2 exp(meanlog) to be finite
-  xi >= 0 || log(-xi) + 2 * log(p$sdlog) + p$meanlog < 700
+  xi >= 0 || log(-xi) + 2 * log(p$sdlog) + p$meanlog < 690
 }
 
 #' @rdname tilt_transform
