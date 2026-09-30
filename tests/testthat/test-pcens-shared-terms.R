@@ -8,7 +8,7 @@ shared_delays <- list(
 )
 
 flexsurv_delays <- function() {
-  skip_if_not_installed("flexsurv")
+  testthat::skip_if_not_installed("flexsurv")
   list(
     list(
       pdist = flexsurv::pgengamma.orig,
@@ -153,4 +153,14 @@ test_that("shared terms reject missing values in q", {
   obj <- shared_obj(shared_delays[[1]])
   expect_error(pcens_cdf(obj, c(1, NA, 3), 1), "missing values")
   expect_error(pcens_cdf(obj, c(1, NaN), 1), "missing values")
+})
+
+test_that("non-positive q give a zero CDF where the terms are undefined", {
+  skip_if_not_installed("flexsurv")
+  obj <- new_pcens(
+    flexsurv::pgengamma, dunif, mu = 1, sigma = 0.6, Q = 1e-3
+  )
+  expect_identical(
+    pcens_cdf(obj, c(-2, -1e-12, 0, 0), 1), rep(0, 4)
+  )
 })
