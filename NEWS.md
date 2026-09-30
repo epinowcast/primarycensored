@@ -1,10 +1,24 @@
 # primarycensored (development version)
 
+## Performance
+
+- The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster per call, with results unchanged to rounding.
+  They share one helper for the window handling, which no longer uses `ifelse()` or `pmin()`/`pmax()` over full vectors.
+  The lognormal, Weibull and generalised gamma terms share the standardised delay between the delay CDF and the partial expectation term.
+  See #378.
+- The Stan Weibull uniform primary solution forms `(t / scale)^shape` once for the delay CDF and the incomplete gamma term.
+  Values are unchanged and the gradient is about 10% cheaper.
+  The gamma, lognormal and generalised gamma solutions were profiled and are dominated by the incomplete gamma or normal CDF and their gradients, so they are unchanged.
+  See #378.
+
 ## Bug fixes
 
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
+- The analytical uniform primary `pcens_cdf()` methods now recycle a vector `pwindow` element-wise when some delays are not positive, where it was previously misaligned.
+  Missing delays give an explicit error.
+  See #378.
 
 ## Performance
 
