@@ -316,10 +316,6 @@ test_that("missing delay parameters are errors", {
   expect_error(
     pcens_cdf(obj, 1, 2), "shape parameter is required for Gamma"
   )
-  obj <- new_pcens(pgamma, dexpgrowth, list(r = 0.2), shape = 2)
-  expect_error(
-    pcens_cdf(obj, 1, 2), "scale or rate parameter is required for Gamma"
-  )
 })
 
 test_that("delay parameters default as in the stats functions", {
@@ -327,6 +323,41 @@ test_that("delay parameters default as in the stats functions", {
   expect_equal(
     pcens_cdf(obj, c(0.5, 2), 1),
     pcens_cdf(obj, c(0.5, 2), 1, use_numeric = TRUE),
+    tolerance = 1e-6
+  )
+  # A gamma with only a shape has rate 1, as in pgamma(), and worked with
+  # the numerical method before the analytical solution
+  obj <- new_pcens(pgamma, dexpgrowth, list(r = 0.3), shape = 2)
+  expect_equal(
+    pcens_cdf(obj, c(1, 5), 2),
+    c(0.04114682, 0.89135648),
+    tolerance = 1e-7
+  )
+  expect_equal(
+    pcens_cdf(obj, c(1, 5), 2),
+    pcens_cdf(obj, c(1, 5), 2, use_numeric = TRUE),
+    tolerance = 1e-6
+  )
+  expect_equal(
+    pprimarycensored(
+      c(1, 5), pgamma,
+      pwindow = 2, dprimary = dexpgrowth, primary_args = list(r = 0.3),
+      shape = 2
+    ),
+    c(0.04114682, 0.89135648),
+    tolerance = 1e-7
+  )
+  obj_rate <- new_pcens(
+    pgamma, dexpgrowth, list(r = 0.3), shape = 2, rate = 1
+  )
+  expect_identical(
+    pcens_cdf(obj, c(1, 5), 2), pcens_cdf(obj_rate, c(1, 5), 2)
+  )
+  # A rate that would not admit the tilt is checked against the default
+  obj <- new_pcens(pgamma, dexpgrowth, list(r = -1.5), shape = 2)
+  expect_equal(
+    pcens_cdf(obj, c(1, 5), 2),
+    pcens_cdf(obj, c(1, 5), 2, use_numeric = TRUE),
     tolerance = 1e-6
   )
   obj <- new_pcens(pnorm, dexpgrowth, list(r = 0.2))

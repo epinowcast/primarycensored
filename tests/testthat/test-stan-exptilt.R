@@ -624,15 +624,22 @@ exptilt_gradient_at <- function(model, case, d, pwindow, rho,
   )
 }
 
-# The shape gradient of Stan's gamma_lcdf is accurate to about 1e-5 except far
-# in the lower tail (a relative error of 1.7e-2 for shape 20 at 2, where the
-# CDF is about 1e-9), so the shape 20 case is left out. The shape gradient of
-# gamma_lccdf is inaccurate in the bulk (1e-3 at shape 2.5 and 7, 5e-3 at
-# shape 20 and 24), so the tilt transforms take the upper tail from
-# gamma_lcdf and use gamma_lccdf only beyond the point where the upper tail
-# is below 1e-8. The points are also not at a switch between forms, as finite
-# differences would step across it.
-exptilt_gradient_cases <- exptilt_stan_cases[c(1, 2, 3, 4, 6, 7)]
+# The shape gradient of Stan's gamma_lcdf has a relative error of 1.7e-2 for
+# shape 20 at 2 and of 0.5 for shape 100 at 30, well below the shape, so the
+# tilt transforms take the lower tail from a series there, see
+# primarycensored_log_gamma_p(). The shape gradient of gamma_lccdf is
+# inaccurate in the bulk (1e-3 at shape 2.5 and 7, 5e-3 at shape 20 and 24),
+# so the tilt transforms take the upper tail from gamma_lcdf and use
+# gamma_lccdf only beyond the point where the upper tail is below 1e-8. The
+# points are also not at a switch between forms, as finite differences would
+# step across it. The last case is a shape of 100.
+exptilt_gradient_cases <- c(
+  exptilt_stan_cases,
+  list(list(
+    dist_id = 2L, params = c(100, 10), pdist = pgamma,
+    args = list(shape = 100, rate = 10)
+  ))
+)
 
 # Compares the gradient with the finite difference gradient one component at a
 # time, relative to the size of the component with a floor for tiny ones.
@@ -666,12 +673,22 @@ test_that("tilted log CDFs have finite gradients matching finite
     list(d = 12, pwindow = 7, rho = 1e-5),
     list(d = 0.0001, pwindow = 2, rho = 0.4),
     list(d = 0.0001, pwindow = 2, rho = -0.4),
-    list(d = 4, pwindow = 2, rho = 0)
+    list(d = 4, pwindow = 2, rho = 0),
+    # Lower tail of the larger shapes, where the shape gradient of
+    # gamma_lcdf is inaccurate
+    list(d = 1, pwindow = 1, rho = 0.3),
+    list(d = 3, pwindow = 3, rho = -0.15),
+    list(d = 2.5, pwindow = 1, rho = 0.3),
+    list(d = 4, pwindow = 2, rho = 0.3)
   )
   for (case in exptilt_gradient_cases) {
     for (point in points) {
       if (case$dist_id != 18L &&
         exptilt_case_rate(case) + point$rho <= 0) {
+        next
+      }
+      # The CDF underflows to zero, so there is no log CDF to differentiate
+      if (case$dist_id == 2L && case$params[1] >= 100 && point$d < 0.5) {
         next
       }
       label <- exptilt_case_label(
@@ -705,9 +722,12 @@ test_that("the vectorised tilted log PMF has finite gradients matching
     list(d = 12, pwindow = 3, rho = 0.4),
     list(d = 12, pwindow = 3, rho = -0.15),
     list(d = 6, pwindow = 2, rho = 1e-6),
-    list(d = 6, pwindow = 10, rho = 1.5e-5, scale = 5)
+    list(d = 6, pwindow = 10, rho = 1.5e-5, scale = 5),
+    # Lower tail of the larger shapes
+    list(d = 1, pwindow = 1, rho = 0.3),
+    list(d = 3, pwindow = 3, rho = -0.15)
   )
-  for (case in exptilt_gradient_cases[c(2, 4, 5)]) {
+  for (case in exptilt_gradient_cases[c(2, 4, 5, 8)]) {
     for (point in points) {
       if (case$dist_id != 18L &&
         exptilt_case_rate(case) + point$rho <= 0) {
@@ -824,5 +844,127 @@ test_that("a zero width primary window gives the delay PMF", {
       tolerance = 1e-10,
       info = exptilt_case_label(case)
     )
+  }
+})
+
+test_that("the gamma tilt transform gradients are accurate in the lower
+  tail", {
+  # The summed shape gradient of the vectorised PMF for delays 0 to 12,
+  # where the lower tail is far below the shape for the early delays. The
+  # PMF sums to a log probability of about -70 to -400, so finite
+  # differences of it in Stan are noisy. The reference is central
+  # differences of the log PMF from the reference integral.
+  model <- exptilt_gradient_model()
+  log_pmf_sum <- function(params, pwindow, rho) {
+    cdf <- function(x) stats::pgamma(x, params[1], params[2])
+    sum(log(diff(c(0, exptilt_reference(1:13, pwindow, rho, cdf)))))
+  }
+  for (case in exptilt_gradient_cases[c(5, 8)]) {
+    for (pwindow in c(1, 3)) {
+      rho <- 0.3
+      theta <- c(case$params, rho)
+      expected <- vapply(seq_along(theta), function(i) {
+        h <- 1e-5 * theta[i]
+        up <- down <- theta
+        up[i] <- theta[i] + h
+        down[i] <- theta[i] - h
+        (log_pmf_sum(up[1:2], pwindow, up[3]) -
+          log_pmf_sum(down[1:2], pwindow, down[3])) / (2 * h)
+      }, numeric(1))
+      # The rate is on the log scale in the model, with a Jacobian term
+      expected[2] <- expected[2] * theta[2] + 1
+      res <- exptilt_gradient_at(
+        model, case, 12, pwindow, rho, vectorised = TRUE
+      )
+      label <- exptilt_case_label(case, pwindow = pwindow)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_true(
+        all(abs(res$gradient - expected) <= 1e-5 * pmax(abs(expected), 1e-2)),
+        info = paste0(
+          label, ": gradient ", toString(signif(res$gradient, 6)),
+          ", reference ", toString(signif(expected, 6))
+        )
+      )
+    }
+  }
+})
+
+# Gradient of a one argument function of the gamma lower tail in the shape,
+# from a compiled model.
+exptilt_log_gamma_p_model <- function() {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  functions <- pcd_load_stan_functions(
+    wrap_in_block = TRUE, write_to_file = FALSE
+  )
+  code <- paste0(
+    functions, "\n",
+    "data {\n  real x;\n}\n",
+    "parameters {\n  real a;\n}\n",
+    "model {\n  target += primarycensored_log_gamma_p(x, a);\n}\n"
+  )
+  path <- file.path(tempdir(), "pcd_log_gamma_p.stan")
+  writeLines(code, path)
+  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
+}
+
+test_that("primarycensored_log_gamma_p is accurate in value and shape
+  gradient well below the shape", {
+  shapes <- c(0.3, 2.5, 20, 100, 1000)
+  fractions <- c(0.001, 0.02, 0.1, 0.2, 0.3, 0.45, 0.55, 0.8, 1, 1.5)
+  for (shape in shapes) {
+    x <- shape * fractions
+    expected <- stats::pgamma(x, shape, log.p = TRUE)
+    actual <- vapply(x, primarycensored_log_gamma_p, numeric(1), shape)
+    # Skip values the reference cannot represent
+    keep <- is.finite(expected) & expected > -700
+    expect_equal(
+      actual[keep], expected[keep],
+      tolerance = 1e-12, info = paste("shape", shape)
+    )
+  }
+  model <- exptilt_log_gamma_p_model()
+  for (shape in c(2.5, 20, 100)) {
+    for (x in shape * c(0.05, 0.1, 0.2, 0.3, 0.4, 0.6, 1)) {
+      res <- stan_gradient_at( # nolint: object_usage_linter.
+        model, data = list(x = x), init = list(a = shape)
+      )
+      h <- 1e-5 * shape
+      expected <- (
+        stats::pgamma(x, shape + h, log.p = TRUE) -
+          stats::pgamma(x, shape - h, log.p = TRUE)
+      ) / (2 * h)
+      info <- paste("shape", shape, "x", x)
+      expect_false(res$gradient_not_finite, info = info)
+      # CmdStan prints the gradient to 6 significant digits
+      expect_equal(res$gradient, expected, tolerance = 1e-5, info = info)
+    }
+  }
+})
+
+test_that("the normal tilted CDF is accurate in the moderate lower tail
+  for a small tilt", {
+  # Phi() loses relative precision for negative arguments down to -5, and
+  # the direct form amplifies it by 1 / (|rho| w) for a small tilt
+  case <- exptilt_stan_cases[[6]]
+  cdf <- exptilt_case_cdf(case)
+  for (pwindow in c(0.1, 1, 2.83)) {
+    for (scaled in c(1.1e-4, 1e-3, 5e-3)) {
+      for (sign in c(-1, 1)) {
+        rho <- sign * scaled / pwindow
+        d <- case$params[1] + case$params[2] * c(-4.95, -4.9, -4.6, -4.2)
+        expected <- exptilt_reference(d, pwindow, rho, cdf)
+        actual <- exp(vapply(
+          d, primarycensored_exptilt_lcdf, numeric(1),
+          case$dist_id, case$params, pwindow, rho
+        ))
+        expect_lt(
+          max_rel_diff(actual, expected), 1e-9,
+          label = exptilt_case_label(case, pwindow = pwindow, r = rho)
+        )
+      }
+    }
   }
 })
