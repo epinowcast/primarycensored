@@ -971,3 +971,236 @@ test_that("the normal tilted CDF is accurate in the moderate lower tail
     }
   }
 })
+
+# Large shapes. The shape gradients of Stan's gamma_lcdf and gamma_lccdf are
+# NaN for shapes of about 200 or more (in the upper tail for gamma_lccdf and
+# over the bulk from about 600 for gamma_lcdf), and an unused NaN partial
+# still poisons the reverse pass. The ODE path on main was finite here.
+exptilt_large_shape_cases <- list(
+  list(
+    dist_id = 2L, params = c(200, 20), pdist = pgamma,
+    args = list(shape = 200, rate = 20)
+  ),
+  list(
+    dist_id = 2L, params = c(250, 25), pdist = pgamma,
+    args = list(shape = 250, rate = 25)
+  ),
+  list(
+    dist_id = 2L, params = c(1000, 200), pdist = pgamma,
+    args = list(shape = 1000, rate = 200)
+  )
+)
+
+test_that("the gamma tilt transform gradients are finite and accurate for
+  large shapes", {
+  model <- exptilt_gradient_model()
+  # Delays across the bulk (the means are 10, 10 and 5) and far into the
+  # upper tail, for both signs of the tilt
+  points <- list(
+    list(d = 14, pwindow = 1, rho = 0.2),
+    list(d = 20, pwindow = 1, rho = 0.2),
+    list(d = 20, pwindow = 3, rho = -0.1),
+    list(d = 8, pwindow = 2, rho = 0.3),
+    list(d = 11, pwindow = 1, rho = -0.1),
+    list(d = 30, pwindow = 2, rho = 0.2)
+  )
+  for (case in exptilt_large_shape_cases) {
+    for (point in points) {
+      label <- exptilt_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, r = point$rho
+      )
+      res <- exptilt_gradient_at(
+        model, case, point$d, point$pwindow, point$rho
+      )
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_gradient_close(res, case, label)
+    }
+  }
+})
+
+test_that("the vectorised tilted log PMF has finite gradients for large
+  shapes", {
+  model <- exptilt_gradient_model()
+  # The sum over the delays 1 to 20 of a gamma with shape 200 and rate 20
+  # has delays far into the upper tail
+  for (case in exptilt_large_shape_cases) {
+    for (point in list(
+      list(d = 20, pwindow = 1, rho = 0.2),
+      list(d = 12, pwindow = 1, rho = 0.2),
+      list(d = 14, pwindow = 2, rho = -0.1)
+    )) {
+      label <- exptilt_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, r = point$rho
+      )
+      res <- exptilt_gradient_at(
+        model, case, point$d, point$pwindow, point$rho,
+        vectorised = TRUE
+      )
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_gradient_close(res, case, label)
+    }
+  }
+})
+
+# A compiled model whose target is one statement in the data `x` and the
+# parameter `a`, for gradients of the helper functions.
+exptilt_unary_model <- function(statement, name) {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  functions <- pcd_load_stan_functions(
+    wrap_in_block = TRUE, write_to_file = FALSE
+  )
+  code <- paste0(
+    functions, "\n",
+    "data {\n  real x;\n  int which;\n}\n",
+    "parameters {\n  real a;\n}\n",
+    "model {\n  target += ", statement, ";\n}\n"
+  )
+  path <- file.path(tempdir(), paste0(name, ".stan"))
+  writeLines(code, path)
+  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
+}
+
+test_that("primarycensored_log_gamma_pq gives both tails in value and shape
+  gradient for any shape", {
+  fractions <- c(0.001, 0.3, 0.7, 0.9, 1, 1.05, 1.2, 1.6, 3, 8)
+  shapes <- c(0.3, 2.5, 20, 200, 1000, 1e4)
+  for (shape in shapes) {
+    x <- shape * fractions
+    lower <- stats::pgamma(x, shape, log.p = TRUE)
+    upper <- stats::pgamma(x, shape, lower.tail = FALSE, log.p = TRUE)
+    actual <- vapply(x, primarycensored_log_gamma_pq, numeric(2), shape)
+    # Skip the lower tails the reference cannot represent
+    for (k in 1:2) {
+      expected <- if (k == 1) lower else upper
+      keep <- is.finite(expected) & expected > -1e5
+      expect_equal(
+        actual[k, keep], expected[keep],
+        tolerance = 1e-10, info = paste("tail", k, "shape", shape)
+      )
+    }
+  }
+  model <- exptilt_unary_model(
+    "primarycensored_log_gamma_pq(x, a)[which]", "pcd_log_gamma_pq"
+  )
+  for (shape in c(2.5, 20, 200, 1000)) {
+    for (x in shape * c(0.05, 0.3, 0.7, 1, 1.3, 2, 4)) {
+      for (k in 1:2) {
+        res <- stan_gradient_at( # nolint: object_usage_linter.
+          model,
+          data = list(x = x, which = k), init = list(a = shape)
+        )
+        h <- 1e-4 * shape
+        reference <- function(s) {
+          stats::pgamma(x, s, lower.tail = k == 1, log.p = TRUE)
+        }
+        expected <- (-reference(shape + 2 * h) + 8 * reference(shape + h) -
+          8 * reference(shape - h) + reference(shape - 2 * h)) / (12 * h)
+        info <- paste("tail", k, "shape", shape, "x", x)
+        expect_false(res$gradient_not_finite, info = info)
+        expect_false(res$rejected, info = info)
+        # CmdStan prints the gradient to 6 significant digits. The lower
+        # tail is 1 to rounding in the far upper tail, with a gradient of
+        # about 0
+        expect_lte(
+          abs(res$gradient - expected),
+          1e-5 * max(abs(expected), 1e-6), label = info
+        )
+      }
+    }
+  }
+})
+
+test_that("the normal log CDF has an exact gradient in the deep lower tail", {
+  model <- exptilt_unary_model(
+    "primarycensored_log_std_normal_cdf(a)", "pcd_log_std_normal_cdf"
+  )
+  z <- c(-5, -20, -36.9, -37.1, -38, -45, -60, -150)
+  actual <- vapply(z, primarycensored_log_std_normal_cdf, numeric(1))
+  expect_equal(actual, stats::pnorm(z, log.p = TRUE), tolerance = 1e-13)
+  for (zz in z) {
+    res <- stan_gradient_at( # nolint: object_usage_linter.
+      model,
+      data = list(x = 0, which = 1L), init = list(a = zz)
+    )
+    # d/dz log Phi(z) = phi(z) / Phi(z)
+    expected <- exp(stats::dnorm(zz, log = TRUE) -
+      stats::pnorm(zz, log.p = TRUE))
+    expect_false(res$gradient_not_finite, info = zz)
+    # CmdStan prints the gradient to 6 significant digits
+    expect_equal(res$gradient, expected, tolerance = 2e-6, info = zz)
+  }
+})
+
+# Reference log CDF for a normal delay and a tilted window, scaled to keep
+# a CDF far below the smallest double, and a five point central difference
+# of it in the parameters (mean, log standard deviation and tilt).
+exptilt_normal_log_reference <- function(d, pwindow, rho, mu, sigma) {
+  log_integrand <- function(z) {
+    window_density <- exptilt_window_density( # nolint: object_usage_linter.
+      z, pwindow, rho
+    )
+    stats::pnorm((d - z - mu) / sigma, log.p = TRUE) + log(window_density)
+  }
+  shift <- max(log_integrand(0), log_integrand(pwindow))
+  integral <- stats::integrate(
+    function(z) exp(vapply(z, log_integrand, numeric(1)) - shift),
+    0, pwindow,
+    rel.tol = 1e-13, abs.tol = 0, subdivisions = 2000L
+  )$value
+  shift + log(integral)
+}
+
+exptilt_normal_log_gradient <- function(d, pwindow, rho, mu, sigma) {
+  theta <- c(mu, sigma, rho)
+  f <- function(theta) {
+    exptilt_normal_log_reference(d, pwindow, theta[3], theta[1], theta[2])
+  }
+  grad <- vapply(1:3, function(i) {
+    h <- 1e-3 * abs(theta[i])
+    at <- function(step) {
+      theta[i] <- theta[i] + step * h
+      f(theta)
+    }
+    (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / (12 * h)
+  }, numeric(1))
+  # The standard deviation is on the log scale in the model, with a
+  # Jacobian term
+  grad[2] <- grad[2] * sigma + 1
+  grad
+}
+
+test_that("the normal tilted log CDF gradients are accurate in the deep
+  lower tail", {
+  # The tilt moves the argument of the tilted terms further into the lower
+  # tail for a negative tilt, below -37 where Stan's std_normal_lcdf has
+  # a derivative with a relative error of about 1e-5 that the difference of
+  # terms amplifies
+  model <- exptilt_gradient_model()
+  case <- exptilt_stan_cases[[6]]
+  case$params <- c(8, 3)
+  for (pwindow in c(1, 3, 1e-3)) {
+    rho <- -3
+    d <- -96.5
+    expected <- exptilt_normal_log_gradient(d, pwindow, rho, 8, 3)
+    res <- exptilt_gradient_at(model, case, d, pwindow, rho)
+    label <- paste("pwindow", pwindow)
+    expect_false(res$gradient_not_finite, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    expect_true(
+      all(abs(res$gradient - expected) <= 1e-6 * pmax(abs(expected), 1e-2)),
+      info = paste0(
+        label, ": gradient ", toString(signif(res$gradient, 6)),
+        ", reference ", toString(signif(expected, 6))
+      )
+    )
+  }
+})
