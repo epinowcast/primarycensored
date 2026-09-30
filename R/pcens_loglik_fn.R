@@ -156,7 +156,7 @@ pcens_loglik_fn <- function(
   }
 }
 
-#' Validate the per-observation inputs of pcens_loglik_fn()
+#' Validate the per-observation inputs of `pcens_loglik_fn()`
 #'
 #' @inheritParams pcens_loglik_fn
 #'

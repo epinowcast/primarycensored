@@ -2,7 +2,7 @@
 % Please edit documentation in R/pcens_loglik_fn.R
 \name{.check_row_inputs}
 \alias{.check_row_inputs}
-\title{Validate the per-observation inputs of pcens_loglik_fn()}
+\title{Validate the per-observation inputs of \code{pcens_loglik_fn()}}
 \usage{
 .check_row_inputs(x, pwindow, swindow, L, D)
 }
