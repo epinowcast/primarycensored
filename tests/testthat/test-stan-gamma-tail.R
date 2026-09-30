@@ -325,6 +325,9 @@ test_that("gamma_lcdf_logx and gamma_lcdf_logx_pair reject an invalid shape", {
     expect_error(dist_lcdf(2, c(a, 1), 2), "shape")
   }
   expect_error(gamma_lcdf_logx(log(2), NaN), "shape")
+  expect_error(gamma_lcdf_logx(log(2), Inf), "shape")
+  expect_error(gamma_lcdf_logx_pair(log(2), Inf), "shape")
+  expect_error(dist_lcdf(2, c(Inf, 1), 2), "shape")
   expect_error(dist_lcdf(2, c(1.5, -1), 2))
 })
 
