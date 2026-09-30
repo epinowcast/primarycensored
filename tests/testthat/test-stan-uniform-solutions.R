@@ -823,3 +823,107 @@ test_that("deep in the inverse gamma lower tail the result is usable or
     }
   }
 })
+
+test_that("the normal CDF applies a finite lower truncation point at or below
+  0 with no upper truncation point", {
+  # The analytical truncation needs a clause for delays with support on the
+  # reals, where F(L) > 0 for a finite L <= 0 even when D is infinite
+  params <- c(0.5, 1.5)
+  pwindow <- 1
+  cdf <- function(x) stan_reference(18L, params, x, pwindow)
+  for (L in c(0, -2)) {
+    for (d in L + c(0.5, 1.5, 3, 6)) {
+      info <- sprintf("L = %g, d = %g", L, d)
+      expected <- (cdf(d) - cdf(L)) / (1 - cdf(L))
+      results <- c(
+        primarycensored_cdf(
+          d, 18L, params, pwindow, L, Inf, 1L, numeric(0)
+        ),
+        exp(primarycensored_lcdf(
+          d, 18L, params, pwindow, L, Inf, 1L, numeric(0)
+        )),
+        primarycensored_analytical_cdf(
+          d, 18L, params, pwindow, L, Inf, 1L, numeric(0)
+        ),
+        exp(primarycensored_analytical_lcdf(
+          d, 18L, params, pwindow, L, Inf, 1L, numeric(0)
+        ))
+      )
+      expect_rel_equal(
+        results, rep(expected, length(results)),
+        tolerance = 1e-8,
+        info = info
+      )
+    }
+  }
+})
+
+test_that("the beta log CDF is exactly 0 and the PMF exactly 0 once the
+  window is above the support", {
+  # For q = max(d - pwindow, 0) >= 1 the CDF is 1. It is returned exactly
+  # rather than as the rounded difference of two sums, which can be above 1
+  # and give a NaN log PMF
+  params <- c(2, 3)
+  for (pwindow in c(1, 2, 3.5)) {
+    delays <- pwindow + 1 + c(0, 0.5, 2, 7)
+    for (d in delays) {
+      info <- sprintf("d = %g, pwindow = %g", d, pwindow)
+      expect_identical(analytical_lcdf(d, 9L, params, pwindow), 0, info = info)
+      expect_identical(
+        primarycensored_lcdf(d, 9L, params, pwindow, 0, Inf, 1L, numeric(0)),
+        0,
+        info = info
+      )
+    }
+  }
+  for (pwindow in c(1, 2)) {
+    delays <- 1:10
+    lcdf <- primarycensored_lcdf_vectorized(
+      1L, 10L, 9L, params, pwindow, 1L, numeric(0)
+    )
+    above <- delays >= pwindow + 1
+    expect_identical(lcdf[above], rep(0, sum(above)))
+    lpmf <- primarycensored_sone_lpmf_vectorized(
+      9L, 0, 10, 9L, params, pwindow, 1L, numeric(0)
+    )
+    expect_false(anyNA(lpmf), info = paste("pwindow", pwindow))
+    # The interval [d - 1, d) has no mass once the CDF is 1 at d - 1
+    empty <- delays > pwindow + 1
+    expect_identical(lpmf[empty], rep(-Inf, sum(empty)))
+    expect_true(all(is.finite(lpmf[!empty])))
+    expect_equal(sum(exp(lpmf)), 1, tolerance = 1e-12)
+    scalar <- vapply(delays[-10], function(d) {
+      primarycensored_lpmf(
+        d, 9L, params, pwindow, d + 1, 0, Inf, 1L, numeric(0)
+      )
+    }, numeric(1))
+    expect_false(anyNA(scalar), info = paste("pwindow", pwindow))
+    # The interval [d, d + 1) has no mass once the CDF is 1 at d
+    no_mass <- above[-10]
+    expect_identical(scalar[no_mass], rep(-Inf, sum(no_mass)))
+    expect_true(all(is.finite(scalar[!no_mass])))
+  }
+})
+
+test_that("the analytical log CDF is never above 0", {
+  cases <- list(
+    list(dist_id = 2L, params = c(2, 0.5)),
+    list(dist_id = 2L, params = c(30, 3)),
+    list(dist_id = 1L, params = c(1, 0.5)),
+    list(dist_id = 3L, params = c(2, 3)),
+    list(dist_id = 4L, params = 2),
+    list(dist_id = 13L, params = 3),
+    list(dist_id = 18L, params = c(2, 1))
+  )
+  for (case in cases) {
+    for (pwindow in c(0.5, 1, 3)) {
+      delays <- c(5, 20, 60, 150, 400, 1e3, 1e4)
+      lcdf <- analytical_lcdf(delays, case$dist_id, case$params, pwindow)
+      expect_false(anyNA(lcdf))
+      expect_true(
+        all(lcdf <= 0),
+        info = paste("dist", case$dist_id, "pwindow", pwindow)
+      )
+    }
+  }
+})
