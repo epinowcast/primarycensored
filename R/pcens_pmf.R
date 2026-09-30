@@ -69,41 +69,13 @@ pcens_pmf.default <- function(
     return(numeric(0))
   }
 
-  if (min(x) < L) {
-    stop(
-      "Some values of x are below L. Minimum x is ",
-      min(x),
-      " and L is ",
-      L,
-      ". Resolve this by filtering x to only include values >= L.",
-      call. = FALSE
-    )
-  }
-
-  if (is.finite(D) && max(x) >= D) {
-    stop(
-      "Upper truncation point is greater than D. Maximum x is ",
-      max(x),
-      " and D is ",
-      D,
-      ". Under truncation at D no event with latent value >= D is ",
-      "observable; resolve this by filtering x to values strictly less than D.",
-      call. = FALSE
-    )
-  }
+  .check_x_bounds(x, L, D)
 
   # Clip the upper end of each secondary interval at D
   upper <- x + swindow
-  if (is.finite(D) && any(upper > D)) {
-    upper_raw <- upper
-    upper <- pmin(upper_raw, D)
-    message(
-      "Upper truncation point is greater than D. It is ",
-      max(upper_raw),
-      " and D is ",
-      D,
-      "; clipping the upper end of secondary intervals at D."
-    )
+  if (is.finite(D)) {
+    .message_if_clipped(upper, D)
+    upper <- pmin(upper, D)
   }
 
   # Rows with a zero-width secondary window contribute a density
@@ -130,24 +102,93 @@ pcens_pmf.default <- function(
     result[exact] <- .pcens_density(object, x[exact], pwindow)
   }
 
-  # Normalise by F(D) - F(L) when truncated
-  if (!(is.infinite(L) && is.infinite(D))) {
-    cdf_D <- .pcens_cdf_at(object, D, pwindow, unique_points, cdfs, 1)
-    cdf_L <- .pcens_cdf_at(object, L, pwindow, unique_points, cdfs, 0)
-    normaliser <- cdf_D - cdf_L
-    if (normaliser != 1) {
-      result <- result / normaliser
-    }
-  }
-
-  # Ensure non-negative values
-  result <- pmax(0, result)
+  cdf_D <- .pcens_cdf_at(object, D, pwindow, unique_points, cdfs, 1)
+  cdf_L <- .pcens_cdf_at(object, L, pwindow, unique_points, cdfs, 0)
+  result <- .pcens_normalise(result, cdf_D, cdf_L)
 
   if (log) {
     return(log(result))
   } else {
     return(result)
   }
+}
+
+#' Check that delays lie within the truncation limits
+#'
+#' @param x Numeric vector of delays.
+#'
+#' @param L,D Lower and upper truncation points, each of length 1 or
+#'   `length(x)`.
+#'
+#' @return `NULL` invisibly. Called for its errors.
+#'
+#' @noRd
+.check_x_bounds <- function(x, L, D) {
+  below <- which(x < L)
+  if (length(below) > 0L) {
+    i <- below[which.min(x[below])]
+    stop(
+      "Some values of x are below L. Minimum x is ", x[[i]], " and L is ",
+      rep_len(L, length(x))[[i]], ". Resolve this by filtering x to only ",
+      "include values >= L.",
+      call. = FALSE
+    )
+  }
+  above <- which(is.finite(D) & x >= D)
+  if (length(above) > 0L) {
+    i <- above[which.max(x[above])]
+    stop(
+      "Upper truncation point is greater than D. Maximum x is ", x[[i]],
+      " and D is ", rep_len(D, length(x))[[i]], ". Under truncation at D no ",
+      "event with latent value >= D is observable; resolve this by ",
+      "filtering x to values strictly less than D.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Message when secondary intervals extend past the upper truncation point
+#'
+#' @param upper Upper ends of the secondary intervals.
+#'
+#' @param D Upper truncation point, of length 1 or `length(upper)`.
+#'
+#' @return `NULL` invisibly. Called for its message.
+#'
+#' @noRd
+.message_if_clipped <- function(upper, D) {
+  over <- which(upper > D)
+  if (length(over) > 0L) {
+    i <- over[which.max(upper[over])]
+    message(
+      "Upper truncation point is greater than D. It is ", upper[[i]],
+      " and D is ", rep_len(D, length(upper))[[i]],
+      "; clipping the upper end of secondary intervals at D."
+    )
+  }
+  invisible(NULL)
+}
+
+#' Normalise a PMF over the truncation limits
+#'
+#' Divides by F(D) - F(L) and sets negative values to zero, keeping missing
+#' values.
+#'
+#' @param pmf Numeric vector of probabilities.
+#'
+#' @param cdf_D,cdf_L CDF at `D` and `L`, each a single value.
+#'
+#' @return Numeric vector of normalised probabilities.
+#'
+#' @noRd
+.pcens_normalise <- function(pmf, cdf_D, cdf_L) {
+  normaliser <- cdf_D - cdf_L
+  if (!isTRUE(normaliser == 1)) {
+    pmf <- pmf / normaliser
+  }
+  pmf[which(pmf < 0)] <- 0
+  pmf
 }
 
 #' Primary event censored CDF at a truncation point

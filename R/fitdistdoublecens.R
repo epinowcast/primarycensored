@@ -465,18 +465,17 @@ fitdistdoublecens <- function(
 
 #' Group the rows of a fitdistrplus density evaluation
 #'
-#' Checks that every delay is within its truncation limits, which gives an
-#' error, and so `NaN` in [.dpcens()], for delays outside them as
-#' [pcens_pmf()] does. The grouped evaluation itself does no such check.
+#' Errors, and so gives `NaN` in `.dpcens()`, for delays outside their
+#' truncation limits as `pcens_pmf()` does.
 #'
 #' @inheritParams .dpcens
 #'
 #' @param params A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
 #'   with one row per element of `x`.
 #'
-#' @return Groups of observations as made by [.pcens_row_groups()].
+#' @return Groups of observations as made by `.pcens_row_groups()`.
 #'
-#' @keywords internal
+#' @noRd
 .dpcens_groups <- function(x, params) {
   .check_row_inputs(x, params$pwindow, params$swindow, params$L, params$D)
   .pcens_row_groups(x, params$pwindow, params$swindow, params$L, params$D)
@@ -485,6 +484,11 @@ fitdistdoublecens <- function(
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @inheritParams .dpcens
+#' @param pcens_cache Optional environment shared across calls with the same
+#'   `params`, `pdist` and `dprimary`, as made by [.build_pcens_closures()].
+#'   The `pcens` object and the grouping of `params` are built on the first
+#'   call and kept in it.
+#'   `NULL` (the default) builds them on every call.
 #' @keywords internal
 .ppcens <- function(q, params, pdist, dprimary, primary_args, pprimary = NULL,
                     check = TRUE, pcens_cache = NULL, ...) {
