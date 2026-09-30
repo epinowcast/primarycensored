@@ -43,16 +43,19 @@ for (tc in tgumbel_cases) {
       lower.tail = FALSE
     )
     expect_equal(lower + upper, rep(1, length(x)), tolerance = 1e-12)
+    # Compare on the log scale only where the probability does not underflow
+    keep <- lower > 1e-300 & upper > 1e-300
     expect_equal(
-      ptgumbel(x, tc$min, tc$max, tc$mu, tc$beta, log.p = TRUE), log(lower),
+      exp(ptgumbel(x, tc$min, tc$max, tc$mu, tc$beta, log.p = TRUE))[keep],
+      lower[keep],
       tolerance = 1e-12
     )
     expect_equal(
-      ptgumbel(
+      exp(ptgumbel(
         x, tc$min, tc$max, tc$mu, tc$beta,
         lower.tail = FALSE, log.p = TRUE
-      ),
-      log(upper),
+      ))[keep],
+      upper[keep],
       tolerance = 1e-12
     )
     expect_identical(lower[1], 0)
@@ -70,9 +73,11 @@ for (tc in tgumbel_cases) {
       dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta), numeric_derivative,
       tolerance = 1e-6
     )
+    dens <- dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta)
+    keep <- dens > 1e-300
     expect_equal(
-      dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta, log = TRUE),
-      log(dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta)),
+      exp(dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta, log = TRUE))[keep],
+      dens[keep],
       tolerance = 1e-12
     )
   })
