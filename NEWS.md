@@ -6,9 +6,8 @@
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
 - `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, and its gradient with respect to `k` is accurate there.
-  This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary (#387).
-  `gengamma_lcdf()` now rejects negative `y` explicitly.
-  The `gamma_lcdf()` gradient can still fail for large shapes at x above about the shape.
+  This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary.
+  See #363.
 
 ## Performance
 
