@@ -7,7 +7,6 @@ Dirichlet
 Formals
 Gumbel
 Inf
-Kummer
 Lifecycle
 Mba
 ORCID
@@ -51,7 +50,6 @@ eps
 eq
 erroring
 expgrowth
-expm
 exptilt
 fcp
 fitdist
@@ -70,6 +68,7 @@ jcblemai
 jgabry
 kaitejohnson
 kz
+ldots
 leq
 lfloor
 lifecycle

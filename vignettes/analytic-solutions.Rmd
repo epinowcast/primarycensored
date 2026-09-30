@@ -18,58 +18,60 @@ vignette: >
 
 # Introduction
 
-Every analytic solution in the package has the same structure.
-It writes the primary event censored distribution function as a weighted sum of truncated exponential-moment transforms of the delay density [@TransformPaperPlaceholder].
-The primary event window fixes the tilts at which the transform is needed and the weights that multiply it.
-The delay distribution fixes whether the transform has a tractable form.
+Each analytic solution for a continuous delay in the package writes the primary event censored distribution function as a weighted sum of truncated exponential-moment transforms of the delay density [@TransformPaperPlaceholder].
+The primary event window fixes where the transform is needed, and the delay fixes whether it is tractable.
 Where no tractable form applies the package integrates numerically, with `pcens_cdf.default()` in R and an ODE solver in Stan.
 
 This vignette gives the definitions, the result for each window and the transform for each delay family.
 It then lists which pairs of window and delay the package solves analytically.
-The derivations are in @TransformPaperPlaceholder.
-The double interval censored model and the uniform window results are in @BrandInPrepPrimaryCensored.
+The derivations are in the transform paper [@TransformPaperPlaceholder].
+The double interval censored model is in Brand et al. [@BrandInPrepPrimaryCensored].
 
 # Notation
 
-The notation follows @TransformPaperPlaceholder.
+The notation follows the transform paper [@TransformPaperPlaceholder].
 
 | Symbol | Meaning | In the package |
 |:---|:---|:---|
 | $F_{\mathrm{IP}}$, $f_{\mathrm{IP}}$ | CDF and density of the delay | `pdist` and its arguments |
-| $w_P$ | width of the primary event window | `pwindow` |
-| $z \in [0, w_P]$ | primary event time, measured from the window start | |
+| $w$, $w_P$ | width of the primary event window | `pwindow` |
+| $z \in [0, w]$ | primary event time, measured from the window start | |
 | $q$ | evaluation time, measured from the window start | `q` of `pcens_cdf()` |
-| $f_{\mathrm{win}}(z; w_P)$ | density of the primary event time in the window | `dprimary` and `primary_args` |
-| $H_{w_P}(z)$ | CDF of the primary event time in the window | `pprimary` |
-| $F_{\mathrm{cens}}(q; w_P)$ | primary event censored CDF | `pcens_cdf()` |
+| $f_{\mathrm{win}}(z; w)$ | density of the primary event time in the window | `dprimary` and `primary_args` |
+| $H_w(z)$ | CDF of the primary event time in the window | `pprimary` |
+| $F_{\mathrm{cens}}(q; w)$ | primary event censored CDF | `pcens_cdf()` |
 | $\rho$ | exponential tilt of the window | `r` of `dexpgrowth()` |
 
-The subscript IP comes from the incubation period application of @TransformPaperPlaceholder, but $F_{\mathrm{IP}}$ may be any delay.
+As in the transform paper, the general results write the width as $w$ and the window sections write it as $w_P$.
+The window sections add the window parameters to $f_{\mathrm{win}}$, for example $f_{\mathrm{win}}(z; w_P, \rho)$.
+The subscript IP stands for incubation period, as in the transform paper.
+$F_{\mathrm{IP}}$ may be any delay.
 For a delay on the non-negative reals $F_{\mathrm{IP}}(x) = f_{\mathrm{IP}}(x) = 0$ for $x < 0$.
 The normal delay has support on the reals.
-For it every integral below with lower limit 0 has lower limit $-\infty$ instead, and $F_{\mathrm{IP}}(q - w_P)$ is not zero for $q < w_P$.
+For the normal delay the integrals over the delay $u$ in equations \@ref(eq:kernel), \@ref(eq:transform), \@ref(eq:partial-moment) and \@ref(eq:kn) have lower limit $-\infty$ instead of 0.
+$F_{\mathrm{IP}}(q - w)$ is then not zero for $q < w$.
 
 # The transform reduction
 
 The primary event censored CDF is
 
 $$
-F_{\mathrm{cens}}(q; w_P) = \int_0^{w_P} F_{\mathrm{IP}}(q - z) f_{\mathrm{win}}(z; w_P)\,dz.
+F_{\mathrm{cens}}(q; w) = \int_0^w F_{\mathrm{IP}}(q - z) f_{\mathrm{win}}(z; w)\,dz.
 (\#eq:cens)
 $$
 
 Let
 
 $$
-H_{w_P}(z) = \int_0^z f_{\mathrm{win}}(s; w_P)\,ds,
+H_w(z) = \int_0^z f_{\mathrm{win}}(s; w)\,ds,
 (\#eq:window-cdf)
 $$
 
-with $H_{w_P}(z) = 0$ for $z \leq 0$ and $H_{w_P}(z) = 1$ for $z \geq w_P$.
+with $H_w(z) = 0$ for $z \leq 0$ and $H_w(z) = 1$ for $z \geq w$.
 Exchanging the order of integration in equation \@ref(eq:cens) gives
 
 $$
-F_{\mathrm{cens}}(q; w_P) = \int_0^q H_{w_P}(q - u) f_{\mathrm{IP}}(u)\,du.
+F_{\mathrm{cens}}(q; w) = \int_0^q H_w(q - u) f_{\mathrm{IP}}(u)\,du.
 (\#eq:kernel)
 $$
 
@@ -80,28 +82,30 @@ T_f(\xi; \tau) = \int_0^\tau e^{\xi u} f_{\mathrm{IP}}(u)\,du,
 (\#eq:transform)
 $$
 
-with $T_f(\xi; \tau) = 0$ for $\tau \leq 0$ for a delay on the non-negative reals.
+with $T_f(\xi; \tau) = 0$ for $\tau \leq 0$ when the delay is non-negative.
 The delay CDF is $F_{\mathrm{IP}}(\tau) = T_f(0; \tau)$.
-Suppose the reversed window CDF has the expansion
+Suppose the reversed kernel $H_w(q - u)$ has the expansion
 
 $$
-H_{w_P}(q - u) = \sum_k a_k(q, w_P) e^{\xi_k u}.
+H_w(q - u) = \sum_k a_k(q, w) e^{\xi_k u}
 (\#eq:expansion)
 $$
 
+for every $u \in [0, q]$.
 Substituting it into equation \@ref(eq:kernel) gives
 
 $$
-F_{\mathrm{cens}}(q; w_P) = \sum_k a_k(q, w_P) T_f(\xi_k; q).
+F_{\mathrm{cens}}(q; w) = \sum_k a_k(q, w) T_f(\xi_k; q).
 (\#eq:reduction)
 $$
 
-The window fixes the coefficients $a_k(q, w_P)$ and the tilts $\xi_k$.
+The window fixes the coefficients $a_k(q, w)$ and the tilts $\xi_k$.
 The delay fixes whether $T_f$ is tractable at those tilts.
 
-The reversed window CDF is 1 for $u \leq q - w_P$.
-The expansion is therefore needed only on $[q - w_P, q]$, and it may differ between parts of that interval.
-Each result below has the form $F_{\mathrm{IP}}(q - w_P)$ plus weighted differences $T_f(\xi_k; \tau^+) - T_f(\xi_k; \tau^-)$.
+In general the reversed kernel is 1 for $u \leq q - w$.
+This saturated part contributes $F_{\mathrm{IP}}(q - w)$.
+The expansion is then needed only on $[q - w, q]$, and it may differ between parts of that interval.
+Each result below for the exponentially tilted, logistic and Gumbel windows has the form $F_{\mathrm{IP}}(q - w_P)$ plus weighted differences $T_f(\xi_k; \tau^+) - T_f(\xi_k; \tau^-)$.
 The endpoints $\tau^\pm$ are $q$ and $q - w_P$, and for the logistic window also a split point $u^\star$.
 
 The uniform window uses the partial moment
@@ -118,7 +122,7 @@ K_n(t) = \int_0^t (t - u)^n f_{\mathrm{IP}}(u)\,du.
 (\#eq:kn)
 $$
 
-$K_1(t)$ is the integral of $F_{\mathrm{IP}}$ from 0 to $t$, and
+$K_1(t)$ is the integral of $F_{\mathrm{IP}}$ up to $t$, and
 
 $$
 K_1(t) = t\,T_f(0; t) - M(t).
@@ -127,16 +131,16 @@ $$
 
 # Primary event windows
 
-| Window | R primary | Stan primary id | $f_{\mathrm{win}}(z; w_P)$ | Tilts $\xi_k$ | Result |
+| Window | R primary | Stan primary id | $f_{\mathrm{win}}$ | Tilts $\xi_k$ | Result |
 |:---|:---|:---|:---|:---|:---|
 | Uniform | `dunif` | 1 | $1 / w_P$ | none, uses $M$ | \@ref(eq:uniform) |
-| Exponential tilt | `dexpgrowth()`, `r` $= \rho$ | 2 | $\rho e^{\rho z} / (e^{\rho w_P} - 1)$ | $-\rho$ | \@ref(eq:exptilt) |
-| Truncated logistic | `dtlogis()`, `location` $= m$, `scale` $= s$ | 3 | $L'(z) / D_L$ | $\pm n / s$, $n \geq 0$ | \@ref(eq:logistic-left) to \@ref(eq:logistic-split) |
-| Truncated Gumbel | `dtgumbel()`, `mu` $= \mu_G$, `beta` $= \beta$ | 4 | $G'(z) / D_G$ | $n / \beta$, $n \geq 0$ | \@ref(eq:gumbel) |
+| Exponential tilt | `dexpgrowth()`, `r` $= \rho$ | 2 | $\rho e^{\rho z} / (e^{\rho w_P} - 1)$ | $0$ and $-\rho$ | \@ref(eq:exptilt) |
+| Truncated logistic | `dtlogis()`, `location` $= m$, `scale` $= s$ | 3 | $L'(z) / D_L$ | $n / s$ for $n \geq 0$, $-n / s$ for $n \geq 1$ | \@ref(eq:logistic-left) to \@ref(eq:logistic-split) |
+| Truncated Gumbel | `dtgumbel()`, `mu` $= \mu_G$, `beta` $= \beta$ | 4 | $G'(z) / D_G$ | $n / \beta$ for $n \geq 0$ | \@ref(eq:gumbel) |
 
 ## Exponentially tilted window
 
-The window CDF is
+The window density is $f_{\mathrm{win}}(z; w_P, \rho) = \rho e^{\rho z} / (e^{\rho w_P} - 1)$ and the window CDF is
 
 $$
 H_{\rho, w_P}(z) = \frac{e^{\rho z} - 1}{e^{\rho w_P} - 1}, \qquad 0 \leq z \leq w_P.
@@ -144,7 +148,7 @@ $$
 
 A tilt $\rho > 0$ places more mass late in the window, as for a growing primary event process [@Park2024; @Zhao2021BETS].
 A tilt $\rho < 0$ places more mass early in the window.
-The only tilt needed is $\xi = -\rho$, and we write $J_\rho(x) = T_f(-\rho; x)$.
+Let $J_\rho(x) = T_f(-\rho; x)$.
 The CDF is
 
 $$
@@ -152,10 +156,12 @@ F_\rho(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{e^{\rho q} \{J_\rho(q) - J_\rh
 (\#eq:exptilt)
 $$
 
-Collecting the $F_{\mathrm{IP}}(q - w_P)$ terms gives the form that @TransformPaperPlaceholder states as its main result.
-The package uses equation \@ref(eq:exptilt) on the log scale, as it keeps $F_{\mathrm{IP}}(q - w_P)$ out of the numerator that cancels.
+Collecting the $F_{\mathrm{IP}}(q - w_P)$ terms gives the main result of the transform paper [@TransformPaperPlaceholder].
+The package evaluates equation \@ref(eq:exptilt) on the log scale.
+This form keeps $F_{\mathrm{IP}}(q - w_P)$ out of the numerator, which loses precision through cancellation.
 Every term depends on $q$ or on $q - w_P$ alone.
-So `primarycensored_exptilt_lcdf_vectorized()` in Stan computes the terms once per integer delay and uses them for the two windows that share the endpoint.
+For an integer `pwindow`, `primarycensored_exptilt_lcdf_vectorized()` in Stan therefore computes the terms once per integer delay.
+It reuses them for the two adjacent probability mass intervals that share that delay as an endpoint.
 
 ## Uniform window as the limit $\rho \to 0$
 
@@ -169,8 +175,8 @@ $$
 By equation \@ref(eq:k1) this needs only $F_{\mathrm{IP}}$ and the partial moment $M$.
 It is closed form whenever $M$ is.
 This holds for more families than have a closed form tilted transform, for example the lognormal.
-@BrandInPrepPrimaryCensored give these results.
-For a gamma delay with daily windows the resulting probability mass function matches that of @cori2013new.
+Brand et al. give these results [@BrandInPrepPrimaryCensored].
+For a gamma delay with daily windows the resulting probability mass function matches that of Cori et al. [@cori2013new].
 
 ## Truncated logistic window
 
@@ -180,9 +186,8 @@ $$
 L(z) = \frac{1}{1 + e^{-(z - m) / s}}, \qquad D_L = L(w_P) - L(0), \qquad A(q) = e^{-(q - m) / s}, \qquad u^\star = q - m.
 $$
 
-The window density is $L'(z) / D_L$ and the window CDF is $H_{L, w_P}(z) = \{L(z) - L(0)\} / D_L$.
+The window density is $f_{\mathrm{win}}(z; w_P, m, s) = L'(z) / D_L$ and the window CDF is $H_{L, w_P}(z) = \{L(z) - L(0)\} / D_L$.
 The reversed function $L(q - u) = 1 / \{1 + A(q) e^{u / s}\}$ is a geometric series in $e^{u / s}$ for $u < u^\star$ and in $e^{-u / s}$ for $u > u^\star$.
-The CDF depends on where the midpoint lies.
 For $m < 0$,
 
 $$
@@ -215,7 +220,7 @@ $$
 G(z) = \exp\left[-e^{-(z - \mu_G) / \beta}\right], \qquad D_G = G(w_P) - G(0), \qquad c(q) = e^{-(q - \mu_G) / \beta}.
 $$
 
-The window density is $G'(z) / D_G$ and the window CDF is $H_{G, w_P}(z) = \{G(z) - G(0)\} / D_G$.
+The window density is $f_{\mathrm{win}}(z; w_P, \mu_G, \beta) = G'(z) / D_G$ and the window CDF is $H_{G, w_P}(z) = \{G(z) - G(0)\} / D_G$.
 The reversed function $G(q - u) = \exp\{-c(q) e^{u / \beta}\}$ is a power series in $e^{u / \beta}$, which gives
 
 $$
@@ -230,39 +235,40 @@ The series converges for every $q$ and needs no split.
 The table gives $T_f$ and $M$ for each delay family with a transform in the package.
 $\gamma(\alpha, x)$ is the lower incomplete gamma function and $P(\alpha, x) = \gamma(\alpha, x) / \Gamma(\alpha)$.
 $\Phi$ and $\phi$ are the standard normal CDF and density.
-The classes and the derivations are those of @TransformPaperPlaceholder.
-A transform is analytic if it is a closed form, semi-analytic if it is a series of special functions, and numerical if it needs quadrature.
+The classes are those of the transform paper [@TransformPaperPlaceholder].
+A transform is analytic if it is a closed form, semi-analytic if it is a series of special functions, and quadrature if it needs numerical integration.
 
 | Family (R; Stan id) | $T_f(\xi; \tau)$ | $M(\tau)$ | Class | Transform used when |
 |:---|:---|:---|:---|:---|
 | Exponential, rate $\lambda$ (`pexp`; 4) | $\frac{\lambda}{\lambda - \xi} \{1 - e^{-(\lambda - \xi) \tau}\}$ | $P(2, \lambda \tau) / \lambda$ | analytic | $\xi < \lambda$ |
 | Gamma, shape $\alpha$, rate $\lambda$ (`pgamma`; 2) | $\left(\frac{\lambda}{\lambda - \xi}\right)^\alpha P(\alpha, (\lambda - \xi) \tau)$ | $\frac{\alpha}{\lambda} P(\alpha + 1, \lambda \tau)$ | analytic | $\xi < \lambda$ |
 | Normal, mean $\mu$, standard deviation $\sigma$ (`pnorm`; 18) | $e^{\xi \mu + \xi^2 \sigma^2 / 2}\, \Phi\left(\frac{\tau - \mu - \xi \sigma^2}{\sigma}\right)$ | $\mu \Phi(z_\tau) - \sigma \phi(z_\tau)$, $z_\tau = \frac{\tau - \mu}{\sigma}$ | analytic | always |
-| Weibull, shape $k$, scale $\lambda$ (`pweibull`; 3) | $\sum_{n \geq 0} \frac{(\xi \lambda)^n}{n!} \gamma\left(1 + \frac{n}{k}, (\tau / \lambda)^k\right)$ | $\lambda \gamma\left(1 + \frac{1}{k}, (\tau / \lambda)^k\right)$ | semi-analytic | every $\xi$, with a cancellation check for $\xi < 0$ |
-| Generalised gamma, $(a, b, c)$ (`pgengamma.orig`, `pgengamma`; 5) | $\sum_{n \geq 0} \frac{\xi^n}{n!} b^{-n / c} \frac{\gamma(a + n / c, b \tau^c)}{\Gamma(a)}$ | $b^{-1 / c} \frac{\gamma(a + 1 / c, b \tau^c)}{\Gamma(a)}$ | semi-analytic | every $\xi$, with a cancellation check for $\xi < 0$ |
-| Lognormal, $\mu$, $\sigma$ (`plnorm`; 1) | $\int_{-\infty}^{\log \tau} e^{\xi e^x} \frac{1}{\sigma} \phi\left(\frac{x - \mu}{\sigma}\right) dx$ | $e^{\mu + \sigma^2 / 2}\, \Phi\left(\frac{\log \tau - \mu}{\sigma} - \sigma\right)$ | numerical | $\log(-\xi) + 2 \log \sigma + \mu < 690$ for $\xi < 0$, every $\xi > 0$ |
-| Log-logistic, shape $k$, scale $\lambda$ (`pllogis`; 31) | $\sum_{n \geq 0} \frac{(\xi \lambda)^n}{n!} \frac{A^{1 + n / k}}{1 + n / k}\, {}_2F_1\left(1 + \frac{n}{k}, 2; 2 + \frac{n}{k}; -A\right)$, $A = (\tau / \lambda)^k$ | $\lambda \frac{A^{1 + 1 / k}}{1 + 1 / k}\, {}_2F_1\left(1 + \frac{1}{k}, 2; 2 + \frac{1}{k}; -A\right)$ | semi-analytic | $k \geq 0.2$ and $|\xi| \tau \leq 10$ |
+| Weibull, shape $k$, scale $\lambda$ (`pweibull`; 3) | $\sum_{n \geq 0} \frac{(\xi \lambda)^n}{n!} \gamma\left(1 + \frac{n}{k}, (\tau / \lambda)^k\right)$ | $\lambda \gamma\left(1 + \frac{1}{k}, (\tau / \lambda)^k\right)$ | semi-analytic | $|\xi| \tau < 400$ and the series converges, with a cancellation check for $\xi < 0$ |
+| Generalised gamma, $(a, b, c)$ (`pgengamma.orig`; 5, and `pgengamma` in R) | $\sum_{n \geq 0} \frac{\xi^n}{n!} b^{-n / c} \frac{\gamma(a + n / c, b \tau^c)}{\Gamma(a)}$ | $b^{-1 / c} \frac{\gamma(a + 1 / c, b \tau^c)}{\Gamma(a)}$ | semi-analytic | $|\xi| \tau < 400$ and the series converges, with a cancellation check for $\xi < 0$ |
+| Lognormal, $\mu$, $\sigma$ (`plnorm`; 1) | $\int_{-\infty}^{\log \tau} e^{\xi e^x} \frac{1}{\sigma} \phi\left(\frac{x - \mu}{\sigma}\right) dx$ | $e^{\mu + \sigma^2 / 2}\, \Phi\left(\frac{\log \tau - \mu}{\sigma} - \sigma\right)$ | quadrature | $\log(-\xi) + 2 \log \sigma + \mu < 690$ for $\xi < 0$, and $\xi > 0$ within the series limits below |
+| Log-logistic, shape $k$, scale $\lambda$ (`pllogis`; 31) | $\sum_{n \geq 0} \frac{(\xi \lambda)^n}{n!} \frac{B^{1 + n / k}}{1 + n / k}\, {}_2F_1\left(1 + \frac{n}{k}, 2; 2 + \frac{n}{k}; -B\right)$, $B = (\tau / \lambda)^k$ | $\lambda \frac{B^{1 + 1 / k}}{1 + 1 / k}\, {}_2F_1\left(1 + \frac{1}{k}, 2; 2 + \frac{1}{k}; -B\right)$ | semi-analytic | $k \geq 0.2$ and $|\xi| \tau \leq 10$ |
 
-The generalised gamma row uses the density $c b^a u^{a c - 1} e^{-b u^c} / \Gamma(a)$ of @TransformPaperPlaceholder.
-The Stacy form of `flexsurv::pgengamma.orig()` [@stacy1962generalization] has `shape` $= c$, `scale` $= b^{-1 / c}$ and `k` $= a$, and the Weibull is the case $a = 1$.
-The Prentice form of `flexsurv::pgengamma()` with $Q > 0$ is mapped to the Stacy form with `shape` $= Q / \sigma$, `scale` $= e^\mu Q^{2 \sigma / Q}$ and `k` $= Q^{-2}$.
+The generalised gamma row uses the density $c b^a u^{a c - 1} e^{-b u^c} / \Gamma(a)$ of the transform paper.
+The Stacy form of `flexsurv::pgengamma.orig()` [@stacy1962generalization] has `shape` $= c$, `scale` $= b^{-1 / c}$ and `k` $= a$.
+The Weibull is the case $a = 1$.
+The Prentice form of `flexsurv::pgengamma()` with $Q > 0$ is mapped in R to the Stacy form with `shape` $= Q / \sigma$, `scale` $= e^\mu Q^{2 \sigma / Q}$ and `k` $= Q^{-2}$.
 For $Q \leq 0$ the numerical method is used.
 
 The log-logistic hypergeometric terms are computed through the ratio
 
 $$
-r_a(A) = \frac{1 + A}{A^{a + 1}} \int_0^A \frac{y^a}{(1 + y)^2}\,dy,
+r_a(B) = \frac{1 + B}{B^{a + 1}} \int_0^B \frac{y^a}{(1 + y)^2}\,dy,
 $$
 
-so that $T_f(\xi; \tau) = F_{\mathrm{IP}}(\tau) \sum_{n \geq 0} (\xi \tau)^n r_{n / k}(A) / n!$ and $M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(A)$.
-For a delay $U$ with CDF $F_{\mathrm{IP}}$ the ratio $r_{n / k}(A)$ is $E[(U / \tau)^n \mid U \leq \tau]$.
-Base R has no Gauss hypergeometric function, so the package evaluates $r_a$ by one of three series in $A$.
-In Stan the log-logistic parameters are ordered `[scale, shape]`.
+so that $T_f(\xi; \tau) = F_{\mathrm{IP}}(\tau) \sum_{n \geq 0} (\xi \tau)^n r_{n / k}(B) / n!$ and $M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(B)$.
+For a delay $U$ with CDF $F_{\mathrm{IP}}$ the ratio $r_{n / k}(B)$ is $E[(U / \tau)^n \mid U \leq \tau]$.
+Base R has no Gauss hypergeometric function, so the package evaluates $r_a$ by one of three series in $B$.
 
-The lognormal transform has no closed form, and @TransformPaperPlaceholder evaluate it by quadrature.
+The lognormal transform has no closed form, and the transform paper evaluates it by quadrature [@TransformPaperPlaceholder].
 The package uses Gauss-Legendre quadrature for $\xi < 0$.
 For $\xi > 0$ it uses the series $\sum_{j \geq 0} \xi^j e^{j \mu + j^2 \sigma^2 / 2} \Phi\left(\frac{\log \tau - \mu}{\sigma} - j \sigma\right) / j!$ of positive terms.
-In R this series is used where $\xi \tau \leq 200$ or $\xi w_P > 2$, with at most 20000 terms, and in Stan where $\xi \tau \leq 60$ or $\xi w_P > 2$.
+In R this series is used where $\xi \tau \leq 200$ or $\xi w_P > 2$, with at most 20000 terms.
+In Stan it is used where $\xi \tau \leq 60$ or $\xi w_P > 2$.
 Elsewhere the numerical method is used for that $q$.
 
 Some families have a closed form $M$ or $K_1$ but no tilted transform in the package.
@@ -271,8 +277,8 @@ Here $I_x(\cdot, \cdot)$ is the regularised incomplete beta function.
 
 | Family (Stan id) | $M(\tau)$ or $K_1(t)$ | Needs | Available in |
 |:---|:---|:---|:---|
-| Beta, shapes $\alpha_1$, $\alpha_2$ (9) | $M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)$ | central | R and Stan |
-| Chi-square, $\nu$ degrees of freedom (13) | the gamma with $\alpha = \nu / 2$ and $\lambda = 1 / 2$ | central | R and Stan |
+| Beta, shapes $\alpha_1$, $\alpha_2$ (9) | $M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)$ | non-centrality 0 | R and Stan |
+| Chi-square, $\nu$ degrees of freedom (13) | the gamma with $\alpha = \nu / 2$ and $\lambda = 1 / 2$ | non-centrality 0 | R and Stan |
 | Inverse gamma, shape $\alpha$, scale $\theta$ (16) | $M(\tau) = \frac{\theta}{\alpha - 1} \{1 - P(\alpha - 1, \theta / \tau)\}$ | $\alpha > 1$ | Stan |
 | Inverse chi-square, $\nu$ (19) | the inverse gamma with $\alpha = \nu / 2$ and $\theta = 1 / 2$ | $\nu > 2$ | Stan |
 | Scaled inverse chi-square, $\nu$ and scale $\varsigma$ (22) | the inverse gamma with $\alpha = \nu / 2$ and $\theta = \nu \varsigma^2 / 2$ | $\nu > 2$ | Stan |
@@ -283,73 +289,106 @@ The non-central beta and chi-square use the numerical method.
 
 The step and hazard delays of `pdiscretestep()` and `pdiscretehazard()` (Stan ids 26, 27 and 28) do not use a transform.
 Their CDF is piecewise constant, so equation \@ref(eq:cens) is a finite sum of differences of the window CDF.
-This is exact for any window with a CDF.
+In R this is exact for any window with a `pprimary` function.
+The R methods are `pcens_cdf.pcens_pdiscretestep()` and `pcens_cdf.pcens_pdiscretehazard()`, for any primary.
 
 # Coverage by window and delay
 
 The table lists the pairs of window and delay that the package solves.
-A is analytic, S is semi-analytic, E is an exact finite sum and N is the numerical method.
+Each entry is the class of the delay transform, "exact" for a finite sum, or "numerical" for the numerical method.
+The logistic and Gumbel windows add a truncated series over the tilts.
 The R method for a pair is `pcens_cdf.pcens_p<delay>_d<primary>`, for example `pcens_cdf.pcens_pgamma_dexpgrowth()`.
 
 | Delay | Uniform | Exponential tilt | Truncated logistic | Truncated Gumbel |
 |:---|:---|:---|:---|:---|
-| Exponential | A | A | A if $\lambda$ exceeds the largest tilt | A if $\lambda$ exceeds the largest tilt |
-| Gamma | A | A | A if $\lambda$ exceeds the largest tilt | A if $\lambda$ exceeds the largest tilt |
-| Normal | A | A | A | A |
-| Weibull | A | S | N | N |
-| Generalised gamma | A | S | N | N |
-| Lognormal | A | quadrature for $\rho > 0$, S for $\rho < 0$ | N | N |
-| Log-logistic | S | S | N | N |
-| Beta, chi-square | A | N | N | N |
-| Inverse gamma, inverse chi-square, scaled inverse chi-square, Pareto | A in Stan, N in R | N | N | N |
-| Step and hazard | E | E | E | E in R, N in Stan |
+| Exponential | analytic | analytic if $\lambda > -\rho$ | analytic if $\lambda$ exceeds the largest tilt | analytic if $\lambda$ exceeds the largest tilt |
+| Gamma | analytic | analytic if $\lambda > -\rho$ | analytic if $\lambda$ exceeds the largest tilt | analytic if $\lambda$ exceeds the largest tilt |
+| Normal | analytic | analytic | analytic | analytic |
+| Weibull | analytic | semi-analytic | numerical | numerical |
+| Generalised gamma | analytic | semi-analytic | numerical | numerical |
+| Lognormal | analytic | quadrature for $\rho > 0$, semi-analytic for $\rho < 0$ | numerical | numerical |
+| Log-logistic | semi-analytic | semi-analytic | numerical | numerical |
+| Beta, chi-square | analytic | numerical | numerical | numerical |
+| Inverse gamma, inverse chi-square, scaled inverse chi-square, Pareto | analytic in Stan, numerical in R | numerical | numerical | numerical |
+| Step and hazard | exact | exact | exact | exact in R, numerical in Stan |
 
-The logistic window needs the tilts $\pm n / s$ up to the number of series terms, and the Gumbel window needs the tilts $n / \beta$ up to the number of series terms.
-The exponential and gamma transforms need $\lambda$ above the largest positive tilt.
-For delays of a day or more $\lambda$ is of order 1.
-The condition then holds only for a logistic midpoint $m \geq w_P$, where no positive tilt is needed, or for a very negative $\mu_G / \beta$ or a large scale.
+The logistic window needs the tilts $n / s$ and $-n / s$ up to the number of series terms.
+For $m \geq w_P$ it needs no positive tilt.
+The Gumbel window needs the tilts $n / \beta$ for $n = 0, \ldots, N$.
+The number of terms $N$ is at least 2 and falls as $\mu_G / \beta$ decreases.
+For the Gumbel window the exponential and gamma delays therefore need $\lambda > N / \beta$, so $\beta > 2 / \lambda$ at least.
+For the logistic window with $m < w_P$ they need $\lambda$ above the largest tilt $n / s$ of the series.
 Otherwise these pairs use the numerical method.
+The Gumbel series checks under Numerical safeguards apply to every delay, including the normal.
 The Weibull, generalised gamma, lognormal and log-logistic delays have transforms, but no method pairs them with the logistic or Gumbel windows.
 
-In Stan `primarycensored_analytical_lcdf()` chooses the route through `check_for_analytical_params()`.
+In Stan `primarycensored_cdf()` and `primarycensored_lcdf()` choose between the analytical and the numerical path with `check_for_analytical_params()`.
+For windows whose admissibility depends on `pwindow`, such as the truncated logistic, they use `check_for_analytical_window()`.
+`primarycensored_analytical_lcdf()` rejects parameters that fail these checks.
+In Stan the log-logistic parameters are ordered `[scale, shape]`.
 
 | Window | Stan functions | Parameter check |
 |:---|:---|:---|
-| Uniform | `primarycensored_<dist>_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` | `check_for_uniform_terms()` |
-| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_exptilt_lcdf_vectorized()`, with `log_tilt_transform()` | `check_for_tilt_transform()` |
+| Uniform | `primarycensored_<dist>_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` | `check_for_uniform_terms()` and `check_uniform_terms_params()` |
+| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_exptilt_lcdf_vectorized()`, with `log_tilt_transform_pair()` | `check_for_tilt_transform()`, with `check_for_tilt_transform_at()` for the lognormal and `check_for_tilt_transform_point()` for the log-logistic |
 | Truncated logistic | `primarycensored_tlogis_lcdf()` and `primarycensored_tlogis_lcdf_vectorized()` | `check_for_tlogis_params()` |
 | Truncated Gumbel | `primarycensored_gumbel_lcdf()` and `primarycensored_gumbel_lcdf_vectorized()` | `check_for_gumbel_params()` |
 
 The numerical method is used in the following cases.
+For the Gumbel window and for the log-logistic delay it is a numerical method specific to the pair.
+In R these are `.gumbel_numeric()` and `.loglogistic_numeric_cdf()`.
+In Stan the Gumbel window uses `primarycensored_gumbel_numeric_cdf()`.
 
 | Condition | R | Stan |
 |:---|:---|:---|
-| The transform is not available at the parameters | `pcens_cdf.default()` for every `q` | ODE |
-| `pwindow` is not a single positive finite number | `pcens_cdf.default()` for every `q` | ODE |
-| A series or error check fails at one `q` | numerical method for that `q` | ODE for that delay |
-| Lognormal delay, exponential tilt, fewer than 10 `q` and $|\rho| w_P \leq 1$ | `pcens_cdf.default()` for every `q` | not applicable |
-| `use_numeric = TRUE` | `pcens_cdf.default()` for every `q` | not applicable |
+| The transform is not available at the parameters | numerical method for every `q` | numerical method |
+| `pwindow` is not a single positive finite number | numerical method for every `q` | not applicable |
+| A series or error check fails at one `q` | numerical method for that `q` | numerical method for that delay |
+| Lognormal delay, exponential tilt, fewer than 10 `q` and $|\rho| w_P \leq 1$ | numerical method for every `q` | not applicable |
+| `use_numeric = TRUE` | numerical method for every `q` | not applicable |
 
 # Numerical safeguards
 
-- **Small tilt.** Equation \@ref(eq:exptilt) cancels as $\rho \to 0$. For $|\rho| w_P < 10^{-4}$ and $|\rho| (|q| + w_P) < 0.1$ the package uses the uniform solution with its first order correction, $\{K_1(q) - K_1(q - w_P)\} / w_P + \rho \{K_2(q) - w_P K_1(q) - K_2(q - w_P) - w_P K_1(q - w_P)\} / (2 w_P)$.
-- **Small delay.** For a delay on the non-negative reals with $q < w_P$ and $|\rho| q < 10^{-4}$ the exponential tilt uses $\rho \{K_1(q) + \rho K_2(q) / 2\} / (e^{\rho w_P} - 1)$. The logistic window uses $\{L'(0) K_1(q) + L''(0) K_2(q) / 2\} / D_L$ for $q < w_P$ and $q < 10^{-4} s$.
-- **Tail choice.** A transform difference is taken from the lower transforms or from the upper transforms $T_f(\xi; \infty) - T_f(\xi; \tau)$, whichever loses less precision. The exponential, gamma and normal have upper transforms for every admissible tilt, the lognormal for $\xi < 0$ and the other families only at $\xi = 0$.
-- **Series transforms.** The Weibull, generalised gamma and log-logistic series are evaluated as $T_f - F_{\mathrm{IP}}$, so the $n = 0$ term does not cancel. For $\xi < 0$ the Weibull and generalised gamma series are used only where the sum of the absolute terms is below $10^5$ times the result. Stan makes this check on the CDF only, so upper tail probability masses below about $10^{-13}$ are not reliable.
-- **Logistic series.** The geometric series converge slowly near $u^\star$. They are summed with a binomial taper of the partial sums (Euler summation) to an error below $10^{-10} D_L$, with at most 64 terms.
-- **Gumbel series.** The terms alternate and reach about $e^{s_0}$, with $s_0 = e^{\mu_G / \beta}$, so the precision lost grows as $e^{s_0}$. The series is used only for $s_0 \leq 15$ and where its estimated relative error is below $10^{-8}$.
+- **Small tilt.**
+  The numerator of equation \@ref(eq:exptilt) loses precision through cancellation as $\rho \to 0$.
+  For $|\rho| w_P < 10^{-4}$ and $|\rho| (|q| + w_P) < 0.1$ the package uses the uniform solution with its first order correction, $\{K_1(q) - K_1(q - w_P)\} / w_P + \rho \{K_2(q) - w_P K_1(q) - K_2(q - w_P) - w_P K_1(q - w_P)\} / (2 w_P)$.
+- **Small delay.**
+  For a delay on the non-negative reals with $q < w_P$ and $|\rho| q < 10^{-4}$ the exponential tilt uses $\rho \{K_1(q) + \rho K_2(q) / 2\} / (e^{\rho w_P} - 1)$.
+  The logistic window uses $\{L'(0) K_1(q) + L''(0) K_2(q) / 2\} / D_L$ for $q < w_P$ and $q < 10^{-4} s$.
+- **Tail choice.**
+  A transform difference is taken from the lower transforms or from the upper transforms $T_f(\xi; \infty) - T_f(\xi; \tau)$, whichever loses less precision.
+  The exponential, gamma and normal have upper transforms for every admissible tilt, the lognormal for $\xi \leq 0$ and the other families only at $\xi = 0$.
+- **Weibull and generalised gamma series.**
+  These series are evaluated as $T_f - F_{\mathrm{IP}}$, so the $n = 0$ term does not cancel.
+  For $\xi < 0$ they are used only where the sum of the absolute terms is below $10^5$ times the result.
+  Stan makes this check on the CDF only, so upper tail probability masses below about $10^{-13}$ are not reliable.
+- **Log-logistic series.**
+  The series is written as $F_{\mathrm{IP}}(\tau)$ times a sum of ratios.
+  Each $q$ is screened with a bound on the error of the CDF.
+  Where the bound exceeds $10^{-8}$ times the smaller tail, that $q$ uses the numerical method.
+- **Logistic series.**
+  The geometric series converge slowly near $u^\star$.
+  They are summed with a binomial taper of the partial sums (Euler summation) to an error below $10^{-10} D_L$, with at most 64 terms.
+- **Gumbel series.**
+  The terms alternate and reach about $e^{c(0)}$, so the relative precision lost grows as $e^{c(0)}$.
+  The series is used only for $c(0) \leq 15$ and where its estimated relative error is below $10^{-8}$.
+  In Stan a gamma delay also needs the error in the gradient with respect to the shape to be small.
 
 # Departures from the paper
 
-1. @TransformPaperPlaceholder define $T_f$ from 0. For the normal delay the package uses lower limit $-\infty$, as in the normal appendix of the paper.
-2. The exponential and gamma transforms are used only for $\xi < \lambda$. The integral is finite for every $\xi$, but the package has no stable form for $\xi \geq \lambda$ (#388, #399).
-3. The lognormal transform is semi-analytic for $\xi > 0$, where @TransformPaperPlaceholder class it as numerical.
-4. The logistic regimes of the package are $m < 0$, $0 \leq m < w_P$ and $m \geq w_P$, where the paper takes $m = 0$ and $m = w_P$ as limits.
-5. The logistic and Gumbel series coefficients are rearranged so that the $L(0)$ and $G(0)$ terms do not cancel when $D_L$ or $D_G$ is small. The result is unchanged.
+1. The lower limit $-\infty$ for the normal delay (see Notation) follows the normal appendix of the transform paper [@TransformPaperPlaceholder].
+2. The exponential and gamma transforms are finite for every $\xi$, but the package has no stable form for $\xi \geq \lambda$ ([#388](https://github.com/epinowcast/primarycensored/issues/388), [#399](https://github.com/epinowcast/primarycensored/issues/399)).
+3. The lognormal transform is semi-analytic for $\xi > 0$, where the transform paper evaluates it by quadrature.
+4. The transform paper states the logistic regimes with strict inequalities.
+   The package puts $m = 0$ in the split case and $m = w_P$ in the right case, so its regimes are $m < 0$, $0 \leq m < w_P$ and $m \geq w_P$.
+5. The logistic and Gumbel series coefficients are rearranged so that the $L(0)$ and $G(0)$ terms do not cancel when $D_L$ or $D_G$ is small.
+   The result is unchanged.
 
 # Extending the package
 
-A new delay needs its transform, `.pcens_tilt_transform()` in R and `log_tilt_transform()` with an entry in `check_for_tilt_transform()` in Stan.
+A new delay needs its transform.
+In R it needs methods for `.pcens_tilt_transform()`, `.pcens_tilt_available()`, `.pcens_tilt_lower()` and `.pcens_tilt_moments()`.
+In Stan it needs an entry in `log_tilt_transform_pair()`, `primarycensored_tilt_moments()` and `check_for_tilt_transform()`.
 A pair of window and delay then needs its `pcens_cdf` method in R and its dispatch in Stan.
 
 # Learning more

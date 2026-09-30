@@ -173,7 +173,7 @@ vector primarycensored_lognormal_uniform_terms(real t,
   *
   * This function is used in the analytical solution for the primary censored
   * Weibull distribution with uniform primary censoring. It corresponds to the
-  * g(t; λ, k) function described in the analytic solutions document.
+  * Weibull partial moment M(t) / λ of the analytic solutions vignette.
   *
   * @param t Upper bound of integration
   * @param shape Shape parameter (k) of the Weibull distribution
