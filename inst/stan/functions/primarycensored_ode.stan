@@ -5,29 +5,30 @@
   * Returns log P(a, x), the log of the regularised lower incomplete gamma
   * function, for x = exp(log_x). `gamma_lcdf` underflows to `-inf` deep in
   * the lower tail, where the true value is finite. Its partial derivative
-  * with respect to `a` is also inaccurate well before that, with errors of
-  * 1e-3 or more once log P is below about -25.
+  * with respect to `a` is also inaccurate there. The error depends on `a`
+  * and x / a. It reaches 1e-2 to 0.9 in the lower tail, and for a of about
+  * 1000 or more it can be `nan` or 0.
   *
   * The series
   *   P(a, x) = x^a exp(-x) / Gamma(a + 1) * S,
   *   S = 1 + x / (a + 1) + x^2 / ((a + 1) (a + 2)) + ...
-  * is evaluated on the log scale when x < (a + 1) / 2 and the leading term
-  * x^a exp(-x) / Gamma(a + 1) is below exp(-10), or when x < 0.9 (a + 1)
-  * and it is below exp(-600), close to where `gamma_lcdf` underflows.
-  * Every term of S is positive, so there is no cancellation. Successive
-  * terms shrink by at least a factor of x / (a + 1), so S is summed to double
-  * precision in under 60 terms in the first case and under 400 in the
-  * second. Autodiff differentiates the series directly, so gradients are as
-  * accurate as the value. The series is exact, so the value is continuous
-  * across the rule. Elsewhere this calls `gamma_lcdf`, which is accurate
-  * there.
+  * is evaluated on the log scale when x < 0.9 (a + 1) and the leading term
+  * x^a exp(-x) / Gamma(a + 1) is below exp(-10). Every term of S is
+  * positive, so there is no cancellation. Successive terms shrink by at
+  * least a factor of x / (a + 1) <= 0.9, so S is summed to double precision
+  * in under 400 terms, and in under 60 when x < (a + 1) / 2. Autodiff
+  * differentiates the series directly, so gradients are as accurate as the
+  * value. The series is exact, so the value is continuous across the rule.
+  * Elsewhere this calls `gamma_lcdf`.
   *
   * Taking `log_x` rather than x keeps the result finite when x itself would
   * underflow, as it does for a generalised gamma with a large `shape`.
   *
-  * The one case left to `gamma_lcdf` that can still underflow is
-  * x >= 0.9 (a + 1) with a leading term below exp(-745), which needs
-  * a > 1e5.
+  * The cases left to `gamma_lcdf` are x >= 0.9 (a + 1), and a leading term
+  * of exp(-10) or more. The value is accurate there. The gradient with
+  * respect to `a` is only checked for x < 0.9 (a + 1), and can fail for
+  * x >= 0.9 (a + 1) with large a (see #381). The value can only underflow
+  * there for a > 1e5, where the leading term is below exp(-745).
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -41,7 +42,7 @@ real gamma_lcdf_logx(real log_x, real a) {
   real x = exp(log_x);
   if (x < 0.9 * (a + 1)) {
     real log_lead = a * log_x - x - lgamma(a + 1);
-    if (log_lead < -600 || (log_lead < -10 && x < 0.5 * (a + 1))) {
+    if (log_lead < -10) {
       real term = 1;
       real total = 1;
       for (n in 1:1000) {

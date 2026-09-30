@@ -4,8 +4,12 @@
 
 - `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, where the true log CDF is finite.
   The generalised gamma analytical solution with a uniform primary uses it, so truncation normalisers no longer become `-Inf` and the log density no longer becomes `NaN` or `+Inf`.
-  Stan's `gamma_lcdf()` also has an inaccurate gradient with respect to its shape when the CDF is below about 1e-11, which affected the gradient with respect to `k` in the same region.
-  The new `gamma_lcdf_logx()` sums the incomplete gamma series on the log scale in the lower tail and calls `gamma_lcdf()` elsewhere, so values are unchanged outside that region.
+  Stan's `gamma_lcdf()` also has an inaccurate gradient with respect to its shape in the lower tail, which affected the gradient with respect to `k` in the same region.
+  The error depends on the shape and on x / shape.
+  It reaches 1e-2 to 0.9 in the lower tail, and for a shape of about 1000 or more the gradient can be `NaN` or 0.
+  The new `gamma_lcdf_logx()` sums the incomplete gamma series on the log scale when x is below 0.9 times the shape plus one and the log CDF is below about -10.
+  It calls `gamma_lcdf()` elsewhere, so values are unchanged outside that region.
+  The gradient of `gamma_lcdf()` for x at or above 0.9 times the shape plus one is not changed and is tracked in #381.
   In that region the log density and gradient take about 1 microsecond longer per evaluation.
   See #363.
 
