@@ -502,6 +502,39 @@ test_that("the ODE path handles a location far below the window", {
   }
 })
 
+test_that("the ODE log CDF is accurate far in the lower tail", {
+  # The CDF is 1e-85 to 1e-225 here, far below the absolute solver
+  # tolerance, so the integral is scaled by the largest delay CDF
+  points <- list(
+    c(mu = 2, beta = 0.1, w = 1),
+    c(mu = 0.5, beta = 0.2, w = 2),
+    c(mu = -3, beta = 0.5, w = 1),
+    c(mu = 1.5, beta = 0.05, w = 7)
+  )
+  for (pt in points) {
+    for (d in c(-35, -60)) {
+      lcdf <- primarycensored_gumbel_numeric_lcdf(
+        d, 18L, c(3, 2), pt[["w"]], pt[["mu"]], pt[["beta"]]
+      )
+      reference <- gumbel_reference(
+        d, pt[["w"]], pt[["mu"]], pt[["beta"]],
+        function(x) pnorm(x, 3, 2), FALSE
+      )
+      expect_equal(
+        lcdf, log(reference), tolerance = 1e-8,
+        info = paste(toString(pt), "d", d)
+      )
+    }
+    # Beyond the double precision CDF the log CDF is finite and decreasing
+    lcdf <- vapply(
+      c(-60, -90, -120), primarycensored_gumbel_numeric_lcdf, numeric(1),
+      18L, c(3, 2), pt[["w"]], pt[["mu"]], pt[["beta"]]
+    )
+    expect_true(all(is.finite(lcdf)), info = toString(pt))
+    expect_true(all(diff(lcdf) < 0), info = toString(pt))
+  }
+})
+
 test_that("a log CDF from the ODE is never NaN or above zero", {
   # The ODE CDF can be 0 or negative by a rounding error of the solver, or
   # above 1, where its log must not be NaN or positive
