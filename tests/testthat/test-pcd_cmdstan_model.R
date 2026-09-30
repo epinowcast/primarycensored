@@ -541,3 +541,89 @@ test_that(
     expect_lt(true_sd, ci_sd[2])
   }
 )
+
+test_that(
+  "pcd_cmdstan_model recovers true values for a normal delay with an
+   exponentially tilted primary and negative observed delays",
+  {
+    set.seed(321)
+    n <- 2000
+    true_mean <- 1
+    true_sd <- 2
+    true_r <- 0.3
+
+    simulated_delays <- rprimarycensored(
+      n = n,
+      rdist = rnorm,
+      mean = true_mean,
+      sd = true_sd,
+      pwindow = 2,
+      L = -5,
+      D = 8,
+      rprimary = rexpgrowth,
+      rprimary_args = list(r = true_r)
+    )
+
+    simulated_data <- data.frame(
+      delay = simulated_delays,
+      delay_upper = simulated_delays + 1,
+      pwindow = 2,
+      start_relative_obs_time = -5,
+      relative_obs_time = 8
+    )
+
+    delay_counts <- simulated_data |>
+      dplyr::summarise(
+        n = dplyr::n(),
+        .by = c(
+          pwindow, start_relative_obs_time, relative_obs_time,
+          delay, delay_upper
+        )
+      )
+
+    # The normal with an exponentially tilted primary has an analytical
+    # solution, so this fit uses it with the vectorised shared terms. The
+    # delay mean and the tilt are confounded, so the tilt has an informative
+    # prior as in the gamma fit above.
+    stan_data <- pcd_as_stan_data(
+      delay_counts,
+      dist_id = pcd_stan_dist_id("normal", "delay"),
+      primary_id = pcd_stan_dist_id("expgrowth", "primary"),
+      param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
+      primary_param_bounds = list(lower = -Inf, upper = Inf),
+      priors = list(location = c(0, 0), scale = c(5, 2.5)),
+      primary_priors = list(location = 0.3, scale = 0.1)
+    )
+
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    fit <- suppressMessages(suppressWarnings(model$sample(
+      data = stan_data,
+      seed = 321,
+      chains = 2,
+      parallel_chains = 2,
+      refresh = 0,
+      show_messages = FALSE,
+      iter_warmup = 500,
+      iter_sampling = 500
+    )))
+
+    posterior <- fit$draws(
+      c("params[1]", "params[2]", "primary_params[1]"),
+      format = "df"
+    )
+
+    expect_equal(mean(posterior$`params[1]`), true_mean, tolerance = 0.1)
+    expect_equal(mean(posterior$`params[2]`), true_sd, tolerance = 0.1)
+
+    ci_mean <- quantile(posterior$`params[1]`, c(0.05, 0.95))
+    ci_sd <- quantile(posterior$`params[2]`, c(0.05, 0.95))
+    ci_r <- quantile(posterior$`primary_params[1]`, c(0.05, 0.95))
+
+    expect_gt(true_mean, ci_mean[1])
+    expect_lt(true_mean, ci_mean[2])
+    expect_gt(true_sd, ci_sd[1])
+    expect_lt(true_sd, ci_sd[2])
+    expect_gt(true_r, ci_r[1])
+    expect_lt(true_r, ci_r[2])
+  }
+)
