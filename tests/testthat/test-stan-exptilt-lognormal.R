@@ -284,25 +284,44 @@ test_that("the lognormal tilted CDF is accurate far from the origin", {
 
 test_that("the lognormal series limit depends on the tilt and the delay", {
   params <- c(1.6, 0.5)
-  # xi t + 9 sqrt(xi t) + 30 terms, at most 20000
+  # The series is used up to xi t of 60, where it costs as much as an ODE at
+  # a tolerance of 1e-10, see the NEWS
   expect_identical(
     vapply(
-      c(1, 1.8e4, 1.9e4, 1e6),
-      function(t) check_for_tilt_transform_at(1L, 1, params, t), integer(1)
+      c(1, 59, 61, 1e3, 1e6),
+      function(t) check_for_tilt_transform_at(1L, 1, params, t, 1),
+      integer(1)
     ),
-    c(1L, 1L, 0L, 0L)
+    c(1L, 1L, 0L, 0L, 0L)
   )
+  # A window that is wide in tilt terms (xi w above 2) keeps the series,
+  # where the ODE is less accurate, up to xi t + 9 sqrt(xi t) + 30 terms, at
+  # most 20000
+  expect_identical(
+    vapply(
+      c(61, 1e3, 1.8e4, 1.9e4, 1e6),
+      function(t) check_for_tilt_transform_at(1L, 1, params, t, 3),
+      integer(1)
+    ),
+    c(1L, 1L, 1L, 0L, 0L)
+  )
+  expect_identical(check_for_tilt_transform_at(1L, 1, params, 61, 2), 0L)
+  expect_identical(check_for_tilt_transform_at(1L, 1, params, 61, 2.01), 1L)
   # A negative tilt, a small delay and other delays have no limit
-  expect_identical(check_for_tilt_transform_at(1L, 1, params, 0), 1L)
-  expect_identical(check_for_tilt_transform_at(1L, 1, params, -5), 1L)
-  expect_identical(check_for_tilt_transform_at(1L, -1, params, 1e9), 1L)
-  expect_identical(check_for_tilt_transform_at(18L, 1, c(3, 2), 1e9), 1L)
-  expect_identical(check_for_tilt_transform_at(2L, -3, c(2, 0.4), 1e9), 1L)
+  expect_identical(check_for_tilt_transform_at(1L, 1, params, 0, 1), 1L)
+  expect_identical(check_for_tilt_transform_at(1L, 1, params, -5, 1), 1L)
+  expect_identical(check_for_tilt_transform_at(1L, -1, params, 1e9, 1), 1L)
+  expect_identical(
+    check_for_tilt_transform_at(18L, 1, c(3, 2), 1e9, 1), 1L
+  )
+  expect_identical(
+    check_for_tilt_transform_at(2L, -3, c(2, 0.4), 1e9, 1), 1L
+  )
   # The transform must still exist
   expect_identical(
-    check_for_tilt_transform_at(1L, -1e300, c(650, 1), 1), 0L
+    check_for_tilt_transform_at(1L, -1e300, c(650, 1), 1, 1), 0L
   )
-  expect_identical(check_for_tilt_transform_at(4L, 0.6, 0.3, 1), 0L)
+  expect_identical(check_for_tilt_transform_at(4L, 0.6, 0.3, 1, 1), 0L)
   # The series itself stops where the terms do not fit
   expect_error(
     primarycensored_exptilt_lcdf(1e6, 1L, params, 1, -1),
@@ -314,6 +333,41 @@ test_that("the lognormal series limit depends on the tilt and the delay", {
       primarycensored_exptilt_lcdf(d, 1L, c(0, 1), 1, -1)
     ))
   }
+})
+
+test_that("the lognormal uses the ODE path past the series cut-off", {
+  params <- c(log(300), 0.5)
+  case <- list(meanlog = log(300), sdlog = 0.5)
+  rho <- -1
+  d <- c(30, 59, 61, 100, 300)
+  expected <- exptilt_reference(d, 1, rho, exptilt_cdf(
+    exptilt_lnorm_family(case)
+  ))
+  lcdf <- vapply(
+    d, primarycensored_lcdf, numeric(1),
+    1L, params, 1, 0, Inf, 2L, rho
+  )
+  # The analytical solution where the series is used
+  expect_identical(lcdf[1:2], lnorm_stan_lcdf(d[1:2], case, 1, rho))
+  # and the ODE, with its tolerance of 1e-6, past it
+  ode <- vapply(
+    d[3:5], function(x) log(primarycensored_numeric_cdf(
+      x, 1L, params, 1, 2L, rho
+    )), numeric(1)
+  )
+  expect_identical(lcdf[3:5], ode)
+  expect_lt(max(abs(exp(lcdf) - expected)), 1e-6)
+  plain <- vapply(
+    d, primarycensored_cdf, numeric(1),
+    1L, params, 1, 0, Inf, 2L, rho
+  )
+  expect_lt(max(abs(plain - expected)), 1e-6)
+  # A wide window keeps the series
+  lcdf <- vapply(
+    d, primarycensored_lcdf, numeric(1),
+    1L, params, 3, 0, Inf, 2L, rho
+  )
+  expect_identical(lcdf, lnorm_stan_lcdf(d, case, 3, rho))
 })
 
 test_that("the lognormal uses the ODE path where the series is too long", {
@@ -605,5 +659,52 @@ test_that("the vectorised lognormal tilted log PMF has finite gradients
       expect_true(all(is.finite(res$gradient)), info = label)
       expect_lnorm_gradient_close(res, label)
     }
+  }
+})
+
+test_that("the lognormal tilted CDF is accurate for a large sdlog", {
+  # One panel per side lost accuracy for sdlog above about 2. Panels are
+  # split in proportion to sdlog
+  for (sdlog in c(4, 6, 10, 15)) {
+    for (meanlog in c(0, 4)) {
+      case <- list(meanlog = meanlog, sdlog = sdlog)
+      d <- exp(meanlog + sdlog * seq(-2, 0.5, by = 0.25))
+      d <- d[d > 1e-9]
+      for (rho in c(5, 200, -2)) {
+        expected <- exptilt_reference(
+          d, 1, rho, exptilt_lnorm_cdf(case)
+        )
+        keep <- expected > 1e-100
+        actual <- exp(lnorm_stan_lcdf(d, case, 1, rho))
+        expect_lt(
+          max_rel_diff(actual[keep], expected[keep]), 1e-8,
+          label = sprintf(
+            "sdlog %g, meanlog %g, r %g", sdlog, meanlog, rho
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("lognormal tilted log CDFs have finite gradients for a large
+  sdlog", {
+  model <- lnorm_gradient_model()
+  case <- list(meanlog = 2, sdlog = 6)
+  points <- list(
+    list(d = 0.05, pwindow = 1, rho = 5),
+    list(d = 3, pwindow = 2, rho = 0.4),
+    list(d = 20, pwindow = 3, rho = -0.3)
+  )
+  for (point in points) {
+    label <- sprintf(
+      "meanlog %g, sdlog %g, d %g, pwindow %g, r %g",
+      case$meanlog, case$sdlog, point$d, point$pwindow, point$rho
+    )
+    res <- lnorm_gradient_at(model, case, point$d, point$pwindow, point$rho)
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    expect_lnorm_gradient_close(res, label)
   }
 })
