@@ -54,8 +54,8 @@ tlogis_label <- function(family, pwindow, location, scale) {
 
 # Log CDF of a gamma delay with a truncated logistic primary, by integration
 # with the tight tolerances of `tlogis_reference()`. With `max_delay` it is
-# the sum of the log PMFs of the integer delays 0 to `max_delay` - 1 that
-# the vectorised Stan PMF returns.
+# the sum of the log PMFs of the integer delays 0 to `max_delay` that the
+# vectorised Stan PMF returns, with no truncation.
 tlogis_gamma_lcdf_reference <- function(shape, rate, d, pwindow, location,
                                         scale, max_delay = NULL) {
   pdist <- function(x) stats::pgamma(x, shape, rate)
@@ -63,7 +63,7 @@ tlogis_gamma_lcdf_reference <- function(shape, rate, d, pwindow, location,
     return(log(tlogis_reference(d, pwindow, location, scale, pdist)))
   }
   cdfs <- tlogis_reference(
-    0:max_delay, pwindow, location, scale, pdist
+    0:(max_delay + 1), pwindow, location, scale, pdist
   )
   sum(log(diff(cdfs)))
 }

@@ -1352,3 +1352,59 @@ test_that("the small tilt and direct forms have accurate gradients for large
     )
   }
 })
+
+test_that("the tilted gamma log CDF has a finite, accurate gradient in the
+  shape at large shapes in both tails", {
+  model <- exptilt_gradient_model()
+  # The tilt transforms are shared with the truncated logistic primary. The
+  # delay upper tail is 1e-7 to 1e-16 at the first points of each shape, where
+  # Stan's gamma_lccdf() has a gradient in the shape with a relative error of
+  # 5e-4 at shape 80 and 2e-3 at shape 150, and NaN from shape 200. The last
+  # point of each shape is in the lower tail, at a log CDF of about -20 to -70.
+  # The reference is the gradient of the integral, by central differences in
+  # the log shape with two Richardson extrapolations.
+  points <- list(
+    list(shape = 80, rate = 26.667, d = 4.6, rho = 0.3),
+    list(shape = 80, rate = 26.667, d = 4.9, rho = -0.3),
+    list(shape = 80, rate = 26.667, d = 1.2, rho = 0.3),
+    list(shape = 150, rate = 50, d = 4.6, rho = 0.3),
+    list(shape = 150, rate = 50, d = 4.9, rho = -0.3),
+    list(shape = 150, rate = 50, d = 1.2, rho = -0.3),
+    list(shape = 250, rate = 83.333, d = 4.7, rho = 0.3),
+    list(shape = 250, rate = 83.333, d = 4.9, rho = -0.3),
+    list(shape = 250, rate = 83.333, d = 1.8, rho = 0.3)
+  )
+  lcdf <- function(shape, point) {
+    log(exptilt_reference(
+      point$d, 1, point$rho, function(x) stats::pgamma(x, shape, point$rate)
+    ))
+  }
+  for (point in points) {
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- exptilt_case_label(
+      case,
+      d = point$d, pwindow = 1, r = point$rho
+    )
+    res <- exptilt_gradient_at(model, case, point$d, 1, point$rho)
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    central <- function(h) {
+      shape_up <- point$shape * (1 + h)
+      shape_down <- point$shape * (1 - h)
+      (lcdf(shape_up, point) - lcdf(shape_down, point)) /
+        (2 * point$shape * h)
+    }
+    r <- c(central(1e-2), central(5e-3), central(2.5e-3))
+    e <- (4 * r[2:3] - r[1:2]) / 3
+    reference <- (16 * e[2] - e[1]) / 15
+    expect_true(
+      abs(res$gradient[1] - reference) <=
+        1e-5 * max(abs(reference), 1e-3),
+      info = paste0(
+        label, ": gradient ", signif(res$gradient[1], 7),
+        ", reference ", signif(reference, 7)
+      )
+    )
+  }
+})
