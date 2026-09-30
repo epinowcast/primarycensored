@@ -82,14 +82,10 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
-  * Both terms stay finite deep in the lower tail and have accurate
-  * gradients for large shapes, using `gamma_lcdf_logx_pair()`.
-  * The subtraction in `primarycensored_uniform_lcdf_from_terms()` amplifies
-  * their rounding error by about d / pwindow. The absolute error of the log
-  * result is at most 2e-8 for shapes up to 1e5 and pwindow of 0.5 or more,
-  * and 3e-6 at a shape of 1e5 with pwindow 0.01 and d / pwindow of 1e9.
-  *
-  * Rejects a rate that is not positive and finite.
+  * Both terms come from one `gamma_lcdf_logx_pair()` evaluation. The
+  * subtraction in `primarycensored_uniform_lcdf_from_terms()` amplifies their
+  * rounding error by about d / pwindow. Rejects a rate that is not positive
+  * and finite.
   *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
@@ -104,16 +100,12 @@ vector primarycensored_gamma_uniform_terms(real t,
   }
   real shape = params[1];
   real rate = params[2];
-  // The rate enters only through its log, so check it here
-  if (!(rate > 0) || is_inf(rate)) {
-    reject("primarycensored_gamma_uniform_terms: rate must be positive ",
-           "finite, found ", rate);
-  }
+  real log_rate = gamma_log_rate(rate);
   // log E where E = k * theta = shape / rate is the mean of the delay
-  real log_E = log(shape) - log(rate);
+  real log_E = log(shape) - log_rate;
   // Both CDFs share one series or fraction evaluation at log(rate * t)
   real log_t = log(t);
-  vector[2] log_F_T = gamma_lcdf_logx_pair(log_t + log(rate), shape);
+  vector[2] log_F_T = gamma_lcdf_logx_pair(log_t + log_rate, shape);
   return [log_t + log_F_T[1], log_E + log_F_T[2]]';
 }
 
@@ -210,9 +202,7 @@ vector primarycensored_weibull_uniform_terms(real t,
   * precision for large `k * shape`, with errors above 1e-6 possible once it
   * exceeds about 12000.
   * The two terms use separate `gamma_lcdf_logx()` calls, since the shapes
-  * k and k + 1 / shape do not differ by one. Gradients are finite, with a
-  * relative error of 1.4e-5 or below up to the 0.999 quantile for k up to
-  * 1e5 with shape 1, and less accurate in the extreme upper tail.
+  * k and k + 1 / shape do not differ by one.
   *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters

@@ -32,8 +32,8 @@ real gamma_lseries_sum_logx(real log_x, real a) {
   * @ingroup delay_log_cdfs
   *
   * Returns log(x^a exp(-x) / Gamma(a + 1)) for x = exp(log_x).
-  * For `a >= 100` the terms of size a cancel analytically, using the
-  * Stirling series of lgamma(a + 1), so rounding error does not grow with a.
+  * For `a >= 100` the Stirling series of lgamma(a + 1) cancels the terms of
+  * size a analytically, so rounding error does not grow with a.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -62,10 +62,8 @@ real gamma_log_lead_logx(real log_x, real a) {
   * Compute log Q(a, x) by the incomplete gamma continued fraction
   * @ingroup delay_log_cdfs
   *
-  * Q(a, x) = 1 - P(a, x). The continued fraction is evaluated with the
-  * modified Lentz algorithm and converges for x >= a + 1. Only called for
-  * `a >= 10`, where the derivative with respect to `a` is accurate at
-  * integer `a`.
+  * Q(a, x) = 1 - P(a, x). Uses the modified Lentz algorithm, which
+  * converges for x >= a + 1. Only called for `a >= 10`.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -99,22 +97,36 @@ real gamma_lccdf_cf_logx(real log_x, real a) {
 }
 
 /**
+  * Compute the log of a Gamma rate
+  * @ingroup delay_log_cdfs
+  *
+  * @param rate Rate parameter of the Gamma distribution
+  *
+  * @return log(rate). Rejects a rate that is not positive and finite.
+  */
+real gamma_log_rate(real rate) {
+  if (!(rate > 0) || is_inf(rate)) {
+    reject("Gamma rate must be positive finite, found ", rate);
+  }
+  return log(rate);
+}
+
+/**
   * Compute the log CDF of a unit rate Gamma distribution from the log of x
   * @ingroup delay_log_cdfs
   *
   * Returns log P(a, x), the log of the regularised lower incomplete gamma
-  * function, for x = exp(log_x). Stan's `gamma_lcdf` underflows, or has an
-  * inaccurate or failing gradient with respect to `a`, in the lower tail,
-  * for large `a` and in the upper tail for `a` of about 10 or more.
+  * function, for x = exp(log_x). Stan's `gamma_lcdf` underflows in the lower
+  * tail, where its gradient with respect to `a` is also inaccurate, and the
+  * gradient is not finite for large `a`. Taking `log_x` keeps the result
+  * finite when x underflows.
   *
   * - `a >= 10`: the series for x < a + 1, otherwise the continued fraction.
   * - `a < 10`: the series for x < 0.9 (a + 1) where the leading term is
   *   below exp(-10), otherwise `gamma_lcdf`.
   *
-  * Falls back to `gamma_lcdf` if the series or fraction does not converge.
-  * The log CDF has a relative error of 1e-9 or below and its derivative
-  * with respect to `a` 3e-9 or below for a up to 1e6, against `pgamma()`.
-  * Taking `log_x` keeps the result finite when x underflows.
+  * Falls back to `gamma_lcdf` if the series or fraction does not converge,
+  * which is not expected for valid inputs.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -159,7 +171,8 @@ real gamma_lcdf_logx(real log_x, real a) {
   * continued fraction where the recursion
   * P(a + 1, x) = P(a, x) - x^a exp(-x) / Gamma(a + 1)
   * would cancel, and otherwise from that recursion. Falls back to
-  * `gamma_lcdf_logx()` if the series or fraction does not converge.
+  * `gamma_lcdf_logx()` if the series or fraction does not converge, which is
+  * not expected for valid inputs.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -181,6 +194,7 @@ vector gamma_lcdf_logx_pair(real log_x, real a) {
   real x = exp(log_x);
   real log_lead = gamma_log_lead_logx(log_x, a);
   vector[2] result = rep_vector(not_a_number(), 2);
+  // Below 0.5 (a + 1) the recursion would cancel by more than a factor of 2
   if (x < a + 1
       && (a >= 10 || x < 0.5 * (a + 1)
           || (x < 0.9 * (a + 1) && log_lead < -10))) {
@@ -329,12 +343,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
            : lognormal_lcdf(delay | params[1], params[2]);
   }
   else if (dist_id == 2) {
-    // The rate enters only through its log, so check it here
-    if (!(params[2] > 0) || is_inf(params[2])) {
-      reject("dist_lcdf: Gamma rate must be positive finite, found ",
-             params[2]);
-    }
-    return gamma_lcdf_logx(log(delay) + log(params[2]), params[1]);
+    return gamma_lcdf_logx(log(delay) + gamma_log_rate(params[2]), params[1]);
   }
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
