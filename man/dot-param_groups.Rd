@@ -7,14 +7,15 @@
 .param_groups(params, cols)
 }
 \arguments{
-\item{params}{A data frame of per-observation settings.}
+\item{params}{A data frame, or list, of per-observation settings.}
 
 \item{cols}{Names of the columns to group by.}
 }
 \value{
-A list with one element per unique combination of \code{cols}. Each
-element is a list of the values of \code{cols} and a logical \code{mask} selecting
-the rows of \code{params} with those values.
+A list with one element per unique combination of \code{cols}, in order
+of first appearance. Each element is a list of the values of \code{cols} and
+\code{idx}, the rows with those values, which is \code{NULL} when all rows are in
+one group.
 }
 \description{
 Group observations that share censoring and truncation settings
