@@ -262,6 +262,94 @@ test_that("pcens_loglik_fn validates its inputs at construction", {
   )
 })
 
+test_that("pcens_loglik_fn rejects non-numeric settings", {
+  for (nm in c("pwindow", "swindow", "L", "D")) {
+    expect_error(
+      do.call(pcens_loglik_fn, list(0:3, plnorm, "a") |>
+        stats::setNames(c("x", "pdist", nm))),
+      paste(nm, "must be numeric")
+    )
+  }
+  # A function passed by position lands in pwindow
+  expect_error(pcens_loglik_fn(0:3, plnorm, dunif), "pwindow must be numeric")
+})
+
+test_that("pcens_loglik_fn supports non-parametric delays", {
+  boundaries <- 0:5
+  pmf1 <- c(0.1, 0.2, 0.3, 0.25, 0.15)
+  pmf2 <- rev(pmf1)
+  x <- c(0, 1, 1, 2, 3, 4)
+  ll <- pcens_loglik_fn(x, pdiscretestep, pwindow = 1, swindow = 1)
+  reference <- function(pmf) {
+    vapply(x, function(xi) {
+      log(dprimarycensored(
+        xi, pdiscretestep,
+        pwindow = 1, swindow = 1, boundaries = boundaries, pmf = pmf
+      ))
+    }, numeric(1))
+  }
+  expect_equal(
+    ll(pmf = pmf1, boundaries = boundaries), reference(pmf1),
+    tolerance = tol
+  )
+  # Same names, new values: the unchecked update path
+  expect_equal(
+    ll(pmf = pmf2, boundaries = boundaries), reference(pmf2),
+    tolerance = tol
+  )
+  expect_equal(
+    ll(pmf = pmf1, boundaries = boundaries), reference(pmf1),
+    tolerance = tol
+  )
+})
+
+test_that("pcens_loglik_fn evaluates the CDF once per group", {
+  cdf_calls <- 0L
+  local_mocked_bindings(
+    pcens_pmf = function(...) stop("pcens_pmf() should not be called"),
+    pcens_cdf = function(object, q, pwindow, ...) {
+      cdf_calls <<- cdf_calls + 1L
+      pgamma(q, shape = 2, scale = 1)
+    }
+  )
+  x <- rep(0:4, times = 20)
+  # Truncation points that are not delays are evaluated in the same call
+  ll <- suppressMessages(
+    pcens_loglik_fn(x, pgamma, pwindow = 1, swindow = 1, L = -1, D = 10)
+  )
+  out <- ll(shape = 2, scale = 1)
+  expect_length(out, 100)
+  expect_identical(cdf_calls, 1L)
+  cdf_calls <- 0L
+  ll <- pcens_loglik_fn(
+    x, pgamma,
+    pwindow = rep(1:2, each = 50), swindow = 1, D = Inf
+  )
+  ll(shape = 2, scale = 1)
+  expect_identical(cdf_calls, 2L)
+})
+
+test_that("pcens_loglik_fn matches pcens_pmf with all truncation forms", {
+  case <- loglik_cases$lnorm_unif
+  x <- c(1, 2, 3, 4)
+  settings <- list(
+    list(L = -Inf, D = Inf), list(L = 0, D = Inf), list(L = -Inf, D = 6),
+    list(L = 0.5, D = 6), list(L = 0, D = 4.5)
+  )
+  for (st in settings) {
+    for (sw in c(0, 1, 2.5)) {
+      ll <- suppressMessages(make_loglik(
+        case, x, pwindow = 1.5, swindow = sw, L = st$L, D = st$D
+      ))
+      expect_equal(
+        do.call(ll, case$pars),
+        reference_loglik(case, x, 1.5, sw, st$L, st$D),
+        tolerance = tol
+      )
+    }
+  }
+})
+
 test_that("pcens_loglik_fn clips secondary windows at D with one message", {
   x <- c(1, 4, 8, 9.5)
   case <- loglik_cases$gamma_unif
