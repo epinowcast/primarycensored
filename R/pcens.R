@@ -156,7 +156,7 @@ new_pcens <- function(
 #'   as `...` is merged into `object$args`. Defaults to `NULL`, which leaves
 #'   the primary event distribution arguments unchanged.
 #'
-#' @param .check Logical. If `FALSE`, `...` and `primary_args` are merged
+#' @param check Logical. If `FALSE`, `...` and `primary_args` are merged
 #'   into the object without any validation. Use this when one object is
 #'   updated many times with parameter names that have already been checked,
 #'   for example in an optimiser or a loop over posterior draws.
@@ -172,7 +172,7 @@ new_pcens <- function(
 #' Otherwise an error is raised. Names in `primary_args` are not checked
 #' against `dprimary`.
 #'
-#' With `.check = FALSE` none of these checks are run.
+#' With `check = FALSE` none of these checks are run.
 #' Unnamed or misspelt parameters are then added to the object as given and
 #' only fail, or are ignored, when the object is evaluated.
 #'
@@ -201,11 +201,11 @@ new_pcens <- function(
 #' )
 #' obj <- update(obj, primary_args = list(r = 0.5))
 #' pcens_pmf(obj, x = 0:5, pwindow = 1)
-update.pcens <- function(object, ..., primary_args = NULL, .check = TRUE) {
+update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   new_args <- list(...)
   nms <- names(new_args)
   # Kept cheap as update() is often called once per parameter draw.
-  if (!identical(.check, FALSE)) {
+  if (!identical(check, FALSE)) {
     if (length(new_args) > 0L) {
       .check_named_list(new_args, "Delay parameters passed to update()")
       unknown <- nms[!nms %in% names(object$args)]

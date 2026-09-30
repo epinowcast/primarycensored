@@ -51,6 +51,6 @@ when it is not \code{NULL}.
 \description{
 Builds a \code{pcens} object with \code{\link[=.build_pcens]{.build_pcens()}}, or, when \code{cache} already
 holds one, updates its delay parameters with \link[=update.pcens]{update()}
-and \code{.check = FALSE}.
+and \code{check = FALSE}.
 }
 \keyword{internal}

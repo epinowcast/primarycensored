@@ -4,7 +4,7 @@
 \alias{update.pcens}
 \title{Update the parameters of a pcens object}
 \usage{
-\method{update}{pcens}(object, ..., primary_args = NULL, .check = TRUE)
+\method{update}{pcens}(object, ..., primary_args = NULL, check = TRUE)
 }
 \arguments{
 \item{object}{A \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
@@ -18,7 +18,7 @@ arguments. These are merged into \code{object$primary_args} in the same way
 as \code{...} is merged into \code{object$args}. Defaults to \code{NULL}, which leaves
 the primary event distribution arguments unchanged.}
 
-\item{.check}{Logical. If \code{FALSE}, \code{...} and \code{primary_args} are merged
+\item{check}{Logical. If \code{FALSE}, \code{...} and \code{primary_args} are merged
 into the object without any validation. Use this when one object is
 updated many times with parameter names that have already been checked,
 for example in an optimiser or a loop over posterior draws.
@@ -49,7 +49,7 @@ of \code{object$pdist} other than its first, unless \code{pdist} takes \code{...
 Otherwise an error is raised. Names in \code{primary_args} are not checked
 against \code{dprimary}.
 
-With \code{.check = FALSE} none of these checks are run.
+With \code{check = FALSE} none of these checks are run.
 Unnamed or misspelt parameters are then added to the object as given and
 only fail, or are ignored, when the object is evaluated.
 }

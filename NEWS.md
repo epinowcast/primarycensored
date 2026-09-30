@@ -8,10 +8,10 @@
 
 ## Performance
 
-- `update()` for `pcens` objects has a new `.check` argument.
-  With `.check = FALSE` the delay and primary event arguments are merged into the object without validating their names, which removes most of the roughly 5 µs per-call cost.
-  The default, `.check = TRUE`, is unchanged.
-  `fitdistdoublecens()` now uses `.check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
+- `update()` for `pcens` objects has a new `check` argument.
+  With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names, which removes most of the roughly 5 microseconds per-call cost.
+  The default, `check = TRUE`, is unchanged.
+  `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
 
 # primarycensored 1.6.0

@@ -532,7 +532,7 @@ fitdistdoublecens <- function(
 #'
 #' Builds a `pcens` object with [.build_pcens()], or, when `cache` already
 #' holds one, updates its delay parameters with [update()][update.pcens()]
-#' and `.check = FALSE`.
+#' and `check = FALSE`.
 #'
 #' @inheritParams .dpcens
 #'
@@ -550,7 +550,7 @@ fitdistdoublecens <- function(
     # Parameter names are the same on every evaluation of a fit, so skip
     # the checks made by `update()`.
     cache$obj <- do.call(
-      update, c(list(cache$obj), args, list(.check = FALSE))
+      update, c(list(cache$obj), args, list(check = FALSE))
     )
     return(cache)
   }
