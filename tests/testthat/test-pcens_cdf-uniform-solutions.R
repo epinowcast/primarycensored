@@ -293,3 +293,34 @@ test_that("pprimarycensored and dprimarycensored work end to end for the new
   lower <- pprimarycensored(-1, pnorm, pwindow = 2, mean = 2, sd = 2)
   expect_gt(lower, 0)
 })
+
+test_that("pprimarycensored matches the empirical CDF of rprimarycensored
+  samples for the new delays", {
+  set.seed(20260930)
+  n <- 1e5
+  cases <- list(
+    list(pdist = pexp, rdist = rexp, args = list(rate = 0.4)),
+    list(pdist = pnorm, rdist = rnorm, args = list(mean = 2, sd = 1.5)),
+    list(pdist = pchisq, rdist = rchisq, args = list(df = 4)),
+    list(pdist = pbeta, rdist = rbeta, args = list(shape1 = 2, shape2 = 3))
+  )
+  for (case in cases) {
+    for (pwindow in c(0.5, 2)) {
+      samples <- do.call(
+        rprimarycensored,
+        c(list(n, case$rdist, pwindow = pwindow, swindow = 0), case$args)
+      )
+      delays <- unname(stats::quantile(samples, c(0.05, 0.3, 0.6, 0.9)))
+      actual <- do.call(
+        pprimarycensored,
+        c(list(delays, case$pdist, pwindow = pwindow), case$args)
+      )
+      # The empirical CDF at its own quantiles is the probability, with a
+      # sampling error of at most 0.002 for 1e5 samples
+      expect_lt(
+        max(abs(actual - c(0.05, 0.3, 0.6, 0.9))), 0.01,
+        label = sprintf("pwindow %g", pwindow)
+      )
+    }
+  }
+})

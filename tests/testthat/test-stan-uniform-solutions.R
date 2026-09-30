@@ -1,18 +1,9 @@
 skip_on_cran()
 
-# Uniform primary analytical solutions in Stan for the Exponential (4),
-# Beta (9), Chi-square (13), Inverse gamma (16), Normal (18), Inverse
-# chi-square (19), Pareto (21) and Scaled inverse chi-square (22) delays.
-#
-# The numerical path integrates the delay CDF over the primary window, see
-# primarycensored_ode(). Its integrand is the exposed Stan function
-# dist_lcdf(), so the reference here integrates exp(dist_lcdf()) with
-# stats::integrate at a tolerance near double precision (see
-# helper-uniform-reference.R). The Stan ODE solver itself only reaches an
-# absolute 1e-6, which is used where the ODE path is run (the fallback
-# cases). Analytical solutions are compared at a relative 1e-8, looser than
-# the R tests because the incomplete gamma and beta functions in Stan lose
-# a few digits in the far lower tail.
+# The reference integrates exp(dist_lcdf()) with stats::integrate at a
+# tolerance near double precision, see helper-uniform-reference.R.
+# Analytical solutions are compared at a relative 1e-8. The Stan ODE solver
+# only reaches an absolute 1e-6, which is used where the ODE path is run.
 
 # nolint start: object_usage_linter.
 stan_reference <- function(dist_id, params, d, pwindow, kinks = numeric(0)) {
@@ -996,13 +987,29 @@ test_that("the gamma and chi-square log CDF is exact deep in the lower tail,
   }
 })
 
-test_that("the gamma log CDF is -Inf, not NaN or 0, where gamma_lcdf
-  underflows above the series range", {
-  # A shape of 20000 is far past practical use. `gamma_lcdf` underflows
-  # for a delay of 12000, above the range of the series, and both terms
-  # are then dropped whole
-  lcdf <- analytical_lcdf(12000, 2L, c(20000, 1), 1)
-  expect_identical(lcdf, -Inf)
+test_that("the gamma log CDF is exact where gamma_lcdf underflows", {
+  for (shape in c(5000, 20000)) {
+    lp <- function(t) pgamma(t, shape, 1, log.p = TRUE)
+    delays <- shape * c(0.5, 0.5001, 0.52, 0.6, 0.8) + c(0, 0.5, 0, 0, 0)
+    expected <- reference_uniform_lcdf(lp, delays, 1)
+    actual <- analytical_lcdf(delays, 2L, c(shape, 1), 1)
+    expect_false(anyNA(actual), info = as.character(shape))
+    expect_equal(actual, expected, tolerance = 1e-8, info = as.character(shape))
+  }
+})
+
+test_that("the gamma gradient is finite and exact where gamma_lcdf
+  underflows", {
+  model <- uniform_gradient_model()
+  for (d in c(2500.5, 2600)) {
+    res <- uniform_gradient_at(model, 2L, c(5000, 1), d, 1)
+    expect_false(res$rejected, info = as.character(d))
+    expect_true(all(is.finite(res$gradient)), info = as.character(d))
+    expect_equal(
+      res$gradient, res$finite_diff, tolerance = 1e-4,
+      info = as.character(d)
+    )
+  }
 })
 
 test_that("the first interval PMF is exact for a gamma or chi-square delay
@@ -1065,6 +1072,65 @@ test_that("the normal vectorised PMF is never NaN in the far upper tail", {
       info <- paste("params", toString(params), "pwindow", pwindow)
       expect_false(anyNA(pmf), info = info)
       expect_true(all(pmf <= 0), info = info)
+    }
+  }
+})
+
+test_that("the analytical CDFs match the empirical CDF of rprimarycensored
+  samples", {
+  set.seed(20260930)
+  n <- 1e5
+  cases <- list(
+    list(
+      dist_id = 4L, params = 0.4, rdist = function(n) rexp(n, 0.4),
+      probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 18L, params = c(2, 1.5),
+      rdist = function(n) rnorm(n, 2, 1.5), probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 13L, params = 4, rdist = function(n) rchisq(n, 4),
+      probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 9L, params = c(2, 3), rdist = function(n) rbeta(n, 2, 3),
+      probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 16L, params = c(3, 2),
+      rdist = function(n) 1 / rgamma(n, 3, rate = 2),
+      probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 19L, params = 6, rdist = function(n) 1 / rchisq(n, 6),
+      probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 22L, params = c(6, 0.5),
+      rdist = function(n) 6 * 0.25 / rchisq(n, 6),
+      probs = c(0.05, 0.3, 0.6, 0.9)
+    ),
+    list(
+      dist_id = 21L, params = c(1, 2.5),
+      rdist = function(n) runif(n)^(-1 / 2.5), probs = c(0.05, 0.3, 0.6, 0.9)
+    )
+  )
+  for (case in cases) {
+    for (pwindow in c(0.5, 2)) {
+      samples <- rprimarycensored(
+        n, function(n, ...) case$rdist(n), pwindow = pwindow, swindow = 0
+      )
+      delays <- unname(stats::quantile(samples, case$probs))
+      actual <- exp(
+        analytical_lcdf(delays, case$dist_id, case$params, pwindow)
+      )
+      # The empirical CDF at its own quantiles is the probability, with a
+      # sampling error of at most 0.002 for 1e5 samples
+      expect_lt(
+        max(abs(actual - case$probs)), 0.01,
+        label = sprintf("dist %d pwindow %g", case$dist_id, pwindow)
+      )
     }
   }
 })
