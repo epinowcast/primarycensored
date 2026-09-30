@@ -124,6 +124,32 @@ test_that("dtgumbel tends to the exponentially tilted window", {
   )
 })
 
+test_that("the window normalisation does not underflow far below the window", {
+  # s(max) and the window difference of s underflow to 0 for mu = -50 and
+  # beta = 0.02, where the density is the exponential one to double precision
+  x <- c(0, 0.05, 0.5, 1)
+  for (beta in c(0.02, 0.05)) {
+    expect_equal(
+      dtgumbel(x, 0, 1, mu = -50, beta = beta),
+      dexpgrowth(x, 0, 1, r = -1 / beta),
+      tolerance = 1e-10
+    )
+    expect_equal(
+      ptgumbel(x, 0, 1, mu = -50, beta = beta),
+      pexpgrowth(x, 0, 1, r = -1 / beta),
+      tolerance = 1e-10
+    )
+    expect_equal(
+      ptgumbel(x, 0, 1, mu = -50, beta = beta, lower.tail = FALSE),
+      1 - pexpgrowth(x, 0, 1, r = -1 / beta),
+      tolerance = 1e-10
+    )
+  }
+  set.seed(2)
+  draws <- rtgumbel(100, 0, 1, mu = -50, beta = 0.02)
+  expect_true(all(is.finite(draws) & draws >= 0 & draws <= 1))
+})
+
 test_that("ptgumbel tends to the uniform window for a wide scale", {
   x <- seq(0, 1, length.out = 6)
   expect_equal(
