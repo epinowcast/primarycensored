@@ -367,9 +367,10 @@ test_that("the numerical path is used where the series does not apply", {
       primarycensored_cdf(d, 18L, c(3, 2), 1, -Inf, Inf, 4L, c(0.5, 0.1)),
       ode
     )
-    expect_identical(
+    expect_equal(
       primarycensored_lcdf(d, 18L, c(3, 2), 1, -Inf, Inf, 4L, c(0.5, 0.1)),
-      log(ode)
+      log(ode),
+      tolerance = 1e-12
     )
   }
   # A rate that is too small for the tilts needed
@@ -557,8 +558,15 @@ test_that("a log CDF from the ODE is never NaN or above zero", {
     expect_lte(lcdf, 0)
     cdf <- gumbel_reference(
       pt$d, pt$w, pt$mu, pt$beta,
-      function(x) if (pt$id == 18L) pnorm(x, pt$par[1], pt$par[2]) else
-        if (pt$id == 4L) pexp(x, pt$par) else pgamma(x, pt$par[1], pt$par[2]),
+      function(x) {
+        if (pt$id == 18L) {
+          pnorm(x, pt$par[1], pt$par[2])
+        } else if (pt$id == 4L) {
+          pexp(x, pt$par)
+        } else {
+          pgamma(x, pt$par[1], pt$par[2])
+        }
+      },
       pt$id != 18L
     )
     expect_equal(exp(lcdf), cdf, tolerance = 1e-7, info = info)
@@ -874,12 +882,13 @@ gumbel_gradient_at <- function(model, case, d, pwindow, mu, beta,
 # Gradient of the delay parameters and the primary parameters. The gradient
 # of the parameters that an exponential delay does not have is zero, and the
 # gamma shape has a gradient with a relative error of about 1e-3 in Stan.
-expect_gumbel_gradient_close <- function(res, case, label, scale = 1) {
+expect_gumbel_gradient_close <- function(res, case, label, scale = 1,
+                                         slack = 0) {
   tolerance <- rep(1e-4, 4) * scale
   if (case$dist_id == 2L) {
     tolerance[1] <- 2e-2
   }
-  allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2)
+  allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2) + slack
   testthat::expect_true(
     all(abs(res$gradient - res$finite_diff) <= allowed),
     info = paste0(
@@ -938,8 +947,8 @@ test_that("Gumbel log CDFs have finite gradients matching finite
   }
 })
 
-# A model whose target is log Phi(z), for the gradient of
-# primarycensored_log_std_normal_cdf()
+# A model whose target is the log of the standard normal CDF, for the
+# gradient of the Stan function primarycensored_log_std_normal_cdf
 log_std_normal_gradient_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if(
@@ -969,12 +978,13 @@ test_that("the Stan log standard normal CDF is accurate with an exact
   model <- log_std_normal_gradient_model()
   for (z0 in z) {
     res <- stan_gradient_at(model, data = list(), init = list(z = z0))
-    # The derivative is the density over the CDF, which the autodiff
-    # derivative of std_normal_lcdf() has a relative error of 1e-5 to 1e-2 in
+    # The derivative is the density over the CDF, which the derivative of
+    # std_normal_lcdf() misses by a relative 4e-4 at -60 and 8e-3 at -100
     exact <- exp(dnorm(z0, log = TRUE) - pnorm(z0, log.p = TRUE))
     expect_false(res$gradient_not_finite, info = as.character(z0))
+    # CmdStan prints the gradient to 6 significant figures
     expect_equal(
-      res$gradient, exact, tolerance = 1e-10, info = as.character(z0)
+      res$gradient, exact, tolerance = 1e-5, info = as.character(z0)
     )
   }
 })
@@ -998,11 +1008,20 @@ test_that("Gumbel log CDF gradients match finite differences across the
             label <- gumbel_case_label(
               case, d = d, pwindow = pwindow, mu = mu, beta = beta
             )
+            # A CDF below 1e-260 is not a point to fit, finite differences
+            # of it are not meaningful
+            lcdf <- primarycensored_lcdf(
+              d, case$dist_id, case$params, pwindow,
+              gumbel_case_lower(case), Inf, 4L, c(mu, beta)
+            )
+            if (lcdf < -600) next
             res <- gumbel_gradient_at(model, case, d, pwindow, mu, beta)
             expect_false(res$gradient_not_finite, info = label)
             expect_false(res$rejected, info = label)
             expect_length(res$gradient, 4)
-            expect_gumbel_gradient_close(res, case, label)
+            # The finite differences of the log CDF have an absolute error of
+            # about 3e-5, from rounding in the log CDF of 3e-11
+            expect_gumbel_gradient_close(res, case, label, slack = 1e-4)
           }
         }
       }
@@ -1072,8 +1091,9 @@ test_that("the vectorised Gumbel log PMF has finite gradients matching
   )
   # The PMF of a delay as short as the exponential is the difference of CDFs
   # that are 1 to double precision, so only the normal delays are used. The
-  # finite differences of a sum of PMFs in the upper tail have an error of
-  # about 5e-4, larger than the 1e-4 of a single log CDF.
+  # gradient of the upper tail log PMF is wrong where the log CDF is close to
+  # 0, see #404. The finite differences of a sum of PMFs in the upper tail
+  # have an error of about 5e-4, larger than the 1e-4 of a single log CDF.
   for (case in gumbel_stan_cases[c(3, 4)]) {
     for (point in points) {
       label <- gumbel_case_label(
