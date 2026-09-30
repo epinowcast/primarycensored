@@ -1270,3 +1270,69 @@ test_that("the small tilt and direct forms have accurate gradients for large
     )
   }
 })
+
+test_that("the tilted log CDF is accurate for gamma delays with large
+  shapes", {
+  q <- c(6, 8, 9.5, 10, 10.5)
+  for (shape in c(500, 1000, 5000)) {
+    for (pwindow in c(1, 7)) {
+      for (rho in c(-1e-3, -1e-5, 2e-5, 1.5e-4, 1e-3, 1e-2)) {
+        expected <- exptilt_gamma_log_reference(
+          q, pwindow, rho, shape, shape / 10
+        )
+        actual <- vapply(
+          q, primarycensored_lcdf, numeric(1),
+          2L, c(shape, shape / 10), pwindow, 0, Inf, 2L, rho
+        )
+        expect_lt(
+          max(abs(expm1(actual - expected))), 1e-6,
+          label = sprintf(
+            "shape = %g, pwindow = %g, r = %g", shape, pwindow, rho
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("the small window form has accurate gradients in the tilt", {
+  model <- exptilt_gradient_model()
+  case <- exptilt_stan_cases[[4]]
+  case$params <- c(3, 1)
+  max_delay <- 12
+  log_pmf_sum <- function(params, pwindow, rho) {
+    cdf <- function(x) stats::pgamma(x, params[1], params[2])
+    sum(log(diff(c(
+      0, exptilt_reference(1:(max_delay + 1), pwindow, rho, cdf)
+    ))))
+  }
+  pwindow <- 2
+  for (rho in c(-3e-5, 3e-5, -1e-3, 4e-3)) {
+    theta <- c(case$params, rho)
+    expected <- vapply(seq_along(theta), function(i) {
+      h <- if (i == 3) 1e-3 else 1e-3 * theta[i]
+      at <- function(step) {
+        shifted <- theta
+        shifted[i] <- theta[i] + step * h
+        log_pmf_sum(shifted[1:2], pwindow, shifted[3])
+      }
+      (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / (12 * h)
+    }, numeric(1))
+    # Log scale rate with a Jacobian term
+    expected[2] <- expected[2] * theta[2] + 1
+    res <- exptilt_gradient_at(
+      model, case, max_delay, pwindow, rho, vectorised = TRUE
+    )
+    expect_true(all(is.finite(res$gradient)))
+    # The tilt is held to 1e-5 and the delay parameters to 1e-4
+    tolerance <- c(1e-4, 1e-4, 1e-5)
+    allowed <- tolerance * pmax(abs(expected), 1e-2)
+    expect_true(
+      all(abs(res$gradient - expected) <= allowed),
+      info = paste0(
+        "r = ", rho, ": gradient ", toString(signif(res$gradient, 6)),
+        ", reference ", toString(signif(expected, 6))
+      )
+    )
+  }
+})

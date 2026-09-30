@@ -91,7 +91,7 @@ test_that("the analytic CDF matches a reference integral", {
       ))
       for (rho in rhos) {
         if (family$positive && !exptilt_admissible(family, rho) &&
-          abs(rho) * pwindow >= 1e-4) {
+          abs(rho) * pwindow >= 1e-2) {
           next
         }
         obj <- exptilt_object(family, rho)
@@ -174,19 +174,43 @@ test_that("the analytic CDF is continuous in the tilt through zero", {
 })
 
 test_that("the analytic CDF has no jump where the small tilt form ends", {
-  # The small tilt form applies while |r| * pwindow is below 1e-4
   for (family in families) {
+    limit <- if (family$positive) 1e-2 else 1e-5
     for (pwindow in c(0.5, 2, 7)) {
       q <- c(1e-3, 0.3 * pwindow, pwindow, 3, 6, 12, 25)
       for (sign in c(-1, 1)) {
-        below <- exptilt_object(family, sign * 0.9999e-4 / pwindow)
-        above <- exptilt_object(family, sign * 1.0001e-4 / pwindow)
+        below <- exptilt_object(family, sign * 0.999999 * limit / pwindow)
+        above <- exptilt_object(family, sign * 1.000001 * limit / pwindow)
         expect_lt(
           max_rel_diff(
             pcens_cdf(below, q, pwindow), pcens_cdf(above, q, pwindow)
           ),
           1e-7,
-          label = exptilt_label(family, pwindow, sign * 1e-4 / pwindow)
+          label = exptilt_label(family, pwindow, sign * limit / pwindow)
+        )
+      }
+    }
+  }
+})
+
+test_that("the analytic CDF is accurate for gamma delays with large shapes", {
+  # Mean 10, so that the lower tail and the bulk are at q = 6 to 10
+  q <- c(6, 8, 9.5, 10, 10.5)
+  for (shape in c(500, 1000, 5000)) {
+    for (pwindow in c(1, 7)) {
+      for (rho in c(-1e-3, -1e-4, -1e-5, 2e-5, 1.5e-4, 1e-3, 1e-2)) {
+        obj <- new_pcens(
+          pdist = pgamma, dprimary = dexpgrowth, primary_args = list(r = rho),
+          shape = shape, rate = shape / 10
+        )
+        expected <- exptilt_gamma_log_reference(
+          q, pwindow, rho, shape, shape / 10
+        )
+        expect_lt(
+          max(abs(expm1(log(pcens_cdf(obj, q, pwindow)) - expected))), 1e-6,
+          label = sprintf(
+            "shape = %g, pwindow = %g, r = %g", shape, pwindow, rho
+          )
         )
       }
     }
