@@ -4,7 +4,7 @@
 \alias{.pcens_cdf_exptilt}
 \title{Primary event censored CDF for an exponentially tilted primary}
 \usage{
-.pcens_cdf_exptilt(object, q, pwindow, use_numeric = FALSE)
+.pcens_cdf_exptilt(object, q, pwindow, use_numeric = FALSE, min_q = 0L)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by
@@ -19,6 +19,10 @@ observed primary event, in which case the delay CDF is used directly.}
 even for distributions with analytical solutions. This is primarily
 useful for testing purposes or for settings where the analytical solution
 breaks down.}
+
+\item{min_q}{Number of quantiles below which the numerical method is
+used, for delays whose transform has a fixed cost. The default 0 always
+uses the closed forms.}
 }
 \value{
 Vector of computed primary event censored CDFs.
