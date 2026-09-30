@@ -104,6 +104,38 @@ test_that("the public CDF agrees with numerical integration everywhere", {
   }
 })
 
+test_that("the series is accurate at extreme and narrow windows", {
+  # A very negative mu / beta, a wide scale and a narrow window, where the
+  # terms are tiny, nearly equal or large, all stay accepted and accurate
+  family <- families[[4]]
+  cdf <- gumbel_cdf(family)
+  settings <- list(
+    c(mu = -5, beta = 0.1, w = 1), c(mu = -2, beta = 0.1, w = 2),
+    c(mu = -50, beta = 1, w = 1), c(mu = 0, beta = 1, w = 0.05),
+    c(mu = 0, beta = 5, w = 0.5), c(mu = 3, beta = 5, w = 2),
+    c(mu = 0.3, beta = 10, w = 1), c(mu = -1, beta = 0.3, w = 0.1)
+  )
+  for (s in settings) {
+    obj <- gumbel_object(family, s[["mu"]], s[["beta"]])
+    expect_true(.gumbel_available(obj, s[["mu"]], s[["beta"]]))
+    fit <- .gumbel_lcdf(
+      obj, family$q, s[["w"]], s[["mu"]], s[["beta"]],
+      .gumbel_n_terms(s[["mu"]] / s[["beta"]]), -Inf
+    )
+    expect_true(all(fit$error <= 1e-9), info = toString(s))
+    expect_lt(
+      max_rel_diff(
+        exp(fit$log_cdf),
+        gumbel_reference(
+          family$q, s[["w"]], s[["mu"]], s[["beta"]], cdf, FALSE
+        )
+      ),
+      1e-10,
+      label = toString(s)
+    )
+  }
+})
+
 test_that("use_numeric returns the numerical result", {
   obj <- gumbel_object(families[[4]], -0.5, 0.5)
   q <- c(-1, 3, 8)

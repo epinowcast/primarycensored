@@ -239,6 +239,35 @@ test_that("primarycensored_gumbel_lcdf matches the R series and the
   }
 })
 
+test_that("the Stan series is accurate at extreme and narrow windows", {
+  case <- gumbel_stan_cases[[3]]
+  cdf <- gumbel_case_cdf(case)
+  settings <- list(
+    c(mu = -5, beta = 0.1, w = 1), c(mu = -50, beta = 1, w = 1),
+    c(mu = 0, beta = 1, w = 0.05), c(mu = 0, beta = 5, w = 0.5),
+    c(mu = 3, beta = 5, w = 2), c(mu = -1, beta = 0.3, w = 0.1)
+  )
+  for (s in settings) {
+    expect_identical(
+      check_for_gumbel_params(18L, case$params, s[["mu"]], s[["beta"]]), 1L
+    )
+    stan <- vapply(
+      case$d, primarycensored_gumbel_lcdf, numeric(1),
+      18L, case$params, s[["w"]], s[["mu"]], s[["beta"]]
+    )
+    expect_lt(
+      max_rel_diff(
+        exp(stan),
+        gumbel_reference(
+          case$d, s[["w"]], s[["mu"]], s[["beta"]], cdf, FALSE
+        )
+      ),
+      1e-10,
+      label = toString(s)
+    )
+  }
+})
+
 test_that("Stan and R accept the same points of the series", {
   case <- gumbel_stan_cases[[3]]
   for (beta in betas) {
@@ -617,6 +646,9 @@ test_that("Gumbel log CDFs have finite gradients matching finite
     list(d = 6, pwindow = 3, mu = -1, beta = 0.3),
     list(d = 20, pwindow = 3, mu = 1, beta = 1),
     list(d = -3, pwindow = 2, mu = 0, beta = 0.5),
+    list(d = 1.5, pwindow = 1, mu = -5, beta = 0.1),
+    list(d = 2, pwindow = 2, mu = -30, beta = 1),
+    list(d = 3, pwindow = 1, mu = 0, beta = 8),
     # A point where the series is not accurate and the ODE is used
     # (the gradient has the accuracy of the solver, about 1e-6)
     list(d = 4, pwindow = 2, mu = 0.5, beta = 0.1, scale = 300)
