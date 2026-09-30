@@ -6,11 +6,6 @@
   They share one helper for the window handling, which no longer uses `ifelse()` or `pmin()`/`pmax()` over full vectors.
   The lognormal, Weibull and generalised gamma terms share the standardised delay between the delay CDF and the partial expectation term.
   See #378 and #380.
-- The Stan Weibull uniform primary solution forms `(t / scale)^shape` once for the delay CDF and the incomplete gamma term.
-  Values are unchanged.
-  On 300 delays the value and its gradient were about 12% and 9% cheaper, taking medians over nine interleaved runs.
-  The gamma, lognormal and generalised gamma solutions were profiled and are dominated by the incomplete gamma or normal CDF and their gradients, so they are unchanged.
-  See #378.
 
 ## Bug fixes
 
@@ -24,9 +19,15 @@
 - These methods now check `pwindow`.
   Missing or negative values are an error, where a missing value previously gave an unhelpful error or `NA`.
   A vector `pwindow` is recycled element-wise against `q`, including when some delays are not positive, where it was previously misaligned.
+  A warning is given if the longer of `q` and `pwindow` is not a multiple of the shorter.
   Zero-width elements of a vector `pwindow` give the delay CDF, where they gave `NaN`.
   Missing delays give an explicit error.
   See #378 and #380.
+- The analytical uniform primary `pcens_cdf()` methods now use the mean of the delay CDF over the window, from a 5 point Gauss-Legendre rule, when the window is more than a million times narrower than the delay.
+  Both analytical forms lose about `1e-16 * d / w` there, which was above `1e-6` for some heavy tailed delays.
+  The far tail and narrow window handling are in R only.
+  The Stan log CDF still cancels far in the upper tail, see #392.
+  See #378.
 
 ## Performance
 

@@ -137,28 +137,6 @@ vector primarycensored_lognormal_uniform_terms(real t,
 }
 
 /**
-  * Compute the log of the lower incomplete gamma function from x
-  * @ingroup analytical_solution_helpers
-  *
-  * The same as log_weibull_g() for callers that already have
-  * x = (t / scale)^shape, such as primarycensored_weibull_uniform_terms(),
-  * which also needs x for the delay CDF.
-  *
-  * @param x Scaled upper bound of integration, (t / scale)^shape
-  * @param shape Shape parameter (k) of the Weibull distribution
-  *
-  * @return Log of gamma(1 + 1/k, x)
-  */
-real log_weibull_g_from_x(real x, real shape) {
-  real a = 1 + inv(shape);
-  // gamma_lcdf(x | a, 1) is log(gamma_p(a, x)), but reverse-mode gamma_p()
-  // returns zero gradients for x / a > 10
-  // (https://github.com/stan-dev/math/issues/2006). gamma_lcdf() has the
-  // same value and computes its own gradients without that cutoff.
-  return gamma_lcdf(x | a, 1) + lgamma(a);
-}
-
-/**
   * Compute the log of the lower incomplete gamma function
   * @ingroup analytical_solution_helpers
   *
@@ -173,16 +151,20 @@ real log_weibull_g_from_x(real x, real shape) {
   * @return Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k)
   */
 real log_weibull_g(real t, real shape, real scale) {
-  return log_weibull_g_from_x(pow(t * inv(scale), shape), shape);
+  real x = pow(t * inv(scale), shape);
+  real a = 1 + inv(shape);
+  // gamma_lcdf(x | a, 1) is log(gamma_p(a, x)), but reverse-mode gamma_p()
+  // returns zero gradients for x / a > 10
+  // (https://github.com/stan-dev/math/issues/2006). gamma_lcdf() has the
+  // same value and computes its own gradients without that cutoff.
+  return gamma_lcdf(x | a, 1) + lgamma(a);
 }
 
 /**
   * Compute the uniform primary terms at t for a Weibull delay
   * @ingroup analytical_solution_helpers
   *
-  * For Weibull, E = scale (lambda) and tilde F_T(t) = g(t; lambda, k). The
-  * delay CDF is 1 - exp(-x) and g is gamma(1 + 1/k, x) with
-  * x = (t / scale)^shape, so x is formed once for both.
+  * For Weibull, E = scale (lambda) and tilde F_T(t) = g(t; lambda, k).
   *
   * @param t Time (d or q)
   * @param params Array of Weibull distribution parameters [shape, scale]
@@ -197,10 +179,9 @@ vector primarycensored_weibull_uniform_terms(real t,
   }
   real shape = params[1];
   real scale = params[2];
-  real x = pow(t * inv(scale), shape);
   return [
-    log(t) + log1m_exp(-x),
-    log(scale) + log_weibull_g_from_x(x, shape)
+    log(t) + weibull_lcdf(t | shape, scale),
+    log(scale) + log_weibull_g(t, shape, scale)
   ]';
 }
 
