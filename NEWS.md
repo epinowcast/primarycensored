@@ -31,8 +31,12 @@
   The numerical path integrates in the variable in which a narrow window density is smooth, so it is accurate for any `mu / beta`, and in Stan it does not return a CDF above 1 or a NaN log CDF.
   The exponential and gamma delays need a rate above the number of terms over `beta`, so in practice the series is for normal delays and for short exponential and gamma delays.
   This limit comes from the upper tail form of the transform and not from the mathematics, as the transform over a bounded interval is finite for every tilt, see #399.
-  Accepted values agree with numerical integration to a relative difference of 1e-8 or better.
-  The gradient of the vectorised log PMF is about 3 to 5 times faster than with the ODE in a short benchmark of a normal delay, and a single log CDF takes about as long as the ODE.
+  Accepted values agree with numerical integration to a relative difference of about 1e-8, at most 2e-8 in tests.
+  In Stan a single log CDF from the series takes 5 to 10 microseconds and from the numerical path 80 to 180 microseconds, which is 8 to 36 times faster, and in R `pcens_cdf()` is 2 to 4 times faster than `use_numeric = TRUE`.
+  The gradient of ten log CDFs of a normal delay is about 3.5 times faster than with the numerical path in a short sampling benchmark, and the gradient of the vectorised log PMF was 3 to 5 times faster in an earlier benchmark.
+  The gradients match finite differences to a relative 1e-4 over the parameter grid of the tests.
+  The normal transform uses an asymptotic form of `log(Phi(z))` with an exact derivative below `z = -37`, where `std_normal_lcdf()` has a derivative that is off by 1e-5 to 1e-2 and that the alternating sum had amplified to gradients that were wrong by up to a factor of 6.
+  The gamma shape gradient of Stan is approximate, so for the gamma the series is used only where the ratio of the sum of the absolute terms to the sum is at most 200, see `gumbel_series_accepted()`.
   See #371.
 - The normal delay is the first analytical solution for a delay with support on the reals.
   Its terms are not zero for negative delays, and the analytical truncation now normalises a finite negative lower bound for such delays.
@@ -43,6 +47,11 @@
 
 ## Bug fixes
 
+- The Stan numerical path of the truncated Gumbel primary is evaluated on the log scale in pieces, so the lower tail is no longer returned as `-Inf` or as a wrong value.
+  This gave `-Inf` log PMFs, and rejected initial values, for short delays with a window that is late relative to them, for example a gamma(5, 1) delay.
+  It starts at the point where the delay CDF leaves 0 for delays on the non-negative reals, integrates on in pieces while the mass of the window is still there for a normal delay, and for a location below the window end integrates from the peak of the integrand to each end of the range.
+  `primarycensored_lcdf()` uses it directly for the truncated Gumbel, so a CDF below 1e-300 is not lost.
+  See #371.
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.
   See #367.

@@ -471,6 +471,13 @@ Where it is above $10^{-9}$ the method uses the numerical path for that $d$.
 This catches a large $s_0$ and a window that is narrow relative to the scale, $w_P \ll \beta$, where the bracket is a small difference of large terms and the loss is about $\beta / w_P$.
 In tests the estimate is above the error against a tight reference integral, allowing for the accuracy of the reference of about $10^{-13}$, and the accepted values agree with the reference to better than $10^{-8}$.
 
+In Stan the same sum of absolute terms over the bracket multiplies the error of the gradient of each term.
+The gradient of the normal and exponential transforms is exact, so it is limited by the same rounding error.
+The normal transform uses the asymptotic form of $\log \Phi(z)$ below $z = -37$, where Stan's `std_normal_lcdf()` has a derivative that is off by $10^{-5}$ at $z = -37$ and by $10^{-2}$ at $z = -100$, which the alternating sum had amplified to gradients that were wrong by up to a factor of 6.
+The derivative of the incomplete gamma function in the shape is approximate in Stan.
+For the gamma delay the series is therefore used only where the sum of the absolute terms over the bracket is at most 200, and the numerical path is used otherwise.
+The numerical path is evaluated on the log scale, so a CDF in the far lower tail, such as $e^{-150}$ for a short delay and a window that is late relative to it, is not lost.
+
 For the normal delay with $\mu_G$ in $\{-0.5, 0, 0.5, 1, 1.5\}$, $\beta$ in $\{0.1, 0.2, 1\}$ and $w_P$ in $\{1, 2\}$, the series is accepted for $\mu_G / \beta \leq 1.5$, which is every $\mu_G$ at $\beta = 1$ and $\mu_G \leq 0$ at $\beta = 0.2$ and $0.1$.
 For larger $\mu_G / \beta$ the window density rises sharply within the window and the numerical path is used.
 A very negative $\mu_G / \beta$ is close to the exponentially tilted window with $r = -1 / \beta$, which has closed forms that need fewer transforms.
