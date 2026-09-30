@@ -1,3 +1,27 @@
+# primarycensored (development version)
+
+## Features
+
+- Uniform primary analytical solutions for more delay distributions, in R and in Stan.
+  Stan now has them for the exponential, beta, chi-square, inverse gamma, normal, inverse chi-square, Pareto and scaled inverse chi-square delays (`dist_id` 4, 9, 13, 16, 18, 19, 21 and 22).
+  R has `pcens_cdf()` methods for `pexp`, `pnorm`, `pchisq` and `pbeta`.
+  The Stan solutions build on `primarycensored_uniform_terms()`, so the shared-terms vectorised PMF applies to them too.
+  They agree with numerical integration of the delay CDF to a relative 1e-8 or better, and the R solutions to 1e-9.
+  See #377.
+- The normal has support on the reals, so its analytic solution does not clip the primary event window at 0.
+  It evaluates the positive antiderivative of the CDF and switches to an asymptotic series below `z = -10`.
+- The inverse gamma, inverse chi-square and scaled inverse chi-square solutions need a finite mean (shape above 1, degrees of freedom above 2).
+  Otherwise Stan uses numerical integration, chosen by the new `check_for_analytical_params()` and `check_uniform_terms_params()`.
+  Non-central chi-square and beta delays in R use numerical integration.
+- The chi-square solution uses the gamma solution with shape `df / 2` and scale 2.
+  The inverse chi-square and scaled inverse chi-square solutions use the inverse gamma solution.
+
+## Bug fixes
+
+- The beta delay no longer errors in the Stan numerical path for delays above 1.
+  `dist_lcdf()` now returns a log CDF of 0 there.
+  See #377.
+
 # primarycensored 1.6.0
 
 This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.

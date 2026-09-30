@@ -357,6 +357,89 @@ where $q = \max(d - w_P, 0)$.
 This is the form implemented in `pcens_cdf()` and in the Stan function `primarycensored_gengamma_uniform_lcdf()`.
 The discrete censored delay distribution follows from equation \@ref(eq:disccensunifprim) exactly as for the Gamma distribution, with $k\theta F_T(\cdot; k + 1, \theta)$ replaced by $\theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} F_T(\cdot; a, \theta, k + 1/a)$.
 
+## Antiderivative form
+
+Equation \@ref(eq:unifprim) is the integral of the delay CDF over the primary event window.
+For a uniform primary event time $F_{S_+}(d) = \frac{1}{w_P} \int_q^d F_T(u)~ du$, with $q = \max(d - w_P, 0)$ for delays with non-negative support and $q = d - w_P$ for delays with support on the reals.
+So for any antiderivative $G$ of $F_T$
+
+$$
+F_{S_+}(d) = \frac{G(d) - G(q)}{w_P}. (\#eq:antiderivunifprim)
+$$
+
+Integrating by parts gives $G(t) = t F_T(t) - \int_{-\infty}^t z f_T(z)~ dz$, which is the form used for the Gamma, Log-Normal, Weibull and generalised gamma distributions above.
+Each of these needs only the delay CDF and the lower partial expectation at $d$ and at $q$.
+The two terms of $G$ are each evaluated once per endpoint, so the Stan functions `primarycensored_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` reuse them across neighbouring delays.
+Where $G$ has a simple positive closed form it is used directly, which avoids differences of terms that can be negative.
+
+## Exponential distribution
+
+The exponential distribution with rate $\lambda$ has $F_T(t) = 1 - e^{-\lambda t}$ for $t \geq 0$.
+An antiderivative that is zero at $t = 0$ is
+
+$$
+G(t) = t - \frac{1}{\lambda} + \frac{e^{-\lambda t}}{\lambda}, \qquad t \geq 0,
+$$
+
+with $G(t) = 0$ for $t < 0$.
+Equation \@ref(eq:antiderivunifprim) then gives, for $d \geq w_P$,
+
+$$
+F_{S_+}(d; \lambda) = 1 - \frac{e^{-\lambda (d - w_P)} \left(1 - e^{-\lambda w_P}\right)}{\lambda w_P}.
+$$
+
+This is the Gamma solution with shape 1.
+It is implemented directly so that it does not need the incomplete gamma function.
+
+## Normal distribution
+
+The normal distribution has support on the reals, so the primary event window $[d - w_P, d]$ is not clipped at zero.
+With $z = (t - \mu) / \sigma$, the partial expectation is $\int_{-\infty}^t z' f_T(z')~ dz' = \mu \Phi(z) - \sigma \phi(z)$.
+This can be negative, so a log scale evaluation cannot hold it as a single term.
+Substituting it into $G(t) = t F_T(t) - \int_{-\infty}^t z' f_T(z')~ dz'$ gives the positive antiderivative
+
+$$
+G(t; \mu, \sigma) = \sigma \left( z \Phi(z) + \phi(z) \right) = \mathbb{E}\left[ (t - T)^+ \right].
+$$
+
+In the lower tail $z \Phi(z)$ and $\phi(z)$ nearly cancel.
+For $z < -10$ the asymptotic series $\sigma \phi(z) z^{-2} \sum_{n \geq 0} (-1)^n (2n + 1)!! z^{-2n}$ is used instead, with 20 terms.
+
+## Chi-square and beta distributions
+
+The chi-square distribution with $\nu$ degrees of freedom is the Gamma distribution with shape $\nu / 2$ and scale 2, so it uses the Gamma solution.
+
+The beta distribution has support on $[0, 1]$ and mean $a / (a + b)$.
+The partial expectation is $\int_0^t z f_T(z)~ dz = \frac{a}{a + b} F_T(t; a + 1, b)$ for $t \leq 1$, and the full mean for $t \geq 1$ where $F_T = 1$.
+So the terms $t F_T(t; a, b)$ and $\frac{a}{a + b} F_T(t; a + 1, b)$ replace $F_T$ with 1 above $t = 1$.
+
+## Inverse gamma family
+
+The inverse gamma distribution with shape $\alpha$ and scale $\beta$ has mean $\beta / (\alpha - 1)$ for $\alpha > 1$.
+Its partial expectation is an inverse gamma distribution function with shape $\alpha - 1$
+
+$$
+\int_0^t z f_T(z; \alpha, \beta)~ dz = \frac{\beta}{\alpha - 1} F_T(t; \alpha - 1, \beta).
+$$
+
+The solution is then equation \@ref(eq:antiderivunifprim) with $G(t) = t F_T(t; \alpha, \beta) - \frac{\beta}{\alpha - 1} F_T(t; \alpha - 1, \beta)$.
+For $\alpha \leq 1$ the mean is infinite and this form does not apply, so the numerical path is used.
+The inverse chi-square distribution with $\nu$ degrees of freedom is the inverse gamma with shape $\nu / 2$ and scale $1 / 2$.
+The scaled inverse chi-square distribution with scale $s$ is the inverse gamma with shape $\nu / 2$ and scale $\nu s^2 / 2$.
+Both need $\nu > 2$ and otherwise use the numerical path.
+
+## Pareto distribution
+
+The Pareto distribution with minimum $y_{\min}$ and shape $\alpha$ has $F_T(t) = 1 - (y_{\min} / t)^\alpha$ for $t \geq y_{\min}$ and 0 below.
+An antiderivative that is zero at $y_{\min}$ is
+
+$$
+G(t) = (t - y_{\min}) - y_{\min} \frac{1 - (y_{\min} / t)^{\alpha - 1}}{\alpha - 1}, \qquad t \geq y_{\min},
+$$
+
+which is $(t - y_{\min}) - y_{\min} \log(t / y_{\min})$ for $\alpha = 1$.
+Unlike the forms that use the mean, this holds for every $\alpha > 0$ because only the integral of $F_T$ over the window enters.
+
 # Learning more
 
 - For more mathematical background on the analytic solutions see the `vignette("why-it-works")`.
