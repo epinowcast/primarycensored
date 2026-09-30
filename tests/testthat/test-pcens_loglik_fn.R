@@ -50,6 +50,22 @@ make_loglik <- function(case, x, ...) {
 # both paths evaluate the same CDFs.
 tol <- 1e-10
 
+# Reference from the numerical CDF path, for checking the analytic solutions
+numeric_loglik <- function(case, x, pwindow, swindow, L, D) {
+  obj <- do.call(
+    new_pcens,
+    c(
+      list(case$pdist, case$dprimary, primary_args = case$primary_args),
+      case$pars
+    )
+  )
+  cdf <- function(q) pcens_cdf(obj, q, pwindow, use_numeric = TRUE)
+  upper <- pmin(x + swindow, D)
+  mass <- (if (is.finite(D)) cdf(D) else 1) -
+    (if (is.finite(L)) cdf(L) else 0)
+  log((cdf(upper) - cdf(x)) / mass)
+}
+
 test_that("pcens_loglik_fn returns a function of the delay parameters", {
   ll <- pcens_loglik_fn(0:5, pgamma)
   expect_type(ll, "closure")
@@ -98,6 +114,45 @@ test_that("pcens_loglik_fn supports per-row windows and truncation", {
       reference_loglik(case, x, pwindow, swindow, L, D),
       tolerance = tol
     )
+  }
+})
+
+test_that("pcens_loglik_fn agrees with the numerical path", {
+  x <- c(0.5, 1, 2, 3.25, 7)
+  for (case in loglik_cases) {
+    ll <- make_loglik(case, x, pwindow = 2, swindow = 1, L = 0.5, D = 10)
+    expect_equal(
+      do.call(ll, case$pars),
+      numeric_loglik(case, x, 2, 1, 0.5, 10),
+      tolerance = 1e-6
+    )
+  }
+})
+
+test_that("pcens_loglik_fn matches the frequencies of simulated data", {
+  set.seed(123)
+  rdists <- list(
+    gamma_unif = rgamma, lnorm_unif = rlnorm, weibull_unif = rweibull,
+    gamma_expgrowth = rgamma
+  )
+  for (nm in names(loglik_cases)) {
+    case <- loglik_cases[[nm]]
+    rprimary <- if (identical(case$dprimary, dunif)) runif else rexpgrowth
+    sim <- do.call(
+      rprimarycensored,
+      c(
+        list(
+          1e5, rdists[[nm]],
+          pwindow = 2, swindow = 1, D = 10,
+          rprimary = rprimary, rprimary_args = case$primary_args
+        ),
+        case$pars
+      )
+    )
+    ux <- sort(unique(sim))
+    ll <- make_loglik(case, ux, pwindow = 2, swindow = 1, D = 10)
+    freq <- as.numeric(table(sim)) / length(sim)
+    expect_lt(max(abs(freq - exp(do.call(ll, case$pars)))), 0.005)
   }
 })
 
@@ -588,7 +643,7 @@ test_that(".pcens_row_groups shares one sorted set of points per pwindow", {
   expect_identical(rg$sets[[2]]$points, c(3, 4, 5))
 })
 
-test_that("fitdistdoublecens is unchanged with repeated delays", {
+test_that("fitdistdoublecens loglik matches per-row dprimarycensored", {
   skip_if_not_installed("fitdistrplus")
   skip_if_not_installed("withr")
   set.seed(3)
