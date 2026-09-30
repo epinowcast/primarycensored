@@ -5,17 +5,20 @@
 # `stats::integrate()` tolerances, it is accurate to about 1e-12 relative,
 # including deep in the lower tail. The integral is split at the kink where
 # the CDF of a delay on the non-negative reals leaves zero, and at the
-# location of the window.
+# location of the window and a few scales either side of it, where a narrow
+# window density has its mass.
 tlogis_reference <- function(q, pwindow, location, scale, cdf,
                              positive = TRUE) {
   vapply(q, function(qq) {
     integrand <- function(p) {
       cdf(qq - p) * dtlogis(p, 0, pwindow, location, scale)
     }
+    centre <- min(max(location, 0), pwindow)
+    spike <- centre + scale * c(-40, -20, -10, -5, -2, 0, 2, 5, 10, 20, 40)
     breaks <- sort(unique(c(
       0, pwindow,
       if (positive && qq > 0 && qq < pwindow) qq,
-      if (location > 0 && location < pwindow) location
+      spike[spike > 0 & spike < pwindow]
     )))
     sum(vapply(seq_len(length(breaks) - 1L), function(i) {
       stats::integrate(

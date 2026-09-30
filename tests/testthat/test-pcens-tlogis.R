@@ -358,3 +358,95 @@ test_that("non-parametric delays use the truncated logistic CDF", {
     tolerance = 1e-6
   )
 })
+
+# Narrow windows. The density of the primary has its mass in a few scales
+# around the location (or around the edge nearest to it), so a quadrature
+# that is not told where that is steps over it.
+narrow_delays <- list(
+  list(
+    label = "exponential rate 1.5", pdist = pexp, args = list(rate = 1.5),
+    positive = TRUE
+  ),
+  list(
+    label = "gamma shape 2", pdist = pgamma,
+    args = list(shape = 2, rate = 1), positive = TRUE
+  ),
+  list(
+    label = "lognormal", pdist = plnorm,
+    args = list(meanlog = 1, sdlog = 0.5), positive = TRUE
+  ),
+  list(
+    label = "weibull", pdist = pweibull,
+    args = list(shape = 2, scale = 2), positive = TRUE
+  ),
+  list(
+    label = "normal", pdist = pnorm, args = list(mean = 3, sd = 2),
+    positive = FALSE
+  )
+)
+
+test_that("the numerical CDF resolves a narrow truncated logistic primary", {
+  pwindow <- 2
+  q <- c(0.5, 1, 3, 10)
+  for (delay in narrow_delays) {
+    cdf <- function(x) do.call(delay$pdist, c(list(x), delay$args))
+    for (location in c(-0.5, 0.7, 2.5)) {
+      for (scale in c(0.02, 0.005, 0.001)) {
+        obj <- tlogis_object(delay, location, scale)
+        expected <- tlogis_reference(
+          q, pwindow, location, scale, cdf, delay$positive
+        )
+        label <- tlogis_label(delay, pwindow, location, scale)
+        # The default dispatch, which falls back where the series does not
+        # apply, and the forced numerical method
+        expect_lt(
+          max_rel_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
+          label = label
+        )
+        expect_lt(
+          max_rel_diff(
+            pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected
+          ), 1e-6,
+          label = paste("numeric:", label)
+        )
+      }
+    }
+  }
+})
+
+test_that("the normal tilt transform keeps the shift of a small sd", {
+  # The CDF at q = mean - k sd is, with p = sd z,
+  # int Phi(-k - z) f(sd z) sd dz, so the window is in units of sd
+  normal_reference <- function(mean, sd, k, pwindow, location, scale) {
+    integrand <- function(z) {
+      stats::pnorm(-k - z) * dtlogis(sd * z, 0, pwindow, location, scale) * sd
+    }
+    upper <- min(40, pwindow / sd)
+    stats::integrate(
+      integrand, 0, upper, rel.tol = 1e-13, abs.tol = 0, subdivisions = 2000L
+    )$value
+  }
+  cases <- list(
+    list(mean = 1, sd = 1e-8, location = -0.5, scale = 1, pwindow = 1),
+    list(mean = 30, sd = 1e-6, location = 0.5, scale = 20, pwindow = 1),
+    list(mean = 30, sd = 1e-4, location = 0.5, scale = 20, pwindow = 1),
+    list(mean = 100, sd = 1e-3, location = 0.5, scale = 20, pwindow = 1)
+  )
+  for (cs in cases) {
+    for (k in c(0, 2)) {
+      obj <- new_pcens(
+        pdist = pnorm, dprimary = dtlogis,
+        primary_args = list(location = cs$location, scale = cs$scale),
+        mean = cs$mean, sd = cs$sd
+      )
+      expected <- normal_reference(
+        cs$mean, cs$sd, k, cs$pwindow, cs$location, cs$scale
+      )
+      actual <- pcens_cdf(obj, cs$mean - k * cs$sd, cs$pwindow)
+      expect_lt(
+        abs(actual / expected - 1), 1e-6,
+        label = paste(toString(unlist(cs)), "k =", k)
+      )
+    }
+  }
+})

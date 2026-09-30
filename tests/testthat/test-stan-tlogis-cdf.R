@@ -374,6 +374,90 @@ test_that("inadmissible series use the ODE path", {
   }
 })
 
+# Narrow windows. The integrand of the ODE has a spike of width about
+# `scale` where the delay is the window location, and a solver that takes
+# large steps across the flat region steps over it. The ODE has absolute and
+# relative tolerances of 1e-6, so these are compared in absolute terms.
+tlogis_narrow_cases <- list(
+  list(dist_id = 4L, params = 1.5, pdist = pexp, args = list(rate = 1.5)),
+  list(
+    dist_id = 2L, params = c(2, 1), pdist = pgamma,
+    args = list(shape = 2, rate = 1)
+  ),
+  list(
+    dist_id = 1L, params = c(1, 0.5), pdist = plnorm,
+    args = list(meanlog = 1, sdlog = 0.5)
+  ),
+  list(
+    dist_id = 3L, params = c(2, 2), pdist = pweibull,
+    args = list(shape = 2, scale = 2)
+  ),
+  list(
+    dist_id = 18L, params = c(3, 2), pdist = pnorm,
+    args = list(mean = 3, sd = 2)
+  )
+)
+
+test_that("the ODE path resolves a narrow truncated logistic primary", {
+  pwindow <- 2
+  d <- c(0.5, 1, 3, 10)
+  for (case in tlogis_narrow_cases) {
+    cdf <- tlogis_case_cdf(case)
+    for (location in c(-0.5, 0.7, 2.5)) {
+      for (scale in c(0.02, 0.005)) {
+        window <- c(location, scale)
+        expected <- tlogis_reference(
+          d, pwindow, location, scale, cdf, case$dist_id != 18L
+        )
+        ode <- vapply(
+          d, primarycensored_numeric_cdf, numeric(1),
+          case$dist_id, case$params, pwindow, 3L, window
+        )
+        expect_lt(
+          max(abs(ode - expected)), 1e-5,
+          label = tlogis_case_label(
+            case, location = location, scale = scale
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("the log CDF and log PMF are correct for a narrow primary", {
+  pwindow <- 2
+  for (case in tlogis_narrow_cases) {
+    cdf <- tlogis_case_cdf(case)
+    lower <- tlogis_case_lower(case)
+    for (location in c(0.7, 1)) {
+      for (scale in c(0.02, 0.005)) {
+        window <- c(location, scale)
+        label <- tlogis_case_label(case, location = location, scale = scale)
+        d <- c(0.5, 1, 3, 10)
+        expected <- tlogis_reference(
+          d, pwindow, location, scale, cdf, case$dist_id != 18L
+        )
+        lcdf <- vapply(
+          d, primarycensored_lcdf, numeric(1),
+          case$dist_id, case$params, pwindow, lower, Inf, 3L, window
+        )
+        expect_lt(max(abs(exp(lcdf) - expected)), 1e-5, label = label)
+        # The PMF over integer delays
+        ref <- tlogis_reference(
+          0:6, pwindow, location, scale, cdf, case$dist_id != 18L
+        )
+        pmf <- exp(primarycensored_sone_lpmf_vectorized(
+          5, lower, Inf, case$dist_id, case$params, pwindow, 3L, window
+        ))
+        expect_lt(
+          max(abs(pmf - diff(ref)[1:6])), 1e-5,
+          label = paste("pmf:", label)
+        )
+      }
+    }
+  }
+})
+
 test_that("the analytical function rejects an inadmissible series", {
   expect_error(
     primarycensored_analytical_lcdf(
