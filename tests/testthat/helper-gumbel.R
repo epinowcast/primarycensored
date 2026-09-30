@@ -4,20 +4,37 @@
 # with tight tolerances, unlike `pcens_cdf.default()` which uses the default
 # `stats::integrate()` tolerances.
 
-# Reference primary event censored CDF for any delay CDF `cdf(x)`. The
-# integral is split at the kink where the delay CDF leaves zero.
+# Reference primary event censored CDF for any delay CDF `cdf(x)`.
+#
+# The integral is taken in u = s(z) - s(w), with s(z) = exp(-(z - mu) / beta),
+# where the window density is exp(-u) / (1 - exp(-Delta)) on [0, Delta] and
+# z = mu - beta log(s(w) + u). The weight is smooth, so a narrow spike of
+# the density in z, for a large mu / beta, is resolved. This shares no
+# code with the package, which integrates in z with the endpoints of the
+# mass found from the same change of variable. The integral is truncated at
+# u = 60, which leaves a mass of 1e-26, and split at the kink where the
+# delay CDF leaves zero and on a ladder of scales.
 gumbel_reference <- function(q, pwindow, mu, beta, cdf, positive = TRUE) {
+  log_sw <- -(pwindow - mu) / beta
+  sw <- exp(log_sw)
+  delta <- sw * expm1(pwindow / beta)
+  top <- min(delta, 60)
+  norm <- -expm1(-delta)
   vapply(q, function(qq) {
-    integrand <- function(z) {
-      cdf(qq - z) * dtgumbel(z, 0, pwindow, mu, beta)
+    integrand <- function(u) cdf(qq - (mu - beta * log(sw + u))) * exp(-u)
+    breaks <- c(0, top, top * c(1e-6, 1e-4, 1e-2, 0.1, 0.3, 0.6))
+    if (positive && qq > 0 && qq < pwindow) {
+      u_kink <- exp(-(qq - mu) / beta) - sw
+      if (u_kink > 0 && u_kink < top) breaks <- c(breaks, u_kink)
     }
-    breaks <- c(0, if (positive && qq > 0 && qq < pwindow) qq, pwindow)
+    breaks <- sort(unique(breaks))
     sum(vapply(seq_len(length(breaks) - 1L), function(i) {
       stats::integrate(
         integrand, breaks[i], breaks[i + 1L],
-        rel.tol = 1e-13, abs.tol = 0, subdivisions = 2000L
+        rel.tol = 5e-14, abs.tol = 0, subdivisions = 5000L,
+        stop.on.error = FALSE
       )$value
-    }, numeric(1)))
+    }, numeric(1))) / norm
   }, numeric(1))
 }
 
@@ -75,5 +92,39 @@ gumbel_label <- function(family, pwindow, mu, beta) {
   sprintf(
     "%s, pwindow = %g, mu = %g, beta = %g",
     family$label, pwindow, mu, beta
+  )
+}
+
+# Windows where the density is a narrow spike, mu / beta of 15 to 50, at the
+# upper edge of the window, inside it, and at a very narrow window. The
+# delays are long relative to the window so that the series is not
+# available for the exponential and the gamma.
+gumbel_spike_settings <- function() {
+  list(
+    c(mu = 1.5, beta = 0.1, w = 1),
+    c(mu = 2, beta = 0.1, w = 1),
+    c(mu = 1, beta = 0.02, w = 0.3),
+    c(mu = 0.5, beta = 0.025, w = 1),
+    c(mu = 1.5, beta = 0.05, w = 7),
+    c(mu = 3, beta = 0.06, w = 2)
+  )
+}
+
+gumbel_spike_families <- function() {
+  list(
+    list(
+      label = "normal mean 3 sd 2", pdist = pnorm,
+      args = list(mean = 3, sd = 2),
+      q = c(-3, 0.5, 1, 3, 5, 8, 20), positive = FALSE
+    ),
+    list(
+      label = "exponential rate 1", pdist = pexp, args = list(rate = 1),
+      q = c(0.05, 0.5, 1, 3, 8, 20), positive = TRUE
+    ),
+    list(
+      label = "gamma shape 3 rate 1", pdist = pgamma,
+      args = list(shape = 3, rate = 1),
+      q = c(0.5, 1, 3, 8, 20), positive = TRUE
+    )
   )
 }

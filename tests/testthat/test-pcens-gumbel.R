@@ -311,3 +311,79 @@ test_that("pprimarycensored uses the solution", {
     tolerance = 1e-8
   )
 })
+
+test_that("a narrow spike of the window density is resolved", {
+  # The window density is a spike when mu / beta is large, so that the
+  # default integration of pcens_cdf.default() sees no mass and returns 0
+  for (family in gumbel_spike_families()) {
+    cdf <- gumbel_cdf(family)
+    for (s in gumbel_spike_settings()) {
+      label <- gumbel_label(family, s[["w"]], s[["mu"]], s[["beta"]])
+      obj <- gumbel_object(family, s[["mu"]], s[["beta"]])
+      expected <- gumbel_reference(
+        family$q, s[["w"]], s[["mu"]], s[["beta"]], cdf, family$positive
+      )
+      expect_lt(
+        max_rel_diff(pcens_cdf(obj, family$q, s[["w"]]), expected),
+        1e-7,
+        label = label
+      )
+      expect_lt(
+        max_rel_diff(
+          pcens_cdf(obj, family$q, s[["w"]], use_numeric = TRUE), expected
+        ),
+        1e-7,
+        label = paste("use_numeric,", label)
+      )
+    }
+  }
+})
+
+test_that("the numerical path is accurate across large mu / beta", {
+  family <- gumbel_spike_families()[[1]]
+  cdf <- gumbel_cdf(family)
+  for (ratio in c(15, 20, 50, 200)) {
+    beta <- 0.1
+    mu <- ratio * beta
+    obj <- gumbel_object(family, mu, beta)
+    # Above, inside and below the window
+    for (pwindow in c(0.4, 1, 3)) {
+      expected <- gumbel_reference(
+        family$q, pwindow, mu, beta, cdf, FALSE
+      )
+      expect_lt(
+        max_rel_diff(pcens_cdf(obj, family$q, pwindow), expected),
+        1e-7,
+        label = sprintf("mu / beta %g, pwindow %g", ratio, pwindow)
+      )
+    }
+  }
+})
+
+test_that("a point mass at the window end is the limit of a large mu", {
+  # mu / beta of 1000 puts all the mass within 1e-300 of pwindow
+  obj <- gumbel_object(gumbel_spike_families()[[1]], 100, 0.1)
+  q <- c(-3, 1, 5)
+  expect_equal(pcens_cdf(obj, q, 1), pnorm(q - 1, 3, 2), tolerance = 1e-8)
+})
+
+test_that("dtgumbel passes the density check for a narrow spike", {
+  expect_null(
+    check_dprimary(dtgumbel, pwindow = 1, list(mu = 2, beta = 0.1))
+  )
+  expect_error(
+    check_dprimary(dtgumbel, pwindow = 1, list(mu = 2, beta = -1)),
+    "beta"
+  )
+})
+
+test_that("pprimarycensored works for a narrow spike", {
+  p <- pprimarycensored(
+    c(1, 5, 20), pnorm,
+    pwindow = 1, dprimary = dtgumbel,
+    primary_args = list(mu = 2, beta = 0.1), mean = 3, sd = 2
+  )
+  expect_equal(
+    p, c(0.0668075, 0.6914633, 1), tolerance = 1e-6
+  )
+})
