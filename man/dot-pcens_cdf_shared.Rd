@@ -21,7 +21,8 @@ error.
 \description{
 The CDF at \code{q} combines terms at \code{q} and at \code{max(q - pwindow, 0)}. Each
 distinct endpoint is evaluated once and reused where a point shifted by
-\code{pwindow} equals another point. Without overlap, or for a vector
-\code{pwindow}, the terms are evaluated directly at both endpoints.
+\code{pwindow} equals another point. Without enough overlap to halve the
+evaluations, or for a vector \code{pwindow}, the terms are evaluated directly
+at both endpoints.
 }
 \keyword{internal}
