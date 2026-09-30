@@ -1,21 +1,83 @@
 /**
+  * Compute the log CDF of a unit rate Gamma distribution from the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * Returns log P(a, x), the log of the regularised lower incomplete gamma
+  * function, for x = exp(log_x). `gamma_lcdf` underflows to `-inf` deep in
+  * the lower tail, where the true value is finite. Its partial derivative
+  * with respect to `a` is also inaccurate well before that, with errors of
+  * 1e-3 or more once log P is below about -25.
+  *
+  * The series
+  *   P(a, x) = x^a exp(-x) / Gamma(a + 1) * S,
+  *   S = 1 + x / (a + 1) + x^2 / ((a + 1) (a + 2)) + ...
+  * is evaluated on the log scale when x < (a + 1) / 2 and the leading term
+  * x^a exp(-x) / Gamma(a + 1) is below exp(-10), or when x < 0.9 (a + 1)
+  * and it is below exp(-600), close to where `gamma_lcdf` underflows.
+  * Every term of S is positive, so there is no cancellation. Successive
+  * terms shrink by at least a factor of x / (a + 1), so S is summed to double
+  * precision in under 60 terms in the first case and under 400 in the
+  * second. Autodiff differentiates the series directly, so gradients are as
+  * accurate as the value. The series is exact, so the value is continuous
+  * across the rule. Elsewhere this calls `gamma_lcdf`, which is accurate
+  * there.
+  *
+  * Taking `log_x` rather than x keeps the result finite when x itself would
+  * underflow, as it does for a generalised gamma with a large `shape`.
+  *
+  * The one case left to `gamma_lcdf` that can still underflow is
+  * x >= 0.9 (a + 1) with a leading term below exp(-745), which needs
+  * a > 1e5.
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return log P(a, exp(log_x)), or `-inf` when `log_x` is `-inf`
+  */
+real gamma_lcdf_logx(real log_x, real a) {
+  if (log_x == negative_infinity()) {
+    return negative_infinity();
+  }
+  real x = exp(log_x);
+  if (x < 0.9 * (a + 1)) {
+    real log_lead = a * log_x - x - lgamma(a + 1);
+    if (log_lead < -600 || (log_lead < -10 && x < 0.5 * (a + 1))) {
+      real term = 1;
+      real total = 1;
+      for (n in 1:1000) {
+        term *= x / (a + n);
+        total += term;
+        if (term < 1e-17 * total) break;
+      }
+      return log_lead + log(total);
+    }
+  }
+  return gamma_lcdf(x | a, 1);
+}
+
+/**
   * Compute the log CDF of the generalised gamma distribution
   * @ingroup delay_log_cdfs
   *
   * Uses the Stacy parameterisation of `flexsurv::pgengamma.orig()` in R.
   * The CDF is the regularised lower incomplete gamma function
   * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
-  * distributions are special cases.
+  * distributions are special cases. It is evaluated with
+  * `gamma_lcdf_logx()`, so it stays finite and its gradients stay accurate
+  * deep in the lower tail.
   *
   * @param y Value at which to evaluate the log CDF (y > 0)
   * @param shape Shape (power) parameter
   * @param scale Scale parameter
   * @param k Shape parameter of the underlying Gamma distribution
   *
-  * @return Log CDF of the generalised gamma distribution
+  * @return Log CDF of the generalised gamma distribution, `-inf` for y <= 0
   */
 real gengamma_lcdf(real y, real shape, real scale, real k) {
-  return gamma_lcdf(pow(y / scale, shape) | k, 1);
+  if (y <= 0) {
+    return negative_infinity();
+  }
+  return gamma_lcdf_logx(shape * (log(y) - log(scale)), k);
 }
 
 /**

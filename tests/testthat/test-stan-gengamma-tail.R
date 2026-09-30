@@ -16,12 +16,20 @@ ref_lgengamma <- function(t, shape, scale, k) {
 
 # log of the uniform primary event censored CDF, from
 # F_{S+}(d) = (1 / w) int_{max(d - w, 0)}^{d} F_T(u) du. The integrand is
-# scaled by its maximum at u = d so that nothing underflows, and the range
-# is cut where it has fallen by a factor of exp(-40).
+# scaled by its maximum at u = d so that nothing underflows. The range is
+# cut where it has fallen by a factor of exp(-40), which only matters in the
+# lower tail.
 ref_lcdf_unif <- function(d, pwindow, shape, scale, k) {
   q_lo <- max(d - pwindow, 0)
   log_max <- ref_lgengamma(d, shape, scale, k)
-  lower <- max(q_lo, d * (1 - 40 / (k * shape + 1)))
+  target <- log_max - 40
+  lower <- q_lo
+  if (ref_lgengamma(q_lo, shape, scale, k) < target) {
+    lower <- uniroot(
+      function(u) ref_lgengamma(u, shape, scale, k) - target,
+      lower = q_lo, upper = d, tol = 1e-14
+    )$root
+  }
   scaled <- integrate(
     function(u) exp(ref_lgengamma(u, shape, scale, k) - log_max),
     lower = lower, upper = d, rel.tol = 1e-13, subdivisions = 1000L
@@ -86,6 +94,31 @@ test_that("gengamma_lcdf does not underflow when the power does", {
   # P(k, x) = x^k e^{-x} / Gamma(k + 1) * (1 + x / (k + 1) + ...)
   expected <- k * log_x - lgamma(k + 1)
   expect_equal(gengamma_lcdf(y, shape, scale, k), expected, tolerance = 1e-12)
+})
+
+test_that("gamma_lcdf_logx matches pgamma across the series rules", {
+  # a spans the body and the extreme shapes where only the series is finite.
+  # frac = x / (a + 1) covers both sides of each switch in the rule.
+  for (a in c(0.1, 1, 5, 40, 400, 4000, 8000, 30000)) {
+    for (frac in c(
+      1e-6, 1e-3, 0.1, 0.3, 0.49, 0.5, 0.51, 0.7, 0.89, 0.9,
+      0.95, 1.2, 3
+    )) {
+      x <- frac * (a + 1)
+      expect_equal(
+        gamma_lcdf_logx(log(x), a),
+        pgamma(x, a, log.p = TRUE),
+        tolerance = 1e-9,
+        info = sprintf("a = %g, x over (a + 1) = %g", a, frac)
+      )
+    }
+  }
+  expect_identical(gamma_lcdf_logx(-Inf, 2), -Inf)
+  # x underflows to 0 but the log CDF is finite
+  expect_equal(
+    gamma_lcdf_logx(-800, 3), 3 * -800 - lgamma(4),
+    tolerance = 1e-12
+  )
 })
 
 test_that("gengamma_lcdf is continuous across the tail rule", {
