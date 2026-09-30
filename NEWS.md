@@ -34,7 +34,7 @@
   In R, `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dtlogis()`, `pcens_cdf.pcens_pgamma_dtlogis()` and `pcens_cdf.pcens_pnorm_dtlogis()`.
   In Stan the CDF is `primarycensored_tlogis_lcdf()`.
   The series are summed with binomial taper weights (the Euler transform after a number of direct terms), which converges near the location where the plain series does not.
-  The number of terms comes from a bound on the truncation error, with a tolerance of 1e-12 relative to the mass of the window.
+  The number of terms comes from a bound on the truncation error, with a tolerance of 1e-10 relative to the mass of the window.
   Results agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails and for delays close to 0.
   The exponential and gamma forms need the largest positive tilt of the series to be below the rate, so they apply for a location after the window or for a large rate, and otherwise use the numerical path.
   Stan chooses the path with the new `check_for_analytical_window()`, as the choice depends on the window.

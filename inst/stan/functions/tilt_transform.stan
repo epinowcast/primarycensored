@@ -348,10 +348,14 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     real sigma = params[2];
     real z = (t - mu - xi * square(sigma)) / sigma;
     real log_total = xi * mu + 0.5 * square(xi * sigma);
-    return [
-      log_total + primarycensored_log_std_normal_cdf(z),
-      log_total + primarycensored_log_std_normal_cdf(-z)
-    ]';
+    // Only the smaller tail is evaluated and the other follows from it, which
+    // halves the cost of the normal CDF and of its derivative
+    if (z < 0) {
+      real log_lower = primarycensored_log_std_normal_cdf(z);
+      return [log_total + log_lower, log_total + log1m_exp(log_lower)]';
+    }
+    real log_upper = primarycensored_log_std_normal_cdf(-z);
+    return [log_total + log1m_exp(log_upper), log_total + log_upper]';
   }
   reject("Invalid distribution identifier: ", dist_id);
 }

@@ -100,9 +100,9 @@ a known range, so the total error is at most the largest value of that
 error over the range times the mass of the delay in the window. The rule
 picks the smallest \eqn{n_0 + M}, among plain partial sums
 (\eqn{M = 0}) and two tapers, for which that error is below
-\eqn{10^{-12} D_L}. The error of \eqn{F_L(q)} is then below
-\eqn{10^{-12}} of the mass of the delay in the window. This takes 7 terms
-for \eqn{x \le 0.01} and 26 for ranges that reach 1.
+\eqn{10^{-10} D_L}. The error of \eqn{F_L(q)} is then below
+\eqn{10^{-10}} of the mass of the delay in the window. This takes about
+6 terms for \eqn{x \le 0.01} and about 23 for ranges that reach 1.
 If no rule with at most 64 terms exists the numerical method is used.
 
 \strong{Admissibility.} The series need the positive tilts up to

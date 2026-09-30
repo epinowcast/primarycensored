@@ -147,7 +147,7 @@ vector tlogis_weights(int n0, int M) {
   */
 array[] int tlogis_plan(real location, real scale, data real pwindow,
                         real log_mass) {
-  real log_tol = log(1e-12) + log_mass;
+  real log_tol = log(1e-10) + log_mass;
   array[2] int pos = {0, 0};
   array[2] int neg = {0, 0};
   int pos_form = 0;
