@@ -114,7 +114,8 @@ test_that("pcens_cdf for the normal is continuous across the tail switch", {
     .norm_shortfall(c(-10.000001, -9.999999)),
     vapply(c(-10.000001, -9.999999), function(z) {
       stats::integrate(
-        pnorm, -Inf, z, rel.tol = 1.2e-14, abs.tol = 0, subdivisions = 500L
+        pnorm, -Inf, z,
+        rel.tol = 1.2e-14, abs.tol = 0, subdivisions = 500L
       )$value
     }, numeric(1)),
     tolerance = 1e-12
@@ -284,7 +285,8 @@ test_that("pprimarycensored and dprimarycensored work end to end for the new
     pcens_cdf(new_pcens(pexp, dunif, list(), rate = 0.3), c(2, 5, 9), 2)
   )
   pmf <- dprimarycensored(
-    0:15, pnorm, pwindow = 2, swindow = 1, L = 0, D = 16, mean = 6, sd = 2
+    0:15, pnorm,
+    pwindow = 2, swindow = 1, L = 0, D = 16, mean = 6, sd = 2
   )
   expect_equal(sum(pmf), 1, tolerance = 1e-10)
   # The window is not clipped at 0, so a normal delay has mass below 0

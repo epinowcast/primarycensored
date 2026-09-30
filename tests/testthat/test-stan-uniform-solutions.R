@@ -214,7 +214,8 @@ test_that("uniform primary terms are -Inf for t <= 0 for non-negative delays", {
     for (t in c(0, -0.5, -3)) {
       expect_identical(
         primarycensored_uniform_terms(t, as.integer(id), params[[id]]),
-        c(-Inf, -Inf), info = paste("dist", id, "t", t)
+        c(-Inf, -Inf),
+        info = paste("dist", id, "t", t)
       )
     }
   }
@@ -262,13 +263,15 @@ test_that("primarycensored_lcdf and primarycensored_cdf dispatch to the
         primarycensored_lcdf(
           d, case$dist_id, params, pwindow, lower, Inf, 1L, numeric(0)
         ),
-        analytic, info = paste(case$name, "d", d)
+        analytic,
+        info = paste(case$name, "d", d)
       )
       expect_equal(
         primarycensored_cdf(
           d, case$dist_id, params, pwindow, lower, Inf, 1L, numeric(0)
         ),
-        exp(analytic), tolerance = 1e-12, info = paste(case$name, "d", d)
+        exp(analytic),
+        tolerance = 1e-12, info = paste(case$name, "d", d)
       )
     }
   }
@@ -302,7 +305,8 @@ test_that("the Stan analytical solution matches the R solution for the
         analytical_lcdf(case$delays, case$dist_id, case$stan, pwindow)
       )
       expect_rel_equal(
-        stan_result, r_result, tolerance = 1e-8,
+        stan_result, r_result,
+        tolerance = 1e-8,
         info = sprintf("dist %d pwindow %g", case$dist_id, pwindow)
       )
     }
@@ -392,7 +396,8 @@ test_that("the normal solution handles a window that starts below zero", {
         upper <- if (is.infinite(D)) 1 else cdf(D)
         expected <- (cdf(d) - cdf(L)) / (upper - cdf(L))
         expect_equal(
-          exp(truncated), expected, tolerance = 1e-8,
+          exp(truncated), expected,
+          tolerance = 1e-8,
           info = sprintf("L = %g, D = %g, d = %g", L, D, d)
         )
       }
@@ -415,7 +420,8 @@ test_that("the normal solution is accurate in the lower tail and across the
   stan_result <- exp(analytical_lcdf(delays, 18L, c(mu, sigma), pwindow))
   expect_rel_equal(stan_result, r_result, tolerance = 1e-9)
   # Deep in the tail the log CDF stays finite and decreases
-  deep <- analytical_lcdf(mu + sigma * c(-60, -45, -40, -30), 18L,
+  deep <- analytical_lcdf(
+    mu + sigma * c(-60, -45, -40, -30), 18L,
     c(mu, sigma), pwindow
   )
   expect_true(all(is.finite(deep)))
@@ -715,40 +721,74 @@ test_that("the new analytical solutions have finite gradients that match
   # chi-square and beta cases use 1e-3 (5e-3 with the partial expectation
   # shape 0.2) and the others 1e-4
   cases <- list(
-    list(name = "exponential", id = 4L, params = 0.5, tol = 1e-4,
-      delays = c(0.01, 0.3, 1, 3, 40)),
-    list(name = "exponential", id = 4L, params = 0.001, tol = 1e-4,
-      delays = c(0.05, 5, 40)),
-    list(name = "normal", id = 18L, params = c(2, 1), tol = 1e-4,
-      delays = c(-12, -8, -3, 0, 1, 4)),
-    list(name = "normal", id = 18L, params = c(-3, 0.5), tol = 1e-4,
-      delays = c(-8, -4, -2.5, 0, 3)),
-    list(name = "normal", id = 18L, params = c(10, 0.3), tol = 1e-4,
-      delays = c(3, 6, 8, 10, 12)),
-    list(name = "chi-square", id = 13L, params = 3, tol = 1e-4,
-      delays = c(0.5, 3, 10, 20)),
-    list(name = "chi-square", id = 13L, params = 10, tol = 1e-4,
-      delays = c(3, 10, 40)),
-    list(name = "beta", id = 9L, params = c(2, 3), tol = 1e-3,
-      delays = c(0.05, 0.5, 0.95, 1.5)),
-    list(name = "beta", id = 9L, params = c(0.6, 1.5), tol = 1e-3,
-      delays = c(0.05, 0.5, 0.95, 1.5)),
-    list(name = "inverse gamma", id = 16L, params = c(3, 2), tol = 1e-3,
-      delays = c(0.3, 1, 5, 50)),
-    list(name = "inverse gamma", id = 16L, params = c(1.2, 5), tol = 5e-3,
-      delays = c(0.5, 5, 50)),
-    list(name = "inverse chi-square", id = 19L, params = 5, tol = 1e-3,
-      delays = c(0.3, 1, 5, 50)),
-    list(name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
-      tol = 1e-3, delays = c(0.3, 1, 5, 50)),
-    list(name = "pareto", id = 21L, params = c(0.5, 2), tol = 1e-4,
-      delays = c(0.6, 1, 5, 50)),
-    list(name = "pareto", id = 21L, params = c(0.5, 0.8), tol = 1e-4,
-      delays = c(0.6, 1, 5, 50)),
-    list(name = "pareto", id = 21L, params = c(0.5, 1), tol = 1e-4,
-      delays = c(0.6, 1, 5, 50)),
-    list(name = "pareto", id = 21L, params = c(0.05, 1.3), tol = 1e-4,
-      delays = c(0.06, 0.5, 5))
+    list(
+      name = "exponential", id = 4L, params = 0.5, tol = 1e-4,
+      delays = c(0.01, 0.3, 1, 3, 40)
+    ),
+    list(
+      name = "exponential", id = 4L, params = 0.001, tol = 1e-4,
+      delays = c(0.05, 5, 40)
+    ),
+    list(
+      name = "normal", id = 18L, params = c(2, 1), tol = 1e-4,
+      delays = c(-12, -8, -3, 0, 1, 4)
+    ),
+    list(
+      name = "normal", id = 18L, params = c(-3, 0.5), tol = 1e-4,
+      delays = c(-8, -4, -2.5, 0, 3)
+    ),
+    list(
+      name = "normal", id = 18L, params = c(10, 0.3), tol = 1e-4,
+      delays = c(3, 6, 8, 10, 12)
+    ),
+    list(
+      name = "chi-square", id = 13L, params = 3, tol = 1e-4,
+      delays = c(0.5, 3, 10, 20)
+    ),
+    list(
+      name = "chi-square", id = 13L, params = 10, tol = 1e-4,
+      delays = c(3, 10, 40)
+    ),
+    list(
+      name = "beta", id = 9L, params = c(2, 3), tol = 1e-3,
+      delays = c(0.05, 0.5, 0.95, 1.5)
+    ),
+    list(
+      name = "beta", id = 9L, params = c(0.6, 1.5), tol = 1e-3,
+      delays = c(0.05, 0.5, 0.95, 1.5)
+    ),
+    list(
+      name = "inverse gamma", id = 16L, params = c(3, 2), tol = 1e-3,
+      delays = c(0.3, 1, 5, 50)
+    ),
+    list(
+      name = "inverse gamma", id = 16L, params = c(1.2, 5), tol = 5e-3,
+      delays = c(0.5, 5, 50)
+    ),
+    list(
+      name = "inverse chi-square", id = 19L, params = 5, tol = 1e-3,
+      delays = c(0.3, 1, 5, 50)
+    ),
+    list(
+      name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
+      tol = 1e-3, delays = c(0.3, 1, 5, 50)
+    ),
+    list(
+      name = "pareto", id = 21L, params = c(0.5, 2), tol = 1e-4,
+      delays = c(0.6, 1, 5, 50)
+    ),
+    list(
+      name = "pareto", id = 21L, params = c(0.5, 0.8), tol = 1e-4,
+      delays = c(0.6, 1, 5, 50)
+    ),
+    list(
+      name = "pareto", id = 21L, params = c(0.5, 1), tol = 1e-4,
+      delays = c(0.6, 1, 5, 50)
+    ),
+    list(
+      name = "pareto", id = 21L, params = c(0.05, 1.3), tol = 1e-4,
+      delays = c(0.06, 0.5, 5)
+    )
   )
   for (case in cases) {
     for (d in case$delays) {
