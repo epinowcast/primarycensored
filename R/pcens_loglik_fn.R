@@ -24,30 +24,15 @@
 #'   `sdlog = 0.5` for a log-normal delay. They are merged with, and can be
 #'   overridden by, the parameters given to the returned function.
 #'
-#' @param check Logical; if `TRUE` (the default) `dprimary` is validated with
-#'   [check_dprimary()] when the function is built, and `pdist` is validated
-#'   with [check_pdist()] on the first valid call for each set of parameter
-#'   names. Set to `FALSE` to skip both.
+#' @param check Logical; if `TRUE` (the default), validate `dprimary` and
+#'   `pdist`. Set to `FALSE` to skip the checks.
 #'
 #' @details
-#' The returned function is called as `ll(...)` with the delay distribution
-#' parameters as named arguments, for example `ll(shape = 2, rate = 1)`.
-#' Each call starts from the fixed parameters given in `...` here, so
-#' parameters from an earlier call are not carried over.
-#' Delay distribution parameters must be scalars, other than vector
-#' parameters of the distribution such as `boundaries` and `pmf`.
-#' A misspelt parameter name raises an error.
-#' Repeated delays are evaluated once.
-#' The result matches `log(dprimarycensored())` called on each observation.
-#'
-#' Parameters that make `pdist` return `NaN` give `NaN`.
-#' Errors raised by `pdist` are not caught, so wrap the call in `tryCatch()`
-#' if an optimiser should see a missing value instead.
-#' Zero probabilities are returned as `-Inf`.
-#'
-#' The construction checks that every observation satisfies `L <= x < D`.
-#' A message is given at construction when any secondary interval extends
-#' past `D`. None is given when the returned function is called.
+#' The returned function takes the delay distribution parameters as named
+#' scalars, other than vector parameters such as `boundaries` and `pmf`.
+#' Errors from `pdist` are not caught.
+#' The message about secondary intervals that extend past `D` is given only
+#' when the function is built.
 #'
 #' @return A function of the delay distribution parameters that returns a
 #'   numeric vector of log-likelihood contributions, one per element of `x`
@@ -205,8 +190,8 @@ pcens_loglik_fn <- function(
 #'
 #' @param x Numeric vector of delays.
 #'
-#' @param pwindow,swindow,L,D Per-observation settings, each of length 1
-#'   or `length(x)`.
+#' @param pwindow,swindow,L,D Per-observation settings, each of length
+#'   `length(x)`.
 #'
 #' @return A list with `groups`, one element per group, and `sets`, one
 #'   element per unique `pwindow` with its pooled CDF `points`.
@@ -218,41 +203,15 @@ pcens_loglik_fn <- function(
     return(list(groups = list(), sets = list()))
   }
   settings <- list(pwindow = pwindow, swindow = swindow, L = L, D = D)
-  # Integer code per combination of settings
-  id <- rep.int(1L, n)
-  for (s in settings) {
-    if (length(s) == 1L) {
-      next
-    }
-    code <- match(s, unique(s))
-    k <- max(code)
-    if (k > 1L) {
-      key <- as.numeric(id - 1L) * k + code
-      id <- match(key, unique(key))
-    }
-  }
-  rows <- list(NULL)
-  if (max(id) > 1L) {
-    rows <- unname(split(seq_len(n), id))
-  }
-  groups <- lapply(rows, function(idx) {
-    first <- if (is.null(idx)) 1L else idx[[1L]]
-    setting <- function(s) s[[if (length(s) == 1L) 1L else first]]
+  groups <- lapply(.param_groups(settings, names(settings)), function(g) {
+    idx <- g$idx
     xs <- if (is.null(idx)) x else x[idx]
     ux <- unique(xs)
     map <- NULL
     if (length(ux) < length(xs)) {
       map <- match(xs, ux)
     }
-    list(
-      idx = idx,
-      x = ux,
-      map = map,
-      pwindow = setting(pwindow),
-      swindow = setting(swindow),
-      L = setting(L),
-      D = setting(D)
-    )
+    c(g, list(x = ux, map = map))
   })
   .pcens_share_points(groups)
 }
@@ -278,11 +237,7 @@ pcens_loglik_fn <- function(
       lapply(ends[members], function(e) e$needed),
       use.names = FALSE
     ))
-    needed <- as.numeric(needed)
-    # Skip the sort when the points are already in order (e.g. x = 0:n)
-    if (is.unsorted(needed)) {
-      needed <- sort(needed)
-    }
+    needed <- sort(as.numeric(needed))
     list(
       pwindow = unique_pw[[k]],
       points = needed,

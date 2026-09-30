@@ -65,10 +65,8 @@ custom primary distribution whose CDF is not in the registry.}
 \code{sdlog = 0.5} for a log-normal delay. They are merged with, and can be
 overridden by, the parameters given to the returned function.}
 
-\item{check}{Logical; if \code{TRUE} (the default) \code{dprimary} is validated with
-\code{\link[=check_dprimary]{check_dprimary()}} when the function is built, and \code{pdist} is validated
-with \code{\link[=check_pdist]{check_pdist()}} on the first valid call for each set of parameter
-names. Set to \code{FALSE} to skip both.}
+\item{check}{Logical; if \code{TRUE} (the default), validate \code{dprimary} and
+\code{pdist}. Set to \code{FALSE} to skip the checks.}
 }
 \value{
 A function of the delay distribution parameters that returns a
@@ -86,24 +84,11 @@ times with different parameters.
 The setup that \code{\link[=dprimarycensored]{dprimarycensored()}} repeats on every call is done once
 here.
 
-The returned function is called as \code{ll(...)} with the delay distribution
-parameters as named arguments, for example \code{ll(shape = 2, rate = 1)}.
-Each call starts from the fixed parameters given in \code{...} here, so
-parameters from an earlier call are not carried over.
-Delay distribution parameters must be scalars, other than vector
-parameters of the distribution such as \code{boundaries} and \code{pmf}.
-A misspelt parameter name raises an error.
-Repeated delays are evaluated once.
-The result matches \code{log(dprimarycensored())} called on each observation.
-
-Parameters that make \code{pdist} return \code{NaN} give \code{NaN}.
-Errors raised by \code{pdist} are not caught, so wrap the call in \code{tryCatch()}
-if an optimiser should see a missing value instead.
-Zero probabilities are returned as \code{-Inf}.
-
-The construction checks that every observation satisfies \verb{L <= x < D}.
-A message is given at construction when any secondary interval extends
-past \code{D}. None is given when the returned function is called.
+The returned function takes the delay distribution parameters as named
+scalars, other than vector parameters such as \code{boundaries} and \code{pmf}.
+Errors from \code{pdist} are not caught.
+The message about secondary intervals that extend past \code{D} is given only
+when the function is built.
 }
 \examples{
 set.seed(1)

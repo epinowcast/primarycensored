@@ -528,7 +528,8 @@ fitdistdoublecens <- function(
       }
       result <- numeric(length(q))
       for (g in state$pgroups) {
-        result[g$mask] <- cdf(q[g$mask], g$pwindow, g$L, g$D)
+        i <- if (is.null(g$idx)) seq_along(q) else g$idx
+        result[i] <- cdf(q[i], g$pwindow, g$L, g$D)
       }
       names(result) <- names(q)
       result
@@ -580,24 +581,39 @@ fitdistdoublecens <- function(
 
 #' Group observations that share censoring and truncation settings
 #'
-#' @param params A data frame of per-observation settings.
+#' @param params A data frame, or list, of per-observation settings.
 #'
 #' @param cols Names of the columns to group by.
 #'
-#' @return A list with one element per unique combination of `cols`. Each
-#'   element is a list of the values of `cols` and a logical `mask` selecting
-#'   the rows of `params` with those values.
+#' @return A list with one element per unique combination of `cols`, in order
+#'   of first appearance. Each element is a list of the values of `cols` and
+#'   `idx`, the rows with those values, which is `NULL` when all rows are in
+#'   one group.
 #'
 #' @keywords internal
 .param_groups <- function(params, cols) {
-  keys <- unique(params[cols])
-  lapply(seq_len(nrow(keys)), function(i) {
-    group <- lapply(keys[cols], `[[`, i)
-    mask <- rep(TRUE, nrow(params))
-    for (col in cols) {
-      mask <- mask & params[[col]] == group[[col]]
+  n <- length(params[[cols[[1L]]]])
+  if (n == 0L) {
+    return(list())
+  }
+  # Integer code per combination of settings
+  id <- rep.int(1L, n)
+  for (col in cols) {
+    code <- match(params[[col]], unique(params[[col]]))
+    k <- max(code)
+    if (k > 1L) {
+      key <- as.numeric(id - 1L) * k + code
+      id <- match(key, unique(key))
     }
-    group$mask <- mask
+  }
+  rows <- list(NULL)
+  if (max(id) > 1L) {
+    rows <- unname(split(seq_len(n), id))
+  }
+  lapply(rows, function(idx) {
+    first <- if (is.null(idx)) 1L else idx[[1L]]
+    group <- lapply(params[cols], `[[`, first)
+    group$idx <- idx
     group
   })
 }

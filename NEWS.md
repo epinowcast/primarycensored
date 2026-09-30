@@ -3,7 +3,8 @@
 ## Features
 
 - New experimental function `pcens_loglik_fn()` returns a function of the delay distribution parameters that gives the log-likelihood of each observation, for use in an external optimiser or sampler.
-  See #376.
+  `fitdistdoublecens()` uses the same code, with unchanged estimates.
+  See #376 and #390.
 
 ## Bug fixes
 
@@ -18,9 +19,6 @@
   The default, `check = TRUE`, is unchanged.
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
-- `fitdistdoublecens()` evaluates its likelihood once per unique delay within each group of observations, using the same code as `pcens_loglik_fn()`.
-  Estimates are unchanged.
-  See #376.
 
 # primarycensored 1.6.0
 
