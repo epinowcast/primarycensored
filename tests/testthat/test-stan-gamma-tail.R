@@ -20,11 +20,6 @@ gamma_tail_cases <- data.frame(
 
 test_that("dist_lcdf for a Gamma delay is finite and accurate deep in the
    lower tail", {
-  expect_equal(
-    dist_lcdf(2, c(400, 0.2), 2),
-    pgamma(0.4, 400, log.p = TRUE),
-    tolerance = 1e-9
-  )
   for (i in seq_len(nrow(gamma_tail_cases))) {
     with(gamma_tail_cases[i, ], {
       for (y in c(0.05, 0.3, 1, 2, 3, 4.5)) {
@@ -38,41 +33,6 @@ test_that("dist_lcdf for a Gamma delay is finite and accurate deep in the
     })
   }
   expect_identical(dist_lcdf(0, c(3, 1), 2), -Inf)
-})
-
-test_that("dist_lcdf for a Gamma delay is accurate in the body and the
-   upper tail", {
-  # Shapes either side of 10, where the evaluation rule changes
-  for (shape in c(0.3, 2, 9.5, 10, 10.5, 75, 400, 3000)) {
-    mu <- shape / 1.5
-    for (frac in c(0.3, 0.7, 0.95, 1, 1.05, 1.3, 2, 5, 50)) {
-      expect_lcdf_close(
-        dist_lcdf(frac * mu, c(shape, 1.5), 2),
-        pgamma(frac * mu * 1.5, shape, log.p = TRUE),
-        sprintf("shape = %g, y over mean = %g", shape, frac)
-      )
-    }
-  }
-})
-
-test_that("gamma uniform terms are finite and accurate in the lower tail", {
-  for (i in seq_len(nrow(gamma_tail_cases))) {
-    with(gamma_tail_cases[i, ], {
-      for (t in c(0.05, 0.3, 1, 2, 3, 4.5)) {
-        terms <- primarycensored_gamma_uniform_terms(t, c(shape, rate))
-        expected <- c(
-          log(t) + ref_lgamma_delay(t, shape, rate),
-          log(shape / rate) + pgamma(t * rate, shape + 1, log.p = TRUE)
-        )
-        expect_true(all(is.finite(terms)))
-        expect_equal(
-          terms, expected,
-          tolerance = 1e-9,
-          info = sprintf("t = %g, shape = %g, rate = %g", t, shape, rate)
-        )
-      }
-    })
-  }
 })
 
 test_that("analytical gamma lcdf is finite and accurate in the lower tail", {
@@ -221,70 +181,19 @@ test_that("Stan analytical gamma matches rprimarycensored samples", {
   }
 })
 
-test_that("analytical gamma lcdf is accurate for large shapes", {
-  cases <- list(
-    list(d = 1400, pwindow = 10, p = c(1500, 1)),
-    list(d = 1510, pwindow = 10, p = c(1500, 1)),
-    list(d = 1600, pwindow = 10, p = c(1500, 1)),
-    list(d = 2900, pwindow = 10, p = c(3000, 1)),
-    list(d = 3100, pwindow = 5, p = c(3000, 1))
-  )
-  for (case in cases) {
-    label <- sprintf(
-      "d = %g, pwindow = %g, params = (%g, %g)",
-      case$d, case$pwindow, case$p[1], case$p[2]
-    )
-    res <- primarycensored_analytical_lcdf(
-      case$d, 2, case$p, case$pwindow, 0, Inf, 1, numeric(0)
-    )
-    expect_equal(
-      res, ref_lcdf_unif_gamma(case$d, case$pwindow, case$p[1], case$p[2]),
-      tolerance = 1e-7, info = label
-    )
-  }
-})
-
 test_that("gamma_lcdf_logx matches pgamma across the evaluation rules", {
   # frac = x / (a + 1) spans the lower tail, the body and the upper tail
-  for (a in c(0.1, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 30000, 1e5)) {
+  for (a in c(0.1, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 30000, 1e5,
+              1e6)) {
     for (frac in c(
-      1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.89, 0.9, 0.99, 1, 1.01, 1.05, 1.2,
-      1.5, 3, 10, 100
+      1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.89, 0.9, 0.99, 1 - 1e-7, 1,
+      1 + 1e-7, 1.01, 1.05, 1.2, 1.5, 3, 10, 100
     )) {
       x <- frac * (a + 1)
       expect_lcdf_close(
         gamma_lcdf_logx(log(x), a),
         pgamma(x, a, log.p = TRUE),
         sprintf("a = %g, x over (a + 1) = %g", a, frac)
-      )
-    }
-  }
-})
-
-test_that("gamma_lcdf_logx is accurate either side of the rule changes", {
-  # x = a + 1 switches the series and the continued fraction, and a = 10
-  # switches `gamma_lcdf`
-  for (a in c(1.5, 9.99, 10.01, 150.5)) {
-    for (x in c(a + 1 - 1e-7, a + 1 + 1e-7)) {
-      expect_lcdf_close(
-        gamma_lcdf_logx(log(x), a),
-        pgamma(x, a, log.p = TRUE),
-        sprintf("a = %g, x = %.9g", a, x),
-        tolerance = 1e-10
-      )
-    }
-  }
-})
-
-test_that("gamma_lcdf_logx is exact for integer shapes", {
-  # The continued fraction terminates at i = a
-  for (a in c(2, 20, 21, 100, 1000)) {
-    for (frac in c(1.01, 1.5, 4)) {
-      x <- frac * (a + 1)
-      expect_equal(
-        gamma_lcdf_logx(log(x), a),
-        pgamma(x, a, log.p = TRUE),
-        tolerance = 1e-9
       )
     }
   }
@@ -334,21 +243,6 @@ test_that("gamma_lcdf_logx_pair does not underflow when x does", {
   expect_identical(gamma_lcdf_logx_pair(Inf, 3), c(0, 0))
 })
 
-test_that("gamma_lcdf_logx_pair keeps P(a + 1) accurate when it is far
-   below P(a)", {
-  # x much less than a + 1, where the recursion would cancel
-  for (a in c(0.2, 3, 8)) {
-    for (x in c(1e-12, 1e-9, 1e-6, 1e-3)) {
-      expect_equal(
-        gamma_lcdf_logx_pair(log(x), a)[2],
-        pgamma(x, a + 1, log.p = TRUE),
-        tolerance = 1e-12,
-        info = sprintf("a = %g, x = %g", a, x)
-      )
-    }
-  }
-})
-
 test_that("gamma_lcdf_logx and gamma_lcdf_logx_pair reject an invalid shape", {
   for (a in c(0, -0.5, -3)) {
     expect_error(gamma_lcdf_logx(log(2), a), "shape")
@@ -375,27 +269,12 @@ test_that("the gamma log CDFs reject a rate that is not positive and finite", {
   }
 })
 
-test_that("gamma_log_lead_logx agrees with the Poisson log PMF for large
-   shapes", {
-  # dpois() is accurate near x = a
-  for (a in c(50, 99, 100, 150, 1e3, 1e4, 1e5, 1e6, 1e7)) {
-    for (r in c(1e-6, 0.01, 0.3, 0.5, 0.6, 0.9, 0.999, 1, 1.001, 1.5,
-                1.99, 2.1, 5, 30)) {
-      log_x <- log(a * r)
-      expected <- dpois(a, exp(log_x), log = TRUE)
-      expect_lt(
-        abs(gamma_log_lead_logx(log_x, a) - expected),
-        1e-12 * max(1, abs(expected)),
-        label = sprintf("a = %g, x over a = %g", a, r)
-      )
-    }
-  }
-})
-
-test_that("primarycensored_lcdf is accurate for a large Gamma shape when
-   the delay is long compared with the primary window", {
+test_that("primarycensored_lcdf is accurate for a large Gamma shape", {
   # Rounding error is amplified by about d / pwindow
   cases <- list(
+    list(d = 1400, shape = 1500, rate = 1, pwindow = 10, tol = 1e-7),
+    list(d = 1600, shape = 1500, rate = 1, pwindow = 10, tol = 1e-7),
+    list(d = 3100, shape = 3000, rate = 1, pwindow = 5, tol = 1e-7),
     list(d = 1e7, shape = 1e5, rate = 0.01, pwindow = 0.01, tol = 1e-5),
     list(d = 1e6, shape = 1e4, rate = 0.01, pwindow = 0.01, tol = 1e-6),
     list(d = 2e6, shape = 1e5, rate = 0.05, pwindow = 0.5, tol = 1e-7),

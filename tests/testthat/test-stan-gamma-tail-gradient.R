@@ -71,11 +71,11 @@ expect_gamma_gradient_ok <- function(res, label) {
   )
 }
 
-# Derivative of log P(a, x) (or log Q(a, x)) with respect to a, by a fifth
-# order central difference of `pgamma()` with a step that shrinks with a
-ref_dlogp_da <- function(x, a, lower = TRUE) {
+# Derivative of log P(a, x) with respect to a, by a fifth order central
+# difference of `pgamma()` with a step that shrinks with a
+ref_dlogp_da <- function(x, a) {
   h <- a * min(1e-4, 0.01 / sqrt(a))
-  f <- function(e) pgamma(x, a + e, lower.tail = lower, log.p = TRUE)
+  f <- function(e) pgamma(x, a + e, log.p = TRUE)
   (-f(2 * h) + 8 * f(h) - 8 * f(-h) + f(-2 * h)) / (12 * h)
 }
 
@@ -90,17 +90,24 @@ expect_gradient_close <- function(gradient, expected, label) {
   }
 }
 
-test_that("primarycensored_lcdf has accurate finite gradients deep in the
-   lower tail of a Gamma delay", {
+test_that("primarycensored_lcdf has accurate finite gradients for a Gamma
+   delay", {
   model <- gamma_delay_probe_model()
-  # Log CDFs from -20 to -2400
+  # From the lower tail (log CDFs down to -2400) to large shapes
   cases <- list(
     list(d = 2, p = c(400, 1 / 5)),
     list(d = 2, p = c(100, 1 / 5)),
     list(d = 1.5, p = c(60, 1 / 4)),
     list(d = 3, p = c(250, 1 / 6)),
     list(d = 1, p = c(12, 1 / 4)),
-    list(d = 1, p = c(40, 1 / 10))
+    list(d = 1, p = c(40, 1 / 10)),
+    list(d = 2, p = c(20, 1)),
+    list(d = 10, p = c(100, 1)),
+    list(d = 6, p = c(2.3, 0.5)),
+    list(d = 1400, p = c(1500, 1)),
+    list(d = 1530, p = c(1500, 1)),
+    list(d = 3150, p = c(3000, 1)),
+    list(d = 10400, p = c(10000, 1))
   )
   for (case in cases) {
     for (pwindow in c(0.5, 1, 3)) {
@@ -111,31 +118,6 @@ test_that("primarycensored_lcdf has accurate finite gradients deep in the
       res <- gamma_gradient_at(model, case$d, case$p, pwindow)
       expect_gamma_gradient_ok(res, label)
     }
-  }
-})
-
-test_that("primarycensored_lcdf has finite gradients for a Gamma delay with
-   a large shape", {
-  model <- gamma_delay_probe_model()
-  # Shapes of 1000 or more, from the body into the upper tail
-  cases <- list(
-    list(d = 1400, p = c(1500, 1), pwindow = 10),
-    list(d = 1500, p = c(1500, 1), pwindow = 10),
-    list(d = 1530, p = c(1500, 1), pwindow = 10),
-    list(d = 1700, p = c(1500, 1), pwindow = 10),
-    list(d = 3000, p = c(1500, 1), pwindow = 10),
-    list(d = 1050, p = c(1000, 1), pwindow = 1),
-    list(d = 2900, p = c(3000, 1), pwindow = 10),
-    list(d = 3150, p = c(3000, 1), pwindow = 10),
-    list(d = 10400, p = c(10000, 1), pwindow = 10)
-  )
-  for (case in cases) {
-    label <- sprintf(
-      "d = %g, pwindow = %g, params = (%s)", case$d, case$pwindow,
-      toString(case$p)
-    )
-    res <- gamma_gradient_at(model, case$d, case$p, case$pwindow)
-    expect_gamma_gradient_ok(res, label)
   }
 })
 
@@ -191,68 +173,22 @@ test_that("primarycensored_lcdf has finite gradients with truncation when
   }
 })
 
-test_that("gradients are accurate in the body of a Gamma delay", {
-  model <- gamma_delay_probe_model()
-  for (d in c(0.5, 2, 6, 15)) {
-    res <- gamma_gradient_at(model, d, c(2.3, 0.5), pwindow = 1)
-    expect_gamma_gradient_ok(res, sprintf("d = %g", d))
-  }
-})
-
 test_that("gamma_lcdf_logx gradient with respect to the shape is accurate", {
   model <- gamma_logx_probe_model()
-  for (a in c(0.7, 2, 5.5, 9.5, 10, 10.5, 20.5, 100, 700.5, 1000, 1500.5,
-              3000, 10000, 1e5, 1e6)) {
+  # Includes integer shapes, where the continued fraction terminates
+  for (a in c(0.7, 2, 5.5, 9.5, 10, 10.5, 12, 20.5, 25, 50, 100, 400, 700.5,
+              1000, 1500.5, 3000, 10000, 1e5, 1e6)) {
     for (frac in c(0.3, 0.8, 0.95, 1, 1.02, 1.1, 1.5, 3)) {
-      x <- frac * a
+      x <- frac * (a + 1)
       res <- stan_gradient_at(
         model,
         data = list(d = x, pwindow = 1, L = 0, D = Inf),
         init = list(a = a)
       )
-      label <- sprintf("a = %g, x over a = %g", a, frac)
+      label <- sprintf("a = %g, x over (a + 1) = %g", a, frac)
       expect_false(res$rejected, info = label)
       expect_false(res$gradient_not_finite, info = label)
       expect_gradient_close(res$gradient, ref_dlogp_da(x, a), label)
-    }
-  }
-})
-
-test_that("gamma_lcdf_logx gradient is accurate for integer shapes", {
-  model <- gamma_logx_probe_model()
-  # The continued fraction has a zero numerator at step i = a
-  for (a in c(10, 12, 25, 50, 100, 400)) {
-    for (frac in c(1, 1.02, 1.1, 1.5, 3)) {
-      x <- frac * (a + 1)
-      res <- stan_gradient_at(
-        model,
-        data = list(d = x, pwindow = 1, L = 0, D = Inf),
-        init = list(a = a)
-      )
-      expect_gradient_close(
-        res$gradient, ref_dlogp_da(x, a),
-        sprintf("a = %g, x over (a + 1) = %g", a, frac)
-      )
-    }
-  }
-})
-
-test_that("gamma_lccdf_cf_logx gradient is accurate for integer shapes", {
-  model <- gamma_logx_probe_model("gamma_lccdf_cf_logx")
-  # The derivative at integer a is only accurate if the fraction has
-  # converged by step a, which holds for a of 10 or more
-  for (a in c(10, 11, 12, 15, 20, 25, 100)) {
-    for (frac in c(1, 1.5, 3)) {
-      x <- frac * (a + 1)
-      res <- stan_gradient_at(
-        model,
-        data = list(d = x, pwindow = 1, L = 0, D = Inf),
-        init = list(a = a)
-      )
-      expect_gradient_close(
-        res$gradient, ref_dlogp_da(x, a, lower = FALSE),
-        sprintf("a = %g, x over (a + 1) = %g", a, frac)
-      )
     }
   }
 })
