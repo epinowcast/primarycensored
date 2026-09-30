@@ -9,32 +9,14 @@ skip_on_cran()
 # The reference is R's `pgamma(log.p = TRUE)`, which is accurate in the
 # tails, so the tolerance is relative 1e-9 unless stated.
 
-# log F_T(t) for a Gamma delay via R
-ref_lgamma_delay <- function(t, shape, rate) {
-  pgamma(t * rate, shape = shape, log.p = TRUE)
-}
-
-# log of the uniform primary event censored CDF, from
-# F_{S+}(d) = (1 / w) int_{max(d - w, 0)}^{d} F_T(u) du. The integrand is
-# scaled by its maximum at u = d so that nothing underflows. The range is
-# cut where it has fallen by a factor of exp(-40), which only matters in the
-# lower tail.
-ref_lcdf_unif_gamma <- function(d, pwindow, shape, rate) {
-  q_lo <- max(d - pwindow, 0)
-  log_max <- ref_lgamma_delay(d, shape, rate)
-  target <- log_max - 40
-  lower <- q_lo
-  if (ref_lgamma_delay(q_lo, shape, rate) < target) {
-    lower <- uniroot(
-      function(u) ref_lgamma_delay(u, shape, rate) - target,
-      lower = q_lo, upper = d, tol = 1e-14
-    )$root
-  }
-  scaled <- integrate(
-    function(u) exp(ref_lgamma_delay(u, shape, rate) - log_max),
-    lower = lower, upper = d, rel.tol = 1e-13, subdivisions = 1000L
-  )$value
-  log_max + log(scaled) - log(pwindow)
+# Relative error of a log CDF, with an absolute allowance of 1e-15. Where
+# the CDF is within 1e-8 of 1 the log CDF is below 1e-8 in size, and
+# `gamma_lcdf` rounds the CDF itself to about 1e-16.
+expect_lcdf_close <- function(actual, expected, label, tolerance = 1e-9) {
+  testthat::expect_lte(
+    abs(actual - expected), tolerance * abs(expected) + 1e-15,
+    label = label
+  )
 }
 
 # Shape, rate and a delay that puts the log CDF well below -10, the
@@ -70,14 +52,13 @@ test_that("dist_lcdf for a Gamma delay is finite and accurate deep in the
 test_that("dist_lcdf for a Gamma delay is unchanged in the body and the
    upper tail", {
   # shape above and below the point where the evaluation rule changes
-  for (shape in c(0.3, 2, 19.5, 20, 20.5, 75, 400, 3000)) {
+  for (shape in c(0.3, 2, 9.5, 10, 10.5, 75, 400, 3000)) {
     mu <- shape / 1.5
     for (frac in c(0.3, 0.7, 0.95, 1, 1.05, 1.3, 2, 5, 50)) {
-      expect_equal(
+      expect_lcdf_close(
         dist_lcdf(frac * mu, c(shape, 1.5), 2),
         pgamma(frac * mu * 1.5, shape, log.p = TRUE),
-        tolerance = 1e-9,
-        info = sprintf("shape = %g, y over mean = %g", shape, frac)
+        sprintf("shape = %g, y over mean = %g", shape, frac)
       )
     }
   }
@@ -226,43 +207,37 @@ test_that("analytical gamma lcdf is accurate for large shapes", {
 })
 
 test_that("gamma_lcdf_logx matches pgamma across the evaluation rules", {
-  # a spans the body, the point where the rule changes at 20, and the large
+  # a spans the body, the point where the rule changes at 10, and the large
   # shapes. frac = x / (a + 1) covers the lower tail, the body and the upper
   # tail on both sides of x = a + 1.
-  for (a in c(0.1, 1, 5, 19.5, 19.999, 20, 20.001, 40, 400, 4000, 30000, 1e5)) {
+  for (a in c(0.1, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 30000, 1e5)) {
     for (frac in c(
       1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.89, 0.9, 0.99, 1, 1.01, 1.05, 1.2,
       1.5, 3, 10, 100
     )) {
       x <- frac * (a + 1)
-      expect_equal(
+      expect_lcdf_close(
         gamma_lcdf_logx(log(x), a),
         pgamma(x, a, log.p = TRUE),
-        tolerance = 1e-9,
-        info = sprintf("a = %g, x over (a + 1) = %g", a, frac)
+        sprintf("a = %g, x over (a + 1) = %g", a, frac)
       )
     }
   }
 })
 
-test_that("gamma_lcdf_logx is continuous across the rule changes", {
+test_that("gamma_lcdf_logx is accurate either side of the rule changes", {
   # x = a + 1 switches between the series and the continued fraction, and
-  # a = 20 between Stan's gamma_lcdf and the series and fraction
-  for (a in c(1.5, 19.99, 20.01, 150.5)) {
+  # a = 10 between Stan's gamma_lcdf and the series and fraction
+  for (a in c(1.5, 9.99, 10.01, 150.5)) {
     for (x in c(a + 1 - 1e-7, a + 1 + 1e-7)) {
-      expect_equal(
+      expect_lcdf_close(
         gamma_lcdf_logx(log(x), a),
         pgamma(x, a, log.p = TRUE),
+        sprintf("a = %g, x = %.9g", a, x),
         tolerance = 1e-10
       )
     }
   }
-  x <- 30
-  expect_equal(
-    gamma_lcdf_logx(log(x), 19.9999999),
-    gamma_lcdf_logx(log(x), 20.0000001),
-    tolerance = 1e-7
-  )
 })
 
 test_that("gamma_lcdf_logx is exact for integer shapes", {
@@ -288,4 +263,57 @@ test_that("gamma_lcdf_logx does not underflow when x does", {
     tolerance = 1e-12
   )
   expect_identical(gamma_lcdf_logx(-Inf, 30.5), -Inf)
+})
+
+test_that("gamma_lcdf_logx_pair matches pgamma for a and a + 1", {
+  # Shapes either side of the rule change at 10 and the large shapes.
+  # frac = x / (a + 1) covers the regions where the pair comes from the
+  # series, from the continued fraction and from `gamma_lcdf`.
+  for (a in c(0.05, 0.5, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 3e4)) {
+    for (frac in c(
+      1e-8, 1e-4, 0.01, 0.1, 0.3, 0.49, 0.5, 0.51, 0.7, 0.89, 0.9, 0.99, 1,
+      1.01, 1.2, 1.5, 3, 10, 100
+    )) {
+      x <- frac * (a + 1)
+      pair <- gamma_lcdf_logx_pair(log(x), a)
+      label <- sprintf("a = %g, x over (a + 1) = %g", a, frac)
+      expect_length(pair, 2)
+      expect_lcdf_close(
+        pair[1], pgamma(x, a, log.p = TRUE), label
+      )
+      expect_lcdf_close(
+        pair[2], pgamma(x, a + 1, log.p = TRUE), label
+      )
+    }
+  }
+})
+
+test_that("gamma_lcdf_logx_pair does not underflow when x does", {
+  # P(a + 1, x) is about x^(a + 1) in the far lower tail. Both are finite
+  # here although x = exp(-800) is 0.
+  for (a in c(0.5, 9.5, 30.5)) {
+    expect_equal(
+      gamma_lcdf_logx_pair(-800, a),
+      c(a * -800 - lgamma(a + 1), (a + 1) * -800 - lgamma(a + 2)),
+      tolerance = 1e-12
+    )
+  }
+  expect_identical(gamma_lcdf_logx_pair(-Inf, 3), c(-Inf, -Inf))
+  expect_identical(gamma_lcdf_logx_pair(Inf, 3), c(0, 0))
+})
+
+test_that("gamma_lcdf_logx_pair keeps P(a + 1) accurate when it is far
+   below P(a)", {
+  # x << a + 1, where P(a + 1) = P(a) - x^a exp(-x) / Gamma(a + 1)
+  # subtracts two terms that agree to about x / (a + 1)
+  for (a in c(0.2, 3, 8)) {
+    for (x in c(1e-12, 1e-9, 1e-6, 1e-3)) {
+      expect_equal(
+        gamma_lcdf_logx_pair(log(x), a)[2],
+        pgamma(x, a + 1, log.p = TRUE),
+        tolerance = 1e-12,
+        info = sprintf("a = %g, x = %g", a, x)
+      )
+    }
+  }
 })

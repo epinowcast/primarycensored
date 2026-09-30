@@ -44,13 +44,13 @@ gamma_delay_probe_model <- function() {
   )
 }
 
-# `gamma_lcdf_logx()` on its own, with d standing in for x. The shape is
+# A function of (log x, a) on its own, with d standing in for x. The shape is
 # unconstrained so that the gradient is with respect to the shape itself.
-gamma_logx_probe_model <- function() {
+gamma_logx_probe_model <- function(fn = "gamma_lcdf_logx") {
   gamma_probe_model(
-    "gamma_lcdf_logx(log(d), a)",
+    paste0(fn, "(log(d), a)"),
     "  real a;\n",
-    "pcd_gamma_logx_gradient"
+    paste0("pcd_", fn, "_gradient")
   )
 }
 
@@ -75,21 +75,23 @@ expect_gamma_gradient_ok <- function(res, label) {
   )
 }
 
-# Derivative of log P(a, x) with respect to a, by a fifth order central
-# difference of `pgamma()`, which is accurate to about 1e-10 relative
-ref_dlogp_da <- function(x, a) {
+# Derivative of log P(a, x) (or log Q(a, x) for `lower = FALSE`) with
+# respect to a, by a fifth order central difference of `pgamma()`, which is
+# accurate to about 1e-10 relative
+ref_dlogp_da <- function(x, a, lower = TRUE) {
   h <- 1e-4 * a
-  f <- function(e) pgamma(x, a + e, log.p = TRUE)
+  f <- function(e) pgamma(x, a + e, lower.tail = lower, log.p = TRUE)
   (-f(2 * h) + 8 * f(h) - 8 * f(-h) + f(-2 * h)) / (12 * h)
 }
 
 # The error is checked against the size of the derivative, with a small
-# absolute allowance for where it is below 1e-10
+# absolute allowance for where it is below 1e-10. CmdStan prints gradients
+# to 6 significant figures, so the tolerance is relative 1e-5.
 expect_gradient_close <- function(gradient, expected, label) {
   testthat::expect_length(gradient, 1)
   if (length(gradient) == 1) {
     testthat::expect_lt(
-      abs(gradient - expected), 1e-6 * abs(expected) + 1e-10,
+      abs(gradient - expected), 1e-5 * abs(expected) + 1e-10,
       label = label
     )
   }
@@ -148,7 +150,9 @@ test_that("primarycensored_lcdf has finite gradients for a Gamma delay with
 test_that("primarycensored_lcdf has finite gradients deep in the upper tail
    of a Gamma delay", {
   model <- gamma_delay_probe_model()
-  # The CDF is 1 to double precision here, and Stan's gradient was nan
+  # The CDF is 1 to double precision here, and Stan's gradient was nan. The
+  # log CDF does not depend on the parameters, so the gradient with respect
+  # to each is the 1 from the log Jacobian of its lower bound.
   cases <- list(
     list(d = 60, p = c(2, 1), pwindow = 1),
     list(d = 120, p = c(20, 1), pwindow = 1),
@@ -164,7 +168,7 @@ test_that("primarycensored_lcdf has finite gradients deep in the upper tail
     expect_false(res$rejected, info = label)
     expect_false(res$gradient_not_finite, info = label)
     expect_true(all(is.finite(res$gradient)), info = label)
-    expect_true(all(abs(res$gradient) < 1e-6), info = label)
+    expect_equal(res$gradient, c(1, 1), tolerance = 1e-6, info = label)
   }
 })
 
@@ -185,7 +189,15 @@ test_that("primarycensored_lcdf has finite gradients with truncation when
       model, case$d, case$p,
       pwindow = 1, L = case$L, D = case$D
     )
-    expect_gamma_gradient_ok(res, label)
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    # The log CDFs are in the thousands, so CmdStan's finite differences
+    # carry rounding noise of 1e-4. Compare with a reference in R instead.
+    expect_equal(
+      res$gradient,
+      ref_gamma_delay_gradient(case$d, case$p, 1, case$L, case$D),
+      tolerance = 1e-5, info = label
+    )
   }
 })
 
@@ -200,7 +212,7 @@ test_that("gradients are unchanged in the body of a Gamma delay", {
 test_that("gamma_lcdf_logx gradient with respect to the shape is accurate", {
   model <- gamma_logx_probe_model()
   # Non-integer and integer shapes, from the lower tail to the upper tail
-  for (a in c(0.7, 2, 5.5, 19.5, 20, 20.5, 100, 700.5, 1000, 1500.5,
+  for (a in c(0.7, 2, 5.5, 9.5, 10, 10.5, 20.5, 100, 700.5, 1000, 1500.5,
               3000, 10000)) {
     for (frac in c(0.3, 0.8, 0.95, 1, 1.02, 1.1, 1.5, 3)) {
       x <- frac * a
@@ -219,10 +231,9 @@ test_that("gamma_lcdf_logx gradient with respect to the shape is accurate", {
 
 test_that("gamma_lcdf_logx gradient is accurate for integer shapes", {
   model <- gamma_logx_probe_model()
-  # The continued fraction terminates at i = a, which once gave a wrong
-  # derivative with respect to the shape
-  for (a in c(2, 3, 25, 100, 400)) {
-    for (frac in c(1.1, 1.5, 3)) {
+  # The continued fraction has a zero numerator at step i = a
+  for (a in c(10, 12, 25, 50, 100, 400)) {
+    for (frac in c(1, 1.02, 1.1, 1.5, 3)) {
       x <- frac * (a + 1)
       res <- stan_gradient_at(
         model,
@@ -233,6 +244,60 @@ test_that("gamma_lcdf_logx gradient is accurate for integer shapes", {
         res$gradient, ref_dlogp_da(x, a),
         sprintf("a = %g, x over (a + 1) = %g", a, frac)
       )
+    }
+  }
+})
+
+test_that("gamma_lccdf_cf_logx gradient is accurate for integer shapes", {
+  model <- gamma_logx_probe_model("gamma_lccdf_cf_logx")
+  # The numerator of step i is i (i - a), which is zero at i = a. The
+  # derivative with respect to a is only accurate there if the fraction has
+  # converged by step a, which it has for a of 10 or more
+  for (a in c(10, 11, 12, 15, 20, 25, 100)) {
+    for (frac in c(1, 1.5, 3)) {
+      x <- frac * (a + 1)
+      res <- stan_gradient_at(
+        model,
+        data = list(d = x, pwindow = 1, L = 0, D = Inf),
+        init = list(a = a)
+      )
+      expect_gradient_close(
+        res$gradient, ref_dlogp_da(x, a, lower = FALSE),
+        sprintf("a = %g, x over (a + 1) = %g", a, frac)
+      )
+    }
+  }
+})
+
+test_that("gamma_lcdf_logx_pair gradients with respect to the shape are
+   accurate", {
+  for (component in 1:2) {
+    model <- gamma_probe_model(
+      paste0("gamma_lcdf_logx_pair(log(d), a)[", component, "]"),
+      "  real a;\n",
+      paste0("pcd_gamma_pair_gradient_", component)
+    )
+    # The second component is the CDF of a + 1
+    shift <- component - 1
+    for (a in c(0.3, 2, 5.5, 9.5, 10.5, 20.5, 100, 700.5, 3000, 10000)) {
+      for (frac in c(1e-4, 0.05, 0.3, 0.6, 0.95, 1, 1.05, 1.5, 3)) {
+        x <- frac * (a + 1)
+        res <- stan_gradient_at(
+          model,
+          data = list(d = x, pwindow = 1, L = 0, D = Inf),
+          init = list(a = a)
+        )
+        label <- sprintf(
+          "component = %d, a = %g, x over (a + 1) = %g", component, a, frac
+        )
+        expect_false(res$rejected, info = label)
+        expect_false(res$gradient_not_finite, info = label)
+        expect_gradient_close(
+          res$gradient,
+          ref_dlogp_da(x, a + shift),
+          label
+        )
+      }
     }
   }
 })
