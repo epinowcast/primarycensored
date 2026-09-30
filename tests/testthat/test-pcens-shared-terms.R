@@ -35,8 +35,8 @@ test_that(".pcens_terms_spec gives terms for registered pairs only", {
     spec <- .pcens_terms_spec(shared_obj(delay))
     expect_type(spec$terms, "closure")
     expect_type(spec$combine, "closure")
-    expect_identical(dim(spec$terms(c(0, 1, 2.5))), c(3L, 2L))
-    expect_identical(spec$terms(c(0, -1)), matrix(0, 2, 2))
+    expect_length(spec$terms(c(0, 1, 2.5)), 2)
+    expect_identical(spec$terms(c(0, -1)), list(c(0, 0), c(0, 0)))
   }
   expect_null(.pcens_terms_spec(new_pcens(
     pgamma, dexpgrowth,
@@ -50,26 +50,28 @@ test_that(".pcens_terms_spec gives terms for registered pairs only", {
 })
 
 test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
-  evaluated <- 0
+  counter <- new.env()
   spec <- list(
     terms = function(t) {
-      evaluated <<- evaluated + length(t)
-      cbind(t, t^2)
+      counter$n <- counter$n + length(t)
+      list(t, t^2)
     },
-    combine = function(td, tq, pwindow) (td[, 1] - tq[, 1]) / pwindow
+    combine = function(td, tq, pwindow) (td[[1]] - tq[[1]]) / pwindow
   )
+  count_evaluations <- function(q, pwindow) {
+    counter$n <- 0L
+    .pcens_cdf_shared(spec, q, pwindow)
+    counter$n
+  }
   q <- 0:10
-  .pcens_cdf_shared(spec, q, 2)
-  expect_identical(evaluated, length(unique(c(q, pmax(q - 2, 0)))))
-
-  evaluated <- 0
-  .pcens_cdf_shared(spec, q, 1.5)
-  expect_identical(evaluated, length(unique(c(q, pmax(q - 1.5, 0)))))
-
+  expect_identical(
+    count_evaluations(q, 2), length(unique(c(q, pmax(q - 2, 0))))
+  )
+  expect_identical(
+    count_evaluations(q, 1.5), length(unique(c(q, pmax(q - 1.5, 0))))
+  )
   # Nothing overlaps, so each endpoint is evaluated directly
-  evaluated <- 0
-  .pcens_cdf_shared(spec, c(2.3, 7.9), 1)
-  expect_identical(evaluated, 4)
+  expect_identical(count_evaluations(c(2.3, 7.9), 1), 4L)
 })
 
 test_that("shared terms match single-point evaluation", {
@@ -142,4 +144,10 @@ test_that("pprimarycensored and dprimarycensored share terms on a lattice", {
 test_that("shared terms handle empty input", {
   obj <- shared_obj(shared_delays[[1]])
   expect_identical(pcens_cdf(obj, numeric(0), 1), numeric(0))
+})
+
+test_that("shared terms reject missing values in q", {
+  obj <- shared_obj(shared_delays[[1]])
+  expect_error(pcens_cdf(obj, c(1, NA, 3), 1), "missing values")
+  expect_error(pcens_cdf(obj, c(1, NaN), 1), "missing values")
 })
