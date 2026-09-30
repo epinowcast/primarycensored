@@ -27,6 +27,18 @@ analytical_lcdf <- function(d, dist_id, params, pwindow) {
 }
 # nolint end
 
+# Delay CDFs with no R method, so pcens_cdf() integrates them numerically
+pinvgamma <- function(q, shape, scale) {
+  ifelse(q <= 0, 0, pgamma(scale / q, shape, lower.tail = FALSE))
+}
+pinvchisq <- function(q, df) pinvgamma(q, df / 2, 0.5)
+pscaledinvchisq <- function(q, df, scale) {
+  pinvgamma(q, df / 2, df * scale^2 / 2)
+}
+ppareto <- function(q, y_min, alpha) {
+  ifelse(q <= y_min, 0, 1 - (y_min / q)^alpha)
+}
+
 delays_positive <- c(0.001, 0.01, 0.1, 0.5, 1, 2, 5, 10, 30, 100)
 
 # Each case is a delay with its parameter sets, the delays at which to
@@ -253,8 +265,11 @@ test_that("primarycensored_lcdf and primarycensored_cdf dispatch to the
   }
 })
 
-test_that("the Stan analytical solution matches the R solution for the
-  exponential, normal, chi-square and beta", {
+test_that("the Stan analytical solution matches the R solution for each new
+  delay", {
+  # Delays with no R method use the numerical path, whose default
+  # stats::integrate tolerance limits the agreement to a mean relative 1e-6
+  # for windows up to 2
   cases <- list(
     list(
       dist_id = 4L, pdist = pexp, stan = 0.4, args = list(rate = 0.4),
@@ -271,20 +286,51 @@ test_that("the Stan analytical solution matches the R solution for the
     list(
       dist_id = 9L, pdist = pbeta, stan = c(2, 3),
       args = list(shape1 = 2, shape2 = 3), delays = c(0.1, 0.5, 0.9, 1.5, 3)
+    ),
+    list(
+      dist_id = 16L, pdist = pinvgamma, stan = c(1.1, 2),
+      args = list(shape = 1.1, scale = 2), delays = c(0.2, 1, 3, 10, 40),
+      numeric = TRUE
+    ),
+    list(
+      dist_id = 16L, pdist = pinvgamma, stan = c(3, 2),
+      args = list(shape = 3, scale = 2), delays = c(0.2, 1, 3, 10, 40),
+      numeric = TRUE
+    ),
+    list(
+      dist_id = 19L, pdist = pinvchisq, stan = 2.2, args = list(df = 2.2),
+      delays = c(0.2, 1, 3, 10, 40), numeric = TRUE
+    ),
+    list(
+      dist_id = 22L, pdist = pscaledinvchisq, stan = c(5, 1.5),
+      args = list(df = 5, scale = 1.5), delays = c(0.2, 1, 3, 10, 40),
+      numeric = TRUE
+    ),
+    list(
+      dist_id = 21L, pdist = ppareto, stan = c(0.5, 1.1),
+      args = list(y_min = 0.5, alpha = 1.1), delays = c(0.6, 1, 3, 10, 40),
+      numeric = TRUE
+    ),
+    list(
+      dist_id = 21L, pdist = ppareto, stan = c(0.5, 2.5),
+      args = list(y_min = 0.5, alpha = 2.5), delays = c(0.6, 1, 3, 10, 40),
+      numeric = TRUE
     )
   )
   for (case in cases) {
-    for (pwindow in c(0.5, 1, 2, 5)) {
+    numeric <- isTRUE(case$numeric)
+    for (pwindow in c(0.5, 1, 2, if (!numeric) 5)) {
       obj <- do.call(new_pcens, c(list(case$pdist, dunif, list()), case$args))
       r_result <- pcens_cdf(obj, case$delays, pwindow)
       stan_result <- exp(
         analytical_lcdf(case$delays, case$dist_id, case$stan, pwindow)
       )
-      expect_rel_equal(
-        stan_result, r_result,
-        tolerance = 1e-8,
-        info = sprintf("dist %d pwindow %g", case$dist_id, pwindow)
-      )
+      info <- sprintf("dist %d pwindow %g", case$dist_id, pwindow)
+      if (numeric) {
+        expect_equal(stan_result, r_result, tolerance = 1e-6, info = info)
+      } else {
+        expect_rel_equal(stan_result, r_result, tolerance = 1e-8, info = info)
+      }
     }
   }
 })
@@ -456,11 +502,41 @@ test_that("the inverse gamma solution stays finite and exact just above shape 1
     stan_reference(16L, c(1.001, 1), c(1, 10, 100), 2, 0),
     tolerance = 1e-8
   )
-  # beta / t well above the point where the CDF underflows
-  for (d in c(0.01, 0.05, 0.2)) {
-    value <- analytical_lcdf(d, 16L, c(3, 50), 0.5)
-    expect_true(value == -Inf || is.finite(value))
-    expect_false(is.nan(value))
+})
+
+test_that("the inverse gamma family is exact across the point where
+  inv_gamma_lcdf underflows and deeper in the lower tail", {
+  cases <- list(
+    list(
+      dist_id = 16L, params = c(3, 50), alpha = 3, beta = 50,
+      delays = c(0.3, 0.071, 0.0705, 0.07, 0.05, 0.02)
+    ),
+    list(
+      dist_id = 16L, params = c(30, 5), alpha = 30, beta = 5,
+      delays = c(0.05, 0.01, 0.0035)
+    ),
+    list(
+      dist_id = 19L, params = 6, alpha = 3, beta = 0.5,
+      delays = c(0.01, 0.001, 0.0005)
+    ),
+    list(
+      dist_id = 22L, params = c(6, 0.5), alpha = 3, beta = 0.75,
+      delays = c(0.01, 0.001, 0.0005)
+    )
+  )
+  for (case in cases) {
+    lp <- function(t) {
+      pgamma(case$beta / t, case$alpha, lower.tail = FALSE, log.p = TRUE)
+    }
+    for (pwindow in c(0.5, 1)) {
+      info <- sprintf("dist %d pwindow %g", case$dist_id, pwindow)
+      actual <- analytical_lcdf(case$delays, case$dist_id, case$params, pwindow)
+      expect_false(anyNA(actual), info = info)
+      expect_equal(
+        actual, reference_uniform_lcdf(lp, case$delays, pwindow),
+        tolerance = 1e-8, info = info
+      )
+    }
   }
 })
 
@@ -595,6 +671,21 @@ test_that("primarycensored_sone_pmf_vectorized matches R dprimarycensored for
     list(
       dist_id = 9L, params = c(2, 3), pdist = pbeta,
       args = list(shape1 = 2, shape2 = 3)
+    ),
+    list(
+      dist_id = 16L, params = c(1.5, 2), pdist = pinvgamma,
+      args = list(shape = 1.5, scale = 2)
+    ),
+    list(
+      dist_id = 19L, params = 5, pdist = pinvchisq, args = list(df = 5)
+    ),
+    list(
+      dist_id = 22L, params = c(5, 1.5), pdist = pscaledinvchisq,
+      args = list(df = 5, scale = 1.5)
+    ),
+    list(
+      dist_id = 21L, params = c(0.5, 1.5), pdist = ppareto,
+      args = list(y_min = 0.5, alpha = 1.5)
     )
   )
   for (case in cases) {
@@ -766,16 +857,15 @@ test_that("the new analytical solutions have finite gradients that match
   }
 })
 
-test_that("deep in the inverse gamma lower tail the result is usable or
-  log(0), never a non-finite gradient", {
+test_that("the inverse gamma log CDF gradient is finite and matches finite
+  differences in the lower tail", {
   model <- uniform_gradient_model()
-  # beta / t is large enough that the upper incomplete gamma underflows
-  for (d in c(0.05, 0.02, 0.01)) {
+  for (d in c(0.3, 0.0705, 0.05, 0.02)) {
     res <- uniform_gradient_at(model, 16L, c(3, 50), d, 0.5)
-    expect_false(res$gradient_not_finite, info = paste("d", d))
-    if (!res$rejected) {
-      expect_true(all(is.finite(res$gradient)), info = paste("d", d))
-    }
+    info <- paste("d", d)
+    expect_false(res$rejected, info = info)
+    expect_true(all(is.finite(res$gradient)), info = info)
+    expect_equal(res$gradient, res$finite_diff, tolerance = 1e-4, info = info)
   }
 })
 
@@ -959,11 +1049,11 @@ test_that("the analytical CDFs match the empirical CDF of rprimarycensored
       actual <- exp(
         analytical_lcdf(delays, case$dist_id, case$params, pwindow)
       )
-      # The empirical CDF at its own quantiles is the probability, with a
-      # sampling error of at most 0.002 for 1e5 samples
+      # Within 4 standard errors of the probability at its own quantile
       expect_lt(
-        max(abs(actual - case$probs)), 0.01,
-        label = sprintf("dist %d pwindow %g", case$dist_id, pwindow)
+        max(abs(actual - case$probs) /
+          sqrt(case$probs * (1 - case$probs) / n)),
+        4, label = sprintf("dist %d pwindow %g", case$dist_id, pwindow)
       )
     }
   }

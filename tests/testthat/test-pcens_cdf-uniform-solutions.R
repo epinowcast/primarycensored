@@ -315,10 +315,10 @@ test_that("pprimarycensored matches the empirical CDF of rprimarycensored
         pprimarycensored,
         c(list(delays, case$pdist, pwindow = pwindow), case$args)
       )
-      # The empirical CDF at its own quantiles is the probability, with a
-      # sampling error of at most 0.002 for 1e5 samples
+      # Within 4 standard errors of the probability at its own quantile
+      probs <- c(0.05, 0.3, 0.6, 0.9)
       expect_lt(
-        max(abs(actual - c(0.05, 0.3, 0.6, 0.9))), 0.01,
+        max(abs(actual - probs) / sqrt(probs * (1 - probs) / n)), 4,
         label = sprintf("pwindow %g", pwindow)
       )
     }
