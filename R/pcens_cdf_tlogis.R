@@ -9,94 +9,42 @@
 #' @inheritParams pcens_cdf
 #'
 #' @details
-#' With the window \eqn{[0, w]} and the logistic CDF
-#' \eqn{L(z) = 1 / (1 + e^{-(z - m) / s)})}, location \eqn{m} and scale
-#' \eqn{s}, the window density is \eqn{L'(z) / D_L} with
-#' \eqn{D_L = L(w) - L(0)}. The primary event censored CDF at \eqn{q} is
-#' \deqn{
-#' F_L(q) = F(q - w) + \frac{1}{D_L}
-#'   \int_{q - w}^{q} \{L(q - u) - L(0)\} f(u) du,
-#' }
-#' for a delay with density \eqn{f} and CDF \eqn{F}.
-#' The integral is a sum of the finite horizon transforms \eqn{T_f(\xi; \tau)}
-#' of [tilt_transform] at the tilts \eqn{\xi = \pm n / s}, found by expanding
-#' \eqn{L} as a geometric series.
-#' With \eqn{p = q - u} the primary event time, \eqn{L(p) = 1 / (1 + x)} with
-#' \eqn{x = e^{-(p - m) / s}}.
-#' For \eqn{p > m}, \eqn{x < 1} and \eqn{L(p) = \sum_{n \ge 0} (-x)^n}, which
-#' needs the positive tilts \eqn{\xi = n / s}.
-#' For \eqn{p < m}, \eqn{L(p) = \sum_{n \ge 1} (-1)^{n - 1} y^n} with
-#' \eqn{y = 1 / x}, which needs the negative tilts \eqn{\xi = -n / s}.
-#' The window is split at \eqn{p = m}, at \eqn{u^\star = q - m}, when the
-#' location is inside it. With \eqn{\Delta T(\xi; a, b) = T_f(\xi; b) -
-#' T_f(\xi; a)}, \eqn{\Delta F(a, b) = F(b) - F(a)}, \eqn{a = q - w} and
-#' \eqn{b = q} the integral \eqn{\Phi} is
-#' * for \eqn{m < 0}, where the whole window is above the location,
-#'   \deqn{\Phi = \sum_{n \ge 1} (-1)^{n - 1} e^{n m / s}
-#'   \{\Delta F(a, b) - e^{-n q / s} \Delta T(n / s; a, b)\}.}
-#' * for \eqn{0 \le m < w}, the sum of
-#'   \deqn{\Phi_P = \sum_{n \ge 0} (-1)^n e^{-n (q - m) / s}
-#'   \Delta T(n / s; a, u^\star) - L(0) \Delta F(a, u^\star)}
-#'   over the part of the window above the location and
-#'   \deqn{\Phi_N = \sum_{n \ge 1} (-1)^{n - 1} e^{-n m / s}
-#'   \{e^{n q / s} \Delta T(-n / s; u^\star, b) - \Delta F(u^\star, b)\}}
-#'   over the part below it. For \eqn{m \ge w} only \eqn{\Phi_N} is needed
-#'   with \eqn{u^\star = a}, and for \eqn{m = 0} only \eqn{\Phi_P}.
+#' With the window \eqn{[0, w]} and the logistic CDF \eqn{L} with location
+#' \eqn{m} and scale \eqn{s}, the window density is \eqn{L'(z) / D_L} with
+#' \eqn{D_L = L(w) - L(0)}. For a delay with density \eqn{f} and CDF
+#' \eqn{F}, the primary event censored CDF at \eqn{q} is
+#' \deqn{F_L(q) = F(q - w) + \frac{1}{D_L}
+#'   \int_{q - w}^{q} \{L(q - u) - L(0)\} f(u) du.}
+#' Expanding \eqn{L} as a geometric series writes the integral as sums of the
+#' transforms \eqn{T_f(\xi; \tau)} of [tilt_transform] at the tilts
+#' \eqn{\xi = \pm n / s}. The positive tilts are for the part of the window
+#' above the location and the negative tilts for the part below it, so the
+#' window is split at the location when it is inside it. Each transform
+#' depends on one endpoint, so each endpoint is evaluated once and reused
+#' when several `q` share it, as for the integer delays of [pcens_pmf()].
+#' Terms that hold \eqn{L(0)} are written as differences so nothing cancels
+#' when the window is far from the location.
 #'
-#' and \eqn{F_L(q) = F(q - w) + \Phi / D_L}.
-#' The terms that hold \eqn{L(0)} in place of the constant \eqn{1} of the
-#' series are written as differences, so that nothing cancels when the window
-#' is far from the location and \eqn{D_L} is small.
-#' For delays on the non-negative reals \eqn{F(x) = T_f(\xi; x) = 0} for
-#' \eqn{x \le 0}, and the normal delay has full support.
-#' Each transform depends on one endpoint, \eqn{q} or \eqn{q - w} or
-#' \eqn{u^\star}, so each endpoint is evaluated once and reused when several
-#' `q` share one, as for the integer delays of [pcens_pmf()].
-#' The split points \eqn{q - m} are shared when the location and window are
-#' integers and are separate for each `q` otherwise.
+#' **Truncation.** Near the location the series converge slowly. Each series
+#' is summed with binomial taper weights (the Euler transform after \eqn{n_0}
+#' terms), which bounds the error for each term by
+#' \eqn{x^{n_0} ((1 - x) / 2)^M / (1 + x)}. The fewest terms, at most 64,
+#' with a total error below \eqn{10^{-10} D_L} are used. The numerical method
+#' is used where there is no such rule.
 #'
-#' **Truncation and its error bound.** The geometric series have a ratio
-#' that approaches 1 near the location, so the partial sums converge slowly
-#' there. Each series \eqn{\sum (-x)^n c_n} is instead summed with weights
-#' \eqn{W_n}, which are 1 for \eqn{n < n_0} and taper to 0 at
-#' \eqn{n_0 + M} as the upper tail of a Binomial(\eqn{M}, 1/2). This is the
-#' average of the partial sums \eqn{S_{n_0}, \ldots, S_{n_0 + M}} with
-#' binomial weights, the Euler transform applied after \eqn{n_0} terms. For
-#' each \eqn{x} the error is exactly
-#' \eqn{x^{n_0} ((1 - x) / 2)^M / (1 + x)}. The terms of every series are
-#' integrals against a positive measure of powers of \eqn{x} with \eqn{x} in
-#' a known range, so the total error is at most the largest value of that
-#' error over the range times the mass of the delay in the window. The rule
-#' picks the smallest \eqn{n_0 + M}, among plain partial sums
-#' (\eqn{M = 0}) and two tapers, for which that error is below
-#' \eqn{10^{-10} D_L}. The error of \eqn{F_L(q)} is then below
-#' \eqn{10^{-10}} of the mass of the delay in the window. This takes about
-#' 6 terms for \eqn{x \le 0.01} and about 23 for ranges that reach 1.
-#' If no rule with at most 64 terms exists the numerical method is used.
-#'
-#' **Admissibility.** The series need the positive tilts up to
-#' \eqn{(n_0 + M) / s} and the negative tilts down to \eqn{-(n_0 + M) / s}.
-#' The exponential and gamma forms need \eqn{\lambda - \xi > 0}, so that the
-#' tilted delay distribution exists, which fails for large positive tilts
-#' unless the rate \eqn{\lambda} exceeds the largest tilt. The negative tilts
-#' always exist. The method falls back to [pcens_cdf.default()] for every `q`
-#' where the largest positive tilt is not available or there is no
-#' truncation rule. For gamma and exponential delays this is the case for a
-#' location at or before the window end unless the rate is large. The normal
-#' form has no restriction. The fallback is also used for a window that is not
-#' a single positive finite number.
+#' **Admissibility.** The exponential and gamma forms need the largest
+#' positive tilt of the series to be below the rate, which holds for a
+#' location after the window or a large rate. Otherwise, and for a window that
+#' is not a single positive finite number, [pcens_cdf.default()] is used. The
+#' normal form has no restriction.
 #'
 #' **Precision.** The CDF agrees with a reference integral to a relative
 #' difference of about 1e-9 or better, including in the tails.
-#' The terms carry a relative error of about the machine precision divided
-#' by \eqn{D_L} in the amount of cancellation of \eqn{\Phi / D_L}, which is
-#' large only for a scale much larger than the window where the window
-#' approaches the uniform one.
+#' The relative error grows with the cancellation in the integral, which is
+#' large only for a scale much larger than the window.
 #'
-#' **Extending.** A new delay distribution is supported by the methods of
-#' [tilt_transform] and a `pcens_cdf` method for its class that calls
-#' `.pcens_cdf_tlogis()`. A new window reuses the same transforms with its
-#' own tilts and coefficients, see [pcens_cdf_exptilt].
+#' A new delay distribution is supported by the methods of [tilt_transform]
+#' and a `pcens_cdf` method for its class that calls `.pcens_cdf_tlogis()`.
 #'
 #' @family pcens
 #'
@@ -518,29 +466,20 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
     t <- pmax(t, lower)
   }
   t <- sort.int(unique(t))
-  if (.pcens_tilt_vectorised(object)) {
-    # One call for all tilts, each at every endpoint
-    grid_t <- rep(t, times = length(xi))
-    grid_xi <- rep(xi, each = length(t))
-    return(list(
-      t = t,
-      lower = matrix(
-        .pcens_tilt_transform(object, grid_t, grid_xi),
-        nrow = length(t)
-      ),
-      upper = matrix(
-        .pcens_tilt_transform(object, grid_t, grid_xi, upper = TRUE),
-        nrow = length(t)
-      )
-    ))
-  }
-  lower_terms <- matrix(0, length(t), length(xi))
-  upper_terms <- matrix(0, length(t), length(xi))
-  for (j in seq_along(xi)) {
-    lower_terms[, j] <- .pcens_tilt_transform(object, t, xi[[j]])
-    upper_terms[, j] <- .pcens_tilt_transform(object, t, xi[[j]], upper = TRUE)
-  }
-  list(t = t, lower = lower_terms, upper = upper_terms)
+  # One call for all tilts, each at every endpoint
+  grid_t <- rep(t, times = length(xi))
+  grid_xi <- rep(xi, each = length(t))
+  list(
+    t = t,
+    lower = matrix(
+      .pcens_tilt_transform(object, grid_t, grid_xi),
+      nrow = length(t)
+    ),
+    upper = matrix(
+      .pcens_tilt_transform(object, grid_t, grid_xi, upper = TRUE),
+      nrow = length(t)
+    )
+  )
 }
 
 #' Log of the difference of a transform between two endpoints

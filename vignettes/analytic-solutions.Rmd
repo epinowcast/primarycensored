@@ -440,7 +440,7 @@ Changing variables and integrating by parts as for the other windows gives
 
 $$
 F_{S_+}(d) = F_T(a) + \frac{1}{D_L} \int_{a}^{d} \{L(d - u) - L(0)\} f_T(u) ~du, \quad a = d - w_P.
-(\#eq:tlogis)
+(\#eq:logistic)
 $$
 
 With $p = d - u$ the primary event time, $L(p) = 1 / (1 + x)$ with $x = e^{-(p - m) / s}$.
@@ -464,7 +464,7 @@ In each case $F_{S_+}(d) = F_T(a) + \Phi / D_L$.
 
 Near the location $x$ is close to 1 and the partial sums of the geometric series converge slowly.
 Each series $\sum (-1)^n c_n$ is instead summed with weights $W_n$ that are 1 for $n < n_0$ and taper to 0 at $n_0 + M$ as the upper tail of a Binomial($M$, 1/2).
-This is the Euler transform after $n_0$ terms, the average of the partial sums $S_{n_0}, \ldots, S_{n_0 + M}$ with binomial weights.
+This is the Euler transform after $n_0$ terms, the average of the partial sums from $S_{n_0}$ to $S_{n_0 + M}$ with binomial weights.
 For one $x$ the error is $x^{n_0} ((1 - x) / 2)^M / (1 + x)$.
 Every $c_n$ is an integral of $x^n$ over the delay density, with $x$ in a known range, so the error of a series is at most the largest error over the range times the mass of the delay in the window.
 The range is $[e^{(m - w_P) / s}, e^{m / s}]$ for $m < 0$, $[e^{-(w_P - m) / s}, 1]$ for the part above the location and $[e^{-m / s}, \min(1, e^{(w_P - m) / s})]$ for the part below it.
@@ -490,7 +490,7 @@ The error is an absolute one of about $10^{-9}$ to $10^{-7}$ and the tolerance c
 
 ## Delays much smaller than the scale
 
-For a delay on the non-negative reals with $d < w_P$ and $d / s < 10^{-4}$ equation \@ref(eq:tlogis) cancels, as only primary event times up to $d$ contribute and $L(p) - L(0)$ is small.
+For a delay on the non-negative reals with $d < w_P$ and $d / s < 10^{-4}$ equation \@ref(eq:logistic) cancels, as only primary event times up to $d$ contribute and $L(p) - L(0)$ is small.
 With $G_k(d) = \int_0^d (d - u)^k f_T(u) ~du$ the expansion of $L(p) - L(0)$ in $p$ gives
 $$F_{S_+}(d) = \frac{L'(0) G_1(d) + L''(0) G_2(d) / 2}{D_L} + O\big((d / s)^2\big),$$
 with $L'(0) = L(0) \{1 - L(0)\} / s$ and $L''(0) = L'(0) \{1 - 2 L(0)\} / s$.

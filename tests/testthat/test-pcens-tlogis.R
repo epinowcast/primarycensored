@@ -310,10 +310,8 @@ test_that("pcens_pmf, pprimarycensored and truncation use the analytic CDF", {
 })
 
 test_that("each endpoint is evaluated once for integer delays", {
-  # The CDF at q needs the transforms at q and q - pwindow. Over neighbouring
-  # integer q these are the same integer endpoints, and with an integer
-  # location the split point q - location is one of them too. A transform
-  # call evaluates each of its distinct points once.
+  # The CDF at q needs the transforms at q, q - pwindow and q - location,
+  # which are shared integers for neighbouring integer q.
   counts <- new.env()
   counts$points <- 0
   original <- .pcens_tilt_transform
@@ -360,9 +358,8 @@ test_that("non-parametric delays use the truncated logistic CDF", {
   )
 })
 
-# Narrow windows. The density of the primary has its mass in a few scales
-# around the location (or around the edge nearest to it), so a quadrature
-# that is not told where that is steps over it.
+# Narrow windows, where a quadrature that is not told the location steps
+# over the density.
 narrow_delays <- list(
   list(
     label = "exponential rate 1.5", pdist = pexp, args = list(rate = 1.5),
@@ -485,6 +482,41 @@ test_that("the normal tilt transform keeps the shift of a small sd", {
       expect_lt(
         abs(actual / expected - 1), 1e-6,
         label = paste(toString(unlist(cs)), "k =", k)
+      )
+    }
+  }
+})
+
+test_that("the analytic CDF matches samples from rprimarycensored", {
+  set.seed(20260930)
+  n <- 20000
+  pwindow <- 2
+  probs <- seq(0.05, 0.95, by = 0.1)
+  for (family in families[c(1, 4, 6, 7)]) {
+    rdist <- if (identical(family$pdist, pexp)) {
+      rexp
+    } else if (identical(family$pdist, pgamma)) {
+      rgamma
+    } else {
+      rnorm
+    }
+    for (window in list(c(-0.5, 0.3), c(1, 0.4), c(3, 0.5))) {
+      samples <- do.call(
+        rprimarycensored,
+        c(
+          list(
+            n = n, rdist = rdist, rprimary = rtlogis, pwindow = pwindow,
+            swindow = 0,
+            rprimary_args = list(location = window[1], scale = window[2])
+          ),
+          family$args
+        )
+      )
+      q <- unname(quantile(samples, probs))
+      obj <- tlogis_object(family, window[1], window[2])
+      expect_lt(
+        max(abs(pcens_cdf(obj, q, pwindow) - probs)), 0.015,
+        label = tlogis_label(family, pwindow, window[1], window[2])
       )
     }
   }

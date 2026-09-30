@@ -108,11 +108,9 @@ vector primarycensored_truncation_bounds(
   * Relative tolerance of the ODE solver for a primary distribution
   * @ingroup ode
   *
-  * The default of `ode_rk45` (1e-6), except for the truncated logistic
-  * primary (primary_id 3), whose parts are short and whose integral is
-  * compared with the analytical solutions at about 1e-8 in absolute terms.
-  * The absolute tolerance, see primarycensored_ode_abs_tol(), is what
-  * bounds the error of small CDFs.
+  * The `ode_rk45` default (1e-6), except 1e-9 for the truncated logistic
+  * primary (primary_id 3), whose integral is compared with the analytical
+  * solutions.
   *
   * @param primary_id Primary distribution identifier
   *
@@ -126,20 +124,13 @@ real primarycensored_ode_rel_tol(data int primary_id) {
   * Absolute tolerance of the ODE solver for a primary distribution
   * @ingroup ode
   *
+  * The `ode_rk45` default (1e-6), except 1e-10 for the truncated logistic
+  * primary (primary_id 3). The ODE error for that primary is absolute, so
+  * small CDFs and PMFs from the ODE are not accurate in relative terms.
+  *
   * @param primary_id Primary distribution identifier
   *
-  * The tolerance is absolute and it is passed to the solver as data, so it
-  * cannot follow the size of the CDF. The error of the integral for the
-  * truncated logistic primary is an absolute one of about 1e-9 to 1e-7,
-  * which is 1e-6 or more relative to a CDF or a PMF below about 1e-3. Small
-  * CDFs and PMFs from the ODE are not accurate in relative terms, for the
-  * delays that have only the ODE path (lognormal, Weibull and the gamma
-  * where the series does not apply). A relative tolerance of 1e-10 with an
-  * absolute tolerance of 1e-14 reduces the absolute error to about 1e-13 in
-  * a benchmark, at about 2.5 times the cost of the gradient.
-  *
-  * @return Absolute tolerance, 1e-6 as the default of `ode_rk45` or 1e-10
-  * for the truncated logistic primary
+  * @return Absolute tolerance
   */
 real primarycensored_ode_abs_tol(data int primary_id) {
   return primary_id == 3 ? 1e-10 : 1e-6;
@@ -191,9 +182,7 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
   vector[1] y = rep_vector(0.0, 1);
   real start = lower_bound;
   if (primary_id == 3) {
-    // A narrow truncated logistic primary density is a spike that the
-    // solver steps over, so the parts of the integral around it are solved
-    // one at a time, see tlogis_spike_times().
+    // Solve in parts so the ODE does not step over a narrow density
     int n_spikes = num_elements(tlogis_spike_times(
       d, lower_bound, pwindow, primary_params[1], primary_params[2]
     ));

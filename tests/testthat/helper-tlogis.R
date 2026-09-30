@@ -1,12 +1,5 @@
-# Helpers for the truncated logistic primary event window tests.
-#
-# The reference values integrate the delay CDF against the window density
-# with tight tolerances. Unlike `pcens_cdf.default()`, which uses the default
-# `stats::integrate()` tolerances, it is accurate to about 1e-12 relative,
-# including deep in the lower tail. The integral is split at the kink where
-# the CDF of a delay on the non-negative reals leaves zero, and at the
-# location of the window and a few scales either side of it, where a narrow
-# window density has its mass.
+# Reference CDF by integrating the delay CDF against the window density to a
+# relative 1e-12, split at the delay kink and around the location.
 tlogis_reference <- function(q, pwindow, location, scale, cdf,
                              positive = TRUE) {
   vapply(q, function(qq) {
@@ -69,9 +62,7 @@ tlogis_gamma_lcdf_reference <- function(shape, rate, d, pwindow, location,
 }
 
 # Gradient of tlogis_gamma_lcdf_reference() in the shape by central
-# differences in the log shape with two Richardson extrapolations. It does
-# not use Stan or its finite differences, which have steps of 1e-6 and so
-# errors of up to 2e-4 when the log CDF is large.
+# differences in the log shape with two Richardson extrapolations.
 tlogis_shape_grad_ref <- function(shape, rate, d, pwindow,
                                   location, scale,
                                   max_delay = NULL) {

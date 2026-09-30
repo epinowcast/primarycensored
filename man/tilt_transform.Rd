@@ -6,8 +6,6 @@
 \alias{.pcens_tilt_available}
 \alias{.pcens_tilt_lower}
 \alias{.pcens_tilt_moments}
-\alias{.pcens_tilt_vectorised}
-\alias{.pcens_tilt_vectorised.default}
 \alias{.pcens_tilt_available.default}
 \alias{.pcens_tilt_transform.default}
 \alias{.pcens_tilt_lower.default}
@@ -15,14 +13,11 @@
 \alias{.pcens_tilt_lower.pcens_pgamma}
 \alias{.pcens_tilt_available.pcens_pgamma}
 \alias{.pcens_tilt_transform.pcens_pgamma}
-\alias{.pcens_tilt_vectorised.pcens_pgamma}
 \alias{.pcens_tilt_lower.pcens_pexp}
 \alias{.pcens_tilt_available.pcens_pexp}
 \alias{.pcens_tilt_transform.pcens_pexp}
-\alias{.pcens_tilt_vectorised.pcens_pexp}
 \alias{.pcens_tilt_lower.pcens_pnorm}
 \alias{.pcens_tilt_available.pcens_pnorm}
-\alias{.pcens_tilt_vectorised.pcens_pnorm}
 \alias{.pcens_tilt_transform.pcens_pnorm}
 \alias{.pcens_tilt_moments.pcens_pgamma}
 \alias{.pcens_tilt_moments.pcens_pexp}
@@ -36,10 +31,6 @@
 .pcens_tilt_lower(object)
 
 .pcens_tilt_moments(object, t)
-
-.pcens_tilt_vectorised(object)
-
-\method{.pcens_tilt_vectorised}{default}(object)
 
 \method{.pcens_tilt_available}{default}(object, xi)
 
@@ -55,21 +46,15 @@
 
 \method{.pcens_tilt_transform}{pcens_pgamma}(object, t, xi, upper = FALSE)
 
-\method{.pcens_tilt_vectorised}{pcens_pgamma}(object)
-
 \method{.pcens_tilt_lower}{pcens_pexp}(object)
 
 \method{.pcens_tilt_available}{pcens_pexp}(object, xi)
 
 \method{.pcens_tilt_transform}{pcens_pexp}(object, t, xi, upper = FALSE)
 
-\method{.pcens_tilt_vectorised}{pcens_pexp}(object)
-
 \method{.pcens_tilt_lower}{pcens_pnorm}(object)
 
 \method{.pcens_tilt_available}{pcens_pnorm}(object, xi)
-
-\method{.pcens_tilt_vectorised}{pcens_pnorm}(object)
 
 \method{.pcens_tilt_transform}{pcens_pnorm}(object, t, xi, upper = FALSE)
 
@@ -85,10 +70,9 @@
 \item{t}{Numeric vector of finite points at which to evaluate the
 transform.}
 
-\item{xi}{Tilt \eqn{\xi}, a single number, or for methods with
-\code{.pcens_tilt_vectorised()} a vector of the length of \code{t}. The exponentially
-tilted window with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and
-\eqn{\xi = 0} gives the delay CDF.}
+\item{xi}{Tilt \eqn{\xi}, a single number or a vector of the length of
+\code{t}. The exponentially tilted window with tilt \eqn{\rho} needs
+\eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.}
 
 \item{upper}{Logical. If \code{TRUE} return the transform over \eqn{(t, \infty)}
 rather than over the lower end of the support up to \code{t}. Evaluating the
@@ -103,8 +87,6 @@ total.}
 tilted delay distribution exists for \code{xi}, otherwise \code{FALSE}. Callers use
 the numerical method when it is \code{FALSE}.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
-\item \code{.pcens_tilt_vectorised()}: \code{TRUE} if a vector \code{xi} is accepted, otherwise
-\code{FALSE}.
 \item \code{.pcens_tilt_moments()}: a matrix with two columns, the log of the first
 and second moments of the delay about \code{t}, see
 \code{\link[=pcens_cdf.pcens_pexp_dexpgrowth]{pcens_cdf.pcens_pexp_dexpgrowth()}}.
@@ -131,10 +113,6 @@ A family is added by defining
 \item Optionally \code{.pcens_tilt_moments()}, which is only needed by the small
 tilt forms of \code{\link[=pcens_cdf.pcens_pexp_dexpgrowth]{pcens_cdf.pcens_pexp_dexpgrowth()}} and the small delay
 form of \link{pcens_cdf_tlogis}.
-\item Optionally \code{.pcens_tilt_vectorised()}, returning \code{TRUE} if
-\code{.pcens_tilt_transform()} accepts a vector \code{xi} of the length of \code{t},
-one tilt for each point. Windows that need many tilts at the same
-endpoints, such as \link{pcens_cdf_tlogis}, then evaluate them in one call.
 }
 
 The Stan equivalents are \code{check_for_tilt_transform()},

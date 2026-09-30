@@ -88,7 +88,6 @@ test_that("check_for_tlogis is structural and for primary_id 3", {
   for (dist_id in c(26L, 27L, 28L)) {
     expect_identical(check_for_analytical(dist_id, 3L), 1L)
   }
-  # The other solutions are unchanged
   expect_identical(check_for_analytical(2L, 1L), 1L)
   expect_identical(check_for_analytical(4L, 2L), 1L)
   expect_identical(check_for_analytical(2L, 2L), 1L)
@@ -203,7 +202,6 @@ test_that("check_for_tlogis_params needs the tilts of the series", {
   expect_identical(
     check_for_analytical_window(3L, c(2.5, 0.4), 3L, c(3, 0.5), 2), 0L
   )
-  # Unchanged for the other primaries
   expect_identical(
     check_for_analytical_window(2L, c(2.5, 0.4), 1L, numeric(0), 2), 1L
   )
@@ -272,6 +270,42 @@ test_that("primarycensored_tlogis_lcdf matches the R implementation", {
           )
         }
       }
+    }
+  }
+})
+
+test_that("primarycensored_tlogis_lcdf matches Stan random draws", {
+  set.seed(20260930)
+  n <- 5000
+  pwindow <- 2
+  probs <- seq(0.1, 0.9, by = 0.2)
+  for (case in tlogis_stan_cases[c(1, 4, 7)]) {
+    rdist <- switch(as.character(case$dist_id),
+      "4" = function(n) rexp(n, case$args$rate),
+      "2" = function(n) rgamma(n, case$args$shape, case$args$rate),
+      "18" = function(n) rnorm(n, case$args$mean, case$args$sd)
+    )
+    for (window in list(c(-0.5, 0.3), c(1, 0.4), c(4, 0.5))) {
+      if (!tlogis_case_analytic(case, window[1], window[2], pwindow)) {
+        next
+      }
+      primary <- vapply(
+        seq_len(n),
+        function(i) tlogis_rng(0, pwindow, window[1], window[2]),
+        numeric(1)
+      )
+      q <- unname(quantile(primary + rdist(n), probs))
+      cdf <- exp(vapply(
+        q, primarycensored_tlogis_lcdf, numeric(1),
+        case$dist_id, case$params, pwindow, window[1], window[2]
+      ))
+      expect_lt(
+        max(abs(cdf - probs)), 0.03,
+        label = tlogis_case_label(
+          case,
+          pwindow = pwindow, location = window[1], scale = window[2]
+        )
+      )
     }
   }
 })
@@ -375,13 +409,8 @@ test_that("inadmissible series use the ODE path", {
   }
 })
 
-# Narrow windows. The integrand of the ODE has a spike of width about
-# `scale` where the delay is the window location, and a solver that takes
-# large steps across the flat region steps over it. The ODE is solved to a
-# relative tolerance of 1e-9 and an absolute tolerance of 1e-10 for this
-# primary. The error is an absolute one of about 1e-9 to 1e-7, so these are
-# compared in absolute terms at 1e-7 and small CDFs and PMFs are not compared
-# in relative terms.
+# Narrow windows, compared in absolute terms at 1e-7 as the ODE error is
+# absolute.
 tlogis_narrow_cases <- list(
   list(dist_id = 4L, params = 1.5, pdist = pexp, args = list(rate = 1.5)),
   list(
@@ -728,18 +757,13 @@ tlogis_gradient_at <- function(model, case, d, pwindow, location, scale,
   )
 }
 
-# The finite differences of CmdStan use a step of 1e-6, so the 1e-12 relative
-# error of the truncated series shows as noise of about 1e-6 in them, which
-# sets the tolerance. The gradient in the shape of a gamma delay comes from
-# Stan's gamma_lcdf(), which is accurate to 1e-7 in the body but not far into
-# the lower tail, so it has a looser tolerance. Exponential delays have no
-# shape.
+# The finite differences of CmdStan are noisy to about 1e-6, which sets the
+# tolerance. The gamma shape gradient has a looser one.
 expect_tlogis_gradient_close <- function(res, case, label) {
   tolerance <- rep(5e-4, 4)
   if (case$dist_id == 2L) {
     tolerance[1] <- 2e-3
   }
-  # A parameter the delay does not have has a zero gradient
   allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2)
   testthat::expect_true(
     all(abs(res$gradient - res$finite_diff) <= allowed),
@@ -791,205 +815,119 @@ test_that("truncated logistic log CDFs have finite gradients matching finite
   }
 })
 
-test_that("the gamma shape gradient is accurate where the series cancel", {
-  model <- tlogis_gradient_model()
-  # A scale that is large relative to the window makes the series cancel
-  # heavily, which amplifies any error in the gradient of the shape of the
-  # terms. These points had errors of 2% to 7%, and 2.6 times at the last.
-  points <- list(
-    list(shape = 2.1, rate = 5, d = 1.7, pwindow = 1, location = 0.5, scale = 50),
-    list(shape = 6, rate = 2, d = 4, pwindow = 1, location = -1, scale = 50),
-    list(shape = 6, rate = 2, d = 4, pwindow = 1, location = 3, scale = 2),
-    list(shape = 2, rate = 20, d = 0.3, pwindow = 1, location = 0.5, scale = 2),
-    list(shape = 6, rate = 5, d = 1.5, pwindow = 1, location = 0.3, scale = 20)
-  )
+# Gamma shape gradients at points that use the analytic path, with `compare`
+# given the result, the point and a label.
+expect_shape_gradients <- function(model, points, compare,
+                                   vectorised = FALSE) {
   for (point in points) {
+    point <- utils::modifyList(list(pwindow = 1), point)
     case <- list(dist_id = 2L, params = c(point$shape, point$rate))
     label <- tlogis_case_label(
       case,
       d = point$d, pwindow = point$pwindow, location = point$location,
       scale = point$scale
     )
-    expect_true(
-      tlogis_case_analytic(
-        case, point$location, point$scale, point$pwindow
-      ),
+    testthat::expect_true(
+      tlogis_case_analytic(case, point$location, point$scale, point$pwindow),
       info = label
     )
     res <- tlogis_gradient_at(
-      model, case, point$d, point$pwindow, point$location, point$scale
+      model, case, point$d, point$pwindow, point$location, point$scale,
+      vectorised = vectorised
     )
-    expect_false(res$gradient_not_finite, info = label)
-    expect_false(res$rejected, info = label)
-    expect_true(all(is.finite(res$gradient)), info = label)
-    allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
-    expect_true(
-      all(abs(res$gradient - res$finite_diff) <= allowed),
-      info = paste0(
-        label, ": gradient ", toString(signif(res$gradient, 5)),
-        ", finite difference ", toString(signif(res$finite_diff, 5))
-      )
-    )
+    testthat::expect_false(res$gradient_not_finite, info = label)
+    testthat::expect_false(res$rejected, info = label)
+    testthat::expect_true(all(is.finite(res$gradient)), info = label)
+    compare(res, point, label)
   }
-})
+}
 
-test_that("the gamma shape gradient is accurate far into the lower tail", {
-  model <- tlogis_gradient_model()
-  # Stan's gradient of gamma_lcdf() in the shape truncates its series at an
-  # absolute tolerance, which is a relative error of up to 80% when the
-  # probability is below 1e-10. The log CDFs here are -25 to -115. A
-  # location after the window keeps the solution analytic.
-  points <- list(
-    list(shape = 6, rate = 2, d = 0.05, scale = 0.5),
-    list(shape = 6, rate = 2, d = 0.02, scale = 5),
-    list(shape = 6, rate = 2, d = 0.05, scale = 5),
-    list(shape = 20, rate = 2, d = 0.4, scale = 0.5),
-    list(shape = 20, rate = 2, d = 0.4, scale = 5),
-    list(shape = 20, rate = 2, d = 0.8, scale = 5)
-  )
-  for (point in points) {
-    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
-    label <- tlogis_case_label(
-      case,
-      d = point$d, pwindow = 1, location = 3, scale = point$scale
-    )
-    expect_true(
-      tlogis_case_analytic(case, 3, point$scale, 1),
-      info = label
-    )
-    res <- tlogis_gradient_at(model, case, point$d, 1, 3, point$scale)
-    expect_false(res$gradient_not_finite, info = label)
-    expect_true(all(is.finite(res$gradient)), info = label)
-    allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
-    expect_true(
-      all(abs(res$gradient - res$finite_diff) <= allowed),
-      info = paste0(
-        label, ": gradient ", toString(signif(res$gradient, 5)),
-        ", finite difference ", toString(signif(res$finite_diff, 5))
-      )
-    )
-  }
-})
-
-# The gradient in the shape of a gamma delay is compared to the gradient of
-# the reference integral, not to CmdStan's finite differences, which have
-# errors of 2e-4 where the log CDF is large. The tolerance is 1e-5 relative
-# to the gradient, with a floor for gradients that are close to zero.
-expect_shape_grad_close <- function(model, point, label,
-                                    tolerance = 1e-5,
-                                    vectorised = FALSE) {
-  case <- list(dist_id = 2L, params = c(point$shape, point$rate))
-  max_delay <- if (vectorised) point$d else NULL
-  res <- tlogis_gradient_at(
-    model, case, point$d, point$pwindow, point$location, point$scale,
-    vectorised = vectorised
-  )
-  testthat::expect_false(res$gradient_not_finite, info = label)
-  testthat::expect_false(res$rejected, info = label)
-  testthat::expect_true(all(is.finite(res$gradient)), info = label)
-  reference <- tlogis_shape_grad_ref(
-    point$shape, point$rate, point$d, point$pwindow, point$location,
-    point$scale, max_delay
-  )
+expect_close_to_finite_diff <- function(res, point, label) {
+  allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
   testthat::expect_true(
-    abs(res$gradient[1] - reference) <=
-      tolerance * max(abs(reference), 1e-3),
+    all(abs(res$gradient - res$finite_diff) <= allowed),
     info = paste0(
-      label, ": gradient ", signif(res$gradient[1], 7),
-      ", reference ", signif(reference, 7)
+      label, ": gradient ", toString(signif(res$gradient, 5)),
+      ", finite difference ", toString(signif(res$finite_diff, 5))
     )
   )
 }
 
-test_that("the gamma shape gradient is accurate where the lower tail series
-  of the gamma CDF meets the cancellation of the series", {
-  model <- tlogis_gradient_model()
-  # The log CDFs are -19 to -68. The first term of the series of the gamma
-  # CDF is 1e-5 to 1 here, where Stan's gamma_lcdf() has a gradient in the
-  # shape with a relative error of up to 6e-6 that the cancellation amplified
-  # to 1e-3 at shape 20 and 4.6% at shape 150. A location before the window
-  # and a scale of 50 cancels the most, and a scale of 5 less.
-  points <- list(
-    list(shape = 150, rate = 50, d = 1.0492872, location = -1, scale = 50),
-    list(shape = 150, rate = 50, d = 1.0492872, location = 0.4, scale = 5),
-    list(shape = 20, rate = 6.6667, d = 0.7187, location = -1, scale = 50),
-    list(shape = 20, rate = 6.6667, d = 0.7187, location = 0.4, scale = 5),
-    list(shape = 80, rate = 26.667, d = 1, location = -1, scale = 50),
-    list(shape = 80, rate = 26.667, d = 0.95, location = 0.4, scale = 5)
-  )
-  for (point in points) {
-    point$pwindow <- 1
-    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
-    label <- tlogis_case_label(
-      case,
-      d = point$d, pwindow = 1, location = point$location,
-      scale = point$scale
+# The reference is the gradient of the integral, as CmdStan's finite
+# differences are not accurate enough at large shapes. The tolerance is 1e-5
+# relative, with a floor for gradients close to zero.
+expect_close_to_reference <- function(vectorised = FALSE) {
+  function(res, point, label) {
+    reference <- tlogis_shape_grad_ref(
+      point$shape, point$rate, point$d, point$pwindow, point$location,
+      point$scale, if (vectorised) point$d
     )
-    expect_true(
-      tlogis_case_analytic(case, point$location, point$scale, 1),
-      info = label
+    testthat::expect_true(
+      abs(res$gradient[1] - reference) <= 1e-5 * max(abs(reference), 1e-3),
+      info = paste0(
+        label, ": gradient ", signif(res$gradient[1], 7),
+        ", reference ", signif(reference, 7)
+      )
     )
-    expect_shape_grad_close(model, point, label)
   }
+}
+
+test_that("the gamma shape gradient matches finite differences where the
+  series cancel and in the lower tail", {
+  model <- tlogis_gradient_model()
+  expect_shape_gradients(
+    model,
+    list(
+      list(shape = 2.1, rate = 5, d = 1.7, location = 0.5, scale = 50),
+      list(shape = 6, rate = 2, d = 4, location = -1, scale = 50),
+      list(shape = 6, rate = 2, d = 4, location = 3, scale = 2),
+      list(shape = 2, rate = 20, d = 0.3, location = 0.5, scale = 2),
+      list(shape = 6, rate = 5, d = 1.5, location = 0.3, scale = 20),
+      list(shape = 6, rate = 2, d = 0.05, location = 3, scale = 0.5),
+      list(shape = 6, rate = 2, d = 0.02, location = 3, scale = 5),
+      list(shape = 20, rate = 2, d = 0.4, location = 3, scale = 0.5),
+      list(shape = 20, rate = 2, d = 0.8, location = 3, scale = 5)
+    ),
+    expect_close_to_finite_diff
+  )
 })
 
-test_that("the gamma shape gradient is finite and accurate in the upper tail
-  at large shapes", {
+test_that("the gamma shape gradient matches a reference integral at large
+  shapes", {
   model <- tlogis_gradient_model()
-  # The upper tail of the delay is 1e-7 to 1e-16 here, where Stan's
-  # gamma_lccdf() has a gradient in the shape with a relative error of
-  # 5e-4 at shape 80 and 2e-3 at shape 150, and NaN from shape 200.
-  points <- list(
-    list(shape = 80, rate = 26.667, d = 3.9, location = 3, scale = 0.5),
-    list(shape = 80, rate = 26.667, d = 4.1, location = -1, scale = 50),
-    list(shape = 150, rate = 50, d = 4.25, location = 3, scale = 0.5),
-    list(shape = 150, rate = 50, d = 4.5, location = 2, scale = 0.05),
-    list(shape = 250, rate = 83.333, d = 4.6, location = 3, scale = 0.5),
-    list(shape = 250, rate = 83.333, d = 4.8, location = -1, scale = 50),
-    list(shape = 400, rate = 133.3, d = 4.6, location = 3, scale = 0.5)
+  expect_shape_gradients(
+    model,
+    list(
+      list(shape = 150, rate = 50, d = 1.0492872, location = -1, scale = 50),
+      list(shape = 150, rate = 50, d = 1.0492872, location = 0.4, scale = 5),
+      list(shape = 20, rate = 6.6667, d = 0.7187, location = -1, scale = 50),
+      list(shape = 80, rate = 26.667, d = 0.95, location = 0.4, scale = 5),
+      list(shape = 80, rate = 26.667, d = 3.9, location = 3, scale = 0.5),
+      list(shape = 80, rate = 26.667, d = 4.1, location = -1, scale = 50),
+      list(shape = 150, rate = 50, d = 4.25, location = 3, scale = 0.5),
+      list(shape = 150, rate = 50, d = 4.5, location = 2, scale = 0.05),
+      list(shape = 250, rate = 83.333, d = 4.6, location = 3, scale = 0.5),
+      list(shape = 250, rate = 83.333, d = 4.8, location = -1, scale = 50),
+      list(shape = 400, rate = 133.3, d = 4.6, location = 3, scale = 0.5)
+    ),
+    expect_close_to_reference()
   )
-  for (point in points) {
-    point$pwindow <- 1
-    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
-    label <- tlogis_case_label(
-      case,
-      d = point$d, pwindow = 1, location = point$location,
-      scale = point$scale
-    )
-    expect_true(
-      tlogis_case_analytic(case, point$location, point$scale, 1),
-      info = label
-    )
-    expect_shape_grad_close(model, point, label)
-  }
 })
 
 test_that("the vectorised gamma log PMF has a finite, accurate gradient in the
   shape at large shapes", {
   model <- tlogis_gradient_model()
-  points <- list(
-    list(shape = 60, rate = 12, d = 9, location = 1, scale = 30),
-    list(shape = 80, rate = 16, d = 9, location = 3, scale = 0.5),
-    list(shape = 150, rate = 30, d = 9, location = -1, scale = 50),
-    list(shape = 250, rate = 27, d = 9, location = 3, scale = 0.5)
+  expect_shape_gradients(
+    model,
+    list(
+      list(shape = 60, rate = 12, d = 9, location = 1, scale = 30),
+      list(shape = 80, rate = 16, d = 9, location = 3, scale = 0.5),
+      list(shape = 150, rate = 30, d = 9, location = -1, scale = 50),
+      list(shape = 250, rate = 27, d = 9, location = 3, scale = 0.5)
+    ),
+    expect_close_to_reference(vectorised = TRUE),
+    vectorised = TRUE
   )
-  for (point in points) {
-    point$pwindow <- 1
-    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
-    label <- tlogis_case_label(
-      case,
-      d = point$d, pwindow = 1, location = point$location,
-      scale = point$scale
-    )
-    expect_true(
-      tlogis_case_analytic(case, point$location, point$scale, 1),
-      info = label
-    )
-    expect_shape_grad_close(
-      model, point, label,
-      vectorised = TRUE
-    )
-  }
 })
 
 test_that("the vectorised truncated logistic log PMF has finite gradients

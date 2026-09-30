@@ -18,15 +18,11 @@ Numeric vector of break points inside \verb{(0, pwindow)}, possibly
 empty.
 }
 \description{
-A quadrature over the primary event window that is not told where a
-narrow density has its mass steps over it and returns a CDF that is too
-small, without a warning. For the truncated logistic primary
-(\code{\link[=dtlogis]{dtlogis()}}) the mass is within a few scales of the location, or of the
-edge of the window nearest to it when the location is outside. This
+A quadrature that is not told where a narrow density has its mass steps
+over it and returns a CDF that is too small. For the truncated logistic
+primary (\code{\link[=dtlogis]{dtlogis()}}) the mass is within a few scales of the location, or
+of the nearest edge of the window when the location is outside. This
 returns break points at multiples of the scale from that centre, for
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} to integrate between. Other primaries have none.
-The primary is the truncated logistic if it is \code{\link[=dtlogis]{dtlogis()}} or if the
-class of \code{object} names it, as for a function with the name attribute
-\code{"dtlogis"}, which S3 dispatch treats as \code{\link[=dtlogis]{dtlogis()}}.
 }
 \keyword{internal}

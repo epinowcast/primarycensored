@@ -1356,11 +1356,6 @@ test_that("the small tilt and direct forms have accurate gradients for large
 test_that("the tilted gamma log CDF has a finite, accurate gradient in the
   shape at large shapes in both tails", {
   model <- exptilt_gradient_model()
-  # The tilt transforms are shared with the truncated logistic primary. The
-  # delay upper tail is 1e-7 to 1e-16 at the first points of each shape, where
-  # Stan's gamma_lccdf() has a gradient in the shape with a relative error of
-  # 5e-4 at shape 80 and 2e-3 at shape 150, and NaN from shape 200. The last
-  # point of each shape is in the lower tail, at a log CDF of about -20 to -70.
   # The reference is the gradient of the integral, by central differences in
   # the log shape with two Richardson extrapolations.
   points <- list(

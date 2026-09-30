@@ -152,16 +152,12 @@ pcens_cdf.default <- function(
 
 #' Break points for a narrow primary event density
 #'
-#' A quadrature over the primary event window that is not told where a
-#' narrow density has its mass steps over it and returns a CDF that is too
-#' small, without a warning. For the truncated logistic primary
-#' ([dtlogis()]) the mass is within a few scales of the location, or of the
-#' edge of the window nearest to it when the location is outside. This
+#' A quadrature that is not told where a narrow density has its mass steps
+#' over it and returns a CDF that is too small. For the truncated logistic
+#' primary ([dtlogis()]) the mass is within a few scales of the location, or
+#' of the nearest edge of the window when the location is outside. This
 #' returns break points at multiples of the scale from that centre, for
 #' [pcens_cdf.default()] to integrate between. Other primaries have none.
-#' The primary is the truncated logistic if it is [dtlogis()] or if the
-#' class of `object` names it, as for a function with the name attribute
-#' `"dtlogis"`, which S3 dispatch treats as [dtlogis()].
 #'
 #' @inheritParams pcens_cdf
 #'

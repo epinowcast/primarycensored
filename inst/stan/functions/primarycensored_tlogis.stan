@@ -1,30 +1,15 @@
 /*
  * Truncated logistic primary event window
  *
- * For a primary window [0, w] with the truncated logistic density
- * L'(p) / D_L, where L is the logistic CDF with location m and scale s and
- * D_L = L(w) - L(0), the primary event censored CDF at delay d is
- *   F_L(d) = F(a) + Phi / D_L,  a = d - w,
- *   Phi = int_a^d {L(d - u) - L(0)} f(u) du,
- * with f and F the delay density and CDF. Expanding L as a geometric series
- * writes Phi as sums of the transforms T_f(xi; .) of tilt_transform.stan at
- * the tilts xi = +/- n / s, in three parts
- *   a location before the window, m < 0: one series with n >= 1 of positive
- *   tilts over [a, d],
- *   the part of the window above the location, 0 <= m < w: a series with
- *   n >= 0 of positive tilts over [a, u], u = d - m,
- *   the part below it, m > 0: a series with n >= 1 of negative tilts over
- *   [u, d], with u = d - min(m, w).
- * See the R documentation of pcens_cdf_tlogis for the series. Each series is
- * summed with binomial taper weights, which are the Euler transform after
- * n0 terms, with n0 and M chosen by tlogis_series_terms() to bound the
- * truncation error. Every transform depends on one endpoint, a, u or d, so
- * the terms of primarycensored_tlogis_terms() are computed once per
- * endpoint and shared between neighbouring delays in
- * primarycensored_tlogis_lcdf_vectorized().
- *
- * A delay distribution plugs in through tilt_transform.stan and is then
- * supported by every window.
+ * The primary event censored CDF is F(a) + Phi / D_L with a = d - w and
+ * D_L the mass of the window, where Phi is a sum of series of the transforms
+ * of tilt_transform.stan at the tilts +/- n / s. The series are summed with
+ * binomial taper weights, with the number of terms chosen by
+ * tlogis_series_terms() to bound the truncation error. Each transform
+ * depends on one endpoint, a, u or d, so the terms of
+ * primarycensored_tlogis_terms() are computed once per endpoint and shared
+ * in primarycensored_tlogis_lcdf_vectorized(). The series are given in the
+ * R documentation of pcens_cdf_tlogis.
  */
 
 /**
@@ -556,17 +541,9 @@ real primarycensored_tlogis_small_delay_lcdf(data real d, int dist_id,
   * tlogis_is_small_delay(). Only for check_for_tlogis() is 1 and
   * check_for_tlogis_params() is 1.
   *
-  * The mass of the window and the plan of the series are computed here and in
-  * check_for_tlogis_params(), which chooses this path. Computing them once
-  * more costs about 4 microseconds of 25 to 300 for a call, so the plan is
-  * not passed through. The vectorised form computes them once for all delays.
-  *
-  * The gradient with respect to the shape of a gamma delay comes from the
-  * gamma tilt transforms, see log_tilt_transform_pair(), which avoid the
-  * inaccurate gradients of Stan's `gamma_lccdf()` and of `gamma_lcdf()`. It agrees with the gradient of a reference integral to a
-  * relative 1e-5 or so for shapes from 2 to 250 (checked), in the body
-  * and in both tails, including where the series cancel for a scale that is
-  * large relative to the window.
+  * The gamma shape gradient comes from the tilt transforms, see
+  * log_tilt_transform_pair(), not from Stan's `gamma_lccdf()` and
+  * `gamma_lcdf()`, whose shape gradients are too inaccurate for the series.
   *
   * @param d Delay
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18

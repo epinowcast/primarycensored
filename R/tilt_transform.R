@@ -18,10 +18,6 @@
 #' * Optionally `.pcens_tilt_moments()`, which is only needed by the small
 #'   tilt forms of [pcens_cdf.pcens_pexp_dexpgrowth()] and the small delay
 #'   form of [pcens_cdf_tlogis].
-#' * Optionally `.pcens_tilt_vectorised()`, returning `TRUE` if
-#'   `.pcens_tilt_transform()` accepts a vector `xi` of the length of `t`,
-#'   one tilt for each point. Windows that need many tilts at the same
-#'   endpoints, such as [pcens_cdf_tlogis], then evaluate them in one call.
 #'
 #' The Stan equivalents are `check_for_tilt_transform()`,
 #' `log_tilt_transform()`, `log_tilt_transform_upper()` and
@@ -32,10 +28,9 @@
 #' @param t Numeric vector of finite points at which to evaluate the
 #'   transform.
 #'
-#' @param xi Tilt \eqn{\xi}, a single number, or for methods with
-#'   `.pcens_tilt_vectorised()` a vector of the length of `t`. The exponentially
-#'   tilted window with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and
-#'   \eqn{\xi = 0} gives the delay CDF.
+#' @param xi Tilt \eqn{\xi}, a single number or a vector of the length of
+#'   `t`. The exponentially tilted window with tilt \eqn{\rho} needs
+#'   \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.
 #'
 #' @param upper Logical. If `TRUE` return the transform over \eqn{(t, \infty)}
 #'   rather than over the lower end of the support up to `t`. Evaluating the
@@ -49,8 +44,6 @@
 #'   tilted delay distribution exists for `xi`, otherwise `FALSE`. Callers use
 #'   the numerical method when it is `FALSE`.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
-#' * `.pcens_tilt_vectorised()`: `TRUE` if a vector `xi` is accepted, otherwise
-#'   `FALSE`.
 #' * `.pcens_tilt_moments()`: a matrix with two columns, the log of the first
 #'   and second moments of the delay about `t`, see
 #'   [pcens_cdf.pcens_pexp_dexpgrowth()].
@@ -79,17 +72,6 @@ NULL
 #' @rdname tilt_transform
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
-}
-
-#' @rdname tilt_transform
-.pcens_tilt_vectorised <- function(object) {
-  UseMethod(".pcens_tilt_vectorised")
-}
-
-#' @rdname tilt_transform
-#' @exportS3Method
-.pcens_tilt_vectorised.default <- function(object) {
-  FALSE
 }
 
 #' @rdname tilt_transform
@@ -228,12 +210,6 @@ NULL
 
 #' @rdname tilt_transform
 #' @exportS3Method
-.pcens_tilt_vectorised.pcens_pgamma <- function(object) {
-  TRUE
-}
-
-#' @rdname tilt_transform
-#' @exportS3Method
 .pcens_tilt_lower.pcens_pexp <- function(object) {
   0
 }
@@ -273,12 +249,6 @@ NULL
   out
 }
 
-#' @rdname tilt_transform
-#' @exportS3Method
-.pcens_tilt_vectorised.pcens_pexp <- function(object) {
-  TRUE
-}
-
 #' Normal delay parameters of a pcens object
 #'
 #' @inheritParams tilt_transform
@@ -309,20 +279,11 @@ NULL
 
 #' @rdname tilt_transform
 #' @exportS3Method
-.pcens_tilt_vectorised.pcens_pnorm <- function(object) {
-  TRUE
-}
-
-#' @rdname tilt_transform
-#' @exportS3Method
 .pcens_tilt_transform.pcens_pnorm <- function(object, t, xi, upper = FALSE) {
   # Completing the square gives a normal density with mean
   # mean + xi sd^2, so the transform is
   # exp(xi mean + xi^2 sd^2 / 2) Phi((t - mean - xi sd^2) / sd).
-  # The argument is formed as (t - mean) / sd - xi sd. Shifting the mean
-  # instead loses xi sd^2 to rounding when it is small relative to the mean,
-  # which is the case for a small sd with the large tilts of the truncated
-  # logistic series.
+  # Forming (t - mean) / sd - xi sd avoids rounding xi sd^2 into the mean.
   p <- .norm_mean_sd(object)
   xi * p$mean + 0.5 * xi^2 * p$sd^2 + stats::pnorm(
     (t - p$mean) / p$sd - xi * p$sd,
