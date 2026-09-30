@@ -29,19 +29,58 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * its own: without a matching update here the new primary silently falls
   * back to numerical integration.
   *
+  * The exponential (4), gamma (2) and normal (18) delays with an
+  * exponentially tilted primary (2) have an analytical solution built from
+  * tilt transforms, see check_for_exptilt(). It applies only where the tilted
+  * delay exists, which depends on the parameters. Use
+  * check_for_analytical_params() to choose between the analytical and the
+  * numerical path.
+  *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
   *
-  * @return 1 if an analytical solution exists, 0 otherwise
+  * @return 1 if an analytical solution exists, 0 otherwise. For the
+  * exponentially tilted solutions it may still not apply for given
+  * parameters, see check_for_analytical_params().
   */
 int check_for_analytical(int dist_id, int primary_id) {
   // Gamma, Lognormal, Weibull and generalised gamma with a Uniform primary
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
+  // Exponential, Gamma and Normal with an exponentially tilted primary
+  if (check_for_exptilt(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
   }
   return 0; // No analytical solution for other combinations
+}
+
+/**
+  * Check if the analytical solution applies for the given parameters
+  * @ingroup analytical_solution_helpers
+  *
+  * This is check_for_analytical() and, for solutions that depend on the
+  * parameters, their admissibility. The exponentially tilted solutions need
+  * the tilted delay distribution to exist, see check_for_tilt_transform().
+  * Where it does not, the numerical path is used. This is the check used to
+  * choose the path in primarycensored_cdf() and primarycensored_lcdf().
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param primary_id Distribution identifier for the primary distribution
+  * @param primary_params Array of primary distribution parameters
+  *
+  * @return 1 if the analytical solution applies, 0 if the numerical path is
+  * needed
+  */
+int check_for_analytical_params(int dist_id, array[] real params,
+                                int primary_id,
+                                array[] real primary_params) {
+  if (!check_for_analytical(dist_id, primary_id)) return 0;
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform(dist_id, -primary_params[1], params);
+  }
+  return 1;
 }
 
 /**
@@ -337,6 +376,22 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
                                          array[] real primary_params) {
   real q = max({d - pwindow, 0});
 
+  if (check_for_exptilt(dist_id, primary_id)) {
+    // The delay must have a tilt transform for this tilt, otherwise the
+    // caller should have used the numerical path, see
+    // check_for_analytical_params(). The delays here have support on the
+    // non-negative reals or on the reals, so q is not clipped at 0.
+    if (!check_for_tilt_transform(dist_id, -primary_params[1], params)) {
+      reject(
+        "The tilted delay distribution does not exist for tilt ",
+        primary_params[1], ". Use the numerical path, see ",
+        "check_for_analytical_params()."
+      );
+    }
+    return primarycensored_exptilt_lcdf(
+      d | dist_id, params, pwindow, primary_params[1]
+    );
+  }
   if (dist_id == 2 && primary_id == 1) {
     return primarycensored_gamma_uniform_lcdf(d | q, params, pwindow);
   } else if (dist_id == 1 && primary_id == 1) {
@@ -395,8 +450,10 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
     d, dist_id, params, pwindow, primary_id, primary_params
   );
 
-  // Apply truncation normalization
-  if (!is_inf(D) || L > 0) {
+  // Apply truncation normalization. Delays with support on the reals need it
+  // for a finite negative L too, as F(L) is not zero there.
+  if (!is_inf(D) || L > 0
+      || (!is_inf(L) && !dist_has_positive_support(dist_id))) {
     vector[2] bounds = primarycensored_truncation_bounds(
       L, D, dist_id, params, pwindow, primary_id, primary_params
     );

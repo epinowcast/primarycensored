@@ -3,6 +3,8 @@ functions {
   #include primarycensored.stan
   #include primarycensored_ode.stan
   #include primarycensored_analytical_cdf.stan
+  #include tilt_transform.stan
+  #include primarycensored_exptilt.stan
   #include expgrowth.stan
 
   real partial_sum(array[] int dummy, int start, int end,
