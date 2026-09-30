@@ -721,16 +721,16 @@ tlogis_gradient_at <- function(model, case, d, pwindow, location, scale,
   )
 }
 
-# Stan's gamma_lcdf has a gradient in the shape with a relative error of
-# about 1e-3, and of 1e-2 when the shape is large relative to the point, so
-# the shape is compared to a looser tolerance for gamma delays. Exponential
-# delays have no shape. The finite differences of CmdStan use a step of 1e-6,
-# so the 1e-12 relative error of the truncated series shows as noise of about
-# 1e-6 in them, which sets the tolerance of the other parameters.
+# The finite differences of CmdStan use a step of 1e-6, so the 1e-12 relative
+# error of the truncated series shows as noise of about 1e-6 in them, which
+# sets the tolerance. The gradient in the shape of a gamma delay comes from
+# Stan's gamma_lcdf(), which is accurate to 1e-7 in the body but not far into
+# the lower tail, so it has a looser tolerance. Exponential delays have no
+# shape.
 expect_tlogis_gradient_close <- function(res, case, label) {
   tolerance <- rep(5e-4, 4)
   if (case$dist_id == 2L) {
-    tolerance[1] <- 2e-2
+    tolerance[1] <- 2e-3
   }
   # A parameter the delay does not have has a zero gradient
   allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2)
@@ -814,6 +814,44 @@ test_that("the gamma shape gradient is accurate where the series cancel", {
     )
     expect_false(res$gradient_not_finite, info = label)
     expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
+    expect_true(
+      all(abs(res$gradient - res$finite_diff) <= allowed),
+      info = paste0(
+        label, ": gradient ", toString(signif(res$gradient, 5)),
+        ", finite difference ", toString(signif(res$finite_diff, 5))
+      )
+    )
+  }
+})
+
+test_that("the gamma shape gradient is accurate far into the lower tail", {
+  model <- tlogis_gradient_model()
+  # Stan's gradient of gamma_lcdf() in the shape truncates its series at an
+  # absolute tolerance, which is a relative error of up to 80% when the
+  # probability is below 1e-10. The log CDFs here are -25 to -115. A
+  # location after the window keeps the solution analytic.
+  points <- list(
+    list(shape = 6, rate = 2, d = 0.05, scale = 0.5),
+    list(shape = 6, rate = 2, d = 0.02, scale = 5),
+    list(shape = 6, rate = 2, d = 0.05, scale = 5),
+    list(shape = 20, rate = 2, d = 0.4, scale = 0.5),
+    list(shape = 20, rate = 2, d = 0.4, scale = 5),
+    list(shape = 20, rate = 2, d = 0.8, scale = 5)
+  )
+  for (point in points) {
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- tlogis_case_label(
+      case,
+      d = point$d, pwindow = 1, location = 3, scale = point$scale
+    )
+    expect_true(
+      tlogis_case_analytic(case, 3, point$scale, 1),
+      info = label
+    )
+    res <- tlogis_gradient_at(model, case, point$d, 1, 3, point$scale)
+    expect_false(res$gradient_not_finite, info = label)
     expect_true(all(is.finite(res$gradient)), info = label)
     allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
     expect_true(
