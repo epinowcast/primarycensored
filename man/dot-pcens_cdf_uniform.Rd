@@ -34,7 +34,8 @@ Only used if \code{upper_fn} is supplied.}
 
 \item{delay_cdf}{Optional function of a numeric vector of delays returning
 the delay CDF.
-Required only if \code{pwindow} contains zeros.}
+Required if \code{pwindow} contains zeros, and used for delays more than
+\eqn{10^6} windows wide, see Details.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -56,20 +57,34 @@ the answer is 1.
 With \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S = 1 - F} and
 \eqn{\tilde S = 1 - \tilde F} are the upper tails, \eqn{G(t) = t - E - H(t)}
 and for \eqn{d \ge w} the CDF is \eqn{1 - (H(d) - H(q)) / w}.
-This has no cancellation.
+This removes the far tail cancellation.
 The lower tail form has an absolute error of about
 \eqn{10^{-16} d / w}, which is negligible unless \eqn{d} is many windows
 wide.
+The upper tail form also cancels when \eqn{H(q)} is not small, as for a
+heavy tailed delay near the switch, so both forms lose about
+\eqn{10^{-16} \max(|G|, |H|) / w} when the window is narrow relative to
+\eqn{d}.
 When \code{upper_fn}, which returns \eqn{H}, is supplied it is used for the
 delays whose window starts above \code{switch_at}, taken as the delay mean, and
 that are more than 1000 windows wide.
 \code{terms_fn} is used for the rest.
 The two forms agree where they are both accurate.
 
+Delays more than \eqn{10^6} windows wide are not given by either form.
+If \code{delay_cdf} is supplied, the CDF is instead the mean of \eqn{F} over
+the window, \eqn{(1 / w) \int_{d - w}^{d} F(u) du}, from a 5 point
+Gauss-Legendre rule.
+\eqn{F} is smooth over so narrow a window, so the rule is accurate to
+rounding, and the cancellation error is at most about \eqn{10^{-10}}
+for the forms used below the cutoff.
+Without \code{delay_cdf} the two forms are always used.
+
 Delays at or below zero give 0, delays of \code{Inf} give 1 and missing delays
 are an error.
 Elements of \code{pwindow} equal to 0 are exact primary events and give the
 delay CDF, from \code{delay_cdf}.
-\code{q} and \code{pwindow} are recycled against each other.
+\code{q} and \code{pwindow} are recycled against each other, with a warning if the
+longer length is not a multiple of the shorter.
 }
 \keyword{internal}

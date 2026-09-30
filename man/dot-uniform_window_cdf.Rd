@@ -4,7 +4,7 @@
 \alias{.uniform_window_cdf}
 \title{Uniform primary CDF for positive, finite delays and positive windows}
 \usage{
-.uniform_window_cdf(d, w, terms_fn, upper_fn, switch_at)
+.uniform_window_cdf(d, w, terms_fn, upper_fn, switch_at, delay_cdf = NULL)
 }
 \arguments{
 \item{d}{Numeric vector of finite delays greater than 0.}
@@ -23,12 +23,17 @@ tails of the delay and partial expectation distributions.}
 \item{switch_at}{Delay above which the window start may use \code{upper_fn}, see
 Details.
 Only used if \code{upper_fn} is supplied.}
+
+\item{delay_cdf}{Optional function of a numeric vector of delays returning
+the delay CDF.
+Required if \code{pwindow} contains zeros, and used for delays more than
+\eqn{10^6} windows wide, see Details.}
 }
 \value{
 Numeric vector of unclamped CDF values.
 }
 \description{
-Chooses between the lower and upper tail forms of
+Chooses between the lower tail, upper tail and narrow window forms of
 \code{.pcens_cdf_uniform()} for each delay.
 }
 \keyword{internal}
