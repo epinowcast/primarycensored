@@ -161,6 +161,11 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 # Most terms of a series before the numerical method is used
 .tlogis_max_terms <- 64L
 
+# Multiples of the scale from the centre of a narrow window density at which
+# the numerical method breaks the integral. The density falls by about e^-x
+# at x scales, so the mass beyond 30 scales is below 1e-13.
+.tlogis_break_multiples <- c(-30, -12, -6, -3, -1.5, 0, 1.5, 3, 6, 12, 30)
+
 # Fraction of the terms of a series kept with weight 1 by the taper
 .tlogis_taper <- 0.35
 

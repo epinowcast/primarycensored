@@ -319,10 +319,13 @@ NULL
   # Completing the square gives a normal density with mean
   # mean + xi sd^2, so the transform is
   # exp(xi mean + xi^2 sd^2 / 2) Phi((t - mean - xi sd^2) / sd).
+  # The argument is formed as (t - mean) / sd - xi sd. Shifting the mean
+  # instead loses xi sd^2 to rounding when it is small relative to the mean,
+  # which is the case for a small sd with the large tilts of the truncated
+  # logistic series.
   p <- .norm_mean_sd(object)
   xi * p$mean + 0.5 * xi^2 * p$sd^2 + stats::pnorm(
-    t,
-    mean = p$mean + xi * p$sd^2, sd = p$sd,
+    (t - p$mean) / p$sd - xi * p$sd,
     lower.tail = !upper, log.p = TRUE
   )
 }

@@ -124,3 +124,45 @@ real tlogis_rng(real xmin, real xmax, real location, real scale) {
   }
   return fmin(fmax(location + scale * z, xmin), xmax);
 }
+
+/**
+  * Times at which to restart the ODE for a narrow truncated logistic primary
+  * @ingroup truncated_logistic_distributions
+  *
+  * The integrand of the primary event censored CDF is the delay CDF times the
+  * primary density at d - t. A narrow logistic density has its mass within a
+  * few scales of its location, or of the edge of the window nearest to it
+  * when the location is outside. A solver that takes large steps across the
+  * flat region steps over that spike, and returns a CDF that is too small
+  * without an error. The integral is split at multiples of the scale from
+  * that centre, so each part is solved on its own. The density falls by
+  * about e^-x at x scales, so the mass beyond 30 scales is below 1e-13.
+  *
+  * The integral does not depend on where it is split, so the gradients with
+  * respect to the times cancel.
+  *
+  * @param d Delay, the end of the integral
+  * @param start Start of the integral
+  * @param pwindow Primary event window
+  * @param location Location of the logistic distribution before truncation
+  * @param scale Scale of the logistic distribution before truncation, positive
+  *
+  * @return Strictly increasing times in (start, d), possibly empty
+  */
+vector tlogis_spike_times(data real d, real start, data real pwindow,
+                          real location, real scale) {
+  // Multiples of the scale in the primary event time, so decreasing to
+  // give increasing times
+  array[11] real multiples = {30, 12, 6, 3, 1.5, 0, -1.5, -3, -6, -12, -30};
+  real centre = fmin(fmax(location, 0), pwindow);
+  vector[11] times;
+  int n = 0;
+  for (k in 1:11) {
+    real time = d - (centre + scale * multiples[k]);
+    if (time > start && time < d && (n == 0 || time > times[n])) {
+      n += 1;
+      times[n] = time;
+    }
+  }
+  return head(times, n);
+}

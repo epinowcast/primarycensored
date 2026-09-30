@@ -105,6 +105,35 @@ vector primarycensored_truncation_bounds(
 }
 
 /**
+  * Relative tolerance of the ODE solver for a primary distribution
+  * @ingroup ode
+  *
+  * The default of `ode_rk45` (1e-6), except for the truncated logistic
+  * primary (primary_id 3), whose parts are short and whose integral is
+  * compared with the analytical solutions at about 1e-8.
+  *
+  * @param primary_id Primary distribution identifier
+  *
+  * @return Relative tolerance
+  */
+real primarycensored_ode_rel_tol(data int primary_id) {
+  return primary_id == 3 ? 1e-9 : 1e-6;
+}
+
+/**
+  * Absolute tolerance of the ODE solver for a primary distribution
+  * @ingroup ode
+  *
+  * @param primary_id Primary distribution identifier
+  *
+  * @return Absolute tolerance, 1e-6 as the default of `ode_rk45` or 1e-10
+  * for the truncated logistic primary
+  */
+real primarycensored_ode_abs_tol(data int primary_id) {
+  return primary_id == 3 ? 1e-10 : 1e-6;
+}
+
+/**
   * Compute the primary event censored CDF by numerical integration
   * @ingroup primary_censored_single
   *
@@ -113,6 +142,10 @@ vector primarycensored_truncation_bounds(
   * primarycensored_cdf(), without truncation, and the path the analytical
   * solutions are tested against. The solver tolerances are those of
   * `ode_rk45` (1e-6), so small CDFs are not accurate in relative terms.
+  * For a truncated logistic primary (primary_id 3) the integral is solved
+  * in parts split around the location, so that a narrow primary density is
+  * not stepped over, see tlogis_spike_times(), with the tolerances of
+  * primarycensored_ode_rel_tol() and primarycensored_ode_abs_tol().
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -143,9 +176,33 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
   );
   array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
 
-  vector[1] y0 = rep_vector(0.0, 1);
-  return ode_rk45(
-    primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids
+  vector[1] y = rep_vector(0.0, 1);
+  real start = lower_bound;
+  if (primary_id == 3) {
+    // A narrow truncated logistic primary density is a spike that the
+    // solver steps over, so the parts of the integral around it are solved
+    // one at a time, see tlogis_spike_times().
+    int n_spikes = num_elements(tlogis_spike_times(
+      d, lower_bound, pwindow, primary_params[1], primary_params[2]
+    ));
+    vector[n_spikes] spikes = tlogis_spike_times(
+      d, lower_bound, pwindow, primary_params[1], primary_params[2]
+    );
+    for (i in 1:n_spikes) {
+      y = ode_rk45_tol(
+        primarycensored_ode, y, start, {spikes[i]},
+        primarycensored_ode_rel_tol(primary_id),
+        primarycensored_ode_abs_tol(primary_id), 1000000,
+        theta, {d, pwindow}, ids
+      )[1];
+      start = spikes[i];
+    }
+  }
+  return ode_rk45_tol(
+    primarycensored_ode, y, start, {d},
+    primarycensored_ode_rel_tol(primary_id),
+    primarycensored_ode_abs_tol(primary_id), 1000000,
+    theta, {d, pwindow}, ids
   )[1, 1];
 }
 

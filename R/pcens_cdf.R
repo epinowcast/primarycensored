@@ -110,6 +110,7 @@ pcens_cdf.default <- function(
   pwindow,
   use_numeric = FALSE
 ) {
+  spike <- .primary_spike_breaks(object, pwindow)
   result <- vapply(
     q,
     function(d) {
@@ -124,7 +125,11 @@ pcens_cdf.default <- function(
       # For delays on the non-negative reals the integrand leaves zero at
       # p = d. A single integral can miss the mass on [0, d] when d is small
       # relative to pwindow, so the two sides are integrated separately.
-      breaks <- c(0, if (!is.na(d) && d > 0 && d < pwindow) d, pwindow)
+      # The same holds for a narrow primary density, see
+      # `.primary_spike_breaks()`.
+      breaks <- sort(unique(c(
+        0, if (!is.na(d) && d > 0 && d < pwindow) d, spike, pwindow
+      )))
       return(sum(vapply(
         seq_len(length(breaks) - 1L),
         function(i) {
@@ -143,6 +148,32 @@ pcens_cdf.default <- function(
   result <- pmin(1, pmax(0, result))
 
   return(result)
+}
+
+#' Break points for a narrow primary event density
+#'
+#' A quadrature over the primary event window that is not told where a
+#' narrow density has its mass steps over it and returns a CDF that is too
+#' small, without a warning. For the truncated logistic primary
+#' ([dtlogis()]) the mass is within a few scales of the location, or of the
+#' edge of the window nearest to it when the location is outside. This
+#' returns break points at multiples of the scale from that centre, for
+#' [pcens_cdf.default()] to integrate between. Other primaries have none.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @return Numeric vector of break points inside `(0, pwindow)`, possibly
+#'   empty.
+#'
+#' @keywords internal
+.primary_spike_breaks <- function(object, pwindow) {
+  if (!identical(object$dprimary, dtlogis)) {
+    return(numeric(0))
+  }
+  primary <- .tlogis_primary_args(object)
+  centre <- min(max(primary$location, 0), pwindow)
+  breaks <- centre + primary$scale * .tlogis_break_multiples
+  breaks[breaks > 0 & breaks < pwindow]
 }
 
 #' Method for step CDF delay with general primary event distribution

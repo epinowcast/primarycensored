@@ -385,6 +385,12 @@ narrow_delays <- list(
   )
 )
 
+# Relative difference, absolute below 1e-10 where `stats::integrate()` has
+# its absolute tolerance
+narrow_diff <- function(actual, expected) {
+  max(abs(actual - expected) / pmax(expected, 1e-10))
+}
+
 test_that("the numerical CDF resolves a narrow truncated logistic primary", {
   pwindow <- 2
   q <- c(0.5, 1, 3, 10)
@@ -400,11 +406,11 @@ test_that("the numerical CDF resolves a narrow truncated logistic primary", {
         # The default dispatch, which falls back where the series does not
         # apply, and the forced numerical method
         expect_lt(
-          max_rel_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
+          narrow_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
           label = label
         )
         expect_lt(
-          max_rel_diff(
+          narrow_diff(
             pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected
           ), 1e-6,
           label = paste("numeric:", label)
