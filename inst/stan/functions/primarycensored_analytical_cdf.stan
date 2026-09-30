@@ -348,44 +348,64 @@ vector primarycensored_beta_uniform_terms(real t, array[] real params) {
 }
 
 /**
-  * Test whether `inv_gamma_lcdf` underflows to `-inf` at these arguments
+  * Compute the log CDF of an Inverse gamma delay
   * @ingroup delay_log_cdfs
   *
-  * Tests the leading term of log Q(alpha, x) at x = beta / y against -700,
-  * as for lognormal_lcdf_underflows().
+  * The CDF is Q(alpha, x) with x = beta / y. It is evaluated on the log scale
+  * from the series for P(alpha, x) when x <= alpha + 1 and the continued
+  * fraction for Q(alpha, x) (modified Lentz) above. Unlike `inv_gamma_lcdf`
+  * it does not underflow in the lower tail, and autodiff gives accurate
+  * shape gradients.
   *
-  * @param y Value at which the log CDF would be evaluated
+  * @param y Positive value at which the log CDF is evaluated
   * @param alpha Shape parameter
   * @param beta Scale parameter
   *
-  * @return 1 if `inv_gamma_lcdf` would underflow or `y` is non-positive, 0
-  *   otherwise
+  * @return Log CDF at y
   */
-int inv_gamma_lcdf_underflows(real y, real alpha, real beta) {
-  if (y <= 0) {
-    return 1;
-  }
+real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
   real x = beta / y;
-  if (x <= alpha) {
-    return 0;
+  if (x > alpha + 1) {
+    real b = x + 1 - alpha;
+    real c = 1e300;
+    real d = inv(b);
+    real h = d;
+    for (i in 1:2000) {
+      real an = -i * (i - alpha);
+      b += 2;
+      d = an * d + b;
+      d = inv(abs(d) < 1e-300 ? 1e-300 : d);
+      c = b + an / c;
+      c = abs(c) < 1e-300 ? 1e-300 : c;
+      h *= d * c;
+      if (abs(d * c - 1) < 1e-15) break;
+    }
+    return (alpha - 1) * log(x) - x - lgamma(alpha) + log(x) + log(h);
   }
-  return (alpha - 1) * log(x) - x - lgamma(alpha) < -700 ? 1 : 0;
+  real term = 1;
+  real series = 1;
+  for (n in 1:2000) {
+    term *= x / (alpha + n);
+    series += term;
+    if (term < 1e-17 * series) break;
+  }
+  return log1m_exp(alpha * log(x) - x - lgamma(alpha + 1) + log(series));
 }
 
 /**
   * Compute the uniform primary terms at t for an Inverse gamma delay
   * @ingroup analytical_solution_helpers
   *
-  * Each term is formed whole and dropped whole, as in
-  * primarycensored_lognormal_uniform_terms(). The mean is
-  * E = beta / (alpha - 1) and the partial expectation distribution is the
-  * Inverse gamma with shape `alpha - 1`, so `alpha > 1` is required.
+  * The mean is E = beta / (alpha - 1) and the partial expectation
+  * distribution is the Inverse gamma with shape `alpha - 1`, so `alpha > 1`
+  * is required.
   *
   * @param t Time (d or q)
   * @param params Array of Inverse gamma distribution parameters
   * [alpha, beta]
   *
-  * @return Vector [log(t * F_T(t)), log(E * tilde F_T(t))]
+  * @return Vector [log(t * F_T(t)), log(E * tilde F_T(t))], both `-inf` for
+  * t <= 0
   */
 vector primarycensored_invgamma_uniform_terms(real t, array[] real params) {
   real alpha = params[1];
@@ -394,14 +414,14 @@ vector primarycensored_invgamma_uniform_terms(real t, array[] real params) {
     reject("Inverse gamma uniform primary terms need shape > 1, shape is ",
            alpha);
   }
+  if (t <= 0) {
+    return rep_vector(negative_infinity(), 2);
+  }
   real log_E = log(beta) - log(alpha - 1);
-  real log_t_F_T = inv_gamma_lcdf_underflows(t, alpha, beta)
-                   ? negative_infinity()
-                   : log(t) + inv_gamma_lcdf(t | alpha, beta);
-  real log_E_tF_T = inv_gamma_lcdf_underflows(t, alpha - 1, beta)
-                    ? negative_infinity()
-                    : log_E + inv_gamma_lcdf(t | alpha - 1, beta);
-  return [log_t_F_T, log_E_tF_T]';
+  return [
+    log(t) + primarycensored_inv_gamma_lcdf(t | alpha, beta),
+    log_E + primarycensored_inv_gamma_lcdf(t | alpha - 1, beta)
+  ]';
 }
 
 /**
