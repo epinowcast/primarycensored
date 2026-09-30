@@ -421,6 +421,8 @@ The method depends on the sign of $\xi = -r$.
   For a point right of the mode the upper transform is one panel that starts at the point.
   The other transform is the difference from the total, which is at least the mass on the other side of the mode, so it does not cancel.
   The panels are accurate to about $10^{-11}$ for $\sigma$ up to 1.8, and $10^{-13}$ for $\sigma$ of 1 or below, in the log transform.
+  The integrand falls from its plateau to zero over a width of about $1 / \sigma$, so for a larger $\sigma$ each panel is split into $\lceil \sigma / 1.8 \rceil$ equal panels.
+  A single panel per side gave a relative error in the CDF of $10^{-7}$ at $\sigma = 4$ and $3 \times 10^{-5}$ at 15, and the split keeps it at about $10^{-9}$ to $\sigma = 15$.
 - For $r < 0$, $\xi > 0$, the transform is the series $\sum_{k \geq 0} \xi^k m_k(\tau) / k!$ in the partial moments $m_k(\tau) = \int_0^\tau u^k f_T(u)~du = e^{k\mu + k^2\sigma^2/2}\,\Phi(z_\tau - k\sigma)$.
   All terms are positive, so the sum does not cancel.
   Past $k = \xi \tau$ the terms fall by at least a factor $\xi \tau / (k + 1)$, so about $\xi \tau + 9 \sqrt{\xi \tau} + 30$ terms are needed.
@@ -442,9 +444,16 @@ In Stan `check_for_analytical_params()` makes the choice from the parameters.
 The ODE is less accurate than the closed forms in the lower tail of a gamma with a shape below 1, with a relative error of about $4 \times 10^{-2}$ for shape 0.3, $r = -1$ and $\lambda = 1$ at $d = 10^{-3}$.
 Closed forms for these tilts would need a stable representation that is not implemented, see #388.
 The normal form has no restriction.
-The lognormal needs that $r \sigma^2 e^\mu$ is finite, and for $r < 0$ that the series needs at most 20000 terms.
-That is $\xi d + 9 \sqrt{\xi d} + 30 \leq 20000$ at the largest delay $d$, or $|r| d$ up to about 18700.
-Quantiles above that use the numerical path, one at a time in R and through `check_for_analytical_delay()` in Stan.
+The lognormal needs that $r \sigma^2 e^\mu$ is finite.
+For $r < 0$ the series needs about $\xi d + 9 \sqrt{\xi d} + 30$ terms at a delay $d$, and is used only where it is the faster accurate path.
+In R it costs about 0.05 microseconds per term and the numerical method about 20 microseconds per quantile, so the series is used up to $|r| d$ of 200.
+In Stan the gradient of the series costs 0.04 ms at $|r| d = 60$ and 0.06 ms at 100, against 0.035 ms for an ODE with a tolerance of $10^{-10}$, which matches the series to $10^{-7}$ in the gradient, so it is used up to $|r| d$ of 60.
+Past that the numerical path is used, one quantile at a time in R and through `check_for_analytical_delay()` at the largest delay in Stan.
+The exception is a window that is wide in tilt terms, $|r| w_P > 2$.
+There the numerical path is less accurate in the lower tail, where the CDF is small and varies fast, with a relative error of up to $5 \times 10^{-3}$ in R at $|r| w_P = 600$.
+The series is kept there up to 20000 terms, which is $|r| d$ up to about 18700.
+For fewer than 10 quantiles in R the numerical method is used only where $|r| w_P \leq 1$, where its error is about $10^{-6}$.
+Beyond that it has a relative error of $10^{-4}$ at $|r| w_P = 50$ and fails at 1000, so the transform is used for any number of quantiles.
 
 ## Tilts close to zero
 

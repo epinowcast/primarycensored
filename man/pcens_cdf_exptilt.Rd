@@ -183,7 +183,7 @@ the tails of a normal delay.
 absolute difference of about 1e-11 in the log transform for \code{sdlog} up to
 1.8, and 1e-13 for \code{sdlog} of 1 or below. Each range of the quadrature is
 split into \code{ceiling(sdlog / 1.8)} panels, which keeps the CDF accurate to
-a relative difference of 1e-9 or better for \code{sdlog} up to 15, as tested.
+a relative difference of about 1e-9 for \code{sdlog} up to 15, as tested.
 The CDF agrees with numerical integration to a relative difference of 1e-7
 or better over the tested grid of tilts, windows and quantiles. The
 largest differences are deep in the lower tail, where the CDF is below

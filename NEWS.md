@@ -38,11 +38,19 @@
   Stan takes about 70 to 150 microseconds for the vectorised PMF, 240 to 320 for 21 separate log CDFs, and 230 to 320 for the ODE at its default tolerance of 1e-6.
   The vectorised PMF is 1.7 to 3.9 times faster than the ODE and 3 to 13 times faster than the ODE with a tolerance of 1e-10, which is closer to the accuracy of the solution.
   One log CDF is 0.8 to 1.2 times as fast as the ODE at its default tolerance and 1.5 to 4 times faster than at 1e-10.
-  In R the transform has a fixed cost of about 0.2 ms, so `pcens_cdf()` uses the numerical method of `pcens_cdf.default()` for fewer than 10 quantiles.
+  In R the transform has a fixed cost of about 0.2 ms, so `pcens_cdf()` uses the numerical method of `pcens_cdf.default()` for fewer than 10 quantiles where `abs(r) * pwindow` is at most 1.
+  The numerical method has a relative error of about 1e-6 there, 1e-4 at `abs(r) * pwindow` of 50, and fails at 1000, so the transform is used for any number of quantiles beyond 1.
   At 12 quantiles it is 1.2 to 1.7 times faster, and at 40 about 3 times.
-  The series for `r < 0` is limited to 20000 terms, which is `abs(r) * q` up to about 18700.
-  In R the quantiles above that use `pcens_cdf.default()` and the others keep the series, through a new internal generic `.pcens_tilt_fits()`.
-  In Stan `check_for_tilt_transform_at()` and `check_for_analytical_delay()` make the same choice, so `primarycensored_cdf()`, `primarycensored_lcdf()` and `primarycensored_lcdf_vectorized()` use the ODE there and do not reject.
+  The series for `r < 0` costs about `abs(r) * q` terms per quantile, and is slower than the numerical method beyond `abs(r) * q` of about 200 in R (ratio of the times 0.7 at 100, 1.0 at 200, 1.4 at 300 and 2.0 at 500).
+  In R the quantiles above 200 use `pcens_cdf.default()` and the others keep the series, through a new internal generic `.pcens_tilt_fits()`.
+  A window that is wide in tilt terms, `abs(r) * pwindow` above 2, keeps the series up to its limit of 20000 terms (`abs(r) * q` up to about 18700), as the numerical method has a relative error of up to 5e-3 in the lower tail there.
+  In Stan the gradient of the series costs 0.04 ms per delay at `abs(r) * d` of 60, 0.06 ms at 100 and 1.1 ms at 3000.
+  The ODE costs 0.013 ms at its default tolerance of 1e-6, with a gradient that differs from the series by 1e-5 at 30 and 1e-3 at 3000, and 0.035 ms at a tolerance of 1e-10, which matches the series to 1e-7.
+  The two cross at about 60, so `check_for_tilt_transform_at()` and `check_for_analytical_delay()`, which now take `pwindow`, use the series up to `abs(r) * d` of 60 and the same exception for a wide window.
+  `primarycensored_cdf()`, `primarycensored_lcdf()` and `primarycensored_lcdf_vectorized()` use the ODE beyond that and do not reject.
+  The panels of the quadrature are split into `ceiling(sdlog / 1.8)` for a larger `sdlog`, in R (`.lnorm_n_panels()`) and in Stan (`primarycensored_lognormal_tilt_panel()`).
+  One panel per side had a relative error in the CDF of 1e-7 at `sdlog` of 4, 1e-6 at 6 and 3e-5 at 15.
+  The CDF is now accurate to about 1e-9 to `sdlog` of 15.
   See #369.
 
 ## Bug fixes
@@ -51,7 +59,8 @@
   It cancelled by about `1e-14 * q^2 * r / pwindow` far from the origin, so a window small next to the delay gave CDFs that were wrong by up to 99% without a warning.
   The direct form is more precise there.
   The CDF is now accurate to about `1e-14 * q / pwindow` relative, as for the uniform window solutions.
-  In Stan `primarycensored_exptilt_lcdf_vectorized()` chooses the form for each delay in that case and does not share the terms.
+  In Stan `primarycensored_exptilt_lcdf_vectorized()` chooses the form for each delay in that case.
+  It computes the moments or the terms once for each endpoint that a delay of that form needs, with one shared setup for the lognormal, so it is 2 to 3 times faster than one call per delay for `rho` of 1e-5 with delays of 1e4 to 2e4.
   See #367 and #369.
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.
