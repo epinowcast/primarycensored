@@ -215,7 +215,7 @@ test_that("primarycensored_gumbel_lcdf matches the R series and the
             obj, case$d, pwindow, mu, beta, n_terms,
             gumbel_case_lower(case)
           )
-          accepted <- fit$error <= 1e-9
+          accepted <- fit$error <= .gumbel_tol
           if (!any(accepted)) next
           d <- case$d[accepted]
           stan <- vapply(
@@ -284,7 +284,10 @@ test_that("Stan and R accept the same points of the series", {
         ))[2]
       }, numeric(1))
       info <- gumbel_case_label(case, mu = mu, beta = beta)
-      expect_identical(stan_error <= 1e-9, fit$error <= 1e-9, info = info)
+      expect_identical(
+        stan_error <= gumbel_error_tolerance(), fit$error <= .gumbel_tol,
+        info = info
+      )
       expect_equal(
         log(stan_error), log(fit$error),
         tolerance = 1e-3, info = info
@@ -318,38 +321,33 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
             case$dist_id, case$params, pwindow, lower, Inf, 4L, c(mu, beta)
           )
           expect_equal(exp(lcdf), plain, tolerance = 1e-9, info = info)
-          # The ODE path has tolerances of 1e-6, more where the density is
-          # steep, and it is the path used where the series does not apply
+          # The ODE path is used where the series does not apply, and is
+          # accurate to 1e-8 of the CDF, relative where it is above 1e-12
           ode <- vapply(
             case$d, primarycensored_numeric_cdf, numeric(1),
             case$dist_id, case$params, pwindow, 4L, c(mu, beta)
           )
-          expect_lt(max(abs(plain - ode)), 1e-3, label = info)
           reference <- gumbel_reference(
             case$d, pwindow, mu, beta, cdf, positive
           )
+          expect_lt(gumbel_error(ode, reference), 1e-7, label = info)
           accepted <- rep(FALSE, length(case$d))
           if (analytic) {
             fit <- .gumbel_lcdf(
               gumbel_case_object(case, mu, beta), case$d, pwindow, mu, beta,
               .gumbel_n_terms(mu / beta), lower
             )
-            accepted <- fit$error <= 1e-9
+            accepted <- fit$error <= .gumbel_tol
           }
-          # The series is accurate to 1e-8 and the ODE path to about 1e-4
-          # where the window density is steep
+          # The series is accurate to 1e-8 and so is the ODE path, at every
+          # mu / beta, where the density can be a narrow spike
+          expect_lt(
+            gumbel_error(plain, reference), 1e-7, label = info
+          )
           expect_lt(
             max(0, abs(plain - reference)[accepted]), 1e-8,
             label = info
           )
-          # The ODE solver does not resolve the very steep window density of
-          # a large mu / beta, where it is off by a few percent
-          if (mu / beta <= 10) {
-            expect_lt(
-              max(0, abs(plain - reference)[!accepted]), 1e-4,
-              label = info
-            )
-          }
         }
       }
     }
@@ -386,7 +384,7 @@ test_that("points where the series loses accuracy use the ODE", {
   d <- c(1, 3)
   n_terms <- gumbel_n_terms(0)
   fit <- .gumbel_lcdf(obj, d, 1e-7, 0, 1, n_terms, -Inf)
-  expect_true(all(fit$error > 1e-9))
+  expect_true(all(fit$error > .gumbel_tol))
   ode <- vapply(
     d, primarycensored_numeric_cdf, numeric(1),
     18L, c(3, 2), 1e-7, 4L, c(0, 1)
@@ -398,6 +396,216 @@ test_that("points where the series loses accuracy use the ODE", {
     ),
     log(ode)
   )
+})
+
+# Delays long relative to the window, for which the series does not apply,
+# with the matching family of gumbel_spike_families()
+gumbel_spike_stan_cases <- list(
+  list(dist_id = 18L, params = c(3, 2), family = 1L),
+  list(dist_id = 4L, params = 1, family = 2L),
+  list(dist_id = 2L, params = c(3, 1), family = 3L)
+)
+
+test_that("the ODE path resolves a narrow spike of the window density", {
+  # mu / beta of 15 to 50 at the end of the window and inside it, where
+  # integrating over the window returns 0 or more than 1 without an error
+  families <- gumbel_spike_families()
+  for (case in gumbel_spike_stan_cases) {
+    family <- families[[case$family]]
+    cdf <- gumbel_cdf(family)
+    for (s in gumbel_spike_settings()) {
+      label <- gumbel_label(family, s[["w"]], s[["mu"]], s[["beta"]])
+      reference <- gumbel_reference(
+        family$q, s[["w"]], s[["mu"]], s[["beta"]], cdf, family$positive
+      )
+      primary <- c(s[["mu"]], s[["beta"]])
+      ode <- vapply(
+        family$q, primarycensored_numeric_cdf, numeric(1),
+        case$dist_id, case$params, s[["w"]], 4L, primary
+      )
+      expect_lt(gumbel_error(ode, reference), 1e-7, label = label)
+      plain <- vapply(
+        family$q, primarycensored_cdf, numeric(1),
+        case$dist_id, case$params, s[["w"]],
+        if (family$positive) 0 else -Inf, Inf, 4L, primary
+      )
+      expect_lt(gumbel_error(plain, reference), 1e-7, label = label)
+      lcdf <- vapply(
+        family$q, primarycensored_lcdf, numeric(1),
+        case$dist_id, case$params, s[["w"]],
+        if (family$positive) 0 else -Inf, Inf, 4L, primary
+      )
+      expect_false(anyNA(lcdf), label = label)
+      expect_true(all(lcdf <= 0), label = label)
+      keep <- reference > 1e-12
+      expect_equal(
+        exp(lcdf[keep]), reference[keep], tolerance = 1e-7, info = label
+      )
+    }
+  }
+})
+
+test_that("the ODE path is accurate for a large mu over beta", {
+  family <- gumbel_spike_families()[[1]]
+  cdf <- gumbel_cdf(family)
+  for (ratio in c(15, 20, 50, 200)) {
+    beta <- 0.1
+    mu <- ratio * beta
+    for (pwindow in c(0.4, 1, 3)) {
+      reference <- gumbel_reference(family$q, pwindow, mu, beta, cdf, FALSE)
+      ode <- vapply(
+        family$q, primarycensored_numeric_cdf, numeric(1),
+        18L, c(3, 2), pwindow, 4L, c(mu, beta)
+      )
+      expect_lt(
+        gumbel_error(ode, reference), 1e-7,
+        label = sprintf("mu over beta %g, pwindow %g", ratio, pwindow)
+      )
+    }
+  }
+})
+
+test_that("the ODE path handles a location far below the window", {
+  # s(pwindow) underflows and the density is the exponentially decaying one,
+  # so the reference integrates dtgumbel() over the window
+  x <- c(1e-6, 0.3, 1, 3)
+  for (s in list(
+    c(mu = -50, beta = 0.02, w = 1), c(mu = -200, beta = 0.05, w = 2)
+  )) {
+    primary <- c(s[["mu"]], s[["beta"]])
+    ode <- vapply(
+      x, primarycensored_numeric_cdf, numeric(1),
+      4L, 1, s[["w"]], 4L, primary
+    )
+    reference <- vapply(x, function(d) {
+      stats::integrate(
+        function(z) {
+          pexp(d - z, 1) * dtgumbel(z, 0, s[["w"]], s[["mu"]], s[["beta"]])
+        },
+        0, min(d, s[["w"]]), rel.tol = 1e-12
+      )$value
+    }, numeric(1))
+    expect_true(all(ode >= 0 & ode <= 1), info = toString(s))
+    expect_lt(gumbel_error(ode, reference), 1e-7, label = toString(s))
+  }
+})
+
+test_that("a log CDF from the ODE is never NaN or above zero", {
+  # The ODE CDF can be 0 or negative by a rounding error of the solver, or
+  # above 1, where its log must not be NaN or positive
+  points <- list(
+    list(d = 31, id = 18L, par = c(3, 2), w = 1, mu = 2.7, beta = 0.05),
+    list(d = 37, id = 18L, par = c(3, 2), w = 7, mu = 1.5, beta = 0.05),
+    list(d = 0.01, id = 18L, par = c(1, 0.1), w = 1, mu = 0.5, beta = 0.2),
+    list(d = 13, id = 18L, par = c(5, 1), w = 1, mu = 0.3, beta = 0.111),
+    list(d = 12, id = 18L, par = c(5, 1), w = 1, mu = 0.3, beta = 0.111),
+    list(d = 37, id = 4L, par = 1, w = 7, mu = 1.5, beta = 0.05),
+    list(d = 37, id = 2L, par = c(3, 1), w = 7, mu = 1.5, beta = 0.05)
+  )
+  for (pt in points) {
+    lower <- if (pt$id == 18L) -Inf else 0
+    lcdf <- primarycensored_lcdf(
+      pt$d, pt$id, pt$par, pt$w, lower, Inf, 4L, c(pt$mu, pt$beta)
+    )
+    info <- toString(unlist(pt))
+    expect_false(is.nan(lcdf), info = info)
+    expect_lte(lcdf, 0)
+    cdf <- gumbel_reference(
+      pt$d, pt$w, pt$mu, pt$beta,
+      function(x) if (pt$id == 18L) pnorm(x, pt$par[1], pt$par[2]) else
+        if (pt$id == 4L) pexp(x, pt$par) else pgamma(x, pt$par[1], pt$par[2]),
+      pt$id != 18L
+    )
+    expect_equal(exp(lcdf), cdf, tolerance = 1e-7, info = info)
+  }
+})
+
+test_that("the series is used where its estimate is below the tolerance", {
+  expect_identical(gumbel_error_tolerance(), .gumbel_tol)
+  case <- gumbel_stan_cases[[3]]
+  used <- 0
+  for (mu in c(0.2, 0.25, 0.27, 0.3)) {
+    beta <- 0.1
+    n_terms <- gumbel_n_terms(mu / beta)
+    for (d in c(-2, 0.5, 2, 5, 9, 14)) {
+      fit <- as.vector(primarycensored_gumbel_lcdf_from_terms(
+        primarycensored_gumbel_terms(d, 18L, beta, n_terms, case$params),
+        primarycensored_gumbel_terms(d - 1, 18L, beta, n_terms, case$params),
+        d, 1, mu, beta, n_terms
+      ))
+      lcdf <- primarycensored_gumbel_lcdf(d, 18L, case$params, 1, mu, beta)
+      info <- sprintf("mu %g, d %g", mu, d)
+      if (fit[2] <= gumbel_error_tolerance()) {
+        expect_identical(lcdf, fit[1], info = info)
+        used <- used + 1
+      } else {
+        expect_identical(
+          lcdf,
+          primarycensored_gumbel_numeric_lcdf(
+            d, 18L, case$params, 1, mu, beta
+          ),
+          info = info
+        )
+      }
+      expect_equal(
+        exp(lcdf),
+        gumbel_reference(d, 1, mu, beta, gumbel_case_cdf(case), FALSE),
+        tolerance = 1e-8, info = info
+      )
+    }
+  }
+  expect_gt(used, 0)
+})
+
+test_that("a series rejected by the estimate is replaced by an accurate ODE", {
+  # The estimate of the series here is 1.9e-5, and the ODE is accurate to
+  # 1e-8 of the CDF where the series loses precision
+  lcdf <- primarycensored_gumbel_lcdf(1, 18L, c(5, 1), 1, 0.3, 0.111)
+  expected <- log(gumbel_reference(
+    1, 1, 0.3, 0.111, function(x) pnorm(x, 5, 1), FALSE
+  ))
+  expect_equal(lcdf, expected, tolerance = 1e-8)
+  # Where the series was rejected and the ODE used to be off by 23%
+  lcdf <- primarycensored_gumbel_lcdf(-2, 18L, c(3, 2), 2, 0.5, 0.2)
+  expect_equal(
+    exp(lcdf),
+    gumbel_reference(-2, 2, 0.5, 0.2, function(x) pnorm(x, 3, 2), FALSE),
+    tolerance = 1e-7
+  )
+})
+
+test_that("Stan tgumbel functions are accurate for a spike and a far location", {
+  # s(xmax) = exp(25), so the density needs the difference of s
+  t <- c(0, 1e-13, 1e-12, 5e-12)
+  x <- 1 - t
+  expect_equal(
+    vapply(x, tgumbel_lpdf, numeric(1), 0, 1, 1.5, 0.02),
+    dtgumbel(x, 0, 1, 1.5, 0.02, log = TRUE),
+    tolerance = 1e-12
+  )
+  expect_equal(
+    tgumbel_lpdf(1, 0, 1, 1.5, 0.02), 25 - log(0.02),
+    tolerance = 1e-13
+  )
+  # The normalisation underflows for a location far below the window
+  x <- c(0, 0.05, 0.5, 1)
+  for (beta in c(0.02, 0.05)) {
+    expect_equal(
+      vapply(x, tgumbel_lpdf, numeric(1), 0, 1, -50, beta),
+      dexpgrowth(x, 0, 1, r = -1 / beta, log = TRUE),
+      tolerance = 1e-10
+    )
+    inner <- x[2:3]
+    expect_equal(
+      vapply(inner, tgumbel_lcdf, numeric(1), 0, 1, -50, beta),
+      pexpgrowth(inner, 0, 1, r = -1 / beta, log.p = TRUE),
+      tolerance = 1e-10
+    )
+  }
+  draws <- replicate(50, tgumbel_rng(0, 1, 1.5, 0.02))
+  expect_true(all(draws <= 1 & draws > 1 - 1e-8))
+  draws <- replicate(50, tgumbel_rng(0, 1, -50, 0.02))
+  expect_true(all(is.finite(draws) & draws >= 0 & draws <= 1))
 })
 
 test_that("the analytical function rejects an inadmissible primary", {
@@ -649,9 +857,21 @@ test_that("Gumbel log CDFs have finite gradients matching finite
     list(d = 1.5, pwindow = 1, mu = -5, beta = 0.1),
     list(d = 2, pwindow = 2, mu = -30, beta = 1),
     list(d = 3, pwindow = 1, mu = 0, beta = 8),
-    # A point where the series is not accurate and the ODE is used
-    # (the gradient has the accuracy of the solver, about 1e-6)
-    list(d = 4, pwindow = 2, mu = 0.5, beta = 0.1, scale = 300)
+    # Points where the series is not accurate and the ODE is used, which
+    # has gradients with the accuracy of the solver
+    list(d = 4, pwindow = 2, mu = 0.5, beta = 0.1),
+    # Narrow spikes of the window density, at the end of the window and
+    # inside it, where the ODE used to give gradients of the wrong size
+    list(d = 1, pwindow = 1, mu = 2, beta = 0.1),
+    list(d = 5, pwindow = 1, mu = 1.5, beta = 0.05),
+    list(d = 7, pwindow = 7, mu = 1.5, beta = 0.05),
+    list(d = 3, pwindow = 2, mu = 3, beta = 0.06),
+    # Around where the series is replaced by the ODE, mu / beta of about
+    # 2.5 to 2.7, where the log CDF must be smooth
+    list(d = 2, pwindow = 1, mu = 0.25, beta = 0.1),
+    list(d = 2, pwindow = 1, mu = 0.27, beta = 0.1),
+    list(d = 5, pwindow = 1, mu = 0.3, beta = 0.111),
+    list(d = 11, pwindow = 1, mu = 0.3, beta = 0.111)
   )
   cases <- gumbel_stan_cases[c(1, 3, 4)]
   for (case in cases) {
@@ -668,10 +888,7 @@ test_that("Gumbel log CDFs have finite gradients matching finite
       expect_false(res$rejected, info = label)
       expect_length(res$gradient, 4)
       expect_true(all(is.finite(res$gradient)), info = label)
-      expect_gumbel_gradient_close(
-        res, case, label,
-        scale = if (is.null(point$scale)) 1 else point$scale
-      )
+      expect_gumbel_gradient_close(res, case, label)
     }
   }
 })
