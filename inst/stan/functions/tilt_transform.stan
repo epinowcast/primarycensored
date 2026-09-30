@@ -40,18 +40,56 @@ real primarycensored_log_diff_exp(real a, real b) {
   *
   * The derivative of std_normal_lcdf() is an approximation with a relative
   * error of about 1e-5. Differences of terms for tilts close to zero
-  * amplify that by 1e3 or more, so the normal tilt terms use log(Phi(z)),
-  * whose derivative is the exact density over the CDF. Phi() underflows
-  * below -37.5, where std_normal_lcdf() is used, and saturates at 1 above
-  * 8.25, where log(Phi(z)) is 0 to double precision.
+  * amplify that by 1e3 or more, so the normal tilt terms use log of the
+  * CDF, whose derivative is the exact density over the CDF. Phi() is
+  * 0.5 * (1 + erf(z / sqrt(2))) for z between -5 and 8.25, which loses
+  * relative precision for negative z (1.3e-6 at z = -4.9) and the direct
+  * form for a small tilt amplifies that by 1 / (|rho| w). For negative z
+  * this uses 0.5 * erfc(-z / sqrt(2)), which is accurate in the tail and
+  * whose derivative is exact. It underflows below -37.5, where
+  * std_normal_lcdf() is used. For z at least 0 log(Phi(z)) is accurate and
+  * saturates at 0 above 8.25.
   *
   * @param z Point
   *
   * @return log(Phi(z))
   */
 real primarycensored_log_std_normal_cdf(real z) {
-  if (z > -37) return log(Phi(z));
+  if (z >= 0) return log(Phi(z));
+  if (z > -37) return log(0.5 * erfc(-z / sqrt(2)));
   return std_normal_lcdf(z);
+}
+
+/**
+  * Log of the regularised lower incomplete gamma function
+  * @ingroup tilt_transforms
+  *
+  * The shape derivative of gamma_lcdf() is inaccurate well below the
+  * shape, with a relative error of 1.7e-2 for shape 20 at 2 and of 0.5 for
+  * shape 100 at 30, where the value is correct. Its accuracy recovers above
+  * about 0.4 of the shape, to 1e-8 or better. Below x = 0.5 shape this uses
+  * the lower series
+  * P(shape, x) = x^shape exp(-x) / Gamma(shape + 1) *
+  *   sum_k x^k / ((shape + 1) ... (shape + k)),
+  * built from elementary operations so that autodiff is exact. Each term is
+  * less than half the previous one, so it converges to double precision in
+  * at most about 55 terms, and in fewer for x well below the shape.
+  *
+  * @param x Point, positive
+  * @param shape Shape, positive
+  *
+  * @return log P(shape, x)
+  */
+real primarycensored_log_gamma_p(real x, real shape) {
+  if (x >= 0.5 * shape) return gamma_lcdf(x | shape, 1);
+  real term = 1;
+  real total = 1;
+  for (k in 1:200) {
+    term *= x / (shape + k);
+    total += term;
+    if (term < 1e-17 * total) break;
+  }
+  return shape * log(x) - x - lgamma(shape + 1) + log(total);
 }
 
 /**
@@ -141,8 +179,9 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * by xi, times the total (rate / (rate - xi))^shape. One tail is evaluated
   * and the other follows from it, which halves the cost of the incomplete
   * gamma function and of its derivative in the shape. The lower tail is
-  * gamma_lcdf(), whose shape derivative has a relative error below about
-  * 1e-5 except far in the lower tail. The upper tail is log1m_exp() of it,
+  * primarycensored_log_gamma_p(), which is gamma_lcdf() except well below
+  * the shape, where the shape derivative of gamma_lcdf() is inaccurate. The
+  * upper tail is log1m_exp() of it,
   * which is accurate in value and derivative for an upper tail down to
   * about 1e-9. The shape derivative of gamma_lccdf() is worse, with
   * relative errors of 1e-3 to 1e-2 over much of the bulk (for example shape
@@ -177,7 +216,7 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     if (gamma_lccdf_underflows(x, shape)) {
       return [log_total, negative_infinity()]';
     }
-    real log_lower = gamma_lcdf(x | shape, 1);
+    real log_lower = primarycensored_log_gamma_p(x, shape);
     if (log_lower > -1e-8) {
       real log_upper = gamma_lccdf(x | shape, 1);
       return [log_total + log1m_exp(log_upper), log_total + log_upper]';
@@ -283,11 +322,13 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
     ]';
   }
   real log_t = log(t);
-  real log_m0 = gamma_lcdf(t | shape, rate);
+  real x = t * rate;
+  real log_m0 = primarycensored_log_gamma_p(x, shape);
   // Partial first and second moments of the delay
-  real log_m1 = log(shape) - log(rate) + gamma_lcdf(t | shape + 1, rate);
+  real log_m1 = log(shape) - log(rate)
+                + primarycensored_log_gamma_p(x, shape + 1);
   real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate)
-                + gamma_lcdf(t | shape + 2, rate);
+                + primarycensored_log_gamma_p(x, shape + 2);
   real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
   real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
   real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);

@@ -108,8 +108,9 @@ NULL
 
 #' Gamma delay parameters of a pcens object
 #'
-#' Takes the `shape` and the `rate` or `scale` from the delay arguments as
-#' the gamma analytical solutions for the uniform primary do.
+#' Takes the `shape` and the `rate` or `scale` from the delay arguments. As
+#' for [stats::pgamma()], the rate is 1 if neither is given. The gamma
+#' analytical solutions for the uniform primary do not default it.
 #'
 #' @inheritParams tilt_transform
 #'
@@ -124,13 +125,7 @@ NULL
     stop("shape parameter is required for Gamma distribution", call. = FALSE)
   }
   if (is.null(rate)) {
-    if (is.null(scale)) {
-      stop(
-        "scale or rate parameter is required for Gamma distribution",
-        call. = FALSE
-      )
-    }
-    rate <- 1 / scale
+    rate <- if (is.null(scale)) 1 else 1 / scale
   }
   list(shape = shape, rate = rate)
 }

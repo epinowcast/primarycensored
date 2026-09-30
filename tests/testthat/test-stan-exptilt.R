@@ -792,7 +792,8 @@ test_that("the gamma tilt transform is finite far in the upper tail", {
     c(2.5, 0.4)
   )
   obj <- new_pcens(
-    pgamma, dexpgrowth, list(r = 0.3), shape = 2.5, rate = 0.4
+    pgamma, dexpgrowth, list(r = 0.3),
+    shape = 2.5, rate = 0.4
   )
   expect_equal(
     upper, .pcens_tilt_transform(obj, c(30, 60, 120), -0.3, upper = TRUE),
@@ -874,7 +875,8 @@ test_that("the gamma tilt transform gradients are accurate in the lower
       # The rate is on the log scale in the model, with a Jacobian term
       expected[2] <- expected[2] * theta[2] + 1
       res <- exptilt_gradient_at(
-        model, case, 12, pwindow, rho, vectorised = TRUE
+        model, case, 12, pwindow, rho,
+        vectorised = TRUE
       )
       label <- exptilt_case_label(case, pwindow = pwindow)
       expect_true(all(is.finite(res$gradient)), info = label)
@@ -929,7 +931,8 @@ test_that("primarycensored_log_gamma_p is accurate in value and shape
   for (shape in c(2.5, 20, 100)) {
     for (x in shape * c(0.05, 0.1, 0.2, 0.3, 0.4, 0.6, 1)) {
       res <- stan_gradient_at( # nolint: object_usage_linter.
-        model, data = list(x = x), init = list(a = shape)
+        model,
+        data = list(x = x), init = list(a = shape)
       )
       h <- 1e-5 * shape
       expected <- (

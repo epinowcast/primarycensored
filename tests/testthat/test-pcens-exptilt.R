@@ -348,7 +348,8 @@ test_that("delay parameters default as in the stats functions", {
     tolerance = 1e-7
   )
   obj_rate <- new_pcens(
-    pgamma, dexpgrowth, list(r = 0.3), shape = 2, rate = 1
+    pgamma, dexpgrowth, list(r = 0.3),
+    shape = 2, rate = 1
   )
   expect_identical(
     pcens_cdf(obj, c(1, 5), 2), pcens_cdf(obj_rate, c(1, 5), 2)

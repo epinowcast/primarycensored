@@ -13,7 +13,8 @@
 A list with \code{shape} and \code{rate}.
 }
 \description{
-Takes the \code{shape} and the \code{rate} or \code{scale} from the delay arguments as
-the gamma analytical solutions for the uniform primary do.
+Takes the \code{shape} and the \code{rate} or \code{scale} from the delay arguments. As
+for \code{\link[stats:pgamma]{stats::pgamma()}}, the rate is 1 if neither is given. The gamma
+analytical solutions for the uniform primary do not default it.
 }
 \keyword{internal}
