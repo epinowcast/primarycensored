@@ -4,9 +4,8 @@
   *
   * Returns log P(a, x), the log of the regularised lower incomplete gamma
   * function, for x = exp(log_x). `gamma_lcdf` underflows to `-inf` deep in
-  * the lower tail. When x < 0.9 (a + 1) and the log leading term is below
-  * -10, this sums the series for P(a, x) on the log scale. Otherwise it
-  * calls `gamma_lcdf`.
+  * the lower tail. This sums the series for P(a, x) on the log scale
+  * there, so both the value and its gradient stay finite.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -20,9 +19,7 @@ real gamma_lcdf_logx(real log_x, real a) {
   real x = exp(log_x);
   if (x < 0.9 * (a + 1)) {
     real log_lead = a * log_x - x - lgamma(a + 1);
-    // Below exp(-10) gamma_lcdf can underflow or have a poor gradient, so
-    // use the series. Its terms shrink by x / (a + n) < 0.9 at every step,
-    // so it converges in under 400 terms and the 1000 cap is never reached.
+    // Use the series where gamma_lcdf can underflow or lose its gradient.
     if (log_lead < -10) {
       real term = 1;
       real total = 1;
@@ -55,6 +52,9 @@ real gamma_lcdf_logx(real log_x, real a) {
   * @return Log CDF of the generalised gamma distribution, `-inf` for y = 0
   */
 real gengamma_lcdf(real y, real shape, real scale, real k) {
+  if (y < 0) {
+    reject("gengamma_lcdf: y must be non-negative, found y = ", y);
+  }
   if (y == 0) {
     return negative_infinity();
   }
