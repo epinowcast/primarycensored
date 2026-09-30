@@ -77,9 +77,10 @@ expect_gamma_gradient_ok <- function(res, label) {
 
 # Derivative of log P(a, x) (or log Q(a, x) for `lower = FALSE`) with
 # respect to a, by a fifth order central difference of `pgamma()`, which is
-# accurate to about 1e-10 relative
+# accurate to about 1e-10 relative. The step in log a shrinks with the
+# shape, because a fixed step of 1e-4 is too coarse for a of 1e5 or more.
 ref_dlogp_da <- function(x, a, lower = TRUE) {
-  h <- 1e-4 * a
+  h <- a * min(1e-4, 0.01 / sqrt(a))
   f <- function(e) pgamma(x, a + e, lower.tail = lower, log.p = TRUE)
   (-f(2 * h) + 8 * f(h) - 8 * f(-h) + f(-2 * h)) / (12 * h)
 }

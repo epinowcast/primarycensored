@@ -340,3 +340,51 @@ test_that("the gamma log CDFs reject a rate that is not positive and finite", {
     )
   }
 })
+
+test_that("gamma_log_lead_logx agrees with the Poisson log PMF for large
+   shapes", {
+  # dpois() uses the Stirling error and bd0, so it is accurate near x = a.
+  # The direct expression a log(x) - x - lgamma(a + 1) is off by about
+  # 1e-10 at a = 1e5, which the log CDF difference amplifies.
+  for (a in c(50, 99, 100, 150, 1e3, 1e4, 1e5, 1e6, 1e7)) {
+    for (r in c(1e-6, 0.01, 0.3, 0.5, 0.6, 0.9, 0.999, 1, 1.001, 1.5,
+                1.99, 2.1, 5, 30)) {
+      log_x <- log(a * r)
+      expected <- dpois(a, exp(log_x), log = TRUE)
+      expect_lt(
+        abs(gamma_log_lead_logx(log_x, a) - expected),
+        1e-12 * max(1, abs(expected)),
+        label = sprintf("a = %g, x over a = %g", a, r)
+      )
+    }
+  }
+})
+
+test_that("primarycensored_lcdf is accurate for a large Gamma shape when
+   the delay is long compared with the primary window", {
+  # The two terms are subtracted and the result is divided by pwindow, so
+  # their rounding error is amplified by about d / pwindow. References are
+  # integrals of pgamma() from ref_lcdf_unif_gamma().
+  cases <- list(
+    list(d = 1e7, shape = 1e5, rate = 0.01, pwindow = 0.01, tol = 1e-5),
+    list(d = 1e6, shape = 1e4, rate = 0.01, pwindow = 0.01, tol = 1e-6),
+    list(d = 2e6, shape = 1e5, rate = 0.05, pwindow = 0.5, tol = 1e-7),
+    list(d = 1e5, shape = 1e5, rate = 1, pwindow = 1, tol = 1e-8)
+  )
+  for (case in cases) {
+    expected <- ref_lcdf_unif_gamma(
+      case$d, case$pwindow, case$shape, case$rate
+    )
+    actual <- primarycensored_lcdf(
+      case$d, 2L, c(case$shape, case$rate), case$pwindow, 0, Inf, 1L,
+      numeric(0)
+    )
+    expect_lt(
+      abs(actual - expected), case$tol,
+      label = sprintf(
+        "d = %g, shape = %g, rate = %g, pwindow = %g", case$d, case$shape,
+        case$rate, case$pwindow
+      )
+    )
+  }
+})
