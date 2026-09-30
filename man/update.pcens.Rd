@@ -18,10 +18,10 @@ arguments. These are merged into \code{object$primary_args} in the same way
 as \code{...} is merged into \code{object$args}. Defaults to \code{NULL}, which leaves
 the primary event distribution arguments unchanged.}
 
-\item{check}{Logical. If \code{FALSE}, skip validation of \code{...} and
-\code{primary_args}. Use this when repeatedly updating one object with names
-that have already been checked. As \code{check} comes after \code{...}, a delay
-parameter called \code{check} cannot be set. Defaults to \code{TRUE}.}
+\item{check}{Logical. If \code{TRUE}, the default, validate \code{...} and
+\code{primary_args}. Set to \code{FALSE} when repeatedly updating one object with
+names that have already been checked. As \code{check} comes after \code{...}, a
+delay parameter called \code{check} cannot be set.}
 }
 \value{
 A \code{pcens} object with the same class as \code{object} and updated
@@ -49,10 +49,9 @@ Otherwise an error is raised. Names in \code{primary_args} are not checked
 against \code{dprimary}.
 
 With \code{check = FALSE} none of these checks are run.
-Unnamed and misspelt parameters are not detected.
-A fully unnamed \code{...} is ignored.
-Misspelt names are added to the object and only fail, or are ignored,
-when the object is evaluated.
+Unnamed or misspelt parameters are not detected and can silently change
+the result of the numerical path.
+Only use it with names that have already been validated.
 }
 \examples{
 obj <- new_pcens(
