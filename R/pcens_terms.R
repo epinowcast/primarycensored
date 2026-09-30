@@ -21,8 +21,9 @@
 #'
 #' The CDF at `q` combines terms at `q` and at `max(q - pwindow, 0)`. Each
 #' distinct endpoint is evaluated once and reused where a point shifted by
-#' `pwindow` equals another point. Without overlap, or for a vector
-#' `pwindow`, the terms are evaluated directly at both endpoints.
+#' `pwindow` equals another point. Without enough overlap to halve the
+#' evaluations, or for a vector `pwindow`, the terms are evaluated directly
+#' at both endpoints.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -43,13 +44,14 @@
     idx <- match(lower, q)
     unmatched <- is.na(idx)
     extra <- unique(lower[unmatched])
-    shared <- length(extra) < n
+    shared <- 2 * length(extra) <= n
   }
   if (shared) {
-    all_terms <- spec$terms(c(q, extra))
     idx[unmatched] <- n + match(lower[unmatched], extra)
-    terms_d <- lapply(all_terms, `[`, seq_len(n))
-    terms_q <- lapply(all_terms, `[`, idx)
+    terms_d <- spec$terms(q)
+    terms_q <- Map(
+      function(d, e) c(d, e)[idx], terms_d, spec$terms(extra)
+    )
   } else {
     terms_d <- spec$terms(q)
     terms_q <- spec$terms(lower)
