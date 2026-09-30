@@ -300,7 +300,8 @@ test_that("pcens_pmf, pprimarycensored and truncation use the analytic CDF", {
   )
   expect_identical(
     pprimarycensored(
-      c(1, 4), pnorm, dprimary = dtlogis, pwindow = 2,
+      c(1, 4), pnorm,
+      dprimary = dtlogis, pwindow = 2,
       primary_args = list(location = 0.5, scale = 0.2),
       mean = 3, sd = 2
     ),
@@ -445,7 +446,8 @@ test_that("the numerical CDF resolves a named wrapper of dtlogis", {
     )
     expect_lt(
       narrow_diff(pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected),
-      1e-6, label = paste("numeric, scale", scale)
+      1e-6,
+      label = paste("numeric, scale", scale)
     )
   }
 })
@@ -459,7 +461,8 @@ test_that("the normal tilt transform keeps the shift of a small sd", {
     }
     upper <- min(40, pwindow / sd)
     stats::integrate(
-      integrand, 0, upper, rel.tol = 1e-13, abs.tol = 0, subdivisions = 2000L
+      integrand, 0, upper,
+      rel.tol = 1e-13, abs.tol = 0, subdivisions = 2000L
     )$value
   }
   cases <- list(

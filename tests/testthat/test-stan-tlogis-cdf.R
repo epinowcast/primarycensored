@@ -424,7 +424,8 @@ test_that("the ODE path resolves a narrow truncated logistic primary", {
         expect_lt(
           max(abs(ode - expected)), 1e-7,
           label = tlogis_case_label(
-            case, location = location, scale = scale
+            case,
+            location = location, scale = scale
           )
         )
       }

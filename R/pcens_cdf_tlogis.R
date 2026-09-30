@@ -525,7 +525,8 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
     return(list(
       t = t,
       lower = matrix(
-        .pcens_tilt_transform(object, grid_t, grid_xi), nrow = length(t)
+        .pcens_tilt_transform(object, grid_t, grid_xi),
+        nrow = length(t)
       ),
       upper = matrix(
         .pcens_tilt_transform(object, grid_t, grid_xi, upper = TRUE),
