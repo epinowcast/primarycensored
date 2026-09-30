@@ -63,7 +63,14 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="1.6.0" id="primarycensored-160">primarycensored 1.6.0<a class="anchor" aria-label="anchor" href="#primarycensored-160"></a></h2>
+<h2 class="pkg-version" data-toc-text="development version" id="primarycensored-development-version">primarycensored (development version)<a class="anchor" aria-label="anchor" href="#primarycensored-development-version"></a></h2>
+<div class="section level3">
+<h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
+<ul><li>A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail. Reverse-mode <code>gamma_p()</code> in Stan drops its gradients there, so <code>log_weibull_g()</code> now uses <code>gamma_lcdf()</code>, which gives the same values. See <a href="https://github.com/epinowcast/primarycensored/issues/364" class="external-link">#364</a>.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="1.6.0" id="primarycensored-160">primarycensored 1.6.0<a class="anchor" aria-label="anchor" href="#primarycensored-160"></a></h2><p class="text-muted">CRAN release: 2026-09-25</p>
 <p>This release makes <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code>, <code><a href="../reference/pprimarycensored.html">pprimarycensored()</a></code>, <code><a href="../reference/new_pcens.html">new_pcens()</a></code> and <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> substantially faster. The vectorised Stan PMF is also faster for common delays with a uniform primary. It adds support for zero-width primary and secondary censoring windows, so exact, single interval censored and doubly interval censored data can be fitted together, and adds <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> and <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> for <code>pcens</code> objects. The one breaking change is that <code><a href="../reference/dprimarycensored.html">dprimarycensored()</a></code> and <code><a href="../reference/pcens_pmf.html">pcens_pmf()</a></code> with <code>swindow = 0</code> now return a density rather than 0.</p>
 <div class="section level3">
 <h3 id="performance-1-6-0">Performance<a class="anchor" aria-label="anchor" href="#performance-1-6-0"></a></h3>
