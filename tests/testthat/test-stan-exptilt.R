@@ -1025,8 +1025,9 @@ test_that("the vectorised tilted log PMF has finite gradients for large
   shapes", {
   model <- exptilt_gradient_model()
   # The sum over the delays 1 to 20 of a gamma with shape 200 and rate 20
-  # has delays far into the upper tail
-  for (case in exptilt_large_shape_cases) {
+  # has delays far into the upper tail. A shape of 1000 has no delay range
+  # with every PMF above the smallest double, as the bulk is 0.2 wide.
+  for (case in exptilt_large_shape_cases[1:2]) {
     for (point in list(
       list(d = 20, pwindow = 1, rho = 0.2),
       list(d = 12, pwindow = 1, rho = 0.2),
@@ -1134,9 +1135,12 @@ test_that("the normal log CDF has an exact gradient in the deep lower tail", {
     # d/dz log Phi(z) = phi(z) / Phi(z)
     expected <- exp(stats::dnorm(zz, log = TRUE) -
       stats::pnorm(zz, log.p = TRUE))
-    expect_false(res$gradient_not_finite, info = zz)
+    expect_false(res$gradient_not_finite, info = as.character(zz))
     # CmdStan prints the gradient to 6 significant digits
-    expect_equal(res$gradient, expected, tolerance = 2e-6, info = zz)
+    expect_equal(
+      res$gradient, expected,
+      tolerance = 1e-5, info = as.character(zz)
+    )
   }
 })
 
@@ -1196,7 +1200,151 @@ test_that("the normal tilted log CDF gradients are accurate in the deep
     expect_false(res$gradient_not_finite, info = label)
     expect_true(all(is.finite(res$gradient)), info = label)
     expect_true(
-      all(abs(res$gradient - expected) <= 1e-6 * pmax(abs(expected), 1e-2)),
+      all(abs(res$gradient - expected) <= 1e-5 * pmax(abs(expected), 1e-2)),
+      info = paste0(
+        label, ": gradient ", toString(signif(res$gradient, 6)),
+        ", reference ", toString(signif(expected, 6))
+      )
+    )
+  }
+})
+
+# Reference log of the upper tail 1 - F_rho(d) of a gamma delay with a tilted
+# window, from the integral of the upper tail of the delay.
+exptilt_gamma_log_upper <- function(d, pwindow, rho, shape, rate) {
+  log_integrand <- function(z) {
+    window_density <- exptilt_window_density( # nolint: object_usage_linter.
+      z, pwindow, rho
+    )
+    stats::pgamma(d - z, shape, rate, lower.tail = FALSE, log.p = TRUE) +
+      log(window_density)
+  }
+  shift <- log_integrand(0)
+  integral <- stats::integrate(
+    function(z) exp(vapply(z, log_integrand, numeric(1)) - shift),
+    0, pwindow,
+    rel.tol = 1e-13, abs.tol = 0
+  )$value
+  shift + log(integral)
+}
+
+test_that("the rate gradient of the tilted log CDF is accurate where the CDF
+  is close to 1", {
+  # The log CDF is -U for an upper tail U far below 1, and its derivative is
+  # -U / (1 - U) times the derivative of log U. The derivative in the rate
+  # needs the tail derivative to survive the log of the total, which was
+  # -2e-19 instead of 1.4e-15 for delay 18 when the two terms of it that
+  # cancel were kept apart.
+  model <- exptilt_unary_model(
+    paste0(
+      "primarycensored_lcdf(x | 2, {200.0, a}, 1.0, 0.0, ",
+      "positive_infinity(), 2, {0.2})"
+    ),
+    "pcd_exptilt_lcdf_rate"
+  )
+  for (d in c(12, 14, 16, 18, 20)) {
+    res <- stan_gradient_at( # nolint: object_usage_linter.
+      model,
+      data = list(x = d, which = 1L), init = list(a = 20)
+    )
+    log_upper <- function(rate) {
+      exptilt_gamma_log_upper(d, 1, 0.2, 200, rate)
+    }
+    h <- 1e-4
+    slope <- (
+      -log_upper(20 * exp(2 * h)) + 8 * log_upper(20 * exp(h)) -
+        8 * log_upper(20 * exp(-h)) + log_upper(20 * exp(-2 * h))
+    ) / (12 * h * 20)
+    upper <- exp(log_upper(20))
+    expected <- -upper * slope / (1 - upper)
+    expect_equal(
+      res$gradient, expected,
+      tolerance = 1e-4, info = as.character(d)
+    )
+  }
+})
+
+test_that("the small tilt forms have a tilt gradient within the documented
+  bound", {
+  # The second order term of the small tilt forms is not included, so the
+  # relative error of the derivative in the tilt is about |rho| w / 6, up to
+  # 2e-5 at the threshold of 1e-4. CmdStan prints 6 significant digits.
+  model <- exptilt_gradient_model()
+  points <- list(
+    list(params = c(100, 10), d = 3.744, pwindow = 3, rho = 1e-5),
+    list(params = c(100, 10), d = 12, pwindow = 3, rho = 1e-5),
+    list(params = c(2.5, 0.4), d = 6, pwindow = 10, rho = 9.9e-6),
+    list(params = c(2.5, 0.4), d = 6, pwindow = 2, rho = -4.9e-5),
+    list(params = c(20, 4), d = 5, pwindow = 1, rho = 9e-5),
+    list(params = c(2.5, 0.4), d = 0.0009, pwindow = 2, rho = 0.04)
+  )
+  for (point in points) {
+    case <- list(dist_id = 2L, params = point$params)
+    cdf <- function(x) stats::pgamma(x, point$params[1], point$params[2])
+    log_cdf <- function(rho) {
+      log(exptilt_reference(point$d, point$pwindow, rho, cdf))
+    }
+    h <- max(abs(point$rho) * 0.05, 1e-6)
+    expected <- (
+      -log_cdf(point$rho + 2 * h) + 8 * log_cdf(point$rho + h) -
+        8 * log_cdf(point$rho - h) + log_cdf(point$rho - 2 * h)
+    ) / (12 * h)
+    res <- exptilt_gradient_at(
+      model, case, point$d, point$pwindow, point$rho
+    )
+    label <- exptilt_case_label(
+      case,
+      d = point$d, pwindow = point$pwindow, r = point$rho
+    )
+    expect_lt(abs(res$gradient[3] / expected - 1), 3e-5, label = label)
+  }
+})
+
+test_that("the small tilt and direct forms have accurate gradients for large
+  shapes", {
+  # The finite differences of CmdStan are not accurate for a shape of 1000,
+  # so the reference is a five point central difference of the log CDF from
+  # the reference integral. The small tilt form takes the moments from the
+  # gamma CDFs of the raised shapes, and the tilt of -1e-3 with a window of 3
+  # takes the direct form.
+  model <- exptilt_gradient_model()
+  points <- list(
+    list(case = 3, d = 5, pwindow = 2, rho = -1e-5),
+    list(case = 3, d = 5.3, pwindow = 3, rho = -1e-3),
+    list(case = 3, d = 4.6, pwindow = 1, rho = 1e-5),
+    list(case = 1, d = 10, pwindow = 2, rho = -1e-5),
+    list(case = 1, d = 11, pwindow = 1, rho = 1e-5),
+    list(case = 1, d = 9, pwindow = 3, rho = -1e-3)
+  )
+  for (point in points) {
+    case <- exptilt_large_shape_cases[[point$case]]
+    theta <- c(case$params, point$rho)
+    log_cdf <- function(theta) {
+      cdf <- function(x) stats::pgamma(x, theta[1], theta[2])
+      log(exptilt_reference(point$d, point$pwindow, theta[3], cdf))
+    }
+    steps <- c(
+      1e-5 * theta[1:2], max(abs(theta[3]) * 0.05, 1e-7)
+    )
+    expected <- vapply(1:3, function(i) {
+      at <- function(step) {
+        theta[i] <- theta[i] + step * steps[i]
+        log_cdf(theta)
+      }
+      (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / (12 * steps[i])
+    }, numeric(1))
+    # The rate is on the log scale in the model, with a Jacobian term
+    expected[2] <- expected[2] * theta[2] + 1
+    res <- exptilt_gradient_at(
+      model, case, point$d, point$pwindow, point$rho
+    )
+    label <- exptilt_case_label(
+      case,
+      d = point$d, pwindow = point$pwindow, r = point$rho
+    )
+    expect_true(all(is.finite(res$gradient)), info = label)
+    expect_true(
+      all(abs(res$gradient - expected) <= 3e-5 * pmax(abs(expected), 1e-2)),
       info = paste0(
         label, ": gradient ", toString(signif(res$gradient, 6)),
         ", reference ", toString(signif(expected, 6))

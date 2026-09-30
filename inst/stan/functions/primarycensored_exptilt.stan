@@ -44,7 +44,10 @@ int check_for_exptilt(int dist_id, int primary_id) {
   * 1e-14 / (|rho| w) relative precision. The form for small |rho| w
   * (primarycensored_exptilt_small_window_lcdf_from_terms()) has a truncation
   * error of about (|rho| w)^2 / 12. They are both below 1e-9 at the
-  * threshold 1e-4.
+  * threshold 1e-4. The derivative of the small form in rho is less accurate,
+  * with a relative error of about |rho| w / 6, up to 2e-5 at the threshold,
+  * as the second order term is not included. Its derivatives in the delay
+  * parameters have the error of its value.
   *
   * @param rho Tilt
   * @param pwindow Primary event window
@@ -183,7 +186,9 @@ real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
   *   F_rho(d) = (G_1(d) - G_1(q)) / w
   *     + rho (G_2(d) - w G_1(d) - G_2(q) - w G_1(q)) / (2 w) + O((rho w)^2)
   * which is the uniform window solution at rho = 0. Terms are scaled by
-  * G_1(d) so nothing underflows when the CDF is small.
+  * G_1(d) so nothing underflows when the CDF is small. The derivative in rho
+  * has a relative error of about |rho| w / 6 from the O((rho w)^2) term, see
+  * exptilt_is_small_window().
   *
   * @param moments_d Moments [log G_1, log G_2] at d from
   *   primarycensored_tilt_moments()
@@ -213,6 +218,7 @@ real primarycensored_exptilt_small_window_lcdf_from_terms(
   *
   * For exptilt_is_small_delay() is 1 the terms at d - pwindow are zero and
   * F_rho(d) = rho (G_1(d) + rho G_2(d) / 2) / (exp(rho w) - 1) + O((rho d)^2).
+  * The derivative in rho has a relative error of at most about |rho| d / 6.
   *
   * @param moments_d Moments [log G_1, log G_2] at d from
   *   primarycensored_tilt_moments()

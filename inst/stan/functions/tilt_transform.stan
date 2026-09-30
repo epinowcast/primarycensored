@@ -46,9 +46,14 @@ real primarycensored_log_diff_exp(real a, real b) {
   * relative precision for negative z (1.3e-6 at z = -4.9) and the direct
   * form for a small tilt amplifies that by 1 / (|rho| w). For negative z
   * this uses 0.5 * erfc(-z / sqrt(2)), which is accurate in the tail and
-  * whose derivative is exact. It underflows below -37.5, where
-  * std_normal_lcdf() is used. For z at least 0 log(Phi(z)) is accurate and
-  * saturates at 0 above 8.25.
+  * whose derivative is exact. It underflows below -37.5. Below -37 this uses
+  * the asymptotic series Phi(z) = phi(z) / (-z) *
+  * (1 - 1 / z^2 + 3 / z^4 - 15 / z^6 + ... ), whose terms are
+  * (-1)^k (2k - 1)!! / z^(2k). Seven terms past the first have a truncation
+  * error below 1e-16 for z <= -37. Both the value and the derivative are
+  * from elementary operations, so the derivative is exact, where the
+  * derivative of std_normal_lcdf() has a relative error of about 1e-5. For z
+  * at least 0 log(Phi(z)) is accurate and saturates at 0 above 8.25.
   *
   * @param z Point
   *
@@ -57,23 +62,137 @@ real primarycensored_log_diff_exp(real a, real b) {
 real primarycensored_log_std_normal_cdf(real z) {
   if (z >= 0) return log(Phi(z));
   if (z > -37) return log(0.5 * erfc(-z / sqrt(2)));
-  return std_normal_lcdf(z);
+  real inv_z2 = 1 / square(z);
+  real series = 1 - inv_z2 * (1 - 3 * inv_z2 * (1 - 5 * inv_z2 * (
+    1 - 7 * inv_z2 * (1 - 9 * inv_z2 * (1 - 11 * inv_z2 * (
+      1 - 13 * inv_z2)))
+  )));
+  return std_normal_lpdf(z) - log(-z) + log(series);
+}
+
+/**
+  * Log of the regularised lower incomplete gamma function from its series
+  * @ingroup tilt_transforms
+  *
+  * The shape derivative of gamma_lcdf() is inaccurate well below the
+  * shape, with a relative error of 1.7e-2 for shape 20 at 2 and of 0.5 for
+  * shape 100 at 30, where the value is correct. It is also NaN for shapes
+  * of about 200 or more in the tail and of about 600 or more over the bulk.
+  * This uses the lower series
+  * P(shape, x) = x^shape exp(-x) / Gamma(shape + 1) *
+  *   sum_k x^k / ((shape + 1) ... (shape + k)),
+  * built from elementary operations so that autodiff is exact. It is for
+  * x < shape + 1, where each term is less than the previous one. Near
+  * x = shape it needs about sqrt(80 shape) terms to converge to double
+  * precision, and far fewer for x well below the shape. It rejects if it
+  * has not converged after 10 sqrt(shape) + 150 terms, which does not happen
+  * for x < shape + 1.
+  *
+  * @param x Point, positive, below shape + 1
+  * @param shape Shape, positive
+  *
+  * @return log P(shape, x)
+  */
+real primarycensored_log_gamma_p_series(real x, real shape) {
+  real term = 1;
+  real total = 1;
+  real max_terms = 10 * sqrt(shape) + 150;
+  int k = 0;
+  while (term >= 1e-17 * total) {
+    k += 1;
+    if (k > max_terms) {
+      reject("The gamma lower series did not converge for x = ", x,
+             " and shape = ", shape);
+    }
+    term *= x / (shape + k);
+    total += term;
+  }
+  return shape * log(x) - x - lgamma(shape + 1) + log(total);
+}
+
+/**
+  * Log of the regularised upper incomplete gamma function from its
+  * continued fraction
+  * @ingroup tilt_transforms
+  *
+  * The shape derivative of gamma_lccdf() is inaccurate in the bulk, with
+  * relative errors of 1e-3 to 1e-2 (for example shape 2.5 at 7 or shape 20 at
+  * 24), and is NaN in the tail for shapes of about 200 or more. This uses
+  * the Legendre continued fraction
+  * Q(shape, x) = x^shape exp(-x) / Gamma(shape) *
+  *   1 / (x + 1 - shape - 1 (1 - shape) / (x + 3 - shape -
+  *   2 (2 - shape) / (x + 5 - shape - ... ))),
+  * evaluated by the modified Lentz method from elementary operations, so
+  * that autodiff is exact and the tail is held on the log scale to any
+  * depth. It is for x >= shape + 1, where it converges in at most about
+  * 90 terms for shapes up to 1e3 and about sqrt(shape) terms beyond. It
+  * rejects if it has not converged after 10 sqrt(shape) + 150 terms, which
+  * does not happen for x >= shape + 1.
+  *
+  * @param x Point, positive, at least shape + 1
+  * @param shape Shape, positive
+  *
+  * @return log Q(shape, x)
+  */
+real primarycensored_log_gamma_q_fraction(real x, real shape) {
+  real b = x + 1 - shape;
+  real d = 1 / b;
+  real c = 1e300;
+  real h = d;
+  real max_terms = 10 * sqrt(shape) + 150;
+  real del = 0;
+  int i = 0;
+  while (abs(del - 1) > 1e-15) {
+    i += 1;
+    if (i > max_terms) {
+      reject("The gamma upper fraction did not converge for x = ", x,
+             " and shape = ", shape);
+    }
+    real an = -i * (i - shape);
+    b += 2;
+    d = an * d + b;
+    if (abs(d) < 1e-300) d = 1e-300;
+    c = b + an / c;
+    if (abs(c) < 1e-300) c = 1e-300;
+    d = 1 / d;
+    del = d * c;
+    h *= del;
+  }
+  return shape * log(x) - x - lgamma(shape) + log(h);
+}
+
+/**
+  * Log of the regularised lower and upper incomplete gamma functions
+  * @ingroup tilt_transforms
+  *
+  * The tail that is not close to 1 is evaluated directly, from the series
+  * for x < shape + 1 and from the continued fraction beyond, see
+  * primarycensored_log_gamma_p_series() and
+  * primarycensored_log_gamma_q_fraction(). The other tail is log1m_exp() of
+  * it, which is accurate in value and derivative, including for an upper
+  * tail far below the smallest double, where it is 0 with a zero
+  * derivative. The derivatives in the shape and in x are exact in both
+  * tails for any shape.
+  *
+  * @param x Point, positive
+  * @param shape Shape, positive
+  *
+  * @return Vector [log P(shape, x), log Q(shape, x)]
+  */
+vector primarycensored_log_gamma_pq(real x, real shape) {
+  if (x < shape + 1) {
+    real log_lower = primarycensored_log_gamma_p_series(x, shape);
+    return [log_lower, log1m_exp(log_lower)]';
+  }
+  real log_upper = primarycensored_log_gamma_q_fraction(x, shape);
+  return [log1m_exp(log_upper), log_upper]';
 }
 
 /**
   * Log of the regularised lower incomplete gamma function
   * @ingroup tilt_transforms
   *
-  * The shape derivative of gamma_lcdf() is inaccurate well below the
-  * shape, with a relative error of 1.7e-2 for shape 20 at 2 and of 0.5 for
-  * shape 100 at 30, where the value is correct. Its accuracy recovers above
-  * about 0.4 of the shape, to 1e-8 or better. Below x = 0.5 shape this uses
-  * the lower series
-  * P(shape, x) = x^shape exp(-x) / Gamma(shape + 1) *
-  *   sum_k x^k / ((shape + 1) ... (shape + k)),
-  * built from elementary operations so that autodiff is exact. Each term is
-  * less than half the previous one, so it converges to double precision in
-  * at most about 55 terms, and in fewer for x well below the shape.
+  * See primarycensored_log_gamma_pq(), which gives both tails.
   *
   * @param x Point, positive
   * @param shape Shape, positive
@@ -81,29 +200,21 @@ real primarycensored_log_std_normal_cdf(real z) {
   * @return log P(shape, x)
   */
 real primarycensored_log_gamma_p(real x, real shape) {
-  if (x >= 0.5 * shape) return gamma_lcdf(x | shape, 1);
-  real term = 1;
-  real total = 1;
-  for (k in 1:200) {
-    term *= x / (shape + k);
-    total += term;
-    if (term < 1e-17 * total) break;
-  }
-  return shape * log(x) - x - lgamma(shape + 1) + log(total);
+  if (x < shape + 1) return primarycensored_log_gamma_p_series(x, shape);
+  return log1m_exp(primarycensored_log_gamma_q_fraction(x, shape));
 }
 
 /**
   * Test whether the gamma lower tail underflows at these arguments
   * @ingroup tilt_transforms
   *
-  * Underflow of `gamma_p` makes `gamma_lcdf` `-inf` with an autodiff partial
-  * that is not finite, which Stan's reverse pass chains into the parameters.
-  * Callers test this before calling `gamma_lcdf`, rather than checking the
-  * result. For x < shape + 1 it uses the bound
+  * The tails are evaluated on the log scale, see
+  * primarycensored_log_gamma_pq(), so they are represented below the smallest
+  * double. A term below 1e-300 of a probability is dropped as `-inf`
+  * instead, which saves its evaluation. For x < shape + 1 this uses the bound
   * P(shape, x) <= x^shape exp(-x) / (Gamma(shape + 1) (1 - x / (shape + 1)))
-  * with a margin below the smallest double, so a term dropped on this test is
-  * below 1e-300 of a probability. The transforms of a gamma with a large total
-  * can be representable below that, and are then dropped with it.
+  * with a margin below the smallest double. The transforms of a gamma with a
+  * large total can be representable below that, and are then dropped with it.
   *
   * @param x Point, positive
   * @param shape Shape
@@ -121,7 +232,7 @@ int gamma_lcdf_underflows(real x, real shape) {
   * Test whether the gamma upper tail underflows at these arguments
   * @ingroup tilt_transforms
   *
-  * As for gamma_lcdf_underflows(), for `gamma_lccdf`. It uses the asymptotic
+  * As for gamma_lcdf_underflows(), for the upper tail. It uses the asymptotic
   * form Q(shape, x) = x^(shape - 1) exp(-x) / Gamma(shape) x / (x - shape + 1)
   * for x beyond shape + 1, where the tail is not close to 1.
   *
@@ -176,21 +287,24 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * is 1.
   *
   * For the gamma the tilted density is a gamma density with the rate lowered
-  * by xi, times the total (rate / (rate - xi))^shape. One tail is evaluated
-  * and the other follows from it, which halves the cost of the incomplete
-  * gamma function and of its derivative in the shape. The lower tail is
-  * primarycensored_log_gamma_p(), which is gamma_lcdf() except well below
-  * the shape, where the shape derivative of gamma_lcdf() is inaccurate. The
-  * upper tail is log1m_exp() of it,
-  * which is accurate in value and derivative for an upper tail down to
-  * about 1e-9. The shape derivative of gamma_lccdf() is worse, with
-  * relative errors of 1e-3 to 1e-2 over much of the bulk (for example shape
-  * 2.5 at 7 or shape 20 at 24) and above 1e-4 into the far tail for large
-  * shapes. It is used only where the upper tail is below 1e-8, where
-  * log1m_exp() of the lower tail loses the tail or is `-inf` with a
-  * derivative that is not finite. For the exponential
-  * T_f = rate / (rate - xi) (1 - exp(-(rate - xi) t)). For the normal,
-  * completing the square gives a normal density with mean mu + xi sigma^2.
+  * by xi, times the total (rate / (rate - xi))^shape. Both tails come from
+  * primarycensored_log_gamma_pq(), which evaluates one from a series or a
+  * continued fraction and the other as log1m_exp() of it. This halves the
+  * cost of the incomplete gamma function and of its derivative in the shape,
+  * and the derivatives are exact for any shape. Stan's gamma_lcdf() and
+  * gamma_lccdf() are not used, as their shape derivatives are inaccurate in
+  * parts of the bulk and NaN for shapes of about 200 or more. For the
+  * exponential T_f = rate / (rate - xi) (1 - exp(-(rate - xi) t)). For the
+  * normal, completing the square gives a normal density with mean
+  * mu + xi sigma^2.
+  *
+  * The log of the total is -shape log1m(xi / rate) (for the exponential,
+  * the shape is 1), rather than shape (log(rate) - log(rate - xi)). The
+  * derivative in the rate is then one term, which is exactly 0 for xi = 0.
+  * Two terms of size shape / rate that cancel would swamp the derivative of
+  * a tail that is far below 1, and the derivative in the rate of a log CDF
+  * close to 0 would be lost, for example 0 instead of 2e-18 for shape 200,
+  * rate 20 at 17.
   *
   * @param t Point
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
@@ -206,7 +320,7 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     real shape = params[1];
     real rate = params[2];
     real tilted_rate = rate - xi;
-    real log_total = shape * (log(rate) - log(tilted_rate));
+    real log_total = -shape * log1m(xi / rate);
     if (t <= 0) return [negative_infinity(), log_total]';
     real x = t * tilted_rate;
     if (gamma_lcdf_underflows(x, shape)) {
@@ -216,16 +330,12 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     if (gamma_lccdf_underflows(x, shape)) {
       return [log_total, negative_infinity()]';
     }
-    real log_lower = primarycensored_log_gamma_p(x, shape);
-    if (log_lower > -1e-8) {
-      real log_upper = gamma_lccdf(x | shape, 1);
-      return [log_total + log1m_exp(log_upper), log_total + log_upper]';
-    }
-    return [log_total + log_lower, log_total + log1m_exp(log_lower)]';
+    vector[2] log_tails = primarycensored_log_gamma_pq(x, shape);
+    return [log_total + log_tails[1], log_total + log_tails[2]]';
   } else if (dist_id == 4) {
     real rate = params[1];
     real tilted_rate = rate - xi;
-    real log_total = log(rate) - log(tilted_rate);
+    real log_total = -log1m(xi / rate);
     if (t <= 0) return [negative_infinity(), log_total]';
     return [
       log_total + log1m_exp(-tilted_rate * t), log_total - tilted_rate * t
