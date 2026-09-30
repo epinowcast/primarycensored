@@ -624,20 +624,20 @@ exptilt_gradient_at <- function(model, case, d, pwindow, rho,
   )
 }
 
-# Stan's gamma_lcdf has a gradient in the shape with a relative error of
-# about 1e-3, and of 1e-2 when the shape is large relative to the point
-# (for example shape 20 at 2), so the shape is compared to a looser tolerance
-# for gamma delays and the shape 20 case is left out. The points are also not
-# at a switch between forms, as finite differences would step across it.
+# The shape gradient of Stan's gamma_lcdf is accurate to about 1e-5 except far
+# in the lower tail (a relative error of 1.7e-2 for shape 20 at 2, where the
+# CDF is about 1e-9), so the shape 20 case is left out. The shape gradient of
+# gamma_lccdf is inaccurate in the bulk (1e-3 at shape 2.5 and 7, 5e-3 at
+# shape 20 and 24), so the tilt transforms take the upper tail from
+# gamma_lcdf and use gamma_lccdf only beyond the point where the upper tail
+# is below 1e-9. The points are also not at a switch between forms, as finite
+# differences would step across it.
 exptilt_gradient_cases <- exptilt_stan_cases[c(1, 2, 3, 4, 6, 7)]
 
 # Compares the gradient with the finite difference gradient one component at a
 # time, relative to the size of the component with a floor for tiny ones.
 expect_gradient_close <- function(res, case, label, scale = 1) {
   tolerance <- rep(1e-4, 3) * scale
-  if (case$dist_id == 2L) {
-    tolerance[1] <- 2e-2
-  }
   allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2)
   testthat::expect_true(
     all(abs(res$gradient - res$finite_diff) <= allowed),
@@ -659,6 +659,8 @@ test_that("tilted log CDFs have finite gradients matching finite
     list(d = 2.5, pwindow = 2, rho = 0.4),
     list(d = 6, pwindow = 3, rho = -0.15),
     list(d = 20, pwindow = 3, rho = 0.5),
+    list(d = 7, pwindow = 1, rho = 0.3),
+    list(d = 7, pwindow = 1, rho = -0.1),
     list(d = 2.5, pwindow = 2, rho = 1e-6),
     list(d = 2.5, pwindow = 2, rho = -1e-6),
     list(d = 12, pwindow = 7, rho = 1e-5),
@@ -727,5 +729,100 @@ test_that("the vectorised tilted log PMF has finite gradients matching
         scale = if (is.null(point$scale)) 1 else point$scale
       )
     }
+  }
+})
+
+test_that("the gamma tilt transform gradient is accurate in the bulk", {
+  # The shape gradient of gamma_lccdf is off by about 1e-2 here, see the
+  # note above exptilt_gradient_cases. The likelihood of several delays
+  # is the case that showed it.
+  model <- exptilt_gradient_model()
+  case <- exptilt_stan_cases[[4]]
+  for (pwindow in c(1, 3)) {
+    for (rho in c(0.3, -0.1)) {
+      for (d in c(5, 8, 12)) {
+        res <- exptilt_gradient_at(
+          model, case, d, pwindow, rho,
+          vectorised = TRUE
+        )
+        label <- exptilt_case_label(case, d = d, pwindow = pwindow, r = rho)
+        expect_true(all(is.finite(res$gradient)), info = label)
+        expect_gradient_close(res, case, label)
+      }
+    }
+  }
+})
+
+test_that("the gamma tilt transform is finite far in the upper tail", {
+  # Beyond an upper tail of 1e-9 the lower tail is 1 to rounding and the
+  # transform uses gamma_lccdf, which stays finite where log1m_exp of the
+  # log CDF would not
+  model <- exptilt_gradient_model()
+  for (case in exptilt_stan_cases[c(3, 4)]) {
+    for (d in c(40, 80, 200)) {
+      res <- exptilt_gradient_at(model, case, d, 2, 0.3)
+      label <- exptilt_case_label(case, d = d)
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+    }
+  }
+  upper <- vapply(
+    c(30, 60, 120), log_tilt_transform_upper, numeric(1), 2L, -0.3,
+    c(2.5, 0.4)
+  )
+  obj <- new_pcens(
+    pgamma, dexpgrowth, list(r = 0.3), shape = 2.5, rate = 0.4
+  )
+  expect_equal(
+    upper, .pcens_tilt_transform(obj, c(30, 60, 120), -0.3, upper = TRUE),
+    tolerance = 1e-8
+  )
+})
+
+test_that("a zero width primary window gives the delay CDF", {
+  # The exact limit of the tilted window as the width goes to 0, which R
+  # returns. The direct and small tilt forms divide by the width.
+  d <- c(0.2, 1, 2.5, 6, 15)
+  for (case in exptilt_stan_cases) {
+    lower <- exptilt_case_lower(case)
+    expected <- exptilt_case_cdf(case)(d)
+    for (rho in c(-0.2, 0, 1e-9, 0.3)) {
+      if (case$dist_id != 18L &&
+        exptilt_case_rate(case) + rho <= 0) {
+        next
+      }
+      info <- exptilt_case_label(case, r = rho)
+      direct <- vapply(
+        d, primarycensored_exptilt_lcdf, numeric(1),
+        case$dist_id, case$params, 0, rho
+      )
+      expect_equal(exp(direct), expected, tolerance = 1e-12, info = info)
+      lcdf <- vapply(
+        d, primarycensored_lcdf, numeric(1),
+        case$dist_id, case$params, 0, lower, Inf, 2L, rho
+      )
+      expect_equal(exp(lcdf), expected, tolerance = 1e-12, info = info)
+      cdf <- vapply(
+        d, primarycensored_cdf, numeric(1),
+        case$dist_id, case$params, 0, lower, Inf, 2L, rho
+      )
+      expect_equal(cdf, expected, tolerance = 1e-12, info = info)
+    }
+  }
+})
+
+test_that("a zero width primary window gives the delay PMF", {
+  for (case in exptilt_stan_cases[c(2, 4, 5)]) {
+    cdf <- exptilt_case_cdf(case)
+    lower <- if (case$dist_id == 18L) -Inf else 0
+    pmf <- exp(primarycensored_sone_lpmf_vectorized(
+      10, lower, Inf, case$dist_id, case$params, 0, 2L, 0.3
+    ))
+    expect_equal(
+      pmf, diff(cdf(0:11)),
+      tolerance = 1e-10,
+      info = exptilt_case_label(case)
+    )
   }
 })
