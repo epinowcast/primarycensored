@@ -19,9 +19,8 @@ real gamma_lcdf_logx(real log_x, real a) {
   real x = exp(log_x);
   if (x < 0.9 * (a + 1)) {
     real log_lead = a * log_x - x - lgamma(a + 1);
-    // Below exp(-10) gamma_lcdf can underflow or lose its gradient. The
-    // series terms shrink by at most 0.9 (x / (a + n)), so it converges in
-    // a few hundred terms.
+    // gamma_lcdf underflows or loses its gradient below exp(-10). The
+    // series terms shrink by at least 0.9 each step.
     if (log_lead < -10) {
       real term = 1;
       real total = 1;
