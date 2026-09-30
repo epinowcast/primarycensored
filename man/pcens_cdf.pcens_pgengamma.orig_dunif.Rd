@@ -34,7 +34,8 @@ The mean is \eqn{E[T] = \theta \Gamma(k + 1/a) / \Gamma(k)} and the partial
 expectation distribution is \eqn{\tilde F_T(t) = P(k + 1/a, (t / \theta)^a)},
 so the solution generalises the gamma (\code{shape = 1}) and Weibull (\code{k = 1})
 cases.
-See \code{vignette("analytic-solutions")} for the derivation.
+\code{vignette("analytic-solutions")} gives the partial moment and cites the
+derivation.
 }
 \examples{
 \dontshow{if (requireNamespace("flexsurv", quietly = TRUE)) withAutoprint(\{ # examplesIf}

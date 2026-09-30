@@ -41,6 +41,7 @@ dp
 dpcens
 dprimary
 dprimarycensored
+ds
 du
 dx
 dy
@@ -58,6 +59,7 @@ frac
 gammapartexp
 gengammapartexp
 geq
+gumbel
 hexsticker
 infty
 int
@@ -66,6 +68,7 @@ jcblemai
 jgabry
 kaitejohnson
 kz
+ldots
 leq
 lfloor
 lifecycle
@@ -126,6 +129,7 @@ u
 underflowing
 unifprim
 varepsilon
+varsigma
 vee
 weibull
 weibullpartexp
