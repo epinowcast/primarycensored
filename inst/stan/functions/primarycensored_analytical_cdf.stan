@@ -224,9 +224,10 @@ vector primarycensored_weibull_uniform_terms(real t,
   * Each of the two terms is evaluated with `gamma_lcdf_logx()`, separately
   * because the shapes k and k + 1 / shape differ by more than one. They
   * do not share an evaluation as in `primarycensored_gamma_uniform_terms()`.
-  * Gradients are finite and have a relative error of 1e-6 or below in the
-  * body of the distribution for k up to 1e5 with shape 1. They are less
-  * accurate in the extreme upper tail, where the log CDF is above -1e-7.
+  * Gradients are finite. For k up to 1e5 with shape 1 their relative error
+  * is 2.2e-6 at the 0.99 quantile and 1.4e-5 at the 0.999 quantile, better than 3.8e-5 before
+  * #381. They are less accurate in the extreme upper tail, where the log
+  * CDF is above -1e-7, see #401.
   *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters

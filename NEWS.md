@@ -20,10 +20,11 @@
   `gamma_lcdf_logx()` now evaluates the incomplete gamma series for x below the shape plus one and a continued fraction above it, both on the log scale, for a shape of 10 or more.
   They have a relative error of 1e-9 or below in the value and 3e-9 or below in the gradient for a shape up to 1e6.
   The leading term of the series is written with a Stirling series for a shape of 100 or more, so its rounding error does not grow with the shape.
-  Generalised gamma gradients have a relative error of about 1e-6 or below in the body for `k` up to 1e5 with `shape` 1, and are less accurate in the extreme upper tail.
+  Generalised gamma gradients have a relative error of 2.2e-6 at the 0.99 quantile and 1.4e-5 at the 0.999 quantile for `k` up to 1e5 with `shape` 1, and are less accurate in the extreme upper tail.
   For a shape below 10 the Gamma log CDF is unchanged, except in the lower tail from #363.
   `dist_lcdf()` and the analytical solution now reject a Gamma rate that is not positive and finite, since only its log is used.
-  The analytical solution takes about 1.0 to 2 times as long for a shape below 100 and is faster above, see #381.
+  Evaluating the analytical solution with gradients takes about 1.0 to 2 times as long for a shape below 100 and is faster above.
+  Evaluating the value alone is up to about 1.2 times as long above a shape of 100, see #381.
 
 # primarycensored 1.6.0
 

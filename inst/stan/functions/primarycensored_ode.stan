@@ -47,7 +47,9 @@ real gamma_lseries_sum_logx(real log_x, real a) {
   * (a + 1 / 2) log(a) - a + log(2 pi) / 2, taken to the term in a^-7. The
   * omitted term is below 1e-21 for `a >= 100`. The bracket is small near
   * x = a, so the rounding error there is about a |r - 1| times machine
-  * precision and not a times the size of log(x). log(r) is evaluated as
+  * precision and not a times the size of log(x). For a above about 1e6 the
+  * rounding of `log_x` dominates, with an absolute error of 1.4e-10 at
+  * a = 1e7 and r = 1.01. log(r) is evaluated as
   * log1p(r - 1) for r between 0.5 and 2, where r - 1 is exact, and as
   * log(x) - log(a) otherwise.
   *
@@ -178,11 +180,11 @@ real gamma_lccdf_cf_logx(real log_x, real a) {
   * @param a Shape parameter of the Gamma distribution (a > 0)
   *
   * @return log P(a, exp(log_x)), `-inf` when `log_x` is `-inf` and 0 when
-  * it is `inf`. Rejects a <= 0 and `nan`.
+  * it is `inf`. Rejects a <= 0, `nan` and `inf`.
   */
 real gamma_lcdf_logx(real log_x, real a) {
-  if (!(a > 0)) {
-    reject("gamma_lcdf_logx: shape must be positive, found a = ", a);
+  if (!(a > 0) || is_inf(a)) {
+    reject("gamma_lcdf_logx: shape must be positive finite, found a = ", a);
   }
   if (log_x == negative_infinity()) {
     return negative_infinity();
@@ -236,11 +238,12 @@ real gamma_lcdf_logx(real log_x, real a) {
   * @param a Shape parameter of the Gamma distribution (a > 0)
   *
   * @return Vector [log P(a, exp(log_x)), log P(a + 1, exp(log_x))].
-  * Rejects a <= 0 and `nan`.
+  * Rejects a <= 0, `nan` and `inf`.
   */
 vector gamma_lcdf_logx_pair(real log_x, real a) {
-  if (!(a > 0)) {
-    reject("gamma_lcdf_logx_pair: shape must be positive, found a = ", a);
+  if (!(a > 0) || is_inf(a)) {
+    reject("gamma_lcdf_logx_pair: shape must be positive finite, found a = ",
+           a);
   }
   if (log_x == negative_infinity()) {
     return rep_vector(negative_infinity(), 2);
