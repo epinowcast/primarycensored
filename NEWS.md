@@ -36,6 +36,7 @@
   The series are summed with binomial taper weights (the Euler transform after a number of direct terms), which converges near the location where the plain series does not.
   The number of terms comes from a bound on the truncation error, with a tolerance of 1e-10 relative to the mass of the window.
   Results agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails and for delays close to 0.
+  The gradient of the gamma shape inherits the accuracy of Stan's `gamma_lcdf()` in the far tails, where it can be wrong by a factor of about 3.
   The exponential and gamma forms need the largest positive tilt of the series to be below the rate, so they apply for a location after the window or for a large rate, and otherwise use the numerical path.
   Stan chooses the path with the new `check_for_analytical_window()`, as the choice depends on the window.
   The normal form has no restriction.
@@ -45,6 +46,13 @@
   See #370.
 - The vectorised Stan PMF functions use shared terms for the truncated logistic solutions with an integer `pwindow`, in `primarycensored_tlogis_lcdf_vectorized()`.
   The split points are shared too for an integer location, and otherwise each delay is evaluated on its own.
+  See #370.
+- The numerical paths, `pcens_cdf.default()` in R and `primarycensored_numeric_cdf()` in Stan, no longer return a CDF that is too small for a truncated logistic primary with a small scale.
+  The density is a spike of width about `scale` at the location, or at the edge of the window nearest to it, which the quadrature and the ODE solver stepped over.
+  The integral is now split at the location and at multiples of the scale from it, and the Stan ODE is solved in parts to a relative tolerance of 1e-9 and an absolute tolerance of 1e-10 for this primary.
+  See #370.
+- Fixed the normal tilt transform in R, shared with the exponentially tilted solutions, losing `xi * sd^2` to rounding when it is small relative to the mean.
+  It now evaluates the normal CDF at `(t - mean) / sd - xi * sd`, as Stan does.
   See #370.
 
 ## Bug fixes

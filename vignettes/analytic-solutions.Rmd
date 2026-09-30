@@ -481,6 +481,12 @@ Where a tilt is not available, or no rule with at most 64 terms meets the tolera
 In Stan `check_for_analytical_window()` makes the choice from the parameters and the window.
 The normal form has no restriction.
 
+The numerical paths are told where the density of a narrow window has its mass.
+The density is a spike of width about $s$ at the location, or at the edge of the window nearest to it when the location is outside.
+A quadrature or an ODE solver that takes large steps across the flat region steps over the spike, and returns a CDF that is too small without an error.
+Both paths therefore split the integral at the location and at multiples of the scale from it (up to 30 scales either side, clipped to the window).
+The Stan ODE is solved in parts between these points, to a relative tolerance of $10^{-9}$ and an absolute tolerance of $10^{-10}$ rather than the $10^{-6}$ of `ode_rk45`.
+
 ## Delays much smaller than the scale
 
 For a delay on the non-negative reals with $d < w_P$ and $d / s < 10^{-4}$ equation \@ref(eq:tlogis) cancels, as only primary event times up to $d$ contribute and $L(p) - L(0)$ is small.

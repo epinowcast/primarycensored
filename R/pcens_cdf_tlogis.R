@@ -626,9 +626,11 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
   for (part in parts) {
     log_phi <- .log_sum_exp(log_phi, part$scale + log(pmax(part$sum, 0)))
   }
-  .log_sum_exp(
-    .pcens_tilt_transform(object, a, 0), log_phi - plan$log_mass
-  )
+  # F(a) is in `f_terms`, at the same ends as they were evaluated
+  log_f_a <- f_terms$lower[
+    match(if (is.finite(lower)) pmax(a, lower) else a, f_terms$t), 1L
+  ]
+  .log_sum_exp(log_f_a, log_phi - plan$log_mass)
 }
 
 #' Part of the truncated logistic integral for a location before the window

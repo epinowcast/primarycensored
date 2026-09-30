@@ -385,7 +385,8 @@ vector tlogis_part_above_location(matrix terms_a, matrix terms_u,
   real log_df = tlogis_terms_diff(terms_u, terms_a, 1);
   vector[n] log_c;
   for (k in 0:(n - 1)) {
-    log_c[k + 1] = (k == 0 ? log_df : tlogis_terms_diff(terms_u, terms_a, 1 + k))
+    log_c[k + 1] = (k == 0 ? log_df
+                           : tlogis_terms_diff(terms_u, terms_a, 1 + k))
                    - k * (d - location) / scale;
   }
   // The constant term of the series, L(0) times the mass of the delay
@@ -554,6 +555,15 @@ real primarycensored_tlogis_small_delay_lcdf(data real d, int dist_id,
   * Chooses the direct form or the small delay form, see
   * tlogis_is_small_delay(). Only for check_for_tlogis() is 1 and
   * check_for_tlogis_params() is 1.
+  *
+  * The mass of the window and the plan of the series are computed here and in
+  * check_for_tlogis_params(), which chooses this path. Computing them once
+  * more costs about 4 microseconds of 25 to 300 for a call, so the plan is
+  * not passed through. The vectorised form computes them once for all delays.
+  *
+  * The gradient with respect to the shape of a gamma delay inherits the
+  * accuracy of the gradient of Stan's `gamma_lcdf()`, which in the far tails
+  * can be wrong by a factor of about 3.
   *
   * @param d Delay
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
