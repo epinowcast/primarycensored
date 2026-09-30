@@ -427,7 +427,7 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        array[] real primary_params) {
   if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
     return primarycensored_analytical_lcdf_vectorized(
-      start, n, dist_id, params, pwindow
+      start, n, dist_id, params, pwindow, primary_id, primary_params
     );
   }
   vector[n] log_cdfs;
