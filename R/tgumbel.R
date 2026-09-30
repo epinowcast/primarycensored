@@ -28,8 +28,8 @@
 #' The density rises to a peak at \eqn{x = \mu} and falls more slowly
 #' above it, so the window is skewed. If \eqn{\mu} is far below `min` the
 #' density decays exponentially with rate \eqn{1 / \beta}, as for
-#' [dexpgrowth()] with `r = -1 / beta`. If it is far above `max` the density
-#' grows roughly as a double exponential.
+#' [dexpgrowth()] with the rate \eqn{r = -1 / \beta}.
+#' If it is far above `max` the density rises very steeply towards `max`.
 #'
 #' Write \eqn{s(x) = \exp\{-(x - \mu) / \beta\}}, so that
 #' \eqn{G(x) = \exp\{-s(x)\}}. The CDF and its complement are evaluated as
