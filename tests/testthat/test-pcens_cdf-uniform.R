@@ -181,3 +181,24 @@ test_that("uniform primary analytical CDFs give the delay CDF for the zero
     )
   }
 })
+
+test_that("uniform primary analytical CDFs with a vector pwindow match
+  element-wise calls when some windows use the upper tail form", {
+  q <- c(0.5, 1e6, 3, 1e9, 60, 25, Inf, -2)
+  pwindow <- c(1, 0.1, 2, 5, 0.01, 1, 1, 1)
+  for (case in unif_cases()) {
+    obj <- do.call(
+      new_pcens, c(list(case$pdist, dunif), case$grid[[1]])
+    )
+    expected <- vapply(
+      seq_along(q), function(i) pcens_cdf(obj, q[[i]], pwindow[[i]]),
+      numeric(1)
+    )
+    expect_equal(
+      pcens_cdf(obj, q, pwindow), expected,
+      tolerance = 1e-14,
+      info = case$name
+    )
+    expect_equal(expected[c(2, 4)], c(1, 1), tolerance = 1e-9)
+  }
+})

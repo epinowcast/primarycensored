@@ -4,7 +4,14 @@
 \alias{.pcens_cdf_uniform}
 \title{Uniform primary event censored CDF from terms at the window ends}
 \usage{
-.pcens_cdf_uniform(q, pwindow, terms_fn)
+.pcens_cdf_uniform(
+  q,
+  pwindow,
+  terms_fn,
+  upper_fn = NULL,
+  switch_at = Inf,
+  delay_cdf = NULL
+)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -16,6 +23,18 @@ observed primary event, in which case the delay CDF is used directly.}
 equal to zero, returning \eqn{G} at each.
 Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
 delay, is done inside \code{terms_fn}.}
+
+\item{upper_fn}{Optional function of a numeric vector of delays, all
+greater than or equal to zero, returning \eqn{H} at each, from the upper
+tails of the delay and partial expectation distributions.}
+
+\item{switch_at}{Delay above which the window start may use \code{upper_fn}, see
+Details.
+Only used if \code{upper_fn} is supplied.}
+
+\item{delay_cdf}{Optional function of a numeric vector of delays returning
+the delay CDF.
+Required only if \code{pwindow} contains zeros.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -29,7 +48,28 @@ For a delay with mean \eqn{E} and a uniform primary event window of width
 A delay distribution with an analytical solution of this form is added by
 supplying \code{terms_fn}, which is called once for the delays and once for the
 start of each window.
-Delays at or below zero give 0.
-Missing delays are an error.
+}
+\details{
+Far into the upper tail \eqn{G(d)} and \eqn{G(q)} are both close to
+\eqn{t - E}, so their difference loses all precision and can return 0 where
+the answer is 1.
+With \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S = 1 - F} and
+\eqn{\tilde S = 1 - \tilde F} are the upper tails, \eqn{G(t) = t - E - H(t)}
+and for \eqn{d \ge w} the CDF is \eqn{1 - (H(d) - H(q)) / w}.
+This has no cancellation.
+The lower tail form has an absolute error of about
+\eqn{10^{-16} d / w}, which is negligible unless \eqn{d} is many windows
+wide.
+When \code{upper_fn}, which returns \eqn{H}, is supplied it is used for the
+delays whose window starts above \code{switch_at}, taken as the delay mean, and
+that are more than 1000 windows wide.
+\code{terms_fn} is used for the rest.
+The two forms agree where they are both accurate.
+
+Delays at or below zero give 0, delays of \code{Inf} give 1 and missing delays
+are an error.
+Elements of \code{pwindow} equal to 0 are exact primary events and give the
+delay CDF, from \code{delay_cdf}.
+\code{q} and \code{pwindow} are recycled against each other.
 }
 \keyword{internal}
