@@ -14,6 +14,14 @@
   `dist_lcdf()` and the analytical solution now reject a Gamma rate that is not positive and finite.
   Evaluating the analytical solution with gradients takes up to about 2 times as long for a shape below 100 and is faster above.
 
+## Performance
+
+- `update()` for `pcens` objects has a new `check` argument.
+  With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names.
+  The default, `check = TRUE`, is unchanged.
+  `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
+  See #379.
+
 # primarycensored 1.6.0
 
 This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.

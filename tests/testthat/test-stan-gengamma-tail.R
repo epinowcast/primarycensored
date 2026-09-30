@@ -11,11 +11,8 @@ ref_lgengamma <- function(t, shape, scale, k) {
   pgamma((t / scale)^shape, shape = k, log.p = TRUE)
 }
 
-# log of the uniform primary event censored CDF, from
-# F_{S+}(d) = (1 / w) int_{max(d - w, 0)}^{d} F_T(u) du. The integrand is
-# scaled by its maximum at u = d so that nothing underflows. The range is
-# cut where it has fallen by a factor of exp(-40), which only matters in the
-# lower tail.
+# Log uniform primary censored CDF, (1 / w) int_{max(d - w, 0)}^{d} F_T(u) du.
+# The integrand is scaled by its value at d and cut once it is below exp(-40).
 ref_lcdf_unif <- function(d, pwindow, shape, scale, k) {
   q_lo <- max(d - pwindow, 0)
   log_max <- ref_lgengamma(d, shape, scale, k)
@@ -80,7 +77,7 @@ test_that("gengamma_lcdf agrees with flexsurv in the tails", {
 })
 
 test_that("gengamma_lcdf does not underflow when the power does", {
-  # (y / scale)^shape underflows to 0 here, but the log CDF is finite
+  # (y / scale)^shape underflows to 0 but the log CDF is finite
   y <- 1e-7
   shape <- 50
   scale <- 1
@@ -190,10 +187,8 @@ test_that("truncation normalisers stay finite when the CDF is deep in the
 })
 
 test_that("analytical generalised gamma matches Stan's numerical path", {
-  # The Stan numerical path integrates exp(dist_lcdf(t)) / pwindow over
-  # [d - pwindow, d] with `primarycensored_ode()`. Integrate that same
-  # right hand side so the analytical path is checked against the delay CDF
-  # that the numerical path uses, including where it is small.
+  # Integrate the right hand side of `primarycensored_ode()` over
+  # [d - pwindow, d], as the Stan numerical path does.
   stan_numeric <- function(d, pwindow, params) {
     rhs <- function(t) {
       vapply(t, function(ti) {
@@ -206,8 +201,7 @@ test_that("analytical generalised gamma matches Stan's numerical path", {
     c(2, 5, 20), c(1, 4, 12), c(1.5, 3, 8), c(0.7, 2, 40), c(5, 5, 100)
   )
   for (params in cases) {
-    # Positions relative to the delay scale reach from deep in the lower
-    # tail, where the CDF is about 1e-100, to the upper tail
+    # Positions run from the deep lower tail to the upper tail
     scale_d <- params[2] * params[3]^(1 / params[1])
     for (pwindow in c(0.5, 1, 3)) {
       for (d in scale_d * c(0.3, 0.5, 0.7, 0.9, 1, 1.5, 3)) {
@@ -243,6 +237,51 @@ test_that("analytical generalised gamma matches R's numerical path", {
         ))
       }, numeric(1))
       expect_equal(analytic, numeric, tolerance = 1e-6)
+    }
+  }
+})
+
+test_that("analytical generalised gamma matches R's analytical path", {
+  skip_if_not_installed("flexsurv")
+  for (params in list(c(2, 5, 20), c(1, 4, 12), c(1.5, 3, 8))) {
+    obj <- new_pcens(
+      flexsurv::pgengamma.orig, dunif, list(),
+      shape = params[1], scale = params[2], k = params[3]
+    )
+    d <- seq(0.5, 40, by = 0.5)
+    for (pwindow in c(0.5, 1, 3)) {
+      r_analytic <- pcens_cdf(obj, q = d, pwindow = pwindow)
+      stan_analytic <- vapply(d, function(di) {
+        exp(primarycensored_analytical_lcdf(
+          di, 5, params, pwindow, 0, Inf, 1, numeric(0)
+        ))
+      }, numeric(1))
+      expect_equal(stan_analytic, r_analytic, tolerance = 1e-8)
+    }
+  }
+})
+
+test_that("analytical generalised gamma matches rprimarycensored samples", {
+  skip_if_not_installed("flexsurv")
+  set.seed(1)
+  n <- 2e5
+  for (params in list(c(2, 5, 6), c(1, 4, 12), c(1.5, 3, 4))) {
+    for (pwindow in c(1, 3)) {
+      samples <- rprimarycensored(
+        n, flexsurv::rgengamma.orig,
+        pwindow = pwindow, swindow = 0,
+        shape = params[1], scale = params[2], k = params[3]
+      )
+      probs <- c(0.05, 0.25, 0.5, 0.75, 0.95)
+      d <- unname(quantile(samples, probs))
+      stan_analytic <- vapply(d, function(di) {
+        exp(primarycensored_analytical_lcdf(
+          di, 5, params, pwindow, 0, Inf, 1, numeric(0)
+        ))
+      }, numeric(1))
+      expect_lt(
+        max(abs(stan_analytic - probs)), 0.005
+      )
     }
   }
 })
