@@ -67,8 +67,8 @@ overridden by, the parameters given to the returned function.}
 
 \item{check}{Logical; if \code{TRUE} (the default) \code{dprimary} is validated with
 \code{\link[=check_dprimary]{check_dprimary()}} when the function is built, and \code{pdist} is validated
-with \code{\link[=check_pdist]{check_pdist()}} on the first call that gives a valid result. Set to
-\code{FALSE} to skip both.}
+with \code{\link[=check_pdist]{check_pdist()}} on the first valid call for each set of parameter
+names. Set to \code{FALSE} to skip both.}
 }
 \value{
 A function of the delay distribution parameters that returns a

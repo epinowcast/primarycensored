@@ -629,3 +629,18 @@ test_that(".dpcens gives NaN for delays outside the truncation limits", {
   expect_identical(dens(c(2, 5, 10), three), rep(NaN, 3))
   expect_true(all(is.finite(dens(c(2, 5, 9), three))))
 })
+
+test_that(".dpcens gives no messages when secondary intervals pass D", {
+  params <- data.frame(swindow = 2, pwindow = 1, L = 0, D = 5)
+  x <- c(1, 3, 4)
+  dens <- function(x, params) {
+    .dpcens(x, params, pgamma, dunif, list(), shape = 2, rate = 1)
+  }
+  expect_no_message(dens(x, params[rep(1, 3), ]))
+  full <- dens(x, params[rep(1, 3), ])
+  expect_true(all(is.finite(full)))
+  # Short vectors, as probed by fitdistrplus
+  expect_no_message(dens(x[1:2], params))
+  short <- dens(x[1:2], params)
+  expect_identical(short, full[1:2])
+})

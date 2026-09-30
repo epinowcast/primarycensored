@@ -26,8 +26,8 @@
 #'
 #' @param check Logical; if `TRUE` (the default) `dprimary` is validated with
 #'   [check_dprimary()] when the function is built, and `pdist` is validated
-#'   with [check_pdist()] on the first call that gives a valid result. Set to
-#'   `FALSE` to skip both.
+#'   with [check_pdist()] on the first valid call for each set of parameter
+#'   names. Set to `FALSE` to skip both.
 #'
 #' @details
 #' The returned function is called as `ll(...)` with the delay distribution
@@ -385,7 +385,6 @@ pcens_loglik_fn <- function(
   upper <- NULL
   if (!exact) {
     upper <- x + swindow
-    # Clip the upper end of each secondary interval at D
     if (is.finite(D)) {
       upper <- pmin(upper, D)
     }
@@ -442,7 +441,6 @@ pcens_loglik_fn <- function(
 #'
 #' @keywords internal
 .pcens_pmf_groups <- function(object, grouped, n) {
-  # One CDF evaluation per primary event window
   cdfs <- lapply(grouped$sets, function(set) {
     cdf <- numeric(0)
     if (length(set$points) > 0L) {
@@ -488,13 +486,11 @@ pcens_loglik_fn <- function(
 #' @keywords internal
 .pcens_pmf_group <- function(object, group, cdfs) {
   if (group$exact) {
-    # Zero-width secondary windows contribute a density
     pmf <- .pcens_density(object, group$x, group$pwindow)
   } else {
     pmf <- cdfs[group$upper] - cdfs[group$lower]
   }
   if (group$truncated) {
-    # Normalise by F(D) - F(L)
     cdf_D <- if (is.na(group$pos_D)) 1 else cdfs[[group$pos_D]]
     cdf_L <- if (is.na(group$pos_L)) 0 else cdfs[[group$pos_L]]
     normaliser <- cdf_D - cdf_L
