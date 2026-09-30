@@ -28,6 +28,15 @@ exptilt_stan_cases <- list(
   )
 )
 
+# Lower and upper transform from the pair
+tilt_lower <- function(t, dist_id, xi, params) {
+  log_tilt_transform_pair(t, dist_id, xi, params)[1]
+}
+
+tilt_upper <- function(t, dist_id, xi, params) {
+  log_tilt_transform_pair(t, dist_id, xi, params)[2]
+}
+
 exptilt_case_rate <- function(case) {
   switch(as.character(case$dist_id),
     "4" = case$params[1],

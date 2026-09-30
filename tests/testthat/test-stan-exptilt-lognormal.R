@@ -12,6 +12,15 @@ lnorm_object_stan <- function(case, rho) {
   exptilt_object(exptilt_lnorm_family(case), rho)
 }
 
+# Lower and upper transform from the pair
+tilt_lower <- function(t, dist_id, xi, params) {
+  log_tilt_transform_pair(t, dist_id, xi, params)[1]
+}
+
+tilt_upper <- function(t, dist_id, xi, params) {
+  log_tilt_transform_pair(t, dist_id, xi, params)[2]
+}
+
 lnorm_stan_lcdf <- function(d, case, pwindow, rho) {
   vapply(
     d, primarycensored_exptilt_lcdf, numeric(1), # nolint: object_usage_linter.

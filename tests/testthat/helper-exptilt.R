@@ -102,12 +102,3 @@ max_rel_diff <- function(actual, expected) {
   keep <- expected > 1e-300
   max(abs(actual[keep] / expected[keep] - 1))
 }
-
-# Lower and upper transform from the pair
-tilt_lower <- function(t, dist_id, xi, params) {
-  log_tilt_transform_pair(t, dist_id, xi, params)[1]
-}
-
-tilt_upper <- function(t, dist_id, xi, params) {
-  log_tilt_transform_pair(t, dist_id, xi, params)[2]
-}
