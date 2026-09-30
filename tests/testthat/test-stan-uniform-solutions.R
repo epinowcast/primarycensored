@@ -84,8 +84,7 @@ test_that("check_for_uniform_terms and check_for_analytical cover the new
   }
 })
 
-test_that("check_uniform_terms_params applies the shape rules and
-  check_for_analytical_params the dispatch", {
+test_that("check_uniform_terms_params applies the shape rules", {
   # Inverse gamma needs shape > 1, inverse and scaled inverse chi-square
   # need nu > 2
   expect_identical(check_uniform_terms_params(16L, c(1.0001, 1)), 1L)
@@ -95,15 +94,9 @@ test_that("check_uniform_terms_params applies the shape rules and
   expect_identical(check_uniform_terms_params(19L, 2), 0L)
   expect_identical(check_uniform_terms_params(22L, c(2.0001, 1)), 1L)
   expect_identical(check_uniform_terms_params(22L, c(1.5, 1)), 0L)
-  # Every other delay is valid for all admissible parameters
   expect_identical(check_uniform_terms_params(4L, 0.1), 1L)
   expect_identical(check_uniform_terms_params(21L, c(1, 0.5)), 1L)
   expect_identical(check_uniform_terms_params(18L, c(0, 1)), 1L)
-
-  expect_identical(check_for_analytical_params(16L, 1L, c(2, 1)), 1L)
-  expect_identical(check_for_analytical_params(16L, 1L, c(0.8, 1)), 0L)
-  expect_identical(check_for_analytical_params(16L, 2L, c(2, 1)), 0L)
-  expect_identical(check_for_analytical_params(4L, 1L, 0.3), 1L)
 })
 
 test_that("check_for_analytical_vectorized covers the new delays for integer
@@ -212,14 +205,6 @@ test_that("uniform primary terms are -Inf for t <= 0 for non-negative delays", {
   }
 })
 
-test_that("primarycensored_uniform_lower_bound clips only for non-negative
-  delays", {
-  expect_identical(primarycensored_uniform_lower_bound(0.5, 4L, 2), 0)
-  expect_identical(primarycensored_uniform_lower_bound(3, 4L, 2), 1)
-  expect_identical(primarycensored_uniform_lower_bound(0.5, 18L, 2), -1.5)
-  expect_identical(primarycensored_uniform_lower_bound(-1, 18L, 2), -3)
-})
-
 test_that("the analytical log CDF matches the numerical path integrand for
   each new delay", {
   for (case in uniform_cases) {
@@ -312,29 +297,6 @@ test_that("the exponential solution is the gamma solution with shape 1", {
         analytical_lcdf(delays, 4L, rate, pwindow),
         analytical_lcdf(delays, 2L, c(1, rate), pwindow),
         tolerance = 1e-9
-      )
-    }
-  }
-})
-
-test_that("the chi-square and inverse chi-square solutions are the gamma and
-  inverse gamma solutions", {
-  delays <- c(0.01, 0.5, 2, 10, 40)
-  for (pwindow in c(0.5, 2, 7)) {
-    for (nu in c(1, 4, 12)) {
-      expect_identical(
-        analytical_lcdf(delays, 13L, nu, pwindow),
-        analytical_lcdf(delays, 2L, c(nu / 2, 0.5), pwindow)
-      )
-    }
-    for (nu in c(2.5, 4, 12)) {
-      expect_identical(
-        analytical_lcdf(delays, 19L, nu, pwindow),
-        analytical_lcdf(delays, 16L, c(nu / 2, 0.5), pwindow)
-      )
-      expect_identical(
-        analytical_lcdf(delays, 22L, c(nu, 1.3), pwindow),
-        analytical_lcdf(delays, 16L, c(nu / 2, nu * 1.3^2 / 2), pwindow)
       )
     }
   }
@@ -459,7 +421,7 @@ test_that("inverse gamma delays without a finite mean use the numerical
   path", {
   pwindow <- 2
   for (params in list(c(0.6, 1), c(1, 2), c(1, 0.5))) {
-    expect_identical(check_for_analytical_params(16L, 1L, params), 0L)
+    expect_identical(check_uniform_terms_params(16L, params), 0L)
     expect_error(
       primarycensored_uniform_terms(3, 16L, params),
       "shape > 1"
@@ -475,8 +437,8 @@ test_that("inverse gamma delays without a finite mean use the numerical
     }
   }
   # The same holds for the chi-square variants with nu <= 2
-  expect_identical(check_for_analytical_params(19L, 1L, 2), 0L)
-  expect_identical(check_for_analytical_params(22L, 1L, c(1.5, 1)), 0L)
+  expect_identical(check_uniform_terms_params(19L, 2), 0L)
+  expect_identical(check_uniform_terms_params(22L, c(1.5, 1)), 0L)
   expect_lt(
     abs(
       exp(primarycensored_lcdf(3, 19L, 1.5, pwindow, 0, Inf, 1L, numeric(0))) -
@@ -931,134 +893,6 @@ test_that("the beta log CDF has a zero gradient once the window is above the
       expect_false(res$rejected, info = info)
       expect_false(res$gradient_not_finite, info = info)
       expect_identical(res$gradient, c(0, 0), info = info)
-    }
-  }
-})
-
-# Gamma and chi-square delays in the far lower tail, where the CDF is
-# below 1e-300 or where Stan's incomplete gamma has an inaccurate gradient.
-# The references integrate the R log CDF on the log scale, see
-# reference_uniform_lcdf().
-lower_tail_cases <- list(
-  list(
-    name = "gamma(1000, 100)", dist_id = 2L, params = c(1000, 100),
-    lp = function(t) pgamma(t, 1000, 100, log.p = TRUE),
-    delays = c(0.5, 1, 2)
-  ),
-  list(
-    name = "gamma(50, 0.5)", dist_id = 2L, params = c(50, 0.5),
-    lp = function(t) pgamma(t, 50, 0.5, log.p = TRUE),
-    delays = c(1e-6, 0.01, 1, 4)
-  ),
-  list(
-    name = "chi-square(400)", dist_id = 13L, params = 400,
-    lp = function(t) pchisq(t, 400, log.p = TRUE),
-    delays = c(0.5, 1, 3, 20)
-  ),
-  list(
-    name = "chi-square(100)", dist_id = 13L, params = 100,
-    lp = function(t) pchisq(t, 100, log.p = TRUE),
-    delays = c(1e-5, 0.1, 1, 10)
-  ),
-  list(
-    name = "chi-square(3)", dist_id = 13L, params = 3,
-    lp = function(t) pchisq(t, 3, log.p = TRUE),
-    delays = c(1e-6, 1e-3, 0.1)
-  )
-)
-
-test_that("the gamma and chi-square log CDF is exact deep in the lower tail,
-  never 0 or NaN", {
-  for (case in lower_tail_cases) {
-    for (pwindow in c(0.3, 1)) {
-      info <- paste(case$name, "pwindow", pwindow)
-      expected <- reference_uniform_lcdf(case$lp, case$delays, pwindow)
-      actual <- analytical_lcdf(
-        case$delays, case$dist_id, case$params, pwindow
-      )
-      expect_false(anyNA(actual), info = info)
-      expect_true(all(actual <= 0), info = info)
-      expect_equal(actual, expected, tolerance = 1e-8, info = info)
-      # `expect_equal()` is relative, so a log CDF of 0 against -1400 fails
-      # it, and this keeps the far tail from collapsing to the CDF of 1
-      far <- expected < -50
-      expect_true(all(actual[far] < -50), info = info)
-    }
-  }
-})
-
-test_that("the gamma log CDF is exact where gamma_lcdf underflows", {
-  for (shape in c(5000, 20000)) {
-    lp <- function(t) pgamma(t, shape, 1, log.p = TRUE)
-    delays <- shape * c(0.5, 0.5001, 0.52, 0.6, 0.8) + c(0, 0.5, 0, 0, 0)
-    expected <- reference_uniform_lcdf(lp, delays, 1)
-    actual <- analytical_lcdf(delays, 2L, c(shape, 1), 1)
-    expect_false(anyNA(actual), info = as.character(shape))
-    expect_equal(actual, expected, tolerance = 1e-8, info = as.character(shape))
-  }
-})
-
-test_that("the gamma gradient is finite and exact where gamma_lcdf
-  underflows", {
-  model <- uniform_gradient_model()
-  for (d in c(2500.5, 2600)) {
-    res <- uniform_gradient_at(model, 2L, c(5000, 1), d, 1)
-    expect_false(res$rejected, info = as.character(d))
-    expect_true(all(is.finite(res$gradient)), info = as.character(d))
-    expect_equal(
-      res$gradient, res$finite_diff, tolerance = 1e-4,
-      info = as.character(d)
-    )
-  }
-})
-
-test_that("the first interval PMF is exact for a gamma or chi-square delay
-  with a far lower tail, for the scalar and vectorised PMF", {
-  cases <- lower_tail_cases[c(1, 3)]
-  for (case in cases) {
-    expected <- reference_uniform_lcdf(case$lp, 1, 1)
-    scalar <- primarycensored_lpmf(
-      0L, case$dist_id, case$params, 1, 1, 0, Inf, 1L, numeric(0)
-    )
-    vectorised <- primarycensored_sone_lpmf_vectorized(
-      3, 0, Inf, case$dist_id, case$params, 1, 1L, numeric(0)
-    )
-    expect_equal(scalar, expected, tolerance = 1e-8, info = case$name)
-    expect_equal(vectorised[1], expected, tolerance = 1e-8, info = case$name)
-    expect_lt(scalar, -50)
-    expect_lt(vectorised[1], -50)
-    expect_false(anyNA(vectorised), info = case$name)
-  }
-})
-
-test_that("the gamma and chi-square lower tail gradients match finite
-  differences", {
-  model <- uniform_gradient_model()
-  cases <- list(
-    list(id = 13L, params = 20, delays = c(0.5, 2, 4, 10, 20)),
-    list(id = 13L, params = 40, delays = c(0.5, 1, 3, 5, 10, 15, 30)),
-    list(id = 13L, params = 100, delays = c(1, 10, 40, 80)),
-    list(id = 2L, params = c(20, 0.5), delays = c(0.5, 2, 4, 10, 20)),
-    list(id = 2L, params = c(10, 2), delays = c(0.1, 0.5, 1, 3, 8)),
-    list(id = 2L, params = c(0.5, 2), delays = c(0.01, 0.1, 0.5, 2)),
-    list(id = 2L, params = c(1000, 100), delays = c(1, 4))
-  )
-  for (case in cases) {
-    for (d in case$delays) {
-      for (pwindow in c(0.5, 1, 3)) {
-        info <- sprintf(
-          "dist %d params = %s d = %g pwindow = %g", case$id,
-          toString(case$params), d, pwindow
-        )
-        res <- uniform_gradient_at(model, case$id, case$params, d, pwindow)
-        expect_false(res$rejected, info = info)
-        expect_false(res$gradient_not_finite, info = info)
-        expect_true(all(is.finite(res$gradient)), info = info)
-        expect_equal(
-          res$gradient, res$finite_diff,
-          tolerance = 1e-4, info = info
-        )
-      }
     }
   }
 })
