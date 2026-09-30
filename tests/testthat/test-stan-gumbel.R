@@ -1064,6 +1064,79 @@ test_that("Gumbel log CDF gradients match finite differences across the
   }
 })
 
+test_that("Gumbel gradients are finite for delays whose CDF has an
+  infinite slope at 0", {
+  # A gamma or Weibull with shape below 1 has an unbounded density at 0. The
+  # series is not admissible for these in daily units, so mu below pwindow
+  # with d at or below pwindow takes the numerical z branch, where the upper
+  # limit is d. Its sensitivity used to be integrated and is singular, which
+  # ended in the solver step limit after about 15 seconds
+  model <- gumbel_gradient_model()
+  cases <- list(
+    list(dist_id = 2L, params = c(0.5, 1)),
+    list(dist_id = 2L, params = c(0.8, 1)),
+    list(dist_id = 2L, params = c(0.3, 2)),
+    list(dist_id = 2L, params = c(0.5, 200)),
+    list(dist_id = 3L, params = c(0.5, 1))
+  )
+  points <- list(
+    list(d = 0.5, pwindow = 2, mu = 0, beta = 0.5),
+    list(d = 0.2, pwindow = 1, mu = -1, beta = 0.3),
+    list(d = 1, pwindow = 1, mu = 0.5, beta = 0.3)
+  )
+  for (case in cases) {
+    for (point in points) {
+      label <- gumbel_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
+      )
+      elapsed <- system.time(
+        res <- gumbel_gradient_at(
+          model, case, point$d, point$pwindow, point$mu, point$beta
+        )
+      )[["elapsed"]]
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_length(res$gradient, 4)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_lt(elapsed, 5, label = label)
+      expect_gumbel_gradient_close(res, case, label, scale = 5)
+    }
+  }
+})
+
+test_that("the vectorised Gumbel log PMF has finite gradients for delays
+  whose CDF has an infinite slope at 0", {
+  model <- gumbel_gradient_model()
+  cases <- list(
+    list(dist_id = 2L, params = c(0.5, 1)),
+    list(dist_id = 3L, params = c(0.5, 1))
+  )
+  points <- list(
+    list(d = 10, pwindow = 1, mu = 0.5, beta = 0.3),
+    list(d = 4, pwindow = 2, mu = 0, beta = 0.5)
+  )
+  for (case in cases) {
+    for (point in points) {
+      label <- gumbel_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
+      )
+      elapsed <- system.time(
+        res <- gumbel_gradient_at(
+          model, case, point$d, point$pwindow, point$mu, point$beta,
+          vectorised = TRUE
+        )
+      )[["elapsed"]]
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_lt(elapsed, 5, label = label)
+      expect_gumbel_gradient_close(res, case, label, scale = 5)
+    }
+  }
+})
+
 test_that("the Stan numerical path keeps the lower tail on the log scale", {
   # The kink of the delay CDF beyond the integration range gave -Inf, the
   # density over the integration range below the solver tolerance gave -Inf
