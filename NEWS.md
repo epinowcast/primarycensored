@@ -6,8 +6,11 @@
   Stan now has them for the exponential, beta, chi-square, inverse gamma, normal, inverse chi-square, Pareto and scaled inverse chi-square delays (`dist_id` 4, 9, 13, 16, 18, 19, 21 and 22).
   R has `pcens_cdf()` methods for `pexp`, `pnorm`, `pchisq` and `pbeta`.
   The Stan solutions build on `primarycensored_uniform_terms()`, so the shared-terms vectorised PMF applies to them too.
-  They agree with numerical integration of the delay CDF to a relative 1e-8 or better, and the R solutions to 1e-9.
+  On the parameter grids tested they agree with numerical integration of the delay CDF to a relative 1e-8 or better in Stan, and 1e-9 in R.
+  The exception is a gamma or chi-square delay with a large shape deep in the lower tail, for example a chi-square with 60 degrees of freedom at a delay of 1e-4, where the CDF is below 1e-160.
+  The existing gamma terms give a relative error of about 1e-6 there.
   See #377.
+- The beta solution returns a log CDF of exactly 0 once the primary event window is above 1.
 - The normal has support on the reals, so its analytic solution does not clip the primary event window at 0.
   It evaluates the positive antiderivative of the CDF and switches to an asymptotic series below `z = -10`.
 - The inverse gamma, inverse chi-square and scaled inverse chi-square solutions need a finite mean (shape above 1, degrees of freedom above 2).
@@ -18,6 +21,8 @@
 
 ## Bug fixes
 
+- The analytical Stan log CDF for the gamma, lognormal, Weibull and generalised gamma delays is now at most 0.
+  In the upper tail the rounded terms could give a value a few 1e-11 above 0.
 - The beta delay no longer errors in the Stan numerical path for delays above 1.
   `dist_lcdf()` now returns a log CDF of 0 there.
   See #377.
