@@ -15,8 +15,6 @@
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.
   See #367.
-- The Stan rate gradient of the exponential and gamma vectorised PMF no longer takes the log of the total, which lost the tail for delays far in the upper tail.
-  See #367.
 
 ## Performance
 
