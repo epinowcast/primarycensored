@@ -213,27 +213,60 @@ test_that("truncation normalisers stay finite when the CDF is deep in the
   expect_equal(res_both, expected_both, tolerance = 1e-8)
 })
 
-test_that("analytical generalised gamma still matches the numeric path
-   where the CDF is representable", {
-  for (params in list(c(2, 5, 20), c(1, 4, 12), c(1.5, 3, 8))) {
+test_that("analytical generalised gamma matches Stan's numerical path", {
+  # The Stan numerical path integrates exp(dist_lcdf(t)) / pwindow over
+  # [d - pwindow, d] with `primarycensored_ode()`. Integrate that same
+  # right hand side so the analytical path is checked against the delay CDF
+  # that the numerical path uses, including where it is small.
+  stan_numeric <- function(d, pwindow, params) {
+    rhs <- function(t) {
+      vapply(t, function(ti) {
+        primarycensored_ode(ti, 0, params, c(d, pwindow), c(5L, 1L, 3L, 0L))
+      }, numeric(1))
+    }
+    integrate(rhs, lower = d - pwindow, upper = d, rel.tol = 1e-12)$value
+  }
+  cases <- list(
+    c(2, 5, 20), c(1, 4, 12), c(1.5, 3, 8), c(0.7, 2, 40), c(5, 5, 100)
+  )
+  for (params in cases) {
+    # Positions relative to the delay scale reach from deep in the lower
+    # tail, where the CDF is about 1e-100, to the upper tail
+    scale_d <- params[2] * params[3]^(1 / params[1])
     for (pwindow in c(0.5, 1, 3)) {
-      for (d in c(0.4, 1, 2.5, 6, 12, 25)) {
+      for (d in scale_d * c(0.3, 0.5, 0.7, 0.9, 1, 1.5, 3)) {
         label <- sprintf(
           "d = %g, pwindow = %g, params = (%s)", d, pwindow,
           toString(params)
         )
-        analytic <- primarycensored_analytical_lcdf(
+        analytic <- exp(primarycensored_analytical_lcdf(
           d, 5, params, pwindow, 0, Inf, 1, numeric(0)
+        ))
+        expect_equal(
+          analytic, stan_numeric(d, pwindow, params),
+          tolerance = 1e-6, info = label
         )
-        # The numeric path integrates the CDF, so only compare where the
-        # result is not vanishingly small
-        if (analytic > -30) {
-          numeric <- log(primarycensored_cdf(
-            d, 5, params, pwindow, 0, Inf, 1, numeric(0)
-          ))
-          expect_equal(analytic, numeric, tolerance = 1e-6, info = label)
-        }
       }
+    }
+  }
+})
+
+test_that("analytical generalised gamma matches R's numerical path", {
+  skip_if_not_installed("flexsurv")
+  for (params in list(c(2, 5, 20), c(1, 4, 12), c(1.5, 3, 8))) {
+    obj <- new_pcens(
+      flexsurv::pgengamma.orig, dunif, list(),
+      shape = params[1], scale = params[2], k = params[3]
+    )
+    d <- seq(0.5, 30, by = 0.5)
+    for (pwindow in c(0.5, 1, 3)) {
+      numeric <- pcens_cdf(obj, q = d, pwindow = pwindow, use_numeric = TRUE)
+      analytic <- vapply(d, function(di) {
+        exp(primarycensored_analytical_lcdf(
+          di, 5, params, pwindow, 0, Inf, 1, numeric(0)
+        ))
+      }, numeric(1))
+      expect_equal(analytic, numeric, tolerance = 1e-6)
     }
   }
 })

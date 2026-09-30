@@ -895,3 +895,26 @@ test_that("pprimarycensored and dprimarycensored work end to end with
   expect_true(all(pmf >= 0))
   expect_equal(sum(pmf), 1, tolerance = 1e-6)
 })
+
+test_that("pcens_cdf.pcens_pgengamma.orig_dunif agrees with numeric
+   integration deep in the lower tail", {
+  skip_if_not_installed("flexsurv")
+  # The R solution works on the CDF scale, so it underflows to 0 where the
+  # numerical path does. Elsewhere in the tail the two must agree. See #363
+  # for the matching Stan log CDF.
+  cases <- list(c(1, 5, 400), c(5, 5, 100), c(2, 5, 30))
+  q_values <- c(0.5, 1, 2, 3, 4)
+  for (params in cases) {
+    obj <- new_pcens(
+      flexsurv::pgengamma.orig, dunif, list(),
+      shape = params[1], scale = params[2], k = params[3]
+    )
+    analytic <- pcens_cdf(obj, q = q_values, pwindow = 1)
+    numeric <- pcens_cdf(
+      obj,
+      q = q_values, pwindow = 1, use_numeric = TRUE
+    )
+    expect_true(all(is.finite(analytic)))
+    expect_equal(analytic, numeric, tolerance = 1e-5)
+  }
+})

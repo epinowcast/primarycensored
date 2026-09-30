@@ -1,3 +1,14 @@
+# primarycensored (development version)
+
+## Bug fixes
+
+- `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, where the true log CDF is finite.
+  The generalised gamma analytical solution with a uniform primary uses it, so truncation normalisers no longer become `-Inf` and the log density no longer becomes `NaN` or `+Inf`.
+  Stan's `gamma_lcdf()` also has an inaccurate gradient with respect to its shape when the CDF is below about 1e-11, which affected the gradient with respect to `k` in the same region.
+  The new `gamma_lcdf_logx()` sums the incomplete gamma series on the log scale in the lower tail and calls `gamma_lcdf()` elsewhere, so values are unchanged outside that region.
+  In that region the log density and gradient take about 1 microsecond longer per evaluation.
+  See #363.
+
 # primarycensored 1.6.0
 
 This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.
