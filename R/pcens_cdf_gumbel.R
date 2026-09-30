@@ -37,37 +37,40 @@
 #'
 #' **Sums of alternating terms.** With \eqn{s(z) = e^{(\mu - z) / \beta}},
 #' the \eqn{n}th term is
-#' \eqn{a_n = \int s(z)^n f(q - z) dz / n!}, at most
+#' \eqn{a_n = \int s(z)^n f(q - z) dz / n!}. It is at most
 #' \eqn{s_0^n / n!} times the delay mass in the window, where
-#' \eqn{s_0 = e^{\mu / \beta}} is the largest value of \eqn{s} on the window.
-#' The terms do not depend on \eqn{q} beyond this bound because
-#' \eqn{c(q)} grows as the transforms \eqn{T_f(n / \beta; q)} shrink, and
-#' they are evaluated on the log scale so they do not overflow. The sum
-#' alternates, so a term that is larger than the result loses precision.
-#' The series is truncated at the first \eqn{N} for which the next term
-#' relative to \eqn{\max(s_0, 1)} is below 1e-18, see `.gumbel_n_terms()`.
-#' The odd and even terms are accumulated separately on the log scale, and
-#' the difference is taken last.
+#' \eqn{s_0 = e^{\mu / \beta}} is the largest value of \eqn{s} on the window,
+#' whatever `q` is, because \eqn{c(q)} grows as the transforms
+#' \eqn{T_f(n / \beta; q)} shrink. The terms are evaluated on the log scale
+#' so they do not overflow. The series is truncated at the first \eqn{N} for
+#' which the bound on the next term, relative to \eqn{\max(s_0, 1)}, is
+#' below 1e-18, see `.gumbel_n_terms()`. The odd and even terms are
+#' accumulated separately on the log scale, and the difference is taken last.
 #'
-#' **Accuracy region.** The relative error is estimated for each `q` from
-#' the terms, as the machine precision times the ratio of the sum of the
-#' absolute terms to the result, times one plus the largest magnitude of a
-#' log term, plus the truncation bound relative to the result. This is
-#' `.gumbel_error_bound()`. Where it is above
-#' \eqn{10^{-9}} the method uses the numerical method of
+#' **Accuracy region.** The sum alternates, so a term that is larger than the
+#' result loses precision. The relative error is estimated for each `q` as
+#' the machine precision times the ratio of the sum of the absolute terms to
+#' the result, times one plus the largest magnitude of a log term, plus the
+#' truncation bound relative to the result, see `.gumbel_error_bound()`.
+#' Where it is above \eqn{10^{-9}} the method uses the numerical method of
 #' [pcens_cdf.default()] for that `q`, so no value is silently inaccurate.
-#' Two things cause it. The first is a large \eqn{s_0 = e^{\mu / \beta}},
-#' where the terms reach \eqn{e^{s_0}} and the result is of order 1, so about
-#' \eqn{s_0 \gtrsim 10} loses precision as \eqn{e^{s_0}} times the rounding
-#' error of the log terms. The second is a window that is narrow relative to
-#' the scale, \eqn{w \ll \beta}, where the bracket is a small difference of
-#' large terms and the loss is about \eqn{\beta / w}.
-#' Also \eqn{s_0 > 15} is never used (see `.gumbel_max_s0`) as the number of
-#' terms grows with it.
+#' Two things cause it. The first is a large \eqn{s_0}, where the terms reach
+#' \eqn{e^{s_0}} and the result is of order 1, so that the precision lost is
+#' \eqn{e^{s_0}} times the rounding error of the log terms, which grows with
+#' the tilts \eqn{n / \beta} and the scale of the delay. The second is a
+#' window that is narrow relative to the scale, \eqn{w \ll \beta}, where the
+#' bracket is a small difference of large terms and the loss is about
+#' \eqn{\beta / w}. Also \eqn{s_0 > 15} is never used, see `.gumbel_max_s0`,
+#' as the number of terms grows with it.
+#' The estimate was at least the actual error in tests against a tight
+#' reference integral, and values that it accepts agree with the reference to
+#' a relative difference of about 1e-9 or better, and about 1e-12 for
+#' \eqn{s_0 \le 1}.
 #' In the grid of `mu` in -0.5, 0, 0.5, 1, 1.5, `beta` in 0.1, 0.2, 1 and
-#' `pwindow` in 1, 2, the series is used for the normal delay when
-#' \eqn{\mu / \beta} is at most about 2, and agrees with numerical
-#' integration to a relative difference of about 1e-9 or better.
+#' `pwindow` in 1, 2, the normal delay uses the series where
+#' \eqn{\mu / \beta \le 1.5}, which is every `mu` at `beta` 1 and `mu` up to
+#' 0 at `beta` 0.2 and 0.1. The numerical method is used for larger
+#' \eqn{\mu / \beta}, where the window density rises sharply inside the window.
 #'
 #' **Admissibility.** The terms need the transform at the tilts
 #' \eqn{n / \beta} for \eqn{n = 1, \ldots, N}. The exponential and gamma forms
@@ -141,9 +144,10 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   .pcens_cdf_gumbel(object, q, pwindow, use_numeric)
 }
 
-# The series is not used above this value of exp(mu / beta). The terms are
-# as large as exp(s0) and the number of terms grows with s0 (about 60 at 12),
-# so beyond it the result needs more than 1e-9 of the rounding error.
+# The series is not used above this value of s0 = exp(mu / beta). The terms
+# are as large as exp(s0) and the number of terms grows with s0, about 60 at
+# 12 and 69 at 15. Beyond it the rounding error of the terms is above 1e-9
+# for the delays in the tests.
 .gumbel_max_s0 <- 15
 
 # Largest estimated relative error for which the series is used
@@ -167,7 +171,8 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 .gumbel_n_terms <- function(log_s0) {
   n <- seq_len(200L)
   log_bound <- n * log_s0 - lgamma(n + 1) - max(log_s0, 0)
-  max(2L, which(log_bound < .gumbel_log_trunc)[[1L]])
+  below <- which(log_bound < .gumbel_log_trunc)
+  max(2L, if (length(below) > 0L) below[[1L]] else length(n))
 }
 
 #' Primary arguments of a truncated Gumbel pcens object
@@ -259,9 +264,9 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 #' This is [pcens_cdf.default()]. The window density can go from zero to
 #' its peak within a fraction of the window, for example for a large
 #' location with a small scale, and the default integration can then fail
-#' with a roundoff error. For a point where it does, the integral is taken
-#' again with more subdivisions and a break at the location `mu`, where the
-#' window density changes most.
+#' with an error from the rounding of the integrand. For a point where it
+#' does, the integral is taken again with more subdivisions and a break at
+#' the location `mu`, where the window density changes most.
 #'
 #' @inheritParams pcens_cdf
 #'

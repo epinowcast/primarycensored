@@ -24,8 +24,8 @@ Vector of CDFs, in [0, 1].
 This is \code{\link[=pcens_cdf.default]{pcens_cdf.default()}}. The window density can go from zero to
 its peak within a fraction of the window, for example for a large
 location with a small scale, and the default integration can then fail
-with a roundoff error. For a point where it does, the integral is taken
-again with more subdivisions and a break at the location \code{mu}, where the
-window density changes most.
+with an error from the rounding of the integrand. For a point where it
+does, the integral is taken again with more subdivisions and a break at
+the location \code{mu}, where the window density changes most.
 }
 \keyword{internal}
