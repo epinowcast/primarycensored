@@ -15,9 +15,7 @@
  * A window of another shape plugs in the same way. It needs the transform at
  * its own tilts and its own combination of the terms. A delay distribution
  * plugs in through tilt_transform.stan and is then supported by every
- * window. A transform that has a setup shared by all the points of a call,
- * as for the lognormal, gives it in log_tilt_transform_context(), which the
- * scalar and the vectorised functions compute once.
+ * window.
  */
 
 /**
@@ -67,10 +65,9 @@ int exptilt_is_small_window_regime(real rho, data real pwindow) {
   * @ingroup exponential_tilt_solutions
   *
   * The small window form subtracts terms of the size of |d| + w, so its
-  * rounding error is about 1e-14 (|d| + w) / w (1 + |rho| (|d| + w)). The
-  * direct form has an error of about 1e-15 / (|rho| w) whatever the distance
-  * from the origin. The small window form has the smaller error while
-  * |rho| (|d| + w) is below about 0.1, and it is used only there.
+  * rounding error is about 1e-14 (|d| + w) / w (1 + |rho| (|d| + w)). That
+  * is below the error of the direct form only while |rho| (|d| + w) is
+  * below about 0.1.
   *
   * @param rho Tilt
   * @param d Delay
@@ -115,8 +112,7 @@ int exptilt_is_small_delay(int dist_id, real rho, data real d,
   * @param dist_id Distribution identifier, see check_for_exptilt()
   * @param rho Tilt
   * @param params Array of distribution parameters
-  * @param context Output of log_tilt_transform_context() for dist_id, -rho
-  *   and params
+  * @param context Output of log_tilt_transform_context() for -rho
   *
   * @return Vector [log F(t), log(1 - F(t)), log J(t), log(J(Inf) - J(t))].
   * The lower tail terms are `-inf` for t <= 0 for delays on the non-negative
@@ -137,8 +133,8 @@ vector primarycensored_exptilt_terms_shared(real t, int dist_id, real rho,
   * Compute the exponentially tilted terms at an endpoint
   * @ingroup exponential_tilt_solutions
   *
-  * As primarycensored_exptilt_terms_shared() with the shared quantities of
-  * the tilt transform computed for this endpoint alone.
+  * As primarycensored_exptilt_terms_shared() with the context computed for
+  * this endpoint alone.
   *
   * @param t Endpoint, d or d - pwindow
   * @param dist_id Distribution identifier, see check_for_exptilt()
@@ -171,8 +167,7 @@ vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
   * @param upper_q Log upper tail quantity at q
   *
   * @return Log of the difference, `-inf` if it is zero to rounding. The
-  * lower tail terms are used where the upper tail terms are `inf`, as for a
-  * lognormal delay with a positive tilt, whose total diverges.
+  * lower tail terms are used where the upper tail terms are `inf`.
   */
 real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
                                real upper_q) {
@@ -371,11 +366,8 @@ int check_for_exptilt_vectorized(int dist_id, int primary_id,
   *
   * The log CDF at d combines the terms at d and at q = d - pwindow. Both are
   * integer delays, so the terms are computed once per delay and used for
-  * both, halving the transform evaluations. Each delay uses the form that
-  * primarycensored_exptilt_lcdf() chooses for it, and each endpoint has its
-  * moments or its terms computed once, for the delays that need them and
-  * with one shared setup, whatever the mix of forms. The values are the same
-  * as from primarycensored_exptilt_lcdf() at each delay. Only for cases where
+  * both, halving the transform evaluations. The values are the same as from
+  * primarycensored_exptilt_lcdf() at each delay. Only for cases where
   * check_for_exptilt_vectorized() is 1 and check_for_tilt_transform() is 1
   * for -rho.
   *
@@ -402,15 +394,9 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
   int first = positive ? max(start - pw, 0) : start - pw;
   int n_endpoints = n - first + 1;
   vector[n] log_cdfs;
-  // Each delay chooses its form as in primarycensored_exptilt_lcdf(). The
-  // moments of the small window form and the terms of the direct form are
-  // computed once per endpoint that a delay of that form needs, and shared
-  // by the two delays that use it. Where the window is small but the delays
-  // are not, as for |rho| w below 1e-4 and delays beyond the reach of the
-  // small window form, both kinds of delay are mixed and each endpoint is
-  // still computed once.
-  // form[d] is 1 for the small window form, 2 for the small delay form and 3
-  // for the direct form.
+  // Each delay uses the form of primarycensored_exptilt_lcdf(), with each
+  // endpoint computed once. form[d] is 1 for the small window form, 2 for
+  // the small delay form and 3 for the direct form.
   array[n] int form = rep_array(3, n);
   array[n_endpoints] int needs_moments = rep_array(0, n_endpoints);
   array[n_endpoints] int needs_terms = rep_array(0, n_endpoints);
@@ -429,8 +415,7 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
       needs_terms[q_index] = 1;
     }
   }
-  // moments[t - first + 1] and terms[t - first + 1] hold the values at
-  // endpoint t, for the endpoints that are needed
+  // moments and terms at endpoint t are at index t - first + 1
   array[n_endpoints] vector[2] moments;
   array[n_endpoints] vector[4] terms;
   vector[4] context = rep_vector(0, 4);

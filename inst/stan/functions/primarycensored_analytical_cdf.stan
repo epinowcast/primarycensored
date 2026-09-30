@@ -90,11 +90,7 @@ int check_for_analytical_params(int dist_id, array[] real params,
   *
   * This is check_for_analytical_params() and, for the exponentially tilted
   * solutions, that the tilt transform is the path to use at d, see
-  * check_for_tilt_transform_at(). The series of the lognormal for a negative
-  * tilt costs more the larger d is, and the ODE is used past the delay where
-  * it is faster. This is the check used to choose the path in
-  * primarycensored_cdf(), primarycensored_lcdf() and
-  * primarycensored_lcdf_vectorized(), the latter at its largest delay.
+  * check_for_tilt_transform_at().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters

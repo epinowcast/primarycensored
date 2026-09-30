@@ -60,17 +60,13 @@
 #' numerical method in R. Stable forms for these tilts, such as
 #' the expm1 closed form for the exponential and a Kummer series for the gamma,
 #' are not implemented, see #388.
-#' The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
-#' the transform is truncated at \eqn{t}. It falls back to the numerical
-#' method for every `q` where \eqn{\rho \sigma^2 e^\mu} overflows, above
-#' about \eqn{e^{690}}. For \eqn{\rho < 0} the series needs about
-#' \eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms per quantile, so it is slower
-#' than the numerical method beyond \eqn{|\rho| q} of about 200. The numerical
-#' method is used for the `q` above that, unless \eqn{|\rho| w} is above 2,
-#' where the numerical method loses accuracy in the lower tail (a relative
-#' error of up to 5e-3 at \eqn{|\rho| w} of 600). The series is then kept up
-#' to 20000 terms, which is for \eqn{|\rho| q} up to about 18700, and the
-#' numerical method is used beyond that.
+#' The lognormal falls back to the numerical method where
+#' \eqn{\rho \sigma^2 e^\mu} overflows, above about \eqn{e^{690}}. For
+#' \eqn{\rho < 0} it also uses the numerical method for the `q` with
+#' \eqn{|\rho| q} above 200, where the series is slower, unless
+#' \eqn{|\rho| w} is above 2, where the numerical method loses accuracy in
+#' the lower tail. The series is then kept up to 20000 terms, about
+#' \eqn{|\rho| q} of 18700.
 #'
 #' **Tilts close to zero.** The expression above cancels as \eqn{\rho \to 0}.
 #' Two forms replace it where the cancellation would lose precision. With
@@ -91,11 +87,10 @@
 #' Away from these regions the error of the direct form is below 1e-9. The
 #' truncation error of the two forms is below 1e-9 at their thresholds.
 #' The first form subtracts terms of the size of \eqn{|q| + w}, so its
-#' rounding error grows as \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
-#' w))}. The second factor makes it worse than the direct form, whose error
-#' is about \eqn{10^{-15} / (|\rho| w)} whatever the distance from the
-#' origin, once \eqn{|\rho| (|q| + w)} is above about 0.1. The direct form
-#' is used there.
+#' rounding error is about \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
+#' w))}. That is above the error of the direct form once
+#' \eqn{|\rho| (|q| + w)} is above about 0.1, so the direct form is used
+#' there.
 #'
 #' **Precision.** The R CDF agrees with numerical integration (`integrate()`
 #' at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
@@ -142,27 +137,15 @@
 #' as it is accurate where the numerical method has errors of up to 1e-2 in
 #' the tails of a normal delay.
 #'
-#' **Lognormal precision and speed.** The quadrature is accurate to an
-#' absolute difference of about 1e-11 in the log transform for `sdlog` up to
-#' 1.8, and 1e-13 for `sdlog` of 1 or below. Each range of the quadrature is
-#' split into `ceiling(sdlog / 1.8)` panels, which keeps the CDF accurate to
-#' a relative difference of about 1e-9 for `sdlog` up to 15, as tested.
-#' The CDF agrees with numerical integration to a relative difference of 1e-7
-#' or better over the tested grid of tilts, windows and quantiles. The
-#' largest differences are deep in the lower tail, where the CDF is below
-#' 1e-100 and the direct form cancels
-#' by about \eqn{1 / (\rho q)} times the gap between `q` and the mean of the
-#' delays below it.
-#' The quadrature and the series have a fixed cost that the numerical method
-#' beats for fewer than 10 quantiles, so `pcens_cdf()` uses the numerical
-#' method for fewer than 10 `q` and the transform for 10 or more, which is
-#' 1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
-#' The numerical method is used for fewer than 10 `q` only where
-#' \eqn{|\rho| w} is at most 1. Its relative error is about 1e-6 there, 1e-4
-#' at 50, and it fails at 1000, where the transform is accurate to 1e-9, so
-#' the transform is used for any number of `q` above that.
-#' The Stan solution takes about as long as the ODE for one delay, and is 2 to
-#' 4 times faster with the shared terms of the vectorised PMF, see the NEWS.
+#' **Lognormal precision and speed.** The quadrature is accurate to about
+#' 1e-11 in the log transform for `sdlog` up to 1.8 and, with
+#' `ceiling(sdlog / 1.8)` panels, keeps the CDF accurate to about 1e-9 up to
+#' `sdlog` of 15. The CDF agrees with numerical integration to a relative
+#' difference of 1e-7 or better over the tested grid. The transform has a
+#' fixed cost, so `pcens_cdf()` uses the numerical method for fewer than 10
+#' `q` where \eqn{|\rho| w} is at most 1, and the transform otherwise.
+#' The Stan solution takes about as long as the ODE for one delay, and is 2
+#' to 4 times faster with the shared terms of the vectorised PMF.
 #'
 #' **Extending.** A new delay distribution is supported by defining
 #' `.pcens_tilt_lower()`, `.pcens_tilt_available()`, `.pcens_tilt_transform()`
@@ -253,10 +236,7 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 # which balance at about 1e-4 with both below 1e-9.
 .exptilt_small <- 1e-4
 
-# The small window form cancels by about 1e-14 * (|q| + w) / w * (1 + |rho|
-# (|q| + w)), and the direct form by about 1e-15 / (|rho| w). The small
-# window form has the smaller error while |rho| (|q| + w) is below about 0.1,
-# whatever the window. Beyond that the direct form is used.
+# The small window form is used only while |rho| (|q| + w) is below this
 .exptilt_small_reach <- 0.1
 
 #' Tilt of the exponentially tilted primary of a pcens object
@@ -315,9 +295,7 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
   rho <- .exptilt_rho(object)
-  # The closed forms are for a single window and need the tilted delay. A
-  # transform that is evaluated by quadrature has a fixed cost that the
-  # numerical method beats for a few quantiles, where it is accurate.
+  # The closed forms are for a single window and need the tilted delay
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0 ||
     !.pcens_tilt_available(object, -rho)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
@@ -331,8 +309,7 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   result[!is.na(q) & q == -Inf] <- 0
   finite <- which(is.finite(q))
   if (length(finite) > 0L) {
-    # Transforms that cannot be evaluated at a large q use the numerical
-    # method for that q alone
+    # Use the numerical method for the q where the transform does not fit
     fits <- .pcens_tilt_fits(object, -rho, q[finite], pwindow)
     result[finite[fits]] <- .exptilt_cdf_finite(
       object, q[finite[fits]], pwindow, rho
@@ -369,8 +346,6 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   # Below the support of the delay no mass has arrived
   active <- !positive | q > lower
   if (abs(rho) * pwindow < .exptilt_small) {
-    # The small window form cancels far from the origin, see
-    # `.exptilt_small_reach`
     small_window <- active &
       abs(rho) * (abs(q) + pwindow) < .exptilt_small_reach
     tiny_delay <- rep(FALSE, length(q))
@@ -507,8 +482,7 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 #' @keywords internal
 .exptilt_tail_diff <- function(lower_q, lower_y, upper_q, upper_y) {
   use_upper <- lower_y - lower_q > upper_q - upper_y
-  # Terms that underflow on both sides give NaN, which is a zero difference.
-  # An upper tail that diverges (`Inf`) is never used.
+  # Terms that underflow on both sides give NaN, which is a zero difference
   use_upper[is.na(use_upper) | is.infinite(upper_q)] <- FALSE
   out <- .log_diff_exp(lower_q, lower_y)
   if (any(use_upper)) {

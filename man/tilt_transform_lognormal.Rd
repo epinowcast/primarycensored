@@ -32,27 +32,23 @@ of the transform over the lower and the upper part of the support.
 }
 \description{
 The truncated exponential-moment transform of the lognormal has no closed
-form, so it is evaluated by two methods that depend on the sign of the tilt
-\eqn{\xi}. With \eqn{u = e^{\mu + \sigma z}} and \eqn{z} standard normal,
+form. With \eqn{z_t = (\log t - \mu) / \sigma},
 \deqn{T_f(\xi; t) = \int_{-\infty}^{z_t} e^{\xi e^{\mu + \sigma z}}
-  \phi(z) dz, \qquad z_t = (\log t - \mu) / \sigma.}
+  \phi(z) dz.}
 \itemize{
 \item For \eqn{\xi = 0} it is the lognormal CDF.
-\item For \eqn{\xi < 0}, the tilted primary with \eqn{\rho = -\xi > 0}, the
-integrand is log-concave and is integrated by Gauss-Legendre quadrature
-on panels chosen from its mode, see \code{.lnorm_tilt_quadrature()}.
-The tail transform \eqn{T_f(\xi; \infty) - T_f(\xi; t)} is integrated in
-the same way, so it does not cancel.
-\item For \eqn{\xi > 0}, the tilted primary with \eqn{\rho < 0}, the transform
-is the series \eqn{\sum_k \xi^k m_k(t) / k!} of positive terms with the
-partial moments \eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2}
-  \Phi(z_t - k \sigma)}, see \code{.lnorm_tilt_series()}.
-The total diverges, so the tail transform is \code{Inf} on the log scale.
+\item For \eqn{\xi < 0} the integrand is log-concave and is integrated by
+Gauss-Legendre quadrature on panels around its mode. The upper
+transform is integrated in the same way, so it does not cancel.
+\item For \eqn{\xi > 0} the transform is the series
+\eqn{\sum_k \xi^k m_k(t) / k!} of positive terms in the partial moments
+\eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
+The total diverges, so the upper transform is \code{Inf}.
+}
+}
+\details{
 The series costs about \eqn{\xi t} terms per point. \code{.pcens_tilt_fits()}
 is \code{FALSE} beyond \eqn{\xi t} of 200, where the numerical method is
-faster, unless the window is wide in tilt terms, see
-\code{.lnorm_series_max_xt}. It is \code{FALSE} beyond 20000 terms, about
-\eqn{\xi t} of 18700, whatever the window.
-}
+faster, unless \eqn{\xi w} is above 2, and beyond 20000 terms.
 }
 \keyword{internal}

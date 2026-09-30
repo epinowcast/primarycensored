@@ -413,28 +413,19 @@ $$
 where $\phi$ is the standard normal density.
 The method depends on the sign of $\xi = -r$.
 
-- For $r > 0$, $\xi < 0$, the log of the integrand $\ell(z) = -r e^{\mu + \sigma z} - z^2 / 2$ is concave with $\ell'' \leq -1$.
-  It has one mode, $z_0 = -W_0(r \sigma^2 e^\mu) / \sigma$ with $W_0$ the principal branch of the Lambert W function, and $\ell''(z_0) = -(1 + W_0)$.
-  Bounds from the curvature and from the decay of the tilt give limits beyond which the integrand is below $e^{-40}$ of its peak.
-  The total over the bump is integrated by two 32 point Gauss-Legendre panels that meet at the mode, once for all the points of a call.
-  For a point left of the mode the lower transform is one panel that ends at the point, with its left limit set from the slope of $\ell$ there.
+- For $r > 0$, $\xi < 0$, the log of the integrand $\ell(z) = -r e^{\mu + \sigma z} - z^2 / 2$ is concave with one mode, $z_0 = -W_0(r \sigma^2 e^\mu) / \sigma$, where $W_0$ is the principal branch of the Lambert W function.
+  The integrand is below $e^{-40}$ of its peak beyond limits set from the curvature and the decay of the tilt.
+  The total is integrated by two 32 point Gauss-Legendre panels that meet at the mode, once for all the points of a call.
+  For a point left of the mode the lower transform is one panel that ends at the point.
   For a point right of the mode the upper transform is one panel that starts at the point.
   The other transform is the difference from the total, which is at least the mass on the other side of the mode, so it does not cancel.
-  The panels are accurate to about $10^{-11}$ for $\sigma$ up to 1.8, and $10^{-13}$ for $\sigma$ of 1 or below, in the log transform.
-  The integrand falls from its plateau to zero over a width of about $1 / \sigma$, so for a larger $\sigma$ each panel is split into $\lceil \sigma / 1.8 \rceil$ equal panels.
-  A single panel per side gave a relative error in the CDF of $10^{-7}$ at $\sigma = 4$ and $3 \times 10^{-5}$ at 15, and the split keeps it at about $10^{-9}$ to $\sigma = 15$.
+  Each panel is split into `ceiling(sigma / 1.8)` equal panels for a larger $\sigma$, which keeps the CDF accurate to about $10^{-9}$ to $\sigma = 15$.
 - For $r < 0$, $\xi > 0$, the transform is the series $\sum_{k \geq 0} \xi^k m_k(\tau) / k!$ in the partial moments $m_k(\tau) = \int_0^\tau u^k f_T(u)~du = e^{k\mu + k^2\sigma^2/2}\,\Phi(z_\tau - k\sigma)$.
   All terms are positive, so the sum does not cancel.
   Past $k = \xi \tau$ the terms fall by at least a factor $\xi \tau / (k + 1)$, so about $\xi \tau + 9 \sqrt{\xi \tau} + 30$ terms are needed.
   The total diverges, so there is no upper transform.
 
 The moments $G_1$ and $G_2$ of the small tilt forms come from $m_0$, $m_1$ and $m_2$.
-The transform is available for every tilt, for any other window that needs the transform at its own tilts, where the upper transform is `Inf` for $\xi > 0$.
-
-The transform is evaluated once for each of the two endpoints of a window.
-Its fixed cost is a few hundred microseconds in R, so `pcens_cdf()` uses the numerical method for fewer than 10 quantiles.
-In Stan the quadrature shares the mode and the total over all the delays of a call.
-It takes about as long as the ODE at its default tolerance of $10^{-6}$ for one delay, is 2 to 4 times faster for the vectorised PMF, and is 1.5 to 13 times faster than an ODE with a tolerance of $10^{-10}$, which is closer to its accuracy.
 
 ## Admissibility
 
@@ -445,15 +436,10 @@ The ODE is less accurate than the closed forms in the lower tail of a gamma with
 Closed forms for these tilts would need a stable representation that is not implemented, see #388.
 The normal form has no restriction.
 The lognormal needs that $r \sigma^2 e^\mu$ is finite.
-For $r < 0$ the series needs about $\xi d + 9 \sqrt{\xi d} + 30$ terms at a delay $d$, and is used only where it is the faster accurate path.
-In R it costs about 0.05 microseconds per term and the numerical method about 20 microseconds per quantile, so the series is used up to $|r| d$ of 200.
-In Stan the gradient of the series costs 0.04 ms at $|r| d = 60$ and 0.06 ms at 100, against 0.035 ms for an ODE with a tolerance of $10^{-10}$, which matches the series to $10^{-7}$ in the gradient, so it is used up to $|r| d$ of 60.
-Past that the numerical path is used, one quantile at a time in R and through `check_for_analytical_delay()` at the largest delay in Stan.
-The exception is a window that is wide in tilt terms, $|r| w_P > 2$.
-There the numerical path is less accurate in the lower tail, where the CDF is small and varies fast, with a relative error of up to $5 \times 10^{-3}$ in R at $|r| w_P = 600$.
+For $r < 0$ the series needs about $\xi d + 9 \sqrt{\xi d} + 30$ terms at a delay $d$, so the numerical path is used past $|r| d$ of 200 in R and 60 in Stan, where it is faster.
+The exception is a window that is wide in tilt terms, $|r| w_P > 2$, where the numerical path is less accurate in the lower tail.
 The series is kept there up to 20000 terms, which is $|r| d$ up to about 18700.
 For fewer than 10 quantiles in R the numerical method is used only where $|r| w_P \leq 1$, where its error is about $10^{-6}$.
-Beyond that it has a relative error of $10^{-4}$ at $|r| w_P = 50$ and fails at 1000, so the transform is used for any number of quantiles.
 
 ## Tilts close to zero
 
@@ -480,7 +466,6 @@ The truncation error of both forms is below $10^{-9}$ at the threshold, where th
 The first form subtracts terms of the size of $|d| + w_P$, so it has a rounding error of about $10^{-14} (|d| + w_P) / w_P \{1 + |r| (|d| + w_P)\}$.
 Equation \@ref(eq:exptilt) has a rounding error of about $10^{-15} / (|r| w_P)$ at any distance from the origin.
 The first form has the smaller error while $|r| (|d| + w_P)$ is below about 0.1, so equation \@ref(eq:exptilt) is used beyond that.
-The remaining loss from a window that is small next to the delay is about $10^{-14} d / w_P$ in relative terms, as for the uniform window solutions.
 
 # Learning more
 

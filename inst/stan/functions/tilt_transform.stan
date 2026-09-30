@@ -256,12 +256,10 @@ int gamma_lccdf_underflows(real x, real shape) {
   * The exponential (4) and gamma (2) forms are the total times the CDF of the
   * tilted delay, a delay with the rate lowered by xi. That delay exists only
   * if rate - xi > 0. The normal (18) form has no restriction. The lognormal
-  * (1) transform is evaluated by quadrature for xi < 0 and by a series for
-  * xi > 0. The quadrature needs -xi sigma^2 exp(mu) to be finite, tested
-  * below 1e300 here. Callers use the numerical path when this is 0. The ODE
-  * is less accurate there for the lower tail of a gamma with a shape below 1
-  * (a relative error of about 4e-2 for shape 0.3 at 1e-3 and tilt -1 with
-  * rate 1).
+  * (1) form needs xi sigma^2 exp(mu) to stay below exp(690) in magnitude.
+  * Callers use the numerical path when this is 0. The ODE is less accurate
+  * there for the lower tail of a gamma with a shape below 1 (a relative
+  * error of about 4e-2 for shape 0.3 at 1e-3 and tilt -1 with rate 1).
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param xi Tilt. The exponentially tilted window with tilt rho needs
@@ -287,31 +285,22 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * Check if the tilt transform is the path to use at a point
   * @ingroup tilt_transforms
   *
-  * This is check_for_tilt_transform() and, for the series of the lognormal
-  * (1) with xi > 0, that the series is the faster accurate path at t. It
-  * costs about xi t + 9 sqrt(xi t) + 30 terms, each with an autodiff
-  * gradient. The gradient of the log CDF costs 0.04 ms at xi t of 60, 0.06
-  * ms at 100 and 1.1 ms at 3000, while the ODE costs 0.013 ms at the default
-  * tolerance of 1e-6 and 0.035 ms at 1e-10, which matches the series to
-  * 1e-7 in the gradient. The two cross at xi t of about 60, so the series is
-  * used up to 60.
-  * Past that the ODE is used, unless the window is wide in tilt terms
-  * (xi w above 2). There the ODE is less accurate in the lower tail, where
-  * the CDF is small and varies fast, so the series is kept up to 20000
-  * terms, which is xi t up to about 18700, and the ODE is used beyond that.
-  * Callers use the numerical path where this is 0, see
-  * check_for_analytical_delay().
+  * This is check_for_tilt_transform() and, for the lognormal (1) with
+  * xi > 0, that the series is the faster accurate path at t. The series
+  * costs about xi t + 9 sqrt(xi t) + 30 terms. It is used up to xi t of 60,
+  * where it matches an ODE at tolerance 1e-10 in speed, and beyond that only
+  * where xi w is above 2, as the ODE is inaccurate in the lower tail there.
+  * The series is limited to 20000 terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param xi Tilt. The exponentially tilted window with tilt rho needs
   *   xi = -rho
   * @param params Array of distribution parameters, as for dist_lcdf()
-  * @param t Point at which the transform is evaluated, the largest of the
-  *   points if there are several
+  * @param t Point, the largest of the points if there are several
   * @param pwindow Primary event window
   *
   * @return 1 if the transform is closed form and is the path to use at t,
-  * and the tilted delay exists, 0 otherwise
+  * 0 otherwise
   */
 int check_for_tilt_transform_at(int dist_id, real xi, array[] real params,
                                 data real t, data real pwindow) {
@@ -324,42 +313,10 @@ int check_for_tilt_transform_at(int dist_id, real xi, array[] real params,
 }
 
 /**
-  * Log of the standard normal CDF with an exact derivative at any point
-  * @ingroup tilt_transforms
-  *
-  * As primarycensored_log_std_normal_cdf(), but accurate to about 1e-15 in
-  * relative terms. Phi() is 0.5 (1 + erf(z / sqrt(2))) between -5 and 0,
-  * which loses up to 1e-10 in relative terms to the cancellation, so this
-  * uses 0.5 erfc(-z / sqrt(2)) below 0 and log1m(0.5 erfc(z / sqrt(2)))
-  * above it. Below -37, where erfc() underflows, it uses the asymptotic
-  * series of the Mills ratio
-  * Phi(z) = phi(z) / (-z) (1 - 1 / z^2 + 3 / z^4 - 15 / z^6 + 105 / z^8
-  * - 945 / z^10 + ...), whose truncation error is below 1e-15 there. The
-  * derivative of std_normal_lcdf() has a relative error of about 1e-5, which
-  * would pass into the gradient of the lognormal series where many terms
-  * are in the tail.
-  *
-  * @param z Point
-  *
-  * @return log(Phi(z))
-  */
-real primarycensored_log_phi(real z) {
-  if (z > 0) return log1m(0.5 * erfc(z / sqrt(2)));
-  if (z > -37) return log(0.5 * erfc(-z / sqrt(2)));
-  real w = 1 / square(z);
-  return -0.5 * square(z) - log(-z) - 0.5 * log(2 * pi())
-         + log1p(w * (-1 + w * (3 + w * (-15 + w * (105 - 945 * w)))));
-}
-
-/**
   * Nodes of the 32 point Gauss-Legendre rule on [-1, 1]
   * @ingroup tilt_transforms
   *
-  * The rule is symmetric, so these are the 16 positive nodes in increasing
-  * order. The nodes are `-x` and `x`. The R implementation computes the same
-  * rule in `.lnorm_rule()`.
-  *
-  * @return Vector of the 16 positive nodes
+  * @return The 16 positive nodes, the others are their negatives
   */
 vector primarycensored_gauss_legendre_nodes() {
   return [
@@ -376,11 +333,7 @@ vector primarycensored_gauss_legendre_nodes() {
   * Log weights of the 32 point Gauss-Legendre rule on [-1, 1]
   * @ingroup tilt_transforms
   *
-  * The log of the weights of the nodes of
-  * primarycensored_gauss_legendre_nodes(), which are the weights of the
-  * negative nodes too.
-  *
-  * @return Vector of the log weights of the 16 positive nodes
+  * @return The log weights of the 16 positive nodes, shared by the negatives
   */
 vector primarycensored_gauss_legendre_log_weights() {
   return [
@@ -399,10 +352,7 @@ vector primarycensored_gauss_legendre_log_weights() {
   *
   * The log of the integral of exp(-rho exp(mu + sigma z)) phi(z) over [a, b]
   * by the 32 point Gauss-Legendre rule, where phi is the standard normal
-  * density. With u = exp(mu + sigma z) and z standard normal this is the
-  * integral of exp(-rho u) f(u) over the matching range of a lognormal
-  * density f. See primarycensored_lognormal_tilt_panel() for the range of a
-  * large sigma.
+  * density.
   *
   * @param a Lower limit
   * @param b Upper limit
@@ -436,14 +386,8 @@ real primarycensored_lognormal_tilt_one_panel(real a, real b, real mu,
   * @ingroup tilt_transforms
   *
   * As primarycensored_lognormal_tilt_one_panel(), with the range split into
-  * ceil(sigma / 1.8) equal panels, one for sigma up to 1.8. The integrand
-  * falls from its plateau to zero over a width of about 1 / sigma. One 32
-  * point panel is accurate to about 1e-11 in the log transform for sigma up
-  * to 1.8 and loses accuracy beyond that, to 1e-7 in the CDF at sigma of 4
-  * and 3e-5 at 15. The split keeps the width of a panel in units of
-  * 1 / sigma within the tested range, and the CDF accurate to about 1e-9 to
-  * a sigma of 15. The R implementation uses the same split in
-  * `.lnorm_n_panels()`.
+  * ceil(sigma / 1.8) equal panels. One panel loses accuracy for sigma above
+  * 1.8.
   *
   * @param a Lower limit
   * @param b Upper limit
@@ -477,20 +421,11 @@ real primarycensored_lognormal_tilt_panel(real a, real b, real mu,
   * Mode, limits and total of the tilted lognormal integrand
   * @ingroup tilt_transforms
   *
-  * With rho = -xi > 0 the log of the integrand in the standardised log
-  * delay z is l(z) = -rho exp(mu + sigma z) - z^2 / 2. It is concave with
-  * l'' <= -1, so it has a single mode z0 = -W0(rho sigma^2 exp(mu)) / sigma,
-  * with W0 the principal branch of the Lambert W function and
-  * l''(z0) = -(1 + W0). Beyond the limits lo and hi the integrand is below
-  * exp(-40) of its peak.
-  * * Left, from the two bounds l(z) - l(z0) <= -(z - z0)^2 / 2 and
-  *   l(z) - l(z0) <= -(z^2 - z0^2) / 2 + rho exp(mu + sigma z0).
-  * * Right, from the curvature at the mode, and from
-  *   rho (u(z) - u(z0)) > 40 for z >= |z0|.
-  *
-  * The total is the integral over [lo, z0] and [z0, hi]. None of these
-  * depends on the point, so they are computed once for all the points of a
-  * call, see log_tilt_transform_context().
+  * The log integrand in z = (log u - mu) / sigma is
+  * -rho exp(mu + sigma z) - z^2 / 2. It is concave with a single mode
+  * z0 = -W0(rho sigma^2 exp(mu)) / sigma. Beyond the limits lo and hi it is
+  * below exp(-40) of its peak. None of these depends on the point, so they
+  * are computed once per call, see log_tilt_transform_context().
   *
   * @param mu Mean of the log of the delay
   * @param sigma Standard deviation of the log of the delay
@@ -519,25 +454,16 @@ vector primarycensored_lognormal_tilt_bump(real mu, real sigma, real rho) {
   * Log of the lognormal tilt transform by quadrature for a negative tilt
   * @ingroup tilt_transforms
   *
-  * The lower transform T_f(xi; t) and the upper transform
-  * T_f(xi; Inf) - T_f(xi; t) for xi = -rho < 0. Left of the mode the lower
-  * transform is one panel that ends at t, bounded on the left from the slope
-  * of the integrand there. Right of the mode the upper transform is one panel
-  * that starts at t, bounded on the right from the slope and the curvature
-  * there. The other transform is the difference from the total of the bump,
-  * see primarycensored_lognormal_tilt_bump(). It is at least the mass on the
-  * other side of the mode, which is not small, so the difference does not
-  * cancel. The panels are accurate to an absolute difference of the log
-  * transform of about 1e-11 for sigma up to 1.8 and of about 1e-13 for sigma
-  * of 1 or below, and for a larger sigma with the split of
-  * primarycensored_lognormal_tilt_panel().
+  * The lower and upper transform for xi = -rho < 0. The transform on the
+  * side of the mode that t is on is one panel that starts or ends at t. The
+  * other is the difference from the total, which does not cancel as it is at
+  * least the mass on the far side of the mode.
   *
   * @param t Point, positive
   * @param mu Mean of the log of the delay
   * @param sigma Standard deviation of the log of the delay
   * @param rho Tilt, above 0
-  * @param bump Output of primarycensored_lognormal_tilt_bump() for mu,
-  *   sigma and rho
+  * @param bump Output of primarycensored_lognormal_tilt_bump()
   *
   * @return Vector [log T_f(-rho; t), log(T_f(-rho; Inf) - T_f(-rho; t))]
   */
@@ -573,16 +499,12 @@ vector primarycensored_lognormal_tilt_quadrature(real t, real mu,
   * Log of the lognormal tilt transform by series for a positive tilt
   * @ingroup tilt_transforms
   *
-  * The lower transform T_f(xi; t) for xi > 0 as the sum of the positive
-  * terms xi^k m_k(t) / k! over the partial moments
-  * m_k(t) = int_0^t u^k f(u) du = exp(k mu + k^2 sigma^2 / 2)
-  * Phi((log t - mu) / sigma - k sigma). Past k = xi t the terms fall by at
-  * least a factor xi t / (k + 1) each, so the sum stops once a term is below
-  * exp(-41) of the sum past that point. The total diverges for xi > 0, so
-  * there is no upper transform. The number of terms is about
-  * xi t + 9 sqrt(xi t) + 30 and is limited to 20000, past which the function
-  * rejects. Use check_for_tilt_transform_at() to choose the numerical path
-  * there.
+  * The lower transform for xi > 0 as the sum of the positive terms
+  * xi^k m_k(t) / k! over the partial moments
+  * m_k(t) = exp(k mu + k^2 sigma^2 / 2) Phi((log t - mu) / sigma - k sigma).
+  * The sum stops once past k = xi t a term is below exp(-41) of the sum. The
+  * total diverges, so there is no upper transform. It rejects past 20000
+  * terms, see check_for_tilt_transform_at().
   *
   * @param t Point, positive
   * @param mu Mean of the log of the delay
@@ -596,11 +518,11 @@ real primarycensored_lognormal_tilt_series(real t, real mu, real sigma,
   real z = (log(t) - mu) / sigma;
   real log_xi_mu = log(xi) + mu;
   real log_factorial = 0;
-  real total = primarycensored_log_phi(z);
+  real total = primarycensored_log_std_normal_cdf(z);
   for (k in 1:20000) {
     log_factorial += log(k);
     real log_term = k * log_xi_mu + 0.5 * square(k * sigma) - log_factorial
-                    + primarycensored_log_phi(z - k * sigma);
+                    + primarycensored_log_std_normal_cdf(z - k * sigma);
     total = log_sum_exp(total, log_term);
     if (k > xi * t && log_term < total - 41) return total;
   }
@@ -611,23 +533,17 @@ real primarycensored_lognormal_tilt_series(real t, real mu, real sigma,
 }
 
 /**
-  * Log of the lognormal tilt transform over the lower and upper part of the
-  * support
+  * Log of the lognormal tilt transform over the lower and upper support
   * @ingroup tilt_transforms
   *
-  * For xi = 0 these are the log CDF and the log survival function. For
-  * xi < 0 they come from primarycensored_lognormal_tilt_quadrature(), and
-  * for xi > 0 the lower transform comes from
-  * primarycensored_lognormal_tilt_series() and the upper transform is
-  * `inf`, as the total diverges. For t <= 0 the lower transform is `-inf`
-  * and the upper transform is the total.
+  * The upper transform is `inf` for xi > 0, as the total diverges.
   *
   * @param t Point
   * @param mu Mean of the log of the delay
   * @param sigma Standard deviation of the log of the delay
   * @param xi Tilt
-  * @param bump Output of primarycensored_lognormal_tilt_bump() for mu,
-  *   sigma and -xi, used for xi < 0
+  * @param bump Output of primarycensored_lognormal_tilt_bump() for -xi,
+  *   used for xi < 0
   *
   * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
   */
@@ -636,7 +552,10 @@ vector primarycensored_lognormal_tilt_pair(real t, real mu, real sigma,
   if (xi == 0) {
     if (t <= 0) return [negative_infinity(), 0]';
     real z = (log(t) - mu) / sigma;
-    return [primarycensored_log_phi(z), primarycensored_log_phi(-z)]';
+    return [
+      primarycensored_log_std_normal_cdf(z),
+      primarycensored_log_std_normal_cdf(-z)
+    ]';
   }
   if (xi > 0) {
     if (t <= 0) return [negative_infinity(), positive_infinity()]';
@@ -653,13 +572,8 @@ vector primarycensored_lognormal_tilt_pair(real t, real mu, real sigma,
   * Quantities shared by the tilt transforms of a delay at every point
   * @ingroup tilt_transforms
   *
-  * Some transforms need a setup that depends on the delay parameters and the
-  * tilt but not on the point, such as the mode and the total of the lognormal
-  * integrand for a negative tilt. Computing it once and passing it to
-  * log_tilt_transform_pair_shared() for each point avoids repeating it for
-  * every endpoint of a call. It has length 4, as Stan needs a fixed size for
-  * a local vector, and is 0 for the delays whose transform has no setup. A
-  * delay that needs more quantities raises the length for all.
+  * Computed once per call and passed to log_tilt_transform_pair_shared(). It
+  * has length 4 and is 0 for delays whose transform has no shared setup.
   *
   * @param dist_id Distribution identifier, see check_for_tilt_transform()
   * @param xi Tilt
@@ -767,8 +681,7 @@ vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
   * @ingroup tilt_transforms
   *
   * As log_tilt_transform_pair_shared() with the shared quantities computed
-  * for this point alone. Use log_tilt_transform_context() and the shared
-  * form for several points.
+  * for this point alone.
   *
   * @param t Point
   * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
@@ -887,11 +800,8 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   * The exponential is the gamma with shape 1. Its own closed forms cancel
   * when the rate times t is small. The normal with z = (t - mu) / sigma has
   * G_1 = sigma (phi(z) + z Phi(z)) and
-  * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)). The lognormal has the
-  * partial moments m_k(t) = exp(k mu + k^2 sigma^2 / 2)
-  * Phi((log t - mu) / sigma - k sigma), so G_1 = t m_0 - m_1 and
-  * G_2 = t G_1 - (t m_1 - m_2), every difference being of positive
-  * integrals as for the gamma.
+  * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)). The lognormal uses its
+  * partial moments m_k(t), see primarycensored_lognormal_tilt_series().
   *
   * @param t Point
   * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
@@ -936,11 +846,11 @@ vector primarycensored_tilt_moments(real t, int dist_id,
     real sigma = params[2];
     real log_t = log(t);
     real z = (log_t - mu) / sigma;
-    real log_m0 = primarycensored_log_phi(z);
+    real log_m0 = primarycensored_log_std_normal_cdf(z);
     real log_m1 = mu + 0.5 * square(sigma)
-                  + primarycensored_log_phi(z - sigma);
+                  + primarycensored_log_std_normal_cdf(z - sigma);
     real log_m2 = 2 * mu + 2 * square(sigma)
-                  + primarycensored_log_phi(z - 2 * sigma);
+                  + primarycensored_log_std_normal_cdf(z - 2 * sigma);
     real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
     real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
     real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);

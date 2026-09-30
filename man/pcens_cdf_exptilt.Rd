@@ -93,17 +93,13 @@ about 4e-2 at \eqn{q = 10^{-6}} and \eqn{10^{-3}}, against 2e-5 for the
 numerical method in R. Stable forms for these tilts, such as
 the expm1 closed form for the exponential and a Kummer series for the gamma,
 are not implemented, see #388.
-The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
-the transform is truncated at \eqn{t}. It falls back to the numerical
-method for every \code{q} where \eqn{\rho \sigma^2 e^\mu} overflows, above
-about \eqn{e^{690}}. For \eqn{\rho < 0} the series needs about
-\eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms per quantile, so it is slower
-than the numerical method beyond \eqn{|\rho| q} of about 200. The numerical
-method is used for the \code{q} above that, unless \eqn{|\rho| w} is above 2,
-where the numerical method loses accuracy in the lower tail (a relative
-error of up to 5e-3 at \eqn{|\rho| w} of 600). The series is then kept up
-to 20000 terms, which is for \eqn{|\rho| q} up to about 18700, and the
-numerical method is used beyond that.
+The lognormal falls back to the numerical method where
+\eqn{\rho \sigma^2 e^\mu} overflows, above about \eqn{e^{690}}. For
+\eqn{\rho < 0} it also uses the numerical method for the \code{q} with
+\eqn{|\rho| q} above 200, where the series is slower, unless
+\eqn{|\rho| w} is above 2, where the numerical method loses accuracy in
+the lower tail. The series is then kept up to 20000 terms, about
+\eqn{|\rho| q} of 18700.
 
 \strong{Tilts close to zero.} The expression above cancels as \eqn{\rho \to 0}.
 Two forms replace it where the cancellation would lose precision. With
@@ -126,11 +122,10 @@ close to zero.
 Away from these regions the error of the direct form is below 1e-9. The
 truncation error of the two forms is below 1e-9 at their thresholds.
 The first form subtracts terms of the size of \eqn{|q| + w}, so its
-rounding error grows as \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
-w))}. The second factor makes it worse than the direct form, whose error
-is about \eqn{10^{-15} / (|\rho| w)} whatever the distance from the
-origin, once \eqn{|\rho| (|q| + w)} is above about 0.1. The direct form
-is used there.
+rounding error is about \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
+w))}. That is above the error of the direct form once
+\eqn{|\rho| (|q| + w)} is above about 0.1, so the direct form is used
+there.
 
 \strong{Precision.} The R CDF agrees with numerical integration (\code{integrate()}
 at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
@@ -179,27 +174,15 @@ evaluates four transforms at two endpoints. It is kept for single values
 as it is accurate where the numerical method has errors of up to 1e-2 in
 the tails of a normal delay.
 
-\strong{Lognormal precision and speed.} The quadrature is accurate to an
-absolute difference of about 1e-11 in the log transform for \code{sdlog} up to
-1.8, and 1e-13 for \code{sdlog} of 1 or below. Each range of the quadrature is
-split into \code{ceiling(sdlog / 1.8)} panels, which keeps the CDF accurate to
-a relative difference of about 1e-9 for \code{sdlog} up to 15, as tested.
-The CDF agrees with numerical integration to a relative difference of 1e-7
-or better over the tested grid of tilts, windows and quantiles. The
-largest differences are deep in the lower tail, where the CDF is below
-1e-100 and the direct form cancels
-by about \eqn{1 / (\rho q)} times the gap between \code{q} and the mean of the
-delays below it.
-The quadrature and the series have a fixed cost that the numerical method
-beats for fewer than 10 quantiles, so \code{pcens_cdf()} uses the numerical
-method for fewer than 10 \code{q} and the transform for 10 or more, which is
-1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
-The numerical method is used for fewer than 10 \code{q} only where
-\eqn{|\rho| w} is at most 1. Its relative error is about 1e-6 there, 1e-4
-at 50, and it fails at 1000, where the transform is accurate to 1e-9, so
-the transform is used for any number of \code{q} above that.
-The Stan solution takes about as long as the ODE for one delay, and is 2 to
-4 times faster with the shared terms of the vectorised PMF, see the NEWS.
+\strong{Lognormal precision and speed.} The quadrature is accurate to about
+1e-11 in the log transform for \code{sdlog} up to 1.8 and, with
+\code{ceiling(sdlog / 1.8)} panels, keeps the CDF accurate to about 1e-9 up to
+\code{sdlog} of 15. The CDF agrees with numerical integration to a relative
+difference of 1e-7 or better over the tested grid. The transform has a
+fixed cost, so \code{pcens_cdf()} uses the numerical method for fewer than 10
+\code{q} where \eqn{|\rho| w} is at most 1, and the transform otherwise.
+The Stan solution takes about as long as the ODE for one delay, and is 2
+to 4 times faster with the shared terms of the vectorised PMF.
 
 \strong{Extending.} A new delay distribution is supported by defining
 \code{.pcens_tilt_lower()}, \code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()}
