@@ -2,21 +2,14 @@
   * Compute the log of the sum in the incomplete gamma series, from log x
   * @ingroup delay_log_cdfs
   *
-  * The series
-  *   P(a, x) = x^a exp(-x) / Gamma(a + 1) * S,
-  *   S = 1 + x / (a + 1) + x^2 / ((a + 1) (a + 2)) + ...
-  * has only positive terms, so there is no cancellation. Successive terms
-  * shrink by a factor of at most x / (a + n) and the sum converges for any
-  * x. It takes under 60 terms for x < (a + 1) / 2, under 400 for
-  * x < 0.9 (a + 1) and about 9 sqrt(a) terms near x = a + 1. Autodiff
-  * differentiates the sum directly, so gradients are as accurate as the
-  * value.
+  * P(a, x) = x^a exp(-x) / Gamma(a + 1) * S, with
+  * S = 1 + x / (a + 1) + x^2 / ((a + 1) (a + 2)) + ...
+  * All terms are positive, so there is no cancellation.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
   *
-  * @return log S, or `nan` if the series has not converged after 100000
-  * terms (a above about 1e8 near x = a + 1)
+  * @return log S, or `nan` if the series has not converged
   */
 real gamma_lseries_sum_logx(real log_x, real a) {
   real x = exp(log_x);
@@ -38,20 +31,9 @@ real gamma_lseries_sum_logx(real log_x, real a) {
   * Compute the log of the leading term of the incomplete gamma series
   * @ingroup delay_log_cdfs
   *
-  * Returns log(x^a exp(-x) / Gamma(a + 1)) for x = exp(log_x). The direct
-  * expression a log(x) - x - lgamma(a + 1) subtracts terms of size a, so
-  * its rounding error grows with a, about 1e-10 at a = 1e5. For `a >= 100`
-  * it is written as
-  *   a (log(r) - (r - 1)) - log(2 pi a) / 2 - delta(a),  r = x / a,
-  * where delta(a) is the Stirling series of lgamma(a + 1) less
-  * (a + 1 / 2) log(a) - a + log(2 pi) / 2, taken to the term in a^-7. The
-  * omitted term is below 1e-21 for `a >= 100`. The bracket is small near
-  * x = a, so the rounding error there is about a |r - 1| times machine
-  * precision and not a times the size of log(x). For a above about 1e6 the
-  * rounding of `log_x` dominates, with an absolute error of 1.4e-10 at
-  * a = 1e7 and r = 1.01. log(r) is evaluated as
-  * log1p(r - 1) for r between 0.5 and 2, where r - 1 is exact, and as
-  * log(x) - log(a) otherwise.
+  * Returns log(x^a exp(-x) / Gamma(a + 1)) for x = exp(log_x).
+  * For `a >= 100` the terms of size a cancel analytically, using the
+  * Stirling series of lgamma(a + 1), so rounding error does not grow with a.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -70,6 +52,7 @@ real gamma_log_lead_logx(real log_x, real a) {
                                     - inv_a2 * (1.0 / 1260
                                                 - inv_a2 / 1680)));
   real r = x / a;
+  // r - 1 is exact near 1, so log1p avoids cancellation
   real log_r = r > 0.5 && r < 2 ? log1p(r - 1) : log_x - log(a);
   return a * (log_r - (r - 1))
          - 0.5 * (log(a) + log(2 * pi())) - delta;
@@ -79,30 +62,15 @@ real gamma_log_lead_logx(real log_x, real a) {
   * Compute log Q(a, x) by the incomplete gamma continued fraction
   * @ingroup delay_log_cdfs
   *
-  * Q(a, x) = 1 - P(a, x) is the regularised upper incomplete gamma
-  * function. The continued fraction
-  *   Gamma(a, x) = exp(-x) x^a / (x + 1 - a - 1 (1 - a) / (x + 3 - a -
-  *   2 (2 - a) / (x + 5 - a - ...)))
-  * is evaluated with the modified Lentz algorithm. It converges for
-  * x >= a + 1, in about 10 to 20 steps for x > 2 a and about
-  * 1.3 sqrt(a) + 10 steps near x = a + 1 for a >= 10. Autodiff
-  * differentiates the algorithm, so gradients are as accurate as the value.
-  *
-  * The numerator of step i is i (i - a), which is zero at i = a when `a` is
-  * an integer. The value of the fraction is then final, but its derivative
-  * with respect to `a` is not, because the derivative of the numerator is
-  * not zero. Stopping on the change in the value therefore leaves the
-  * derivative wrong when the fraction needs more than a steps. That is the
-  * case for a of about 5 or less near x = a + 1, where the derivative is
-  * wrong by 1e-7 to 1e-2 at integer `a`, so this is only called for
-  * a >= 10 by `gamma_lcdf_logx()`. For a >= 10 the derivative at integer
-  * `a` is accurate to 1e-8.
+  * Q(a, x) = 1 - P(a, x). The continued fraction is evaluated with the
+  * modified Lentz algorithm and converges for x >= a + 1. Only called for
+  * `a >= 10`, where the derivative with respect to `a` is accurate at
+  * integer `a`.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
   *
-  * @return log Q(a, exp(log_x)), or `nan` if the fraction has not
-  * converged after 100000 steps (a above about 1e8 near x = a + 1)
+  * @return log Q(a, exp(log_x)), or `nan` if the fraction has not converged
   */
 real gamma_lccdf_cf_logx(real log_x, real a) {
   real x = exp(log_x);
@@ -135,46 +103,18 @@ real gamma_lccdf_cf_logx(real log_x, real a) {
   * @ingroup delay_log_cdfs
   *
   * Returns log P(a, x), the log of the regularised lower incomplete gamma
-  * function, for x = exp(log_x). Stan's `gamma_lcdf` is accurate in value
-  * but not in its partial derivative with respect to `a`, which fails in
-  * three regions (see #363 and #381).
+  * function, for x = exp(log_x). Stan's `gamma_lcdf` underflows, or has an
+  * inaccurate or failing gradient with respect to `a`, in the lower tail,
+  * for large `a` and in the upper tail for `a` of about 10 or more.
   *
-  * - Lower tail. `gamma_lcdf` underflows to `-inf` deep in the lower tail,
-  *   where the true value is finite. The gradient is inaccurate before that,
-  *   by 1e-2 to 0.9 once log P is below about -10 and x < 0.9 (a + 1), and
-  *   can be `nan` or 0 for a of about 1000 or more.
-  * - Large shape. The gradient is `nan` or throws "n (internal counter)
-  *   exceeded 100000 iterations" for a of about 700 or more, anywhere in
-  *   the body or the tail.
-  * - Upper tail. The gradient is off by about 1e-14, and is `nan` once
-  *   Q(a, x) underflows, for a of about 10 or more.
+  * - `a >= 10`: the series for x < a + 1, otherwise the continued fraction.
+  * - `a < 10`: the series for x < 0.9 (a + 1) where the leading term is
+  *   below exp(-10), otherwise `gamma_lcdf`.
   *
-  * The rules are
-  * 1. `a >= 10`. Use `gamma_lseries_sum_logx()` for x < a + 1 and
-  *    `log1m_exp(gamma_lccdf_cf_logx())` for x >= a + 1. Both are exact.
-  * 2. `a < 10` and x < 0.9 (a + 1) with the leading term
-  *    x^a exp(-x) / Gamma(a + 1) below exp(-10). Use
-  *    `gamma_lseries_sum_logx()`.
-  * 3. Otherwise `gamma_lcdf`, which is accurate in the rest of the region.
-  *
-  * The value changes by under 1e-10 relative to `gamma_lcdf` where the
-  * rule changes, because every branch is accurate. If the series or the
-  * fraction does not converge the result is from `gamma_lcdf`, which either
-  * has the right value or throws.
-  *
-  * Taking `log_x` rather than x keeps the result finite when x itself would
-  * underflow, as it does for a generalised gamma with a large `shape`.
-  *
-  * Measured against `pgamma(log.p = TRUE)` for a from 0.01 to 1e6, and x
-  * from 0.01 a to 30 a. The log CDF has a relative error of 1e-9 or below,
-  * except for a < 10 where x > 5 a puts log P below 1e-12 in size, and
-  * `gamma_lcdf` returns an absolute error of 1e-16 in it. The derivative
-  * with respect to `a` has a relative error of 3e-9 or below for a up to
-  * 1e6, ignoring derivatives below 1e-13 in size. It was measured against
-  * a fifth order central difference of `pgamma()` in log a, with a step of
-  * min(1e-5, 1e-3 / sqrt(a)). A fixed step of 1e-4 is too coarse for a of
-  * 1e5 or more and overstates the error there. The leading term comes from
-  * `gamma_log_lead_logx()`, so the error does not grow with a.
+  * Falls back to `gamma_lcdf` if the series or fraction does not converge.
+  * The log CDF has a relative error of 1e-9 or below and its derivative
+  * with respect to `a` 3e-9 or below for a up to 1e6, against `pgamma()`.
+  * Taking `log_x` keeps the result finite when x underflows.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
@@ -215,24 +155,11 @@ real gamma_lcdf_logx(real log_x, real a) {
   * @ingroup delay_log_cdfs
   *
   * Returns [log P(a, x), log P(a + 1, x)] with unit rate, as needed by the
-  * uniform primary solution for a Gamma delay. The two are related by
-  *   P(a + 1, x) = P(a, x) - x^a exp(-x) / Gamma(a + 1),
-  * which subtracts two equal terms when x is small compared to a + 1. It is
-  * applied only where that is safe, and otherwise both values come from the
-  * same series or fraction as `gamma_lcdf_logx()`, so that the pair costs
-  * one evaluation and not two.
-  *
-  * - Series region, `a >= 10` and x < a + 1, or `a < 10` and x < 0.5 (a + 1)
-  *   or x < 0.9 (a + 1) with the leading term below exp(-10). The sum S for
-  *   `a + 1` is evaluated, and the sum for `a` is 1 + x S / (a + 1) with
-  *   no subtraction.
-  * - Fraction region, `a >= 10` and x >= a + 1. Q(a + 1, x) is
-  *   Q(a, x) + x^a exp(-x) / Gamma(a + 1), a sum of positive terms.
-  * - Otherwise `a < 10` and x is at least about half of a + 1, so that the
-  *   subtraction loses at most about one bit. P(a, x) is from `gamma_lcdf`.
-  *
-  * If the series or the fraction does not converge, both values are from
-  * `gamma_lcdf_logx()`, which falls back to `gamma_lcdf`.
+  * uniform primary solution for a Gamma delay. Both come from one series or
+  * continued fraction where the recursion
+  * P(a + 1, x) = P(a, x) - x^a exp(-x) / Gamma(a + 1)
+  * would cancel, and otherwise from that recursion. Falls back to
+  * `gamma_lcdf_logx()` if the series or fraction does not converge.
   *
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)

@@ -1,11 +1,7 @@
 skip_on_cran()
 
-# Gradient regression tests for #381. Stan's `gamma_lcdf` has an inaccurate
-# or failing gradient with respect to its shape in the lower tail, and for a
-# shape of about 1000 or more anywhere (nan, or an exception after 100000
-# iterations). Gradients are only observable from a compiled model, so these
-# build minimal ones and run `stan_gradient_at()` from
-# helper-stan-gradient.R.
+# Gradients are only observable from a compiled model, so these build
+# minimal ones and use `stan_gradient_at()` from helper-stan-gradient.R.
 
 gamma_probe_model <- function(target, parameters, name) {
   testthat::skip_if_not_installed("cmdstanr")
@@ -75,19 +71,15 @@ expect_gamma_gradient_ok <- function(res, label) {
   )
 }
 
-# Derivative of log P(a, x) (or log Q(a, x) for `lower = FALSE`) with
-# respect to a, by a fifth order central difference of `pgamma()`, which is
-# accurate to about 1e-10 relative. The step in log a shrinks with the
-# shape, because a fixed step of 1e-4 is too coarse for a of 1e5 or more.
+# Derivative of log P(a, x) (or log Q(a, x)) with respect to a, by a fifth
+# order central difference of `pgamma()` with a step that shrinks with a
 ref_dlogp_da <- function(x, a, lower = TRUE) {
   h <- a * min(1e-4, 0.01 / sqrt(a))
   f <- function(e) pgamma(x, a + e, lower.tail = lower, log.p = TRUE)
   (-f(2 * h) + 8 * f(h) - 8 * f(-h) + f(-2 * h)) / (12 * h)
 }
 
-# The error is checked against the size of the derivative, with a small
-# absolute allowance for where it is below 1e-10. CmdStan prints gradients
-# to 6 significant figures, so the tolerance is relative 1e-5.
+# Relative 1e-5, as CmdStan prints gradients to 6 significant figures
 expect_gradient_close <- function(gradient, expected, label) {
   testthat::expect_length(gradient, 1)
   if (length(gradient) == 1) {
@@ -101,7 +93,7 @@ expect_gradient_close <- function(gradient, expected, label) {
 test_that("primarycensored_lcdf has accurate finite gradients deep in the
    lower tail of a Gamma delay", {
   model <- gamma_delay_probe_model()
-  # Log CDFs from -20 to -2400. The first returned -inf before the fix.
+  # Log CDFs from -20 to -2400
   cases <- list(
     list(d = 2, p = c(400, 1 / 5)),
     list(d = 2, p = c(100, 1 / 5)),
@@ -125,8 +117,7 @@ test_that("primarycensored_lcdf has accurate finite gradients deep in the
 test_that("primarycensored_lcdf has finite gradients for a Gamma delay with
    a large shape", {
   model <- gamma_delay_probe_model()
-  # Shapes of 1000 or more from the body into the upper tail, where
-  # `gamma_lcdf` returned nan gradients or threw after 100000 iterations.
+  # Shapes of 1000 or more, from the body into the upper tail
   cases <- list(
     list(d = 1400, p = c(1500, 1), pwindow = 10),
     list(d = 1500, p = c(1500, 1), pwindow = 10),
@@ -151,9 +142,8 @@ test_that("primarycensored_lcdf has finite gradients for a Gamma delay with
 test_that("primarycensored_lcdf has finite gradients deep in the upper tail
    of a Gamma delay", {
   model <- gamma_delay_probe_model()
-  # The CDF is 1 to double precision here, and Stan's gradient was nan. The
-  # log CDF does not depend on the parameters, so the gradient with respect
-  # to each is the 1 from the log Jacobian of its lower bound.
+  # The CDF is 1 to double precision, so the gradient with respect to each
+  # parameter is the 1 from the log Jacobian of its lower bound
   cases <- list(
     list(d = 60, p = c(2, 1), pwindow = 1),
     list(d = 120, p = c(20, 1), pwindow = 1),
@@ -192,8 +182,7 @@ test_that("primarycensored_lcdf has finite gradients with truncation when
     )
     expect_false(res$gradient_not_finite, info = label)
     expect_false(res$rejected, info = label)
-    # The log CDFs are in the thousands, so CmdStan's finite differences
-    # carry rounding noise of 1e-4. Compare with a reference in R instead.
+    # CmdStan's finite differences are noisy for log CDFs in the thousands
     expect_equal(
       res$gradient,
       ref_gamma_delay_gradient(case$d, case$p, 1, case$L, case$D),
@@ -202,7 +191,7 @@ test_that("primarycensored_lcdf has finite gradients with truncation when
   }
 })
 
-test_that("gradients are unchanged in the body of a Gamma delay", {
+test_that("gradients are accurate in the body of a Gamma delay", {
   model <- gamma_delay_probe_model()
   for (d in c(0.5, 2, 6, 15)) {
     res <- gamma_gradient_at(model, d, c(2.3, 0.5), pwindow = 1)
@@ -212,7 +201,6 @@ test_that("gradients are unchanged in the body of a Gamma delay", {
 
 test_that("gamma_lcdf_logx gradient with respect to the shape is accurate", {
   model <- gamma_logx_probe_model()
-  # Non-integer and integer shapes, from the lower tail to the upper tail
   for (a in c(0.7, 2, 5.5, 9.5, 10, 10.5, 20.5, 100, 700.5, 1000, 1500.5,
               3000, 10000, 1e5, 1e6)) {
     for (frac in c(0.3, 0.8, 0.95, 1, 1.02, 1.1, 1.5, 3)) {
@@ -251,9 +239,8 @@ test_that("gamma_lcdf_logx gradient is accurate for integer shapes", {
 
 test_that("gamma_lccdf_cf_logx gradient is accurate for integer shapes", {
   model <- gamma_logx_probe_model("gamma_lccdf_cf_logx")
-  # The numerator of step i is i (i - a), which is zero at i = a. The
-  # derivative with respect to a is only accurate there if the fraction has
-  # converged by step a, which it has for a of 10 or more
+  # The derivative at integer a is only accurate if the fraction has
+  # converged by step a, which holds for a of 10 or more
   for (a in c(10, 11, 12, 15, 20, 25, 100)) {
     for (frac in c(1, 1.5, 3)) {
       x <- frac * (a + 1)
