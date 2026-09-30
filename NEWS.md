@@ -10,10 +10,13 @@
   Forms for a tilt or a delay close to zero keep the precision that the direct form loses as the tilt goes to zero.
   The exponential and gamma forms need the tilted delay to exist, `rate + r > 0`, and otherwise use the numerical path.
   The Stan ODE path is less accurate in the lower tail of a gamma with a shape below 1, see `?pcens_cdf_exptilt`.
-  The Stan shape gradient of the gamma solution is accurate in the lower tail, where the derivative of Stan's `gamma_lcdf()` is not.
+  The Stan gradients of the gamma solution are exact for any shape.
+  The incomplete gamma function comes from a series and a continued fraction, as the shape derivatives of Stan's `gamma_lcdf()` and `gamma_lccdf()` are inaccurate in parts of the bulk and NaN for shapes of about 200 or more.
+  The derivative in the rate of a log CDF close to 0 no longer loses the tail to the log of the total.
+  The small tilt forms have a derivative in the tilt with a relative error of up to about 2e-5 at their thresholds, see `?pcens_cdf_exptilt`.
   The gamma solution for the uniform primary still uses `gamma_lcdf()` and has that inaccuracy in the shape gradient, see #395.
   In R a gamma delay with only a `shape` has rate 1, as in `pgamma()`.
-  The R method is about 3 to 8 times faster than `use_numeric = TRUE` for many `q` and about 1.2 to 1.9 times slower for a single `q`, which is kept on accuracy grounds.
+  The R method is about 2 to 2.5 times faster than `use_numeric = TRUE` for 10 `q`, about 10 to 17 times faster for 100 `q` and about 1.5 to 3 times slower for a single `q`, which is kept on accuracy grounds.
   In Stan a primary window of width 0 gives the delay CDF.
   See #367.
 - The normal delay is the first analytical solution for a delay with support on the reals.

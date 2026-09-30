@@ -83,10 +83,14 @@
 #' The Stan CDF agrees to a relative difference of about 1e-9 or better for
 #' windows of 0.5 or more, and of up to about 5e-9 for windows of 1e-3 with
 #' delays up to 25.
-#' The Stan shape gradient of the gamma solution is accurate in the lower tail,
-#' where the derivative of Stan's `gamma_lcdf()` is not, as the lower tail is
-#' taken from a series there.
-#' Two regimes are less accurate.
+#' The Stan gradients of the gamma solution are exact for any shape. The
+#' incomplete gamma function is taken from a series below the shape and from
+#' a continued fraction above it, as the shape derivatives of Stan's
+#' `gamma_lcdf()` and `gamma_lccdf()` are inaccurate in parts of the bulk
+#' and NaN for shapes of about 200 or more.
+#' The normal solution takes the lower tail beyond 37 standard deviations from
+#' an asymptotic series for the same reason.
+#' Three regimes are less accurate.
 #' * The small window form for a normal delay in the deep lower tail, about 30
 #'   to 35 standard deviations below the mean, has a relative error of up to
 #'   about 1e-7 in both R and Stan (3e-8 at 35 standard deviations for
@@ -98,10 +102,19 @@
 #'   delay with shape 2.5 and rate 0.4 and `pwindow = 1e-8` the relative error
 #'   is 6e-7 for \eqn{\rho = 0.5} and 6e-5 for \eqn{\rho = 50}. Use
 #'   `pwindow = 0` for a primary event at a known time.
+#' * The small tilt forms have a Stan gradient in \eqn{\rho} that is less
+#'   accurate than their value, which has a truncation error below 1e-9. The
+#'   second order term of the expansion is not included. The relative error
+#'   of the derivative in \eqn{\rho} is about \eqn{|\rho| w / 6} for the
+#'   small window form, and of at most the same order in \eqn{|\rho| q} for
+#'   the small delay form. It is up to about 2e-5 at the thresholds of
+#'   \eqn{10^{-4}}. The gradients in the delay parameters have the error of
+#'   the value.
 #'
-#' **Speed.** For many values of `q` the analytical method is about 3 to 8
-#' times faster than `use_numeric = TRUE`, as each endpoint is evaluated once.
-#' For a single `q` it is about 1.2 to 1.9 times slower, as the call
+#' **Speed.** For many values of `q` the analytical method is faster than
+#' `use_numeric = TRUE`, as each endpoint is evaluated once. It is about 2 to
+#' 2.5 times faster for 10 values and about 10 to 17 times faster for 100
+#' values. For a single `q` it is about 1.5 to 3 times slower, as the call
 #' evaluates four transforms at two endpoints. It is kept for single values
 #' as it is accurate where the numerical method has errors of up to 1e-2 in
 #' the tails of a normal delay.
