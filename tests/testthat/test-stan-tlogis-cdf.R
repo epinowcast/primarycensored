@@ -784,6 +784,48 @@ test_that("truncated logistic log CDFs have finite gradients matching finite
   }
 })
 
+test_that("the gamma shape gradient is accurate where the series cancel", {
+  model <- tlogis_gradient_model()
+  # A scale that is large relative to the window makes the series cancel
+  # heavily, which amplifies any error in the gradient of the shape of the
+  # terms. These points had errors of 2% to 7%, and 2.6 times at the last.
+  points <- list(
+    list(shape = 2, rate = 5, d = 1.7, pwindow = 1, location = 0.5, scale = 50),
+    list(shape = 6, rate = 2, d = 4, pwindow = 1, location = -1, scale = 50),
+    list(shape = 6, rate = 2, d = 4, pwindow = 1, location = 3, scale = 2),
+    list(shape = 2, rate = 20, d = 0.3, pwindow = 1, location = 0.5, scale = 2),
+    list(shape = 6, rate = 5, d = 1.5, pwindow = 1, location = 0.3, scale = 20)
+  )
+  for (point in points) {
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- tlogis_case_label(
+      case,
+      d = point$d, pwindow = point$pwindow, location = point$location,
+      scale = point$scale
+    )
+    expect_true(
+      tlogis_case_analytic(
+        case, point$location, point$scale, point$pwindow
+      ),
+      info = label
+    )
+    res <- tlogis_gradient_at(
+      model, case, point$d, point$pwindow, point$location, point$scale
+    )
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
+    expect_true(
+      all(abs(res$gradient - res$finite_diff) <= allowed),
+      info = paste0(
+        label, ": gradient ", toString(signif(res$gradient, 5)),
+        ", finite difference ", toString(signif(res$finite_diff, 5))
+      )
+    )
+  }
+})
+
 test_that("the vectorised truncated logistic log PMF has finite gradients
   matching finite differences", {
   model <- tlogis_gradient_model()
