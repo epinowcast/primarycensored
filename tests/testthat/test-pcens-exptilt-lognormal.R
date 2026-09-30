@@ -391,3 +391,52 @@ test_that("the lognormal transform agrees with the delays it generalises", {
   expect_equal(exp(lower[1]), 0, tolerance = 1e-12)
   expect_equal(exp(lower[2]), exp(-0.3 * 2), tolerance = 2e-3)
 })
+
+test_that("pcens_cdf uses the numerical method for a few quantiles", {
+  # The quadrature has a fixed cost that the numerical method beats for
+  # fewer than 10 quantiles, see `.lnorm_exptilt_min_q`
+  obj <- lnorm_object(cases[[1]], 0.3)
+  few <- c(0.5, 2, 4, 8)
+  expect_identical(
+    pcens_cdf(obj, few, 2), pcens_cdf.default(obj, few, 2)
+  )
+  many <- seq(0.5, 20, length.out = 12)
+  expect_identical(
+    pcens_cdf(obj, many, 2), .pcens_cdf_exptilt(obj, many, 2)
+  )
+  expect_equal(
+    pcens_cdf(obj, many, 2), pcens_cdf(obj, many, 2, use_numeric = TRUE),
+    tolerance = 1e-6
+  )
+  # The other delays use the closed forms for any number of quantiles
+  gamma_obj <- exptilt_object(exptilt_families()[[3]], 0.3)
+  expect_identical(
+    pcens_cdf(gamma_obj, few, 2), .pcens_cdf_exptilt(gamma_obj, few, 2)
+  )
+})
+
+test_that("a missing tilt is an error for the lognormal with few quantiles", {
+  obj <- new_pcens(plnorm, dexpgrowth, list(), meanlog = 1, sdlog = 0.5)
+  expect_error(
+    pcens_cdf(obj, 1, 2), "r parameter is required for the exponential growth"
+  )
+})
+
+test_that("the lognormal series stops where it needs too many terms", {
+  expect_error(
+    .lnorm_tilt_series(1e6, 0, 1, 1), "needs more than 20000 terms"
+  )
+  # A large tilt times the point still gives a finite transform
+  lower <- .lnorm_tilt_series(c(10, 2000), 0, 1, 1)
+  expect_true(all(is.finite(lower)))
+  expect_lt(lower[1], lower[2])
+})
+
+test_that("default parameters of the lognormal are as in plnorm", {
+  obj <- new_pcens(plnorm, dexpgrowth, list(r = 0.2))
+  q <- seq(0.3, 12, length.out = 14)
+  expect_equal(
+    pcens_cdf(obj, q, 1), pcens_cdf(obj, q, 1, use_numeric = TRUE),
+    tolerance = 1e-6
+  )
+})

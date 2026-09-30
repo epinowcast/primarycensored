@@ -34,9 +34,10 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-\code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt \eqn{\rho}.
+Analytical primary event censored CDFs for exponential, gamma, normal and
+lognormal delay distributions with an exponentially tilted primary event
+window, the \code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt
+\eqn{\rho}.
 They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
@@ -70,6 +71,9 @@ incomplete gamma function.
 \item Normal with mean \eqn{\mu} and standard deviation \eqn{\sigma}:
 \eqn{T_f(\xi; \tau) = e^{\xi \mu + \xi^2 \sigma^2 / 2}
   \Phi((\tau - \mu - \xi \sigma^2) / \sigma)}.
+\item Lognormal with \code{meanlog} \eqn{\mu} and \code{sdlog} \eqn{\sigma}: no closed
+form. The transform is evaluated by quadrature for \eqn{\rho > 0} and by
+a series for \eqn{\rho < 0}, see \link{tilt_transform_lognormal}.
 }
 
 The terms are evaluated on the log scale, and differences are taken
@@ -89,6 +93,12 @@ about 4e-2 at \eqn{q = 10^{-6}} and \eqn{10^{-3}}, against 2e-5 for the
 numerical method in R. Stable forms for these tilts, such as
 the expm1 closed form for the exponential and a Kummer series for the gamma,
 are not implemented, see #388.
+The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
+the transform is truncated at \eqn{t}. It falls back to the numerical
+method where \eqn{\rho \sigma^2 e^\mu} overflows, above about
+\eqn{e^{690}}, and stops with an error where the series for
+\eqn{\rho < 0} needs more than 20000 terms, which is for \eqn{|\rho| q}
+above about 15000.
 
 \strong{Tilts close to zero.} The expression above cancels as \eqn{\rho \to 0}.
 Two forms replace it where the cancellation would lose precision. With
@@ -156,6 +166,21 @@ values. For a single \code{q} it is about 1.5 to 3 times slower, as the call
 evaluates four transforms at two endpoints. It is kept for single values
 as it is accurate where the numerical method has errors of up to 1e-2 in
 the tails of a normal delay.
+
+\strong{Lognormal precision and speed.} The quadrature is accurate to an
+absolute difference of about 1e-11 in the log transform for \code{sdlog} up to
+1.8, and 1e-13 for \code{sdlog} of 1 or below. The CDF agrees with numerical
+integration to a relative difference of 1e-7 or better over the tested
+grid of tilts, windows and quantiles. The largest differences are deep in the
+lower tail, where the CDF is below 1e-100 and the direct form cancels
+by about \eqn{1 / (\rho q)} times the gap between \code{q} and the mean of the
+delays below it.
+The quadrature and the series have a fixed cost that the numerical method
+beats for fewer than 10 quantiles, so \code{pcens_cdf()} uses the numerical
+method for fewer than 10 \code{q} and the transform for 10 or more, which is
+1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
+The Stan solution is faster than the ODE with the shared terms of the
+vectorised PMF, and slower for one delay, so one delay uses the ODE there.
 
 \strong{Extending.} A new delay distribution is supported by defining
 \code{.pcens_tilt_lower()}, \code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()}

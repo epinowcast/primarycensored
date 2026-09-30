@@ -15,7 +15,9 @@
  * A window of another shape plugs in the same way. It needs the transform at
  * its own tilts and its own combination of the terms. A delay distribution
  * plugs in through tilt_transform.stan and is then supported by every
- * window.
+ * window. A transform that has a setup shared by all the points of a call,
+ * as for the lognormal, gives it in log_tilt_transform_context(), which the
+ * scalar and the vectorised functions compute once.
  */
 
 /**
@@ -90,16 +92,42 @@ int exptilt_is_small_delay(int dist_id, real rho, data real d,
   * @param dist_id Distribution identifier, see check_for_exptilt()
   * @param rho Tilt
   * @param params Array of distribution parameters
+  * @param context Output of log_tilt_transform_context() for dist_id, -rho
+  *   and params
   *
   * @return Vector [log F(t), log(1 - F(t)), log J(t), log(J(Inf) - J(t))].
   * The lower tail terms are `-inf` for t <= 0 for delays on the non-negative
-  * reals. Only defined where check_for_tilt_transform() is 1 for -rho.
+  * reals. The upper tail term of J is `inf` where the total diverges, as for
+  * a lognormal delay with rho < 0. Only defined where
+  * check_for_tilt_transform() is 1 for -rho.
+  */
+vector primarycensored_exptilt_terms_shared(real t, int dist_id, real rho,
+                                            array[] real params,
+                                            vector context) {
+  return append_row(
+    log_tilt_transform_pair(t, dist_id, 0, params),
+    log_tilt_transform_pair_shared(t, dist_id, -rho, params, context)
+  );
+}
+
+/**
+  * Compute the exponentially tilted terms at an endpoint
+  * @ingroup exponential_tilt_solutions
+  *
+  * As primarycensored_exptilt_terms_shared() with the shared quantities of
+  * the tilt transform computed for this endpoint alone.
+  *
+  * @param t Endpoint, d or d - pwindow
+  * @param dist_id Distribution identifier, see check_for_exptilt()
+  * @param rho Tilt
+  * @param params Array of distribution parameters
+  *
+  * @return Vector [log F(t), log(1 - F(t)), log J(t), log(J(Inf) - J(t))]
   */
 vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
                                      array[] real params) {
-  return append_row(
-    log_tilt_transform_pair(t, dist_id, 0, params),
-    log_tilt_transform_pair(t, dist_id, -rho, params)
+  return primarycensored_exptilt_terms_shared(
+    t, dist_id, rho, params, log_tilt_transform_context(dist_id, -rho, params)
   );
 }
 
@@ -256,8 +284,8 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
   * check_for_exptilt() is 1 and check_for_tilt_transform() is 1 for -rho.
   *
   * @param d Delay
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param rho Tilt, the exponential growth rate of the primary
@@ -283,9 +311,11 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
       primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
     );
   }
+  vector[4] context = log_tilt_transform_context(dist_id, -rho, params);
   return primarycensored_exptilt_lcdf_from_terms(
-    primarycensored_exptilt_terms(d, dist_id, rho, params),
-    primarycensored_exptilt_terms(q, dist_id, rho, params), d, rho, pwindow
+    primarycensored_exptilt_terms_shared(d, dist_id, rho, params, context),
+    primarycensored_exptilt_terms_shared(q, dist_id, rho, params, context),
+    d, rho, pwindow
   );
 }
 
@@ -325,8 +355,8 @@ int check_for_exptilt_vectorized(int dist_id, int primary_id,
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window, a positive integer
   * @param rho Tilt, the exponential growth rate of the primary
@@ -362,9 +392,10 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
   } else {
     // terms[t - first + 1] holds the terms at endpoint t
     array[n - first + 1] vector[4] terms;
+    vector[4] context = log_tilt_transform_context(dist_id, -rho, params);
     for (t in first:n) {
-      terms[t - first + 1] = primarycensored_exptilt_terms(
-        t, dist_id, rho, params
+      terms[t - first + 1] = primarycensored_exptilt_terms_shared(
+        t, dist_id, rho, params, context
       );
     }
     for (d in start:n) {

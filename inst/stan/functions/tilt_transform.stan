@@ -8,9 +8,10 @@
  * event window fixes the tilts xi and the coefficients. The delay
  * distribution fixes whether T_f is closed form, and these functions are
  * the extension points for new delay distributions. A delay is added by a
- * branch in check_for_tilt_transform(), log_tilt_transform_pair() and, for
- * the small tilt forms of the exponentially tilted window,
- * primarycensored_tilt_moments().
+ * branch in check_for_tilt_transform(), log_tilt_transform_pair_shared() and,
+ * for the small tilt forms of the exponentially tilted window,
+ * primarycensored_tilt_moments(). A delay whose transform has a setup that is
+ * the same at every point also gives it in log_tilt_transform_context().
  * The R equivalents are the `.pcens_tilt_*()` generics.
  */
 
@@ -391,7 +392,7 @@ real primarycensored_lognormal_tilt_panel(real a, real b, real mu,
 }
 
 /**
-  * Mode and limits of the tilted lognormal integrand
+  * Mode, limits and total of the tilted lognormal integrand
   * @ingroup tilt_transforms
   *
   * With rho = -xi > 0 the log of the integrand in the standardised log
@@ -405,13 +406,17 @@ real primarycensored_lognormal_tilt_panel(real a, real b, real mu,
   * * Right, from the curvature at the mode, and from
   *   rho (u(z) - u(z0)) > 40 for z >= |z0|.
   *
+  * The total is the integral over [lo, z0] and [z0, hi]. None of these
+  * depends on the point, so they are computed once for all the points of a
+  * call, see log_tilt_transform_context().
+  *
   * @param mu Mean of the log of the delay
   * @param sigma Standard deviation of the log of the delay
   * @param rho Tilt, above 0
   *
-  * @return Vector [z0, lo, hi]
+  * @return Vector [z0, lo, hi, log total]
   */
-vector primarycensored_lognormal_tilt_mode(real mu, real sigma, real rho) {
+vector primarycensored_lognormal_tilt_bump(real mu, real sigma, real rho) {
   real w0 = lambert_w0(exp(log(rho) + 2 * log(sigma) + mu));
   real z0 = -w0 / sigma;
   real u0 = exp(mu - w0);
@@ -421,7 +426,11 @@ vector primarycensored_lognormal_tilt_mode(real mu, real sigma, real rho) {
   real lo = fmax(
     z0 - sqrt(80), -sqrt(square(z0) + 2 * w0 / square(sigma) + 80)
   );
-  return [z0, lo, hi]';
+  real log_total = log_sum_exp(
+    primarycensored_lognormal_tilt_panel(lo, z0, mu, sigma, rho),
+    primarycensored_lognormal_tilt_panel(z0, hi, mu, sigma, rho)
+  );
+  return [z0, lo, hi, log_total]';
 }
 
 /**
@@ -429,46 +438,40 @@ vector primarycensored_lognormal_tilt_mode(real mu, real sigma, real rho) {
   * @ingroup tilt_transforms
   *
   * The lower transform T_f(xi; t) and the upper transform
-  * T_f(xi; Inf) - T_f(xi; t) for xi = -rho < 0, as sums of integrals of the
-  * log-concave integrand over panels, see
-  * primarycensored_lognormal_tilt_mode(). Left of the mode the lower
+  * T_f(xi; Inf) - T_f(xi; t) for xi = -rho < 0. Left of the mode the lower
   * transform is one panel that ends at t, bounded on the left from the slope
-  * of the integrand there. Right of the mode the upper transform is one
-  * panel that starts at t. The other transform adds the integral between t
-  * and the mode to the integral of the rest of the bump. All of the terms are
-  * positive, so nothing cancels. The panels are accurate to an absolute
-  * difference of the log transform of about 1e-11 for sigma up to 1.8 and of
-  * about 1e-13 for sigma of 1 or below.
+  * of the integrand there. Right of the mode the upper transform is one panel
+  * that starts at t, bounded on the right from the slope and the curvature
+  * there. The other transform is the difference from the total of the bump,
+  * see primarycensored_lognormal_tilt_bump(). It is at least the mass on the
+  * other side of the mode, which is not small, so the difference does not
+  * cancel. The panels are accurate to an absolute difference of the log
+  * transform of about 1e-11 for sigma up to 1.8 and of about 1e-13 for sigma
+  * of 1 or below.
   *
   * @param t Point, positive
   * @param mu Mean of the log of the delay
   * @param sigma Standard deviation of the log of the delay
   * @param rho Tilt, above 0
+  * @param bump Output of primarycensored_lognormal_tilt_bump() for mu,
+  *   sigma and rho
   *
   * @return Vector [log T_f(-rho; t), log(T_f(-rho; Inf) - T_f(-rho; t))]
   */
 vector primarycensored_lognormal_tilt_quadrature(real t, real mu,
-                                                 real sigma, real rho) {
+                                                 real sigma, real rho,
+                                                 vector bump) {
   real z = (log(t) - mu) / sigma;
-  vector[3] mode = primarycensored_lognormal_tilt_mode(mu, sigma, rho);
-  real z0 = mode[1];
-  real lo = mode[2];
-  real hi = mode[3];
   // The slope of the log integrand at t, positive left of the mode
   real slope = -rho * sigma * t - z;
-  if (z < z0) {
+  if (z < bump[1]) {
     real width = 80 / (slope + sqrt(square(slope) + 80));
     real log_lower = primarycensored_lognormal_tilt_panel(
       z - width, z, mu, sigma, rho
     );
-    real right = primarycensored_lognormal_tilt_panel(
-      z0, hi, mu, sigma, rho
-    );
-    // Below lo the upper transform is the whole bump to rounding
-    real left = primarycensored_lognormal_tilt_panel(
-      fmax(z, lo), z0, mu, sigma, rho
-    );
-    return [log_lower, log_sum_exp(left, right)]';
+    return [
+      log_lower, primarycensored_log_diff_exp(bump[4], log_lower)
+    ]';
   }
   real curvature = 1 + rho * square(sigma) * t;
   real width = 80 / (abs(slope) + sqrt(square(slope) + 80 * curvature));
@@ -480,12 +483,7 @@ vector primarycensored_lognormal_tilt_quadrature(real t, real mu,
   real log_upper = primarycensored_lognormal_tilt_panel(
     z, z + width, mu, sigma, rho
   );
-  // Past hi the lower transform is the whole bump to rounding
-  real left = primarycensored_lognormal_tilt_panel(lo, z0, mu, sigma, rho);
-  real right = primarycensored_lognormal_tilt_panel(
-    z0, fmin(z, hi), mu, sigma, rho
-  );
-  return [log_sum_exp(left, right), log_upper]';
+  return [primarycensored_log_diff_exp(bump[4], log_upper), log_upper]';
 }
 
 /**
@@ -543,11 +541,13 @@ real primarycensored_lognormal_tilt_series(real t, real mu, real sigma,
   * @param mu Mean of the log of the delay
   * @param sigma Standard deviation of the log of the delay
   * @param xi Tilt
+  * @param bump Output of primarycensored_lognormal_tilt_bump() for mu,
+  *   sigma and -xi, used for xi < 0
   *
   * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
   */
 vector primarycensored_lognormal_tilt_pair(real t, real mu, real sigma,
-                                           real xi) {
+                                           real xi, vector bump) {
   if (xi == 0) {
     if (t <= 0) return [negative_infinity(), 0]';
     real z = (log(t) - mu) / sigma;
@@ -560,18 +560,33 @@ vector primarycensored_lognormal_tilt_pair(real t, real mu, real sigma,
       positive_infinity()
     ]';
   }
-  real rho = -xi;
-  if (t <= 0) {
-    vector[3] mode = primarycensored_lognormal_tilt_mode(mu, sigma, rho);
-    return [
-      negative_infinity(),
-      log_sum_exp(
-        primarycensored_lognormal_tilt_panel(mode[2], mode[1], mu, sigma, rho),
-        primarycensored_lognormal_tilt_panel(mode[1], mode[3], mu, sigma, rho)
-      )
-    ]';
+  if (t <= 0) return [negative_infinity(), bump[4]]';
+  return primarycensored_lognormal_tilt_quadrature(t, mu, sigma, -xi, bump);
+}
+
+/**
+  * Quantities shared by the tilt transforms of a delay at every point
+  * @ingroup tilt_transforms
+  *
+  * Some transforms need a setup that depends on the delay parameters and the
+  * tilt but not on the point, such as the mode and the total of the lognormal
+  * integrand for a negative tilt. Computing it once and passing it to
+  * log_tilt_transform_pair_shared() for each point avoids repeating it for
+  * every endpoint of a call. It has length 4, as Stan needs a fixed size for
+  * a local vector, and is 0 for the delays whose transform has no setup. A
+  * delay that needs more quantities raises the length for all.
+  *
+  * @param dist_id Distribution identifier, see check_for_tilt_transform()
+  * @param xi Tilt
+  * @param params Array of distribution parameters, as for dist_lcdf()
+  *
+  * @return Vector of 4 shared quantities
+  */
+vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
+  if (dist_id == 1 && xi < 0) {
+    return primarycensored_lognormal_tilt_bump(params[1], params[2], -xi);
   }
-  return primarycensored_lognormal_tilt_quadrature(t, mu, sigma, rho);
+  return rep_vector(0, 4);
 }
 
 /**
@@ -607,15 +622,17 @@ vector primarycensored_lognormal_tilt_pair(real t, real mu, real sigma,
   * rate 20 at 17.
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal), see check_for_tilt_transform()
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
+  * @param context Output of log_tilt_transform_context() for dist_id, xi
+  *   and params
   *
   * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
   */
-vector log_tilt_transform_pair(real t, int dist_id, real xi,
-                               array[] real params) {
+vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
+                                      array[] real params, vector context) {
   if (dist_id == 2) {
     real shape = params[1];
     real rate = params[2];
@@ -653,9 +670,34 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
       log_total + primarycensored_log_std_normal_cdf(-z)
     ]';
   } else if (dist_id == 1) {
-    return primarycensored_lognormal_tilt_pair(t, params[1], params[2], xi);
+    return primarycensored_lognormal_tilt_pair(
+      t, params[1], params[2], xi, context
+    );
   }
   reject("Invalid distribution identifier: ", dist_id);
+}
+
+/**
+  * Log of the tilt transform over the lower and the upper part of the support
+  * @ingroup tilt_transforms
+  *
+  * As log_tilt_transform_pair_shared() with the shared quantities computed
+  * for this point alone. Use log_tilt_transform_context() and the shared
+  * form for several points.
+  *
+  * @param t Point
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal), see check_for_tilt_transform()
+  * @param xi Tilt
+  * @param params Array of distribution parameters, as for dist_lcdf()
+  *
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
+  */
+vector log_tilt_transform_pair(real t, int dist_id, real xi,
+                               array[] real params) {
+  return log_tilt_transform_pair_shared(
+    t, dist_id, xi, params, log_tilt_transform_context(dist_id, xi, params)
+  );
 }
 
 /**
@@ -667,8 +709,8 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
   * log_tilt_transform_pair(), which also gives the upper part.
   *
   * @param t Upper limit of the transform
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal), see check_for_tilt_transform()
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
@@ -689,8 +731,8 @@ real log_tilt_transform(real t, int dist_id, real xi, array[] real params) {
   * log_tilt_transform_pair().
   *
   * @param t Lower limit of the transform
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal), see check_for_tilt_transform()
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
@@ -760,11 +802,15 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   * The exponential is the gamma with shape 1. Its own closed forms cancel
   * when the rate times t is small. The normal with z = (t - mu) / sigma has
   * G_1 = sigma (phi(z) + z Phi(z)) and
-  * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)).
+  * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)). The lognormal has the
+  * partial moments m_k(t) = exp(k mu + k^2 sigma^2 / 2)
+  * Phi((log t - mu) / sigma - k sigma), so G_1 = t m_0 - m_1 and
+  * G_2 = t G_1 - (t m_1 - m_2), every difference being of positive
+  * integrals as for the gamma.
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   4 (Exponential) or 18 (Normal), see check_for_tilt_transform()
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
   * @return Vector [log G_1(t), log G_2(t)]

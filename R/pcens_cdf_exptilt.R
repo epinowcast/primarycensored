@@ -1,8 +1,9 @@
 #' Methods for delays with an exponentially tilted primary
 #'
-#' Analytical primary event censored CDFs for exponential, gamma and normal
-#' delay distributions with an exponentially tilted primary event window, the
-#' [dexpgrowth()] primary distribution with `r` equal to the tilt \eqn{\rho}.
+#' Analytical primary event censored CDFs for exponential, gamma, normal and
+#' lognormal delay distributions with an exponentially tilted primary event
+#' window, the [dexpgrowth()] primary distribution with `r` equal to the tilt
+#' \eqn{\rho}.
 #' They honour `use_numeric`, and use the numerical method of
 #' [pcens_cdf.default()] when no closed form applies.
 #'
@@ -38,6 +39,10 @@
 #'   \eqn{T_f(\xi; \tau) = e^{\xi \mu + \xi^2 \sigma^2 / 2}
 #'   \Phi((\tau - \mu - \xi \sigma^2) / \sigma)}.
 #'
+#' * Lognormal with `meanlog` \eqn{\mu} and `sdlog` \eqn{\sigma}: no closed
+#'   form. The transform is evaluated by quadrature for \eqn{\rho > 0} and by
+#'   a series for \eqn{\rho < 0}, see [tilt_transform_lognormal].
+#'
 #' The terms are evaluated on the log scale, and differences are taken
 #' between the lower or the upper tail representations, whichever loses less
 #' precision, see `.log_diff_exp()`. Results agree with numerical integration
@@ -55,6 +60,12 @@
 #' numerical method in R. Stable forms for these tilts, such as
 #' the expm1 closed form for the exponential and a Kummer series for the gamma,
 #' are not implemented, see #388.
+#' The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
+#' the transform is truncated at \eqn{t}. It falls back to the numerical
+#' method where \eqn{\rho \sigma^2 e^\mu} overflows, above about
+#' \eqn{e^{690}}, and stops with an error where the series for
+#' \eqn{\rho < 0} needs more than 20000 terms, which is for \eqn{|\rho| q}
+#' above about 15000.
 #'
 #' **Tilts close to zero.** The expression above cancels as \eqn{\rho \to 0}.
 #' Two forms replace it where the cancellation would lose precision. With
@@ -118,6 +129,21 @@
 #' evaluates four transforms at two endpoints. It is kept for single values
 #' as it is accurate where the numerical method has errors of up to 1e-2 in
 #' the tails of a normal delay.
+#'
+#' **Lognormal precision and speed.** The quadrature is accurate to an
+#' absolute difference of about 1e-11 in the log transform for `sdlog` up to
+#' 1.8, and 1e-13 for `sdlog` of 1 or below. The CDF agrees with numerical
+#' integration to a relative difference of 1e-7 or better over the tested
+#' grid of tilts, windows and quantiles. The largest differences are deep in the
+#' lower tail, where the CDF is below 1e-100 and the direct form cancels
+#' by about \eqn{1 / (\rho q)} times the gap between `q` and the mean of the
+#' delays below it.
+#' The quadrature and the series have a fixed cost that the numerical method
+#' beats for fewer than 10 quantiles, so `pcens_cdf()` uses the numerical
+#' method for fewer than 10 `q` and the transform for 10 or more, which is
+#' 1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
+#' The Stan solution is faster than the ODE with the shared terms of the
+#' vectorised PMF, and slower for one delay, so one delay uses the ODE there.
 #'
 #' **Extending.** A new delay distribution is supported by defining
 #' `.pcens_tilt_lower()`, `.pcens_tilt_available()`, `.pcens_tilt_transform()`
@@ -196,7 +222,10 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
+  .pcens_cdf_exptilt(
+    object, q, pwindow, use_numeric,
+    min_q = .lnorm_exptilt_min_q
+  )
 }
 
 # Tilts with |rho| times the window (or q) below this use the small tilt
@@ -205,20 +234,14 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 # which balance at about 1e-4 with both below 1e-9.
 .exptilt_small <- 1e-4
 
-#' Primary event censored CDF for an exponentially tilted primary
-#'
-#' Shared implementation of the [pcens_cdf_exptilt] methods. It dispatches
-#' on the delay class of `object` through the generics of [tilt_transform].
+#' Tilt of the exponentially tilted primary of a pcens object
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @return Vector of computed primary event censored CDFs.
+#' @return The tilt `r`, a single finite number.
 #'
 #' @keywords internal
-.pcens_cdf_exptilt <- function(object, q, pwindow, use_numeric = FALSE) {
-  if (isTRUE(use_numeric)) {
-    return(pcens_cdf.default(object, q, pwindow, use_numeric))
-  }
+.exptilt_rho <- function(object) {
   rho <- object$primary_args$r
   if (is.null(rho)) {
     stop(
@@ -234,9 +257,39 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
       call. = FALSE
     )
   }
-  # The closed forms are for a single window and need the tilted delay
+  rho
+}
+
+#' Primary event censored CDF for an exponentially tilted primary
+#'
+#' Shared implementation of the [pcens_cdf_exptilt] methods. It dispatches
+#' on the delay class of `object` through the generics of [tilt_transform].
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @param min_q Number of quantiles below which the numerical method is
+#'   used, for delays whose transform has a fixed cost. The default 0 always
+#'   uses the closed forms.
+#'
+#' @return Vector of computed primary event censored CDFs.
+#'
+#' @keywords internal
+.pcens_cdf_exptilt <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE,
+  min_q = 0L
+) {
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  rho <- .exptilt_rho(object)
+  # The closed forms are for a single window and need the tilted delay. A
+  # transform that is evaluated by quadrature has a fixed cost that the
+  # numerical method beats for a few quantiles.
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0 ||
-    !.pcens_tilt_available(object, -rho)) {
+    !.pcens_tilt_available(object, -rho) || length(q) < min_q) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
 

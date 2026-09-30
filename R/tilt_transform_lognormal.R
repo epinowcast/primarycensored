@@ -138,7 +138,7 @@
   peak + log(rowSums(exp(log_f - peak))) + log(half) - 0.5 * log(2 * pi)
 }
 
-#' Panels for the tilted lognormal integrand
+#' Mode and total of the tilted lognormal integrand
 #'
 #' With \eqn{\rho = -\xi > 0} the log of the integrand is
 #' \eqn{\ell(z) = -\rho e^{\mu + \sigma z} - z^2 / 2}. It is concave with
@@ -150,41 +150,41 @@
 #' * Right, from the curvature at the mode and from
 #'   \eqn{\rho \{u(z) - u(z_0)\} > 40} for \eqn{z \ge |z_0|}.
 #'
-#' The integral over the whole line is the sum over the two panels that meet
-#' at the mode. The mode and the two panel integrals do not depend on the
-#' point, so they are computed once for all points.
+#' The total over the whole line is the sum over the two panels that meet at
+#' the mode. The mode and the total do not depend on the point, so they are
+#' computed once for all points.
 #'
 #' @inheritParams .lnorm_panel
 #'
 #' @return A list with the mode `z0`, the limits `lo` and `hi`, and the log
-#'   integrals `left` over `[lo, z0]` and `right` over `[z0, hi]`.
+#'   `total` integral over `[lo, hi]`.
 #'
 #' @keywords internal
 .lnorm_bump <- function(meanlog, sdlog, rho, rule) {
-  w0 <- .lambert_w0(rho * sdlog^2 * exp(meanlog))
+  w0 <- .lambert_w0(exp(log(rho) + 2 * log(sdlog) + meanlog))
   z0 <- -w0 / sdlog
-  u0 <- exp(meanlog + sdlog * z0)
+  u0 <- exp(meanlog - w0)
   hi <- min(
     z0 + sqrt(80 / (1 + w0)),
     max((log(u0 + 40 / rho) - meanlog) / sdlog, -z0)
   )
   lo <- max(z0 - sqrt(80), -sqrt(z0^2 + 2 * w0 / sdlog^2 + 80))
-  list(
-    z0 = z0, lo = lo, hi = hi,
-    left = .lnorm_panel(lo, z0, meanlog, sdlog, rho, rule),
-    right = .lnorm_panel(z0, hi, meanlog, sdlog, rho, rule)
+  panels <- .lnorm_panel(
+    c(lo, z0), c(z0, hi), meanlog, sdlog, rho, rule
   )
+  list(z0 = z0, lo = lo, hi = hi, total = .log_sum_exp(panels[1], panels[2]))
 }
 
 #' Tilted lognormal transform by quadrature
 #'
-#' The lower and the upper transform for a tilt \eqn{\xi < 0}. For a point
-#' left of the mode the lower transform is one panel that ends at the point,
-#' bounded on the left from the slope of the integrand there. For a point
-#' right of the mode the upper transform is one panel that starts at the
-#' point. The other transform adds the integral over the mode to the
-#' precomputed integral of the bump, see `.lnorm_bump()`. All of the terms are
-#' positive, so nothing cancels.
+#' The lower and the upper transform for a tilt \eqn{\xi < 0}. Left of the
+#' mode the lower transform is one panel that ends at the point, bounded on
+#' the left from the slope of the integrand there. Right of the mode the
+#' upper transform is one panel that starts at the point, bounded on the
+#' right from the slope and the curvature there. The other transform is the
+#' difference from the total of the bump, see `.lnorm_bump()`. It is at least
+#' the mass on the other side of the mode, which is not small, so the
+#' difference does not cancel.
 #'
 #' The panels are accurate to an absolute difference of the log transform of
 #' about 1e-11 for sdlog up to 1.8 and of about 1e-13 for sdlog of 1 or
@@ -204,55 +204,39 @@
                                    rule = .lnorm_rule()) {
   rho <- -xi
   bump <- .lnorm_bump(meanlog, sdlog, rho, rule)
-  log_total <- .log_sum_exp(bump$left, bump$right)
   n <- length(t)
   lower <- rep(-Inf, n)
-  upper <- rep(log_total, n)
-  positive <- t > 0
-  z <- rep(-Inf, n)
-  z[positive] <- (log(t[positive]) - meanlog) / sdlog
-  # Slope of the log integrand at the point. It is positive left of the mode
-  slope <- -rho * sdlog * t - z
-  left <- which(positive & z < bump$z0)
-  if (length(left) > 0L) {
-    zl <- z[left]
-    width <- 80 / (slope[left] + sqrt(slope[left]^2 + 80))
-    lower[left] <- .lnorm_panel(zl - width, zl, meanlog, sdlog, rho, rule)
-    # Below lo the upper transform is the whole bump to rounding
-    inner <- left[zl > bump$lo]
-    if (length(inner) > 0L) {
-      upper[inner] <- .log_sum_exp(
-        .lnorm_panel(
-          z[inner], rep(bump$z0, length(inner)), meanlog, sdlog, rho, rule
-        ),
-        bump$right
-      )
-    }
+  upper <- rep(bump$total, n)
+  positive <- which(t > 0)
+  if (length(positive) == 0L) {
+    return(cbind(lower = lower, upper = upper))
   }
-  right <- which(positive & z >= bump$z0)
-  if (length(right) > 0L) {
-    zr <- z[right]
-    curvature <- 1 + rho * sdlog^2 * t[right]
-    width <- 80 / (abs(slope[right]) + sqrt(slope[right]^2 + 80 * curvature))
-    # The integrand is less than e^-40 of its value at the point beyond the
-    # point where the tilt alone has decayed by 40
-    width <- pmin(
-      width,
-      pmax(abs(zr), (log(t[right] + 40 / rho) - meanlog) / sdlog) - zr
-    )
-    upper[right] <- .lnorm_panel(zr, zr + width, meanlog, sdlog, rho, rule)
-    # Past hi the lower transform is the whole bump to rounding
-    lower[right] <- log_total
-    inner <- right[zr < bump$hi]
-    if (length(inner) > 0L) {
-      lower[inner] <- .log_sum_exp(
-        bump$left,
-        .lnorm_panel(
-          rep(bump$z0, length(inner)), z[inner], meanlog, sdlog, rho, rule
-        )
-      )
-    }
-  }
+  tp <- t[positive]
+  z <- (log(tp) - meanlog) / sdlog
+  # Slope of the log integrand at the point, positive left of the mode
+  slope <- -rho * sdlog * tp - z
+  left <- z < bump$z0
+  curvature <- 1 + rho * sdlog^2 * tp
+  width <- ifelse(
+    left,
+    80 / (slope + sqrt(slope^2 + 80)),
+    80 / (abs(slope) + sqrt(slope^2 + 80 * curvature))
+  )
+  # Right of the mode the integrand is below e^-40 of its value at the point
+  # beyond the point where the tilt alone has decayed by 40
+  width <- ifelse(
+    left, width,
+    pmin(width, pmax(abs(z), (log(tp + 40 / rho) - meanlog) / sdlog) - z)
+  )
+  panel <- .lnorm_panel(
+    ifelse(left, z - width, z), ifelse(left, z, z + width),
+    meanlog, sdlog, rho, rule
+  )
+  # The panel is the lower transform left of the mode and the upper
+  # transform right of it. The other one is the rest of the total.
+  rest <- .log_diff_exp(bump$total, panel)
+  lower[positive] <- ifelse(left, panel, rest)
+  upper[positive] <- ifelse(left, rest, panel)
   cbind(lower = lower, upper = upper)
 }
 
@@ -263,9 +247,9 @@
 #' \eqn{m_k(t) = \int_0^t u^k f(u) du =
 #' e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
 #' Past \eqn{k = \xi t} the terms fall by at least a factor
-#' \eqn{\xi t / (k + 1)} each, so \eqn{2 \xi t + 64} terms leave a relative
-#' truncation error below 1e-17. Terms are added in blocks until the last term
-#' is below that for every point.
+#' \eqn{\xi t / (k + 1)} each. The number of terms starts at about
+#' \eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles until the last term is below
+#' \eqn{e^{-40}} of the largest for every point.
 #'
 #' @inheritParams .lnorm_tilt_quadrature
 #'
@@ -281,10 +265,20 @@
     return(out)
   }
   z <- (log(t[positive]) - meanlog) / sdlog
-  n_terms <- ceiling(2 * xi * max(t[positive]) + 64)
+  # The terms fall below e^-40 of the largest within about 9 sqrt(xi t)
+  # of xi t, which the check below confirms
+  lambda <- xi * max(t[positive])
+  n_terms <- ceiling(lambda + 9 * sqrt(lambda) + 30)
   repeat {
+    if (n_terms > .lnorm_max_terms) {
+      stop(
+        "The lognormal tilt transform needs more than ", .lnorm_max_terms,
+        " terms. Use use_numeric = TRUE.",
+        call. = FALSE
+      )
+    }
     k <- seq_len(n_terms + 1L) - 1L
-    log_terms <- pnorm_matrix(z, k * sdlog) +
+    log_terms <- .lnorm_log_pnorm(z, k * sdlog) +
       rep(
         k * (log(xi) + meanlog) + 0.5 * k^2 * sdlog^2 - lgamma(k + 1),
         each = length(z)
@@ -297,13 +291,6 @@
     if (all(last < -40)) {
       break
     }
-    if (n_terms > .lnorm_max_terms) {
-      stop(
-        "The lognormal tilt transform needs more than ", .lnorm_max_terms,
-        " terms. Use use_numeric = TRUE.",
-        call. = FALSE
-      )
-    }
     n_terms <- 2L * n_terms
   }
   out[positive] <- peak + log(rowSums(exp(log_terms - peak)))
@@ -312,8 +299,20 @@
 
 .lnorm_max_terms <- 20000L
 
-# log of the standard normal CDF at z_i - s_j for all pairs, as a matrix
-pnorm_matrix <- function(z, shift) {
+# The quadrature and the series have a fixed cost of about 0.2 ms that the
+# numerical method of `pcens_cdf.default()` beats for fewer than about 10
+# quantiles, and they are faster beyond that, see the benchmarks in NEWS.md.
+.lnorm_exptilt_min_q <- 10L
+
+#' Log standard normal CDF at every point less every shift
+#'
+#' @param z,shift Numeric vectors.
+#'
+#' @return A matrix with `length(z)` rows and `length(shift)` columns of
+#'   `log(Phi(z_i - shift_j))`.
+#'
+#' @keywords internal
+.lnorm_log_pnorm <- function(z, shift) {
   stats::pnorm(outer(z, shift, "-"), log.p = TRUE)
 }
 
