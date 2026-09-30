@@ -1,10 +1,7 @@
 skip_on_cran()
 
-# Tests for the generalised gamma lower tail. `gamma_lcdf` underflows to
-# -inf deep in the lower tail of the generalised gamma, which gave NaN or
-# +Inf log densities once the truncation normaliser was subtracted. Stan's partial of the
-# regularised incomplete gamma with respect to its shape is also inaccurate
-# well before that point.
+# Tests for the generalised gamma log CDF and its analytical terms in the
+# lower tail.
 #
 # The reference is R's `pgamma(log.p = TRUE)`, which is accurate in the
 # tails, so the tolerance is relative 1e-9 unless stated.
@@ -121,14 +118,17 @@ test_that("gamma_lcdf_logx matches pgamma across the series rules", {
 })
 
 test_that("gengamma_lcdf is continuous across the tail rule", {
-  # Values either side of any switch between evaluation rules must agree
+  # The change across a switch must match the true change in log CDF.
+  # frac = 0.9 is the x / (a + 1) switch of the series rule.
   for (k in c(3, 25, 150)) {
-    for (frac in c(0.3, 0.45, 0.5, 0.55, 0.7)) {
+    for (frac in c(0.3, 0.5, 0.9)) {
       x <- frac * (k + 1)
       eps <- 1e-7
       lo <- gengamma_lcdf((x * (1 - eps))^(1 / 1.3) * 2, 1.3, 2, k)
       hi <- gengamma_lcdf((x * (1 + eps))^(1 / 1.3) * 2, 1.3, 2, k)
-      expect_lt(abs(hi - lo), 1e-4)
+      ref_jump <- pgamma(x * (1 + eps), k, log.p = TRUE) -
+        pgamma(x * (1 - eps), k, log.p = TRUE)
+      expect_equal(hi - lo, ref_jump, tolerance = 1e-6)
       expect_equal(
         gengamma_lcdf(x^(1 / 1.3) * 2, 1.3, 2, k),
         pgamma(x, k, log.p = TRUE),
@@ -267,4 +267,8 @@ test_that("analytical generalised gamma matches R's numerical path", {
       expect_equal(analytic, numeric, tolerance = 1e-6)
     }
   }
+})
+
+test_that("gengamma_lcdf errors for negative y", {
+  expect_error(gengamma_lcdf(-1, 1.5, 2, 3))
 })
