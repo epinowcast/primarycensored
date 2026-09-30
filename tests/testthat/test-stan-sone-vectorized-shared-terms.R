@@ -1,9 +1,9 @@
 skip_on_cran()
 
-# With a uniform primary and an integer pwindow,
+# With a registered delay and primary pair and an integer pwindow,
 # primarycensored_sone_lpmf_vectorized() uses
-# primarycensored_analytical_lcdf_vectorized(), which computes the analytical
-# uniform primary terms once per integer delay and shares them. These tests
+# primarycensored_analytical_lcdf_vectorized(), which computes the terms of
+# primarycensored_terms() once per integer delay and shares them. These tests
 # check it against per-delay Stan calls and the R functions.
 
 vectorized_dists <- list(
@@ -41,6 +41,46 @@ test_that("check_for_analytical_vectorized needs uniform terms and an
   }
 })
 
+test_that("check_for_terms registers the uniform primary delays only", {
+  for (dist_id in c(1L, 2L, 3L, 5L)) {
+    expect_identical(check_for_terms(dist_id, 1L), 1L)
+    expect_identical(check_for_terms(dist_id, 2L), 0L)
+  }
+  for (dist_id in c(4L, 18L, 26L, 27L, 28L)) {
+    expect_identical(check_for_terms(dist_id, 1L), 0L)
+  }
+})
+
+test_that("primarycensored_terms and primarycensored_lcdf_from_terms
+  dispatch to the uniform primary terms", {
+  for (dist in vectorized_dists) {
+    params <- dist$params[[1]]
+    for (t in c(0, 0.3, 2, 11)) {
+      expect_identical(
+        primarycensored_terms(t, dist$dist_id, 1L, params, numeric(0)),
+        primarycensored_uniform_terms(t, dist$dist_id, params)
+      )
+    }
+    terms_d <- primarycensored_terms(9, dist$dist_id, 1L, params, numeric(0))
+    terms_q <- primarycensored_terms(6, dist$dist_id, 1L, params, numeric(0))
+    expect_identical(
+      primarycensored_lcdf_from_terms(
+        terms_d, terms_q, dist$dist_id, 1L, 3, numeric(0)
+      ),
+      primarycensored_uniform_lcdf_from_terms(terms_d, terms_q, 3)
+    )
+  }
+  expect_error(
+    primarycensored_terms(1, 4L, 1L, 0.3, numeric(0)), "terms"
+  )
+  expect_error(
+    primarycensored_lcdf_from_terms(
+      c(0, 0), c(0, 0), 2L, 2L, 1, 0.2
+    ),
+    "terms"
+  )
+})
+
 test_that("uniform primary terms are -Inf for t <= 0", {
   for (dist in vectorized_dists) {
     for (t in c(0, -0.5, -3)) {
@@ -76,7 +116,7 @@ test_that("primarycensored_analytical_lcdf_vectorized matches
             "pwindow", pwindow, "start", start
           )
           vectorised <- primarycensored_analytical_lcdf_vectorized(
-            start, n, dist$dist_id, params, pwindow
+            start, n, dist$dist_id, params, pwindow, 1L, numeric(0)
           )
           expect_length(vectorised, n)
           expect_identical(
