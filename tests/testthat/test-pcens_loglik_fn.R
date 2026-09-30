@@ -90,7 +90,8 @@ test_that("pcens_loglik_fn supports per-row windows and truncation", {
   D <- c(Inf, 10, 10, Inf, 10, Inf, 10, Inf)
   for (case in loglik_cases) {
     ll <- make_loglik(
-      case, x, pwindow = pwindow, swindow = swindow, L = L, D = D
+      case, x,
+      pwindow = pwindow, swindow = swindow, L = L, D = D
     )
     expect_equal(
       do.call(ll, case$pars),
@@ -103,7 +104,7 @@ test_that("pcens_loglik_fn supports per-row windows and truncation", {
 test_that("pcens_loglik_fn returns values in row order with repeated x", {
   set.seed(1)
   x <- sample(0:8, 60, replace = TRUE)
-  pwindow <- sample(1:2, 60, replace = TRUE)
+  pwindow <- sample.int(2, 60, replace = TRUE)
   case <- loglik_cases$gamma_unif
   ll <- make_loglik(case, x, pwindow = pwindow, swindow = 1, D = 10)
   out <- do.call(ll, case$pars)
@@ -118,21 +119,23 @@ test_that("pcens_loglik_fn returns values in row order with repeated x", {
 })
 
 test_that("pcens_loglik_fn evaluates each group at its unique x", {
-  seen <- integer(0)
+  seen <- new.env(parent = emptyenv())
+  seen$n <- integer(0)
   pgamma_counted <- add_name_attribute(
     function(q, shape, scale) {
-      seen <<- c(seen, length(q))
+      seen$n <- c(seen$n, length(q))
       pgamma(q, shape = shape, scale = scale)
     },
     "pgamma"
   )
   x <- rep(0:4, times = 200)
   ll <- pcens_loglik_fn(x, pgamma_counted, pwindow = 1, swindow = 1)
-  seen <- integer(0)
+  seen$n <- integer(0)
   out <- ll(shape = 2, scale = 1)
   expect_length(out, 1000)
   # 5 unique x give 6 unique CDF points, not 2000
-  expect_lte(max(seen), 6)
+  expect_gt(length(seen$n), 0)
+  expect_lte(max(seen$n), 6)
 })
 
 test_that("pcens_loglik_fn handles exact windows and mixed swindow", {
@@ -205,13 +208,15 @@ test_that("pcens_loglik_fn checks parameter names on every new name set", {
 })
 
 test_that("pcens_loglik_fn validates pdist on first use", {
-  ll <- pcens_loglik_fn(0:4, dgamma, pwindow = 1, swindow = 1)
+  decreasing <- function(q, shape, rate) exp(-q / 1000)
+  ll <- pcens_loglik_fn(0:4, decreasing, pwindow = 1, swindow = 1)
   expect_error(
     ll(shape = 2, rate = 1),
     "pdist is not a valid cumulative distribution function"
   )
   ll <- pcens_loglik_fn(
-    0:4, dgamma, pwindow = 1, swindow = 1, check = FALSE
+    0:4, decreasing,
+    pwindow = 1, swindow = 1, check = FALSE
   )
   expect_no_error(suppressWarnings(ll(shape = 2, rate = 1)))
 })
@@ -261,10 +266,14 @@ test_that("pcens_loglik_fn clips secondary windows at D with one message", {
   x <- c(1, 4, 8, 9.5)
   case <- loglik_cases$gamma_unif
   expect_message(
-    ll <- make_loglik(case, x, pwindow = 1, swindow = 1, D = 10),
+    make_loglik(case, x, pwindow = 1, swindow = 1, D = 10),
     "clipping"
   )
-  expect_no_message(out <- do.call(ll, case$pars))
+  ll <- suppressMessages(
+    make_loglik(case, x, pwindow = 1, swindow = 1, D = 10)
+  )
+  expect_no_message(do.call(ll, case$pars))
+  out <- do.call(ll, case$pars)
   expect_equal(
     out, reference_loglik(case, x, 1, 1, -Inf, 10),
     tolerance = tol
@@ -300,9 +309,10 @@ test_that("pcens_loglik_fn is the likelihood of fitdistdoublecens", {
   skip_if_not_installed("withr")
   set.seed(42)
   n <- 300
-  pw <- sample(1:2, n, replace = TRUE)
+  pw <- sample.int(2, n, replace = TRUE)
   samples <- rprimarycensored(
-    n, rgamma, shape = 3, rate = 1.2, pwindow = pw, swindow = 1, D = 15
+    n, rgamma,
+    shape = 3, rate = 1.2, pwindow = pw, swindow = 1, D = 15
   )
   dat <- data.frame(
     left = samples, right = samples + 1, pwindow = pw, D = 15
@@ -312,7 +322,8 @@ test_that("pcens_loglik_fn is the likelihood of fitdistdoublecens", {
     start = list(shape = 2, rate = 1), truncation_check_multiplier = NULL
   ))
   ll <- pcens_loglik_fn(
-    dat$left, pgamma, pwindow = dat$pwindow, swindow = 1, D = dat$D
+    dat$left, pgamma,
+    pwindow = dat$pwindow, swindow = 1, D = dat$D
   )
   expect_equal(
     sum(do.call(ll, as.list(fit$estimate))), fit$loglik,
@@ -324,7 +335,8 @@ test_that("pcens_loglik_fn can be optimised directly", {
   set.seed(7)
   n <- 400
   samples <- rprimarycensored(
-    n, rlnorm, meanlog = 1.3, sdlog = 0.5,
+    n, rlnorm,
+    meanlog = 1.3, sdlog = 0.5,
     pwindow = 1, swindow = 1, D = 20
   )
   ll <- pcens_loglik_fn(samples, plnorm, pwindow = 1, swindow = 1, D = 20)
@@ -339,14 +351,16 @@ test_that("pcens_loglik_fn can be optimised directly", {
 
 test_that(".pcens_row_groups collapses equal settings and repeated x", {
   groups <- .pcens_row_groups(
-    c(1, 1, 2, 2, 3), pwindow = 1, swindow = 1, L = -Inf, D = Inf
+    c(1, 1, 2, 2, 3),
+    pwindow = 1, swindow = 1, L = -Inf, D = Inf
   )
   expect_length(groups, 1)
   expect_identical(groups[[1]]$x, c(1, 2, 3))
   expect_identical(groups[[1]]$map, c(1L, 1L, 2L, 2L, 3L))
   expect_null(groups[[1]]$idx)
   groups <- .pcens_row_groups(
-    c(1, 2, 3, 4), pwindow = c(1, 2, 1, 2), swindow = 1, L = -Inf, D = Inf
+    c(1, 2, 3, 4),
+    pwindow = c(1, 2, 1, 2), swindow = 1, L = -Inf, D = Inf
   )
   expect_length(groups, 2)
   expect_identical(groups[[1]]$idx, c(1L, 3L))
@@ -360,7 +374,8 @@ test_that("fitdistdoublecens is unchanged with repeated delays", {
   skip_if_not_installed("withr")
   set.seed(3)
   samples <- rprimarycensored(
-    500, rgamma, shape = 2.5, scale = 2, pwindow = 1, swindow = 1, D = 25
+    500, rgamma,
+    shape = 2.5, scale = 2, pwindow = 1, swindow = 1, D = 25
   )
   dat <- data.frame(
     left = floor(samples), right = floor(samples) + 1,
