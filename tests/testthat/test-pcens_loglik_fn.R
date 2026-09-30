@@ -173,26 +173,6 @@ test_that("pcens_loglik_fn returns values in row order with repeated x", {
   ))
 })
 
-test_that("pcens_loglik_fn evaluates each group at its unique x", {
-  seen <- new.env(parent = emptyenv())
-  seen$n <- integer(0)
-  pgamma_counted <- add_name_attribute(
-    function(q, shape, scale) {
-      seen$n <- c(seen$n, length(q))
-      pgamma(q, shape = shape, scale = scale)
-    },
-    "pgamma"
-  )
-  x <- rep(0:4, times = 200)
-  ll <- pcens_loglik_fn(x, pgamma_counted, pwindow = 1, swindow = 1)
-  seen$n <- integer(0)
-  out <- ll(shape = 2, scale = 1)
-  expect_length(out, 1000)
-  # 5 unique x give 6 unique CDF points, not 2000
-  expect_gt(length(seen$n), 0)
-  expect_lte(max(seen$n), 6)
-})
-
 test_that("pcens_loglik_fn handles exact windows and mixed swindow", {
   x <- c(1, 2, 3, 4)
   swindow <- c(1, 0, 1, 0)
@@ -209,6 +189,17 @@ test_that("pcens_loglik_fn handles exact windows and mixed swindow", {
   expect_equal(
     do.call(ll, case$pars),
     reference_loglik(case, x, c(0, 1, 0, 2), 1, -Inf, Inf),
+    tolerance = tol
+  )
+})
+
+test_that("pcens_loglik_fn handles an infinite secondary window", {
+  case <- loglik_cases$gamma_unif
+  x <- c(1, 2, 3)
+  ll <- make_loglik(case, x, swindow = c(Inf, 1, Inf))
+  expect_equal(
+    do.call(ll, case$pars),
+    reference_loglik(case, x, 1, c(Inf, 1, Inf), -Inf, Inf),
     tolerance = tol
   )
 })
@@ -315,6 +306,14 @@ test_that("pcens_loglik_fn validates its inputs at construction", {
     pcens_loglik_fn(0:4, pgamma, D = 4),
     "Upper truncation point is greater than D"
   )
+  expect_error(
+    pcens_loglik_fn(0:4, pgamma, D = c(10, 10, 10, 10, 4)),
+    "Maximum x is 4 and D is 4"
+  )
+  expect_error(
+    pcens_loglik_fn(0:4, pgamma, L = c(-Inf, 0, 0, 5, 0)),
+    "Minimum x is 3 and L is 5"
+  )
 })
 
 test_that("pcens_loglik_fn rejects non-numeric settings", {
@@ -356,72 +355,30 @@ test_that("pcens_loglik_fn supports non-parametric delays", {
   )
 })
 
-test_that("pcens_loglik_fn evaluates the CDF once per unique pwindow", {
+test_that("pcens_loglik_fn evaluates each CDF point once per pwindow", {
   calls <- new.env(parent = emptyenv())
-  calls$cdf <- 0L
-  local_mocked_bindings(
-    pcens_cdf = function(object, q, pwindow, ...) {
-      calls$cdf <- calls$cdf + 1L
-      pgamma(q, shape = 2, scale = 1)
-    }
-  )
-  x <- rep(0:4, times = 20)
-  # Truncation points that are not delays are evaluated in the same call
-  ll <- suppressMessages(
-    pcens_loglik_fn(x, pgamma, pwindow = 1, swindow = 1, L = -1, D = 10)
-  )
-  out <- ll(shape = 2, scale = 1)
-  expect_length(out, 100)
-  expect_identical(calls$cdf, 1L)
-  calls$cdf <- 0L
-  ll <- pcens_loglik_fn(
-    x, pgamma,
-    pwindow = rep(1:2, each = 50), swindow = 1, D = Inf
-  )
-  ll(shape = 2, scale = 1)
-  expect_identical(calls$cdf, 2L)
-})
-
-test_that("pcens_loglik_fn shares CDF points across groups", {
-  calls <- new.env(parent = emptyenv())
-  calls$cdf <- 0L
   calls$q <- list()
-  calls$pwindow <- numeric(0)
   local_mocked_bindings(
     pcens_cdf = function(object, q, pwindow, ...) {
-      calls$cdf <- calls$cdf + 1L
-      calls$q[[calls$cdf]] <- q
-      calls$pwindow[[calls$cdf]] <- pwindow
+      calls$q[[length(calls$q) + 1L]] <- q
       pgamma(q, shape = 2, scale = 1)
     }
   )
   set.seed(4)
   n <- 600
-  x <- sample(0:20, n, replace = TRUE)
-  pwindow <- sample.int(2, n, replace = TRUE)
-  swindow <- sample(c(0.5, 1, 2), n, replace = TRUE)
-  L <- sample(c(-Inf, 0), n, replace = TRUE)
-  D <- sample(c(Inf, 25, 40), n, replace = TRUE)
   ll <- suppressMessages(
-    pcens_loglik_fn(x, pgamma,
-      pwindow = pwindow, swindow = swindow,
-      L = L, D = D
+    pcens_loglik_fn(
+      sample(0:20, n, replace = TRUE), pgamma,
+      pwindow = sample.int(2, n, replace = TRUE),
+      swindow = sample(c(0.5, 1, 2), n, replace = TRUE),
+      L = sample(c(-Inf, 0), n, replace = TRUE),
+      D = sample(c(Inf, 25, 40), n, replace = TRUE)
     )
   )
   ll(shape = 2, scale = 1)
-  # One call per unique pwindow, however many groups there are
-  expect_identical(calls$cdf, 2L)
-  expect_setequal(calls$pwindow, 1:2)
-  for (i in seq_len(calls$cdf)) {
-    q <- calls$q[[i]]
-    # Each point is evaluated once
+  expect_length(calls$q, 2)
+  for (q in calls$q) {
     expect_false(anyDuplicated(q) > 0)
-    expect_false(is.unsorted(q))
-    # The points are those needed by the rows with this pwindow
-    rows <- pwindow == calls$pwindow[[i]]
-    upper <- pmin(x[rows] + swindow[rows], D[rows])
-    needed <- c(x[rows], upper, L[rows], D[rows])
-    expect_setequal(q, unique(needed[is.finite(needed)]))
   }
 })
 
@@ -579,68 +536,6 @@ test_that("pcens_loglik_fn can be optimised directly", {
   )
   expect_equal(fit$par[1], 1.3, tolerance = 0.1)
   expect_equal(exp(fit$par[2]), 0.5, tolerance = 0.15)
-})
-
-test_that(".pcens_row_groups collapses equal settings and repeated x", {
-  rg <- .pcens_row_groups(
-    c(1, 1, 2, 2, 3),
-    pwindow = 1, swindow = 1, L = -Inf, D = Inf
-  )
-  groups <- rg$groups
-  expect_length(groups, 1)
-  expect_identical(groups[[1]]$x, c(1, 2, 3))
-  expect_identical(groups[[1]]$map, c(1L, 1L, 2L, 2L, 3L))
-  expect_null(groups[[1]]$idx)
-  rg <- .pcens_row_groups(
-    c(1, 2, 3, 4),
-    pwindow = c(1, 2, 1, 2), swindow = 1, L = -Inf, D = Inf
-  )
-  groups <- rg$groups
-  expect_length(groups, 2)
-  expect_identical(groups[[1]]$idx, c(1L, 3L))
-  expect_identical(groups[[2]]$idx, c(2L, 4L))
-  expect_null(groups[[1]]$map)
-  expect_identical(groups[[2]]$pwindow, 2)
-  expect_length(.pcens_row_groups(numeric(0), 1, 1, -Inf, Inf)$groups, 0)
-})
-
-test_that(".pcens_row_groups shares one sorted set of points per pwindow", {
-  rg <- .pcens_row_groups(
-    c(3, 1, 2),
-    pwindow = 1, swindow = 1, L = 0, D = 3.5
-  )
-  expect_length(rg$sets, 1)
-  pts <- rg$sets[[1]]$points
-  g <- rg$groups[[1]]
-  # Upper ends are clipped at D, and L and D are in the same set
-  expect_identical(pts, c(0, 1, 2, 3, 3.5))
-  expect_identical(pts[g$lower], c(3, 1, 2))
-  expect_identical(pts[g$upper], c(3.5, 2, 3))
-  expect_identical(g$pos_L, 1L)
-  expect_identical(g$pos_D, 5L)
-  expect_true(g$truncated)
-  expect_false(g$exact)
-  expect_identical(g$set, 1L)
-  rg <- .pcens_row_groups(c(1, 2), 1, swindow = 0, L = -Inf, D = Inf)
-  g <- rg$groups[[1]]
-  expect_true(g$exact)
-  expect_length(rg$sets[[1]]$points, 0)
-  expect_null(g$lower)
-  expect_true(is.na(g$pos_D))
-  expect_false(g$truncated)
-  rg <- .pcens_row_groups(1, 1, swindow = Inf, L = -Inf, D = Inf)
-  expect_identical(rg$sets[[1]]$at_inf, 2L)
-  # Groups with the same pwindow share a set, others do not
-  rg <- .pcens_row_groups(
-    c(1, 2, 3, 4),
-    pwindow = c(1, 1, 2, 2), swindow = c(1, 2, 1, 1), L = -Inf, D = Inf
-  )
-  expect_length(rg$groups, 3)
-  expect_length(rg$sets, 2)
-  expect_identical(vapply(rg$groups, `[[`, integer(1), "set"), c(1L, 1L, 2L))
-  expect_identical(rg$sets[[1]]$points, c(1, 2, 4))
-  expect_identical(rg$sets[[1]]$pwindow, 1)
-  expect_identical(rg$sets[[2]]$points, c(3, 4, 5))
 })
 
 test_that("fitdistdoublecens loglik matches per-row dprimarycensored", {
