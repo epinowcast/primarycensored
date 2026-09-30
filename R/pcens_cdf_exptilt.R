@@ -251,7 +251,7 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @keywords internal
 .exptilt_endpoints <- function(q, pwindow, lower) {
-  endpoints <- sort(unique(c(q, q - pwindow)))
+  endpoints <- sort.int(unique(c(q, q - pwindow)))
   if (is.finite(lower)) {
     endpoints <- c(lower, endpoints[endpoints > lower])
   }
@@ -342,14 +342,14 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @keywords internal
 .exptilt_tail_diff <- function(lower_q, lower_y, upper_q, upper_y) {
-  use_lower <- lower_y - lower_q <= upper_q - upper_y
+  use_upper <- lower_y - lower_q > upper_q - upper_y
   # Terms that underflow on both sides give NaN, which is a zero difference
-  use_lower[is.na(use_lower)] <- TRUE
-  ifelse(
-    use_lower,
-    .log_diff_exp(lower_q, lower_y),
-    .log_diff_exp(upper_y, upper_q)
-  )
+  use_upper[is.na(use_upper)] <- FALSE
+  out <- .log_diff_exp(lower_q, lower_y)
+  if (any(use_upper)) {
+    out[use_upper] <- .log_diff_exp(upper_y[use_upper], upper_q[use_upper])
+  }
+  out
 }
 
 #' Small window form of the exponentially tilted log CDF

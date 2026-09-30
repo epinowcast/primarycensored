@@ -74,11 +74,13 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_available.default <- function(object, xi) {
   FALSE
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_transform.default <- function(object, t, xi, upper = FALSE) {
   stop(
     "No tilt transform is available for this delay distribution.",
@@ -87,6 +89,7 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_lower.default <- function(object) {
   stop(
     "No tilt transform is available for this delay distribution.",
@@ -95,6 +98,7 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_moments.default <- function(object, t) {
   stop(
     "No tilt transform is available for this delay distribution.",
@@ -148,7 +152,12 @@ NULL
 #' @keywords internal
 #' @name log_helpers
 .log1m_exp <- function(x) {
-  ifelse(x > -log(2), log(-expm1(x)), log1p(-exp(x)))
+  out <- log1p(-exp(x))
+  near_zero <- which(x > -log(2))
+  if (length(near_zero) > 0L) {
+    out[near_zero] <- log(-expm1(x[near_zero]))
+  }
+  out
 }
 
 #' @rdname log_helpers
@@ -168,20 +177,25 @@ NULL
   gap <- -abs(a - b)
   # Both -Inf gives NaN
   gap[is.na(gap)] <- 0
-  ifelse(larger == -Inf, -Inf, larger + log1p(exp(gap)))
+  out <- larger + log1p(exp(gap))
+  out[larger == -Inf] <- -Inf
+  out
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_lower.pcens_pgamma <- function(object) {
   0
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_available.pcens_pgamma <- function(object, xi) {
   .gamma_shape_rate(object)$rate - xi > 0
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_transform.pcens_pgamma <- function(object, t, xi, upper = FALSE) {
   # The tilted density is proportional to a gamma density with rate
   # rate - xi, so the transform is the tilted gamma CDF times the total
@@ -199,6 +213,7 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_lower.pcens_pexp <- function(object) {
   0
 }
@@ -216,11 +231,13 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_available.pcens_pexp <- function(object, xi) {
   .exp_rate(object) - xi > 0
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_transform.pcens_pexp <- function(object, t, xi, upper = FALSE) {
   # T_f(xi; t) = rate / (rate - xi) * (1 - exp(-(rate - xi) t))
   rate <- .exp_rate(object)
@@ -253,16 +270,19 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_lower.pcens_pnorm <- function(object) {
   -Inf
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_available.pcens_pnorm <- function(object, xi) {
   TRUE
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_transform.pcens_pnorm <- function(object, t, xi, upper = FALSE) {
   # Completing the square gives a normal density with mean
   # mean + xi sd^2, so the transform is
@@ -313,12 +333,14 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_moments.pcens_pgamma <- function(object, t) {
   p <- .gamma_shape_rate(object)
   .gamma_moments(t, p$shape, p$rate)
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_moments.pcens_pexp <- function(object, t) {
   # The exponential is the gamma distribution with shape 1. Its own closed
   # forms cancel when the rate times t is small.
@@ -326,6 +348,7 @@ NULL
 }
 
 #' @rdname tilt_transform
+#' @exportS3Method
 .pcens_tilt_moments.pcens_pnorm <- function(object, t) {
   # With z = (t - mean) / sd,
   # G_1 = sd (phi(z) + z Phi(z)) and G_2 = sd^2 ((z^2 + 1) Phi(z) + z phi(z))
