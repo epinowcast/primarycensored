@@ -418,3 +418,42 @@ test_that("the numerical path keeps a small delay at the end of the window", {
   expect_gt(expected, 0)
   expect_equal(pcens_cdf(obj, 1, 1), expected, tolerance = 1e-7)
 })
+
+test_that("rprimarycensored samples match the analytic CDF", {
+  args <- list(
+    list(rdist = rexp, pdist = pexp, rate = 0.4),
+    list(rdist = rgamma, pdist = pgamma, shape = 3, rate = 1),
+    list(rdist = rnorm, pdist = pnorm, mean = 5, sd = 1)
+  )
+  primary_args <- list(mu = 0.5, beta = 0.3)
+  for (a in args) {
+    set.seed(10)
+    dist_args <- a[setdiff(names(a), c("rdist", "pdist"))]
+    draws <- do.call(
+      rprimarycensored,
+      c(
+        list(
+          n = 2000, rdist = a$rdist, pwindow = 2, swindow = 0,
+          rprimary = rtgumbel, rprimary_args = primary_args
+        ),
+        dist_args
+      )
+    )
+    ks <- suppressWarnings(stats::ks.test(
+      draws,
+      function(x) {
+        do.call(
+          pprimarycensored,
+          c(
+            list(
+              q = x, pdist = a$pdist, pwindow = 2, dprimary = dtgumbel,
+              primary_args = primary_args
+            ),
+            dist_args
+          )
+        )
+      }
+    ))
+    expect_gt(ks$p.value, 0.001, label = deparse(a$rdist))
+  }
+})

@@ -653,7 +653,7 @@ test_that("a series rejected by the estimate is replaced by an accurate ODE", {
     1, 1, 0.3, 0.111, function(x) pnorm(x, 5, 1), FALSE
   ))
   expect_equal(lcdf, expected, tolerance = 1e-8)
-  # Where the series was rejected and the ODE used to be off by 23%
+  # Where the series is rejected and the ODE is used
   lcdf <- primarycensored_gumbel_lcdf(-2, 18L, c(3, 2), 2, 0.5, 0.2)
   expect_equal(
     exp(lcdf),
@@ -950,7 +950,7 @@ test_that("Gumbel log CDFs have finite gradients matching finite
     # has gradients with the accuracy of the solver
     list(d = 4, pwindow = 2, mu = 0.5, beta = 0.1),
     # Narrow spikes of the window density, at the end of the window and
-    # inside it, where the ODE used to give gradients of the wrong size
+    # inside it, where the ODE gradients must have the right size
     list(d = 1, pwindow = 1, mu = 2, beta = 0.1),
     list(d = 5, pwindow = 1, mu = 1.5, beta = 0.05),
     list(d = 7, pwindow = 7, mu = 1.5, beta = 0.05),
@@ -1069,8 +1069,7 @@ test_that("Gumbel gradients are finite for delays whose CDF has an
   # A gamma or Weibull with shape below 1 has an unbounded density at 0. The
   # series is not admissible for these in daily units, so mu below pwindow
   # with d at or below pwindow takes the numerical z branch, where the upper
-  # limit is d. Its sensitivity used to be integrated and is singular, which
-  # ended in the solver step limit after about 15 seconds
+  # limit is d. Its sensitivity is singular, so it is not integrated
   model <- gumbel_gradient_model()
   cases <- list(
     list(dist_id = 2L, params = c(0.5, 1)),
