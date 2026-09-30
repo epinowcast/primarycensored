@@ -334,16 +334,49 @@ vector gumbel_numeric_limits(data real d, int dist_id, data real pwindow,
 }
 
 /**
-  * ODE system for the truncated Gumbel primary event censored CDF
+  * Delay argument and log density weight of the numerical integral
   * @ingroup truncated_gumbel_solutions
   *
   * The integration variable tau is in [0, 1] and is mapped to the limits of
   * gumbel_numeric_limits(). With mu at or above the window end it is the
-  * upper quantile v, the density of v is 1, and z = pwindow - beta log(1 +
-  * u / s(pwindow)). The delay is taken as d - z = (d - pwindow) + beta log(1
-  * + u / s(pwindow)), which keeps its small difference from 0 where the
-  * spike is within rounding of pwindow. With mu below it the integrand is
-  * the delay CDF times the window density in z.
+  * upper quantile v, so the density of v is 1 and the log weight is 0, and
+  * z = pwindow - beta log(1 + u / s(pwindow)). The delay is taken as
+  * d - z = (d - pwindow) + beta log(1 + u / s(pwindow)), which keeps its
+  * small difference from 0 where the spike is within rounding of pwindow.
+  * With mu below it the delay is d - z and the log weight is the log window
+  * density at z.
+  *
+  * @param tau Integration variable in [0, 1]
+  * @param limits Limits of the variable from gumbel_numeric_limits()
+  * @param d Delay
+  * @param pwindow Primary event window
+  * @param mu Location of the truncated Gumbel
+  * @param beta Scale of the truncated Gumbel
+  *
+  * @return Vector [delay, log weight]
+  */
+vector gumbel_numeric_point(real tau, vector limits, data real d,
+                            data real pwindow, real mu, real beta) {
+  real x = limits[1] + (limits[2] - limits[1]) * tau;
+  real log_sw = (mu - pwindow) / beta;
+  if (log_sw >= 0) {
+    real log_delta = log_sw + log_diff_exp(pwindow / beta, 0);
+    real u_cap = exp(fmin(log_delta, log(gumbel_numeric_u_max())));
+    real c = log_delta > 4 ? 1 : -expm1(-exp(log_delta));
+    // x is the upper quantile v, so 1 - v c is exp(-u)
+    real u = -log1m(fmin(x * c, -expm1(-u_cap)));
+    return [(d - pwindow) + beta * log1p(u * exp(-log_sw)), 0]';
+  }
+  return [d - x, tgumbel_lpdf(x | 0, pwindow, mu, beta)]';
+}
+
+/**
+  * ODE system for the truncated Gumbel primary event censored CDF
+  * @ingroup truncated_gumbel_solutions
+  *
+  * The derivative with respect to tau of the integral of the delay CDF, see
+  * gumbel_numeric_point(), scaled by exp(-log_shift) so that the integrand is
+  * of order 1, and so the solver tolerances are relative to a small CDF.
   *
   * @param tau Integration variable in [0, 1]
   * @param y State, the integral so far
@@ -353,30 +386,71 @@ vector gumbel_numeric_limits(data real d, int dist_id, data real pwindow,
   * @param params Array of distribution parameters
   * @param mu Location of the truncated Gumbel
   * @param beta Scale of the truncated Gumbel
+  * @param log_shift Log of the largest value of the delay CDF
   *
   * @return The derivative of the state with respect to tau
   */
 vector primarycensored_gumbel_ode(real tau, vector y, data real d,
                                   data real pwindow, int dist_id,
-                                  array[] real params, real mu, real beta) {
+                                  array[] real params, real mu, real beta,
+                                  real log_shift) {
   vector[2] limits = gumbel_numeric_limits(d, dist_id, pwindow, mu, beta);
-  real width = limits[2] - limits[1];
-  real x = limits[1] + width * tau;
-  real log_sw = (mu - pwindow) / beta;
-  if (log_sw >= 0) {
-    real log_delta = log_sw + log_diff_exp(pwindow / beta, 0);
-    real u_cap = exp(fmin(log_delta, log(gumbel_numeric_u_max())));
-    real c = log_delta > 4 ? 1 : -expm1(-exp(log_delta));
-    // x is the upper quantile v, so 1 - v c is exp(-u)
-    real u = -log1m(fmin(x * c, -expm1(-u_cap)));
-    real delay = (d - pwindow) + beta * log1p(u * exp(-log_sw));
-    return rep_vector(width * exp(dist_lcdf(delay | params, dist_id)), 1);
-  }
+  vector[2] point = gumbel_numeric_point(tau, limits, d, pwindow, mu, beta);
   return rep_vector(
-    width * exp(dist_lcdf(d - x | params, dist_id)
-                + tgumbel_lpdf(x | 0, pwindow, mu, beta)),
+    (limits[2] - limits[1])
+    * exp(dist_lcdf(point[1] | params, dist_id) + point[2] - log_shift),
     1
   );
+}
+
+/**
+  * Scale and integral of the numerical truncated Gumbel CDF
+  * @ingroup truncated_gumbel_solutions
+  *
+  * The CDF is exp(log_shift) times the integral, where log_shift is the log
+  * of the delay CDF at the largest delay of the integral, which is at most
+  * 1 times the integrand. The solver tolerances of a relative 1e-12 and an
+  * absolute 1e-18 then hold relative to the CDF, for a CDF as small as the
+  * fraction of the window that is near the largest delay allows, rather
+  * than absolute to 1. The limits, and the integration variable, are those
+  * of gumbel_numeric_limits().
+  *
+  * @param d Delay
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param mu Location of the truncated Gumbel
+  * @param beta Scale of the truncated Gumbel
+  *
+  * @return Vector [log_shift, integral], with a `-inf` log_shift and integral
+  * 0 where the CDF is 0
+  */
+vector gumbel_numeric_parts(data real d, int dist_id, array[] real params,
+                            data real pwindow, real mu, real beta) {
+  vector[2] empty = [negative_infinity(), 0]';
+  if (dist_has_positive_support(dist_id) && d <= 0) {
+    return empty;
+  }
+  vector[2] limits = gumbel_numeric_limits(d, dist_id, pwindow, mu, beta);
+  if (!(limits[2] > limits[1])) {
+    return empty;
+  }
+  // The delay CDF is largest at the end of tau with mu at or above the
+  // window end, where the delay is largest, and at its start otherwise
+  real tau_max = mu >= pwindow ? 1 : 0;
+  real log_shift = dist_lcdf(
+    gumbel_numeric_point(tau_max, limits, d, pwindow, mu, beta)[1]
+    | params, dist_id
+  );
+  if (log_shift == negative_infinity()) {
+    return empty;
+  }
+  vector[1] y0 = rep_vector(0.0, 1);
+  real integral = ode_rk45_tol(
+    primarycensored_gumbel_ode, y0, 0.0, {1.0}, 1e-12, 1e-18, 1000000,
+    d, pwindow, dist_id, params, mu, beta, log_shift
+  )[1, 1];
+  return [log_shift, integral]';
 }
 
 /**
@@ -388,10 +462,9 @@ vector primarycensored_gumbel_ode(real tau, vector y, data real d,
   * in a variable in which the integrand is smooth for every mu and beta, see
   * gumbel_numeric_limits(). It is primarycensored_numeric_cdf() for the
   * truncated Gumbel primary, whose integration over the window would miss a
-  * spike of the density. The solver tolerances are a relative 1e-12 and an
-  * absolute 1e-18, and the result was within 1e-11 of a tight reference in
-  * tests, relative to a CDF above 1e-6 and absolute below it. The result is
-  * in [0, 1].
+  * spike of the density. The result was within 1e-11 of a tight reference in
+  * tests, relative to a CDF above 1e-6 and absolute below it, see
+  * gumbel_numeric_parts() for the scale of the integral. It is in [0, 1].
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -406,19 +479,13 @@ real primarycensored_gumbel_numeric_cdf(data real d, int dist_id,
                                         array[] real params,
                                         data real pwindow, real mu,
                                         real beta) {
-  if (dist_has_positive_support(dist_id) && d <= 0) {
+  vector[2] parts = gumbel_numeric_parts(
+    d, dist_id, params, pwindow, mu, beta
+  );
+  if (parts[1] == negative_infinity()) {
     return 0;
   }
-  vector[2] limits = gumbel_numeric_limits(d, dist_id, pwindow, mu, beta);
-  if (!(limits[2] > limits[1])) {
-    return 0;
-  }
-  vector[1] y0 = rep_vector(0.0, 1);
-  real result = ode_rk45_tol(
-    primarycensored_gumbel_ode, y0, 0.0, {1.0}, 1e-12, 1e-18, 1000000,
-    d, pwindow, dist_id, params, mu, beta
-  )[1, 1];
-  return fmin(1, fmax(0, result));
+  return fmin(1, fmax(0, exp(parts[1]) * parts[2]));
 }
 
 /**
@@ -426,9 +493,11 @@ real primarycensored_gumbel_numeric_cdf(data real d, int dist_id,
   * primary
   * @ingroup truncated_gumbel_solutions
   *
-  * A CDF that is not above 0, which is below the solver tolerance, is `-inf`
-  * and one above 1 is capped at 0, so the result is never NaN and never
-  * above 0.
+  * Evaluated as the log scale plus the log of the integral, so a CDF much
+  * below 1e-300 is not lost, see gumbel_numeric_parts(). An integral that is
+  * not above 0, which is below the solver tolerance, gives `-inf` and one
+  * above what makes the CDF 1 is capped at 0, so the result is never NaN and
+  * never above 0.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -443,10 +512,13 @@ real primarycensored_gumbel_numeric_lcdf(data real d, int dist_id,
                                          array[] real params,
                                          data real pwindow, real mu,
                                          real beta) {
-  real cdf = primarycensored_gumbel_numeric_cdf(
-    d | dist_id, params, pwindow, mu, beta
+  vector[2] parts = gumbel_numeric_parts(
+    d, dist_id, params, pwindow, mu, beta
   );
-  return cdf > 0 ? fmin(log(cdf), 0) : negative_infinity();
+  if (parts[1] == negative_infinity() || !(parts[2] > 0)) {
+    return negative_infinity();
+  }
+  return fmin(parts[1] + log(parts[2]), 0);
 }
 
 /**
