@@ -376,8 +376,8 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
         } else {
           Inf
         }
-        if (kink < log(top)) breaks_u <- c(breaks_u, exp(kink))
-        min(1, max(0, integrate_pieces(integrand, breaks_u) / scale))
+        breaks <- if (kink < log(top)) c(breaks_u, exp(kink)) else breaks_u
+        min(1, max(0, integrate_pieces(integrand, breaks) / scale))
       },
       numeric(1)
     ))
