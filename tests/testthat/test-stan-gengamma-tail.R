@@ -92,13 +92,12 @@ test_that("gengamma_lcdf does not underflow when the power does", {
   expect_equal(gengamma_lcdf(y, shape, scale, k), expected, tolerance = 1e-12)
 })
 
-test_that("gamma_lcdf_logx matches pgamma across the series rules", {
+test_that("gamma_lcdf_logx matches pgamma across the 0.9 switch", {
   # a spans the body and the extreme shapes where only the series is finite.
-  # frac = x / (a + 1) covers both sides of each switch in the rule.
+  # frac = x / (a + 1) covers both sides of the 0.9 switch and the body.
   for (a in c(0.1, 1, 5, 40, 400, 4000, 8000, 30000)) {
     for (frac in c(
-      1e-6, 1e-3, 0.1, 0.3, 0.49, 0.5, 0.51, 0.7, 0.89, 0.9,
-      0.95, 1.2, 3
+      1e-6, 1e-3, 0.1, 0.3, 0.7, 0.89, 0.9, 0.95, 1.2, 3
     )) {
       x <- frac * (a + 1)
       expect_equal(

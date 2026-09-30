@@ -84,8 +84,8 @@ test_that("primarycensored_lcdf has accurate finite gradients deep in the
 
 test_that("primarycensored_lcdf has finite gradients for extreme shapes", {
   model <- gengamma_probe_model()
-  # k = 30000 puts x / (k + 1) between 0.5 and 0.9 with a log CDF far below
-  # -600, which uses the wider series rule.
+  # k = 30000 gives a log CDF far below -600 with x / (k + 1) between 0.5
+  # and 0.9, where `gamma_lcdf` has a wrong gradient.
   res <- gengamma_gradient_at(
     model, 21000, c(1, 1, 30000),
     pwindow = 2000
