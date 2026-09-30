@@ -156,13 +156,10 @@ new_pcens <- function(
 #'   as `...` is merged into `object$args`. Defaults to `NULL`, which leaves
 #'   the primary event distribution arguments unchanged.
 #'
-#' @param check Logical. If `FALSE`, `...` and `primary_args` are merged
-#'   into the object without any validation. Use this when one object is
-#'   updated many times with parameter names that have already been checked,
-#'   for example in an optimiser or a loop over posterior draws.
-#'   Only an explicit `FALSE` turns the checks off. Defaults to `TRUE`.
-#'   As `check` comes after `...`, it is reserved. A delay parameter of
-#'   `pdist` called `check` cannot be set through `update()`.
+#' @param check Logical. If `FALSE`, skip validation of `...` and
+#'   `primary_args`. Use this when repeatedly updating one object with names
+#'   that have already been checked. As `check` comes after `...`, a delay
+#'   parameter called `check` cannot be set. Defaults to `TRUE`.
 #'
 #' @details
 #' Parameters are merged rather than replaced as a whole, so
@@ -175,8 +172,9 @@ new_pcens <- function(
 #' against `dprimary`.
 #'
 #' With `check = FALSE` none of these checks are run.
-#' Unnamed or misspelt parameters are then added to the object as given and
-#' only fail, or are ignored, when the object is evaluated.
+#' Unnamed parameters are ignored.
+#' Misspelt names are added to the object and only fail, or are ignored,
+#' when the object is evaluated.
 #'
 #' @return A `pcens` object with the same class as `object` and updated
 #'   `args`, `primary_args` and `dprimary_args` fields. See [new_pcens()] for
@@ -206,7 +204,7 @@ new_pcens <- function(
 update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   new_args <- list(...)
   nms <- names(new_args)
-  if (!identical(check, FALSE)) {
+  if (!isFALSE(check)) {
     .check_update_args(object, new_args, primary_args)
   }
   if (length(new_args) > 0L) {

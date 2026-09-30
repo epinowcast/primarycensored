@@ -547,7 +547,7 @@ fitdistdoublecens <- function(
 .fit_pcens_state <- function(cache, pdist, dprimary, primary_args, pprimary,
                              args) {
   if (!is.null(cache) && !is.null(cache$obj)) {
-    # Names were validated when the object was built below.
+    # Parameter names were validated when `cache$obj` was built.
     cache$obj <- do.call(
       update, c(list(cache$obj), args, list(check = FALSE))
     )

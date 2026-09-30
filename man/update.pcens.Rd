@@ -18,13 +18,10 @@ arguments. These are merged into \code{object$primary_args} in the same way
 as \code{...} is merged into \code{object$args}. Defaults to \code{NULL}, which leaves
 the primary event distribution arguments unchanged.}
 
-\item{check}{Logical. If \code{FALSE}, \code{...} and \code{primary_args} are merged
-into the object without any validation. Use this when one object is
-updated many times with parameter names that have already been checked,
-for example in an optimiser or a loop over posterior draws.
-Only an explicit \code{FALSE} turns the checks off. Defaults to \code{TRUE}.
-As \code{check} comes after \code{...}, it is reserved. A delay parameter of
-\code{pdist} called \code{check} cannot be set through \code{update()}.}
+\item{check}{Logical. If \code{FALSE}, skip validation of \code{...} and
+\code{primary_args}. Use this when repeatedly updating one object with names
+that have already been checked. As \code{check} comes after \code{...}, a delay
+parameter called \code{check} cannot be set. Defaults to \code{TRUE}.}
 }
 \value{
 A \code{pcens} object with the same class as \code{object} and updated
@@ -52,8 +49,9 @@ Otherwise an error is raised. Names in \code{primary_args} are not checked
 against \code{dprimary}.
 
 With \code{check = FALSE} none of these checks are run.
-Unnamed or misspelt parameters are then added to the object as given and
-only fail, or are ignored, when the object is evaluated.
+Unnamed parameters are ignored.
+Misspelt names are added to the object and only fail, or are ignored,
+when the object is evaluated.
 }
 \examples{
 obj <- new_pcens(

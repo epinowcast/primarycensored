@@ -175,11 +175,6 @@ test_that("update.pcens with check = FALSE matches for primary_args", {
   expect_identical(unchecked$dprimary_args, list(r = 0.5))
 })
 
-test_that("update.pcens with check = FALSE and no updates is a no-op", {
-  obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
-  expect_identical(update(obj, check = FALSE), obj)
-})
-
 test_that("update.pcens with check = FALSE skips validation", {
   obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
   expect_error(update(obj, shap = 2), "shap")
@@ -188,9 +183,12 @@ test_that("update.pcens with check = FALSE skips validation", {
     update(obj, shap = 2, check = FALSE)$args,
     list(shape = 1.5, scale = 2, shap = 2)
   )
-  expect_no_error(
-    update(obj, primary_args = list(0.5), check = FALSE)
+  # Unnamed parameters are dropped
+  expect_identical(
+    update(obj, primary_args = list(0.5), check = FALSE)$primary_args,
+    obj$primary_args
   )
+  expect_identical(update(obj, 2, check = FALSE)$args, obj$args)
 })
 
 test_that("update.pcens checks by default and unless check is FALSE", {
@@ -216,4 +214,9 @@ test_that(".fit_pcens_state updates the cached object without checks", {
     pcens_cdf(state$obj, q = c(1, 5), pwindow = 1),
     pcens_cdf(fresh, q = c(1, 5), pwindow = 1)
   )
+  # An unchecked update accepts a name that update() would reject
+  state <- .fit_pcens_state(
+    cache, pgamma, dunif, list(), NULL, list(shap = 3)
+  )
+  expect_true("shap" %in% names(state$obj$args))
 })
