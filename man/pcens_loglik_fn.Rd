@@ -88,8 +88,10 @@ The setup that \code{\link[=dprimarycensored]{dprimarycensored()}} repeats on ev
 here. Observations are grouped by their censoring and truncation
 settings, \code{pdist} and \code{dprimary} are resolved and checked, and a \code{pcens}
 object is built.
+The points at which the CDF is needed and the positions used to difference
+and normalise it are also worked out for each group.
 Each call then only updates the delay parameters and evaluates
-\code{\link[=pcens_pmf]{pcens_pmf()}} once per group.
+\code{\link[=pcens_cdf]{pcens_cdf()}} once per group.
 
 The returned function is called as \code{ll(...)} with the delay distribution
 parameters as named arguments, for example \code{ll(shape = 2, rate = 1)}.
@@ -103,8 +105,12 @@ Within each group of observations that share settings, the likelihood is
 evaluated once at each unique value of \code{x} and copied to the matching
 rows. This makes the cost depend on the number of unique delays rather
 than the number of observations, which helps most with daily data.
-Values are identical to those from \code{log(dprimarycensored())} called on
-each observation.
+The unique CDF points, including any finite \code{L} and \code{D}, are sorted and
+matched to the rows at construction, so a call does one \code{\link[=pcens_cdf]{pcens_cdf()}}
+evaluation per group and then differences, normalises and takes logs.
+This repeats the steps of \code{\link[=pcens_pmf]{pcens_pmf()}} that do not depend on the
+parameters, and gives the same values as \code{log(dprimarycensored())}
+called on each observation.
 
 Errors from \code{pdist}, for example for parameters outside its support, are
 not caught. Wrap the call in \code{tryCatch()} if an optimiser should see a

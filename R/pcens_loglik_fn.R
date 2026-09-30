@@ -10,8 +10,10 @@
 #' here. Observations are grouped by their censoring and truncation
 #' settings, `pdist` and `dprimary` are resolved and checked, and a `pcens`
 #' object is built.
+#' The points at which the CDF is needed and the positions used to difference
+#' and normalise it are also worked out for each group.
 #' Each call then only updates the delay parameters and evaluates
-#' [pcens_pmf()] once per group.
+#' [pcens_cdf()] once per group.
 #'
 #' @inheritParams dprimarycensored
 #'
@@ -47,8 +49,12 @@
 #' evaluated once at each unique value of `x` and copied to the matching
 #' rows. This makes the cost depend on the number of unique delays rather
 #' than the number of observations, which helps most with daily data.
-#' Values are identical to those from `log(dprimarycensored())` called on
-#' each observation.
+#' The unique CDF points, including any finite `L` and `D`, are sorted and
+#' matched to the rows at construction, so a call does one [pcens_cdf()]
+#' evaluation per group and then differences, normalises and takes logs.
+#' This repeats the steps of [pcens_pmf()] that do not depend on the
+#' parameters, and gives the same values as `log(dprimarycensored())`
+#' called on each observation.
 #'
 #' Errors from `pdist`, for example for parameters outside its support, are
 #' not caught. Wrap the call in `tryCatch()` if an optimiser should see a
@@ -173,6 +179,9 @@ pcens_loglik_fn <- function(
   n <- length(x)
   inputs <- list(pwindow = pwindow, swindow = swindow, L = L, D = D)
   for (nm in names(inputs)) {
+    if (!is.numeric(inputs[[nm]])) {
+      stop(nm, " must be numeric.", call. = FALSE)
+    }
     len <- length(inputs[[nm]])
     if (len != 1L && len != n) {
       stop(
@@ -240,8 +249,9 @@ pcens_loglik_fn <- function(
 #' Group observations that share settings and collapse repeated delays
 #'
 #' Groups rows by their `pwindow`, `swindow`, `L` and `D`. Within each group
-#' the unique values of `x` are kept with a map back to the rows, so that
-#' [pcens_pmf()] is evaluated once per unique delay.
+#' the unique values of `x` are kept with a map back to the rows, and the
+#' points at which the primary event censored CDF is needed are worked out
+#' once, so that [.pcens_pmf_group()] only has to evaluate the CDF.
 #'
 #' @param x Numeric vector of delays.
 #'
@@ -251,9 +261,9 @@ pcens_loglik_fn <- function(
 #' @return A list with one element per group. Each element is a list with
 #'   `idx`, the rows of the group or `NULL` if the group is every row, `x`,
 #'   the unique delays of the group, `map`, the position of each row of the
-#'   group in `x` or `NULL` if `x` has no repeats, the group's `pwindow`,
-#'   `swindow`, `L` and `D`, and `clip`, whether any secondary interval of
-#'   the group extends past `D`. Empty if `x` is empty.
+#'   group in `x` or `NULL` if `x` has no repeats, and the group's
+#'   `pwindow`, `swindow`, `L` and `D`. It also has the output of
+#'   [.pcens_cdf_points()]. Empty if `x` is empty.
 #'
 #' @keywords internal
 .pcens_row_groups <- function(x, pwindow, swindow, L, D) {
@@ -290,18 +300,74 @@ pcens_loglik_fn <- function(
       map <- match(xs, ux)
     }
     g_swindow <- setting(swindow)
+    g_L <- setting(L)
     g_D <- setting(D)
-    list(
-      idx = idx,
-      x = ux,
-      map = map,
-      pwindow = setting(pwindow),
-      swindow = g_swindow,
-      L = setting(L),
-      D = g_D,
-      clip = is.finite(g_D) && any(ux + g_swindow > g_D)
+    c(
+      list(
+        idx = idx,
+        x = ux,
+        map = map,
+        pwindow = setting(pwindow),
+        swindow = g_swindow,
+        L = g_L,
+        D = g_D
+      ),
+      .pcens_cdf_points(ux, g_swindow, g_L, g_D)
     )
   })
+}
+
+#' Points at which the CDF is needed for a group of observations
+#'
+#' Works out, once, what [pcens_pmf()] would repeat on every call. This is
+#' the sorted unique points at which the primary event censored CDF is
+#' needed, the position of each delay and of the clipped upper end of its
+#' secondary interval among them, and the position of the truncation points,
+#' which are in the same set so that one CDF evaluation serves the whole
+#' group.
+#'
+#' @param x Numeric vector of unique delays of a group.
+#'
+#' @param swindow,L,D Secondary window and truncation points of the group,
+#'   each a single value.
+#'
+#' @return A list with `exact`, whether the group has a zero-width secondary
+#'   window and so contributes densities, `points`, the sorted unique points
+#'   (empty if there is nothing to evaluate), `lower` and `upper`, the
+#'   positions in `points` of the ends of each secondary interval (`NULL`
+#'   if `exact`), `truncated`, whether the PMF is normalised, `pos_L` and
+#'   `pos_D`, the positions of `L` and `D` in `points` (`NA` if infinite),
+#'   and `at_minf` and `at_inf`, the positions of `-Inf` and `Inf` in
+#'   `points`, where the CDF is known to be 0 and 1.
+#'
+#' @keywords internal
+.pcens_cdf_points <- function(x, swindow, L, D) {
+  exact <- swindow == 0
+  upper <- x + swindow
+  # Clip the upper end of each secondary interval at D
+  if (is.finite(D)) {
+    upper <- pmin(upper, D)
+  }
+  bounds <- c(L, D)
+  cdf_at <- unique(c(if (!exact) c(x, upper), bounds[is.finite(bounds)]))
+  # Skip the sort when the points are already in order (e.g. x = 0:n)
+  if (is.unsorted(cdf_at)) {
+    cdf_at <- sort(cdf_at)
+  }
+  position <- function(bound) {
+    if (is.finite(bound)) match(bound, cdf_at) else NA_integer_
+  }
+  list(
+    exact = exact,
+    points = cdf_at,
+    lower = if (exact) NULL else match(x, cdf_at),
+    upper = if (exact) NULL else match(upper, cdf_at),
+    truncated = !(is.infinite(L) && is.infinite(D)),
+    pos_L = position(L),
+    pos_D = position(D),
+    at_minf = which(cdf_at == -Inf),
+    at_inf = which(cdf_at == Inf)
+  )
 }
 
 #' Evaluate the primary event censored PMF for grouped observations
@@ -329,6 +395,12 @@ pcens_loglik_fn <- function(
 
 #' Evaluate the primary event censored PMF for one group of observations
 #'
+#' Gives the same values as [pcens_pmf()] for the unique delays of the group
+#' and copies them to the rows of the group. The points for the CDF, and the
+#' positions needed to difference and normalise it, are taken from the
+#' group rather than worked out on each call, so [pcens_cdf()] is called
+#' once. A message about clipping at `D` is not given.
+#'
 #' @inheritParams .pcens_pmf_groups
 #'
 #' @param group One element of the list made by [.pcens_row_groups()].
@@ -337,17 +409,29 @@ pcens_loglik_fn <- function(
 #'
 #' @keywords internal
 .pcens_pmf_group <- function(object, group) {
-  # The clipping notice from pcens_pmf() would be repeated on every call
-  if (group$clip) {
-    pmf <- suppressMessages(pcens_pmf(
-      object, group$x, group$pwindow,
-      swindow = group$swindow, L = group$L, D = group$D
-    ))
-  } else {
-    pmf <- pcens_pmf(
-      object, group$x, group$pwindow,
-      swindow = group$swindow, L = group$L, D = group$D
-    )
+  cdfs <- numeric(0)
+  if (length(group$points) > 0L) {
+    cdfs <- pcens_cdf(object, group$points, group$pwindow)
+    # Some analytical methods return NaN at Inf
+    cdfs[group$at_minf] <- 0
+    cdfs[group$at_inf] <- 1
   }
+  if (group$exact) {
+    # Zero-width secondary windows contribute a density
+    pmf <- .pcens_density(object, group$x, group$pwindow)
+  } else {
+    pmf <- cdfs[group$upper] - cdfs[group$lower]
+  }
+  if (group$truncated) {
+    # Normalise by F(D) - F(L)
+    cdf_D <- if (is.na(group$pos_D)) 1 else cdfs[[group$pos_D]]
+    cdf_L <- if (is.na(group$pos_L)) 0 else cdfs[[group$pos_L]]
+    normaliser <- cdf_D - cdf_L
+    if (normaliser != 1) {
+      pmf <- pmf / normaliser
+    }
+  }
+  # Ensure non-negative values
+  pmf <- pmax(0, pmf)
   if (is.null(group$map)) pmf else pmf[group$map]
 }

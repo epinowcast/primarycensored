@@ -15,6 +15,10 @@
 Numeric vector with one value per row of the group.
 }
 \description{
-Evaluate the primary event censored PMF for one group of observations
+Gives the same values as \code{\link[=pcens_pmf]{pcens_pmf()}} for the unique delays of the group
+and copies them to the rows of the group. The points for the CDF, and the
+positions needed to difference and normalise it, are taken from the
+group rather than worked out on each call, so \code{\link[=pcens_cdf]{pcens_cdf()}} is called
+once. A message about clipping at \code{D} is not given.
 }
 \keyword{internal}

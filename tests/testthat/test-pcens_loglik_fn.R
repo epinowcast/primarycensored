@@ -264,11 +264,9 @@ test_that("pcens_loglik_fn validates its inputs at construction", {
 
 test_that("pcens_loglik_fn rejects non-numeric settings", {
   for (nm in c("pwindow", "swindow", "L", "D")) {
-    expect_error(
-      do.call(pcens_loglik_fn, list(0:3, plnorm, "a") |>
-        stats::setNames(c("x", "pdist", nm))),
-      paste(nm, "must be numeric")
-    )
+    args <- list(x = 0:3, pdist = plnorm)
+    args[[nm]] <- "a"
+    expect_error(do.call(pcens_loglik_fn, args), paste(nm, "must be numeric"))
   }
   # A function passed by position lands in pwindow
   expect_error(pcens_loglik_fn(0:3, plnorm, dunif), "pwindow must be numeric")
@@ -304,11 +302,14 @@ test_that("pcens_loglik_fn supports non-parametric delays", {
 })
 
 test_that("pcens_loglik_fn evaluates the CDF once per group", {
-  cdf_calls <- 0L
+  calls <- new.env(parent = emptyenv())
+  calls$cdf <- 0L
   local_mocked_bindings(
-    pcens_pmf = function(...) stop("pcens_pmf() should not be called"),
+    pcens_pmf = function(...) {
+      stop("pcens_pmf() should not be called", call. = FALSE)
+    },
     pcens_cdf = function(object, q, pwindow, ...) {
-      cdf_calls <<- cdf_calls + 1L
+      calls$cdf <- calls$cdf + 1L
       pgamma(q, shape = 2, scale = 1)
     }
   )
@@ -319,14 +320,14 @@ test_that("pcens_loglik_fn evaluates the CDF once per group", {
   )
   out <- ll(shape = 2, scale = 1)
   expect_length(out, 100)
-  expect_identical(cdf_calls, 1L)
-  cdf_calls <- 0L
+  expect_identical(calls$cdf, 1L)
+  calls$cdf <- 0L
   ll <- pcens_loglik_fn(
     x, pgamma,
     pwindow = rep(1:2, each = 50), swindow = 1, D = Inf
   )
   ll(shape = 2, scale = 1)
-  expect_identical(cdf_calls, 2L)
+  expect_identical(calls$cdf, 2L)
 })
 
 test_that("pcens_loglik_fn matches pcens_pmf with all truncation forms", {
@@ -455,6 +456,26 @@ test_that(".pcens_row_groups collapses equal settings and repeated x", {
   expect_identical(groups[[2]]$idx, c(2L, 4L))
   expect_null(groups[[1]]$map)
   expect_identical(groups[[2]]$pwindow, 2)
+})
+
+test_that(".pcens_cdf_points shares one sorted set of points", {
+  pts <- .pcens_cdf_points(c(3, 1, 2), swindow = 1, L = 0, D = 3.5)
+  # Upper ends are clipped at D, and L and D are in the same set
+  expect_identical(pts$points, c(0, 1, 2, 3, 3.5))
+  expect_identical(pts$points[pts$lower], c(3, 1, 2))
+  expect_identical(pts$points[pts$upper], c(3.5, 2, 3))
+  expect_identical(pts$pos_L, 1L)
+  expect_identical(pts$pos_D, 5L)
+  expect_true(pts$truncated)
+  expect_false(pts$exact)
+  pts <- .pcens_cdf_points(c(1, 2), swindow = 0, L = -Inf, D = Inf)
+  expect_true(pts$exact)
+  expect_length(pts$points, 0)
+  expect_null(pts$lower)
+  expect_true(is.na(pts$pos_D))
+  expect_false(pts$truncated)
+  pts <- .pcens_cdf_points(1, swindow = Inf, L = -Inf, D = Inf)
+  expect_identical(pts$at_inf, 2L)
 })
 
 test_that("fitdistdoublecens is unchanged with repeated delays", {

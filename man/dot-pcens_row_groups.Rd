@@ -16,13 +16,14 @@ or \code{length(x)}.}
 A list with one element per group. Each element is a list with
 \code{idx}, the rows of the group or \code{NULL} if the group is every row, \code{x},
 the unique delays of the group, \code{map}, the position of each row of the
-group in \code{x} or \code{NULL} if \code{x} has no repeats, the group's \code{pwindow},
-\code{swindow}, \code{L} and \code{D}, and \code{clip}, whether any secondary interval of
-the group extends past \code{D}. Empty if \code{x} is empty.
+group in \code{x} or \code{NULL} if \code{x} has no repeats, and the group's
+\code{pwindow}, \code{swindow}, \code{L} and \code{D}. It also has the output of
+\code{\link[=.pcens_cdf_points]{.pcens_cdf_points()}}. Empty if \code{x} is empty.
 }
 \description{
 Groups rows by their \code{pwindow}, \code{swindow}, \code{L} and \code{D}. Within each group
-the unique values of \code{x} are kept with a map back to the rows, so that
-\code{\link[=pcens_pmf]{pcens_pmf()}} is evaluated once per unique delay.
+the unique values of \code{x} are kept with a map back to the rows, and the
+points at which the primary event censored CDF is needed are worked out
+once, so that \code{\link[=.pcens_pmf_group]{.pcens_pmf_group()}} only has to evaluate the CDF.
 }
 \keyword{internal}
