@@ -1,4 +1,41 @@
 /**
+  * Compute the log CDF of a unit rate Gamma distribution from the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * Returns log P(a, x), the log of the regularised lower incomplete gamma
+  * function, for x = exp(log_x). `gamma_lcdf` underflows to `-inf` deep in
+  * the lower tail. This sums the series for P(a, x) on the log scale
+  * there, so both the value and its gradient stay finite.
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return log P(a, exp(log_x)), or `-inf` when `log_x` is `-inf`
+  */
+real gamma_lcdf_logx(real log_x, real a) {
+  if (log_x == negative_infinity()) {
+    return negative_infinity();
+  }
+  real x = exp(log_x);
+  if (x < 0.9 * (a + 1)) {
+    real log_lead = a * log_x - x - lgamma(a + 1);
+    // gamma_lcdf underflows or loses its gradient below exp(-10). Terms
+    // shrink by at least 0.9 per step, so 1000 is only a safety bound.
+    if (log_lead < -10) {
+      real term = 1;
+      real total = 1;
+      for (n in 1:1000) {
+        term *= x / (a + n);
+        total += term;
+        if (term < 1e-17 * total) break;
+      }
+      return log_lead + log(total);
+    }
+  }
+  return gamma_lcdf(x | a, 1);
+}
+
+/**
   * Compute the log CDF of the generalised gamma distribution
   * @ingroup delay_log_cdfs
   *
@@ -7,7 +44,7 @@
   * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
   * distributions are special cases.
   *
-  * @param y Value at which to evaluate the log CDF (y > 0)
+  * @param y Value at which to evaluate the log CDF (y >= 0)
   * @param shape Shape (power) parameter
   * @param scale Scale parameter
   * @param k Shape parameter of the underlying Gamma distribution
@@ -15,7 +52,13 @@
   * @return Log CDF of the generalised gamma distribution
   */
 real gengamma_lcdf(real y, real shape, real scale, real k) {
-  return gamma_lcdf(pow(y / scale, shape) | k, 1);
+  if (y < 0) {
+    reject("gengamma_lcdf: y must be non-negative, found y = ", y);
+  }
+  if (y == 0) {
+    return negative_infinity();
+  }
+  return gamma_lcdf_logx(shape * (log(y) - log(scale)), k);
 }
 
 /**

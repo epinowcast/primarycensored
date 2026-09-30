@@ -195,6 +195,10 @@ vector primarycensored_weibull_uniform_terms(real t,
   * replaced by k + 1/shape, so this generalises the Gamma (shape = 1) and
   * Weibull (k = 1) solutions.
   *
+  * The subtraction in `primarycensored_uniform_lcdf_from_terms()` loses
+  * precision for large `k * shape`, with errors above 1e-6 possible once it
+  * exceeds about 12000.
+  *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters
   * [shape, scale, k]
@@ -212,9 +216,11 @@ vector primarycensored_gengamma_uniform_terms(real t,
   real k = params[3];
   real k_shift = k + inv(shape);
   real log_E = log(scale) + lgamma(k_shift) - lgamma(k);
+  real log_t = log(t);
+  real log_x = shape * (log_t - log(scale));
   return [
-    log(t) + gengamma_lcdf(t | shape, scale, k),
-    log_E + gengamma_lcdf(t | shape, scale, k_shift)
+    log_t + gamma_lcdf_logx(log_x, k),
+    log_E + gamma_lcdf_logx(log_x, k_shift)
   ]';
 }
 
