@@ -135,7 +135,6 @@ test_that("use_numeric = TRUE uses the default method", {
 })
 
 test_that("inadmissible tilts use the numerical method", {
-  # rate + rho <= 0 has no tilted delay, so the closed forms do not apply
   for (family in families[c(2, 3, 4)]) {
     for (rho in c(-1, -0.5)) {
       if (exptilt_admissible(family, rho)) {
@@ -175,8 +174,7 @@ test_that("the analytic CDF is continuous in the tilt through zero", {
 })
 
 test_that("the analytic CDF has no jump where the small tilt form ends", {
-  # The small tilt form applies while |r| * pwindow is below 1e-4. Either side
-  # of that point both forms are accurate, so values must match closely.
+  # The small tilt form applies while |r| * pwindow is below 1e-4
   for (family in families) {
     for (pwindow in c(0.5, 2, 7)) {
       q <- c(1e-3, 0.3 * pwindow, pwindow, 3, 6, 12, 25)
@@ -196,8 +194,6 @@ test_that("the analytic CDF has no jump where the small tilt form ends", {
 })
 
 test_that("the analytic CDF is accurate for q near zero", {
-  # Direct evaluation loses accuracy when r * q is tiny, so there is a
-  # separate form for that case.
   for (family in families[c(2, 3, 4, 5)]) {
     cdf <- exptilt_cdf(family)
     for (rho in c(-0.05, 0.5, 1)) {
@@ -325,8 +321,7 @@ test_that("delay parameters default as in the stats functions", {
     pcens_cdf(obj, c(0.5, 2), 1, use_numeric = TRUE),
     tolerance = 1e-6
   )
-  # A gamma with only a shape has rate 1, as in pgamma(), and worked with
-  # the numerical method before the analytical solution
+  # A gamma with only a shape has rate 1, as in pgamma()
   obj <- new_pcens(pgamma, dexpgrowth, list(r = 0.3), shape = 2)
   expect_equal(
     pcens_cdf(obj, c(1, 5), 2),
@@ -370,14 +365,35 @@ test_that("delay parameters default as in the stats functions", {
 })
 
 test_that("endpoints are shared between neighbouring delays", {
-  # Each delay needs the transform at q and at q - pwindow. For integer
-  # delays these overlap, so each endpoint is evaluated once.
   endpoints <- .exptilt_endpoints(1:10, 3, lower = 0)
   expect_identical(endpoints, c(0, 1:10))
   endpoints <- .exptilt_endpoints(1:10, 3, lower = -Inf)
   expect_identical(endpoints, as.numeric(-2:10))
   endpoints <- .exptilt_endpoints(c(0.5, 2.5, 4), 2, lower = 0)
   expect_identical(endpoints, c(0, 0.5, 2, 2.5, 4))
+})
+
+test_that("the analytic CDF matches rprimarycensored samples", {
+  set.seed(101)
+  n <- 20000
+  pwindow <- 2
+  for (family in families[c(1, 3, 4, 6, 7)]) {
+    for (rho in c(-0.2, 0.5)) {
+      obj <- exptilt_object(family, rho)
+      samples <- do.call(
+        rprimarycensored,
+        c(
+          list(
+            n = n, rdist = family$rdist, pwindow = pwindow, swindow = 0,
+            rprimary = rexpgrowth, rprimary_args = list(r = rho)
+          ),
+          family$args
+        )
+      )
+      ks <- stats::ks.test(samples, function(x) pcens_cdf(obj, x, pwindow))
+      expect_gt(ks$p.value, 1e-3, label = exptilt_label(family, pwindow, rho))
+    }
+  }
 })
 
 test_that("pcens_cdf is unchanged for the uniform primary", {
