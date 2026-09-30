@@ -3,8 +3,7 @@
  *
  * A Gumbel distribution with location mu and scale beta, truncated to
  * [xmin, xmax]. With G(z) = exp(-s(z)) and s(z) = exp(-(z - mu) / beta) the
- * density is G'(x) / (G(xmax) - G(xmin)) and the CDF is
- * (G(x) - G(xmin)) / (G(xmax) - G(xmin)). Differences of s are written as
+ * density is G'(x) / (G(xmax) - G(xmin)). Differences of s are written as
  * s(x) (exp((x - xmin) / beta) - 1) so that the terms do not cancel when mu
  * is far from the window. The R equivalents are dtgumbel(), ptgumbel() and
  * rtgumbel(). It is primary distribution 4 with primary_params = [mu, beta].
@@ -13,9 +12,6 @@
 /**
   * Log of the difference of s across the window of a truncated Gumbel
   * @ingroup truncated_gumbel_distributions
-  *
-  * The log of s(xmin) - s(xmax), which is s(xmax) (exp((xmax - xmin) / beta)
-  * - 1), with s(z) = exp(-(z - mu) / beta).
   *
   * @param xmin Lower bound of the distribution
   * @param xmax Upper bound of the distribution
@@ -31,10 +27,8 @@ real tgumbel_log_delta_window(real xmin, real xmax, real mu, real beta) {
   * Log of 1 - exp(-exp(x))
   * @ingroup truncated_gumbel_distributions
   *
-  * The normalisation of the truncated Gumbel is this with x the log of a
-  * difference of s. Below -37 the difference is under 1e-16 and the value is
-  * x, where exp(x) would otherwise underflow for a window far above the
-  * location and give `-inf`. Above 700 the value is 0 to double precision.
+  * Below -37 the value is x, where exp(x) would underflow for a window far
+  * above the location. Above 700 it is 0 to double precision.
   *
   * @param x Real number
   * @return log(1 - exp(-exp(x)))
@@ -53,9 +47,8 @@ real tgumbel_log1m_exp_neg_exp(real x) {
   * Log of the normalisation of a truncated Gumbel
   * @ingroup truncated_gumbel_distributions
   *
-  * The log of (G(xmax) - G(xmin)) / G(xmax), which is
-  * log(1 - exp(-(s(xmin) - s(xmax)))). The factor G(xmax) cancels against
-  * the density, which is written with differences of s.
+  * The log of (G(xmax) - G(xmin)) / G(xmax), as G(xmax) cancels against the
+  * density.
   *
   * @param xmin Lower bound of the distribution
   * @param xmax Upper bound of the distribution
@@ -72,11 +65,6 @@ real tgumbel_log_norm(real xmin, real xmax, real mu, real beta) {
 /**
   * Truncated Gumbel log probability density function (log PDF)
   * @ingroup truncated_gumbel_distributions
-  *
-  * The density is s(x) exp(-(s(x) - s(xmax))) / (beta (1 - exp(-(s(xmin) -
-  * s(xmax))))). The exponent is written with s(x) - s(xmax) =
-  * s(xmax) (exp((xmax - x) / beta) - 1), so it does not cancel where
-  * s(xmax) is large, for a location above the window.
   *
   * @param x Value at which to evaluate the log PDF
   * @param xmin Lower bound of the distribution
@@ -100,11 +88,6 @@ real tgumbel_lpdf(real x, real xmin, real xmax, real mu, real beta) {
 /**
   * Truncated Gumbel log cumulative distribution function (log CDF)
   * @ingroup truncated_gumbel_distributions
-  *
-  * With delta_lower = s(xmin) - s(x), delta_upper = s(x) - s(xmax) and
-  * delta_window = s(xmin) - s(xmax), the CDF is
-  * (exp(delta_lower) - 1) / (exp(delta_window) - 1), which on the log scale
-  * is log(1 - exp(-delta_lower)) - delta_upper - log(1 - exp(-delta_window)).
   *
   * @param x Value at which to evaluate the log CDF
   * @param xmin Lower bound of the distribution
@@ -134,9 +117,7 @@ real tgumbel_lcdf(real x, real xmin, real xmax, real mu, real beta) {
   * Truncated Gumbel random number generator
   * @ingroup truncated_gumbel_distributions
   *
-  * Inverts the upper tail, 1 - F(x) = (1 - exp(-delta_upper)) /
-  * (1 - exp(-delta_window)), which adds delta_upper = s(x) - s(xmax) to
-  * s(xmax) and so does not cancel.
+  * Inverts the upper tail, which does not cancel.
   *
   * @param xmin Lower bound of the distribution
   * @param xmax Upper bound of the distribution

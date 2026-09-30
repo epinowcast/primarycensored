@@ -73,9 +73,8 @@ check_dprimary <- function(
     return(invisible(NULL))
   }
 
-  # The truncated Gumbel density is normalised on the window by
-  # construction. For a large mu / beta it is a narrow spike, which the
-  # integration below misses, so only its parameters are checked.
+  # Normalised by construction, and a narrow spike for a large mu / beta
+  # that the integration below misses, so only its parameters are checked
   if (identical(dprimary, dtgumbel)) {
     .check_tgumbel(
       0, pwindow, dprimary_args$mu, dprimary_args$beta

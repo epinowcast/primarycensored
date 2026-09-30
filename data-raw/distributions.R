@@ -35,7 +35,7 @@ pcd_primary_distributions <- data.frame(
   dprimary = c("dunif", "dexpgrowth", "dtgumbel"),
   pprimary = c("punif", "pexpgrowth", "ptgumbel"),
   aliases = c("uniform", "exponential growth", "truncated gumbel"),
-  # 3 is reserved for the logistic primary
+  # 3 is reserved
   stan_id = c(1L, 2L, 4L),
   stringsAsFactors = FALSE
 )

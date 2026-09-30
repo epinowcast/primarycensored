@@ -95,13 +95,6 @@ transformed data {
   // - parametric path: n_params
   // - non-parametric: 2 * K_np + 1 = (K_np + 1) boundaries + K_np weights
   int n_lpmf_params = nonparametric == 1 ? 2 * K_np + 1 : n_params;
-  // The bound on primary_id admits 3, which is reserved for the logistic
-  // primary and has no functions yet, so it is rejected here rather than
-  // when the first density is evaluated
-  if (primary_id == 3) {
-    reject("primary_id 3 is reserved and has no primary distribution. ",
-           "Use 1 (uniform), 2 (exponential growth) or 4 (truncated Gumbel).");
-  }
   for (i in 1:N) {
     if (d[i] < L[i]) {
       reject("d[", i, "] = ", d[i], " is below the lower truncation L[", i,

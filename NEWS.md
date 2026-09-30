@@ -6,6 +6,11 @@
   `pcens_cdf()` and the vectorised Stan PMF use them in place of numerical integration, with the numerical path kept as a fallback outside their valid region, see `?pcens_cdf_exptilt`.
   The normal delay is the first analytical solution for a delay on the reals.
   See #367.
+- Added a truncated Gumbel primary event distribution, `dtgumbel()`, `ptgumbel()` and `rtgumbel()`, registered as primary distribution 4 with `primary_params = [mu, beta]`.
+  Exponential, gamma and normal delays have a series solution in R and Stan, built from the delay transforms at the tilts `n / beta`, see `?pcens_cdf_gumbel`.
+  The vectorised Stan PMF shares the transforms between neighbouring delays.
+  The numerical path is used where the series is not accurate, and integrates in a variable in which a narrow window density is smooth.
+  See #371.
 
 ## Bug fixes
 
@@ -26,7 +31,7 @@
 
 ## Breaking changes
 
-- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`.
+- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`, and also `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
 
 # primarycensored 1.6.0
 

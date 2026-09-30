@@ -33,9 +33,8 @@ Vector of computed primary event censored CDFs
 \description{
 Analytical primary event censored CDFs for exponential, gamma and normal
 delay distributions with a truncated Gumbel primary event window, the
-\code{\link[=dtgumbel]{dtgumbel()}} primary distribution. They honour \code{use_numeric}, and use the
-numerical method of \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no accurate closed form
-applies.
+\code{\link[=dtgumbel]{dtgumbel()}} primary distribution. They honour \code{use_numeric}, and use a
+numerical method when no accurate closed form applies.
 }
 \details{
 Write \eqn{G(z) = \exp[-\exp\{-(z - \mu) / \beta\}]} and
@@ -46,89 +45,42 @@ With \eqn{c(q) = \exp\{-(q - \mu) / \beta\}} the reversed window
 \eqn{e^{u / \beta}}, which gives
 \deqn{
 F_G(q) = F(q - w) + \frac{1}{D} \Big[
-  \sum_{n = 0}^\infty \frac{\{-c(q)\}^n}{n!}
-  \{T_f(n / \beta; q) - T_f(n / \beta; q - w)\}
-  - G(0) \{F(q) - F(q - w)\} \Big].
+  (1 - G(0)) \{F(q) - F(q - w)\} +
+  \sum_{n \ge 1} \frac{\{-c(q)\}^n}{n!} \Delta_n(q) \Big],
 }
-This solution was checked numerically.
-The \eqn{n = 0} term is \eqn{F(q) - F(q - w)}, so the bracket is computed
-as
-\deqn{B(q) = (1 - G(0)) \{F(q) - F(q - w)\} +
-  \sum_{n \ge 1} \frac{\{-c(q)\}^n}{n!} \Delta_n(q),}
-with \eqn{\Delta_n(q) = T_f(n / \beta; q) - T_f(n / \beta; q - w)}. Then
-\eqn{1 - G(0)} is evaluated as \code{-expm1(-exp(mu / beta))}, which keeps
-precision when \eqn{\mu} is far below the window and \eqn{D} is small.
-The transforms at each endpoint, \eqn{q} and \eqn{q - w}, are evaluated
-once at every tilt and reused when several \code{q} share an endpoint. Every
-\eqn{\Delta_n} is taken between the lower tail transforms or the upper
-tail transforms, whichever loses less precision, as for
-\link{pcens_cdf_exptilt}.
+with \eqn{\Delta_n(q) = T_f(n / \beta; q) - T_f(n / \beta; q - w)}.
+The transforms at each endpoint are evaluated once at every tilt and reused
+when several \code{q} share an endpoint.
+Each \eqn{\Delta_n} is taken between the lower or the upper tail
+transforms, whichever loses less precision, as for \link{pcens_cdf_exptilt}.
 
-\strong{Sums of alternating terms.} With \eqn{s(z) = e^{(\mu - z) / \beta}},
-the \eqn{n}th term is
-\eqn{a_n = \int s(z)^n f(q - z) dz / n!}. It is at most
-\eqn{s_0^n / n!} times the delay mass in the window, where
-\eqn{s_0 = e^{\mu / \beta}} is the largest value of \eqn{s} on the window,
-whatever \code{q} is, because \eqn{c(q)} grows as the transforms
-\eqn{T_f(n / \beta; q)} shrink. The terms are evaluated on the log scale
-so they do not overflow. The series is truncated at the first \eqn{N} for
-which the bound on the next term, relative to \eqn{\max(s_0, 1)}, is
-below 1e-18, see \code{.gumbel_n_terms()}. The odd and even terms are
-accumulated separately on the log scale, and the difference is taken last.
+The terms alternate and are bounded by \eqn{s_0^n / n!} times the delay mass
+in the window, where \eqn{s_0 = e^{\mu / \beta}}.
+They are summed on the log scale with the odd and even terms separate.
+The series is truncated where the bound is below 1e-18.
 
-\strong{Accuracy region.} The sum alternates, so a term that is larger than the
-result loses precision. The relative error is estimated for each \code{q} as
-the machine precision times the ratio of the sum of the absolute terms to
-the result, times one plus the largest magnitude of a log term, plus the
-truncation bound relative to the result, see \code{.gumbel_error_bound()}.
-Where it is above \eqn{10^{-8}} the method uses the numerical method of
-\code{.gumbel_numeric()} for that \code{q}, so no value is silently inaccurate.
-That method is accurate to about 1e-9 relative to the CDF, so the series is
-kept wherever its estimated error is below that of the numerical method.
-The estimate is 10 to 1000 times the actual error. In tests against a
-tight reference integral, values with an estimate of at most 1e-8 agree
-to a relative difference of 5e-10 or better, and 1e-12 for
-\eqn{s_0 \le 1}.
-Two things make the estimate large. The first is a large \eqn{s_0}, where
-the terms reach \eqn{e^{s_0}} and the result is of order 1, so that the
-precision lost is \eqn{e^{s_0}} times the rounding error of the log terms,
-which grows with the tilts \eqn{n / \beta} and the scale of the delay. The
-second is a window that is narrow relative to the scale, \eqn{w \ll
-\beta}, where the bracket is a small difference of large terms and the
-loss is about \eqn{\beta / w}. Also \eqn{s_0 > 15} is never used, see
-\code{.gumbel_max_s0}, as the number of terms grows with it.
-In the grid of \code{mu} in -0.5, 0, 0.5, 1, 1.5, \code{beta} in 0.1, 0.2, 1 and
-\code{pwindow} in 1, 2, the normal delay uses the series where
-\eqn{\mu / \beta \le 1.5}, which is every \code{mu} at \code{beta} 1 and \code{mu} up to
-0 at \code{beta} 0.2 and 0.1. The numerical method is used for larger
-\eqn{\mu / \beta}, where the window density rises sharply inside the window.
+\strong{Fallback to the numerical method.} The relative error of the series is
+estimated for each \code{q}, see \code{.gumbel_error_bound()}.
+Where it is above 1e-8 the numerical method is used for that \code{q}.
+Accepted values agree with a tight reference integral to a relative
+difference of 5e-10 or better in tests.
+The numerical method is used for every \code{q} where \eqn{\mu / \beta} is
+above \code{log(15)}, where the window is narrow relative to \eqn{\beta}, and
+where the delay has no transform at the largest tilt.
+The exponential and gamma transforms need the rate to be above
+\eqn{N / \beta}, so in practice these delays use the series only when they
+are short relative to the window.
+The normal delay has no such restriction.
 
 \strong{Numerical method.} The window density is a spike of width about
-\eqn{\beta} when \eqn{\mu / \beta} is large, and adaptive integration
-over the window, as in \code{\link[=pcens_cdf.default]{pcens_cdf.default()}}, can miss it and return
-about 0 without an error. So the numerical method integrates in a
-variable in which the integrand is smooth and over the range that holds
-the mass of the window, see \code{.gumbel_numeric()}. It is also used by
-\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} for any delay with this primary, and for
-\code{use_numeric = TRUE}. It was checked against reference integrals from
-a location far below the window to one far above it.
+\eqn{\beta} when \eqn{\mu / \beta} is large, which the integration of
+\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} can miss.
+So \code{.gumbel_numeric()} integrates in a variable in which the integrand is
+smooth, over the range that holds the mass of the window.
+\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} uses it for any delay with this primary.
 
-\strong{Admissibility.} The terms need the transform at the tilts
-\eqn{n / \beta} for \eqn{n = 1, \ldots, N}. The exponential and gamma forms
-need the tilted delay to exist, \eqn{\lambda > N / \beta} for rate
-\eqn{\lambda}. Otherwise the method uses the numerical method for every
-\code{q}. For delays of a day or more the rate is of order 1, and the
-bound is only met for very short delays, so in practice these delays use
-the numerical method unless \eqn{\mu / \beta} is very negative or the
-scale is large. The normal delay has no restriction.
-A window with \eqn{\mu / \beta} very negative is close to the exponentially
-tilted window with \eqn{\rho = -1 / \beta}, see \link{pcens_cdf_exptilt}, which
-only needs \eqn{\lambda + \rho > 0}.
-
-\strong{Extending.} A new delay distribution is supported by the methods of
-\link{tilt_transform} and a \code{pcens_cdf} method for the class that calls
-\code{.pcens_cdf_gumbel()}. The tilts are \eqn{n / \beta}, all positive, so a
-delay needs a transform for positive tilts.
+A delay is added with \link{tilt_transform} methods and a \code{pcens_cdf} method
+that calls \code{.pcens_cdf_gumbel()}.
 }
 \examples{
 # Normal delay, for example a difference of event times
@@ -145,23 +97,3 @@ pexp_obj <- new_pcens(
 )
 pcens_cdf(pexp_obj, q = c(0.01, 0.1, 1), pwindow = 1)
 }
-\seealso{
-Low level primary event censored distribution objects and methods
-\code{\link{new_pcens}()},
-\code{\link{pcens_cdf}()},
-\code{\link{pcens_cdf.default}()},
-\code{\link{pcens_cdf.pcens_pdiscretehazard}()},
-\code{\link{pcens_cdf.pcens_pdiscretestep}()},
-\code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
-\code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()},
-\code{\link{pcens_cdf_exptilt}},
-\code{\link{pcens_pmf}()},
-\code{\link{pcens_pmf.default}()},
-\code{\link{pcens_quantile}()},
-\code{\link{pcens_quantile.default}()},
-\code{\link{update.pcens}()}
-}
-\concept{pcens}

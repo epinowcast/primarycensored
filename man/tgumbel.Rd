@@ -20,9 +20,8 @@ rtgumbel(n, min = 0, max = 1, mu, beta)
 
 \item{max}{Maximum value of the distribution range. Default is 1.}
 
-\item{mu}{Location of the Gumbel distribution before truncation. It is on
-the same scale as \code{x}, so for the default \code{min = 0} it is the time from
-the start of the window at which the exposure rate peaks.}
+\item{mu}{Location of the Gumbel distribution before truncation, on the
+same scale as \code{x}.}
 
 \item{beta}{Scale of the Gumbel distribution before truncation, positive.}
 
@@ -44,8 +43,7 @@ maximum of the lengths of the numerical arguments for the other functions.
 \description{
 Density, distribution function, and random generation for a Gumbel
 distribution truncated to \verb{[min, max]}. It is a primary event distribution
-for exposure that builds up or decays unevenly within the window, for
-example environmental sources in outbreak reconstruction.
+for exposure that builds up or decays unevenly within the window.
 }
 \details{
 With \eqn{G(z) = \exp[-\exp\{-(z - \mu) / \beta\}]}, the CDF of the
@@ -53,30 +51,19 @@ Gumbel distribution, the density on [min, max] is
 \deqn{f(x) = \frac{G'(x)}{G(max) - G(min)}}
 and the cumulative distribution function is
 \deqn{F(x) = \frac{G(x) - G(min)}{G(max) - G(min)}.}
-The density rises to a peak at \eqn{x = \mu} and falls more slowly
-above it, so the window is skewed. If \eqn{\mu} is far below \code{min} the
-density decays exponentially with rate \eqn{1 / \beta}, as for
-\code{\link[=dexpgrowth]{dexpgrowth()}} with the rate \eqn{r = -1 / \beta}.
-If it is far above \code{max} the density rises very steeply towards \code{max}.
+The density peaks at \eqn{x = \mu} and falls more slowly above it.
+If \eqn{\mu} is far below \code{min} it decays with rate \eqn{1 / \beta}, as for
+\code{\link[=dexpgrowth]{dexpgrowth()}} with \eqn{r = -1 / \beta}.
+If \eqn{\mu} is far above \code{max} it is a narrow spike at \code{max}.
 
-Write \eqn{s(x) = \exp\{-(x - \mu) / \beta\}}, so that
-\eqn{G(x) = \exp\{-s(x)\}}. The CDF and its complement are evaluated as
-\deqn{\log F(x) = \log(1 - e^{-\{s(min) - s(x)\}}) -
-  \{s(x) - s(max)\} - \log(1 - e^{-\{s(min) - s(max)\}})}
-and \deqn{\log(1 - F(x)) = \log(1 - e^{-\{s(x) - s(max)\}}) -
-  \log(1 - e^{-\{s(min) - s(max)\}}),}
-with the differences of \eqn{s} written as, for example,
-\eqn{s(x) (e^{(x - min) / \beta} - 1)}.
-This avoids the cancellation of \eqn{G(max) - G(min)} when
-\eqn{\mu} is far from the window and keeps the tails precise.
-
-Random numbers are drawn by inverting the upper tail form, which adds
-\eqn{s(x) - s(max)} to \eqn{s(max)} and so has no cancellation.
+Differences of \eqn{s(x) = \exp\{-(x - \mu) / \beta\}} are evaluated on the
+log scale, so the tails stay precise when \eqn{\mu} is far from the window.
+Random numbers are drawn by inverting the upper tail.
 
 The Stan equivalents are \code{tgumbel_lpdf()}, \code{tgumbel_lcdf()} and
 \code{tgumbel_rng()}, with the primary distribution identifier 4 and
 \verb{primary_params = [mu, beta]}.
-Analytical primary event censored CDFs for this primary are described in
+Analytical primary event censored CDFs are described in
 \link{pcens_cdf_gumbel}.
 }
 \examples{

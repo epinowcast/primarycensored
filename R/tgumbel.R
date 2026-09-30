@@ -2,14 +2,12 @@
 #'
 #' Density, distribution function, and random generation for a Gumbel
 #' distribution truncated to `[min, max]`. It is a primary event distribution
-#' for exposure that builds up or decays unevenly within the window, for
-#' example environmental sources in outbreak reconstruction.
+#' for exposure that builds up or decays unevenly within the window.
 #'
 #' @inheritParams expgrowth
 #'
-#' @param mu Location of the Gumbel distribution before truncation. It is on
-#'  the same scale as `x`, so for the default `min = 0` it is the time from
-#'  the start of the window at which the exposure rate peaks.
+#' @param mu Location of the Gumbel distribution before truncation, on the
+#'  same scale as `x`.
 #'
 #' @param beta Scale of the Gumbel distribution before truncation, positive.
 #'
@@ -25,30 +23,19 @@
 #' \deqn{f(x) = \frac{G'(x)}{G(max) - G(min)}}
 #' and the cumulative distribution function is
 #' \deqn{F(x) = \frac{G(x) - G(min)}{G(max) - G(min)}.}
-#' The density rises to a peak at \eqn{x = \mu} and falls more slowly
-#' above it, so the window is skewed. If \eqn{\mu} is far below `min` the
-#' density decays exponentially with rate \eqn{1 / \beta}, as for
-#' [dexpgrowth()] with the rate \eqn{r = -1 / \beta}.
-#' If it is far above `max` the density rises very steeply towards `max`.
+#' The density peaks at \eqn{x = \mu} and falls more slowly above it.
+#' If \eqn{\mu} is far below `min` it decays with rate \eqn{1 / \beta}, as for
+#' [dexpgrowth()] with \eqn{r = -1 / \beta}.
+#' If \eqn{\mu} is far above `max` it is a narrow spike at `max`.
 #'
-#' Write \eqn{s(x) = \exp\{-(x - \mu) / \beta\}}, so that
-#' \eqn{G(x) = \exp\{-s(x)\}}. The CDF and its complement are evaluated as
-#' \deqn{\log F(x) = \log(1 - e^{-\{s(min) - s(x)\}}) -
-#'   \{s(x) - s(max)\} - \log(1 - e^{-\{s(min) - s(max)\}})}
-#' and \deqn{\log(1 - F(x)) = \log(1 - e^{-\{s(x) - s(max)\}}) -
-#'   \log(1 - e^{-\{s(min) - s(max)\}}),}
-#' with the differences of \eqn{s} written as, for example,
-#' \eqn{s(x) (e^{(x - min) / \beta} - 1)}.
-#' This avoids the cancellation of \eqn{G(max) - G(min)} when
-#' \eqn{\mu} is far from the window and keeps the tails precise.
-#'
-#' Random numbers are drawn by inverting the upper tail form, which adds
-#' \eqn{s(x) - s(max)} to \eqn{s(max)} and so has no cancellation.
+#' Differences of \eqn{s(x) = \exp\{-(x - \mu) / \beta\}} are evaluated on the
+#' log scale, so the tails stay precise when \eqn{\mu} is far from the window.
+#' Random numbers are drawn by inverting the upper tail.
 #'
 #' The Stan equivalents are `tgumbel_lpdf()`, `tgumbel_lcdf()` and
 #' `tgumbel_rng()`, with the primary distribution identifier 4 and
 #' `primary_params = [mu, beta]`.
-#' Analytical primary event censored CDFs for this primary are described in
+#' Analytical primary event censored CDFs are described in
 #' [pcens_cdf_gumbel].
 #'
 #' @family primaryeventdistributions
@@ -62,13 +49,7 @@
 #' @name tgumbel
 NULL
 
-#' Check the parameters of the truncated Gumbel distribution
-#'
-#' @inheritParams tgumbel
-#'
-#' @return `NULL` invisibly, called for its error.
-#'
-#' @keywords internal
+# Checks mu, beta and the bounds, called for its error
 .check_tgumbel <- function(min, max, mu, beta) {
   finite <- function(x) is.numeric(x) && !anyNA(x) && all(is.finite(x))
   if (!finite(mu) || !finite(beta) || any(beta <= 0)) {
@@ -87,29 +68,7 @@ NULL
   invisible(NULL)
 }
 
-#' Log of `exp(x) - 1` for non-negative `x`
-#'
-#' @param x Numeric vector, at least 0.
-#'
-#' @return `log(expm1(x))`, `-Inf` at 0, without overflow for large `x`.
-#'
-#' @keywords internal
-.log_expm1 <- function(x) {
-  x + .log1m_exp(-x)
-}
-
-#' Log of `1 - exp(-exp(x))`
-#'
-#' The normalisation of the truncated Gumbel is this with `x` the log of a
-#' difference of `s`. For `x` below -37 the difference is below 1e-16 and
-#' the value is `x`, where `exp(x)` would otherwise underflow for a window far
-#' above the location and give `-Inf`.
-#'
-#' @param x Numeric vector.
-#'
-#' @return `log(1 - exp(-exp(x)))`.
-#'
-#' @keywords internal
+# log(1 - exp(-exp(x))), which is x below -37 where exp(x) would underflow
 .log1m_exp_neg_exp <- function(x) {
   out <- x
   large <- which(x >= -37)
@@ -117,37 +76,16 @@ NULL
   out
 }
 
-#' Log of the width of the Gumbel window on the scale of `s`
-#'
-#' With \eqn{s(x) = \exp\{-(x - \mu) / \beta\}} the truncated Gumbel CDF is
-#' a ratio of \eqn{1 - e^{-\delta}} terms, where \eqn{\delta} is a difference
-#' of \eqn{s} at two points. The window difference
-#' \eqn{s(min) - s(max)} is computed as \eqn{s(max) \{e^{(max - min) /
-#' \beta} - 1\}}, on the log scale.
-#'
-#' @inheritParams tgumbel
-#'
-#' @return The log of `s(min) - s(max)`.
-#'
-#' @keywords internal
+# Log of s(min) - s(max), with s(x) = exp(-(x - mu) / beta)
 .tgumbel_log_delta_window <- function(min, max, mu, beta) {
-  -(max - mu) / beta + .log_expm1((max - min) / beta)
+  -(max - mu) / beta + .log_diff_exp((max - min) / beta, 0)
 }
 
-#' Log of the Gumbel differences of `s` at points in the window
-#'
-#' @inheritParams tgumbel
-#'
-#' @param x Numeric vector of points in `[min, max]`.
-#'
-#' @return A list with the log of `lower`, `s(min) - s(x)`, and `upper`,
-#'   `s(x) - s(max)`, computed as in `.tgumbel_log_delta_window()`.
-#'
-#' @keywords internal
+# Logs of s(min) - s(x) and s(x) - s(max)
 .tgumbel_log_deltas <- function(x, min, max, mu, beta) {
   list(
-    lower = -(x - mu) / beta + .log_expm1((x - min) / beta),
-    upper = -(max - mu) / beta + .log_expm1((max - x) / beta)
+    lower = -(x - mu) / beta + .log_diff_exp((x - min) / beta, 0),
+    upper = -(max - mu) / beta + .log_diff_exp((max - x) / beta, 0)
   )
 }
 
@@ -155,15 +93,12 @@ NULL
 #' @export
 dtgumbel <- function(x, min = 0, max = 1, mu, beta, log = FALSE) {
   .check_tgumbel(min, max, mu, beta)
-  # Evaluate inside the window only
   inside_x <- pmin(pmax(x, min), max)
-  log_s <- -(inside_x - mu) / beta
   log_delta <- .tgumbel_log_delta_window(min, max, mu, beta)
-  # The density is s(x) exp(-{s(x) - s(max)}) / {beta (1 - exp(-delta))}.
-  # The exponent is the difference of s from the end of the window, so it
-  # does not cancel where s(max) is large, for a location above the window
+  # The exponent s(x) - s(max) is a difference, so it does not cancel where
+  # s(max) is large
   log_upper <- .tgumbel_log_deltas(inside_x, min, max, mu, beta)$upper
-  result <- -log(beta) + log_s - exp(log_upper) -
+  result <- -log(beta) - (inside_x - mu) / beta - exp(log_upper) -
     .log1m_exp_neg_exp(log_delta)
   result[is.na(x)] <- NA_real_
   result[!is.na(x) & (x < min | x > max)] <- -Inf
@@ -187,15 +122,11 @@ ptgumbel <- function(
 ) {
   .check_tgumbel(min, max, mu, beta)
   inside <- !is.na(q) & q >= min & q <= max
-  # Evaluate inside the window only
   x <- pmin(pmax(q, min), max)
   deltas <- .tgumbel_log_deltas(x, min, max, mu, beta)
   log_norm <- .log1m_exp_neg_exp(
     .tgumbel_log_delta_window(min, max, mu, beta)
   )
-  # The CDF is (e^delta_lower - 1) / (e^delta_window - 1) and the upper tail
-  # is (1 - e^-delta_upper) / (1 - e^-delta_window), where the window
-  # difference is the sum of the lower and upper differences
   log_cdf <- .log1m_exp_neg_exp(deltas$lower) - exp(deltas$upper) - log_norm
   log_ccdf <- .log1m_exp_neg_exp(deltas$upper) - log_norm
   result <- if (lower.tail) log_cdf else log_ccdf
@@ -204,7 +135,6 @@ ptgumbel <- function(
   result[below] <- if (lower.tail) -Inf else 0
   result[above] <- if (lower.tail) 0 else -Inf
   result[is.na(q)] <- NA_real_
-  # Guard rounding just outside [-Inf, 0]
   result[inside] <- pmin(result[inside], 0)
   if (log.p) {
     result
@@ -219,13 +149,8 @@ ptgumbel <- function(
 rtgumbel <- function(n, min = 0, max = 1, mu, beta) {
   .check_tgumbel(min, max, mu, beta)
   u <- runif(n)
-  log_delta_window <- .tgumbel_log_delta_window(min, max, mu, beta)
-  log_norm <- .log1m_exp_neg_exp(log_delta_window)
-  # Invert the upper tail, 1 - F(x) = 1 - u, which is
-  # (1 - e^-delta_upper) / (1 - e^-delta_window) with
-  # delta_upper = s(x) - s(max). Then x = max - beta log(1 + delta_upper /
-  # s(max)), which has no cancellation, and the lower tail is never
-  # subtracted from
+  log_norm <- .log1m_exp_neg_exp(.tgumbel_log_delta_window(min, max, mu, beta))
+  # Invert the upper tail, x = max - beta log(1 + (s(x) - s(max)) / s(max))
   log_delta_upper <- log(-.log1m_exp(log1p(-u) + log_norm))
   log_ratio <- log_delta_upper + (max - mu) / beta
   samples <- max - beta * (pmax(log_ratio, 0) + log1p(exp(-abs(log_ratio))))
