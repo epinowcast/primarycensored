@@ -201,6 +201,44 @@ test_that("pcens_cdf for the beta matches quadrature and the numerical path
   )
 })
 
+test_that("the new pcens_cdf methods use the numerical path for arguments
+  they do not handle, rather than ignoring them", {
+  q <- c(0.5, 2, 6)
+  # lower.tail changes what pdist returns, and an unknown argument is an
+  # error in pdist, so neither can be ignored by an analytical solution
+  exp_tail <- new_pcens(pexp, dunif, list(), rate = 0.4, lower.tail = FALSE)
+  expect_identical(
+    pcens_cdf(exp_tail, q, 2), pcens_cdf(exp_tail, q, 2, use_numeric = TRUE)
+  )
+  expect_gt(
+    max(abs(
+      pcens_cdf(exp_tail, q, 2) -
+        pcens_cdf(new_pcens(pexp, dunif, list(), rate = 0.4), q, 2)
+    )),
+    0.1
+  )
+  norm_tail <- new_pcens(pnorm, dunif, list(), mean = 2, log.p = TRUE)
+  expect_identical(
+    pcens_cdf(norm_tail, q, 2),
+    pcens_cdf(norm_tail, q, 2, use_numeric = TRUE)
+  )
+  exp_scale <- new_pcens(pexp, dunif, list(), scale = 2)
+  expect_error(pcens_cdf(exp_scale, q, 2), "unused argument")
+  chisq_tail <- new_pcens(pchisq, dunif, list(), df = 3, lower.tail = FALSE)
+  expect_identical(
+    pcens_cdf(chisq_tail, q, 2),
+    pcens_cdf(chisq_tail, q, 2, use_numeric = TRUE)
+  )
+  beta_tail <- new_pcens(
+    pbeta, dunif, list(),
+    shape1 = 2, shape2 = 3, lower.tail = FALSE
+  )
+  expect_identical(
+    pcens_cdf(beta_tail, c(0.2, 0.6), 0.5),
+    pcens_cdf(beta_tail, c(0.2, 0.6), 0.5, use_numeric = TRUE)
+  )
+})
+
 test_that("the new pcens_cdf methods error for missing parameters", {
   expect_error(
     pcens_cdf(new_pcens(pchisq, dunif, list()), 1, 1),
