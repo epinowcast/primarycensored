@@ -902,19 +902,37 @@ test_that("pcens_cdf.pcens_pgengamma.orig_dunif agrees with numeric
   # The R solution works on the CDF scale, so it underflows to 0 where the
   # numerical path does. Elsewhere in the tail the two must agree. See #363
   # for the matching Stan log CDF.
-  cases <- list(c(1, 5, 400), c(5, 5, 100), c(2, 5, 30))
-  q_values <- c(0.5, 1, 2, 3, 4)
-  for (params in cases) {
+  cases <- list(
+    list(params = c(1, 5, 400), q = c(0.5, 1, 100, 200, 300, 400, 600)),
+    list(params = c(5, 5, 100), q = c(0.5, 1, 2, 3, 4)),
+    list(params = c(2, 5, 30), q = c(0.5, 1, 2, 3, 4))
+  )
+  for (case in cases) {
     obj <- new_pcens(
       flexsurv::pgengamma.orig, dunif, list(),
-      shape = params[1], scale = params[2], k = params[3]
+      shape = case$params[1], scale = case$params[2], k = case$params[3]
     )
-    analytic <- pcens_cdf(obj, q = q_values, pwindow = 1)
+    analytic <- pcens_cdf(obj, q = case$q, pwindow = 1)
     numeric <- pcens_cdf(
       obj,
-      q = q_values, pwindow = 1, use_numeric = TRUE
+      q = case$q, pwindow = 1, use_numeric = TRUE
     )
     expect_true(all(is.finite(analytic)))
-    expect_equal(analytic, numeric, tolerance = 1e-5)
+    # Both paths underflow to exactly 0 together.
+    underflow <- numeric == 0
+    expect_identical(analytic[underflow], numeric[underflow])
+    # Elsewhere the CDF is positive and the paths agree to 1e-6.
+    expect_true(all(analytic[!underflow] > 0))
+    expect_equal(
+      analytic[!underflow], numeric[!underflow],
+      tolerance = 1e-6
+    )
   }
+  # The test must exercise both regimes.
+  obj <- new_pcens(
+    flexsurv::pgengamma.orig, dunif, list(),
+    shape = 1, scale = 5, k = 400
+  )
+  expect_identical(pcens_cdf(obj, q = 0.5, pwindow = 1), 0)
+  expect_gt(pcens_cdf(obj, q = 300, pwindow = 1), 0)
 })
