@@ -871,6 +871,127 @@ test_that("the gamma shape gradient is accurate far into the lower tail", {
   }
 })
 
+# The gradient in the shape of a gamma delay is compared to the gradient of
+# the reference integral, not to CmdStan's finite differences, which have
+# errors of 2e-4 where the log CDF is large. The tolerance is 1e-5 relative
+# to the gradient, with a floor for gradients that are close to zero.
+expect_shape_grad_close <- function(model, point, label,
+                                    tolerance = 1e-5,
+                                    vectorised = FALSE) {
+  case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+  max_delay <- if (vectorised) point$d else NULL
+  res <- tlogis_gradient_at(
+    model, case, point$d, point$pwindow, point$location, point$scale,
+    vectorised = vectorised
+  )
+  testthat::expect_false(res$gradient_not_finite, info = label)
+  testthat::expect_false(res$rejected, info = label)
+  testthat::expect_true(all(is.finite(res$gradient)), info = label)
+  reference <- tlogis_shape_grad_ref(
+    point$shape, point$rate, point$d, point$pwindow, point$location,
+    point$scale, max_delay
+  )
+  testthat::expect_true(
+    abs(res$gradient[1] - reference) <=
+      tolerance * max(abs(reference), 1e-3),
+    info = paste0(
+      label, ": gradient ", signif(res$gradient[1], 7),
+      ", reference ", signif(reference, 7)
+    )
+  )
+}
+
+test_that("the gamma shape gradient is accurate where the lower tail series
+  of the gamma CDF meets the cancellation of the series", {
+  model <- tlogis_gradient_model()
+  # The log CDFs are -19 to -68. The first term of the series of the gamma
+  # CDF is 1e-5 to 1 here, where Stan's gamma_lcdf() has a gradient in the
+  # shape with a relative error of up to 6e-6 that the cancellation amplified
+  # to 1e-3 at shape 20 and 4.6% at shape 150. A location before the window
+  # and a scale of 50 cancels the most, and a scale of 5 less.
+  points <- list(
+    list(shape = 150, rate = 50, d = 1.0492872, location = -1, scale = 50),
+    list(shape = 150, rate = 50, d = 1.0492872, location = 0.4, scale = 5),
+    list(shape = 20, rate = 6.6667, d = 0.7187, location = -1, scale = 50),
+    list(shape = 20, rate = 6.6667, d = 0.7187, location = 0.4, scale = 5),
+    list(shape = 80, rate = 26.667, d = 1, location = -1, scale = 50),
+    list(shape = 80, rate = 26.667, d = 0.95, location = 0.4, scale = 5)
+  )
+  for (point in points) {
+    point$pwindow <- 1
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- tlogis_case_label(
+      case,
+      d = point$d, pwindow = 1, location = point$location,
+      scale = point$scale
+    )
+    expect_true(
+      tlogis_case_analytic(case, point$location, point$scale, 1),
+      info = label
+    )
+    expect_shape_grad_close(model, point, label)
+  }
+})
+
+test_that("the gamma shape gradient is finite and accurate in the upper tail
+  at large shapes", {
+  model <- tlogis_gradient_model()
+  # The upper tail of the delay is 1e-7 to 1e-16 here, where Stan's
+  # gamma_lccdf() has a gradient in the shape with a relative error of
+  # 5e-4 at shape 80 and 2e-3 at shape 150, and NaN from shape 200.
+  points <- list(
+    list(shape = 80, rate = 26.667, d = 3.9, location = 3, scale = 0.5),
+    list(shape = 80, rate = 26.667, d = 4.1, location = -1, scale = 50),
+    list(shape = 150, rate = 50, d = 4.25, location = 3, scale = 0.5),
+    list(shape = 150, rate = 50, d = 4.5, location = 2, scale = 0.05),
+    list(shape = 250, rate = 83.333, d = 4.6, location = 3, scale = 0.5),
+    list(shape = 250, rate = 83.333, d = 4.8, location = -1, scale = 50),
+    list(shape = 400, rate = 133.3, d = 4.6, location = 3, scale = 0.5)
+  )
+  for (point in points) {
+    point$pwindow <- 1
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- tlogis_case_label(
+      case,
+      d = point$d, pwindow = 1, location = point$location,
+      scale = point$scale
+    )
+    expect_true(
+      tlogis_case_analytic(case, point$location, point$scale, 1),
+      info = label
+    )
+    expect_shape_grad_close(model, point, label)
+  }
+})
+
+test_that("the vectorised gamma log PMF has a finite, accurate gradient in the
+  shape at large shapes", {
+  model <- tlogis_gradient_model()
+  points <- list(
+    list(shape = 60, rate = 12, d = 9, location = 1, scale = 30),
+    list(shape = 80, rate = 16, d = 9, location = 3, scale = 0.5),
+    list(shape = 150, rate = 30, d = 9, location = -1, scale = 50),
+    list(shape = 250, rate = 50, d = 9, location = 3, scale = 0.5)
+  )
+  for (point in points) {
+    point$pwindow <- 1
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- tlogis_case_label(
+      case,
+      d = point$d, pwindow = 1, location = point$location,
+      scale = point$scale
+    )
+    expect_true(
+      tlogis_case_analytic(case, point$location, point$scale, 1),
+      info = label
+    )
+    expect_shape_grad_close(
+      model, point, label,
+      vectorised = TRUE
+    )
+  }
+})
+
 test_that("the vectorised truncated logistic log PMF has finite gradients
   matching finite differences", {
   model <- tlogis_gradient_model()
