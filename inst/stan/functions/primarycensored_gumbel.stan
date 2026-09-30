@@ -20,10 +20,17 @@
  * are evaluated on the log scale and the odd and even terms are accumulated
  * separately. The relative error is estimated for each delay, and the
  * numerical path, see primarycensored_gumbel_numeric_cdf(), is used where it
- * is above 1e-8, see gumbel_error_tolerance(). The
- * transform is needed at the tilts n / beta, which are positive, so the
- * exponential and gamma delays need a rate above n_terms / beta, see
- * check_for_gumbel_params().
+ * is above 1e-8, see gumbel_error_tolerance(). For the gamma it is also used
+ * where the series would amplify the error of the derivative of the gamma
+ * CDF in the shape, see gumbel_series_accepted(). The transform is needed at
+ * the tilts n / beta, which are positive, so the exponential and gamma delays
+ * need a rate above n_terms / beta, see check_for_gumbel_params().
+ *
+ * The numerical path is on the log scale, so a CDF far in the lower tail is
+ * not lost. For mu at or above the window end it integrates the delay CDF in
+ * pieces of u = s(z) - s(pwindow) in the upper quantile of the piece, and
+ * for mu below it in z from the peak of the integrand to each end of the
+ * range, see gumbel_numeric_log_cdf().
  *
  * A delay distribution plugs in through tilt_transform.stan and is then
  * supported by the window.
@@ -62,24 +69,27 @@ real gumbel_error_tolerance() {
 }
 
 /**
-  * Relative error of the derivative of gamma_lcdf() and gamma_lccdf() in the
-  * shape
+  * Relative error of the shape gradient of the Gumbel series for the gamma,
+  * per unit of amplification
   * @ingroup truncated_gumbel_solutions
   *
   * The derivative of the regularised incomplete gamma function in the shape
-  * is computed by Stan with a relative error of 1e-3 to 1e-2, for example
-  * 0.8% for the upper tail at a shape of 3 and a point of 8. A sum of
-  * alternating terms multiplies the error of the derivative of each term by
-  * the ratio of the sum of the absolute terms to the sum, so the series is
-  * not used for the gamma where that would give an error above
-  * gumbel_gradient_tolerance(). The derivatives in the other parameters,
-  * and of the exponential and the normal, are exact, so they are limited by
-  * the rounding error in gumbel_error_tolerance().
+  * is computed by Stan with a relative error of about 1e-3, and up to 8e-3
+  * in tests, for example for the upper tail at a shape of 3 and a point of 8.
+  * A sum of alternating terms multiplies the error of the derivative of each
+  * term by the ratio of the sum of the absolute terms to the sum, see the
+  * amplification of primarycensored_gumbel_lcdf_from_terms(). The error in
+  * the shape gradient of the series was 9e-5 times that ratio in tests
+  * against the numerical path and finite differences, with ratios of 59 and
+  * 18519, so 1e-4 is used. The series is not used for the gamma where the
+  * ratio times 1e-4 is above gumbel_gradient_tolerance(). The derivatives in
+  * the other parameters, and of the exponential and the normal, are exact, so
+  * they are limited by the rounding error in gumbel_error_tolerance().
   *
-  * @return 1e-2
+  * @return 1e-4
   */
 real gumbel_gamma_shape_gradient_error() {
-  return 1e-2;
+  return 1e-4;
 }
 
 /**
@@ -90,7 +100,7 @@ real gumbel_gamma_shape_gradient_error() {
   * See gumbel_gamma_shape_gradient_error(). The numerical path has the error
   * of the derivative of the delay without amplification.
   *
-  * @return 2e-2
+  * @return 2e-2, so an amplification of at most 200
   */
 real gumbel_gradient_tolerance() {
   return 2e-2;

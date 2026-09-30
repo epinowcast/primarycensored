@@ -610,6 +610,41 @@ test_that("the series is used where its estimate is below the tolerance", {
   expect_gt(used, 0)
 })
 
+test_that("the series is not used for the gamma where it amplifies the
+  shape gradient error", {
+  case <- gumbel_stan_cases[[2]]
+  beta <- 1
+  d <- 0.1
+  fit_at <- function(mu) {
+    n_terms <- gumbel_n_terms(mu / beta)
+    as.vector(primarycensored_gumbel_lcdf_from_terms(
+      primarycensored_gumbel_terms(d, 2L, beta, n_terms, case$params),
+      primarycensored_gumbel_terms(d - 1, 2L, beta, n_terms, case$params),
+      d, 1, mu, beta, n_terms
+    ))
+  }
+  # The value is accurate, but the ratio of the absolute terms to the sum
+  # multiplies the error of the derivative of the gamma CDF in the shape
+  fit <- fit_at(1.5)
+  expect_lt(fit[2], gumbel_error_tolerance())
+  expect_gt(
+    fit[3] * gumbel_gamma_shape_gradient_error(), gumbel_gradient_tolerance()
+  )
+  expect_identical(gumbel_series_accepted(2L, fit), 0L)
+  expect_identical(gumbel_series_accepted(18L, fit), 1L)
+  expect_identical(
+    primarycensored_gumbel_lcdf(d, 2L, case$params, 1, 1.5, beta),
+    primarycensored_gumbel_numeric_lcdf(d, 2L, case$params, 1, 1.5, beta)
+  )
+  # A ratio of 32 is accepted
+  fit <- fit_at(-8)
+  expect_lt(fit[3], 200)
+  expect_identical(gumbel_series_accepted(2L, fit), 1L)
+  expect_identical(
+    primarycensored_gumbel_lcdf(d, 2L, case$params, 1, -8, beta), fit[1]
+  )
+})
+
 test_that("a series rejected by the estimate is replaced by an accurate ODE", {
   # The estimate of the series here is 1.9e-5, and the ODE is accurate to
   # 1e-8 of the CDF where the series loses precision
