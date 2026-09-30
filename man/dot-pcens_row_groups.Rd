@@ -28,14 +28,11 @@ positions of \code{-Inf} and \code{Inf} in \code{points}, where the CDF is known
 and 1.
 }
 \description{
-Groups rows by their \code{pwindow}, \code{swindow}, \code{L} and \code{D}. Within each group
-the unique values of \code{x} are kept with a map back to the rows.
-The primary event censored CDF depends on the primary event window and the
-point only, so the points at which it is needed are pooled over every
-group that shares a \code{pwindow}. Each group stores the positions of its own
-points in the pooled set. This means each endpoint is evaluated once per
-\code{pwindow} and reused by every group that needs it, as in the vectorised
-Stan PMF, and \code{\link[=.pcens_pmf_groups]{.pcens_pmf_groups()}} only has to evaluate the CDF once per
-set.
+Groups rows by their \code{pwindow}, \code{swindow}, \code{L} and \code{D} and keeps the
+unique values of \code{x} in each group with a map back to the rows.
+The CDF depends on the primary event window and the point only, so the
+points are pooled over groups that share a \code{pwindow}.
+Each endpoint is then evaluated once and reused, as in the vectorised Stan
+PMF.
 }
 \keyword{internal}

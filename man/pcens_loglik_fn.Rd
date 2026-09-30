@@ -90,6 +90,8 @@ The returned function is called as \code{ll(...)} with the delay distribution
 parameters as named arguments, for example \code{ll(shape = 2, rate = 1)}.
 Each call starts from the fixed parameters given in \code{...} here, so
 parameters from an earlier call are not carried over.
+Delay distribution parameters must be scalars, other than vector
+parameters of the distribution such as \code{boundaries} and \code{pmf}.
 A misspelt parameter name raises an error.
 Repeated delays are evaluated once.
 The result matches \code{log(dprimarycensored())} called on each observation.

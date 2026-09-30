@@ -34,6 +34,8 @@
 #' parameters as named arguments, for example `ll(shape = 2, rate = 1)`.
 #' Each call starts from the fixed parameters given in `...` here, so
 #' parameters from an earlier call are not carried over.
+#' Delay distribution parameters must be scalars, other than vector
+#' parameters of the distribution such as `boundaries` and `pmf`.
 #' A misspelt parameter name raises an error.
 #' Repeated delays are evaluated once.
 #' The result matches `log(dprimarycensored())` called on each observation.
@@ -126,10 +128,8 @@ pcens_loglik_fn <- function(
   .message_if_clipped(x, swindow, D)
   max_D <- if (n > 0L) max(D) else Inf
 
-  # Parameter names are checked when they change, as `update()` with
-  # `check = FALSE` would otherwise hide a misspelt name. `pdist` is checked
-  # once a call gives a result without missing values, so invalid starting
-  # parameters give `NaN` rather than an error from `check_pdist()`.
+  # Recheck names when they change. Check `pdist` on the first call without
+  # missing values, so invalid starting values give `NaN` and not an error.
   state <- new.env(parent = emptyenv())
   state$checked <- FALSE
   state$names <- NULL
@@ -239,15 +239,12 @@ pcens_loglik_fn <- function(
 
 #' Group observations that share settings and collapse repeated delays
 #'
-#' Groups rows by their `pwindow`, `swindow`, `L` and `D`. Within each group
-#' the unique values of `x` are kept with a map back to the rows.
-#' The primary event censored CDF depends on the primary event window and the
-#' point only, so the points at which it is needed are pooled over every
-#' group that shares a `pwindow`. Each group stores the positions of its own
-#' points in the pooled set. This means each endpoint is evaluated once per
-#' `pwindow` and reused by every group that needs it, as in the vectorised
-#' Stan PMF, and [.pcens_pmf_groups()] only has to evaluate the CDF once per
-#' set.
+#' Groups rows by their `pwindow`, `swindow`, `L` and `D` and keeps the
+#' unique values of `x` in each group with a map back to the rows.
+#' The CDF depends on the primary event window and the point only, so the
+#' points are pooled over groups that share a `pwindow`.
+#' Each endpoint is then evaluated once and reused, as in the vectorised Stan
+#' PMF.
 #'
 #' @param x Numeric vector of delays.
 #'
@@ -275,8 +272,7 @@ pcens_loglik_fn <- function(
     return(list(groups = list(), sets = list()))
   }
   settings <- list(pwindow = pwindow, swindow = swindow, L = L, D = D)
-  # Integer code of each row's combination of settings. Re-matching after
-  # each column keeps the codes small.
+  # Integer code per combination of settings
   id <- rep.int(1L, n)
   for (s in settings) {
     if (length(s) == 1L) {
@@ -363,10 +359,8 @@ pcens_loglik_fn <- function(
 
 #' Points at which the CDF is needed for one group of observations
 #'
-#' Works out what [pcens_pmf()] would repeat on every call. These are the
-#' delays and the clipped upper ends of their secondary intervals, and any
-#' finite truncation points, which are in the same set so that one CDF
-#' evaluation serves them all.
+#' These are the delays, the clipped upper ends of their secondary intervals
+#' and any finite truncation points.
 #'
 #' @param x Numeric vector of unique delays of a group.
 #'
@@ -465,14 +459,11 @@ pcens_loglik_fn <- function(
 #' Evaluate the primary event censored PMF for one group of observations
 #'
 #' Gives the same values as [pcens_pmf()] for the unique delays of the group
-#' and copies them to the rows of the group. The CDF values are taken from
-#' the set the group belongs to, and the positions needed to difference and
-#' normalise them from the group, rather than worked out on each call.
-#' A message about clipping at `D` is not given.
-#' The clipping at `D`, the normalisation by `F(D) - F(L)` and the
-#' non-negative clamp repeat [pcens_pmf()], and the input checks of
-#' [.check_row_inputs()] repeat [.check_truncation_bounds_df()] and the
-#' checks of [dprimarycensored()]. Keep them in step with those.
+#' and copies them to the rows of the group, using the CDF values of the
+#' group's set.
+#' No message about clipping at `D` is given.
+#' The clipping, normalisation and non-negative clamp repeat [pcens_pmf()],
+#' so keep them in step.
 #'
 #' @inheritParams .pcens_pmf_groups
 #'

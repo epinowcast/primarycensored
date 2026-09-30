@@ -20,9 +20,7 @@ whether the PMF is normalised, and \code{needed}, the points, which may
 repeat, at which the CDF is needed.
 }
 \description{
-Works out what \code{\link[=pcens_pmf]{pcens_pmf()}} would repeat on every call. These are the
-delays and the clipped upper ends of their secondary intervals, and any
-finite truncation points, which are in the same set so that one CDF
-evaluation serves them all.
+These are the delays, the clipped upper ends of their secondary intervals
+and any finite truncation points.
 }
 \keyword{internal}

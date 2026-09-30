@@ -19,13 +19,10 @@ Numeric vector with one value per row of the group.
 }
 \description{
 Gives the same values as \code{\link[=pcens_pmf]{pcens_pmf()}} for the unique delays of the group
-and copies them to the rows of the group. The CDF values are taken from
-the set the group belongs to, and the positions needed to difference and
-normalise them from the group, rather than worked out on each call.
-A message about clipping at \code{D} is not given.
-The clipping at \code{D}, the normalisation by \code{F(D) - F(L)} and the
-non-negative clamp repeat \code{\link[=pcens_pmf]{pcens_pmf()}}, and the input checks of
-\code{\link[=.check_row_inputs]{.check_row_inputs()}} repeat \code{\link[=.check_truncation_bounds_df]{.check_truncation_bounds_df()}} and the
-checks of \code{\link[=dprimarycensored]{dprimarycensored()}}. Keep them in step with those.
+and copies them to the rows of the group, using the CDF values of the
+group's set.
+No message about clipping at \code{D} is given.
+The clipping, normalisation and non-negative clamp repeat \code{\link[=pcens_pmf]{pcens_pmf()}},
+so keep them in step.
 }
 \keyword{internal}
