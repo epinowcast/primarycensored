@@ -8,8 +8,8 @@ if (!on_ci() || not_on_cran()) {
     if (!is.null(cmdstanr::cmdstan_version())) {
       # nolint end
       library(cmdstanr) # nolint
-      # cmdstanr 0.9.0.9001 wrongly flags underscored model names as
-      # reserved in expose_functions(), so keep the file name plain.
+      # Keep the file name free of underscores, as cmdstanr's
+      # expose_functions() wrongly flags them as reserved names.
       temp_path <- file.path(tempdir(), "pcdtests.stan")
       # Use local source Stan files if available (e.g. during
       # development), otherwise fall back to the installed package
