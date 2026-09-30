@@ -6,6 +6,8 @@
   `pcens_cdf()` and the vectorised Stan PMF use them in place of numerical integration, with the numerical path kept as a fallback outside their valid region, see `?pcens_cdf_exptilt`.
   The normal delay is the first analytical solution for a delay on the reals.
   See #367.
+- Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3).
+  See #370.
 
 ## Bug fixes
 

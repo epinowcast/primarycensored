@@ -5,10 +5,11 @@
 \alias{pcd_primary_distributions}
 \title{Supported primary event distributions}
 \format{
-A data.frame with 2 rows and 4 columns:
+A data.frame with 3 rows and 5 columns:
 \describe{
 \item{name}{Distribution name}
 \item{dprimary}{R density function name}
+\item{pprimary}{R distribution function name}
 \item{aliases}{Alternative names/identifiers}
 \item{stan_id}{Stan distribution ID used in the stan code}
 }

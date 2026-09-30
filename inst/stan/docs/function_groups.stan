@@ -5,6 +5,12 @@
  */
 
 /**
+ * @defgroup truncated_logistic_distributions Truncated Logistic Distribution Functions
+ * @brief Functions for truncated logistic distribution calculations, the primary event distribution with primary_id 3
+ * @ingroup ode
+ */
+
+/**
  * @defgroup primary_censored_distributions Primary Censored Distributions Functions
  * @brief Functions for computing primary censored distributions
  */

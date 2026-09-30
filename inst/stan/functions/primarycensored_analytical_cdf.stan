@@ -24,10 +24,10 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   *
   * The non-parametric step (26) and discrete-hazard (27, 28) delays are
   * analytic for every primary `primary_lcdf` currently supports, the uniform
-  * (1) and exponential growth (2). That list is repeated by hand below, so
-  * adding a primary to `primary_lcdf` does not extend the analytic path on
-  * its own: without a matching update here the new primary silently falls
-  * back to numerical integration.
+  * (1), exponential growth (2) and truncated logistic (3). That list is
+  * repeated by hand below, so adding a primary to `primary_lcdf` does not
+  * extend the analytic path on its own: without a matching update here the
+  * new primary silently falls back to numerical integration.
   *
   * The exponentially tilted solutions may not apply for given parameters,
   * see check_for_analytical_params().
@@ -44,7 +44,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (check_for_exptilt(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
-    return primary_id == 1 || primary_id == 2;
+    return primary_id == 1 || primary_id == 2 || primary_id == 3;
   }
   return 0; // No analytical solution for other combinations
 }

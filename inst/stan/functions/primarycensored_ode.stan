@@ -166,9 +166,10 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * call sites.
   *
   * @param p Primary event time in [0, pwindow]
-  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth)
+  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth,
+  *   3=truncated logistic)
   * @param primary_params Distribution parameters (empty for uniform;
-  *   [r] for expgrowth)
+  *   [r] for expgrowth; [location, scale] for the truncated logistic)
   * @param pwindow Primary event window width
   *
   * @return log(F_primary(p))
@@ -183,6 +184,8 @@ real primary_lcdf(real p, int primary_id, array[] real primary_params,
     return uniform_lcdf(p | 0, pwindow);
   } else if (primary_id == 2) {
     return expgrowth_lcdf(p | 0, pwindow, primary_params[1]);
+  } else if (primary_id == 3) {
+    return tlogis_lcdf(p | 0, pwindow, primary_params[1], primary_params[2]);
   }
   reject("primary_lcdf: unsupported primary_id ", primary_id);
 }
@@ -213,6 +216,9 @@ real primary_lpdf(real x, int primary_id, array[] real params, real xmin, real x
   // Implement switch for different primary distributions
   if (primary_id == 1) return uniform_lpdf(x | xmin, xmax);
   if (primary_id == 2) return expgrowth_lpdf(x | xmin, xmax, params[1]);
+  if (primary_id == 3) {
+    return tlogis_lpdf(x | xmin, xmax, params[1], params[2]);
+  }
   // Add more primary distributions as needed
   reject("Invalid primary distribution identifier");
 }
