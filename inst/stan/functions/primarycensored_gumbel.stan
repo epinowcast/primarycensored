@@ -391,6 +391,34 @@ vector gumbel_numeric_z_limits(data real d, int dist_id, data real pwindow,
 }
 
 /**
+  * Upper limit of the numerical integral in z that does not depend on the
+  * parameters
+  * @ingroup truncated_gumbel_solutions
+  *
+  * The window end, cut at d for delays on the non-negative reals. It is the
+  * upper limit of gumbel_numeric_z_limits() where the mass of the window
+  * reaches it. A value computed from data only is data in the autodiff sense,
+  * which a local variable of the caller is not, so the caller passes this
+  * function's result to the solver in place of the limit to keep the limit
+  * out of the sensitivities. For a delay whose CDF has an infinite slope at 0,
+  * which is a gamma or Weibull with a shape below 1, the sensitivity to an
+  * upper limit at d is singular and the solver cannot integrate it.
+  *
+  * @param d Delay
+  * @param dist_id Distribution identifier
+  * @param pwindow Primary event window
+  *
+  * @return The upper limit of z that is data
+  */
+real gumbel_numeric_z_data_limit(data real d, int dist_id,
+                                 data real pwindow) {
+  if (dist_has_positive_support(dist_id)) {
+    return fmin(pwindow, d);
+  }
+  return pwindow;
+}
+
+/**
   * Log CDF of the delay for the numerical integral, with finite partials
   * @ingroup truncated_gumbel_solutions
   *
@@ -843,9 +871,18 @@ real gumbel_numeric_z_lcdf(data real d, int dist_id, array[] real params,
     );
   }
   if (z_high > z_peak) {
-    integral += gumbel_numeric_z_half(
-      d, dist_id, params, pwindow, mu, beta, z_peak, z_high, log_shift
-    );
+    // An upper limit at the window end or d is passed as data, see
+    // gumbel_numeric_z_data_limit()
+    if (z_high >= gumbel_numeric_z_data_limit(d, dist_id, pwindow)) {
+      integral += gumbel_numeric_z_half(
+        d, dist_id, params, pwindow, mu, beta, z_peak,
+        gumbel_numeric_z_data_limit(d, dist_id, pwindow), log_shift
+      );
+    } else {
+      integral += gumbel_numeric_z_half(
+        d, dist_id, params, pwindow, mu, beta, z_peak, z_high, log_shift
+      );
+    }
   }
   if (!(integral > 0)) {
     return negative_infinity();
