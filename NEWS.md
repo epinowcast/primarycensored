@@ -8,7 +8,19 @@
 - `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, and its gradient with respect to `k` is accurate there.
   This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary (#387).
   `gengamma_lcdf()` now rejects negative `y` explicitly.
-  The `gamma_lcdf()` gradient can still fail for large shapes at x above about the shape.
+- A bug was fixed where a Gamma delay with a uniform primary returned `-Inf` for the log CDF deep in the lower tail, and `NaN` once truncation normalisers were subtracted.
+  The terms of the analytical solution took the difference of two log CDFs that both underflow there.
+  They now come from a new `gamma_lcdf_logx_pair()`, which gives the log CDFs for shapes `a` and `a + 1` from one evaluation with no subtraction.
+  `dist_lcdf()` for a Gamma delay also uses `gamma_lcdf_logx()`, so the numerical path is finite in the same region.
+  See #381.
+- Stan gradients for Gamma and generalised gamma delays with a large shape are now accurate.
+  Stan's `gamma_lcdf()` has a gradient with respect to its shape that is `NaN` or throws "n (internal counter) exceeded 100000 iterations" for a shape of about 700 or more, anywhere in the body or the tail.
+  It is also off by about 1e-14 and then `NaN` in the upper tail for a shape of about 10 or more.
+  This affects gamma and generalised gamma delays with `k` above about 1000 (coefficient of variation below about 3%), whose fits rejected proposals in the body of the distribution.
+  `gamma_lcdf_logx()` now evaluates the incomplete gamma series for x below the shape plus one and a continued fraction above it, both on the log scale, for a shape of 10 or more.
+  They have a relative error of 1e-9 or below in the value and 5e-9 or below in the gradient for a shape up to 3e4.
+  For a shape below 10 it is unchanged, except in the lower tail from #363.
+  The analytical solution takes about 1.0 to 2 times as long for a shape below 100 and is faster above, see #381.
 
 # primarycensored 1.6.0
 

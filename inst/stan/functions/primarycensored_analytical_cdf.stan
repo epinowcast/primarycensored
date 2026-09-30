@@ -82,6 +82,16 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
+  * Both terms stay finite deep in the lower tail, where `gamma_lcdf`
+  * underflows to `-inf`, and their gradients stay finite and accurate for
+  * large shapes, because they use `gamma_lcdf_logx_pair()`.
+  * primarycensored_uniform_lcdf_from_terms() subtracts two nearly equal
+  * terms, which amplifies their rounding error by about d / pwindow. On a
+  * grid with shape 3 to 1e5, rate 0.05 and 1, pwindow 0.5 to 50 and d from
+  * 12 standard deviations below to 10 above the mean, the absolute error
+  * of the log result was at most 3e-12 for a shape up to 30, 2e-10 at 300,
+  * 2e-9 at 3000, 2e-8 at 1e4 and 1.3e-6 at 1e5.
+  *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
   *
@@ -97,13 +107,14 @@ vector primarycensored_gamma_uniform_terms(real t,
   real rate = params[2];
   // log E where E = k * theta = shape / rate is the mean of the delay
   real log_E = log(shape) - log(rate);
-  // F_T(t; k) and the recursion to F_T(t; k+1):
-  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1), with y = rate * t
-  real log_F_T_k = gamma_lcdf(t | shape, rate);
-  real gamma_kp1_pdf_log = shape * log(rate * t) - rate * t
-                           - lgamma(shape + 1);
-  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_kp1_pdf_log);
-  return [log(t) + log_F_T_k, log_E + log_F_T_kp1]';
+  // Both CDFs are evaluated at the same log of y = rate * t, from one series
+  // or fraction. They are finite deep in the lower tail, see
+  // `gamma_lcdf_logx_pair()`, which avoids the subtraction
+  // P(k + 1, y) = P(k, y) - y^k e^{-y} / Gamma(k + 1) that loses all
+  // precision there.
+  real log_t = log(t);
+  vector[2] log_F_T = gamma_lcdf_logx_pair(log_t + log(rate), shape);
+  return [log_t + log_F_T[1], log_E + log_F_T[2]]';
 }
 
 /**
