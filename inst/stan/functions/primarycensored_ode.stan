@@ -137,9 +137,12 @@ real gamma_lccdf_cf_logx(real log_x, real a) {
   * @param a Shape parameter of the Gamma distribution (a > 0)
   *
   * @return log P(a, exp(log_x)), `-inf` when `log_x` is `-inf` and 0 when
-  * it is `inf`
+  * it is `inf`. Rejects a <= 0 and `nan`.
   */
 real gamma_lcdf_logx(real log_x, real a) {
+  if (!(a > 0)) {
+    reject("gamma_lcdf_logx: shape must be positive, found a = ", a);
+  }
   if (log_x == negative_infinity()) {
     return negative_infinity();
   }
@@ -193,9 +196,13 @@ real gamma_lcdf_logx(real log_x, real a) {
   * @param log_x Log of the argument, log(x) with x > 0
   * @param a Shape parameter of the Gamma distribution (a > 0)
   *
-  * @return Vector [log P(a, exp(log_x)), log P(a + 1, exp(log_x))]
+  * @return Vector [log P(a, exp(log_x)), log P(a + 1, exp(log_x))].
+  * Rejects a <= 0 and `nan`.
   */
 vector gamma_lcdf_logx_pair(real log_x, real a) {
+  if (!(a > 0)) {
+    reject("gamma_lcdf_logx_pair: shape must be positive, found a = ", a);
+  }
   if (log_x == negative_infinity()) {
     return rep_vector(negative_infinity(), 2);
   }
