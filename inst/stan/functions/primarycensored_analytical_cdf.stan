@@ -105,6 +105,11 @@ vector primarycensored_gamma_uniform_terms(real t,
   }
   real shape = params[1];
   real rate = params[2];
+  // The rate enters only through its log, so check it here
+  if (!(rate > 0) || is_inf(rate)) {
+    reject("primarycensored_gamma_uniform_terms: rate must be positive ",
+           "finite, found ", rate);
+  }
   // log E where E = k * theta = shape / rate is the mean of the delay
   real log_E = log(shape) - log(rate);
   // Both CDFs are evaluated at the same log of y = rate * t, from one series

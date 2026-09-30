@@ -362,6 +362,11 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
            : lognormal_lcdf(delay | params[1], params[2]);
   }
   else if (dist_id == 2) {
+    // The rate enters only through its log, so check it here
+    if (!(params[2] > 0) || is_inf(params[2])) {
+      reject("dist_lcdf: Gamma rate must be positive finite, found ",
+             params[2]);
+    }
     return gamma_lcdf_logx(log(delay) + log(params[2]), params[1]);
   }
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
