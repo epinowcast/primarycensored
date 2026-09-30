@@ -3,7 +3,6 @@
 ## Performance
 
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster per call, with results unchanged to rounding.
-  A scalar call takes about 40 to 70% of the time on 1.6.0, and a call with 200 delays about 70 to 90%.
   See #378 and #380.
 
 ## Bug fixes

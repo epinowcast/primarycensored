@@ -81,10 +81,15 @@ test_that(".pcens_cdf_uniform combines the terms at both ends of the window
   terms_fn <- function(t) {
     t * -expm1(-rate * t) - (1 - exp(-rate * t) * (1 + rate * t)) / rate
   }
+  # The upper tail terms are H(t) = t S(t) - E tilde S(t) = -exp(-rate t) / rate
+  upper_fn <- function(t) -exp(-rate * t) / rate
   q <- c(-1, 0, 0.2, 0.9, 1, 3, 10, 40)
   for (pwindow in c(0.5, 1, 4)) {
     expect_close(
-      .pcens_cdf_uniform(q, pwindow, terms_fn),
+      .pcens_cdf_uniform(
+        q, pwindow, terms_fn, upper_fn, 1 / rate,
+        function(t) pexp(t, rate)
+      ),
       unif_reference(pexp, q, pwindow, rate = rate)
     )
   }
@@ -167,6 +172,34 @@ test_that("uniform primary analytical CDFs match numerical integration for
       info = paste(toString(unlist(case[[2]])), "pwindow", case[[4]])
     )
   }
+})
+
+test_that("uniform primary analytical CDFs handle a vector pwindow with both
+  narrow and wide windows", {
+  q <- c(5, 4e3, 1e5, 3)
+  pwindow <- c(1e-7, 1, 1e-2, 1e-9)
+  for (case in unif_cases()) {
+    obj <- do.call(
+      new_pcens, c(list(case$pdist, dunif), case$grid[[3]])
+    )
+    expect_equal(
+      pcens_cdf(obj, q, pwindow),
+      vapply(
+        seq_along(q), function(i) pcens_cdf(obj, q[[i]], pwindow[[i]]),
+        numeric(1)
+      ),
+      tolerance = 1e-14,
+      info = case$name
+    )
+  }
+})
+
+test_that("check_pwindow errors for missing q and invalid pwindow", {
+  expect_null(check_pwindow(c(1, 2), c(0, 1)))
+  expect_error(check_pwindow(NA_real_, 1), "q must not")
+  expect_error(check_pwindow(1, numeric(0)), "pwindow")
+  expect_error(check_pwindow(1, NA_real_), "pwindow")
+  expect_error(check_pwindow(1, -1), "pwindow")
 })
 
 test_that("uniform primary analytical CDFs warn when q and a vector pwindow

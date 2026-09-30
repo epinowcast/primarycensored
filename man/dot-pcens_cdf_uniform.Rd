@@ -4,14 +4,7 @@
 \alias{.pcens_cdf_uniform}
 \title{Uniform primary event censored CDF from terms at the window ends}
 \usage{
-.pcens_cdf_uniform(
-  q,
-  pwindow,
-  terms_fn,
-  upper_fn = NULL,
-  switch_at = Inf,
-  delay_cdf = NULL
-)
+.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, switch_at, delay_cdf)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -24,17 +17,15 @@ equal to zero, returning \eqn{G} at each.
 Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
 delay, is done inside \code{terms_fn}.}
 
-\item{upper_fn}{Optional function of a numeric vector of delays, all
+\item{upper_fn}{Function of a numeric vector of delays, all
 greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
 at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
 and partial expectation distributions.}
 
-\item{switch_at}{Delay above which the window start may use \code{upper_fn}.
-Only used if \code{upper_fn} is supplied.}
+\item{switch_at}{Delay above which the window start may use \code{upper_fn}.}
 
-\item{delay_cdf}{Optional function of a numeric vector of delays returning
-the delay CDF.
-Required if \code{pwindow} contains zeros, and used for very narrow windows.}
+\item{delay_cdf}{Function of a numeric vector of delays returning the delay
+CDF, used for zero-width and very narrow windows.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -46,14 +37,13 @@ For a delay with mean \eqn{E} and a uniform primary event window of width
 \eqn{G(t) = t F(t) - E \tilde F(t)}, where \eqn{F} is the delay CDF and
 \eqn{\tilde F} is the CDF of the partial expectation distribution.
 A delay distribution with an analytical solution of this form is added by
-supplying \code{terms_fn}.
-\code{upper_fn} and \code{delay_cdf} are optional and give the far upper tail and
-narrow window forms, see \code{.uniform_window_cdf()}.
+supplying \code{terms_fn}, with \code{upper_fn} and \code{delay_cdf} for the far upper
+tail and very narrow windows, see \code{.uniform_window_cdf()}.
 }
 \details{
 Delays at or below zero give 0 and delays of \code{Inf} give 1.
-Missing delays are an error, as before,
-and \code{.dpcens()} and \code{.ppcens()} turn that into \code{NaN}.
+Missing delays are an error, which \code{.dpcens()} and \code{.ppcens()} turn into
+\code{NaN}.
 Elements of \code{pwindow} equal to 0 are exact primary events and give the
 delay CDF, from \code{delay_cdf}.
 \code{q} and \code{pwindow} are recycled against each other, with a warning if the

@@ -290,13 +290,12 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #' \eqn{G(t) = t F(t) - E \tilde F(t)}, where \eqn{F} is the delay CDF and
 #' \eqn{\tilde F} is the CDF of the partial expectation distribution.
 #' A delay distribution with an analytical solution of this form is added by
-#' supplying `terms_fn`.
-#' `upper_fn` and `delay_cdf` are optional and give the far upper tail and
-#' narrow window forms, see `.uniform_window_cdf()`.
+#' supplying `terms_fn`, with `upper_fn` and `delay_cdf` for the far upper
+#' tail and very narrow windows, see `.uniform_window_cdf()`.
 #'
 #' Delays at or below zero give 0 and delays of `Inf` give 1.
-#' Missing delays are an error, as before,
-#' and `.dpcens()` and `.ppcens()` turn that into `NaN`.
+#' Missing delays are an error, which `.dpcens()` and `.ppcens()` turn into
+#' `NaN`.
 #' Elements of `pwindow` equal to 0 are exact primary events and give the
 #' delay CDF, from `delay_cdf`.
 #' `q` and `pwindow` are recycled against each other, with a warning if the
@@ -309,35 +308,23 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'  Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
 #'  delay, is done inside `terms_fn`.
 #'
-#' @param upper_fn Optional function of a numeric vector of delays, all
+#' @param upper_fn Function of a numeric vector of delays, all
 #'  greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
 #'  at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
 #'  and partial expectation distributions.
 #'
 #' @param switch_at Delay above which the window start may use `upper_fn`.
-#'  Only used if `upper_fn` is supplied.
 #'
-#' @param delay_cdf Optional function of a numeric vector of delays returning
-#'  the delay CDF.
-#'  Required if `pwindow` contains zeros, and used for very narrow windows.
+#' @param delay_cdf Function of a numeric vector of delays returning the delay
+#'  CDF, used for zero-width and very narrow windows.
 #'
 #' @return Numeric vector of CDF values in \[0, 1\].
 #'
 #' @keywords internal
-.pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn = NULL,
-                               switch_at = Inf, delay_cdf = NULL) {
-  if (anyNA(q)) {
-    stop("q must not contain missing values.", call. = FALSE)
-  }
-  n_window <- length(pwindow)
-  if (n_window == 0L || anyNA(pwindow) || min(pwindow) < 0) {
-    stop(
-      "pwindow must be non-negative with no missing values.",
-      call. = FALSE
-    )
-  }
-  vector_window <- n_window > 1L
-  if (vector_window && length(q) != n_window) {
+.pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn, switch_at,
+                               delay_cdf) {
+  check_pwindow(q, pwindow)
+  if (length(pwindow) > 1L && length(q) != length(pwindow)) {
     if (length(q) == 0L) {
       return(numeric(0))
     }
@@ -358,9 +345,6 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   result <- numeric(length(q))
   result[q == Inf] <- 1
   if (has_exact) {
-    if (is.null(delay_cdf)) {
-      stop("delay_cdf is required when pwindow contains zeros.", call. = FALSE)
-    }
     # Exact primary events are the delay CDF
     exact <- active & pwindow == 0
     if (any(exact)) {
@@ -381,12 +365,34 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 # Subset a window width that is either a single value or one per delay
 .pick <- function(x, i) if (length(x) > 1L) x[i] else x
 
+#' Check the delays and window widths of a uniform primary CDF
+#'
+#' Errors if `q` has missing values or `pwindow` is empty, has missing values
+#' or is negative.
+#'
+#' @inheritParams .pcens_cdf_uniform
+#'
+#' @return `NULL`, invisibly.
+#'
+#' @keywords internal
+check_pwindow <- function(q, pwindow) {
+  if (anyNA(q)) {
+    stop("q must not contain missing values.", call. = FALSE)
+  }
+  if (length(pwindow) == 0L || anyNA(pwindow) || min(pwindow) < 0) {
+    stop(
+      "pwindow must be non-negative with no missing values.",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' Recycle delays and a vector of windows against each other
 #'
 #' @inheritParams .pcens_cdf_uniform
 #'
-#' @return A list with `q` and `pwindow` of the same length.
-#' A warning is given if the longer length is not a multiple of the shorter.
+#' @return A list with `q` and `pwindow` recycled to the same length.
 #'
 #' @keywords internal
 .recycle_window <- function(q, pwindow) {
@@ -400,11 +406,15 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   list(q = rep_len(q, n), pwindow = rep_len(pwindow, n))
 }
 
+# Delays more than `.upper_tail_ratio` windows wide may use the survival form,
+# and delays more than `.narrow_window_ratio` windows wide use the mean of the
+# delay CDF over the window
+.upper_tail_ratio <- 1e3
+.narrow_window_ratio <- 1e6
+
 #' Uniform primary CDF for positive, finite delays and positive windows
 #'
-#' Chooses between the lower tail, upper tail and narrow window forms of
-#' `.pcens_cdf_uniform()` for each delay.
-#' The forms and their thresholds are described in the comments in the code.
+#' Chooses the lower tail, upper tail or narrow window form for each delay.
 #'
 #' @param d Numeric vector of finite delays greater than 0.
 #'
@@ -412,17 +422,17 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'
 #' @inheritParams .pcens_cdf_uniform
 #'
-#' @return Numeric vector of CDF values not clamped to [0, 1].
+#' @return Numeric vector of CDF values not clamped to \[0, 1\].
 #'
 #' @keywords internal
 .uniform_window_cdf <- function(d, w, terms_fn, upper_fn, switch_at,
-                                delay_cdf = NULL) {
+                                delay_cdf) {
   # Both tail forms below lose about 1e-16 * max(|G|, |H|) / w, so they are
-  # not accurate for windows narrower than 1e-6 of the delay. There the
-  # result is the mean of the delay CDF over the window. The error model
-  # gives about 1e-10 at the cutoff. This needs d > w, so the window starts
-  # above 0.
-  narrow <- if (is.null(delay_cdf)) FALSE else d > 1e6 * w
+  # not accurate for windows much narrower than the delay. Beyond
+  # `.narrow_window_ratio` the result is the mean of the delay CDF over the
+  # window instead. The error model gives about 1e-10 at that ratio. This
+  # needs d > w, so the window starts above 0.
+  narrow <- d > .narrow_window_ratio * w
   if (any(narrow)) {
     if (all(narrow)) {
       return(.narrow_window_cdf(d, w, delay_cdf))
@@ -432,7 +442,7 @@ pcens_cdf.pcens_pdiscretehazard <- function(
       d[narrow], .pick(w, narrow), delay_cdf
     )
     result[!narrow] <- .uniform_window_cdf(
-      d[!narrow], .pick(w, !narrow), terms_fn, upper_fn, switch_at
+      d[!narrow], .pick(w, !narrow), terms_fn, upper_fn, switch_at, delay_cdf
     )
     return(result)
   }
@@ -441,13 +451,9 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   # difference loses all precision and can return 0 where the answer is 1.
   # With H(t) = t S(t) - E S~(t), G(t) = t - E - H(t), so for d >= w the CDF
   # is 1 - (H(d) - H(lo)) / w, which has no far tail cancellation. It is only
-  # needed for delays many windows wide (above 1000) whose window starts above
-  # the delay mean, which keeps it off the usual path.
-  up <- if (is.null(upper_fn)) {
-    FALSE
-  } else {
-    lo > switch_at & d > 1e3 * w
-  }
+  # needed for delays more than `.upper_tail_ratio` windows wide whose window
+  # starts above the delay mean, which keeps it off the usual path.
+  up <- lo > switch_at & d > .upper_tail_ratio * w
   if (!any(up)) {
     return((terms_fn(d) - terms_fn(lo)) / w)
   }
@@ -462,10 +468,8 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 
 #' Mean of the delay CDF over a narrow uniform primary window
 #'
-#' The uniform primary CDF is \eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
-#' This applies a 5 point Gauss-Legendre rule, which is exact for polynomials
-#' of degree 9 and so accurate to rounding when the window is a small fraction
-#' of the delay, see `.uniform_window_cdf()`.
+#' Applies a 5 point Gauss-Legendre rule to
+#' \eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
 #'
 #' @param d Numeric vector of delays with `d > w`.
 #'

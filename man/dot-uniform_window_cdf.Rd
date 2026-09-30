@@ -4,7 +4,7 @@
 \alias{.uniform_window_cdf}
 \title{Uniform primary CDF for positive, finite delays and positive windows}
 \usage{
-.uniform_window_cdf(d, w, terms_fn, upper_fn, switch_at, delay_cdf = NULL)
+.uniform_window_cdf(d, w, terms_fn, upper_fn, switch_at, delay_cdf)
 }
 \arguments{
 \item{d}{Numeric vector of finite delays greater than 0.}
@@ -16,24 +16,20 @@ equal to zero, returning \eqn{G} at each.
 Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
 delay, is done inside \code{terms_fn}.}
 
-\item{upper_fn}{Optional function of a numeric vector of delays, all
+\item{upper_fn}{Function of a numeric vector of delays, all
 greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
 at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
 and partial expectation distributions.}
 
-\item{switch_at}{Delay above which the window start may use \code{upper_fn}.
-Only used if \code{upper_fn} is supplied.}
+\item{switch_at}{Delay above which the window start may use \code{upper_fn}.}
 
-\item{delay_cdf}{Optional function of a numeric vector of delays returning
-the delay CDF.
-Required if \code{pwindow} contains zeros, and used for very narrow windows.}
+\item{delay_cdf}{Function of a numeric vector of delays returning the delay
+CDF, used for zero-width and very narrow windows.}
 }
 \value{
-Numeric vector of CDF values not clamped to \link{0, 1}.
+Numeric vector of CDF values not clamped to [0, 1].
 }
 \description{
-Chooses between the lower tail, upper tail and narrow window forms of
-\code{.pcens_cdf_uniform()} for each delay.
-The forms and their thresholds are described in the comments in the code.
+Chooses the lower tail, upper tail or narrow window form for each delay.
 }
 \keyword{internal}

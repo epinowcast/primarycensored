@@ -11,17 +11,14 @@
 
 \item{w}{Window width, a single value or one per delay.}
 
-\item{delay_cdf}{Optional function of a numeric vector of delays returning
-the delay CDF.
-Required if \code{pwindow} contains zeros, and used for very narrow windows.}
+\item{delay_cdf}{Function of a numeric vector of delays returning the delay
+CDF, used for zero-width and very narrow windows.}
 }
 \value{
 Numeric vector of CDF values.
 }
 \description{
-The uniform primary CDF is \eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
-This applies a 5 point Gauss-Legendre rule, which is exact for polynomials
-of degree 9 and so accurate to rounding when the window is a small fraction
-of the delay, see \code{.uniform_window_cdf()}.
+Applies a 5 point Gauss-Legendre rule to
+\eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
 }
 \keyword{internal}
