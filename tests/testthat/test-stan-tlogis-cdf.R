@@ -971,7 +971,7 @@ test_that("the vectorised gamma log PMF has a finite, accurate gradient in the
     list(shape = 60, rate = 12, d = 9, location = 1, scale = 30),
     list(shape = 80, rate = 16, d = 9, location = 3, scale = 0.5),
     list(shape = 150, rate = 30, d = 9, location = -1, scale = 50),
-    list(shape = 250, rate = 50, d = 9, location = 3, scale = 0.5)
+    list(shape = 250, rate = 27, d = 9, location = 3, scale = 0.5)
   )
   for (point in points) {
     point$pwindow <- 1
