@@ -73,8 +73,7 @@ test_that("the truncation rule gives no rule where too many terms are needed", {
 test_that("the weights taper from 1 to 0", {
   weights <- .tlogis_weights(3L, 5L)
   expect_identical(weights[1:3], rep(1, 3))
-  expect_equal(weights[4:8], pbinom(4:0, 5, 0.5, lower.tail = FALSE) |>
-    (\(x) x)() |> rev() |> rev())
+  expect_identical(weights[4:8], pbinom(0:4, 5, 0.5, lower.tail = FALSE))
   expect_true(all(diff(weights) <= 0))
   expect_identical(.tlogis_weights(4L, 0L), rep(1, 4))
 })
@@ -264,7 +263,7 @@ test_that("the analytic CDF is monotone, bounded and handles special q", {
   gamma_obj <- tlogis_object(families[[3]], 3, 0.5)
   expect_identical(pcens_cdf(gamma_obj, c(-3, 0), 2), c(0, 0))
   # pwindow = 0 is the delay CDF
-  expect_equal(pcens_cdf(obj, 3, 0), pnorm(3, 3, 2))
+  expect_identical(pcens_cdf(obj, 3, 0), pnorm(3, 3, 2))
 })
 
 test_that("a window that is not finite or positive uses the default method", {
@@ -289,17 +288,17 @@ test_that("pcens_pmf, pprimarycensored and truncation use the analytic CDF", {
   obj <- tlogis_object(family, 0.5, 0.2)
   pmf <- pcens_pmf(obj, 0:12, pwindow = 2, swindow = 1)
   cdf <- pcens_cdf(obj, 0:13, 2)
-  expect_equal(pmf, diff(cdf))
+  expect_identical(pmf, diff(cdf))
   ref <- tlogis_reference(
     0:13, 2, 0.5, 0.2, exptilt_cdf(family), FALSE
   )
   expect_equal(pmf, diff(ref), tolerance = 1e-8)
-  truncated <- pcens_pmf(obj, 0:12, pwindow = 2, L = 1, D = 13)
+  truncated <- pcens_pmf(obj, 1:12, pwindow = 2, L = 1, D = 13)
   expect_equal(
-    truncated[-1], diff(ref)[-1] / (ref[14] - ref[2]),
+    truncated, diff(ref)[2:13] / (ref[14] - ref[2]),
     tolerance = 1e-8
   )
-  expect_equal(
+  expect_identical(
     pprimarycensored(
       c(1, 4), pnorm, dprimary = dtlogis, pwindow = 2,
       primary_args = list(location = 0.5, scale = 0.2),
@@ -312,35 +311,34 @@ test_that("pcens_pmf, pprimarycensored and truncation use the analytic CDF", {
 test_that("each endpoint is evaluated once for integer delays", {
   # The CDF at q needs the transforms at q and q - pwindow. Over neighbouring
   # integer q these are the same integer endpoints, and with an integer
-  # location the split point q - location is one of them too.
+  # location the split point q - location is one of them too. A transform
+  # call evaluates each of its distinct points once.
   counts <- new.env()
   counts$points <- 0
-  counts$calls <- 0
   original <- .pcens_tilt_transform
   local_mocked_bindings(
     .pcens_tilt_transform = function(object, t, xi, upper = FALSE) {
-      counts$points <- counts$points + length(t)
-      counts$calls <- counts$calls + 1
+      counts$points <- max(counts$points, length(unique(t)))
       original(object, t, xi, upper)
     }
   )
   family <- normals[[1]]
-  for (location in c(-1, 1, 2, 3.5)) {
+  for (location in c(-1, 0.5, 1, 2, 3.5)) {
     counts$points <- 0
-    counts$calls <- 0
     obj <- tlogis_object(family, location, 0.7)
     pcens_cdf(obj, 0:20, 2)
-    # 21 delays and their neighbours at q - 2 give 23 endpoints, plus the
-    # points of a non-integer split that are all different
+    # 21 delays and their neighbours at q - 2 give 23 endpoints. The points
+    # q - location of a location inside the window that is not an integer
+    # are all different.
     split_points <- if (location > 0 && location < 2 && location %% 1 != 0) {
       21
     } else {
       0
     }
-    per_call <- (counts$points - 0) / counts$calls
     expect_lte(
-      per_call, 23 + split_points,
+      counts$points, 23 + split_points,
       label = paste("location", location)
     )
+    expect_gte(counts$points, 23)
   }
 })

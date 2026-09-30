@@ -16,7 +16,12 @@
 #' * `.pcens_tilt_available()`, whether the closed form applies for a tilt.
 #' * `.pcens_tilt_transform()`, the transform on the log scale.
 #' * Optionally `.pcens_tilt_moments()`, which is only needed by the small
-#'   tilt forms of [pcens_cdf.pcens_pexp_dexpgrowth()].
+#'   tilt forms of [pcens_cdf.pcens_pexp_dexpgrowth()] and the small delay
+#'   form of [pcens_cdf_tlogis].
+#' * Optionally `.pcens_tilt_vectorised()`, returning `TRUE` if
+#'   `.pcens_tilt_transform()` accepts a vector `xi` of the length of `t`,
+#'   one tilt for each point. Windows that need many tilts at the same
+#'   endpoints, such as [pcens_cdf_tlogis], then evaluate them in one call.
 #'
 #' The Stan equivalents are `check_for_tilt_transform()`,
 #' `log_tilt_transform()`, `log_tilt_transform_upper()` and
@@ -27,9 +32,10 @@
 #' @param t Numeric vector of finite points at which to evaluate the
 #'   transform.
 #'
-#' @param xi Tilt \eqn{\xi}, a single number. The exponentially tilted window
-#'   with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the
-#'   delay CDF.
+#' @param xi Tilt \eqn{\xi}, a single number, or for methods with
+#'   `.pcens_tilt_vectorised()` a vector of the length of `t`. The exponentially
+#'   tilted window with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and
+#'   \eqn{\xi = 0} gives the delay CDF.
 #'
 #' @param upper Logical. If `TRUE` return the transform over \eqn{(t, \infty)}
 #'   rather than over the lower end of the support up to `t`. Evaluating the
@@ -43,6 +49,8 @@
 #'   tilted delay distribution exists for `xi`, otherwise `FALSE`. Callers use
 #'   the numerical method when it is `FALSE`.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
+#' * `.pcens_tilt_vectorised()`: `TRUE` if a vector `xi` is accepted, otherwise
+#'   `FALSE`.
 #' * `.pcens_tilt_moments()`: a matrix with two columns, the log of the first
 #'   and second moments of the delay about `t`, see
 #'   [pcens_cdf.pcens_pexp_dexpgrowth()].
@@ -71,6 +79,17 @@ NULL
 #' @rdname tilt_transform
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
+}
+
+#' @rdname tilt_transform
+.pcens_tilt_vectorised <- function(object) {
+  UseMethod(".pcens_tilt_vectorised")
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_vectorised.default <- function(object) {
+  FALSE
 }
 
 #' @rdname tilt_transform
@@ -196,15 +215,21 @@ NULL
   # rate - xi, so the transform is the tilted gamma CDF times the total
   # T_f(xi; Inf) = (rate / (rate - xi))^shape.
   p <- .gamma_shape_rate(object)
-  tilted_rate <- p$rate - xi
+  tilted_rate <- rep_len(p$rate - xi, length(t))
   log_total <- p$shape * (log(p$rate) - log(tilted_rate))
-  out <- rep(if (upper) log_total else -Inf, length(t))
+  out <- if (upper) log_total else rep(-Inf, length(t))
   positive <- t > 0
-  out[positive] <- log_total + stats::pgamma(
-    t[positive] * tilted_rate,
+  out[positive] <- log_total[positive] + stats::pgamma(
+    t[positive] * tilted_rate[positive],
     shape = p$shape, lower.tail = !upper, log.p = TRUE
   )
   out
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_vectorised.pcens_pgamma <- function(object) {
+  TRUE
 }
 
 #' @rdname tilt_transform
@@ -236,16 +261,22 @@ NULL
 .pcens_tilt_transform.pcens_pexp <- function(object, t, xi, upper = FALSE) {
   # T_f(xi; t) = rate / (rate - xi) * (1 - exp(-(rate - xi) t))
   rate <- .exp_rate(object)
-  tilted_rate <- rate - xi
+  tilted_rate <- rep_len(rate - xi, length(t))
   log_total <- log(rate) - log(tilted_rate)
-  out <- rep(if (upper) log_total else -Inf, length(t))
+  out <- if (upper) log_total else rep(-Inf, length(t))
   positive <- t > 0
-  out[positive] <- log_total + if (upper) {
-    -tilted_rate * t[positive]
+  out[positive] <- log_total[positive] + if (upper) {
+    -tilted_rate[positive] * t[positive]
   } else {
-    .log1m_exp(-tilted_rate * t[positive])
+    .log1m_exp(-tilted_rate[positive] * t[positive])
   }
   out
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_vectorised.pcens_pexp <- function(object) {
+  TRUE
 }
 
 #' Normal delay parameters of a pcens object
@@ -273,6 +304,12 @@ NULL
 #' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_available.pcens_pnorm <- function(object, xi) {
+  TRUE
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_vectorised.pcens_pnorm <- function(object) {
   TRUE
 }
 
