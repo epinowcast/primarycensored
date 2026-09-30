@@ -35,7 +35,7 @@
   See #370.
 - The numerical paths split the integral around a narrow truncated logistic density, and the Stan ODE uses tighter tolerances for it, so the CDF is no longer too small for a small scale.
   See #370.
-- The exponential and gamma tilt transforms in Stan keep the log of the far upper tail of a gamma finite, and the normal tilt transform in R no longer loses `xi * sd^2` to rounding.
+- The gamma tilt transform in Stan keeps the log of the far upper tail finite, and the normal tilt transform in R no longer loses `xi * sd^2` to rounding.
   See #370.
 
 ## Bug fixes
