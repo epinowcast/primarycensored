@@ -1,5 +1,13 @@
 # primarycensored (development version)
 
+## Features
+
+- New experimental function `pcens_loglik_fn()` returns a function of the delay distribution parameters that gives the log-likelihood of each observation, for use in an external optimiser or sampler.
+  It groups observations by their censoring and truncation settings and validates `pdist` and `dprimary` once.
+  Each call then updates one `pcens` object and evaluates `pcens_pmf()` once per group, at the unique delays of the group.
+  `pwindow`, `swindow`, `L` and `D` can each be a single value or one value per observation.
+  See #376.
+
 ## Bug fixes
 
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
@@ -13,6 +21,9 @@
   The default, `check = TRUE`, is unchanged.
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
+- `fitdistdoublecens()` evaluates its likelihood once per unique delay within each group of observations, using the same code as `pcens_loglik_fn()`.
+  Estimates are unchanged.
+  See #376.
 
 # primarycensored 1.6.0
 

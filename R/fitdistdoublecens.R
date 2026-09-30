@@ -442,32 +442,24 @@ fitdistdoublecens <- function(
       state <- .fit_pcens_state(
         pcens_cache, pdist, dprimary, primary_args, pprimary, list(...)
       )
-      dcols <- c("swindow", "pwindow", "L", "D")
       if (length(x) != nrow(params)) {
         # fitdistrplus checks the density on short test vectors
-        groups <- .param_groups(.recycle_params(params, length(x)), dcols)
+        rows <- .recycle_params(params, length(x))
+        groups <- .pcens_row_groups(
+          x, rows$pwindow, rows$swindow, rows$L, rows$D
+        )
       } else {
-        if (is.null(state$dgroups)) {
-          state$dgroups <- .param_groups(params, dcols)
+        # The grouping depends on the delays as well as the settings, so
+        # rebuild it if they change
+        if (is.null(state$dgroups) || !identical(state$dx, x)) {
+          state$dgroups <- .pcens_row_groups(
+            x, params$pwindow, params$swindow, params$L, params$D
+          )
+          state$dx <- x
         }
         groups <- state$dgroups
       }
-      if (length(groups) == 1L) {
-        g <- groups[[1L]]
-        pcens_pmf(
-          state$obj, x, g$pwindow,
-          swindow = g$swindow, L = g$L, D = g$D
-        )
-      } else {
-        result <- numeric(length(x))
-        for (g in groups) {
-          result[g$mask] <- pcens_pmf(
-            state$obj, x[g$mask], g$pwindow,
-            swindow = g$swindow, L = g$L, D = g$D
-          )
-        }
-        result
-      }
+      .pcens_pmf_groups(state$obj, groups, length(x))
     },
     error = function(e) {
       rep(NaN, length(x))
