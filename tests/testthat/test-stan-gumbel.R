@@ -1011,11 +1011,13 @@ test_that("the model rejects the reserved primary identifier 3", {
       error = function(e) NULL
     )),
     message = function(m) {
-      messages <<- c(messages, conditionMessage(m))
+      messages <<- c(messages, conditionMessage(m)) # nolint
       invokeRestart("muffleMessage")
     }
   )
-  expect_true(any(grepl("primary_id 3 is reserved", messages)))
+  expect_true(
+    any(grepl("primary_id 3 is reserved", messages, fixed = TRUE))
+  )
 })
 
 test_that(

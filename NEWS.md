@@ -27,8 +27,10 @@
 - Added a series solution for the truncated Gumbel primary with exponential, gamma and normal delays, built from the transform of the delay at the tilts `n / beta`.
   In R `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dtgumbel()`, `pcens_cdf.pcens_pgamma_dtgumbel()` and `pcens_cdf.pcens_pnorm_dtgumbel()`, and in Stan the solution is `primarycensored_gumbel_lcdf()` and the vectorised `primarycensored_gumbel_lcdf_vectorized()`, which computes the transforms once per integer delay and shares them between the two windows that use the endpoint.
   The series alternates, so the terms are accumulated on the log scale with the odd and even terms separate, and the relative error is estimated for each delay.
-  The numerical path is used for delays where it is above 1e-9, and for parameters where `mu / beta` is above `log(15)` or the delay has no transform at the largest tilt (`check_for_gumbel_params()` in Stan).
+  The numerical path is used for delays where it is above 1e-8, the accuracy of the numerical path, and for parameters where `mu / beta` is above `log(15)` or the delay has no transform at the largest tilt (`check_for_gumbel_params()` in Stan).
+  The numerical path integrates in the variable in which a narrow window density is smooth, so it is accurate for any `mu / beta`, and in Stan it does not return a CDF above 1 or a NaN log CDF.
   The exponential and gamma delays need a rate above the number of terms over `beta`, so in practice the series is for normal delays and for short exponential and gamma delays.
+  This limit comes from the upper tail form of the transform and not from the mathematics, as the transform over a bounded interval is finite for every tilt, see #399.
   Accepted values agree with numerical integration to a relative difference of 1e-8 or better.
   The gradient of the vectorised log PMF is about 3 to 5 times faster than with the ODE in a short benchmark of a normal delay, and a single log CDF takes about as long as the ODE.
   See #371.

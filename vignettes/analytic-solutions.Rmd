@@ -484,6 +484,7 @@ The series is useful for exponential and gamma delays that are short relative to
 In Stan `check_for_gumbel_params()` makes the choice from the parameters and `check_for_analytical_params()` uses it.
 The same bound holds for any delay added to the transform generics.
 A closed form of the transform for tilts above the rate, which exists for the exponential delay as $T_f(\xi; \tau) = \lambda \{e^{(\xi - \lambda)\tau} - 1\} / (\xi - \lambda)$, would remove the bound for that delay.
+This is tracked in #399.
 
 # Learning more
 
