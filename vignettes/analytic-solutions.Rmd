@@ -441,14 +441,17 @@ Where $\lambda + r \leq 0$ the methods use the numerical path, `pcens_cdf.defaul
 In Stan `check_for_analytical_params()` makes the choice from the parameters.
 The ODE is less accurate than the closed forms in the lower tail of a gamma with a shape below 1, with a relative error of about $4 \times 10^{-2}$ for shape 0.3, $r = -1$ and $\lambda = 1$ at $d = 10^{-3}$.
 Closed forms for these tilts would need a stable representation that is not implemented, see #388.
-The normal form has no restriction, and nor does the lognormal, which needs only that $r \sigma^2 e^\mu$ is finite.
+The normal form has no restriction.
+The lognormal needs that $r \sigma^2 e^\mu$ is finite, and for $r < 0$ that the series needs at most 20000 terms.
+That is $\xi d + 9 \sqrt{\xi d} + 30 \leq 20000$ at the largest delay $d$, or $|r| d$ up to about 18700.
+Quantiles above that use the numerical path, one at a time in R and through `check_for_analytical_delay()` in Stan.
 
 ## Tilts close to zero
 
 Equation \@ref(eq:exptilt) cancels as $r \to 0$ and loses about $10^{-14} / (|r| w_P)$ of relative precision.
 Two forms replace it, with $G_k(t) = \int (t - u)^k f_T(u)~du$ over the support up to $t$.
 
-For $|r| w_P < 10^{-4}$, expanding the window density in $r$ gives the uniform solution and its first order correction,
+For $|r| w_P < 10^{-4}$ and $|r| (|d| + w_P) < 0.1$, expanding the window density in $r$ gives the uniform solution and its first order correction,
 
 $$
 F_{S_+}(d) = \frac{G_1(d) - G_1(q)}{w_P} + r \frac{G_2(d) - w_P G_1(d) - G_2(q) - w_P G_1(q)}{2 w_P} + O\big((r w_P)^2\big).
@@ -464,6 +467,11 @@ $$
 is used instead.
 The moments $G_1$ and $G_2$ come from the CDFs of gamma distributions with the shape raised by one and two for the exponential and the gamma, and from the standard normal density and CDF for the normal.
 The truncation error of both forms is below $10^{-9}$ at the threshold, where the error of equation \@ref(eq:exptilt) is also below $10^{-9}$.
+
+The first form subtracts terms of the size of $|d| + w_P$, so it has a rounding error of about $10^{-14} (|d| + w_P) / w_P \{1 + |r| (|d| + w_P)\}$.
+Equation \@ref(eq:exptilt) has a rounding error of about $10^{-15} / (|r| w_P)$ at any distance from the origin.
+The first form has the smaller error while $|r| (|d| + w_P)$ is below about 0.1, so equation \@ref(eq:exptilt) is used beyond that.
+The remaining loss from a window that is small next to the delay is about $10^{-14} d / w_P$ in relative terms, as for the uniform window solutions.
 
 # Learning more
 

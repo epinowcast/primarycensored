@@ -40,10 +40,19 @@
   One log CDF is 0.8 to 1.2 times as fast as the ODE at its default tolerance and 1.5 to 4 times faster than at 1e-10.
   In R the transform has a fixed cost of about 0.2 ms, so `pcens_cdf()` uses the numerical method of `pcens_cdf.default()` for fewer than 10 quantiles.
   At 12 quantiles it is 1.2 to 1.7 times faster, and at 40 about 3 times.
+  The series for `r < 0` is limited to 20000 terms, which is `abs(r) * q` up to about 18700.
+  In R the quantiles above that use `pcens_cdf.default()` and the others keep the series, through a new internal generic `.pcens_tilt_fits()`.
+  In Stan `check_for_tilt_transform_at()` and `check_for_analytical_delay()` make the same choice, so `primarycensored_cdf()`, `primarycensored_lcdf()` and `primarycensored_lcdf_vectorized()` use the ODE there and do not reject.
   See #369.
 
 ## Bug fixes
 
+- The small window form of the exponentially tilted solutions (`abs(r) * pwindow < 1e-4`) is used only while `abs(r) * (abs(q) + pwindow)` is below 0.1, in R and in Stan (`exptilt_is_small_window()`, which now takes the delay, and `exptilt_is_small_window_regime()`).
+  It cancelled by about `1e-14 * q^2 * r / pwindow` far from the origin, so a window small next to the delay gave CDFs that were wrong by up to 99% without a warning.
+  The direct form is more precise there.
+  The CDF is now accurate to about `1e-14 * q / pwindow` relative, as for the uniform window solutions.
+  In Stan `primarycensored_exptilt_lcdf_vectorized()` chooses the form for each delay in that case and does not share the terms.
+  See #367 and #369.
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.
   See #367.
