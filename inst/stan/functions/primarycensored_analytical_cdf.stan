@@ -153,7 +153,11 @@ vector primarycensored_lognormal_uniform_terms(real t,
 real log_weibull_g(real t, real shape, real scale) {
   real x = pow(t * inv(scale), shape);
   real a = 1 + inv(shape);
-  return log(gamma_p(a, x)) + lgamma(a);
+  // gamma_lcdf(x | a, 1) is log(gamma_p(a, x)), but reverse-mode gamma_p()
+  // returns zero gradients for x / a > 10
+  // (https://github.com/stan-dev/math/issues/2006). gamma_lcdf() has the
+  // same value and computes its own gradients without that cutoff.
+  return gamma_lcdf(x | a, 1) + lgamma(a);
 }
 
 /**
