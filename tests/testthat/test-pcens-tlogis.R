@@ -420,6 +420,36 @@ test_that("the numerical CDF resolves a narrow truncated logistic primary", {
   }
 })
 
+test_that("the numerical CDF resolves a named wrapper of dtlogis", {
+  # A wrapper with the name attribute gets the tlogis classes, and so the
+  # same dispatch as dtlogis, including the break points of a narrow primary
+  wrapper <- function(x, min = 0, max = 1, location = 0, scale = 1,
+                      log = FALSE) {
+    dtlogis(x, min, max, location, scale, log)
+  }
+  named <- add_name_attribute(wrapper, "dtlogis")
+  pwindow <- 2
+  q <- c(0.72, 1, 1.5, 3)
+  cdf <- function(x) pgamma(x, shape = 2, rate = 1)
+  for (scale in c(1e-3, 1e-4)) {
+    obj <- new_pcens(
+      pdist = pgamma, dprimary = named,
+      primary_args = list(location = 0.7, scale = scale),
+      shape = 2, rate = 1
+    )
+    expect_s3_class(obj, "pcens_pgamma_dtlogis")
+    expected <- tlogis_reference(q, pwindow, 0.7, scale, cdf)
+    expect_lt(
+      narrow_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
+      label = paste("scale", scale)
+    )
+    expect_lt(
+      narrow_diff(pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected),
+      1e-6, label = paste("numeric, scale", scale)
+    )
+  }
+})
+
 test_that("the normal tilt transform keeps the shift of a small sd", {
   # The CDF at q = mean - k sd is, with p = sd z,
   # int Phi(-k - z) f(sd z) sd dz, so the window is in units of sd
