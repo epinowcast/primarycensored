@@ -2,6 +2,9 @@
 
 ## Bug fixes
 
+- A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
+  Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
+  See #364.
 - `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, and its gradient with respect to `k` is accurate there.
   This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary (#387).
   The `gamma_lcdf()` gradient can still fail for large shapes at x above about the shape.
