@@ -4,21 +4,24 @@
 \alias{.pcens_pmf_group}
 \title{Evaluate the primary event censored PMF for one group of observations}
 \usage{
-.pcens_pmf_group(object, group)
+.pcens_pmf_group(object, group, cdfs)
 }
 \arguments{
 \item{object}{A \code{pcens} object.}
 
-\item{group}{One element of the list made by \code{\link[=.pcens_row_groups]{.pcens_row_groups()}}.}
+\item{group}{One element of \code{groups} in the list made by
+\code{\link[=.pcens_row_groups]{.pcens_row_groups()}}.}
+
+\item{cdfs}{Numeric vector of the CDF at the points of the group's set.}
 }
 \value{
 Numeric vector with one value per row of the group.
 }
 \description{
 Gives the same values as \code{\link[=pcens_pmf]{pcens_pmf()}} for the unique delays of the group
-and copies them to the rows of the group. The points for the CDF, and the
-positions needed to difference and normalise it, are taken from the
-group rather than worked out on each call, so \code{\link[=pcens_cdf]{pcens_cdf()}} is called
-once. A message about clipping at \code{D} is not given.
+and copies them to the rows of the group. The CDF values are taken from
+the set the group belongs to, and the positions needed to difference and
+normalise them from the group, rather than worked out on each call.
+A message about clipping at \code{D} is not given.
 }
 \keyword{internal}

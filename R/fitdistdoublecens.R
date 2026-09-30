@@ -201,22 +201,23 @@
 #' )
 #' }
 fitdistdoublecens <- function(
-    censdata,
-    distr,
-    left = "left",
-    right = "right",
-    pwindow = "pwindow",
-    L = "L",
-    D = "D",
-    dprimary = dunif,
-    primary_args = NULL,
-    pprimary = NULL,
-    dprimary_args = NULL,
-    truncation_check_multiplier = 2,
-    prior = NULL,
-    hazard_model = c("rw", "re"),
-    check = TRUE,
-    ...) {
+  censdata,
+  distr,
+  left = "left",
+  right = "right",
+  pwindow = "pwindow",
+  L = "L",
+  D = "D",
+  dprimary = dunif,
+  primary_args = NULL,
+  pprimary = NULL,
+  dprimary_args = NULL,
+  truncation_check_multiplier = 2,
+  prior = NULL,
+  hazard_model = c("rw", "re"),
+  check = TRUE,
+  ...
+) {
   hazard_model <- match.arg(hazard_model)
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -412,23 +413,24 @@ fitdistdoublecens <- function(
 #'
 #' @param pcens_cache Optional environment shared across calls with the same
 #'   `params`, `pdist` and `dprimary`, as made by [.build_pcens_closures()].
-#'   The `pcens` object and the grouping of `params` are built on the first
-#'   call and kept in it, and later calls only [update()][update.pcens()] the
-#'   parameters. `NULL` (the default) builds them on every call.
+#'   The `pcens` object is built on the first call and kept in it, and later
+#'   calls only [update()][update.pcens()] the parameters.
+#'   The grouping of `params` also depends on the delays, so it is built on
+#'   the first call and rebuilt whenever they change.
+#'   `NULL` (the default) builds both on every call.
 #' @keywords internal
 .dpcens <- function(
-    x,
-    params,
-    pdist,
-    dprimary,
-    primary_args,
-    pprimary = NULL,
-    check = TRUE,
-    pcens_cache = NULL,
-    ...) {
-  # Wrap in `suppressMessages` so the per-call upper-clip notice from
-  # pcens_pmf() is not emitted on every fitdistrplus iteration.
-  suppressMessages(tryCatch(
+  x,
+  params,
+  pdist,
+  dprimary,
+  primary_args,
+  pprimary = NULL,
+  check = TRUE,
+  pcens_cache = NULL,
+  ...
+) {
+  tryCatch(
     {
       # Validate once for the whole vector. `pdist` and `dprimary` are the
       # same for every observation.
@@ -445,16 +447,12 @@ fitdistdoublecens <- function(
       if (length(x) != nrow(params)) {
         # fitdistrplus checks the density on short test vectors
         rows <- .recycle_params(params, length(x))
-        groups <- .pcens_row_groups(
-          x, rows$pwindow, rows$swindow, rows$L, rows$D
-        )
+        groups <- .dpcens_groups(x, rows)
       } else {
         # The grouping depends on the delays as well as the settings, so
         # rebuild it if they change
         if (is.null(state$dgroups) || !identical(state$dx, x)) {
-          state$dgroups <- .pcens_row_groups(
-            x, params$pwindow, params$swindow, params$L, params$D
-          )
+          state$dgroups <- .dpcens_groups(x, params)
           state$dx <- x
         }
         groups <- state$dgroups
@@ -464,7 +462,26 @@ fitdistdoublecens <- function(
     error = function(e) {
       rep(NaN, length(x))
     }
-  ))
+  )
+}
+
+#' Group the rows of a fitdistrplus density evaluation
+#'
+#' Checks that every delay is within its truncation limits, which gives an
+#' error, and so `NaN` in [.dpcens()], for delays outside them as
+#' [pcens_pmf()] does. The grouped evaluation itself does no such check.
+#'
+#' @inheritParams .dpcens
+#'
+#' @param params A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
+#'   with one row per element of `x`.
+#'
+#' @return Groups of observations as made by [.pcens_row_groups()].
+#'
+#' @keywords internal
+.dpcens_groups <- function(x, params) {
+  .check_row_inputs(x, params$pwindow, params$swindow, params$L, params$D)
+  .pcens_row_groups(x, params$pwindow, params$swindow, params$L, params$D)
 }
 
 #' Define a fitdistrplus compatible wrapper around pprimarycensored

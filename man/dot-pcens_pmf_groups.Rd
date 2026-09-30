@@ -4,12 +4,13 @@
 \alias{.pcens_pmf_groups}
 \title{Evaluate the primary event censored PMF for grouped observations}
 \usage{
-.pcens_pmf_groups(object, groups, n)
+.pcens_pmf_groups(object, grouped, n)
 }
 \arguments{
 \item{object}{A \code{pcens} object.}
 
-\item{groups}{Groups of observations as made by \code{\link[=.pcens_row_groups]{.pcens_row_groups()}}.}
+\item{grouped}{Groups of observations and their shared CDF points as
+made by \code{\link[=.pcens_row_groups]{.pcens_row_groups()}}.}
 
 \item{n}{Number of observations.}
 }

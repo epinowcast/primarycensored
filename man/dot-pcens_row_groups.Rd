@@ -13,17 +13,29 @@
 or \code{length(x)}.}
 }
 \value{
-A list with one element per group. Each element is a list with
-\code{idx}, the rows of the group or \code{NULL} if the group is every row, \code{x},
-the unique delays of the group, \code{map}, the position of each row of the
-group in \code{x} or \code{NULL} if \code{x} has no repeats, and the group's
-\code{pwindow}, \code{swindow}, \code{L} and \code{D}. It also has the output of
-\code{\link[=.pcens_cdf_points]{.pcens_cdf_points()}}. Empty if \code{x} is empty.
+A list with \code{groups} and \code{sets}, both empty if \code{x} is empty.
+\code{groups} has one element per group. Each is a list with \code{idx}, the rows
+of the group or \code{NULL} if the group is every row, \code{x}, the unique delays
+of the group, \code{map}, the position of each row of the group in \code{x} or
+\code{NULL} if \code{x} has no repeats, and the group's \code{pwindow}, \code{swindow}, \code{L}
+and \code{D}. It also has \code{set}, the position of the group's set in \code{sets},
+and the positions within that set's points as made by
+\code{\link[=.pcens_group_positions]{.pcens_group_positions()}}.
+\code{sets} has one element per unique \code{pwindow}. Each is a list with
+\code{pwindow}, \code{points}, the sorted unique points at which the CDF is needed
+(empty if there is nothing to evaluate), and \code{at_minf} and \code{at_inf}, the
+positions of \code{-Inf} and \code{Inf} in \code{points}, where the CDF is known to be 0
+and 1.
 }
 \description{
 Groups rows by their \code{pwindow}, \code{swindow}, \code{L} and \code{D}. Within each group
-the unique values of \code{x} are kept with a map back to the rows, and the
-points at which the primary event censored CDF is needed are worked out
-once, so that \code{\link[=.pcens_pmf_group]{.pcens_pmf_group()}} only has to evaluate the CDF.
+the unique values of \code{x} are kept with a map back to the rows.
+The primary event censored CDF depends on the primary event window and the
+point only, so the points at which it is needed are pooled over every
+group that shares a \code{pwindow}. Each group stores the positions of its own
+points in the pooled set. This means each endpoint is evaluated once per
+\code{pwindow} and reused by every group that needs it, as in the vectorised
+Stan PMF, and \code{\link[=.pcens_pmf_groups]{.pcens_pmf_groups()}} only has to evaluate the CDF once per
+set.
 }
 \keyword{internal}

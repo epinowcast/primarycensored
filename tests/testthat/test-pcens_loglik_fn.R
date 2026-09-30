@@ -350,7 +350,7 @@ test_that("pcens_loglik_fn shares CDF points across groups", {
   set.seed(4)
   n <- 600
   x <- sample(0:20, n, replace = TRUE)
-  pwindow <- sample(1:2, n, replace = TRUE)
+  pwindow <- sample.int(2, n, replace = TRUE)
   swindow <- sample(c(0.5, 1, 2), n, replace = TRUE)
   L <- sample(c(-Inf, 0), n, replace = TRUE)
   D <- sample(c(Inf, 25, 40), n, replace = TRUE)
@@ -381,7 +381,7 @@ test_that("pcens_loglik_fn matches dprimarycensored with many groups", {
   set.seed(5)
   n <- 300
   x <- sample(0:12, n, replace = TRUE)
-  pwindow <- sample(1:2, n, replace = TRUE)
+  pwindow <- sample.int(2, n, replace = TRUE)
   swindow <- sample(c(0, 0.5, 1, 2), n, replace = TRUE)
   L <- sample(c(-Inf, 0, -0.5), n, replace = TRUE)
   D <- sample(c(Inf, 25, 22.5, 40), n, replace = TRUE)
@@ -404,10 +404,7 @@ test_that("pcens_loglik_fn returns NaN for invalid parameters", {
     ll <- pcens_loglik_fn(x, pgamma, D = D)
     valid <- ll(shape = 2, rate = 1)
     expect_true(all(is.finite(valid)))
-    expect_warning(
-      invalid <- ll(shape = -1, rate = 1),
-      "NaNs produced"
-    )
+    invalid <- suppressWarnings(ll(shape = -1, rate = 1))
     expect_identical(invalid, rep(NaN, 3))
     # A valid call afterwards is unaffected
     expect_identical(ll(shape = 2, rate = 1), valid)

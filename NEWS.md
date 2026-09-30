@@ -4,8 +4,9 @@
 
 - New experimental function `pcens_loglik_fn()` returns a function of the delay distribution parameters that gives the log-likelihood of each observation, for use in an external optimiser or sampler.
   It groups observations by their censoring and truncation settings and validates `pdist` and `dprimary` once.
-  The unique CDF points of each group and the positions used to difference and normalise them are worked out once.
-  Each call then updates one `pcens` object and evaluates `pcens_cdf()` once per group, at the unique delays of the group and any finite truncation points.
+  The unique CDF points, pooled over all groups that share a primary event window, and the positions used to difference and normalise them are worked out once.
+  Each call then updates one `pcens` object and evaluates `pcens_cdf()` once per unique `pwindow`, so each endpoint is evaluated once however many groups use it.
+  Invalid delay parameters give `NaN` whether or not the data are truncated.
   `pwindow`, `swindow`, `L` and `D` can each be a single value or one value per observation.
   See #376.
 
