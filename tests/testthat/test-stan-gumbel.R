@@ -938,6 +938,130 @@ test_that("Gumbel log CDFs have finite gradients matching finite
   }
 })
 
+# A model whose target is log Phi(z), for the gradient of
+# primarycensored_log_std_normal_cdf()
+log_std_normal_gradient_model <- function() {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  functions <- pcd_load_stan_functions(
+    wrap_in_block = TRUE, write_to_file = FALSE
+  )
+  code <- paste0(
+    functions, "\n",
+    "parameters {\n  real z;\n}\n",
+    "model {\n  target += primarycensored_log_std_normal_cdf(z);\n}\n"
+  )
+  path <- file.path(tempdir(), "pcd_log_std_normal_gradient.stan")
+  writeLines(code, path)
+  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
+}
+
+test_that("the Stan log standard normal CDF is accurate with an exact
+  gradient in the far lower tail", {
+  z <- c(-5, -20, -36.9, -37.1, -45, -60, -100, -300)
+  expect_equal(
+    vapply(z, primarycensored_log_std_normal_cdf, numeric(1)),
+    pnorm(z, log.p = TRUE),
+    tolerance = 1e-13
+  )
+  model <- log_std_normal_gradient_model()
+  for (z0 in z) {
+    res <- stan_gradient_at(model, data = list(), init = list(z = z0))
+    # The derivative is the density over the CDF, which the autodiff
+    # derivative of std_normal_lcdf() has a relative error of 1e-5 to 1e-2 in
+    exact <- exp(dnorm(z0, log = TRUE) - pnorm(z0, log.p = TRUE))
+    expect_false(res$gradient_not_finite, info = as.character(z0))
+    expect_equal(
+      res$gradient, exact, tolerance = 1e-10, info = as.character(z0)
+    )
+  }
+})
+
+test_that("Gumbel log CDF gradients match finite differences across the
+  acceptance grid", {
+  # The series path gave the right log CDF but a gradient that was wrong by
+  # up to 6 times where the tilts push the normal transform below -37
+  model <- gumbel_gradient_model()
+  cases <- list(
+    list(dist_id = 18L, params = c(0.5, 1), d = c(0.02, 1, 3)),
+    list(dist_id = 18L, params = c(3, 2), d = c(0.02, 1, 3, 6)),
+    list(dist_id = 4L, params = 60, d = c(0.02, 0.1, 0.5, 2.5)),
+    list(dist_id = 2L, params = c(3, 80), d = c(0.02, 0.1, 0.5, 2.5))
+  )
+  for (case in cases) {
+    for (mu in c(-0.5, 0, 0.5, 1, 1.5)) {
+      for (beta in c(0.1, 0.2, 1)) {
+        for (pwindow in c(1, 2)) {
+          for (d in case$d) {
+            label <- gumbel_case_label(
+              case, d = d, pwindow = pwindow, mu = mu, beta = beta
+            )
+            res <- gumbel_gradient_at(model, case, d, pwindow, mu, beta)
+            expect_false(res$gradient_not_finite, info = label)
+            expect_false(res$rejected, info = label)
+            expect_length(res$gradient, 4)
+            expect_gumbel_gradient_close(res, case, label)
+          }
+        }
+      }
+    }
+  }
+})
+
+test_that("the Stan numerical path keeps the lower tail on the log scale", {
+  # The kink of the delay CDF beyond the integration range gave -Inf, the
+  # density over the integration range below the solver tolerance gave -Inf
+  # or a wrong value, and the mass beyond a window quantile of 1 - 2^-53 was
+  # cut. The references are an independent log scale integral, and R
+  cases <- list(
+    list(id = 4L, par = 1, d = 1 / 3, w = 1, mu = 1.5, beta = 0.3,
+         ref = -48.6807),
+    list(id = 4L, par = 1, d = 1, w = 3, mu = 1.5, beta = 0.1,
+         ref = -155.72),
+    list(id = 2L, par = c(5, 1), d = 2, w = 4, mu = 3, beta = 0.3,
+         ref = -51.1984),
+    list(id = 18L, par = c(1, 0.1), d = 1, w = 3, mu = 0.9, beta = 0.1,
+         ref = -32.9165),
+    list(id = 18L, par = c(0, 1), d = -10, w = 10, mu = 45, beta = 10,
+         ref = -108.60),
+    list(id = 18L, par = c(0, 1), d = -3, w = 10, mu = 45, beta = 10,
+         ref = -51.684)
+  )
+  for (pt in cases) {
+    info <- toString(unlist(pt[c("id", "par", "d", "w", "mu", "beta")]))
+    lower <- if (pt$id == 18L) -Inf else 0
+    lcdf <- primarycensored_lcdf(
+      pt$d, pt$id, pt$par, pt$w, lower, Inf, 4L, c(pt$mu, pt$beta)
+    )
+    expect_equal(lcdf, pt$ref, tolerance = 1e-4, info = info)
+    family <- switch(
+      as.character(pt$id),
+      "4" = list(pdist = pexp, args = list(rate = pt$par)),
+      "2" = list(
+        pdist = pgamma, args = list(shape = pt$par[1], rate = pt$par[2])
+      ),
+      "18" = list(
+        pdist = pnorm, args = list(mean = pt$par[1], sd = pt$par[2])
+      )
+    )
+    r_cdf <- pcens_cdf(
+      gumbel_object(family, pt$mu, pt$beta), pt$d, pt$w, use_numeric = TRUE
+    )
+    expect_equal(lcdf, log(r_cdf), tolerance = 1e-8, info = info)
+    numeric_lcdf <- primarycensored_gumbel_numeric_lcdf(
+      pt$d, pt$id, pt$par, pt$w, pt$mu, pt$beta
+    )
+    expect_equal(numeric_lcdf, log(r_cdf), tolerance = 1e-8, info = info)
+  }
+  # The log PMF of a day scale gamma delay is finite
+  lpmf <- primarycensored_lpmf(
+    1, 2L, c(5, 1), 4, 2, 0, Inf, 4L, c(3, 0.3)
+  )
+  expect_true(is.finite(lpmf))
+})
+
 test_that("the vectorised Gumbel log PMF has finite gradients matching
   finite differences", {
   model <- gumbel_gradient_model()
