@@ -144,6 +144,50 @@ test_that("uniform primary analytical CDFs match numerical integration
   }
 })
 
+test_that("uniform primary analytical CDFs match numerical integration for
+  windows many orders of magnitude narrower than the delay", {
+  # Both tail forms lose about 1e-16 * d / w here. These are the delays and
+  # windows where that was above the 1e-6 tolerance, including heavy tailed
+  # Weibulls whose window starts just above the mean.
+  cases <- list(
+    list(pgamma, list(shape = 500, scale = 100), 49967, 1e-6),
+    list(pgamma, list(shape = 500, scale = 100), c(4.9e4, 5.1e4), 1e-5),
+    list(pweibull, list(shape = 0.1, scale = 1), 4.29e6, 1e-6),
+    list(pweibull, list(shape = 0.1, scale = 100), 4.29e8, 1e-3),
+    list(pweibull, list(shape = 0.1, scale = 100), 4.29e8, 1e-6),
+    list(pweibull, list(shape = 1.5, scale = 5), c(3, 8, 20), 1e-8),
+    list(plnorm, list(meanlog = 2, sdlog = 2), c(5, 4e3, 1e5), 1e-7),
+    list(plnorm, list(meanlog = 0, sdlog = 1), c(1, 3, 40), 1e-9)
+  )
+  for (case in cases) {
+    obj <- do.call(new_pcens, c(list(case[[1]], dunif), case[[2]]))
+    expect_close(
+      pcens_cdf(obj, case[[3]], case[[4]]),
+      do.call(unif_reference, c(list(case[[1]], case[[3]], case[[4]]),
+                                case[[2]])),
+      info = paste(toString(unlist(case[[2]])), "pwindow", case[[4]])
+    )
+  }
+})
+
+test_that("uniform primary analytical CDFs warn when q and a vector pwindow
+  have lengths that do not recycle evenly", {
+  for (case in unif_cases()) {
+    obj <- do.call(
+      new_pcens, c(list(case$pdist, dunif), case$grid[[3]])
+    )
+    expect_warning(
+      pcens_cdf(obj, c(1, 2, 3), c(1, 2)), "multiple"
+    )
+    expect_warning(
+      pcens_cdf(obj, c(1, 2), c(1, 2, 3)), "multiple"
+    )
+    expect_no_warning(pcens_cdf(obj, c(1, 2, 3, 4), c(1, 2)))
+    expect_no_warning(pcens_cdf(obj, 1, c(1, 2, 3)))
+    expect_no_warning(pcens_cdf(obj, c(1, 2, 3), 1))
+  }
+})
+
 test_that("uniform primary analytical CDFs check pwindow", {
   for (case in unif_cases()) {
     obj <- do.call(

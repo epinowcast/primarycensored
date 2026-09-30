@@ -304,7 +304,21 @@ test_that("pcens_cdf.default computes the same values as
             pwindow
           )
         )
-        expect_lt(max(abs(result_numeric - result_analytical)), 2e-3)
+        if (shape >= 1) {
+          expect_equal(
+            result_numeric,
+            result_analytical,
+            tolerance = 1e-5,
+            info = sprintf(
+              "Mismatch for shape = %s, scale = %s, pwindow = %s",
+              shape,
+              scale,
+              pwindow
+            )
+          )
+        } else {
+          expect_lt(max(abs(result_numeric - result_analytical)), 2e-3)
+        }
       }
     }
   }
