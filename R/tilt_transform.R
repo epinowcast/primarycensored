@@ -17,10 +17,13 @@
 #' * `.pcens_tilt_transform()`, the transform on the log scale.
 #' * Optionally `.pcens_tilt_moments()`, which is only needed by the small
 #'   tilt forms of [pcens_cdf.pcens_pexp_dexpgrowth()].
+#' * Optionally `.pcens_tilt_pair()`, the lower and the upper transform
+#'   together, for families where one evaluation gives both. The default calls
+#'   `.pcens_tilt_transform()` twice.
 #'
 #' The Stan equivalents are `check_for_tilt_transform()`,
-#' `log_tilt_transform()`, `log_tilt_transform_upper()` and
-#' `primarycensored_tilt_moments()`.
+#' `log_tilt_transform()`, `log_tilt_transform_upper()`,
+#' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
 #'
 #' @param object A `pcens` object as created by [new_pcens()].
 #'
@@ -39,6 +42,10 @@
 #' @return
 #' * `.pcens_tilt_transform()`: the log of the transform at each `t`. It is
 #'   `-Inf` below the support for the lower transform.
+#' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the
+#'   log of the transform over the lower and the upper part of the support.
+#'   The upper transform is `Inf` where the total diverges, as for a lognormal
+#'   delay with `xi > 0`, and callers then use the lower transform alone.
 #' * `.pcens_tilt_available()`: `TRUE` if the transform is closed form and the
 #'   tilted delay distribution exists for `xi`, otherwise `FALSE`. Callers use
 #'   the numerical method when it is `FALSE`.
@@ -71,6 +78,20 @@ NULL
 #' @rdname tilt_transform
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
+}
+
+#' @rdname tilt_transform
+.pcens_tilt_pair <- function(object, t, xi) {
+  UseMethod(".pcens_tilt_pair")
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_pair.default <- function(object, t, xi) {
+  cbind(
+    lower = .pcens_tilt_transform(object, t, xi),
+    upper = .pcens_tilt_transform(object, t, xi, upper = TRUE)
+  )
 }
 
 #' @rdname tilt_transform

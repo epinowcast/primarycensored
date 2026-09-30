@@ -5,6 +5,7 @@
 \alias{pcens_cdf.pcens_pexp_dexpgrowth}
 \alias{pcens_cdf.pcens_pgamma_dexpgrowth}
 \alias{pcens_cdf.pcens_pnorm_dexpgrowth}
+\alias{pcens_cdf.pcens_plnorm_dexpgrowth}
 \title{Methods for delays with an exponentially tilted primary}
 \usage{
 \method{pcens_cdf}{pcens_pexp_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
@@ -12,6 +13,8 @@
 \method{pcens_cdf}{pcens_pgamma_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 
 \method{pcens_cdf}{pcens_pnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
+
+\method{pcens_cdf}{pcens_plnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by

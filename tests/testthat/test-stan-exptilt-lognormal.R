@@ -18,7 +18,7 @@ lnorm_object_stan <- function(case, rho) {
 
 lnorm_stan_lcdf <- function(d, case, pwindow, rho) {
   vapply(
-    d, primarycensored_exptilt_lcdf, numeric(1),
+    d, primarycensored_exptilt_lcdf, numeric(1), # nolint: object_usage_linter.
     1L, lnorm_params(case), pwindow, rho
   )
 }
@@ -146,8 +146,9 @@ test_that("Stan lognormal moments match the R moments", {
     keep <- is.finite(expected[, 1]) & expected[, 1] > -700
     expect_equal(actual[keep, ], expected[keep, ], tolerance = 1e-9)
   }
-  expect_identical(primarycensored_tilt_moments(0, 1L, c(1.6, 0.5)), c(-Inf, -Inf))
-  expect_identical(primarycensored_tilt_moments(-2, 1L, c(1.6, 0.5)), c(-Inf, -Inf))
+  params <- c(1.6, 0.5)
+  expect_identical(primarycensored_tilt_moments(0, 1L, params), c(-Inf, -Inf))
+  expect_identical(primarycensored_tilt_moments(-2, 1L, params), c(-Inf, -Inf))
 })
 
 test_that("the lognormal tilted CDF matches a reference integral", {

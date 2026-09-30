@@ -40,17 +40,17 @@ lnorm_tilt_integral <- function(lower, upper, meanlog, sdlog, xi) {
   log_integrand <- function(z) {
     xi * exp(meanlog + sdlog * z) + stats::dnorm(z, log = TRUE)
   }
-  grid <- seq(lower, upper, length.out = 20001)
-  values <- log_integrand(grid)
+  z_grid <- seq(lower, upper, length.out = 20001)
+  values <- log_integrand(z_grid)
   values[is.na(values)] <- -Inf
   peak <- max(values)
   if (!is.finite(peak)) {
     return(-Inf)
   }
   keep <- which(values > peak - 60)
-  lower <- grid[max(1L, min(keep) - 1L)]
-  upper <- grid[min(length(grid), max(keep) + 1L)]
-  if (!(upper > lower)) {
+  lower <- z_grid[max(1L, min(keep) - 1L)]
+  upper <- z_grid[min(length(z_grid), max(keep) + 1L)]
+  if (upper <= lower) {
     return(peak)
   }
   pieces <- seq(lower, upper, length.out = 81)

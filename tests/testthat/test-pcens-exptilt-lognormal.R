@@ -29,7 +29,8 @@ test_that("lognormal delays with a tilted primary dispatch to the transform", {
 
 test_that("the lognormal tilt is unavailable where the mode overflows", {
   obj <- new_pcens(
-    plnorm, dexpgrowth, list(r = 1e300), meanlog = 650, sdlog = 1
+    plnorm, dexpgrowth, list(r = 1e300),
+    meanlog = 650, sdlog = 1
   )
   expect_false(.pcens_tilt_available(obj, -1e300))
   obj <- new_pcens(plnorm, dexpgrowth, list(r = 1), meanlog = 0, sdlog = 0)
@@ -264,7 +265,7 @@ test_that("the lognormal CDF has no jump where the small tilt form ends", {
   }
 })
 
-test_that("the lognormal CDF has no jump where the series and quadrature meet", {
+test_that("the lognormal CDF has no jump where series and quadrature meet", {
   # The sign of the tilt chooses the method of the transform. At a window
   # where |rho| w is 1e-3 the small tilt forms are not used.
   for (case in cases) {
@@ -307,7 +308,10 @@ test_that("the lognormal CDF handles boundary values of q", {
   result <- .pcens_cdf_exptilt(obj, c(-Inf, Inf, NA), 2)
   expect_identical(result, c(0, 1, NA_real_))
   expect_identical(.pcens_cdf_exptilt(obj, numeric(0), 2), numeric(0))
-  expect_equal(.pcens_cdf_exptilt(obj, c(1e4, 1e6), 2), c(1, 1))
+  expect_equal(
+    .pcens_cdf_exptilt(obj, c(1e4, 1e6), 2), c(1, 1),
+    tolerance = 1e-12
+  )
   expect_identical(.pcens_cdf_exptilt(obj, c(-3, -1e-12, 0), 2), c(0, 0, 0))
   # Endpoints shared between q and q - pwindow
   endpoints <- .exptilt_endpoints(1:10, 3, lower = 0)
@@ -379,7 +383,8 @@ test_that("the lognormal transform agrees with the delays it generalises", {
   # A lognormal with a tiny sdlog is a point mass at exp(meanlog). The
   # transform is then a step of size exp(xi * exp(meanlog)) at that point
   obj <- new_pcens(
-    plnorm, dexpgrowth, list(r = 0.3), meanlog = log(2), sdlog = 0.02
+    plnorm, dexpgrowth, list(r = 0.3),
+    meanlog = log(2), sdlog = 0.02
   )
   t <- c(1, 3)
   lower <- .pcens_tilt_transform(obj, t, -0.3)

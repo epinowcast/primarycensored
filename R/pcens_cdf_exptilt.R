@@ -188,6 +188,17 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
 }
 
+#' @rdname pcens_cdf_exptilt
+#' @export
+pcens_cdf.pcens_plnorm_dexpgrowth <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
+}
+
 # Tilts with |rho| times the window (or q) below this use the small tilt
 # forms. The direct form loses about 1e-14 / (|rho| w) of relative precision
 # and the small tilt forms have a truncation error of about (|rho| w)^2 / 12,
@@ -350,10 +361,8 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 .exptilt_lcdf_direct <- function(object, q, pwindow, rho, lower) {
   endpoints <- .exptilt_endpoints(q, pwindow, lower)
   endpoint_terms <- cbind(
-    .pcens_tilt_transform(object, endpoints, 0),
-    .pcens_tilt_transform(object, endpoints, 0, upper = TRUE),
-    .pcens_tilt_transform(object, endpoints, -rho),
-    .pcens_tilt_transform(object, endpoints, -rho, upper = TRUE)
+    .pcens_tilt_pair(object, endpoints, 0),
+    .pcens_tilt_pair(object, endpoints, -rho)
   )
   at_q <- endpoint_terms[
     .exptilt_index(q, endpoints, lower), ,
@@ -396,8 +405,9 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #' @keywords internal
 .exptilt_tail_diff <- function(lower_q, lower_y, upper_q, upper_y) {
   use_upper <- lower_y - lower_q > upper_q - upper_y
-  # Terms that underflow on both sides give NaN, which is a zero difference
-  use_upper[is.na(use_upper)] <- FALSE
+  # Terms that underflow on both sides give NaN, which is a zero difference.
+  # An upper tail that diverges (`Inf`) is never used.
+  use_upper[is.na(use_upper) | is.infinite(upper_q)] <- FALSE
   out <- .log_diff_exp(lower_q, lower_y)
   if (any(use_upper)) {
     out[use_upper] <- .log_diff_exp(upper_y[use_upper], upper_q[use_upper])
