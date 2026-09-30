@@ -235,6 +235,7 @@ test_that("uniform primary analytical CDFs check pwindow", {
       tolerance = 1e-14
     )
     expect_identical(pcens_cdf(obj, numeric(0), 1), numeric(0))
+    expect_identical(pcens_cdf(obj, numeric(0), c(1, 2)), numeric(0))
   }
 })
 
