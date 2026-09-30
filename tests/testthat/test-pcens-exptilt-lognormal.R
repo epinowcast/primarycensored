@@ -506,6 +506,11 @@ test_that("pcens_cdf uses the numerical method for a few quantiles", {
     pcens_cdf(obj, many, 2), pcens_cdf(obj, many, 2, use_numeric = TRUE),
     tolerance = 1e-6
   )
+  # Infinite and missing quantiles do not count towards the 10
+  mixed <- c(many[1:7], -Inf, Inf, Inf, NA, -Inf)
+  expected <- pcens_cdf.default(obj, many[1:7], 2)
+  expect_identical(pcens_cdf(obj, mixed, 2)[1:7], expected)
+  expect_identical(pcens_cdf(obj, mixed, 2)[8:12], c(0, 1, 1, NA, 0))
   # The other delays use the closed forms for any number of quantiles
   gamma_obj <- exptilt_object(exptilt_families()[[3]], 0.3)
   expect_identical(
@@ -528,6 +533,13 @@ test_that("the lognormal series stops where it needs too many terms", {
   lower <- .lnorm_tilt_series(c(10, 2000), 0, 1, 1)
   expect_true(all(is.finite(lower)))
   expect_lt(lower[1], lower[2])
+})
+
+test_that("the lognormal series gives the same values in blocks", {
+  t <- seq(0.5, 300, length.out = 41)
+  whole <- .lnorm_tilt_series(t, 1, 0.7, 1)
+  expect_identical(.lnorm_tilt_series(t, 1, 0.7, 1, cells = 1000), whole)
+  expect_identical(.lnorm_tilt_series(t, 1, 0.7, 1, cells = 1), whole)
 })
 
 test_that("default parameters of the lognormal are as in plnorm", {
