@@ -1,19 +1,9 @@
-# Helpers for the truncated Gumbel primary event window tests.
-#
-# The reference values integrate the delay CDF against the window density
-# with tight tolerances, unlike `pcens_cdf.default()` which uses the default
-# `stats::integrate()` tolerances.
+# Helpers for the truncated Gumbel primary event window tests
 
-# Reference primary event censored CDF for any delay CDF `cdf(x)`.
-#
-# The integral is taken in u = s(z) - s(w), with s(z) = exp(-(z - mu) / beta),
-# where the window density is exp(-u) / (1 - exp(-Delta)) on [0, Delta] and
-# z = mu - beta log(s(w) + u). The weight is smooth, so a narrow spike of
-# the density in z, for a large mu / beta, is resolved. The package
-# integrates in u only for mu at or above the window end and in z otherwise,
-# so the two share the delay argument only. The integral is truncated at
-# u = 60, which leaves a mass of 1e-26, and split at the kink where the
-# delay CDF leaves zero and on a ladder of scales. It needs
+# Reference primary event censored CDF for any delay CDF `cdf(x)` with tight
+# tolerances. The integral is taken in u = s(z) - s(w), with
+# s(z) = exp(-(z - mu) / beta), where the window density is
+# exp(-u) / (1 - exp(-Delta)), so a narrow spike is resolved. It needs
 # (w - mu) / beta above -700 so that s(w) does not underflow.
 gumbel_reference <- function(q, pwindow, mu, beta, cdf, positive = TRUE) {
   log_sw <- -(pwindow - mu) / beta
@@ -21,8 +11,6 @@ gumbel_reference <- function(q, pwindow, mu, beta, cdf, positive = TRUE) {
   top <- min(delta, 60)
   mass <- -expm1(-delta)
   vapply(q, function(qq) {
-    # The delay at q - z = (q - w) + beta log(1 + u / s(w)), which keeps a
-    # small difference when u / s(w) is tiny
     integrand <- function(u) {
       cdf((qq - pwindow) + beta * log1p(exp(log(u) - log_sw))) * exp(-u)
     }
@@ -43,14 +31,12 @@ gumbel_reference <- function(q, pwindow, mu, beta, cdf, positive = TRUE) {
 }
 
 # Largest error of a CDF, relative where the reference is at least `floor`
-# and absolute, relative to `floor`, below it.
 gumbel_error <- function(actual, expected, floor = 1e-12) {
   max(abs(actual - expected) / pmax(expected, floor))
 }
 
 # Delay families with a transform for positive tilts. The exponential and
-# gamma rates are large as the series needs the rate above N / beta, so
-# these are short delays in the units of the window.
+# gamma rates are large as the series needs the rate above N / beta.
 gumbel_families <- function() {
   list(
     list(
@@ -97,7 +83,6 @@ gumbel_object <- function(family, mu, beta) {
   )
 }
 
-# Label for a failed expectation.
 gumbel_label <- function(family, pwindow, mu, beta) {
   sprintf(
     "%s, pwindow = %g, mu = %g, beta = %g",
@@ -105,10 +90,8 @@ gumbel_label <- function(family, pwindow, mu, beta) {
   )
 }
 
-# Windows where the density is a narrow spike, mu / beta of 15 to 50, at the
-# upper edge of the window, inside it, and at a very narrow window. The
-# delays are long relative to the window so that the series is not
-# available for the exponential and the gamma.
+# Windows where the density is a narrow spike, mu / beta of 15 to 50, and
+# delays long relative to the window so that the series is not available
 gumbel_spike_settings <- function() {
   list(
     c(mu = 1.5, beta = 0.1, w = 1),

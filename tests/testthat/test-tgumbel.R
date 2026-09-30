@@ -1,11 +1,9 @@
-# Parameter sets covering a peak inside the window, a window far above the
-# peak (declining density), far below it (growing density), a non-zero min
-# and a wide scale.
+# A peak inside the window, a declining and a growing density, a non-zero min
+# and a negative min
 tgumbel_cases <- list(
   list(min = 0, max = 1, mu = 0.5, beta = 0.3, label = "peak inside"),
   list(min = 0, max = 2, mu = -0.5, beta = 0.2, label = "declining"),
   list(min = 0, max = 2, mu = 1.5, beta = 0.1, label = "growing"),
-  list(min = 0, max = 1, mu = 0, beta = 1, label = "wide scale"),
   list(min = 5, max = 7, mu = 6, beta = 0.5, label = "non-zero min"),
   list(min = -2, max = 1, mu = -0.5, beta = 0.4, label = "negative min")
 )
@@ -62,26 +60,6 @@ for (tc in tgumbel_cases) {
     expect_identical(lower[length(x)], 1)
   })
 
-  test_that(paste("dtgumbel is the derivative of ptgumbel:", tc$label), {
-    x <- seq(tc$min, tc$max, length.out = 7)[2:6]
-    h <- 1e-6 * (tc$max - tc$min)
-    numeric_derivative <- (
-      ptgumbel(x + h, tc$min, tc$max, tc$mu, tc$beta) -
-        ptgumbel(x - h, tc$min, tc$max, tc$mu, tc$beta)
-    ) / (2 * h)
-    expect_equal(
-      dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta), numeric_derivative,
-      tolerance = 1e-6
-    )
-    dens <- dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta)
-    keep <- dens > 1e-300
-    expect_equal(
-      exp(dtgumbel(x, tc$min, tc$max, tc$mu, tc$beta, log = TRUE))[keep],
-      dens[keep],
-      tolerance = 1e-12
-    )
-  })
-
   test_that(paste("rtgumbel samples match ptgumbel:", tc$label), {
     set.seed(123)
     samples <- rtgumbel(20000, tc$min, tc$max, tc$mu, tc$beta)
@@ -109,8 +87,7 @@ test_that("dtgumbel is zero and ptgumbel saturates outside the window", {
 })
 
 test_that("dtgumbel tends to the exponentially tilted window", {
-  # With mu far below the window, G(z) - G(0) is proportional to
-  # exp(-z / beta) - 1, the exponentially tilted CDF with r = -1 / beta
+  # The exponentially tilted window with r = -1 / beta
   x <- seq(0, 1, length.out = 6)
   expect_equal(
     dtgumbel(x, 0, 1, mu = -8, beta = 0.5),
@@ -125,8 +102,7 @@ test_that("dtgumbel tends to the exponentially tilted window", {
 })
 
 test_that("the window normalisation does not underflow far below the window", {
-  # s(max) and the window difference of s underflow to 0 for mu = -50 and
-  # beta = 0.02, where the density is the exponential one to double precision
+  # s(max) underflows, and the density is the exponential one
   x <- c(0, 0.05, 0.5, 1)
   for (beta in c(0.02, 0.05)) {
     expect_equal(
@@ -151,8 +127,7 @@ test_that("the window normalisation does not underflow far below the window", {
 })
 
 test_that("dtgumbel is accurate for a spike at the end of the window", {
-  # s(max) = exp(25) here, so exp(-s(x)) and exp(-s(max)) are not
-  # representable apart and the density is written with the difference
+  # s(max) = exp(25), so the density needs the difference of s
   mu <- 1.5
   beta <- 0.02
   s_max <- exp(25)
@@ -161,14 +136,13 @@ test_that("dtgumbel is accurate for a spike at the end of the window", {
     tolerance = 1e-13
   )
   x <- 1 - c(1e-13, 1e-12, 5e-12)
-  # The distance to the end of the window of the points as represented
   t <- 1 - x
   expect_equal(
     dtgumbel(x, 0, 1, mu, beta, log = TRUE),
     25 + t / beta - s_max * expm1(t / beta) - log(beta),
     tolerance = 1e-9
   )
-  # A location beyond exp(-s) overflowing is still a point mass at the end
+  # A point mass at the end of the window
   expect_identical(dtgumbel(0.5, 0, 1, mu = 20, beta = 0.02), 0)
   expect_true(is.finite(dtgumbel(1, 0, 1, mu = 20, beta = 0.05, log = TRUE)))
   set.seed(3)

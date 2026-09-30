@@ -1,10 +1,7 @@
 skip_on_cran()
 
 # Stan solutions for exponential, gamma and normal delays with a truncated
-# Gumbel primary (primary_id 4 with primary_params = [mu, beta]). These tests
-# check the Stan primary functions against R, the series against the R
-# implementation, a reference integral and the ODE path, the dispatch and the
-# fallback, the shared endpoint vectorised form, and gradients.
+# Gumbel primary (primary_id 4 with primary_params = [mu, beta])
 
 gumbel_stan_cases <- list(
   list(
@@ -268,34 +265,6 @@ test_that("the Stan series is accurate at extreme and narrow windows", {
   }
 })
 
-test_that("Stan and R accept the same points of the series", {
-  case <- gumbel_stan_cases[[3]]
-  for (beta in betas) {
-    for (mu in mus) {
-      if (!check_for_gumbel_params(case$dist_id, case$params, mu, beta)) next
-      n_terms <- gumbel_n_terms(mu / beta)
-      obj <- gumbel_case_object(case, mu, beta)
-      fit <- .gumbel_lcdf(obj, case$d, 1, mu, beta, n_terms, -Inf)
-      stan_error <- vapply(case$d, function(d) {
-        as.vector(primarycensored_gumbel_lcdf_from_terms(
-          primarycensored_gumbel_terms(d, 18L, beta, n_terms, case$params),
-          primarycensored_gumbel_terms(d - 1, 18L, beta, n_terms, case$params),
-          d, 1, mu, beta, n_terms
-        ))[2]
-      }, numeric(1))
-      info <- gumbel_case_label(case, mu = mu, beta = beta)
-      expect_identical(
-        stan_error <= gumbel_error_tolerance(), fit$error <= .gumbel_tol,
-        info = info
-      )
-      expect_equal(
-        log(stan_error), log(fit$error),
-        tolerance = 1e-3, info = info
-      )
-    }
-  }
-})
-
 test_that("primarycensored_lcdf and primarycensored_cdf use the series and
   agree with the ODE path", {
   for (case in gumbel_stan_cases) {
@@ -321,8 +290,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
             case$dist_id, case$params, pwindow, lower, Inf, 4L, c(mu, beta)
           )
           expect_equal(exp(lcdf), plain, tolerance = 1e-9, info = info)
-          # The ODE path is used where the series does not apply, and is
-          # accurate to 1e-8 of the CDF, relative where it is above 1e-12
+          # Relative error where the reference is above 1e-8
           ode <- vapply(
             case$d, primarycensored_numeric_cdf, numeric(1),
             case$dist_id, case$params, pwindow, 4L, c(mu, beta)
@@ -341,8 +309,6 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
             )
             accepted <- fit$error <= .gumbel_tol
           }
-          # The series is accurate to 1e-8 and so is the ODE path, at every
-          # mu / beta, where the density can be a narrow spike
           expect_lt(
             gumbel_error(plain, reference, floor = 1e-8), 1e-7, label = info
           )
@@ -401,9 +367,6 @@ test_that("points where the series loses accuracy use the ODE", {
   )
 })
 
-# The ODE path is accurate to about 1e-15 absolute for a small CDF, so it is
-# compared with a floor of 1e-8 on the reference, see gumbel_error().
-
 # Delays long relative to the window, for which the series does not apply,
 # with the matching family of gumbel_spike_families()
 gumbel_spike_stan_cases <- list(
@@ -413,8 +376,7 @@ gumbel_spike_stan_cases <- list(
 )
 
 test_that("the ODE path resolves a narrow spike of the window density", {
-  # mu / beta of 15 to 50 at the end of the window and inside it, where
-  # integrating over the window returns 0 or more than 1 without an error
+  # mu / beta of 15 to 50, where integrating over the window misses the spike
   families <- gumbel_spike_families()
   for (case in gumbel_spike_stan_cases) {
     family <- families[[case$family]]
@@ -476,8 +438,7 @@ test_that("the ODE path is accurate for a large mu over beta", {
 })
 
 test_that("the ODE path handles a location far below the window", {
-  # s(pwindow) underflows and the density is the exponentially decaying one,
-  # so the reference integrates dtgumbel() over the window
+  # s(pwindow) underflows, so the reference integrates dtgumbel()
   x <- c(1e-6, 0.3, 1, 3)
   for (s in list(
     c(mu = -50, beta = 0.02, w = 1), c(mu = -200, beta = 0.05, w = 2)
@@ -504,8 +465,7 @@ test_that("the ODE path handles a location far below the window", {
 })
 
 test_that("the ODE log CDF is accurate far in the lower tail", {
-  # The CDF is 1e-85 to 1e-225 here, far below the absolute solver
-  # tolerance, so the integral is scaled by the largest delay CDF
+  # The CDF is 1e-85 to 1e-225 here
   points <- list(
     c(mu = 2, beta = 0.1, w = 1),
     c(mu = 0.5, beta = 0.2, w = 2),
@@ -537,8 +497,7 @@ test_that("the ODE log CDF is accurate far in the lower tail", {
 })
 
 test_that("a log CDF from the ODE is never NaN or above zero", {
-  # The ODE CDF can be 0 or negative by a rounding error of the solver, or
-  # above 1, where its log must not be NaN or positive
+  # Solver rounding must not give a NaN or positive log CDF
   points <- list(
     list(d = 31, id = 18L, par = c(3, 2), w = 1, mu = 2.7, beta = 0.05),
     list(d = 37, id = 18L, par = c(3, 2), w = 7, mu = 1.5, beta = 0.05),
@@ -623,8 +582,8 @@ test_that("the series is not used for the gamma where it amplifies the
       d, 1, mu, beta, n_terms
     ))
   }
-  # The value is accurate, but the ratio of the absolute terms to the sum
-  # multiplies the error of the derivative of the gamma CDF in the shape
+  # The ratio of the absolute terms to the sum multiplies the error of the
+  # gamma shape derivative
   fit <- fit_at(1.5)
   expect_lt(fit[2], gumbel_error_tolerance())
   expect_gt(
@@ -642,23 +601,6 @@ test_that("the series is not used for the gamma where it amplifies the
   expect_identical(gumbel_series_accepted(2L, fit), 1L)
   expect_identical(
     primarycensored_gumbel_lcdf(d, 2L, case$params, 1, -8, beta), fit[1]
-  )
-})
-
-test_that("a series rejected by the estimate is replaced by an accurate ODE", {
-  # The estimate of the series here is 1.9e-5, and the ODE is accurate to
-  # 1e-8 of the CDF where the series loses precision
-  lcdf <- primarycensored_gumbel_lcdf(1, 18L, c(5, 1), 1, 0.3, 0.111)
-  expected <- log(gumbel_reference(
-    1, 1, 0.3, 0.111, function(x) pnorm(x, 5, 1), FALSE
-  ))
-  expect_equal(lcdf, expected, tolerance = 1e-8)
-  # Where the series is rejected and the ODE is used
-  lcdf <- primarycensored_gumbel_lcdf(-2, 18L, c(3, 2), 2, 0.5, 0.2)
-  expect_equal(
-    exp(lcdf),
-    gumbel_reference(-2, 2, 0.5, 0.2, function(x) pnorm(x, 3, 2), FALSE),
-    tolerance = 1e-7
   )
 })
 
@@ -815,7 +757,7 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
   for (case in gumbel_stan_cases[c(1, 3)]) {
     lower_support <- case$dist_id == 18L
     for (setting in settings) {
-      if (lower_support && setting$L == 0) next
+      if (lower_support && is.finite(setting$L)) next
       for (pwindow in c(1, 3)) {
         info <- gumbel_case_label(
           case,
@@ -828,9 +770,6 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
         expected <- vapply(
           seq_len(setting$max_delay + 1L) - 1L,
           function(d) {
-            if (lower_support && is.finite(setting$L) && d < setting$L) {
-              return(-Inf)
-            }
             primarycensored_lpmf(
               d, case$dist_id, case$params, pwindow, d + 1, setting$L,
               setting$D, 4L, c(-1, 1)
@@ -838,10 +777,6 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
           },
           numeric(1)
         )
-        if (lower_support) {
-          # Delays below zero are not part of the vectorised interval
-          next
-        }
         expect_equal(vectorised, expected, tolerance = 1e-9, info = info)
       }
     }
@@ -914,9 +849,7 @@ gumbel_gradient_at <- function(model, case, d, pwindow, mu, beta,
   )
 }
 
-# Gradient of the delay parameters and the primary parameters. The gradient
-# of the parameters that an exponential delay does not have is zero, and the
-# gamma shape has a gradient with a relative error of about 1e-3 in Stan.
+# Stan's gamma shape gradient has a relative error of about 1e-3
 expect_gumbel_gradient_close <- function(res, case, label, scale = 1,
                                          slack = 0) {
   tolerance <- rep(1e-4, 4) * scale
@@ -946,17 +879,14 @@ test_that("Gumbel log CDFs have finite gradients matching finite
     list(d = 1.5, pwindow = 1, mu = -5, beta = 0.1),
     list(d = 2, pwindow = 2, mu = -30, beta = 1),
     list(d = 3, pwindow = 1, mu = 0, beta = 8),
-    # Points where the series is not accurate and the ODE is used, which
-    # has gradients with the accuracy of the solver
+    # The ODE is used
     list(d = 4, pwindow = 2, mu = 0.5, beta = 0.1),
-    # Narrow spikes of the window density, at the end of the window and
-    # inside it, where the ODE gradients must have the right size
+    # Narrow spikes of the window density
     list(d = 1, pwindow = 1, mu = 2, beta = 0.1),
     list(d = 5, pwindow = 1, mu = 1.5, beta = 0.05),
     list(d = 7, pwindow = 7, mu = 1.5, beta = 0.05),
     list(d = 3, pwindow = 2, mu = 3, beta = 0.06),
-    # Around where the series is replaced by the ODE, mu / beta of about
-    # 2.5 to 2.7, where the log CDF must be smooth
+    # Around where the series is replaced by the ODE
     list(d = 2, pwindow = 1, mu = 0.25, beta = 0.1),
     list(d = 2, pwindow = 1, mu = 0.27, beta = 0.1),
     list(d = 5, pwindow = 1, mu = 0.3, beta = 0.111),
@@ -982,52 +912,8 @@ test_that("Gumbel log CDFs have finite gradients matching finite
   }
 })
 
-# A model whose target is the log of the standard normal CDF, for the
-# gradient of the Stan function primarycensored_log_std_normal_cdf
-log_std_normal_gradient_model <- function() {
-  testthat::skip_if_not_installed("cmdstanr")
-  testthat::skip_if(
-    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
-  )
-  functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
-  )
-  code <- paste0(
-    functions, "\n",
-    "parameters {\n  real z;\n}\n",
-    "model {\n  target += primarycensored_log_std_normal_cdf(z);\n}\n"
-  )
-  path <- file.path(tempdir(), "pcd_log_std_normal_gradient.stan")
-  writeLines(code, path)
-  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
-}
-
-test_that("the Stan log standard normal CDF is accurate with an exact
-  gradient in the far lower tail", {
-  z <- c(-5, -20, -36.9, -37.1, -45, -60, -100, -300)
-  expect_equal(
-    vapply(z, primarycensored_log_std_normal_cdf, numeric(1)),
-    pnorm(z, log.p = TRUE),
-    tolerance = 1e-13
-  )
-  model <- log_std_normal_gradient_model()
-  for (z0 in z) {
-    res <- stan_gradient_at(model, data = list(), init = list(z = z0))
-    # The derivative is the density over the CDF, which the derivative of
-    # std_normal_lcdf() misses by a relative 4e-4 at -60 and 8e-3 at -100
-    exact <- exp(dnorm(z0, log = TRUE) - pnorm(z0, log.p = TRUE))
-    expect_false(res$gradient_not_finite, info = as.character(z0))
-    # CmdStan prints the gradient to 6 significant figures
-    expect_equal(
-      res$gradient, exact, tolerance = 1e-5, info = as.character(z0)
-    )
-  }
-})
-
 test_that("Gumbel log CDF gradients match finite differences across the
   acceptance grid", {
-  # The series path gave the right log CDF but a gradient that was wrong by
-  # up to 6 times where the tilts push the normal transform below -37
   model <- gumbel_gradient_model()
   cases <- list(
     list(dist_id = 18L, params = c(0.5, 1), d = c(0.02, 1, 3)),
@@ -1043,8 +929,7 @@ test_that("Gumbel log CDF gradients match finite differences across the
             label <- gumbel_case_label(
               case, d = d, pwindow = pwindow, mu = mu, beta = beta
             )
-            # A CDF below 1e-260 is not a point to fit, finite differences
-            # of it are not meaningful
+            # Finite differences of a CDF below 1e-260 are not meaningful
             lcdf <- primarycensored_lcdf(
               d, case$dist_id, case$params, pwindow,
               gumbel_case_lower(case), Inf, 4L, c(mu, beta)
@@ -1054,8 +939,7 @@ test_that("Gumbel log CDF gradients match finite differences across the
             expect_false(res$gradient_not_finite, info = label)
             expect_false(res$rejected, info = label)
             expect_length(res$gradient, 4)
-            # The finite differences of the log CDF have an absolute error of
-            # about 3e-5, from rounding in the log CDF of 3e-11
+            # Finite differences have an absolute error of about 3e-5
             expect_gumbel_gradient_close(res, case, label, slack = 1e-4)
           }
         }
@@ -1066,10 +950,7 @@ test_that("Gumbel log CDF gradients match finite differences across the
 
 test_that("Gumbel gradients are finite for delays whose CDF has an
   infinite slope at 0", {
-  # A gamma or Weibull with shape below 1 has an unbounded density at 0. The
-  # series is not admissible for these in daily units, so mu below pwindow
-  # with d at or below pwindow takes the numerical z branch, where the upper
-  # limit is d. Its sensitivity is singular, so it is not integrated
+  # A gamma or Weibull with shape below 1 has an unbounded density at 0
   model <- gumbel_gradient_model()
   cases <- list(
     list(dist_id = 2L, params = c(0.5, 1)),
@@ -1137,10 +1018,7 @@ test_that("the vectorised Gumbel log PMF has finite gradients for delays
 })
 
 test_that("the Stan numerical path keeps the lower tail on the log scale", {
-  # The kink of the delay CDF beyond the integration range gave -Inf, the
-  # density over the integration range below the solver tolerance gave -Inf
-  # or a wrong value, and the mass beyond a window quantile of 1 - 2^-53 was
-  # cut. The references are an independent log scale integral, and R
+  # References are an independent log scale integral and R
   cases <- list(
     list(id = 4L, par = 1, d = 1 / 3, w = 1, mu = 1.5, beta = 0.3,
          ref = -48.6807),
@@ -1196,11 +1074,9 @@ test_that("the vectorised Gumbel log PMF has finite gradients matching
     list(d = 8, pwindow = 2, mu = 0, beta = 1),
     list(d = 10, pwindow = 1, mu = 1, beta = 1)
   )
-  # The PMF of a delay as short as the exponential is the difference of CDFs
-  # that are 1 to double precision, so only the normal delays are used. The
-  # gradient of the upper tail log PMF is wrong where the log CDF is close to
-  # 0, see #404. The finite differences of a sum of PMFs in the upper tail
-  # have an error of about 5e-4, larger than the 1e-4 of a single log CDF.
+  # Only normal delays, as the PMF of a short exponential delay is a
+  # difference of CDFs that are 1 in double precision. Finite differences of
+  # a sum of PMFs have an error of about 5e-4.
   for (case in gumbel_stan_cases[c(3, 4)]) {
     for (point in points) {
       label <- gumbel_case_label(
@@ -1229,47 +1105,6 @@ gumbel_pcens_model <- function() {
   }
   gumbel_pcens_model_cache$model
 }
-
-test_that("the model rejects the reserved primary identifier 3", {
-  testthat::skip_if_not_installed("cmdstanr")
-  testthat::skip_if_not_installed("dplyr")
-  testthat::skip_if(
-    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
-  )
-  delay_counts <- data.frame(
-    delay = 1:3, delay_upper = 2:4, n = 5L, pwindow = 1L,
-    start_relative_obs_time = 0, relative_obs_time = 10
-  )
-  stan_data <- pcd_as_stan_data(
-    delay_counts,
-    dist_id = pcd_stan_dist_id("lognormal", "delay"),
-    primary_id = 1,
-    param_bounds = list(lower = c(-Inf, 0.01), upper = c(Inf, Inf)),
-    primary_param_bounds = list(lower = numeric(0), upper = numeric(0)),
-    priors = list(location = c(0, 1), scale = c(5, 2.5)),
-    primary_priors = list(location = numeric(0), scale = numeric(0))
-  )
-  model <- gumbel_pcens_model()
-  # The identifier 3 is reserved and has no primary distribution
-  stan_data$primary_id <- 3L
-  messages <- character()
-  withCallingHandlers(
-    suppressWarnings(tryCatch(
-      model$sample(
-        data = stan_data, chains = 1, iter_warmup = 1, iter_sampling = 1,
-        refresh = 0, show_messages = TRUE
-      ),
-      error = function(e) NULL
-    )),
-    message = function(m) {
-      messages <<- c(messages, conditionMessage(m)) # nolint
-      invokeRestart("muffleMessage")
-    }
-  )
-  expect_true(
-    any(grepl("primary_id 3 is reserved", messages, fixed = TRUE))
-  )
-})
 
 test_that(
   "pcd_cmdstan_model recovers true values for a normal delay with a

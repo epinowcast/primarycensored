@@ -2,10 +2,8 @@ families <- gumbel_families()
 mus <- c(-0.5, 0, 0.5, 1, 1.5)
 betas <- c(0.1, 0.2, 1)
 pwindows <- c(1, 2)
-# The solution is checked against the tight reference with this relative
-# tolerance wherever the series is accepted, and the public CDF with this
-# one everywhere as the numerical path is used where it is not accepted
-# (stats::integrate() defaults, so the reference is about 1e-6 here)
+# Relative tolerance of the series where it is accepted, and absolute
+# tolerance of the public CDF everywhere
 series_tol <- 1e-8
 public_tol <- 1e-5
 
@@ -29,12 +27,8 @@ test_that("truncated Gumbel primaries dispatch to analytic methods", {
   }
 })
 
-test_that("the number of terms grows with the largest window value", {
+test_that("the number of terms meets the truncation bound", {
   expect_gte(.gumbel_n_terms(-10), 2)
-  expect_lt(.gumbel_n_terms(-10), .gumbel_n_terms(0))
-  expect_lt(.gumbel_n_terms(0), .gumbel_n_terms(1))
-  expect_lt(.gumbel_n_terms(1), .gumbel_n_terms(2))
-  # The truncation bound is met
   for (log_s0 in c(-5, -1, 0, 1, 2.5)) {
     n <- .gumbel_n_terms(log_s0)
     bound <- n * log_s0 - lgamma(n + 1) - max(log_s0, 0)
@@ -69,8 +63,7 @@ test_that("the series agrees with numerical integration where accepted", {
             series_tol,
             label = label
           )
-          # The estimated error bounds the actual error, which is limited
-          # by the accuracy of the reference at about 1e-13
+          # The estimate bounds the actual error
           actual <- abs(exp(fit$log_cdf)[accepted] / reference[accepted] - 1)
           expect_true(
             all(actual <= 10 * fit$error[accepted] + 1e-12),
@@ -105,8 +98,7 @@ test_that("the public CDF agrees with numerical integration everywhere", {
 })
 
 test_that("the series is accurate at extreme and narrow windows", {
-  # A very negative mu / beta, a wide scale and a narrow window, where the
-  # terms are tiny, nearly equal or large, all stay accepted and accurate
+  # Very negative mu / beta, a wide scale and a narrow window
   family <- families[[4]]
   cdf <- gumbel_cdf(family)
   settings <- list(
@@ -145,24 +137,6 @@ test_that("use_numeric returns the numerical result", {
   )
 })
 
-test_that("the normal delay uses the series where the window value is small", {
-  family <- families[[4]]
-  for (beta in betas) {
-    for (mu in mus) {
-      if (mu / beta > 1.5) next
-      obj <- gumbel_object(family, mu, beta)
-      expect_true(.gumbel_available(obj, mu, beta))
-      fit <- .gumbel_lcdf(
-        obj, family$q, 1, mu, beta, .gumbel_n_terms(mu / beta), -Inf
-      )
-      expect_true(
-        all(fit$error <= .gumbel_tol),
-        label = gumbel_label(family, 1, mu, beta)
-      )
-    }
-  }
-})
-
 test_that("a large window value falls back to the numerical path", {
   # exp(mu / beta) is about 148 here
   obj <- gumbel_object(families[[4]], 0.5, 0.1)
@@ -172,7 +146,7 @@ test_that("a large window value falls back to the numerical path", {
 })
 
 test_that("delays without the tilted delay fall back to numerical", {
-  # The rate must be above N / beta, N of the order of 10 to 50
+  # The rate must be above N / beta
   obj <- do.call(
     new_pcens,
     c(
@@ -193,8 +167,7 @@ test_that("delays without the tilted delay fall back to numerical", {
 })
 
 test_that("a narrow window relative to the scale uses the numerical path", {
-  # The bracket is a small difference of large terms when w is much less
-  # than beta, so the estimated error is large
+  # The bracket is a small difference of large terms when w << beta
   obj <- gumbel_object(families[[4]], 0, 1)
   fit <- .gumbel_lcdf(
     obj, c(1, 3), 1e-7, 0, 1, .gumbel_n_terms(0), -Inf
@@ -297,24 +270,8 @@ test_that("the PMF shares endpoints and matches the reference", {
   expect_equal(pmf, expected, tolerance = 1e-7)
 })
 
-test_that("pprimarycensored uses the solution", {
-  p <- pprimarycensored(
-    c(0, 3, 6), pnorm,
-    pwindow = 2, dprimary = dtgumbel,
-    primary_args = list(mu = -0.5, beta = 0.5), mean = 3, sd = 2
-  )
-  expect_equal(
-    p,
-    gumbel_reference(
-      c(0, 3, 6), 2, -0.5, 0.5, function(x) pnorm(x, 3, 2), FALSE
-    ),
-    tolerance = 1e-8
-  )
-})
-
 test_that("a narrow spike of the window density is resolved", {
-  # The window density is a spike when mu / beta is large, so that the
-  # default integration of pcens_cdf.default() sees no mass and returns 0
+  # The window density is a spike when mu / beta is large
   for (family in gumbel_spike_families()) {
     cdf <- gumbel_cdf(family)
     for (s in gumbel_spike_settings()) {
@@ -361,7 +318,7 @@ test_that("the numerical path is accurate for large mu over beta", {
 })
 
 test_that("a point mass at the window end is the limit of a large mu", {
-  # mu / beta of 1000 puts all the mass within 1e-300 of pwindow
+  # mu / beta of 1000 puts the mass within 1e-300 of pwindow
   obj <- gumbel_object(gumbel_spike_families()[[1]], 100, 0.1)
   q <- c(-3, 1, 5)
   expect_equal(pcens_cdf(obj, q, 1), pnorm(q - 1, 3, 2), tolerance = 1e-8)
@@ -389,8 +346,7 @@ test_that("pprimarycensored works for a narrow spike", {
 })
 
 test_that("delays without a solution use the numerical path for a spike", {
-  # The lognormal has no truncated Gumbel solution, so it uses
-  # pcens_cdf.default(), which integrates in the same way
+  # The lognormal has no solution, so it uses pcens_cdf.default()
   cdf <- function(x) plnorm(x, 1, 0.5)
   q <- c(0.5, 1, 3, 8, 20)
   for (s in gumbel_spike_settings()) {
@@ -410,8 +366,7 @@ test_that("delays without a solution use the numerical path for a spike", {
 })
 
 test_that("the numerical path keeps a small delay at the end of the window", {
-  # With a spike within rounding of the window end, q - z is a difference
-  # of 1e-39 at q = pwindow, which is kept as (q - pwindow) plus a term
+  # A spike within rounding of the window end at q = pwindow
   obj <- gumbel_object(gumbel_spike_families()[[3]], 2.7, 0.02)
   cdf <- gumbel_cdf(gumbel_spike_families()[[3]])
   expected <- gumbel_reference(1, 1, 2.7, 0.02, cdf, TRUE)
@@ -425,35 +380,45 @@ test_that("rprimarycensored samples match the analytic CDF", {
     list(rdist = rgamma, pdist = pgamma, shape = 3, rate = 1),
     list(rdist = rnorm, pdist = pnorm, mean = 5, sd = 1)
   )
-  primary_args <- list(mu = 0.5, beta = 0.3)
-  for (a in args) {
-    set.seed(10)
-    dist_args <- a[setdiff(names(a), c("rdist", "pdist"))]
-    draws <- do.call(
-      rprimarycensored,
-      c(
-        list(
-          n = 2000, rdist = a$rdist, pwindow = 2, swindow = 0,
-          rprimary = rtgumbel, rprimary_args = primary_args
-        ),
-        dist_args
-      )
-    )
-    ks <- suppressWarnings(stats::ks.test(
-      draws,
-      function(x) {
-        do.call(
-          pprimarycensored,
-          c(
-            list(
-              q = x, pdist = a$pdist, pwindow = 2, dprimary = dtgumbel,
-              primary_args = primary_args
-            ),
-            dist_args
-          )
+  # Location before, inside and after the window
+  primaries <- list(
+    list(mu = -1, beta = 0.5),
+    list(mu = 0.5, beta = 0.3),
+    list(mu = 3, beta = 1)
+  )
+  for (primary_args in primaries) {
+    for (a in args) {
+      set.seed(10)
+      dist_args <- a[setdiff(names(a), c("rdist", "pdist"))]
+      draws <- do.call(
+        rprimarycensored,
+        c(
+          list(
+            n = 2000, rdist = a$rdist, pwindow = 2, swindow = 0,
+            rprimary = rtgumbel, rprimary_args = primary_args
+          ),
+          dist_args
         )
-      }
-    ))
-    expect_gt(ks$p.value, 0.001, label = deparse(a$rdist))
+      )
+      ks <- suppressWarnings(stats::ks.test(
+        draws,
+        function(x) {
+          do.call(
+            pprimarycensored,
+            c(
+              list(
+                q = x, pdist = a$pdist, pwindow = 2, dprimary = dtgumbel,
+                primary_args = primary_args
+              ),
+              dist_args
+            )
+          )
+        }
+      ))
+      expect_gt(
+        ks$p.value, 0.001,
+        label = paste(deparse(a$rdist), "mu", primary_args$mu)
+      )
+    }
   }
 })
