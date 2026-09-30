@@ -228,6 +228,7 @@ writeLines(
     #include tilt_transform.stan
     #include primarycensored_exptilt.stan
     #include expgrowth.stan
+    #include tlogis.stan
   }
   data {
     int<lower=0> N;  // number of observations
