@@ -3,8 +3,7 @@
 ## Performance
 
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster per call, with results unchanged to rounding.
-  They share one helper for the window handling, which no longer uses `ifelse()` or `pmin()`/`pmax()` over full vectors.
-  The lognormal, Weibull and generalised gamma terms share the standardised delay between the delay CDF and the partial expectation term.
+  A scalar call takes about 40 to 70% of the time on 1.6.0, and a call with 200 delays about 70 to 90%.
   See #378 and #380.
 
 ## Bug fixes
@@ -13,19 +12,17 @@
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
 - The analytical uniform primary `pcens_cdf()` methods now return 1 for `q = Inf`, where they returned `NaN`.
-  Far into the upper tail they use the survival form of the solution when the window starts above the delay mean and is more than 1000 window widths wide.
-  This replaces values that had lost all precision, such as 0 where the answer is 1, with values accurate to rounding.
+  Far into the upper tail they use the survival form, which replaces values that had lost all precision, such as 0 where the answer is 1.
   See #380.
 - These methods now check `pwindow`.
-  Missing or negative values are an error, where a missing value previously gave an unhelpful error or `NA`.
+  Missing or negative values are an error.
   A vector `pwindow` is recycled element-wise against `q`, including when some delays are not positive, where it was previously misaligned.
   A warning is given if the longer of `q` and `pwindow` is not a multiple of the shorter.
   Zero-width elements of a vector `pwindow` give the delay CDF, where they gave `NaN`.
-  Missing delays give an explicit error.
+  Missing delays give an explicit error, where they gave an unhelpful one.
   See #378 and #380.
-- The analytical uniform primary `pcens_cdf()` methods now use the mean of the delay CDF over the window, from a 5 point Gauss-Legendre rule, when the window is more than a million times narrower than the delay.
-  Both analytical forms lose about `1e-16 * d / w` there, which was above `1e-6` for some heavy tailed delays.
-  The far tail and narrow window handling are in R only.
+- The analytical uniform primary `pcens_cdf()` methods are accurate for windows more than a million times narrower than the delay, where they lost precision for some heavy tailed delays.
+  These changes are in R only.
   The Stan log CDF still cancels far in the upper tail, see #392.
   See #378.
 

@@ -146,9 +146,8 @@ test_that("uniform primary analytical CDFs match numerical integration
 
 test_that("uniform primary analytical CDFs match numerical integration for
   windows many orders of magnitude narrower than the delay", {
-  # Both tail forms lose about 1e-16 * d / w here. These are the delays and
-  # windows where that was above the 1e-6 tolerance, including heavy tailed
-  # Weibulls whose window starts just above the mean.
+  # Both tail forms lose about 1e-16 * d / w here. These cases include heavy
+  # tailed Weibulls whose window starts just above the mean.
   cases <- list(
     list(pgamma, list(shape = 500, scale = 100), 49967, 1e-6),
     list(pgamma, list(shape = 500, scale = 100), c(4.9e4, 5.1e4), 1e-5),
@@ -196,7 +195,7 @@ test_that("uniform primary analytical CDFs check pwindow", {
     expect_error(pcens_cdf(obj, c(1, 2), NA_real_), "pwindow")
     expect_error(pcens_cdf(obj, c(1, 2), c(1, NA)), "pwindow")
     expect_error(pcens_cdf(obj, c(1, 2), -1), "pwindow")
-    # A vector pwindow is recycled against q, as a longer pwindow was before
+    # A vector pwindow is recycled against a scalar q
     expect_equal(
       pcens_cdf(obj, 2, c(1, 2)),
       vapply(c(1, 2), function(w) pcens_cdf(obj, 2, w), numeric(1)),

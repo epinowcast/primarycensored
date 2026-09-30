@@ -17,23 +17,23 @@ Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
 delay, is done inside \code{terms_fn}.}
 
 \item{upper_fn}{Optional function of a numeric vector of delays, all
-greater than or equal to zero, returning \eqn{H} at each, from the upper
-tails of the delay and partial expectation distributions.}
+greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
+at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
+and partial expectation distributions.}
 
-\item{switch_at}{Delay above which the window start may use \code{upper_fn}, see
-Details.
+\item{switch_at}{Delay above which the window start may use \code{upper_fn}.
 Only used if \code{upper_fn} is supplied.}
 
 \item{delay_cdf}{Optional function of a numeric vector of delays returning
 the delay CDF.
-Required if \code{pwindow} contains zeros, and used for delays more than
-\eqn{10^6} windows wide, see Details.}
+Required if \code{pwindow} contains zeros, and used for very narrow windows.}
 }
 \value{
-Numeric vector of unclamped CDF values.
+Numeric vector of CDF values not clamped to \link{0, 1}.
 }
 \description{
 Chooses between the lower tail, upper tail and narrow window forms of
 \code{.pcens_cdf_uniform()} for each delay.
+The forms and their thresholds are described in the comments in the code.
 }
 \keyword{internal}

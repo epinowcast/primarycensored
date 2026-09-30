@@ -289,14 +289,11 @@ test_that("pcens_cdf.default computes the same values as
           all(diff(result_numeric) >= 0)
         ) # Ensure CDF is non-decreasing
 
-        # The analytical result matches tight numerical integration. The
-        # default integration is coarser for shape < 1, where the density is
-        # unbounded at 0, so it is only checked to 2e-3.
-        expect_close(
+        # Check that analytical and numeric results are the same
+        expect_equal(
+          result_numeric,
           result_analytical,
-          unif_reference(
-            pdist, q_values, pwindow, shape = shape, scale = scale
-          ),
+          tolerance = 1e-5,
           info = sprintf(
             "Mismatch for shape = %s, scale = %s, pwindow = %s",
             shape,
@@ -304,21 +301,6 @@ test_that("pcens_cdf.default computes the same values as
             pwindow
           )
         )
-        if (shape >= 1) {
-          expect_equal(
-            result_numeric,
-            result_analytical,
-            tolerance = 1e-5,
-            info = sprintf(
-              "Mismatch for shape = %s, scale = %s, pwindow = %s",
-              shape,
-              scale,
-              pwindow
-            )
-          )
-        } else {
-          expect_lt(max(abs(result_numeric - result_analytical)), 2e-3)
-        }
       }
     }
   }

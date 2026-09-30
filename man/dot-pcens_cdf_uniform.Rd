@@ -25,17 +25,16 @@ Sharing work between \eqn{F} and \eqn{\tilde F}, such as the standardised
 delay, is done inside \code{terms_fn}.}
 
 \item{upper_fn}{Optional function of a numeric vector of delays, all
-greater than or equal to zero, returning \eqn{H} at each, from the upper
-tails of the delay and partial expectation distributions.}
+greater than or equal to zero, returning \eqn{H(t) = t S(t) - E \tilde S(t)}
+at each, where \eqn{S} and \eqn{\tilde S} are the upper tails of the delay
+and partial expectation distributions.}
 
-\item{switch_at}{Delay above which the window start may use \code{upper_fn}, see
-Details.
+\item{switch_at}{Delay above which the window start may use \code{upper_fn}.
 Only used if \code{upper_fn} is supplied.}
 
 \item{delay_cdf}{Optional function of a numeric vector of delays returning
 the delay CDF.
-Required if \code{pwindow} contains zeros, and used for delays more than
-\eqn{10^6} windows wide, see Details.}
+Required if \code{pwindow} contains zeros, and used for very narrow windows.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -47,41 +46,14 @@ For a delay with mean \eqn{E} and a uniform primary event window of width
 \eqn{G(t) = t F(t) - E \tilde F(t)}, where \eqn{F} is the delay CDF and
 \eqn{\tilde F} is the CDF of the partial expectation distribution.
 A delay distribution with an analytical solution of this form is added by
-supplying \code{terms_fn}, which is called once for the delays and once for the
-start of each window.
+supplying \code{terms_fn}.
+\code{upper_fn} and \code{delay_cdf} are optional and give the far upper tail and
+narrow window forms, see \code{.uniform_window_cdf()}.
 }
 \details{
-Far into the upper tail \eqn{G(d)} and \eqn{G(q)} are both close to
-\eqn{t - E}, so their difference loses all precision and can return 0 where
-the answer is 1.
-With \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S = 1 - F} and
-\eqn{\tilde S = 1 - \tilde F} are the upper tails, \eqn{G(t) = t - E - H(t)}
-and for \eqn{d \ge w} the CDF is \eqn{1 - (H(d) - H(q)) / w}.
-This removes the far tail cancellation.
-The lower tail form has an absolute error of about
-\eqn{10^{-16} d / w}, which is negligible unless \eqn{d} is many windows
-wide.
-The upper tail form also cancels when \eqn{H(q)} is not small, as for a
-heavy tailed delay near the switch, so both forms lose about
-\eqn{10^{-16} \max(|G|, |H|) / w} when the window is narrow relative to
-\eqn{d}.
-When \code{upper_fn}, which returns \eqn{H}, is supplied it is used for the
-delays whose window starts above \code{switch_at}, taken as the delay mean, and
-that are more than 1000 windows wide.
-\code{terms_fn} is used for the rest.
-The two forms agree where they are both accurate.
-
-Delays more than \eqn{10^6} windows wide are not given by either form.
-If \code{delay_cdf} is supplied, the CDF is instead the mean of \eqn{F} over
-the window, \eqn{(1 / w) \int_{d - w}^{d} F(u) du}, from a 5 point
-Gauss-Legendre rule.
-\eqn{F} is smooth over so narrow a window, so the rule is accurate to
-rounding, and the cancellation error is at most about \eqn{10^{-10}}
-for the forms used below the cutoff.
-Without \code{delay_cdf} the two forms are always used.
-
-Delays at or below zero give 0, delays of \code{Inf} give 1 and missing delays
-are an error.
+Delays at or below zero give 0 and delays of \code{Inf} give 1.
+Missing delays are an error, as before,
+and \code{.dpcens()} and \code{.ppcens()} turn that into \code{NaN}.
 Elements of \code{pwindow} equal to 0 are exact primary events and give the
 delay CDF, from \code{delay_cdf}.
 \code{q} and \code{pwindow} are recycled against each other, with a warning if the

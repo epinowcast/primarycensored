@@ -13,8 +13,7 @@
 
 \item{delay_cdf}{Optional function of a numeric vector of delays returning
 the delay CDF.
-Required if \code{pwindow} contains zeros, and used for delays more than
-\eqn{10^6} windows wide, see Details.}
+Required if \code{pwindow} contains zeros, and used for very narrow windows.}
 }
 \value{
 Numeric vector of CDF values.
@@ -23,6 +22,6 @@ Numeric vector of CDF values.
 The uniform primary CDF is \eqn{(1 / w) \int_{d - w}^{d} F(u) du}.
 This applies a 5 point Gauss-Legendre rule, which is exact for polynomials
 of degree 9 and so accurate to rounding when the window is a small fraction
-of the delay, see \code{.pcens_cdf_uniform()}.
+of the delay, see \code{.uniform_window_cdf()}.
 }
 \keyword{internal}
