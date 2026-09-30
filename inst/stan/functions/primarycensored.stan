@@ -446,7 +446,9 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * Uses primarycensored_analytical_lcdf_vectorized() when
   * check_for_analytical_vectorized() is 1, and
   * primarycensored_exptilt_lcdf_vectorized() when
-  * check_for_exptilt_vectorized() and check_for_analytical_params() are 1.
+  * check_for_exptilt_vectorized() and check_for_analytical_params() are 1,
+  * and primarycensored_gumbel_lcdf_vectorized() when
+  * check_for_gumbel_vectorized() and check_for_analytical_params() are 1.
   * Otherwise it calls primarycensored_lcdf() at each delay. No truncation
   * is applied.
   *
@@ -475,6 +477,14 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                      primary_params)) {
     return primarycensored_exptilt_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_params[1]
+    );
+  }
+  if (check_for_gumbel_vectorized(dist_id, primary_id, pwindow)
+      && check_for_analytical_params(dist_id, params, primary_id,
+                                     primary_params)) {
+    return primarycensored_gumbel_lcdf_vectorized(
+      start, n, dist_id, params, pwindow, primary_params[1],
+      primary_params[2]
     );
   }
   vector[n] log_cdfs;
@@ -516,8 +526,9 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
   *
   * The log CDFs at the integer delays come from
   * primarycensored_lcdf_vectorized(), which uses the analytical solution
-  * with shared terms where check_for_analytical_vectorized() or
-  * check_for_exptilt_vectorized() allows it.
+  * with shared terms where check_for_analytical_vectorized(),
+  * check_for_exptilt_vectorized() or check_for_gumbel_vectorized() allows
+  * it.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution

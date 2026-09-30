@@ -31,8 +31,9 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   *
   * The exponential (4), gamma (2) and normal (18) delays with an
   * exponentially tilted primary (2) have an analytical solution built from
-  * tilt transforms, see check_for_exptilt(). It applies only where the tilted
-  * delay exists, which depends on the parameters. Use
+  * tilt transforms, see check_for_exptilt(). So do they with a truncated
+  * Gumbel primary (4), see check_for_gumbel(). They apply only where the
+  * tilted delay exists, which depends on the parameters. Use
   * check_for_analytical_params() to choose between the analytical and the
   * numerical path.
   *
@@ -48,6 +49,8 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
   // Exponential, Gamma and Normal with an exponentially tilted primary
   if (check_for_exptilt(dist_id, primary_id)) return 1;
+  // Exponential, Gamma and Normal with a truncated Gumbel primary
+  if (check_for_gumbel(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
@@ -79,6 +82,11 @@ int check_for_analytical_params(int dist_id, array[] real params,
   if (!check_for_analytical(dist_id, primary_id)) return 0;
   if (check_for_exptilt(dist_id, primary_id)) {
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
+  }
+  if (check_for_gumbel(dist_id, primary_id)) {
+    return check_for_gumbel_params(
+      dist_id, params, primary_params[1], primary_params[2]
+    );
   }
   return 1;
 }
@@ -390,6 +398,24 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     }
     return primarycensored_exptilt_lcdf(
       d | dist_id, params, pwindow, primary_params[1]
+    );
+  }
+  if (check_for_gumbel(dist_id, primary_id)) {
+    // The series needs a bounded window value and the tilted delay, and is
+    // replaced by the ODE path for the delays where it is not accurate, see
+    // primarycensored_gumbel_lcdf(). The caller should have used the
+    // numerical path where the parameters do not allow it, see
+    // check_for_analytical_params().
+    if (!check_for_gumbel_params(
+          dist_id, params, primary_params[1], primary_params[2])) {
+      reject(
+        "The truncated Gumbel solution does not apply for mu ",
+        primary_params[1], " and beta ", primary_params[2],
+        ". Use the numerical path, see check_for_analytical_params()."
+      );
+    }
+    return primarycensored_gumbel_lcdf(
+      d | dist_id, params, pwindow, primary_params[1], primary_params[2]
     );
   }
   if (dist_id == 2 && primary_id == 1) {

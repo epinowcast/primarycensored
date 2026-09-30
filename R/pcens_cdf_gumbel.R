@@ -167,7 +167,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 .gumbel_n_terms <- function(log_s0) {
   n <- seq_len(200L)
   log_bound <- n * log_s0 - lgamma(n + 1) - max(log_s0, 0)
-  which(log_bound < .gumbel_log_trunc)[[1L]]
+  max(2L, which(log_bound < .gumbel_log_trunc)[[1L]])
 }
 
 #' Primary arguments of a truncated Gumbel pcens object

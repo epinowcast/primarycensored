@@ -227,7 +227,9 @@ writeLines(
     #include primarycensored_analytical_cdf.stan
     #include tilt_transform.stan
     #include primarycensored_exptilt.stan
+    #include primarycensored_gumbel.stan
     #include expgrowth.stan
+    #include tgumbel.stan
   }
   data {
     int<lower=0> N;  // number of observations
