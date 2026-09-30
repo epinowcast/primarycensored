@@ -49,7 +49,8 @@ Otherwise an error is raised. Names in \code{primary_args} are not checked
 against \code{dprimary}.
 
 With \code{check = FALSE} none of these checks are run.
-Unnamed parameters are ignored.
+Unnamed and misspelt parameters are not detected.
+A fully unnamed \code{...} is ignored.
 Misspelt names are added to the object and only fail, or are ignored,
 when the object is evaluated.
 }
