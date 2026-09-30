@@ -176,7 +176,7 @@ test_that("tlogis functions recycle arguments and keep names", {
   expect_length(ptlogis(c(0.1, 0.5, 0.9), 0, 1, c(0, 0.5, 1), 0.3), 3)
   expect_identical(attr(dtlogis, "name"), "dtlogis")
   expect_identical(attr(ptlogis, "name"), "ptlogis")
-  expect_identical(length(rtlogis(0, 0, 1, 0.5, 1)), 0L)
+  expect_length(rtlogis(0, 0, 1, 0.5, 1), 0L)
 })
 
 test_that("tlogis functions check their arguments", {
