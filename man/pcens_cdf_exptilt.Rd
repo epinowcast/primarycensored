@@ -107,15 +107,24 @@ close to zero.
 Away from these regions the error of the direct form is below 1e-9. The
 truncation error of the two forms is below 1e-9 at their thresholds.
 
-\strong{Precision.} The CDF agrees with numerical integration (\code{integrate()} at
-a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
-better for delays that are not deep in the tails, and to an absolute
-difference of about 1e-14 in the upper tail for tilts close to zero.
+\strong{Precision.} The R CDF agrees with numerical integration (\code{integrate()}
+at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
+better for delays that are not deep in the tails. For tilts close to zero
+the upper tail, \eqn{1 - F_\rho(q)}, has an absolute difference of up to
+about \eqn{10^{-15} G_1(q) / w}, which is about 1e-14 for \code{pwindow = 1}
+and up to about 1e-11 for \code{pwindow = 1e-3}.
+The Stan CDF agrees to a relative difference of about 1e-9 or better for
+windows of 0.5 or more, and of up to about 5e-9 for windows of 1e-3 with
+delays up to 25.
+The Stan shape gradient of the gamma solution is accurate in the lower tail,
+where the derivative of Stan's \code{gamma_lcdf()} is not, as the lower tail is
+taken from a series there.
 Two regimes are less accurate.
 \itemize{
 \item The small window form for a normal delay in the deep lower tail, about 30
-standard deviations below the mean, has a relative error of about 1e-7 in
-R and 4e-7 in Stan.
+to 35 standard deviations below the mean, has a relative error of up to
+about 1e-7 in both R and Stan (3e-8 at 35 standard deviations for
+\code{pwindow = 1e-3}).
 \item A window much smaller than the delay loses precision to the difference of
 the terms at its two ends, up to about 1e-13 / \code{pwindow} in relative
 terms, as the uniform window solutions do. The first order correction of
