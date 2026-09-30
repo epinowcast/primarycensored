@@ -102,6 +102,28 @@ test_that("primarycensored_lcdf has finite gradients for extreme shapes", {
   expect_gradient_ok(res, "shape = 12, k = 1500")
 })
 
+test_that("primarycensored_lcdf has finite gradients for large k with
+   x / (k + 1) between 0.5 and 0.9", {
+  model <- gengamma_probe_model()
+  # Here the log CDF is between about -12 and -600, which `gamma_lcdf`
+  # differentiates wrongly (NaN or 0) for k of 1000 or more.
+  cases <- list(
+    list(d = 900, p = c(1, 1, 1500), pwindow = 1),
+    list(d = 800, p = c(1, 1, 1000), pwindow = 1),
+    list(d = 830, p = c(1, 1, 1500), pwindow = 10),
+    list(d = 1700, p = c(1, 1, 3000), pwindow = 1),
+    list(d = 2600, p = c(1, 1, 3000), pwindow = 1)
+  )
+  for (case in cases) {
+    label <- sprintf(
+      "d = %g, pwindow = %g, params = (%s)", case$d, case$pwindow,
+      toString(case$p)
+    )
+    res <- gengamma_gradient_at(model, case$d, case$p, case$pwindow)
+    expect_gradient_ok(res, label)
+  }
+})
+
 test_that("primarycensored_lcdf has finite gradients with truncation when
    both bounds are deep in the lower tail", {
   model <- gengamma_probe_model()
