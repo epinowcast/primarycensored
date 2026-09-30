@@ -284,6 +284,35 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
 }
 
 /**
+  * Check if the tilt transform can be evaluated at a point
+  * @ingroup tilt_transforms
+  *
+  * This is check_for_tilt_transform() and, for the series of the lognormal
+  * (1) with xi > 0, that the series needs at most 20000 terms at t. It
+  * needs about xi t + 9 sqrt(xi t) + 30 terms, which is for xi t up to about
+  * 18700. Callers use the numerical path where this is 0, see
+  * check_for_analytical_delay().
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param xi Tilt. The exponentially tilted window with tilt rho needs
+  *   xi = -rho
+  * @param params Array of distribution parameters, as for dist_lcdf()
+  * @param t Point at which the transform is evaluated, the largest of the
+  *   points if there are several
+  *
+  * @return 1 if the transform is closed form at t and the tilted delay
+  * exists, 0 otherwise
+  */
+int check_for_tilt_transform_at(int dist_id, real xi, array[] real params,
+                                data real t) {
+  if (!check_for_tilt_transform(dist_id, xi, params)) return 0;
+  if (dist_id == 1 && xi > 0 && t > 0) {
+    return xi * t + 9 * sqrt(xi * t) + 30 <= 20000;
+  }
+  return 1;
+}
+
+/**
   * Log of the standard normal CDF with an exact derivative at any point
   * @ingroup tilt_transforms
   *
@@ -496,8 +525,10 @@ vector primarycensored_lognormal_tilt_quadrature(real t, real mu,
   * Phi((log t - mu) / sigma - k sigma). Past k = xi t the terms fall by at
   * least a factor xi t / (k + 1) each, so the sum stops once a term is below
   * exp(-41) of the sum past that point. The total diverges for xi > 0, so
-  * there is no upper transform. The number of terms is about 2 xi t + 64 at
-  * most and is limited to 20000, past which the function rejects.
+  * there is no upper transform. The number of terms is about
+  * xi t + 9 sqrt(xi t) + 30 and is limited to 20000, past which the function
+  * rejects. Use check_for_tilt_transform_at() to choose the numerical path
+  * there.
   *
   * @param t Point, positive
   * @param mu Mean of the log of the delay

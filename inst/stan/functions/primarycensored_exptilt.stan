@@ -40,11 +40,11 @@ int check_for_exptilt(int dist_id, int primary_id) {
 }
 
 /**
-  * Check if the small tilt forms replace the direct form
+  * Check if the small window form can replace the direct form
   * @ingroup exponential_tilt_solutions
   *
   * The direct form cancels as rho goes to zero and loses about
-  * 1e-14 / (|rho| w) relative precision. The form for small |rho| w
+  * 1e-15 / (|rho| w) relative precision. The form for small |rho| w
   * (primarycensored_exptilt_small_window_lcdf_from_terms()) has a truncation
   * error of about (|rho| w)^2 / 12. They are both below 1e-9 at the
   * threshold 1e-4. The derivative of the small form in rho is less accurate,
@@ -55,10 +55,33 @@ int check_for_exptilt(int dist_id, int primary_id) {
   * @param rho Tilt
   * @param pwindow Primary event window
   *
-  * @return 1 if |rho| * pwindow is below 1e-4, 0 otherwise
+  * @return 1 if |rho| * pwindow is below 1e-4, 0 otherwise. The form is
+  * used only where exptilt_is_small_window() is 1 too.
   */
-int exptilt_is_small_window(real rho, data real pwindow) {
+int exptilt_is_small_window_regime(real rho, data real pwindow) {
   return abs(rho) * pwindow < 1e-4;
+}
+
+/**
+  * Check if the small window form replaces the direct form at a delay
+  * @ingroup exponential_tilt_solutions
+  *
+  * The small window form subtracts terms of the size of |d| + w, so its
+  * rounding error is about 1e-14 (|d| + w) / w (1 + |rho| (|d| + w)). The
+  * direct form has an error of about 1e-15 / (|rho| w) whatever the distance
+  * from the origin. The small window form has the smaller error while
+  * |rho| (|d| + w) is below about 0.1, and it is used only there.
+  *
+  * @param rho Tilt
+  * @param d Delay
+  * @param pwindow Primary event window
+  *
+  * @return 1 if exptilt_is_small_window_regime() is 1 and |rho| * (|d| +
+  * pwindow) is below 0.1, 0 otherwise
+  */
+int exptilt_is_small_window(real rho, data real d, data real pwindow) {
+  return exptilt_is_small_window_regime(rho, pwindow)
+         && abs(rho) * (abs(d) + pwindow) < 0.1;
 }
 
 /**
@@ -300,7 +323,7 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   }
   if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
-  if (exptilt_is_small_window(rho, pwindow)) {
+  if (exptilt_is_small_window(rho, d, pwindow)) {
     return primarycensored_exptilt_small_window_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params),
       primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
@@ -375,7 +398,18 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
   // non-negative reals, so they share the entry for 0
   int first = positive ? max(start - pw, 0) : start - pw;
   vector[n] log_cdfs;
-  if (exptilt_is_small_window(rho, pwindow)) {
+  // The small window form cancels far from the origin. Where the window is
+  // small but the delays are not, each delay chooses its form, as in
+  // primarycensored_exptilt_lcdf(), and the terms are not shared.
+  if (exptilt_is_small_window_regime(rho, pwindow)
+      && !exptilt_is_small_window(rho, max(abs(start), n), pwindow)) {
+    for (d in start:n) {
+      log_cdfs[d] = primarycensored_exptilt_lcdf(d | dist_id, params, pwindow,
+                                                 rho);
+    }
+    return log_cdfs;
+  }
+  if (exptilt_is_small_window_regime(rho, pwindow)) {
     // moments[t - first + 1] holds the moments at endpoint t
     array[n - first + 1] vector[2] moments;
     for (t in first:n) {

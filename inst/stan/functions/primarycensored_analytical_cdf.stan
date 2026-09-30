@@ -85,6 +85,41 @@ int check_for_analytical_params(int dist_id, array[] real params,
 }
 
 /**
+  * Check if the analytical solution applies at a delay
+  * @ingroup analytical_solution_helpers
+  *
+  * This is check_for_analytical_params() and, for the exponentially tilted
+  * solutions, that the tilt transform can be evaluated at d, see
+  * check_for_tilt_transform_at(). The series of the lognormal for a negative
+  * tilt has a limit on its length that depends on d. This is the check used
+  * to choose the path in primarycensored_cdf(), primarycensored_lcdf() and
+  * primarycensored_lcdf_vectorized(), the latter at its largest delay.
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param primary_id Distribution identifier for the primary distribution
+  * @param primary_params Array of primary distribution parameters
+  * @param d Delay, the largest delay if there are several
+  *
+  * @return 1 if the analytical solution applies at d, 0 if the numerical path
+  * is needed
+  */
+int check_for_analytical_delay(int dist_id, array[] real params,
+                               int primary_id, array[] real primary_params,
+                               data real d) {
+  if (!check_for_analytical_params(dist_id, params, primary_id,
+                                   primary_params)) {
+    return 0;
+  }
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform_at(
+      dist_id, -primary_params[1], params, d
+    );
+  }
+  return 1;
+}
+
+/**
   * Combine the uniform primary terms at d and q into the censored log CDF
   * @ingroup analytical_solution_helpers
   *
