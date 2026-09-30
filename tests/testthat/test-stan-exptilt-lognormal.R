@@ -351,9 +351,10 @@ test_that("the lognormal uses the ODE path past the series cut-off", {
   expect_identical(lcdf[1:2], lnorm_stan_lcdf(d[1:2], case, 1, rho))
   # and the ODE, with its tolerance of 1e-6, past it
   ode <- vapply(
-    d[3:5], function(x) log(primarycensored_numeric_cdf(
-      x, 1L, params, 1, 2L, rho
-    )), numeric(1)
+    d[3:5], function(x) {
+      log(primarycensored_numeric_cdf(x, 1L, params, 1, 2L, rho))
+    },
+    numeric(1)
   )
   expect_identical(lcdf[3:5], ode)
   expect_lt(max(abs(exp(lcdf) - expected)), 1e-6)
@@ -404,16 +405,32 @@ test_that("the lognormal uses the ODE path where the series is too long", {
 
 test_that("the vectorised lognormal tilted CDF matches the per delay CDF far
   from the origin", {
+  # With |r| w below 1e-4 the small window form applies up to |r| (d + w) of
+  # 0.1 and the direct form beyond, so ranges that cross it mix both forms.
+  # Each endpoint has its terms computed once for the delays that need them
   pwindow <- 1
-  rho <- 5e-5
   params <- c(log(1e4), 0.5)
-  for (range in list(c(1L, 40L), c(1990L, 2010L), c(19980L, 20000L))) {
+  for (rho in c(5e-5, -5e-5)) {
+    for (range in list(c(1L, 40L), c(1990L, 2010L), c(19980L, 20000L))) {
+      expect_identical(
+        primarycensored_exptilt_lcdf_vectorized(
+          range[1], range[2], 1L, params, pwindow, rho
+        )[range[1]:range[2]],
+        lnorm_per_delay_lcdf(range[1]:range[2], params, pwindow, rho),
+        info = sprintf("start %g, end %g, r %g", range[1], range[2], rho)
+      )
+    }
+  }
+  # Mixed small delay, small window and direct forms
+  params <- c(1.6, 0.5)
+  for (rho in c(3e-5, -3e-5)) {
     expect_identical(
       primarycensored_exptilt_lcdf_vectorized(
-        range[1], range[2], 1L, params, pwindow, rho
-      )[range[1]:range[2]],
-      lnorm_per_delay_lcdf(range[1]:range[2], params, pwindow, rho),
-      info = sprintf("start %g, end %g", range[1], range[2])
+        1L, 5000L, 1L, params, 2, rho
+      )[c(1:30, 2990:3010, 4990:5000)],
+      lnorm_per_delay_lcdf(
+        c(1:30, 2990:3010, 4990:5000), params, 2, rho
+      )
     )
   }
 })
@@ -670,7 +687,8 @@ test_that("the lognormal tilted CDF is accurate for a large sdlog", {
       case <- list(meanlog = meanlog, sdlog = sdlog)
       d <- exp(meanlog + sdlog * seq(-2, 0.5, by = 0.25))
       d <- d[d > 1e-9]
-      for (rho in c(5, 200, -2)) {
+      # The series for a negative tilt needs xi d of at most about 2e4
+      for (rho in c(5, 200, -0.005)) {
         expected <- exptilt_reference(
           d, 1, rho, exptilt_lnorm_cdf(case)
         )

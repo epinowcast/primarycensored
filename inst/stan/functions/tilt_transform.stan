@@ -284,13 +284,22 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
 }
 
 /**
-  * Check if the tilt transform can be evaluated at a point
+  * Check if the tilt transform is the path to use at a point
   * @ingroup tilt_transforms
   *
   * This is check_for_tilt_transform() and, for the series of the lognormal
-  * (1) with xi > 0, that the series needs at most 20000 terms at t. It
-  * needs about xi t + 9 sqrt(xi t) + 30 terms, which is for xi t up to about
-  * 18700. Callers use the numerical path where this is 0, see
+  * (1) with xi > 0, that the series is the faster accurate path at t. It
+  * costs about xi t + 9 sqrt(xi t) + 30 terms, each with an autodiff
+  * gradient. The gradient of the log CDF costs 0.04 ms at xi t of 60, 0.06
+  * ms at 100 and 1.1 ms at 3000, while the ODE costs 0.013 ms at the default
+  * tolerance of 1e-6 and 0.035 ms at 1e-10, which matches the series to
+  * 1e-7 in the gradient. The two cross at xi t of about 60, so the series is
+  * used up to 60.
+  * Past that the ODE is used, unless the window is wide in tilt terms
+  * (xi w above 2). There the ODE is less accurate in the lower tail, where
+  * the CDF is small and varies fast, so the series is kept up to 20000
+  * terms, which is xi t up to about 18700, and the ODE is used beyond that.
+  * Callers use the numerical path where this is 0, see
   * check_for_analytical_delay().
   *
   * @param dist_id Distribution identifier for the delay distribution
@@ -299,15 +308,17 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * @param params Array of distribution parameters, as for dist_lcdf()
   * @param t Point at which the transform is evaluated, the largest of the
   *   points if there are several
+  * @param pwindow Primary event window
   *
-  * @return 1 if the transform is closed form at t and the tilted delay
-  * exists, 0 otherwise
+  * @return 1 if the transform is closed form and is the path to use at t,
+  * and the tilted delay exists, 0 otherwise
   */
 int check_for_tilt_transform_at(int dist_id, real xi, array[] real params,
-                                data real t) {
+                                data real t, data real pwindow) {
   if (!check_for_tilt_transform(dist_id, xi, params)) return 0;
   if (dist_id == 1 && xi > 0 && t > 0) {
-    return xi * t + 9 * sqrt(xi * t) + 30 <= 20000;
+    if (xi * t + 9 * sqrt(xi * t) + 30 > 20000) return 0;
+    return xi * t <= 60 || xi * pwindow > 2;
   }
   return 1;
 }
@@ -383,15 +394,15 @@ vector primarycensored_gauss_legendre_log_weights() {
 }
 
 /**
-  * Log of a Gaussian weighted integral of the tilt over a panel
+  * Log of a Gaussian weighted integral of the tilt over one panel
   * @ingroup tilt_transforms
   *
   * The log of the integral of exp(-rho exp(mu + sigma z)) phi(z) over [a, b]
   * by the 32 point Gauss-Legendre rule, where phi is the standard normal
   * density. With u = exp(mu + sigma z) and z standard normal this is the
   * integral of exp(-rho u) f(u) over the matching range of a lognormal
-  * density f. The panels of primarycensored_lognormal_tilt_quadrature() are
-  * chosen so that the integrand is smooth over them.
+  * density f. See primarycensored_lognormal_tilt_panel() for the range of a
+  * large sigma.
   *
   * @param a Lower limit
   * @param b Upper limit
@@ -401,8 +412,8 @@ vector primarycensored_gauss_legendre_log_weights() {
   *
   * @return Log of the integral, `-inf` if b <= a
   */
-real primarycensored_lognormal_tilt_panel(real a, real b, real mu,
-                                          real sigma, real rho) {
+real primarycensored_lognormal_tilt_one_panel(real a, real b, real mu,
+                                              real sigma, real rho) {
   if (b <= a) return negative_infinity();
   real half = 0.5 * (b - a);
   real mid = 0.5 * (a + b);
@@ -418,6 +429,48 @@ real primarycensored_lognormal_tilt_panel(real a, real b, real mu,
                     - 0.5 * square(z_down);
   }
   return log_sum_exp(terms) + log(half) - 0.5 * log(2 * pi());
+}
+
+/**
+  * Log of a Gaussian weighted integral of the tilt over a range
+  * @ingroup tilt_transforms
+  *
+  * As primarycensored_lognormal_tilt_one_panel(), with the range split into
+  * ceil(sigma / 1.8) equal panels, one for sigma up to 1.8. The integrand
+  * falls from its plateau to zero over a width of about 1 / sigma. One 32
+  * point panel is accurate to about 1e-11 in the log transform for sigma up
+  * to 1.8 and loses accuracy beyond that, to 1e-7 in the CDF at sigma of 4
+  * and 3e-5 at 15. The split keeps the width of a panel in units of
+  * 1 / sigma within the tested range, and the CDF accurate to about 1e-9 to
+  * a sigma of 15. The R implementation uses the same split in
+  * `.lnorm_n_panels()`.
+  *
+  * @param a Lower limit
+  * @param b Upper limit
+  * @param mu Mean of the log of the delay
+  * @param sigma Standard deviation of the log of the delay
+  * @param rho Tilt, at least 0
+  *
+  * @return Log of the integral, `-inf` if b <= a
+  */
+real primarycensored_lognormal_tilt_panel(real a, real b, real mu,
+                                          real sigma, real rho) {
+  if (b <= a) return negative_infinity();
+  int n_panels = 1;
+  while (n_panels * 1.8 < sigma) {
+    n_panels += 1;
+  }
+  if (n_panels == 1) {
+    return primarycensored_lognormal_tilt_one_panel(a, b, mu, sigma, rho);
+  }
+  real width = (b - a) / n_panels;
+  vector[n_panels] panels;
+  for (j in 1:n_panels) {
+    panels[j] = primarycensored_lognormal_tilt_one_panel(
+      a + (j - 1) * width, a + j * width, mu, sigma, rho
+    );
+  }
+  return log_sum_exp(panels);
 }
 
 /**
@@ -476,7 +529,8 @@ vector primarycensored_lognormal_tilt_bump(real mu, real sigma, real rho) {
   * other side of the mode, which is not small, so the difference does not
   * cancel. The panels are accurate to an absolute difference of the log
   * transform of about 1e-11 for sigma up to 1.8 and of about 1e-13 for sigma
-  * of 1 or below.
+  * of 1 or below, and for a larger sigma with the split of
+  * primarycensored_lognormal_tilt_panel().
   *
   * @param t Point, positive
   * @param mu Mean of the log of the delay

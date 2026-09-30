@@ -371,8 +371,11 @@ int check_for_exptilt_vectorized(int dist_id, int primary_id,
   *
   * The log CDF at d combines the terms at d and at q = d - pwindow. Both are
   * integer delays, so the terms are computed once per delay and used for
-  * both, halving the transform evaluations. The values are the same as from
-  * primarycensored_exptilt_lcdf() at each delay. Only for cases where
+  * both, halving the transform evaluations. Each delay uses the form that
+  * primarycensored_exptilt_lcdf() chooses for it, and each endpoint has its
+  * moments or its terms computed once, for the delays that need them and
+  * with one shared setup, whatever the mix of forms. The values are the same
+  * as from primarycensored_exptilt_lcdf() at each delay. Only for cases where
   * check_for_exptilt_vectorized() is 1 and check_for_tilt_transform() is 1
   * for -rho.
   *
@@ -397,52 +400,69 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
   // Endpoints below 0 have the same terms as 0 for delays on the
   // non-negative reals, so they share the entry for 0
   int first = positive ? max(start - pw, 0) : start - pw;
+  int n_endpoints = n - first + 1;
   vector[n] log_cdfs;
-  // The small window form cancels far from the origin. Where the window is
-  // small but the delays are not, each delay chooses its form, as in
-  // primarycensored_exptilt_lcdf(), and the terms are not shared.
-  if (exptilt_is_small_window_regime(rho, pwindow)
-      && !exptilt_is_small_window(rho, max(abs(start), n), pwindow)) {
-    for (d in start:n) {
-      log_cdfs[d] = primarycensored_exptilt_lcdf(d | dist_id, params, pwindow,
-                                                 rho);
+  // Each delay chooses its form as in primarycensored_exptilt_lcdf(). The
+  // moments of the small window form and the terms of the direct form are
+  // computed once per endpoint that a delay of that form needs, and shared
+  // by the two delays that use it. Where the window is small but the delays
+  // are not, as for |rho| w below 1e-4 and delays beyond the reach of the
+  // small window form, both kinds of delay are mixed and each endpoint is
+  // still computed once.
+  // form[d] is 1 for the small window form, 2 for the small delay form and 3
+  // for the direct form.
+  array[n] int form = rep_array(3, n);
+  array[n_endpoints] int needs_moments = rep_array(0, n_endpoints);
+  array[n_endpoints] int needs_terms = rep_array(0, n_endpoints);
+  for (d in start:n) {
+    int d_index = d - first + 1;
+    int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
+    if (exptilt_is_small_window(rho, d, pwindow)) {
+      form[d] = 1;
+      needs_moments[d_index] = 1;
+      needs_moments[q_index] = 1;
+    } else if (exptilt_is_small_delay(dist_id, rho, d, pwindow)) {
+      form[d] = 2;
+      needs_moments[d_index] = 1;
+    } else {
+      needs_terms[d_index] = 1;
+      needs_terms[q_index] = 1;
     }
-    return log_cdfs;
   }
-  if (exptilt_is_small_window_regime(rho, pwindow)) {
-    // moments[t - first + 1] holds the moments at endpoint t
-    array[n - first + 1] vector[2] moments;
-    for (t in first:n) {
-      moments[t - first + 1] = primarycensored_tilt_moments(
-        t, dist_id, params
-      );
+  // moments[t - first + 1] and terms[t - first + 1] hold the values at
+  // endpoint t, for the endpoints that are needed
+  array[n_endpoints] vector[2] moments;
+  array[n_endpoints] vector[4] terms;
+  vector[4] context = rep_vector(0, 4);
+  if (sum(needs_terms) > 0) {
+    context = log_tilt_transform_context(dist_id, -rho, params);
+  }
+  for (t in first:n) {
+    int t_index = t - first + 1;
+    if (needs_moments[t_index]) {
+      moments[t_index] = primarycensored_tilt_moments(t, dist_id, params);
     }
-    for (d in start:n) {
-      int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-      log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
-        moments[d - first + 1], moments[q_index], rho, pwindow
-      );
-    }
-  } else {
-    // terms[t - first + 1] holds the terms at endpoint t
-    array[n - first + 1] vector[4] terms;
-    vector[4] context = log_tilt_transform_context(dist_id, -rho, params);
-    for (t in first:n) {
-      terms[t - first + 1] = primarycensored_exptilt_terms_shared(
+    if (needs_terms[t_index]) {
+      terms[t_index] = primarycensored_exptilt_terms_shared(
         t, dist_id, rho, params, context
       );
     }
-    for (d in start:n) {
-      if (exptilt_is_small_delay(dist_id, rho, d, pwindow)) {
-        log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
-          primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
-        );
-      } else {
-        int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-        log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
-          terms[d - first + 1], terms[q_index], d, rho, pwindow
-        );
-      }
+  }
+  for (d in start:n) {
+    int d_index = d - first + 1;
+    int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
+    if (form[d] == 1) {
+      log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
+        moments[d_index], moments[q_index], rho, pwindow
+      );
+    } else if (form[d] == 2) {
+      log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
+        moments[d_index], rho, pwindow
+      );
+    } else {
+      log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
+        terms[d_index], terms[q_index], d, rho, pwindow
+      );
     }
   }
   return log_cdfs;
