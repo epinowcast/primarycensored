@@ -21,7 +21,7 @@
 #'   \{T_f(n / \beta; q) - T_f(n / \beta; q - w)\}
 #'   - G(0) \{F(q) - F(q - w)\} \Big].
 #' }
-#' This is the solution of the paper, and was checked numerically.
+#' This solution was checked numerically.
 #' The \eqn{n = 0} term is \eqn{F(q) - F(q - w)}, so the bracket is computed
 #' as
 #' \deqn{B(q) = (1 - G(0)) \{F(q) - F(q - w)\} +
@@ -52,31 +52,43 @@
 #' the machine precision times the ratio of the sum of the absolute terms to
 #' the result, times one plus the largest magnitude of a log term, plus the
 #' truncation bound relative to the result, see `.gumbel_error_bound()`.
-#' Where it is above \eqn{10^{-9}} the method uses the numerical method of
-#' [pcens_cdf.default()] for that `q`, so no value is silently inaccurate.
-#' Two things cause it. The first is a large \eqn{s_0}, where the terms reach
-#' \eqn{e^{s_0}} and the result is of order 1, so that the precision lost is
-#' \eqn{e^{s_0}} times the rounding error of the log terms, which grows with
-#' the tilts \eqn{n / \beta} and the scale of the delay. The second is a
-#' window that is narrow relative to the scale, \eqn{w \ll \beta}, where the
-#' bracket is a small difference of large terms and the loss is about
-#' \eqn{\beta / w}. Also \eqn{s_0 > 15} is never used, see `.gumbel_max_s0`,
-#' as the number of terms grows with it.
-#' The estimate was at least the actual error in tests against a tight
-#' reference integral, and values that it accepts agree with the reference to
-#' a relative difference of about 1e-9 or better, and about 1e-12 for
+#' Where it is above \eqn{10^{-8}} the method uses the numerical method of
+#' `.gumbel_numeric()` for that `q`, so no value is silently inaccurate.
+#' That method is accurate to about 1e-9 relative to the CDF, so the series is
+#' kept wherever its estimated error is below that of the numerical method.
+#' The estimate is 10 to 1000 times the actual error. In tests against a
+#' tight reference integral, values with an estimate of at most 1e-8 agree
+#' to a relative difference of 5e-10 or better, and 1e-12 for
 #' \eqn{s_0 \le 1}.
+#' Two things make the estimate large. The first is a large \eqn{s_0}, where
+#' the terms reach \eqn{e^{s_0}} and the result is of order 1, so that the
+#' precision lost is \eqn{e^{s_0}} times the rounding error of the log terms,
+#' which grows with the tilts \eqn{n / \beta} and the scale of the delay. The
+#' second is a window that is narrow relative to the scale, \eqn{w \ll
+#' \beta}, where the bracket is a small difference of large terms and the
+#' loss is about \eqn{\beta / w}. Also \eqn{s_0 > 15} is never used, see
+#' `.gumbel_max_s0`, as the number of terms grows with it.
 #' In the grid of `mu` in -0.5, 0, 0.5, 1, 1.5, `beta` in 0.1, 0.2, 1 and
 #' `pwindow` in 1, 2, the normal delay uses the series where
 #' \eqn{\mu / \beta \le 1.5}, which is every `mu` at `beta` 1 and `mu` up to
 #' 0 at `beta` 0.2 and 0.1. The numerical method is used for larger
 #' \eqn{\mu / \beta}, where the window density rises sharply inside the window.
 #'
+#' **Numerical method.** The window density is a spike of width about
+#' \eqn{\beta} when \eqn{\mu / \beta} is large, and adaptive integration
+#' over the window, as in [pcens_cdf.default()], can miss it and return
+#' about 0 without an error. So the numerical method integrates in a
+#' variable in which the integrand is smooth and over the range that holds
+#' the mass of the window, see `.gumbel_numeric()`. It is also used by
+#' [pcens_cdf.default()] for any delay with this primary, and for
+#' `use_numeric = TRUE`. It was checked against reference integrals from
+#' a location far below the window to one far above it.
+#'
 #' **Admissibility.** The terms need the transform at the tilts
 #' \eqn{n / \beta} for \eqn{n = 1, \ldots, N}. The exponential and gamma forms
 #' need the tilted delay to exist, \eqn{\lambda > N / \beta} for rate
-#' \eqn{\lambda}. Otherwise the method falls back to [pcens_cdf.default()] for
-#' every `q`. For delays of a day or more the rate is of order 1, and the
+#' \eqn{\lambda}. Otherwise the method uses the numerical method for every
+#' `q`. For delays of a day or more the rate is of order 1, and the
 #' bound is only met for very short delays, so in practice these delays use
 #' the numerical method unless \eqn{\mu / \beta} is very negative or the
 #' scale is large. The normal delay has no restriction.
@@ -146,12 +158,26 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 
 # The series is not used above this value of s0 = exp(mu / beta). The terms
 # are as large as exp(s0) and the number of terms grows with s0, about 60 at
-# 12 and 69 at 15. Beyond it the rounding error of the terms is above 1e-9
-# for the delays in the tests.
+# 12 and 69 at 15. Beyond it the rounding error of the terms is above the
+# tolerance below for the delays in the tests.
 .gumbel_max_s0 <- 15
 
-# Largest estimated relative error for which the series is used
-.gumbel_tol <- 1e-9
+# Largest estimated relative error for which the series is used. The
+# estimate is 10 to 1000 times the actual error, and the numerical method
+# is accurate to about 1e-9, so a series value with an estimate above this
+# is replaced by the numerical one.
+.gumbel_tol <- 1e-8
+
+# Relative tolerance of the numerical integrals
+.gumbel_num_tol <- 1e-10
+
+# Largest value of u = s(z) - s(w) that is integrated, where exp(-u)
+# underflows
+.gumbel_u_max <- 745
+
+# Number of scales beyond the peak, in beta, at which the density is cut,
+# where it is exp(-46) of its peak
+.gumbel_z_cut <- 46
 
 # Truncation threshold of the series, relative to max(s0, 1)
 .gumbel_log_trunc <- log(1e-18)
@@ -233,17 +259,16 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 #'
 #' @keywords internal
 .pcens_cdf_gumbel <- function(object, q, pwindow, use_numeric = FALSE) {
-  if (isTRUE(use_numeric)) {
-    return(pcens_cdf.default(object, q, pwindow, use_numeric))
-  }
   primary <- .gumbel_primary_args(object)
   mu <- primary$mu
   scale <- primary$beta
   # The closed forms are for a single window and need a bounded number of
   # terms, and the tilted delay at the largest tilt
-  if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0 ||
-    !.gumbel_available(object, mu, scale)) {
-    return(.gumbel_numeric(object, q, pwindow, mu))
+  if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  if (isTRUE(use_numeric) || !.gumbel_available(object, mu, scale)) {
+    return(.gumbel_numeric(object, q, pwindow, mu, scale))
   }
   n_terms <- .gumbel_n_terms(mu / scale)
 
@@ -261,52 +286,116 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 
 #' Numerical primary event censored CDF for a truncated Gumbel primary
 #'
-#' This is [pcens_cdf.default()]. The window density can go from zero to
-#' its peak within a fraction of the window, for example for a large
-#' location with a small scale, and the default integration can then fail
-#' with an error from the rounding of the integrand. For a point where it
-#' does, the integral is taken again with more subdivisions and a break at
-#' the location `mu`, where the window density changes most.
+#' The integral of the delay CDF against the window density, for a finite
+#' positive window. It replaces [pcens_cdf.default()], whose integration
+#' returns about 0 without an error when the density is a narrow spike, as
+#' it is for a large \eqn{\mu / \beta}, because the spike falls between the
+#' points at which the integrand is evaluated. Two changes of variable keep
+#' the integrand smooth, with \eqn{s(z) = e^{(\mu - z) / \beta}} and
+#' \eqn{s_w = s(w)}.
+#'
+#' With \eqn{\mu \ge w}, \eqn{s_w \ge 1} and the spike is at the end of the
+#' window, within \eqn{\beta / s_w}. The integral is taken in
+#' \eqn{u = s(z) - s_w}, where the window density is
+#' \eqn{e^{-u} / (1 - e^{-\Delta})} on \eqn{[0, \Delta]} with
+#' \eqn{\Delta = s(0) - s_w}, cut at \eqn{u = 745}, where \eqn{e^{-u}}
+#' underflows. The range is split at 1, 5, 20 and 60, and at the point where
+#' the delay CDF leaves zero.
+#'
+#' With \eqn{\mu < w} the density is resolved in \eqn{z}. It is cut where
+#' the mass beyond is below \eqn{10^{-20}} of the window, at
+#' \eqn{s(z) = 745 + s_w} below and \eqn{e^{-46}} relative to the peak
+#' above, and split at \eqn{\mu + \beta c} for \eqn{c} in \eqn{-3, -1, 0,
+#' 1, 3, 8, 20}, and at the point where the delay CDF leaves zero. This is
+#' the range of the density, so a spike of width \eqn{\beta} inside a wide
+#' window is found, and there is no underflow as for a location far below the
+#' window.
+#'
+#' The integrals use `stats::integrate()` with a relative tolerance of
+#' 1e-10, so the result is accurate to about 1e-9 relative to the CDF.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @param mu Location of the truncated Gumbel primary.
+#' @param mu,beta Location and scale of the truncated Gumbel primary.
 #'
 #' @return Vector of CDFs, in \[0, 1\].
 #'
 #' @keywords internal
-.gumbel_numeric <- function(object, q, pwindow, mu) {
+.gumbel_numeric <- function(object, q, pwindow, mu, beta) {
+  result <- rep(NA_real_, length(q))
+  result[!is.na(q) & q == Inf] <- 1
+  result[!is.na(q) & q == -Inf] <- 0
+  finite <- which(is.finite(q))
+  result[finite] <- .gumbel_numeric_finite(
+    object, q[finite], pwindow, mu, beta
+  )
+  result
+}
+
+#' Numerical CDF of a truncated Gumbel primary at finite points
+#'
+#' @inheritParams .gumbel_numeric
+#'
+#' @return Vector of CDFs, in \[0, 1\].
+#'
+#' @keywords internal
+.gumbel_numeric_finite <- function(object, q, pwindow, mu, beta) {
+  log_sw <- (mu - pwindow) / beta
+  cdf <- function(x) do.call(object$pdist, c(list(q = x), object$args))
+  integrate_pieces <- function(integrand, breaks) {
+    breaks <- sort(unique(breaks))
+    sum(vapply(
+      seq_len(length(breaks) - 1L),
+      function(i) {
+        stats::integrate(
+          integrand, breaks[i], breaks[i + 1L],
+          rel.tol = .gumbel_num_tol, abs.tol = 0, subdivisions = 1000L,
+          stop.on.error = FALSE
+        )$value
+      },
+      numeric(1)
+    ))
+  }
+  if (log_sw >= 0) {
+    # The end of the window is at or below the peak, integrate in u
+    log_delta <- log_sw + .log_expm1(pwindow / beta)
+    top <- min(exp(log_delta), .gumbel_u_max)
+    scale <- -expm1(-exp(log_delta))
+    breaks_u <- c(0, top, c(1, 5, 20, 60)[c(1, 5, 20, 60) < top])
+    return(vapply(
+      q,
+      function(d) {
+        # The delay at d - z = (d - pwindow) + beta log(1 + u / s_w), so
+        # that d = pwindow with u / s_w tiny keeps its small difference
+        integrand <- function(u) {
+          x <- (d - pwindow) + beta * log1p(exp(log(u) - log_sw))
+          cdf(pmin(x, d)) * exp(-u)
+        }
+        kink <- if (!is.na(d) && d > 0 && d < pwindow) {
+          log_sw + .log_expm1((pwindow - d) / beta)
+        } else {
+          Inf
+        }
+        if (kink < log(top)) breaks_u <- c(breaks_u, exp(kink))
+        min(1, max(0, integrate_pieces(integrand, breaks_u) / scale))
+      },
+      numeric(1)
+    ))
+  }
+  # The window ends above the peak, integrate in z over the range of the
+  # density
+  z_low <- max(0, mu - beta * log(.gumbel_u_max + exp(log_sw)))
+  z_high <- min(pwindow, max(mu, 0) + beta * .gumbel_z_cut)
+  breaks_z <- c(z_low, z_high, mu + beta * c(-3, -1, 0, 1, 3, 8, 20))
+  breaks_z <- breaks_z[breaks_z >= z_low & breaks_z <= z_high]
   vapply(
     q,
     function(d) {
-      tryCatch(
-        pcens_cdf.default(object, d, pwindow, FALSE),
-        error = function(e) {
-          integrand <- function(p) {
-            do.call(object$pdist, c(list(q = d - p), object$args)) *
-              do.call(
-                object$dprimary,
-                c(list(x = p, min = 0, max = pwindow), object$dprimary_args)
-              )
-          }
-          breaks <- sort(unique(c(
-            0, pwindow,
-            if (d > 0 && d < pwindow) d,
-            if (mu > 0 && mu < pwindow) mu
-          )))
-          value <- sum(vapply(
-            seq_len(length(breaks) - 1L),
-            function(i) {
-              stats::integrate(
-                integrand, breaks[i], breaks[i + 1L],
-                rel.tol = 1e-9, subdivisions = 1000L, stop.on.error = FALSE
-              )$value
-            },
-            numeric(1)
-          ))
-          min(1, max(0, value))
-        }
-      )
+      integrand <- function(z) {
+        cdf(d - z) * dtgumbel(z, 0, pwindow, mu, beta)
+      }
+      breaks <- c(breaks_z, if (!is.na(d) && d > z_low && d < z_high) d)
+      min(1, max(0, integrate_pieces(integrand, breaks)))
     },
     numeric(1)
   )
@@ -343,7 +432,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   result <- pmin(1, exp(log_cdf))
   if (any(numeric_needed)) {
     result[numeric_needed] <- .gumbel_numeric(
-      object, q[numeric_needed], pwindow, mu
+      object, q[numeric_needed], pwindow, mu, beta
     )
   }
   result
@@ -437,7 +526,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   # Positive terms are the even n and (1 - G(0)) Delta_0, negative the odd
   is_odd <- n %% 2L == 1L
   log_pos <- .log_sum_exp_rows(cbind(
-    .log1m_exp(-exp(log_s0)) + log_delta[, 1L],
+    .log1m_exp_neg_exp(log_s0) + log_delta[, 1L],
     log_a[, !is_odd, drop = FALSE]
   ))
   log_neg <- .log_sum_exp_rows(log_a[, is_odd, drop = FALSE])
@@ -448,7 +537,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   # expm1 of the window over beta
   log_s_w <- -(pwindow - mu) / beta
   log_d <- -exp(log_s_w) +
-    .log1m_exp(-exp(log_s_w + .log_expm1(pwindow / beta)))
+    .log1m_exp_neg_exp(log_s_w + .log_expm1(pwindow / beta))
   log_cdf <- .log_sum_exp(log_f_y, log_bracket - log_d)
   # Mass in the window is zero, so all terms vanish together
   no_mass <- is.infinite(log_delta[, 1L]) & log_delta[, 1L] < 0

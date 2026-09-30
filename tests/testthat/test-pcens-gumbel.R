@@ -60,7 +60,7 @@ test_that("the series agrees with numerical integration where accepted", {
           reference <- gumbel_reference(
             q, pwindow, mu, beta, cdf, family$positive
           )
-          accepted <- fit$error <= 1e-9
+          accepted <- fit$error <= .gumbel_tol
           if (!any(accepted)) next
           expect_lt(
             max_rel_diff(
@@ -122,7 +122,7 @@ test_that("the series is accurate at extreme and narrow windows", {
       obj, family$q, s[["w"]], s[["mu"]], s[["beta"]],
       .gumbel_n_terms(s[["mu"]] / s[["beta"]]), -Inf
     )
-    expect_true(all(fit$error <= 1e-9), info = toString(s))
+    expect_true(all(fit$error <= .gumbel_tol), info = toString(s))
     expect_lt(
       max_rel_diff(
         exp(fit$log_cdf),
@@ -156,7 +156,7 @@ test_that("the normal delay uses the series where the window value is small", {
         obj, family$q, 1, mu, beta, .gumbel_n_terms(mu / beta), -Inf
       )
       expect_true(
-        all(fit$error <= 1e-9),
+        all(fit$error <= .gumbel_tol),
         label = gumbel_label(family, 1, mu, beta)
       )
     }
@@ -199,7 +199,7 @@ test_that("a narrow window relative to the scale uses the numerical path", {
   fit <- .gumbel_lcdf(
     obj, c(1, 3), 1e-7, 0, 1, .gumbel_n_terms(0), -Inf
   )
-  expect_true(all(fit$error > 1e-9))
+  expect_true(all(fit$error > .gumbel_tol))
   q <- c(1, 3)
   expect_equal(
     pcens_cdf(obj, q, 1e-7),
@@ -324,12 +324,12 @@ test_that("a narrow spike of the window density is resolved", {
         family$q, s[["w"]], s[["mu"]], s[["beta"]], cdf, family$positive
       )
       expect_lt(
-        max_rel_diff(pcens_cdf(obj, family$q, s[["w"]]), expected),
+        gumbel_error(pcens_cdf(obj, family$q, s[["w"]]), expected),
         1e-7,
         label = label
       )
       expect_lt(
-        max_rel_diff(
+        gumbel_error(
           pcens_cdf(obj, family$q, s[["w"]], use_numeric = TRUE), expected
         ),
         1e-7,
@@ -339,7 +339,7 @@ test_that("a narrow spike of the window density is resolved", {
   }
 })
 
-test_that("the numerical path is accurate across large mu / beta", {
+test_that("the numerical path is accurate for large mu over beta", {
   family <- gumbel_spike_families()[[1]]
   cdf <- gumbel_cdf(family)
   for (ratio in c(15, 20, 50, 200)) {
@@ -352,9 +352,9 @@ test_that("the numerical path is accurate across large mu / beta", {
         family$q, pwindow, mu, beta, cdf, FALSE
       )
       expect_lt(
-        max_rel_diff(pcens_cdf(obj, family$q, pwindow), expected),
+        gumbel_error(pcens_cdf(obj, family$q, pwindow), expected),
         1e-7,
-        label = sprintf("mu / beta %g, pwindow %g", ratio, pwindow)
+        label = sprintf("mu over beta %g, pwindow %g", ratio, pwindow)
       )
     }
   }
@@ -386,4 +386,35 @@ test_that("pprimarycensored works for a narrow spike", {
   expect_equal(
     p, c(0.0668075, 0.6914633, 1), tolerance = 1e-6
   )
+})
+
+test_that("delays without a solution use the numerical path for a spike", {
+  # The lognormal has no truncated Gumbel solution, so it uses
+  # pcens_cdf.default(), which integrates in the same way
+  cdf <- function(x) plnorm(x, 1, 0.5)
+  q <- c(0.5, 1, 3, 8, 20)
+  for (s in gumbel_spike_settings()) {
+    obj <- new_pcens(
+      plnorm, dtgumbel,
+      primary_args = list(mu = s[["mu"]], beta = s[["beta"]]),
+      meanlog = 1, sdlog = 0.5
+    )
+    expected <- gumbel_reference(
+      q, s[["w"]], s[["mu"]], s[["beta"]], cdf, TRUE
+    )
+    expect_lt(
+      gumbel_error(pcens_cdf(obj, q, s[["w"]]), expected), 1e-7,
+      label = toString(s)
+    )
+  }
+})
+
+test_that("the numerical path keeps a small delay at the end of the window", {
+  # With a spike within rounding of the window end, q - z is a difference
+  # of 1e-39 at q = pwindow, which is kept as (q - pwindow) plus a term
+  obj <- gumbel_object(gumbel_spike_families()[[3]], 2.7, 0.02)
+  cdf <- gumbel_cdf(gumbel_spike_families()[[3]])
+  expected <- gumbel_reference(1, 1, 2.7, 0.02, cdf, TRUE)
+  expect_gt(expected, 0)
+  expect_equal(pcens_cdf(obj, 1, 1), expected, tolerance = 1e-7)
 })

@@ -4,7 +4,7 @@
 \alias{.gumbel_numeric}
 \title{Numerical primary event censored CDF for a truncated Gumbel primary}
 \usage{
-.gumbel_numeric(object, q, pwindow, mu)
+.gumbel_numeric(object, q, pwindow, mu, beta)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by
@@ -15,17 +15,39 @@
 \item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
 observed primary event, in which case the delay CDF is used directly.}
 
-\item{mu}{Location of the truncated Gumbel primary.}
+\item{mu, beta}{Location and scale of the truncated Gumbel primary.}
 }
 \value{
 Vector of CDFs, in [0, 1].
 }
 \description{
-This is \code{\link[=pcens_cdf.default]{pcens_cdf.default()}}. The window density can go from zero to
-its peak within a fraction of the window, for example for a large
-location with a small scale, and the default integration can then fail
-with an error from the rounding of the integrand. For a point where it
-does, the integral is taken again with more subdivisions and a break at
-the location \code{mu}, where the window density changes most.
+The integral of the delay CDF against the window density, for a finite
+positive window. It replaces \code{\link[=pcens_cdf.default]{pcens_cdf.default()}}, whose integration
+returns about 0 without an error when the density is a narrow spike, as
+it is for a large \eqn{\mu / \beta}, because the spike falls between the
+points at which the integrand is evaluated. Two changes of variable keep
+the integrand smooth, with \eqn{s(z) = e^{(\mu - z) / \beta}} and
+\eqn{s_w = s(w)}.
+}
+\details{
+With \eqn{\mu \ge w}, \eqn{s_w \ge 1} and the spike is at the end of the
+window, within \eqn{\beta / s_w}. The integral is taken in
+\eqn{u = s(z) - s_w}, where the window density is
+\eqn{e^{-u} / (1 - e^{-\Delta})} on \eqn{[0, \Delta]} with
+\eqn{\Delta = s(0) - s_w}, cut at \eqn{u = 745}, where \eqn{e^{-u}}
+underflows. The range is split at 1, 5, 20 and 60, and at the point where
+the delay CDF leaves zero.
+
+With \eqn{\mu < w} the density is resolved in \eqn{z}. It is cut where
+the mass beyond is below \eqn{10^{-20}} of the window, at
+\eqn{s(z) = 745 + s_w} below and \eqn{e^{-46}} relative to the peak
+above, and split at \eqn{\mu + \beta c} for \eqn{c} in \eqn{-3, -1, 0,
+1, 3, 8, 20}, and at the point where the delay CDF leaves zero. This is
+the range of the density, so a spike of width \eqn{\beta} inside a wide
+window is found, and there is no underflow as for a location far below the
+window.
+
+The integrals use \code{stats::integrate()} with a relative tolerance of
+1e-10, so the result is accurate to about 1e-9 relative to the CDF.
 }
 \keyword{internal}

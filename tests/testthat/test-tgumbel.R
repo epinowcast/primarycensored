@@ -150,6 +150,33 @@ test_that("the window normalisation does not underflow far below the window", {
   expect_true(all(is.finite(draws) & draws >= 0 & draws <= 1))
 })
 
+test_that("dtgumbel is accurate for a spike at the end of the window", {
+  # s(max) = exp(25) here, so exp(-s(x)) and exp(-s(max)) are not
+  # representable apart and the density is written with the difference
+  mu <- 1.5
+  beta <- 0.02
+  s_max <- exp(25)
+  expect_equal(
+    dtgumbel(1, 0, 1, mu, beta, log = TRUE), 25 - log(beta),
+    tolerance = 1e-13
+  )
+  x <- 1 - c(1e-13, 1e-12, 5e-12)
+  # The distance to the end of the window of the points as represented
+  t <- 1 - x
+  expect_equal(
+    dtgumbel(x, 0, 1, mu, beta, log = TRUE),
+    25 + t / beta - s_max * expm1(t / beta) - log(beta),
+    tolerance = 1e-9
+  )
+  # A location beyond exp(-s) overflowing is still a point mass at the end
+  expect_identical(dtgumbel(0.5, 0, 1, mu = 20, beta = 0.02), 0)
+  expect_true(is.finite(dtgumbel(1, 0, 1, mu = 20, beta = 0.05, log = TRUE)))
+  set.seed(3)
+  draws <- rtgumbel(50, 0, 1, mu, beta)
+  expect_true(all(draws <= 1 & draws > 1 - 1e-8))
+  expect_true(all(rtgumbel(50, 0, 1, mu = 20, beta = 0.02) > 1 - 1e-8))
+})
+
 test_that("ptgumbel tends to the uniform window for a wide scale", {
   x <- seq(0, 1, length.out = 6)
   expect_equal(

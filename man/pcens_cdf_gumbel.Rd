@@ -50,7 +50,7 @@ F_G(q) = F(q - w) + \frac{1}{D} \Big[
   \{T_f(n / \beta; q) - T_f(n / \beta; q - w)\}
   - G(0) \{F(q) - F(q - w)\} \Big].
 }
-This is the solution of the paper, and was checked numerically.
+This solution was checked numerically.
 The \eqn{n = 0} term is \eqn{F(q) - F(q - w)}, so the bracket is computed
 as
 \deqn{B(q) = (1 - G(0)) \{F(q) - F(q - w)\} +
@@ -81,31 +81,43 @@ result loses precision. The relative error is estimated for each \code{q} as
 the machine precision times the ratio of the sum of the absolute terms to
 the result, times one plus the largest magnitude of a log term, plus the
 truncation bound relative to the result, see \code{.gumbel_error_bound()}.
-Where it is above \eqn{10^{-9}} the method uses the numerical method of
-\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} for that \code{q}, so no value is silently inaccurate.
-Two things cause it. The first is a large \eqn{s_0}, where the terms reach
-\eqn{e^{s_0}} and the result is of order 1, so that the precision lost is
-\eqn{e^{s_0}} times the rounding error of the log terms, which grows with
-the tilts \eqn{n / \beta} and the scale of the delay. The second is a
-window that is narrow relative to the scale, \eqn{w \ll \beta}, where the
-bracket is a small difference of large terms and the loss is about
-\eqn{\beta / w}. Also \eqn{s_0 > 15} is never used, see \code{.gumbel_max_s0},
-as the number of terms grows with it.
-The estimate was at least the actual error in tests against a tight
-reference integral, and values that it accepts agree with the reference to
-a relative difference of about 1e-9 or better, and about 1e-12 for
+Where it is above \eqn{10^{-8}} the method uses the numerical method of
+\code{.gumbel_numeric()} for that \code{q}, so no value is silently inaccurate.
+That method is accurate to about 1e-9 relative to the CDF, so the series is
+kept wherever its estimated error is below that of the numerical method.
+The estimate is 10 to 1000 times the actual error. In tests against a
+tight reference integral, values with an estimate of at most 1e-8 agree
+to a relative difference of 5e-10 or better, and 1e-12 for
 \eqn{s_0 \le 1}.
+Two things make the estimate large. The first is a large \eqn{s_0}, where
+the terms reach \eqn{e^{s_0}} and the result is of order 1, so that the
+precision lost is \eqn{e^{s_0}} times the rounding error of the log terms,
+which grows with the tilts \eqn{n / \beta} and the scale of the delay. The
+second is a window that is narrow relative to the scale, \eqn{w \ll
+\beta}, where the bracket is a small difference of large terms and the
+loss is about \eqn{\beta / w}. Also \eqn{s_0 > 15} is never used, see
+\code{.gumbel_max_s0}, as the number of terms grows with it.
 In the grid of \code{mu} in -0.5, 0, 0.5, 1, 1.5, \code{beta} in 0.1, 0.2, 1 and
 \code{pwindow} in 1, 2, the normal delay uses the series where
 \eqn{\mu / \beta \le 1.5}, which is every \code{mu} at \code{beta} 1 and \code{mu} up to
 0 at \code{beta} 0.2 and 0.1. The numerical method is used for larger
 \eqn{\mu / \beta}, where the window density rises sharply inside the window.
 
+\strong{Numerical method.} The window density is a spike of width about
+\eqn{\beta} when \eqn{\mu / \beta} is large, and adaptive integration
+over the window, as in \code{\link[=pcens_cdf.default]{pcens_cdf.default()}}, can miss it and return
+about 0 without an error. So the numerical method integrates in a
+variable in which the integrand is smooth and over the range that holds
+the mass of the window, see \code{.gumbel_numeric()}. It is also used by
+\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} for any delay with this primary, and for
+\code{use_numeric = TRUE}. It was checked against reference integrals from
+a location far below the window to one far above it.
+
 \strong{Admissibility.} The terms need the transform at the tilts
 \eqn{n / \beta} for \eqn{n = 1, \ldots, N}. The exponential and gamma forms
 need the tilted delay to exist, \eqn{\lambda > N / \beta} for rate
-\eqn{\lambda}. Otherwise the method falls back to \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} for
-every \code{q}. For delays of a day or more the rate is of order 1, and the
+\eqn{\lambda}. Otherwise the method uses the numerical method for every
+\code{q}. For delays of a day or more the rate is of order 1, and the
 bound is only met for very short delays, so in practice these delays use
 the numerical method unless \eqn{\mu / \beta} is very negative or the
 scale is large. The normal delay has no restriction.

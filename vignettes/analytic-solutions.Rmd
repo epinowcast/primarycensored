@@ -451,7 +451,7 @@ F_{S_+}(d) = F_T(q) + \frac{1}{D} \left[ \sum_{n = 0}^\infty \frac{\{-c(d)\}^n}{
 (\#eq:gumbel)
 $$
 
-This is the form given in the draft paper, which we checked against numerical integration.
+We checked this form against numerical integration.
 The $n = 0$ term is $F_T(d) - F_T(q)$, so the package evaluates the bracket as $(1 - G(0)) \{F_T(d) - F_T(q)\}$ plus the terms with $n \geq 1$.
 This keeps precision when $\mu_G$ is far below the window and $D$ is small.
 As for the exponentially tilted window, every transform depends on $d$ or on $q$ alone.
