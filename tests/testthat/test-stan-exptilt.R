@@ -292,6 +292,65 @@ test_that("the tilted CDF is continuous across the small tilt forms", {
   }
 })
 
+test_that("the tilted CDF is accurate far from the origin", {
+  # The small window form cancels by about eps * |r| d^2 / w, so it applies
+  # only while |r| (|d| + w) is below 0.1, as in R
+  pwindow <- 1
+  for (m in c(1e5, 1e6, 1e7, 1e8)) {
+    d <- m * c(0.5, 1, 2)
+    delays <- list(
+      list(
+        dist_id = 2L, params = c(4, 4 / m), pdist = pgamma,
+        args = list(shape = 4, rate = 4 / m)
+      ),
+      list(
+        dist_id = 18L, params = c(m, m / 4), pdist = pnorm,
+        args = list(mean = m, sd = m / 4)
+      )
+    )
+    for (case in delays) {
+      for (rho in c(3e-5, -3e-5, 1e-6)) {
+        if (case$dist_id != 18L && exptilt_case_rate(case) + rho <= 0) {
+          next
+        }
+        expected <- exptilt_reference(d, pwindow, rho, exptilt_case_cdf(case))
+        actual <- exp(vapply(
+          d, primarycensored_exptilt_lcdf, numeric(1),
+          case$dist_id, case$params, pwindow, rho
+        ))
+        expect_lt(
+          max_rel_diff(actual, expected), 1e-7,
+          label = exptilt_case_label(case, m = m, r = rho)
+        )
+      }
+    }
+  }
+})
+
+test_that("the tilted CDF is continuous where the small window reach ends", {
+  pwindow <- 1
+  for (m in c(1e3, 1e5, 1e6)) {
+    d <- m * c(0.5, 1, 2)
+    reach <- 0.1 / (2 * m + pwindow)
+    for (sign in c(-1, 1)) {
+      expect_lt(
+        max_rel_diff(
+          exp(vapply(
+            d, primarycensored_exptilt_lcdf, numeric(1),
+            18L, c(m, m / 4), pwindow, sign * 0.999 * reach
+          )),
+          exp(vapply(
+            d, primarycensored_exptilt_lcdf, numeric(1),
+            18L, c(m, m / 4), pwindow, sign * 1.001 * reach
+          ))
+        ),
+        1e-6,
+        label = sprintf("m = %g, sign = %g", m, sign)
+      )
+    }
+  }
+})
+
 test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
   solution and agree with the ODE path", {
   d <- c(0.2, 1, 2.5, 6, 15)
@@ -422,6 +481,28 @@ per_delay_exptilt_lcdf <- function(delays, dist_id, params, pwindow, rho) {
     dist_id, params, pwindow, lower, Inf, 2L, rho
   )
 }
+
+test_that("the vectorised tilted CDF matches the per delay CDF far from the
+  origin", {
+  # With r * pwindow below 1e-4 the small window form applies up to
+  # |r| (d + pwindow) of 0.1, here d of about 2e3, and the direct form beyond
+  pwindow <- 1
+  rho <- 5e-5
+  for (case in exptilt_stan_cases[c(4, 6)]) {
+    for (range in list(c(1L, 40L), c(1990L, 2010L), c(19980L, 20000L))) {
+      vectorised <- primarycensored_exptilt_lcdf_vectorized(
+        range[1], range[2], case$dist_id, case$params, pwindow, rho
+      )
+      expect_identical(
+        vectorised[range[1]:range[2]],
+        per_delay_exptilt_lcdf(
+          range[1]:range[2], case$dist_id, case$params, pwindow, rho
+        ),
+        info = exptilt_case_label(case, start = range[1], end = range[2])
+      )
+    }
+  }
+})
 
 test_that("check_for_exptilt_vectorized needs an integer pwindow", {
   for (dist_id in c(2L, 4L, 18L)) {

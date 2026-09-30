@@ -257,6 +257,113 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the lognormal
   }
 })
 
+lnorm_per_delay_lcdf <- function(delays, params, pwindow, rho) {
+  vapply(
+    delays, primarycensored_lcdf, numeric(1), # nolint: object_usage_linter.
+    1L, params, pwindow, 0, Inf, 2L, rho
+  )
+}
+
+test_that("the lognormal tilted CDF is accurate far from the origin", {
+  pwindow <- 1
+  for (m in c(1e5, 1e6, 1e7, 1e8)) {
+    d <- m * c(0.5, 1, 2)
+    case <- list(meanlog = log(m), sdlog = 0.5)
+    for (rho in c(3e-5, -3e-5, 1e-6)) {
+      expected <- exptilt_reference(d, pwindow, rho, exptilt_lnorm_cdf(case))
+      expect_lt(
+        max_rel_diff(
+          exp(lnorm_stan_lcdf(d, case, pwindow, rho)), expected
+        ),
+        1e-7,
+        label = sprintf("m = %g, r = %g", m, rho)
+      )
+    }
+  }
+})
+
+test_that("the lognormal series limit depends on the tilt and the delay", {
+  params <- c(1.6, 0.5)
+  # xi t + 9 sqrt(xi t) + 30 terms, at most 20000
+  expect_identical(
+    vapply(
+      c(1, 1.8e4, 1.9e4, 1e6),
+      function(t) check_for_tilt_transform_at(1L, 1, params, t), integer(1)
+    ),
+    c(1L, 1L, 0L, 0L)
+  )
+  # A negative tilt, a small delay and other delays have no limit
+  expect_identical(check_for_tilt_transform_at(1L, 1, params, 0), 1L)
+  expect_identical(check_for_tilt_transform_at(1L, 1, params, -5), 1L)
+  expect_identical(check_for_tilt_transform_at(1L, -1, params, 1e9), 1L)
+  expect_identical(check_for_tilt_transform_at(18L, 1, c(3, 2), 1e9), 1L)
+  expect_identical(check_for_tilt_transform_at(2L, -3, c(2, 0.4), 1e9), 1L)
+  # The transform must still exist
+  expect_identical(
+    check_for_tilt_transform_at(1L, -1e300, c(650, 1), 1), 0L
+  )
+  expect_identical(check_for_tilt_transform_at(4L, 0.6, 0.3, 1), 0L)
+  # The series itself stops where the terms do not fit
+  expect_error(
+    primarycensored_exptilt_lcdf(1e6, 1L, params, 1, -1),
+    "needs more than 20000 terms"
+  )
+  # and converges just inside the limit
+  for (d in c(1.7e4, 1.8e4)) {
+    expect_true(is.finite(
+      primarycensored_exptilt_lcdf(d, 1L, c(0, 1), 1, -1)
+    ))
+  }
+})
+
+test_that("the lognormal uses the ODE path where the series is too long", {
+  # r = -20 needs about 20 d terms. The ODE path has tolerances of 1e-6
+  params <- c(6, 0.5)
+  rho <- -20
+  d <- c(200, 900, 950, 1100)
+  expected <- exptilt_reference(
+    d, 1, rho, function(x) plnorm(x, 6, 0.5)
+  )
+  lcdf <- vapply(
+    d, primarycensored_lcdf, numeric(1),
+    1L, params, 1, 0, Inf, 2L, rho
+  )
+  expect_true(all(is.finite(lcdf)))
+  expect_lt(max(abs(exp(lcdf) - expected)), 1e-4)
+  # Where the series fits the analytical solution is used
+  expect_identical(
+    lcdf[1:2], lnorm_stan_lcdf(d[1:2], list(meanlog = 6, sdlog = 0.5), 1, rho)
+  )
+  plain <- vapply(
+    d, primarycensored_cdf, numeric(1),
+    1L, params, 1, 0, Inf, 2L, rho
+  )
+  expect_lt(max(abs(plain - expected)), 1e-4)
+  # The vectorised PMF path does the same for the delays it is given
+  vectorised <- primarycensored_lcdf_vectorized(
+    990L, 1000L, 1L, params, 1, 2L, rho
+  )
+  expect_identical(
+    vectorised[990:1000], lnorm_per_delay_lcdf(990:1000, params, 1, rho)
+  )
+})
+
+test_that("the vectorised lognormal tilted CDF matches the per delay CDF far
+  from the origin", {
+  pwindow <- 1
+  rho <- 5e-5
+  params <- c(log(1e4), 0.5)
+  for (range in list(c(1L, 40L), c(1990L, 2010L), c(19980L, 20000L))) {
+    expect_identical(
+      primarycensored_exptilt_lcdf_vectorized(
+        range[1], range[2], 1L, params, pwindow, rho
+      )[range[1]:range[2]],
+      lnorm_per_delay_lcdf(range[1]:range[2], params, pwindow, rho),
+      info = sprintf("start %g, end %g", range[1], range[2])
+    )
+  }
+})
+
 test_that("the lognormal uses the ODE path where the tilt overflows", {
   params <- c(650, 1)
   expect_identical(check_for_analytical_params(1L, params, 2L, 1e300), 0L)
@@ -281,13 +388,6 @@ test_that("the lognormal uniform primary solution is unchanged", {
     expect_lt(max(abs(exp(lcdf) - ode)), 1e-5)
   }
 })
-
-lnorm_per_delay_lcdf <- function(delays, params, pwindow, rho) {
-  vapply(
-    delays, primarycensored_lcdf, numeric(1), # nolint: object_usage_linter.
-    1L, params, pwindow, 0, Inf, 2L, rho
-  )
-}
 
 test_that("the vectorised lognormal tilted CDF matches the per delay CDF", {
   n <- 31L
