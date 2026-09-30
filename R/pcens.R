@@ -156,6 +156,11 @@ new_pcens <- function(
 #'   as `...` is merged into `object$args`. Defaults to `NULL`, which leaves
 #'   the primary event distribution arguments unchanged.
 #'
+#' @param check Logical. If `FALSE`, skip validation of `...` and
+#'   `primary_args`. Use this when repeatedly updating one object with names
+#'   that have already been checked. As `check` comes after `...`, a delay
+#'   parameter called `check` cannot be set. Defaults to `TRUE`.
+#'
 #' @details
 #' Parameters are merged rather than replaced as a whole, so
 #' `update(object, scale = 3)` changes `scale` and keeps all other
@@ -165,6 +170,12 @@ new_pcens <- function(
 #' of `object$pdist` other than its first, unless `pdist` takes `...`.
 #' Otherwise an error is raised. Names in `primary_args` are not checked
 #' against `dprimary`.
+#'
+#' With `check = FALSE` none of these checks are run.
+#' Unnamed and misspelt parameters are not detected.
+#' A fully unnamed `...` is ignored.
+#' Misspelt names are added to the object and only fail, or are ignored,
+#' when the object is evaluated.
 #'
 #' @return A `pcens` object with the same class as `object` and updated
 #'   `args`, `primary_args` and `dprimary_args` fields. See [new_pcens()] for
@@ -191,13 +202,35 @@ new_pcens <- function(
 #' )
 #' obj <- update(obj, primary_args = list(r = 0.5))
 #' pcens_pmf(obj, x = 0:5, pwindow = 1)
-update.pcens <- function(object, ..., primary_args = NULL) {
+update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   new_args <- list(...)
+  nms <- names(new_args)
+  if (!isFALSE(check)) {
+    .check_update_args(object, new_args, primary_args)
+  }
+  if (length(new_args) > 0L) {
+    object$args[nms] <- new_args
+  }
+  if (length(primary_args) > 0L) {
+    object$primary_args[names(primary_args)] <- primary_args
+    object$dprimary_args <- object$primary_args
+  }
+  object
+}
+
+#' Validate the arguments passed to `update.pcens()`
+#'
+#' @inheritParams update.pcens
+#'
+#' @param new_args Named list of delay parameters, from `...`.
+#'
+#' @return `NULL` invisibly. Called for its errors.
+#'
+#' @keywords internal
+.check_update_args <- function(object, new_args, primary_args) {
   if (length(new_args) > 0L) {
     .check_named_list(new_args, "Delay parameters passed to update()")
-    # Kept cheap as update() is often called once per parameter draw.
-    nms <- names(new_args)
-    unknown <- nms[!nms %in% names(object$args)]
+    unknown <- names(new_args)[!names(new_args) %in% names(object$args)]
     if (length(unknown) > 0L) {
       # Drop the first formal, the point at which pdist is evaluated
       pdist_args <- names(formals(object$pdist))[-1]
@@ -211,7 +244,6 @@ update.pcens <- function(object, ..., primary_args = NULL) {
         }
       }
     }
-    object$args[nms] <- new_args
   }
   if (!is.null(primary_args)) {
     if (!is.list(primary_args)) {
@@ -219,11 +251,9 @@ update.pcens <- function(object, ..., primary_args = NULL) {
     }
     if (length(primary_args) > 0L) {
       .check_named_list(primary_args, "primary_args")
-      object$primary_args[names(primary_args)] <- primary_args
-      object$dprimary_args <- object$primary_args
     }
   }
-  object
+  invisible(NULL)
 }
 
 #' Check that every element of a list is named
