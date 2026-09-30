@@ -92,23 +92,3 @@ pgamma_obj <- new_pcens(
 )
 pcens_cdf(pgamma_obj, q = c(1, 4, 8), pwindow = 2)
 }
-\seealso{
-Low level primary event censored distribution objects and methods
-\code{\link{new_pcens}()},
-\code{\link{pcens_cdf}()},
-\code{\link{pcens_cdf.default}()},
-\code{\link{pcens_cdf.pcens_pdiscretehazard}()},
-\code{\link{pcens_cdf.pcens_pdiscretestep}()},
-\code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
-\code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()},
-\code{\link{pcens_cdf_exptilt}},
-\code{\link{pcens_pmf}()},
-\code{\link{pcens_pmf.default}()},
-\code{\link{pcens_quantile}()},
-\code{\link{pcens_quantile.default}()},
-\code{\link{update.pcens}()}
-}
-\concept{pcens}

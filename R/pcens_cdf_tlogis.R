@@ -46,7 +46,6 @@
 #' A new delay distribution is supported by the methods of [tilt_transform]
 #' and a `pcens_cdf` method for its class that calls `.pcens_cdf_tlogis()`.
 #'
-#' @family pcens
 #'
 #' @inherit pcens_cdf return
 #'
