@@ -5,9 +5,13 @@
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
+- The analytical uniform primary `pcens_cdf()` methods return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay (#380).
+  See #392 for Stan.
+- These methods error for missing `q` or invalid `pwindow`, recycle a vector `pwindow` element-wise against `q` with a warning for uneven lengths, and give the delay CDF for zero-width elements (#378).
 
 ## Performance
 
+- The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster per call (#378).
 - `update()` for `pcens` objects has a new `check` argument.
   With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names.
   The default, `check = TRUE`, is unchanged.
