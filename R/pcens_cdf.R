@@ -721,6 +721,8 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 #' \eqn{F_{S+}(d) = (G(d) - G(d - w_P)) / w_P}.
 #' This is the gamma solution with `shape = 1` written in closed form
 #' without the incomplete gamma function.
+#' Delay arguments other than `rate`, such as `lower.tail`, use the numerical
+#' [pcens_cdf.default()] method.
 #' See `vignette("analytic-solutions")` for the derivation.
 #'
 #' @inheritParams pcens_cdf
@@ -744,14 +746,15 @@ pcens_cdf.pcens_pexp_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  if (isTRUE(use_numeric)) {
+  delay_args <- .delay_args(object, "rate")
+  if (isTRUE(use_numeric) || is.null(delay_args)) {
     return(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
   # pexp defaults to a rate of 1
-  rate <- object$args$rate
+  rate <- delay_args$rate
   if (is.null(rate)) {
     rate <- 1
   }
@@ -777,6 +780,8 @@ pcens_cdf.pcens_pexp_dunif <- function(
 #' \eqn{\mu \Phi(z) - \sigma \phi(z)}, but its two terms can be negative.
 #' In the lower tail \eqn{z \Phi(z)} and \eqn{\phi(z)} nearly cancel, so for
 #' \eqn{z < -10} an asymptotic series is used.
+#' Delay arguments other than `mean` and `sd`, such as `lower.tail`, use the
+#' numerical [pcens_cdf.default()] method.
 #' See `vignette("analytic-solutions")` for the derivation.
 #'
 #' @inheritParams pcens_cdf
@@ -801,15 +806,16 @@ pcens_cdf.pcens_pnorm_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  if (isTRUE(use_numeric)) {
+  delay_args <- .delay_args(object, c("mean", "sd"))
+  if (isTRUE(use_numeric) || is.null(delay_args)) {
     return(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
 
   # pnorm defaults to a standard normal
-  mu <- object$args$mean
-  sigma <- object$args$sd
+  mu <- delay_args$mean
+  sigma <- delay_args$sd
   if (is.null(mu)) {
     mu <- 0
   }
@@ -831,6 +837,7 @@ pcens_cdf.pcens_pnorm_dunif <- function(
 #' [pcens_cdf.pcens_pgamma_dunif()].
 #' A non-central chi-square (`ncp` not zero) has no such form and uses the
 #' numerical [pcens_cdf.default()] method.
+#' So do delay arguments other than `df` and `ncp`, such as `lower.tail`.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -853,9 +860,12 @@ pcens_cdf.pcens_pchisq_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  degrees <- object$args$df
-  ncp <- object$args$ncp
-  if (isTRUE(use_numeric) || .is_noncentral(ncp)) {
+  delay_args <- .delay_args(object, c("df", "ncp"))
+  degrees <- delay_args$df
+  if (
+    isTRUE(use_numeric) || is.null(delay_args) ||
+      .is_noncentral(delay_args$ncp)
+  ) {
     return(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
@@ -879,6 +889,8 @@ pcens_cdf.pcens_pchisq_dunif <- function(
 #' For \eqn{t \ge 1} both CDFs are 1.
 #' A non-central beta (`ncp` not zero) uses the numerical
 #' [pcens_cdf.default()] method.
+#' So do delay arguments other than `shape1`, `shape2` and `ncp`, such as
+#' `lower.tail`.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -902,10 +914,13 @@ pcens_cdf.pcens_pbeta_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  a <- object$args$shape1
-  b <- object$args$shape2
-  ncp <- object$args$ncp
-  if (isTRUE(use_numeric) || .is_noncentral(ncp)) {
+  delay_args <- .delay_args(object, c("shape1", "shape2", "ncp"))
+  a <- delay_args$shape1
+  b <- delay_args$shape2
+  if (
+    isTRUE(use_numeric) || is.null(delay_args) ||
+      .is_noncentral(delay_args$ncp)
+  ) {
     return(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
@@ -928,6 +943,34 @@ pcens_cdf.pcens_pbeta_dunif <- function(
   }
 
   .pcens_cdf_antiderivative(q, pwindow, G)
+}
+
+#' Delay distribution arguments an analytical solution handles
+#'
+#' An analytical solution only applies when every argument of the delay
+#' CDF is one it uses. Otherwise `lower.tail`, `log.p`, an unnamed argument
+#' or an argument `pdist` does not accept would be silently ignored, so the
+#' numerical [pcens_cdf.default()] method is used, which passes all of them
+#' to `pdist`.
+#'
+#' @param object A `pcens` object as created by [new_pcens()].
+#'
+#' @param allowed Character vector of the argument names the solution uses.
+#'
+#' @return The named list of delay arguments, or `NULL` if any argument is
+#'  unnamed or not in `allowed`.
+#'
+#' @keywords internal
+.delay_args <- function(object, allowed) {
+  delay_args <- object$args
+  arg_names <- names(delay_args)
+  if (length(delay_args) == 0L) {
+    return(delay_args)
+  }
+  if (is.null(arg_names) || !all(arg_names %in% allowed)) {
+    return(NULL)
+  }
+  delay_args
 }
 
 #' Test for a non-central delay distribution

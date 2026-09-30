@@ -35,6 +35,8 @@ This equals the form with the partial expectation
 \eqn{\mu \Phi(z) - \sigma \phi(z)}, but its two terms can be negative.
 In the lower tail \eqn{z \Phi(z)} and \eqn{\phi(z)} nearly cancel, so for
 \eqn{z < -10} an asymptotic series is used.
+Delay arguments other than \code{mean} and \code{sd}, such as \code{lower.tail}, use the
+numerical \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
 See \code{vignette("analytic-solutions")} for the derivation.
 }
 \examples{

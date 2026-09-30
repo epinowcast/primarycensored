@@ -31,6 +31,8 @@ distribution is the beta distribution with \code{shape1 = a + 1}.
 For \eqn{t \ge 1} both CDFs are 1.
 A non-central beta (\code{ncp} not zero) uses the numerical
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
+So do delay arguments other than \code{shape1}, \code{shape2} and \code{ncp}, such as
+\code{lower.tail}.
 }
 \examples{
 pcens_obj <- new_pcens(
