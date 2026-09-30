@@ -149,8 +149,8 @@ test_that("Stan tilt transforms match the R transforms", {
 })
 
 test_that("Stan gamma tilt transforms are accurate in both tails", {
-  # Only the smaller tail is evaluated and the other follows from it, so this
-  # covers the switch at the median for small and large shapes. Stan returns
+  # One tail is evaluated and the other follows from it, so this covers the
+  # switch to the upper tail at 1e-8 for small and large shapes. Stan returns
   # -Inf where a term is below the smallest double, where R gives the log.
   ts <- 10^seq(-8, 4, by = 0.5)
   for (shape in c(0.05, 0.3, 1, 7, 100, 1000)) {
@@ -630,7 +630,7 @@ exptilt_gradient_at <- function(model, case, d, pwindow, rho,
 # gamma_lccdf is inaccurate in the bulk (1e-3 at shape 2.5 and 7, 5e-3 at
 # shape 20 and 24), so the tilt transforms take the upper tail from
 # gamma_lcdf and use gamma_lccdf only beyond the point where the upper tail
-# is below 1e-9. The points are also not at a switch between forms, as finite
+# is below 1e-8. The points are also not at a switch between forms, as finite
 # differences would step across it.
 exptilt_gradient_cases <- exptilt_stan_cases[c(1, 2, 3, 4, 6, 7)]
 
@@ -754,7 +754,7 @@ test_that("the gamma tilt transform gradient is accurate in the bulk", {
 })
 
 test_that("the gamma tilt transform is finite far in the upper tail", {
-  # Beyond an upper tail of 1e-9 the lower tail is 1 to rounding and the
+  # Beyond an upper tail of 1e-8 the lower tail is 1 to rounding and the
   # transform uses gamma_lccdf, which stays finite where log1m_exp of the
   # log CDF would not
   model <- exptilt_gradient_model()

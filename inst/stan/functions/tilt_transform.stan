@@ -124,27 +124,6 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
 }
 
 /**
-  * Test whether the lower tail of a gamma is the smaller one
-  * @ingroup tilt_transforms
-  *
-  * The lower and the upper tail sum to one, so one is computed directly and
-  * the other from it by log1m_exp(), which is exact when the direct one is
-  * at most about a half. This chooses by the Wilson-Hilferty approximation
-  * to the median, and by the small shape limit of the median for a shape
-  * below 0.5, where that approximation fails. Either choice is valid near the
-  * median.
-  *
-  * @param x Point, positive
-  * @param shape Shape
-  *
-  * @return 1 if x is below the approximate median, 0 otherwise
-  */
-int gamma_lower_tail_is_smaller(real x, real shape) {
-  if (shape < 0.5) return log(x) < (lgamma(shape + 1) - log2()) / shape;
-  return cbrt(x / shape) < 1 - 1 / (9 * shape);
-}
-
-/**
   * Log of the tilt transform over the lower and the upper part of the support
   * @ingroup tilt_transforms
   *
@@ -157,10 +136,18 @@ int gamma_lower_tail_is_smaller(real x, real shape) {
   * is 1.
   *
   * For the gamma the tilted density is a gamma density with the rate lowered
-  * by xi, times the total (rate / (rate - xi))^shape. Only the smaller of its
-  * two tails is evaluated, see gamma_lower_tail_is_smaller(), and the other
-  * follows from it, which halves the cost of the incomplete gamma function
-  * and of its derivative in the shape. For the exponential
+  * by xi, times the total (rate / (rate - xi))^shape. One tail is evaluated
+  * and the other follows from it, which halves the cost of the incomplete
+  * gamma function and of its derivative in the shape. The lower tail is
+  * gamma_lcdf(), whose shape derivative has a relative error below about
+  * 1e-5 except far in the lower tail. The upper tail is log1m_exp() of it,
+  * which is accurate in value and derivative for an upper tail down to
+  * about 1e-9. The shape derivative of gamma_lccdf() is worse, with
+  * relative errors of 1e-3 to 1e-2 over much of the bulk (for example shape
+  * 2.5 at 7 or shape 20 at 24) and above 1e-4 into the far tail for large
+  * shapes. It is used only where the upper tail is below 1e-8, where
+  * log1m_exp() of the lower tail loses the tail or is `-inf` with a
+  * derivative that is not finite. For the exponential
   * T_f = rate / (rate - xi) (1 - exp(-(rate - xi) t)). For the normal,
   * completing the square gives a normal density with mean mu + xi sigma^2.
   *
@@ -188,12 +175,12 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     if (gamma_lccdf_underflows(x, shape)) {
       return [log_total, negative_infinity()]';
     }
-    if (gamma_lower_tail_is_smaller(x, shape)) {
-      real log_lower = gamma_lcdf(x | shape, 1);
-      return [log_total + log_lower, log_total + log1m_exp(log_lower)]';
+    real log_lower = gamma_lcdf(x | shape, 1);
+    if (log_lower > -1e-8) {
+      real log_upper = gamma_lccdf(x | shape, 1);
+      return [log_total + log1m_exp(log_upper), log_total + log_upper]';
     }
-    real log_upper = gamma_lccdf(x | shape, 1);
-    return [log_total + log1m_exp(log_upper), log_total + log_upper]';
+    return [log_total + log_lower, log_total + log1m_exp(log_lower)]';
   } else if (dist_id == 4) {
     real rate = params[1];
     real tilted_rate = rate - xi;

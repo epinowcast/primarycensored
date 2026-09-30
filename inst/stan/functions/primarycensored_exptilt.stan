@@ -240,7 +240,9 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
   * @ingroup exponential_tilt_solutions
   *
   * Chooses the direct form or the small tilt forms, see
-  * exptilt_is_small_window() and exptilt_is_small_delay(). Only for
+  * exptilt_is_small_window() and exptilt_is_small_delay(). A zero width
+  * window has no primary event uncertainty, and the log CDF is the delay
+  * log CDF, which all forms divide by the width to reach. Only for
   * check_for_exptilt() is 1 and check_for_tilt_transform() is 1 for -rho.
   *
   * @param d Delay
@@ -258,6 +260,7 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   if (dist_has_positive_support(dist_id) && d <= 0) {
     return negative_infinity();
   }
+  if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
   if (exptilt_is_small_window(rho, pwindow)) {
     return primarycensored_exptilt_small_window_lcdf_from_terms(
