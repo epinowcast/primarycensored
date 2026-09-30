@@ -376,20 +376,17 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
     lower_terms <- matrix(lower_terms, nrow = 1L)
     upper_terms <- matrix(upper_terms, nrow = 1L)
   }
-  # Log of Delta_n(q) = T_f(n / beta; q) - T_f(n / beta; q - w), n = 0, ...
-  log_delta <- vapply(
-    seq_along(tilts),
-    function(i) {
-      .exptilt_tail_diff(
-        lower_terms[index_q, i], lower_terms[index_y, i],
-        upper_terms[index_q, i], upper_terms[index_y, i]
-      )
-    },
-    numeric(length(q))
+  # Log of Delta_n(q) = T_f(n / beta; q) - T_f(n / beta; q - w), n = 0, ...,
+  # for all tilts in one call
+  log_delta <- matrix(
+    .exptilt_tail_diff(
+      c(lower_terms[index_q, , drop = FALSE]),
+      c(lower_terms[index_y, , drop = FALSE]),
+      c(upper_terms[index_q, , drop = FALSE]),
+      c(upper_terms[index_y, , drop = FALSE])
+    ),
+    nrow = length(q)
   )
-  if (length(q) == 1L) {
-    log_delta <- matrix(log_delta, nrow = 1L)
-  }
   log_f_y <- lower_terms[index_y, 1L]
   # The scale of the log transforms at both ends, from either tail
   finite_abs <- function(x) {
@@ -490,8 +487,8 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 .gumbel_error_bound <- function(log_pos, log_neg, log_bracket, log_mass,
                                 log_c, log_s0, n_terms, scale_t, n) {
   # Magnitude of the log arithmetic behind each term
-  magnitude <- 1 + apply(
-    abs(outer(log_c, n)) + scale_t[, n + 1L, drop = FALSE], 1L, max
+  magnitude <- 1 + .row_max(
+    abs(outer(log_c, n)) + scale_t[, n + 1L, drop = FALSE]
   )
   log_rounding <- log(.Machine$double.eps) + log(magnitude) +
     .log_sum_exp(log_pos, log_neg) - log_bracket
@@ -500,6 +497,17 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   error <- exp(log_rounding) + exp(log_trunc)
   error[!is.finite(log_bracket)] <- Inf
   error
+}
+
+#' Row-wise maximum of a matrix
+#'
+#' @param x Numeric matrix without missing values.
+#'
+#' @return Vector with the largest value of each row.
+#'
+#' @keywords internal
+.row_max <- function(x) {
+  x[cbind(seq_len(nrow(x)), max.col(x, ties.method = "first"))]
 }
 
 #' Row-wise log of a sum of exponentials
@@ -511,7 +519,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 #'
 #' @keywords internal
 .log_sum_exp_rows <- function(x) {
-  top <- apply(x, 1L, max)
+  top <- .row_max(x)
   shifted <- x - ifelse(is.finite(top), top, 0)
   top + log(rowSums(exp(shifted)))
 }
