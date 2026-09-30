@@ -714,13 +714,8 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 
 #' Method for Exponential delay with uniform primary
 #'
-#' Analytical solution for the exponential distribution.
-#' The antiderivative of the delay CDF
-#' \eqn{F_T(t) = 1 - e^{-\lambda t}} is the positive function
-#' \eqn{G(t) = t - 1 / \lambda + e^{-\lambda t} / \lambda}, so
-#' \eqn{F_{S+}(d) = (G(d) - G(d - w_P)) / w_P}.
-#' This is the gamma solution with `shape = 1` written in closed form
-#' without the incomplete gamma function.
+#' Analytical solution for the exponential distribution, which is the gamma
+#' solution with `shape = 1` without the incomplete gamma function.
 #' Delay arguments other than `rate`, such as `lower.tail`, use the numerical
 #' [pcens_cdf.default()] method.
 #' See `vignette("analytic-solutions")` for the derivation.
@@ -772,14 +767,7 @@ pcens_cdf.pcens_pexp_dunif <- function(
 #' Analytical solution for the normal distribution, which has support on
 #' the reals.
 #' The primary event window \eqn{[d - w_P, d]} is not clipped at zero.
-#' The antiderivative of the delay CDF is the positive function
-#' \eqn{G(t) = \sigma (z \Phi(z) + \phi(z))} with \eqn{z = (t - \mu) /
-#' \sigma}, which is \eqn{E[(t - T)^+]}, so
-#' \eqn{F_{S+}(d) = (G(d) - G(d - w_P)) / w_P}.
-#' This equals the form with the partial expectation
-#' \eqn{\mu \Phi(z) - \sigma \phi(z)}, but its two terms can be negative.
-#' In the lower tail \eqn{z \Phi(z)} and \eqn{\phi(z)} nearly cancel, so for
-#' \eqn{z < -10} an asymptotic series is used.
+#' Below \eqn{z = -10} an asymptotic series avoids cancellation.
 #' Delay arguments other than `mean` and `sd`, such as `lower.tail`, use the
 #' numerical [pcens_cdf.default()] method.
 #' See `vignette("analytic-solutions")` for the derivation.
@@ -884,9 +872,6 @@ pcens_cdf.pcens_pchisq_dunif <- function(
 #'
 #' Analytical solution for the beta distribution, which has support on
 #' \eqn{[0, 1]}.
-#' The mean is \eqn{E[T] = a / (a + b)} and the partial expectation
-#' distribution is the beta distribution with `shape1 = a + 1`.
-#' For \eqn{t \ge 1} both CDFs are 1.
 #' A non-central beta (`ncp` not zero) uses the numerical
 #' [pcens_cdf.default()] method.
 #' So do delay arguments other than `shape1`, `shape2` and `ncp`, such as
@@ -934,8 +919,7 @@ pcens_cdf.pcens_pbeta_dunif <- function(
 
   E_T <- a / (a + b)
 
-  # G(t) = t F_T(t) - E_T F~_T(t), with F_T = F~_T = 1 for t >= 1 and
-  # F_T = 0 for t <= 0. Clamp t to [0, 1] and add the linear part for t > 1.
+  # Clamp t to [0, 1] and add the linear part above the support
   G <- function(t) {
     t_in <- pmin(pmax(t, 0), 1)
     t_in * stats::pbeta(t_in, a, b) -
@@ -947,11 +931,8 @@ pcens_cdf.pcens_pbeta_dunif <- function(
 
 #' Delay distribution arguments an analytical solution handles
 #'
-#' An analytical solution only applies when every argument of the delay
-#' CDF is one it uses. Otherwise `lower.tail`, `log.p`, an unnamed argument
-#' or an argument `pdist` does not accept would be silently ignored, so the
-#' numerical [pcens_cdf.default()] method is used, which passes all of them
-#' to `pdist`.
+#' Arguments the solution does not use, such as `lower.tail`, would be
+#' ignored, so the numerical [pcens_cdf.default()] method is used instead.
 #'
 #' @param object A `pcens` object as created by [new_pcens()].
 #'
@@ -986,9 +967,8 @@ pcens_cdf.pcens_pbeta_dunif <- function(
 
 #' Primary event censored CDF from an antiderivative of the delay CDF
 #'
-#' For a uniform primary event window the CDF is
-#' \eqn{F_{S+}(d) = \int_{d - w_P}^d F_T(u) du / w_P}, which is
-#' \eqn{(G(d) - G(d - w_P)) / w_P} for an antiderivative \eqn{G} of \eqn{F_T}.
+#' The CDF is \eqn{(G(d) - G(d - w_P)) / w_P} for an antiderivative
+#' \eqn{G} of the delay CDF.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -1009,9 +989,7 @@ pcens_cdf.pcens_pbeta_dunif <- function(
 
 #' Evaluate x - 1 + exp(-x) for x >= 0
 #'
-#' This is the antiderivative of the exponential CDF in rate units.
-#' For small `x` the direct form loses digits to cancellation, so a series in
-#' `x` is used for `x < 0.1`.
+#' A series is used for `x < 0.1` where the direct form cancels.
 #'
 #' @param x Non-negative numeric vector.
 #'
@@ -1037,13 +1015,10 @@ pcens_cdf.pcens_pbeta_dunif <- function(
 
 #' Expected shortfall of a standard normal
 #'
-#' Evaluates \eqn{g(z) = z \Phi(z) + \phi(z) = \int_{-\infty}^z \Phi(u) du}.
-#' In the lower tail the direct form loses digits to cancellation, about a
-#' factor \eqn{z^2}.
-#' It is used for `z >= -10`.
-#' Below that the asymptotic series
-#' \eqn{g(z) = \phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with
-#' 20 terms, which is accurate to double precision for `z < -10`.
+#' Evaluates \eqn{g(z) = z \Phi(z) + \phi(z)}.
+#' Below `z = -10` the asymptotic series
+#' \eqn{\phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with 20
+#' terms, as the direct form cancels.
 #'
 #' @param z Numeric vector of standardised values.
 #'

@@ -19,8 +19,7 @@ of times.}
 Vector of computed primary event censored CDFs
 }
 \description{
-For a uniform primary event window the CDF is
-\eqn{F_{S+}(d) = \int_{d - w_P}^d F_T(u) du / w_P}, which is
-\eqn{(G(d) - G(d - w_P)) / w_P} for an antiderivative \eqn{G} of \eqn{F_T}.
+The CDF is \eqn{(G(d) - G(d - w_P)) / w_P} for an antiderivative
+\eqn{G} of the delay CDF.
 }
 \keyword{internal}

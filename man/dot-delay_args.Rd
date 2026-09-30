@@ -16,10 +16,7 @@ The named list of delay arguments, or \code{NULL} if any argument is
 unnamed or not in \code{allowed}.
 }
 \description{
-An analytical solution only applies when every argument of the delay
-CDF is one it uses. Otherwise \code{lower.tail}, \code{log.p}, an unnamed argument
-or an argument \code{pdist} does not accept would be silently ignored, so the
-numerical \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method is used, which passes all of them
-to \code{pdist}.
+Arguments the solution does not use, such as \code{lower.tail}, would be
+ignored, so the numerical \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method is used instead.
 }
 \keyword{internal}

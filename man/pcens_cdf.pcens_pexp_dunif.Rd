@@ -24,13 +24,8 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Analytical solution for the exponential distribution.
-The antiderivative of the delay CDF
-\eqn{F_T(t) = 1 - e^{-\lambda t}} is the positive function
-\eqn{G(t) = t - 1 / \lambda + e^{-\lambda t} / \lambda}, so
-\eqn{F_{S+}(d) = (G(d) - G(d - w_P)) / w_P}.
-This is the gamma solution with \code{shape = 1} written in closed form
-without the incomplete gamma function.
+Analytical solution for the exponential distribution, which is the gamma
+solution with \code{shape = 1} without the incomplete gamma function.
 Delay arguments other than \code{rate}, such as \code{lower.tail}, use the numerical
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
 See \code{vignette("analytic-solutions")} for the derivation.

@@ -27,14 +27,7 @@ Vector of computed primary event censored CDFs
 Analytical solution for the normal distribution, which has support on
 the reals.
 The primary event window \eqn{[d - w_P, d]} is not clipped at zero.
-The antiderivative of the delay CDF is the positive function
-\eqn{G(t) = \sigma (z \Phi(z) + \phi(z))} with \eqn{z = (t - \mu) /
-\sigma}, which is \eqn{E[(t - T)^+]}, so
-\eqn{F_{S+}(d) = (G(d) - G(d - w_P)) / w_P}.
-This equals the form with the partial expectation
-\eqn{\mu \Phi(z) - \sigma \phi(z)}, but its two terms can be negative.
-In the lower tail \eqn{z \Phi(z)} and \eqn{\phi(z)} nearly cancel, so for
-\eqn{z < -10} an asymptotic series is used.
+Below \eqn{z = -10} an asymptotic series avoids cancellation.
 Delay arguments other than \code{mean} and \code{sd}, such as \code{lower.tail}, use the
 numerical \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
 See \code{vignette("analytic-solutions")} for the derivation.

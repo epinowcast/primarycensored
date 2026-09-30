@@ -2,42 +2,24 @@
 
 ## Features
 
-- Uniform primary analytical solutions for more delay distributions, in R and in Stan.
-  Stan now has them for the exponential, beta, chi-square, inverse gamma, normal, inverse chi-square, Pareto and scaled inverse chi-square delays (`dist_id` 4, 9, 13, 16, 18, 19, 21 and 22).
-  R has `pcens_cdf()` methods for `pexp`, `pnorm`, `pchisq` and `pbeta`.
-  The Stan solutions build on `primarycensored_uniform_terms()`, so the shared-terms vectorised PMF applies to them too.
-  On the parameter grids tested they agree with numerical integration of the delay CDF to a relative 1e-8 or better in Stan, and 1e-9 in R.
-  For the gamma and chi-square in Stan the error grows with the shape.
-  It is below 1e-12 for a shape of 10 and about 3e-9 for a shape of 1000, from the far lower tail to the upper tail.
-  The solutions subtract two antiderivatives, so they lose precision when the delay is much larger than the primary event window.
-  The relative error is about 1e-16 * d / (pwindow * F(d)), for example 3e-6 for an exponential delay with a rate of 1e-3 at d = 1e4 and pwindow = 1e-6.
+- Uniform primary analytical solutions for the exponential, beta, chi-square, inverse gamma, normal, inverse chi-square, Pareto and scaled inverse chi-square delays in Stan, and for the exponential, normal, chi-square and beta delays in `pcens_cdf()`.
+  The Stan solutions use the shared-terms vectorised PMF.
+  They agree with numerical integration to a relative 1e-8 or better in Stan and 1e-9 in R on the tested grids.
+  Precision is lost when the delay is much larger than the primary event window.
+  The inverse gamma family needs a finite mean, and non-central chi-square and beta delays use numerical integration.
   See #377.
-- The beta solution returns a log CDF of exactly 0 once the primary event window is above 1.
-- The normal has support on the reals, so its analytic solution does not clip the primary event window at 0.
-  It evaluates the positive antiderivative of the CDF and switches to an asymptotic series below `z = -10`.
-- The inverse gamma, inverse chi-square and scaled inverse chi-square solutions need a finite mean (shape above 1, degrees of freedom above 2).
-  Otherwise Stan uses numerical integration, chosen by the new `check_for_analytical_params()` and `check_uniform_terms_params()`.
-  Non-central chi-square and beta delays in R use numerical integration.
-- The chi-square solution uses the gamma solution with shape `df / 2` and scale 2.
-  The inverse chi-square and scaled inverse chi-square solutions use the inverse gamma solution.
 
 ## Bug fixes
 
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
-- The analytical Stan log CDF for the gamma, lognormal, Weibull and generalised gamma delays is now at most 0.
-  In the upper tail the rounded terms could give a value a few 1e-11 above 0.
-- The beta delay no longer errors in the Stan numerical path for delays above 1.
-  `dist_lcdf()` now returns a log CDF of 0 there.
-  See #377.
 - The Stan gamma and chi-square solutions are accurate in the lower tail.
-  Below `rate * d = (shape + 1) / 2` the terms come from a log scale series for the incomplete gamma function, instead of `gamma_lcdf` and a recursion.
-  `gamma_lcdf` underflows there, which gave a NaN log CDF, and its derivative with respect to the shape is inaccurate, by up to a factor of 3 for a chi-square with 40 degrees of freedom.
-  The gradient with respect to the shape now matches finite differences.
-  A gamma or chi-square with a shape above about 500 can still have a non-finite gradient from near the mean upwards, from `gamma_lcdf`.
-- The Stan log PMF is `-Inf` rather than NaN for an interval far in the upper tail, where the log CDF at both ends rounds to about 0.
-  This is `primarycensored_log_cdf_diff()`.
+  A log scale series replaces `gamma_lcdf`, which underflows there and has an inaccurate shape gradient.
+  See #377.
+- The analytical Stan log CDF for the gamma, lognormal, Weibull and generalised gamma delays is at most 0.
+- The Stan log PMF is `-Inf` rather than NaN for an interval far in the upper tail.
+- The beta delay no longer errors in the Stan numerical path for delays above 1.
 
 ## Performance
 

@@ -13,12 +13,9 @@
 Vector of \code{g(z)}.
 }
 \description{
-Evaluates \eqn{g(z) = z \Phi(z) + \phi(z) = \int_{-\infty}^z \Phi(u) du}.
-In the lower tail the direct form loses digits to cancellation, about a
-factor \eqn{z^2}.
-It is used for \code{z >= -10}.
-Below that the asymptotic series
-\eqn{g(z) = \phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with
-20 terms, which is accurate to double precision for \code{z < -10}.
+Evaluates \eqn{g(z) = z \Phi(z) + \phi(z)}.
+Below \code{z = -10} the asymptotic series
+\eqn{\phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with 20
+terms, as the direct form cancels.
 }
 \keyword{internal}

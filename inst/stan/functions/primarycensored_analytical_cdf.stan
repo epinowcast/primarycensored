@@ -4,12 +4,8 @@
   *
   * These are the delays whose censored CDF with a uniform primary is
   * primarycensored_uniform_lcdf_from_terms() applied to
-  * primarycensored_uniform_terms() at d and q. The delays are the
-  * Lognormal (1), Gamma (2), Weibull (3), Exponential (4), generalised gamma
-  * (5), Beta (9), Chi-square (13), Inverse gamma (16), Normal (18), Inverse
-  * chi-square (19), Pareto (21) and Scaled inverse chi-square (22). Some of
-  * these only hold for part of the parameter space, see
-  * check_uniform_terms_params().
+  * primarycensored_uniform_terms() at d and q. Some only hold for part of
+  * the parameter space, see check_uniform_terms_params().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -28,13 +24,9 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * Check the uniform primary terms are valid for the delay parameters
   * @ingroup analytical_solution_helpers
   *
-  * The Inverse gamma terms use the partial expectation distribution, an
-  * Inverse gamma with shape `alpha - 1`, so they need a finite mean with
-  * `alpha > 1`. The Inverse chi-square (19) and Scaled inverse chi-square
-  * (22) delays are Inverse gamma with `alpha = nu / 2`, so they need
-  * `nu > 2`. Outside that range the numerical path is used, see
-  * check_for_analytical_params(). Every other delay with uniform primary
-  * terms is valid for all admissible parameters.
+  * The Inverse gamma terms need a finite mean, `alpha > 1`, and the Inverse
+  * chi-square (19) and Scaled inverse chi-square (22) need `nu > 2`.
+  * Otherwise the numerical path is used.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of distribution parameters
@@ -81,11 +73,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   * and delay parameters
   * @ingroup analytical_solution_helpers
   *
-  * This is check_for_analytical() with the parameter rule of
-  * check_uniform_terms_params() applied, so a delay whose uniform primary
-  * terms are not valid for `params` uses numerical integration instead.
-  * The dispatch in primarycensored_cdf() and primarycensored_lcdf() uses
-  * this function.
+  * This is check_for_analytical() with check_uniform_terms_params() applied.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -115,11 +103,8 @@ int check_for_analytical_params(int dist_id, int primary_id,
   * primarycensored_uniform_terms()). Ordering A >= B is guaranteed by
   * F_{S+}(d) >= 0.
   *
-  * More generally the terms a(t) and b(t) at t only need a(t) - b(t) to be
-  * an antiderivative of F_T, so that A - B = int_q^d F_T(u) du. Delays
-  * with support on the reals use q = d - w_P. Delays where the antiderivative
-  * is one positive function G(t) take a(t) = G(t) and b(t) = 0, that is
-  * terms [log G(t), -inf].
+  * Delays with support on the reals use q = d - w_P. Delays with one
+  * positive antiderivative G of F_T have terms [log G(t), -inf].
   *
   * @param terms_d Terms at d from primarycensored_uniform_terms()
   * @param terms_q Terms at q from primarycensored_uniform_terms()
@@ -138,11 +123,8 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
     return negative_infinity();
   }
   real log_cdf = log_diff_exp(log_A, log_B) - log(pwindow);
-  // A and B are sums of rounded terms, so the difference can land a few ulp
-  // above 1 in the upper tail. A CDF is at most 1, so clamp the log at 0 to
-  // avoid a NaN from the log PMF differences. `fmin` is not used because it
-  // returns the other argument for a NaN, which would turn a NaN log CDF into
-  // a CDF of 1. The comparison below leaves a NaN as it is.
+  // Rounding can put the upper tail a few ulp above 1. Not fmin, which
+  // would turn a NaN into 0.
   return log_cdf > 0 ? 0 : log_cdf;
 }
 
@@ -151,11 +133,8 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * window is above the support of the delay
   * @ingroup analytical_solution_helpers
   *
-  * The Beta has support on [0, 1]. Once the lower end q of the primary window
-  * is at or above 1, F_{S+}(d) = 1 exactly. The terms give (d + E) - (q + E)
-  * over w_P, which rounds to a value a few ulp from 1 and can be above it.
-  * The other delays with uniform primary terms have an unbounded upper
-  * support.
+  * The Beta has support on [0, 1], so the CDF is 1 once q >= 1. The terms
+  * would give a value a few ulp from 1.
   *
   * @param q Lower bound of integration, see
   * primarycensored_uniform_lower_bound()
@@ -172,25 +151,16 @@ int primarycensored_uniform_cdf_is_one(real q, data int dist_id) {
   * and a + 1 from its series in y
   * @ingroup analytical_solution_helpers
   *
-  * The regularised lower incomplete gamma function is
-  *   P(a, y) = y^a e^{-y} / Gamma(a + 1) * S(a, y), with
-  *   S(a, y) = sum_{n >= 0} y^n / ((a + 1) (a + 2) ... (a + n)).
-  * The two shapes share one sum since S(a, y) = 1 + y / (a + 1) * S(a + 1, y).
-  *
-  * The prefactor and the sum are evaluated on the log scale. So this does
-  * not underflow where `gamma_lcdf` returns `-inf`, and it needs no
-  * cancelling recursion between the two shapes. Autodiff through the sum
-  * gives the derivative with respect to the shape exactly. The shape
-  * derivative of `gamma_lcdf` has a relative error from 1e-3 up to 1 once
-  * P(a, y) is below about 1e-13, and is not finite for a = 1000 at y = 100.
-  *
-  * The terms shrink by a factor of at most y / (a + 1 + n), so for
-  * `y <= (a + 1) / 2` they at least halve, and 100 terms reach a relative
-  * 1e-17 with room to spare. primarycensored_gamma_uniform_terms() only calls
-  * this function in that range.
+  * P(a, y) = y^a e^{-y} / Gamma(a + 1) * S(a, y), with
+  * S(a, y) = sum_{n >= 0} y^n / ((a + 1) ... (a + n)),
+  * and S(a, y) = 1 + y / (a + 1) * S(a + 1, y) so both shapes share a sum.
+  * This does not underflow like `gamma_lcdf`, and autodiff gives the shape
+  * derivative where that of `gamma_lcdf` is inaccurate in the lower tail.
+  * The terms shrink by a factor of y / (a + 1 + n) or less, so it is only
+  * called for `y < a + 1`.
   *
   * @param a Shape
-  * @param y Rate times time, at most `(a + 1) / 2`
+  * @param y Rate times time, below `a + 1`
   *
   * @return Vector [log P(a, y), log P(a + 1, y)]
   */
@@ -199,7 +169,7 @@ vector primarycensored_log_gamma_p_series(real a, real y) {
   // term is y^n / ((a + 2) ... (a + 1 + n)), so S1 = S(a + 1, y)
   real term = 1;
   real S1 = 1;
-  for (n in 1:100) {
+  for (n in 1:2000) {
     term *= y / (a + 1 + n);
     S1 += term;
     if (term < 1e-17 * S1) break;
@@ -216,22 +186,11 @@ vector primarycensored_log_gamma_p_series(real a, real y) {
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
-  * The terms need the log CDFs F_T(t; k) and F_T(t; k + 1), the Gamma CDF at
-  * shape k and at shape k + 1, with y = rate * t.
-  *
-  * For `y < (k + 1) / 2` both come from
-  * primarycensored_log_gamma_p_series(). There `gamma_lcdf` can underflow
-  * and its shape derivative is inaccurate, and the recursion between the two
-  * shapes below cancels.
-  *
-  * Otherwise F_T(t; k) is `gamma_lcdf` and F_T(t; k + 1) follows from
-  * P(k + 1, y) = P(k, y) - y^k e^{-y} / Gamma(k + 1). Both terms are
-  * `-inf` if `gamma_lcdf` underflows, which only happens for a shape of
-  * thousands (8000 or more degrees of freedom for the Chi-square). They are
-  * dropped whole, as in primarycensored_lognormal_uniform_terms(), because
-  * `log_diff_exp(-inf, x)` is NaN. The log CDF is then `-inf` if the terms at
-  * d and q are both dropped. It is NaN if only those at d are, where the
-  * series still covers q, and Stan rejects the draw.
+  * With y = rate * t, the log CDFs at shapes k and k + 1 come from
+  * primarycensored_log_gamma_p_series() for `y < (k + 1) / 2`, and below the
+  * mean where `gamma_lcdf` would underflow. Otherwise F_T(t; k) is
+  * `gamma_lcdf` and F_T(t; k + 1) follows from
+  * P(k + 1, y) = P(k, y) - y^k e^{-y} / Gamma(k + 1).
   *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
@@ -249,17 +208,15 @@ vector primarycensored_gamma_uniform_terms(real t,
   real y = rate * t;
   // log E where E = k * theta = shape / rate is the mean of the delay
   real log_E = log(shape) - log(rate);
-  if (y < 0.5 * (shape + 1)) {
+  // Leading term of log P(k, y), below -700 gamma_lcdf can underflow
+  real log_lead = shape * log(y) - y - lgamma(shape + 1);
+  if (y < 0.5 * (shape + 1) || (y < shape + 1 && log_lead < -700)) {
     vector[2] log_F_T = primarycensored_log_gamma_p_series(shape, y);
     return [log(t) + log_F_T[1], log_E + log_F_T[2]]';
   }
   real log_F_T_k = gamma_lcdf(t | shape, rate);
-  if (log_F_T_k == negative_infinity()) {
-    return rep_vector(negative_infinity(), 2);
-  }
   // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1)
-  real gamma_k_pdf_log = shape * log(y) - y - lgamma(shape + 1);
-  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_k_pdf_log);
+  real log_F_T_kp1 = log_diff_exp(log_F_T_k, log_lead);
   return [log(t) + log_F_T_k, log_E + log_F_T_kp1]';
 }
 
@@ -379,11 +336,9 @@ vector primarycensored_gengamma_uniform_terms(real t,
   * Compute the uniform primary terms at t for an Exponential delay
   * @ingroup analytical_solution_helpers
   *
-  * The antiderivative of F_T(t) = 1 - exp(-rate * t) is the positive
-  * function G(t) = t - 1 / rate + exp(-rate * t) / rate, so the terms are
-  * [log G(t), -inf]. With x = rate * t the log of x - 1 + exp(-x) is
-  * log_diff_exp(log(x), log1m_exp(-x)), which loses digits to cancellation
-  * for small x. Below x = 0.1 a series in x is used instead.
+  * The antiderivative of F_T is G(t) = t - 1 / rate + exp(-rate * t) / rate,
+  * so the terms are [log G(t), -inf]. A series is used below `rate * t = 0.1`
+  * where the difference cancels.
   *
   * @param t Time (d or q)
   * @param params Array of Exponential distribution parameters [rate]
@@ -417,13 +372,9 @@ vector primarycensored_exponential_uniform_terms(real t,
   * Compute the log of the expected shortfall of a standard normal
   * @ingroup analytical_solution_helpers
   *
-  * Returns the log of g(z) = z * Phi(z) + phi(z), which is
-  * E[(z - Z)^+] = int_{-inf}^z Phi(u) du for a standard normal Z, so it is
-  * positive. The direct form loses digits to cancellation in the lower tail
-  * where z * Phi(z) and phi(z) nearly cancel, by about a factor z^2. It is
-  * used for z >= -10, where that is a few digits. Below that the asymptotic
-  * series g(z) = phi(z) / z^2 * sum_n (-1)^n (2n + 1)!! / z^(2n) is used,
-  * with 20 terms, which is accurate to double precision for z < -10.
+  * Returns log(z * Phi(z) + phi(z)), which is positive. The two terms
+  * cancel in the lower tail, so below z = -10 the asymptotic series
+  * phi(z) / z^2 * sum_n (-1)^n (2n + 1)!! / z^(2n) is used with 20 terms.
   *
   * @param z Standardised value
   *
@@ -440,9 +391,7 @@ real log_std_normal_shortfall(real z) {
     }
     return std_normal_lpdf(z) + log(y) + log(series);
   }
-  // Phi(z) = erfc(-z / sqrt(2)) / 2 is accurate in the tail and has an exact
-  // autodiff derivative, unlike std_normal_lcdf whose derivative is
-  // approximate and is amplified by the cancellation here
+  // erfc has an exact autodiff derivative, unlike std_normal_lcdf
   return log(
     exp(std_normal_lpdf(z)) + z * 0.5 * erfc(-z / sqrt2())
   );
@@ -452,12 +401,9 @@ real log_std_normal_shortfall(real z) {
   * Compute the uniform primary terms at t for a Normal delay
   * @ingroup analytical_solution_helpers
   *
-  * The Normal has support on the reals, so the terms are valid at negative
-  * t and q = d - w_P is not clipped at zero. The antiderivative of F_T is
-  * the positive function G(t) = sigma * g((t - mu) / sigma), with g from
-  * log_std_normal_shortfall(). The partial expectation form
-  * t * F_T(t) - (mu * Phi(z) - sigma * phi(z)) gives the same G, but its
-  * two terms can be negative, which the log scale terms cannot hold.
+  * The Normal has support on the reals, so q = d - w_P is not clipped at
+  * zero. The positive antiderivative of F_T is
+  * G(t) = sigma * (z * Phi(z) + phi(z)) with z = (t - mu) / sigma.
   *
   * @param t Time (d or q)
   * @param params Array of Normal distribution parameters [mu, sigma]
@@ -477,9 +423,8 @@ vector primarycensored_normal_uniform_terms(real t, array[] real params) {
   * Compute the uniform primary terms at t for a Beta delay
   * @ingroup analytical_solution_helpers
   *
-  * The Beta has support on [0, 1] and mean E = a / (a + b). The partial
-  * expectation distribution is the Beta with shape1 `a + 1`. For t >= 1 both
-  * CDFs are 1, so the terms are [log(t), log(E)].
+  * The mean is E = a / (a + b) and the partial expectation distribution is
+  * the Beta with shape1 `a + 1`. For t >= 1 both CDFs are 1.
   *
   * @param t Time (d or q)
   * @param params Array of Beta distribution parameters [a, b]
@@ -507,8 +452,7 @@ vector primarycensored_beta_uniform_terms(real t, array[] real params) {
   * Compute the uniform primary terms at t for a Chi-square delay
   * @ingroup analytical_solution_helpers
   *
-  * The Chi-square with `nu` degrees of freedom is the Gamma with shape
-  * `nu / 2` and rate 1 / 2.
+  * This is the Gamma with shape `nu / 2` and rate 1 / 2.
   *
   * @param t Time (d or q)
   * @param params Array of Chi-square distribution parameters [nu]
@@ -524,13 +468,8 @@ vector primarycensored_chisq_uniform_terms(real t, array[] real params) {
   * Test whether `inv_gamma_lcdf` underflows to `-inf` at these arguments
   * @ingroup delay_log_cdfs
   *
-  * The CDF is the regularised upper incomplete gamma function Q(alpha, x)
-  * at x = beta / y. Deep in the lower tail, where x is well above alpha, it
-  * underflows, and the autodiff partial is then `0 / 0` as for
-  * lognormal_lcdf_underflows(). This tests the leading asymptotic
-  * log Q(alpha, x) = (alpha - 1) * log(x) - x - lgamma(alpha) below -700,
-  * inside the representable range, so a term dropped on this test cannot
-  * change a result at double precision.
+  * Tests the leading term of log Q(alpha, x) at x = beta / y against -700,
+  * as for lognormal_lcdf_underflows().
   *
   * @param y Value at which the log CDF would be evaluated
   * @param alpha Shape parameter
@@ -557,10 +496,7 @@ int inv_gamma_lcdf_underflows(real y, real alpha, real beta) {
   * Each term is formed whole and dropped whole, as in
   * primarycensored_lognormal_uniform_terms(). The mean is
   * E = beta / (alpha - 1) and the partial expectation distribution is the
-  * Inverse gamma with shape `alpha - 1`, so the terms need `alpha > 1`. The
-  * dispatch in primarycensored_lcdf() uses the numerical path for
-  * `alpha <= 1`, see check_uniform_terms_params(), and this function rejects
-  * it.
+  * Inverse gamma with shape `alpha - 1`, so `alpha > 1` is required.
   *
   * @param t Time (d or q)
   * @param params Array of Inverse gamma distribution parameters
@@ -589,8 +525,7 @@ vector primarycensored_invgamma_uniform_terms(real t, array[] real params) {
   * Compute the uniform primary terms at t for an Inverse chi-square delay
   * @ingroup analytical_solution_helpers
   *
-  * The Inverse chi-square with `nu` degrees of freedom is the Inverse gamma
-  * with shape `nu / 2` and scale 1 / 2, so it needs `nu > 2`.
+  * This is the Inverse gamma with shape `nu / 2` and scale 1 / 2.
   *
   * @param t Time (d or q)
   * @param params Array of Inverse chi-square distribution parameters [nu]
@@ -608,9 +543,7 @@ vector primarycensored_invchisq_uniform_terms(real t, array[] real params) {
   * delay
   * @ingroup analytical_solution_helpers
   *
-  * The Scaled inverse chi-square with `nu` degrees of freedom and scale `s`
-  * is the Inverse gamma with shape `nu / 2` and scale `nu * s^2 / 2`, so it
-  * needs `nu > 2`.
+  * This is the Inverse gamma with shape `nu / 2` and scale `nu * s^2 / 2`.
   *
   * @param t Time (d or q)
   * @param params Array of Scaled inverse chi-square distribution
@@ -629,8 +562,7 @@ vector primarycensored_scaledinvchisq_uniform_terms(real t,
   * Evaluate expm1(u) / u
   * @ingroup analytical_solution_helpers
   *
-  * Smooth through `u = 0`, where it is 1, so the derivative is finite there.
-  * A Taylor series in u is used for `|u| < 1e-4`.
+  * A Taylor series is used for `|u| < 1e-4` so the derivative is finite at 0.
   *
   * @param u Argument
   *
@@ -647,15 +579,11 @@ real expm1_over_x(real u) {
   * Compute the uniform primary terms at t for a Pareto delay
   * @ingroup analytical_solution_helpers
   *
-  * The Pareto has support on `[y_min, inf)` and
-  * F_T(t) = 1 - (y_min / t)^alpha. Its antiderivative from `y_min` is the
-  * positive function
+  * The antiderivative of F_T from `y_min` is
   * G(t) = y_min * (delta + expm1(-(alpha - 1) * L) / (alpha - 1)), with
   * delta = t / y_min - 1 and L = log(t / y_min). It holds for every
-  * `alpha > 0`, including `alpha <= 1` where the mean is infinite, because
-  * only the integral of F_T over the window enters. Its terms are
-  * [log G(t), -inf]. For small L the two terms in G cancel, and a Taylor
-  * series in L is used instead when `L * max(1, |alpha - 1|) < 0.1`.
+  * `alpha > 0`. A series in L is used when `L * max(1, |alpha - 1|) < 0.1`
+  * where the terms cancel.
   *
   * @param t Time (d or q)
   * @param params Array of Pareto distribution parameters [y_min, alpha]
@@ -737,10 +665,7 @@ vector primarycensored_uniform_terms(real t, data int dist_id,
   * Compute the lower integration bound q of the uniform primary window
   * @ingroup analytical_solution_helpers
   *
-  * The primary event time ranges over `[d - pwindow, d]`. Delays with
-  * non-negative support have F_T(t) = 0 for t <= 0, so the bound is clipped
-  * at 0. Delays with support on the reals use `d - pwindow`, which can be
-  * negative.
+  * The bound is clipped at 0 for delays with non-negative support.
   *
   * @param d Delay time
   * @param dist_id Distribution identifier
@@ -846,9 +771,7 @@ real primarycensored_gengamma_uniform_lcdf(data real d, real q,
   * @ingroup primary_event_analytical_distributions
   *
   * This is primarycensored_uniform_lcdf_from_terms() applied to
-  * primarycensored_uniform_terms() at d and q, for any delay in
-  * check_for_uniform_terms() that is valid for the parameters, see
-  * check_uniform_terms_params().
+  * primarycensored_uniform_terms() at d and q.
   *
   * @param d Delay time
   * @param q Lower bound of integration, see
@@ -990,15 +913,12 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   * @ingroup analytical_solution_helpers
   *
   * The analytical uniform primary CDF at d combines terms at d and at
-  * q = max(d - pwindow, 0), or d - pwindow for delays with support on the
-  * reals, see primarycensored_uniform_lower_bound(). With an integer pwindow
-  * q is an integer delay too, so
+  * q = max(d - pwindow, 0), see primarycensored_uniform_lower_bound(). With
+  * an integer pwindow q is an integer delay too, so
   * primarycensored_analytical_lcdf_vectorized() can compute the terms once
   * per delay and share them. This needs the analytical solutions built from
   * primarycensored_uniform_terms(), see check_for_uniform_terms(). The
-  * non-parametric delays in check_for_analytical() have no such terms. The
-  * delay parameters must also pass check_uniform_terms_params(), which
-  * primarycensored_lcdf_vectorized() checks.
+  * non-parametric delays in check_for_analytical() have no such terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -1016,12 +936,10 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * Compute the primary event censored log CDF analytically at integer delays
   * @ingroup primary_event_analytical_distributions
   *
-  * The log CDF at d combines the terms at d and at q, see
-  * primarycensored_uniform_lower_bound() and
-  * primarycensored_uniform_lcdf_from_terms(). Both are integer delays, so
+  * The log CDF at d combines the terms at d and at q (see
+  * primarycensored_uniform_lcdf_from_terms()). Both are integer delays, so
   * the terms are computed once per delay and used for both, halving the CDF
-  * evaluations. Delays with support on the reals need the terms at negative
-  * delays down to start - pwindow. The values are the same as from
+  * evaluations. The values are the same as from
   * primarycensored_analytical_lcdf() at each delay without truncation.
   * Only for cases where check_for_analytical_vectorized() and
   * check_uniform_terms_params() are 1.
@@ -1042,8 +960,6 @@ vector primarycensored_analytical_lcdf_vectorized(data int start,
                                                   data real pwindow) {
   int pw = to_int(pwindow);
   vector[n] log_cdfs;
-  // Delays with support on the reals need the terms at negative t, as
-  // q = d - pw is not clipped at 0, see primarycensored_uniform_lower_bound()
   int first = dist_has_positive_support(dist_id) ? max(start - pw, 0)
                                                  : start - pw;
   // terms[t - first + 1] holds the terms at delay t

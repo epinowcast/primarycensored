@@ -13,8 +13,6 @@
 Vector of \code{x - 1 + exp(-x)}.
 }
 \description{
-This is the antiderivative of the exponential CDF in rate units.
-For small \code{x} the direct form loses digits to cancellation, so a series in
-\code{x} is used for \code{x < 0.1}.
+A series is used for \code{x < 0.1} where the direct form cancels.
 }
 \keyword{internal}

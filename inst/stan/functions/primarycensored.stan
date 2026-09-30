@@ -6,10 +6,9 @@
   * Compute the log of the difference between two CDF values
   * @ingroup truncation_helpers
   *
-  * Far into the upper tail both log CDFs round to about 0, and the CDF at
-  * the upper point can land at or below the CDF at the lower point. Then
-  * `log_diff_exp` is NaN. The interval has no mass to double precision, so
-  * this returns `-inf`, as the numerical path does.
+  * Far in the upper tail both log CDFs round to about 0 and `log_diff_exp`
+  * can be NaN. The interval has no mass to double precision, so this
+  * returns `-inf`.
   *
   * @param log_cdf_upper Log CDF at the upper end of the interval
   * @param log_cdf_lower Log CDF at the lower end of the interval
