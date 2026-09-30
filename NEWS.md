@@ -5,9 +5,10 @@
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster per call, with results unchanged to rounding.
   They share one helper for the window handling, which no longer uses `ifelse()` or `pmin()`/`pmax()` over full vectors.
   The lognormal, Weibull and generalised gamma terms share the standardised delay between the delay CDF and the partial expectation term.
-  See #378.
+  See #378 and #380.
 - The Stan Weibull uniform primary solution forms `(t / scale)^shape` once for the delay CDF and the incomplete gamma term.
-  Values are unchanged and the gradient is about 10% cheaper.
+  Values are unchanged.
+  On 300 delays the value and its gradient were about 12% and 9% cheaper, taking medians over nine interleaved runs.
   The gamma, lognormal and generalised gamma solutions were profiled and are dominated by the incomplete gamma or normal CDF and their gradients, so they are unchanged.
   See #378.
 
@@ -16,9 +17,16 @@
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
-- The analytical uniform primary `pcens_cdf()` methods now recycle a vector `pwindow` element-wise when some delays are not positive, where it was previously misaligned.
+- The analytical uniform primary `pcens_cdf()` methods now return 1 for `q = Inf`, where they returned `NaN`.
+  Far into the upper tail they use the survival form of the solution when the window starts above the delay mean and is more than 1000 window widths wide.
+  This replaces values that had lost all precision, such as 0 where the answer is 1, with values accurate to rounding.
+  See #380.
+- These methods now check `pwindow`.
+  Missing or negative values are an error, where a missing value previously gave an unhelpful error or `NA`.
+  A vector `pwindow` is recycled element-wise against `q`, including when some delays are not positive, where it was previously misaligned.
+  Zero-width elements of a vector `pwindow` give the delay CDF, where they gave `NaN`.
   Missing delays give an explicit error.
-  See #378.
+  See #378 and #380.
 
 ## Performance
 

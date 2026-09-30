@@ -84,6 +84,9 @@ test_that("Stan uniform primary analytical log CDFs have gradients that match
   model <- gradient_model()
   # Delays at the lower tail, central mass and upper tail of each case, and
   # for d <= pwindow, where q = 0 and only the terms at d contribute.
+  # Weibull and generalised gamma shapes are 0.8 and above. The autodiff
+  # gradient of gamma_p in a = 1 + 1 / shape is inaccurate for shapes below
+  # about 0.2, see #393.
   cases <- list(
     list(id = 2L, params = c(3, 0.5), d = c(0.4, 1.5, 4, 9, 20)),
     list(id = 2L, params = c(0.6, 0.2), d = c(0.3, 2, 8, 40)),
