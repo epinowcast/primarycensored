@@ -627,7 +627,9 @@ real gumbel_numeric_piece_lcdf(data real d, int dist_id, array[] real params,
   * concave in u, so after a piece whose log CDF rises by less than its
   * length, the rest is at most the end value over one minus that slope. The
   * pieces stop where this is below 1e-15 of the total, and at the end of the
-  * window. At most 300 pieces are used, and more is an error.
+  * window. At most 300 pieces are used, and more is an error. It is reached
+  * only where the log CDF is below about -1000, as for a narrow normal delay
+  * far below the window.
   *
   * The pieces are 36 long while more than 48 of the window is left, and
   * otherwise 12 long until at most 12 is left, where the last piece ends at
@@ -726,7 +728,9 @@ real gumbel_numeric_spike_lcdf(data real d, int dist_id, array[] real params,
   if (!finished) {
     reject(
       "The truncated Gumbel numerical integral did not finish for d ", d,
-      ", pwindow ", pwindow, ", mu ", mu, " and beta ", beta
+      ", pwindow ", pwindow, ", mu ", mu, " and beta ", beta,
+      ". The log CDF is extremely small, below about -1000, so the delay ",
+      "distribution and the window are far apart."
     );
   }
   return log_total - tgumbel_log1m_exp_neg_exp(log_delta);

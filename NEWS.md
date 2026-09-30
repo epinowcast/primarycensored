@@ -51,6 +51,11 @@
   This gave `-Inf` log PMFs, and rejected initial values, for short delays with a window that is late relative to them, for example a gamma(5, 1) delay.
   It starts at the point where the delay CDF leaves 0 for delays on the non-negative reals, integrates on in pieces while the mass of the window is still there for a normal delay, and for a location below the window end integrates from the peak of the integrand to each end of the range.
   `primarycensored_lcdf()` uses it directly for the truncated Gumbel, so a CDF below 1e-300 is not lost.
+  A normal delay so far below the window that the log CDF is below about -1000 is rejected with an explicit message, rather than returning a bound.
+  See #371.
+- The Stan numerical path of the truncated Gumbel primary with `mu` below the window end passes an upper limit at the window end or at `d` to the ODE solver as data.
+  The sensitivity to that limit is singular for a gamma or Weibull delay with shape below 1, and the gradient failed with `max_num_steps` after about 15 seconds, including for the vectorised daily PMF.
+  It now takes about 0.1 seconds.
   See #371.
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.

@@ -477,6 +477,7 @@ The normal transform uses the asymptotic form of $\log \Phi(z)$ below $z = -37$,
 The derivative of the incomplete gamma function in the shape is approximate in Stan.
 For the gamma delay the series is therefore used only where the sum of the absolute terms over the bracket is at most 200, and the numerical path is used otherwise.
 The numerical path is evaluated on the log scale, so a CDF in the far lower tail, such as $e^{-150}$ for a short delay and a window that is late relative to it, is not lost.
+A CDF with a log below about $-1000$, which only a narrow normal delay far below the window reaches, is rejected with an explicit message, as the integral needs more than 300 pieces.
 
 For the normal delay with $\mu_G$ in $\{-0.5, 0, 0.5, 1, 1.5\}$, $\beta$ in $\{0.1, 0.2, 1\}$ and $w_P$ in $\{1, 2\}$, the series is accepted for $\mu_G / \beta \leq 1.5$, which is every $\mu_G$ at $\beta = 1$ and $\mu_G \leq 0$ at $\beta = 0.2$ and $0.1$.
 For larger $\mu_G / \beta$ the window density rises sharply within the window and the numerical path is used.
