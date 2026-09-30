@@ -66,6 +66,14 @@
 #' Away from these regions the error of the direct form is below 1e-9. The
 #' truncation error of the two forms is below 1e-9 at their thresholds.
 #'
+#' **Precision.** The CDF is accurate to a relative difference of about 1e-9
+#' or better for delays that are not deep in the tails, and to an absolute
+#' difference of about 1e-14 in the upper tail for tilts close to zero. A
+#' window much smaller than the delay loses precision to the difference of
+#' the terms at its two ends, about 1e-13 / `pwindow` in relative terms, as the
+#' uniform window solutions do. Use `pwindow = 0` for a primary event at a
+#' known time.
+#'
 #' **Extending.** A new delay distribution is supported by defining
 #' `.pcens_tilt_lower()`, `.pcens_tilt_available()`, `.pcens_tilt_transform()`
 #' and, for the small tilt forms, `.pcens_tilt_moments()` for its class, and
