@@ -1,10 +1,5 @@
-# Uniform primary analytical solutions for the exponential, normal,
-# chi-square and beta delays. Each is checked against a near double
-# precision quadrature of the delay CDF over the primary window (see
-# helper-uniform-reference.R) to a relative 1e-9, and against the package
-# numerical path with `use_numeric = TRUE` to 1e-6 on a grid where its
-# default stats::integrate tolerance is enough. The grids include windows
-# wider than q, q near 0, q below 0 for the normal, and both tails.
+# Analytical uniform primary CDFs against quadrature, see
+# helper-uniform-solutions-reference.R
 
 delays_positive <- c(0.001, 0.01, 0.1, 0.5, 1, 2, 5, 10, 30, 100)
 

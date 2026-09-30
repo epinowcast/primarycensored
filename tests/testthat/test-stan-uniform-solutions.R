@@ -1,9 +1,8 @@
 skip_on_cran()
 
-# The reference integrates exp(dist_lcdf()) with stats::integrate at a
-# tolerance near double precision, see helper-uniform-reference.R.
-# Analytical solutions are compared at a relative 1e-8. The Stan ODE solver
-# only reaches an absolute 1e-6, which is used where the ODE path is run.
+# Analytical solutions against quadrature, see
+# helper-uniform-solutions-reference.R. The Stan ODE path only reaches an
+# absolute 1e-6.
 
 # nolint start: object_usage_linter.
 stan_reference <- function(dist_id, params, d, pwindow, kinks = numeric(0)) {
@@ -407,9 +406,7 @@ test_that("the normal solution handles a window that starts below zero", {
 test_that("the normal solution is accurate in the lower tail and across the
   switch to the asymptotic series", {
   # z = (t - mu) / sigma runs from well below the switch at -10 to above 0.
-  # The lower tail CDFs are tiny, so the values are checked on the log scale
-  # against the R solution, which is itself checked against quadrature in
-  # test-pcens_cdf-uniform-solutions.R.
+  # The lower tail CDFs are tiny, so compare on the log scale
   mu <- 10
   sigma <- 0.5
   pwindow <- 1
@@ -637,9 +634,7 @@ test_that("primarycensored_sone_lpmf_vectorized matches primarycensored_lpmf
             numeric(0)
           )
         }, numeric(1))
-        # The CDF difference cannot resolve a PMF below the rounding error
-        # of the CDF near 1, where it can be NaN for any delay, so compare
-        # where the PMF is above 1e-9
+        # A PMF below the rounding error of the CDF near 1 is not resolved
         resolved <- is.finite(per_delay) & per_delay > log(1e-9)
         if (!(dist$dist_id == 9L && s$L >= 3)) {
           expect_true(any(resolved), info = info)
@@ -760,10 +755,8 @@ uniform_gradient_at <- function(model, dist_id, params, d, pwindow) {
 test_that("the new analytical solutions have finite gradients that match
   finite differences", {
   model <- uniform_gradient_model()
-  # Stan's gradient of the incomplete gamma and beta functions with respect
-  # to a shape has a limited precision, so the inverse gamma, inverse
-  # chi-square and beta cases use 1e-3 (5e-3 with the partial expectation
-  # shape 0.2) and the others 1e-4
+  # Shape gradients of the incomplete gamma and beta are less precise, so
+  # those cases use 1e-3 (5e-3 for shape 1.2) and the others 1e-4
   cases <- list(
     list(
       name = "exponential", id = 4L, params = 0.5, tol = 1e-4,
@@ -818,8 +811,7 @@ test_that("the new analytical solutions have finite gradients that match
       tol = 1e-3, delays = c(0.3, 1, 5, 50)
     ),
     list(
-      # The gradients are about 4e-4 here, so finite difference noise of
-      # about 5e-8 is a relative 1e-4
+      # Gradients of about 4e-4 leave finite difference noise at 1e-4
       name = "pareto", id = 21L, params = c(0.5, 2), tol = 5e-4,
       delays = c(0.6, 1, 5, 50)
     ),
@@ -905,9 +897,7 @@ test_that("the normal CDF applies a finite lower truncation point at or below
 
 test_that("the beta log CDF is exactly 0 and the PMF exactly 0 once the
   window is above the support", {
-  # For q = max(d - pwindow, 0) >= 1 the CDF is 1. It is returned exactly
-  # rather than as the rounded difference of two sums, which can be above 1
-  # and give a NaN log PMF
+  # For q >= 1 the CDF is exactly 1, not a rounded difference above 1
   params <- c(2, 3)
   for (pwindow in c(1, 2, 3.5)) {
     delays <- pwindow + 1 + c(0, 0.5, 2, 7)

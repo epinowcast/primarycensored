@@ -371,6 +371,7 @@ Integrating by parts gives $G(t) = t F_T(t) - \int_{-\infty}^t z f_T(z)~ dz$, wh
 Each of these needs only the delay CDF and the lower partial expectation at $d$ and at $q$.
 The two terms of $G$ are each evaluated once per endpoint, so the Stan functions `primarycensored_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` reuse them across neighbouring delays.
 Where $G$ has a simple positive closed form it is used directly, which avoids differences of terms that can be negative.
+The difference $G(d) - G(q)$ loses precision when $d$ is much larger than $w_P$, with a relative error of about $10^{-16} d / (w_P F_{S_+}(d))$.
 
 ## Exponential distribution
 

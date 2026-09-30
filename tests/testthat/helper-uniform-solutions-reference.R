@@ -1,11 +1,4 @@
-# High accuracy references for the uniform primary event censored CDF
-#
-# F_{S+}(d) = int_{d - pwindow}^{d} F_T(t) dt / pwindow is integrated with
-# stats::integrate at a tolerance near double precision. The integrand has a
-# kink wherever F_T changes form (t = 0 for non-negative delays, t = 1 for the
-# Beta and t = y_min for the Pareto), so the integral is split there. The
-# default stats::integrate tolerance of the package numerical path is not
-# enough to check the analytical solutions to a relative 1e-9.
+# Quadrature of the delay CDF over the primary window, split at the kinks
 reference_uniform_cdf <- function(pdist, d, pwindow, kinks = numeric(0)) {
   vapply(d, function(di) {
     lower <- di - pwindow
@@ -24,9 +17,7 @@ reference_uniform_cdf <- function(pdist, d, pwindow, kinks = numeric(0)) {
   }, numeric(1))
 }
 
-# Checks the relative error elementwise. Values of `expected` at or below
-# `floor` are in the far tail, where the reference underflows, and need
-# `actual` to be at or below `floor` too.
+# Elementwise relative error, with values at or below `floor` compared as tails
 expect_rel_equal <- function(actual, expected, tolerance = 1e-9,
                              floor = 1e-250, info = NULL) {
   testthat::expect_length(actual, length(expected))
@@ -45,13 +36,7 @@ expect_rel_equal <- function(actual, expected, tolerance = 1e-9,
   )
 }
 
-# Log of the uniform primary event censored CDF from a delay log CDF `lp`
-#
-# The integral of F_T over [q, d] is taken relative to F_T(d), so it stays
-# representable when the CDF itself underflows. F_T is increasing, so the
-# integrand is largest at d. The range is split geometrically towards d to
-# resolve the narrow peak in the far lower tail. `lower` is the lower
-# bound of the delay support.
+# Log quadrature relative to F_T(d), so it holds where the CDF underflows
 reference_uniform_lcdf <- function(lp, d, pwindow, lower = 0) {
   vapply(d, function(di) {
     q_lower <- max(di - pwindow, lower)
