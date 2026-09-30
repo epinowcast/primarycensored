@@ -108,11 +108,8 @@ vector primarycensored_truncation_bounds(
   * Compute the primary event censored CDF by numerical integration
   * @ingroup primary_censored_single
   *
-  * Integrates the delay CDF against the primary event density over the
-  * primary event time with an ODE solver. This is the numerical path of
-  * primarycensored_cdf(), without truncation, and the path the analytical
-  * solutions are tested against. The solver tolerances are those of
-  * `ode_rk45` (1e-6), so small CDFs are not accurate in relative terms.
+  * The numerical path of primarycensored_cdf(), without truncation, using
+  * `ode_rk45`.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -127,13 +124,8 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
                                  array[] real params, data real pwindow,
                                  data int primary_id,
                                  array[] real primary_params) {
-  // The integration variable ranges over the primary-event time, so the
-  // natural lower bound is d - pwindow. For positive-support delays the
-  // integrand `F_delay(t)` is 0 for t <= 0. Starting at 0 when d < pwindow
-  // leaves out that flat zero region, and with it the kink at t = 0, which
-  // the solver steps over with a relative error of order 1e-3 for small d.
-  // Distributions with support on the reals accept the unclipped lower bound
-  // directly.
+  // Start at 0 for positive-support delays, as the solver steps over the
+  // kink at 0 with a relative error of order 1e-3 for small d
   real lower_bound = dist_has_positive_support(dist_id)
                      ? fmax(d - pwindow, 0) : d - pwindow;
   int n_params = num_elements(params);

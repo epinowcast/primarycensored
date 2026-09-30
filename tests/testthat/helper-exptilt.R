@@ -1,10 +1,7 @@
 # Helpers for the exponentially tilted primary event window tests.
 #
-# The reference values integrate the delay CDF against the tilted window
-# density with tight tolerances. Unlike `pcens_cdf.default()`, which uses the
-# default `stats::integrate()` tolerances and the cancelling form of
-# `dexpgrowth()`, it is accurate to about 1e-12 relative, including deep in
-# the lower tail and for tilts close to zero.
+# The reference integrates the delay CDF against the tilted window density
+# with tight tolerances, to about 1e-12 relative.
 
 # Density of the tilted window on [0, w] written to avoid overflow and
 # cancellation: rho exp(rho z) / (exp(rho w) - 1).
@@ -41,31 +38,31 @@ exptilt_reference <- function(q, pwindow, rho, cdf) {
 exptilt_families <- function() {
   list(
     list(
-      label = "exponential rate 2", pdist = pexp, args = list(rate = 2),
-      rate = 2, positive = TRUE
+      label = "exponential rate 2", pdist = pexp, rdist = rexp,
+      args = list(rate = 2), rate = 2, positive = TRUE
     ),
     list(
-      label = "exponential rate 0.3", pdist = pexp, args = list(rate = 0.3),
-      rate = 0.3, positive = TRUE
+      label = "exponential rate 0.3", pdist = pexp, rdist = rexp,
+      args = list(rate = 0.3), rate = 0.3, positive = TRUE
     ),
     list(
-      label = "gamma shape 0.6", pdist = pgamma,
+      label = "gamma shape 0.6", pdist = pgamma, rdist = rgamma,
       args = list(shape = 0.6, rate = 1.3), rate = 1.3, positive = TRUE
     ),
     list(
-      label = "gamma shape 2.5", pdist = pgamma,
+      label = "gamma shape 2.5", pdist = pgamma, rdist = rgamma,
       args = list(shape = 2.5, scale = 2.5), rate = 0.4, positive = TRUE
     ),
     list(
-      label = "gamma shape 20", pdist = pgamma,
+      label = "gamma shape 20", pdist = pgamma, rdist = rgamma,
       args = list(shape = 20, rate = 4), rate = 4, positive = TRUE
     ),
     list(
-      label = "normal mean 3", pdist = pnorm,
+      label = "normal mean 3", pdist = pnorm, rdist = rnorm,
       args = list(mean = 3, sd = 2), rate = Inf, positive = FALSE
     ),
     list(
-      label = "normal mean -1", pdist = pnorm,
+      label = "normal mean -1", pdist = pnorm, rdist = rnorm,
       args = list(mean = -1, sd = 3), rate = Inf, positive = FALSE
     )
   )
@@ -104,4 +101,13 @@ exptilt_label <- function(family, pwindow, rho) {
 max_rel_diff <- function(actual, expected) {
   keep <- expected > 1e-300
   max(abs(actual[keep] / expected[keep] - 1))
+}
+
+# Lower and upper transform from the pair
+tilt_lower <- function(t, dist_id, xi, params) {
+  log_tilt_transform_pair(t, dist_id, xi, params)[1]
+}
+
+tilt_upper <- function(t, dist_id, xi, params) {
+  log_tilt_transform_pair(t, dist_id, xi, params)[2]
 }

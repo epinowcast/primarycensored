@@ -87,7 +87,7 @@ test_that("Stan lognormal tilt transforms match a reference integral", {
     t <- exp(case$meanlog + case$sdlog * z)
     params <- lnorm_params(case)
     for (xi in c(-4, -0.3, -1e-4, 0.05, 0.6)) {
-      lower <- vapply(t, log_tilt_transform, numeric(1), 1L, xi, params)
+      lower <- vapply(t, tilt_lower, numeric(1), 1L, xi, params)
       expected <- lnorm_tilt_reference(t, case$meanlog, case$sdlog, xi)
       keep <- expected > -700
       expect_lt(
@@ -95,7 +95,7 @@ test_that("Stan lognormal tilt transforms match a reference integral", {
         label = sprintf("xi %g", xi)
       )
       if (xi < 0) {
-        upper <- vapply(t, log_tilt_transform_upper, numeric(1), 1L, xi, params)
+        upper <- vapply(t, tilt_upper, numeric(1), 1L, xi, params)
         expected <- lnorm_tilt_reference(
           t, case$meanlog, case$sdlog, xi,
           upper = TRUE
@@ -114,20 +114,20 @@ test_that("Stan lognormal tilt transforms are 0 or total below the
   support", {
   params <- c(1.6, 0.5)
   for (t in c(-3, -1e-9, 0)) {
-    expect_identical(log_tilt_transform(t, 1L, -0.3, params), -Inf)
-    expect_identical(log_tilt_transform(t, 1L, 0.3, params), -Inf)
-    expect_identical(log_tilt_transform(t, 1L, 0, params), -Inf)
-    expect_identical(log_tilt_transform_upper(t, 1L, 0.3, params), Inf)
-    expect_identical(log_tilt_transform_upper(t, 1L, 0, params), 0)
+    expect_identical(tilt_lower(t, 1L, -0.3, params), -Inf)
+    expect_identical(tilt_lower(t, 1L, 0.3, params), -Inf)
+    expect_identical(tilt_lower(t, 1L, 0, params), -Inf)
+    expect_identical(tilt_upper(t, 1L, 0.3, params), Inf)
+    expect_identical(tilt_upper(t, 1L, 0, params), 0)
   }
   expected <- lnorm_tilt_integral(-45, 45, 1.6, 0.5, -0.3)
   expect_equal(
-    log_tilt_transform_upper(0, 1L, -0.3, params), expected,
+    tilt_upper(0, 1L, -0.3, params), expected,
     tolerance = 1e-10
   )
   expect_identical(
-    log_tilt_transform_upper(-2, 1L, -0.3, params),
-    log_tilt_transform_upper(0, 1L, -0.3, params)
+    tilt_upper(-2, 1L, -0.3, params),
+    tilt_upper(0, 1L, -0.3, params)
   )
 })
 

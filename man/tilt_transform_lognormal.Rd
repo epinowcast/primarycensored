@@ -13,14 +13,12 @@
 \arguments{
 \item{object}{A \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
 
-\item{t}{Numeric vector of finite points at which to evaluate the
-transform.}
+\item{t}{Numeric vector of finite points.}
 
 \item{meanlog, sdlog}{Mean and standard deviation of the log of the delay.}
 
-\item{xi}{Tilt \eqn{\xi}, a single number. The exponentially tilted window
-with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the
-delay CDF.}
+\item{xi}{Tilt, a single number. A window with tilt \eqn{\rho} needs
+\eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.}
 }
 \value{
 \itemize{

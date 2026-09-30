@@ -9,11 +9,8 @@
 \alias{.pcens_tilt_moments}
 \alias{.pcens_tilt_pair}
 \alias{.pcens_tilt_pair.default}
-\alias{.pcens_tilt_available.default}
 \alias{.pcens_tilt_fits.default}
-\alias{.pcens_tilt_transform.default}
-\alias{.pcens_tilt_lower.default}
-\alias{.pcens_tilt_moments.default}
+\alias{.pcens_tilt_available.default}
 \alias{.pcens_tilt_lower.pcens_pgamma}
 \alias{.pcens_tilt_available.pcens_pgamma}
 \alias{.pcens_tilt_transform.pcens_pgamma}
@@ -48,15 +45,9 @@
 
 \method{.pcens_tilt_pair}{default}(object, t, xi)
 
-\method{.pcens_tilt_available}{default}(object, xi)
-
 \method{.pcens_tilt_fits}{default}(object, xi, t, pwindow = 0)
 
-\method{.pcens_tilt_transform}{default}(object, t, xi, upper = FALSE)
-
-\method{.pcens_tilt_lower}{default}(object)
-
-\method{.pcens_tilt_moments}{default}(object, t)
+\method{.pcens_tilt_available}{default}(object, xi)
 
 \method{.pcens_tilt_lower}{pcens_pgamma}(object)
 
@@ -97,72 +88,46 @@
 \arguments{
 \item{object}{A \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
 
-\item{t}{Numeric vector of finite points at which to evaluate the
-transform.}
+\item{t}{Numeric vector of finite points.}
 
-\item{xi}{Tilt \eqn{\xi}, a single number. The exponentially tilted window
-with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the
-delay CDF.}
+\item{xi}{Tilt, a single number. A window with tilt \eqn{\rho} needs
+\eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.}
 
-\item{upper}{Logical. If \code{TRUE} return the transform over \eqn{(t, \infty)}
-rather than over the lower end of the support up to \code{t}. Evaluating the
-tail directly keeps precision where the lower transform is close to its
-total.}
+\item{upper}{If \code{TRUE} return the transform over \eqn{(t, \infty)}
+rather than up to \code{t}, which keeps precision where the lower transform
+is close to its total.}
 
-\item{pwindow}{Primary event window, used by \code{.pcens_tilt_fits()} to judge
-the accuracy of the numerical method. The default 0 is no window.}
+\item{pwindow}{Primary event window, used by \code{.pcens_tilt_fits()}.}
 }
 \value{
 \itemize{
-\item \code{.pcens_tilt_transform()}: the log of the transform at each \code{t}. It is
-\code{-Inf} below the support for the lower transform.
-\item \code{.pcens_tilt_pair()}: a matrix with columns \code{lower} and \code{upper}, the
-log of the transform over the lower and the upper part of the support.
-The upper transform is \code{Inf} where the total diverges, as for a lognormal
-delay with \code{xi > 0}, and callers then use the lower transform alone.
+\item \code{.pcens_tilt_transform()}: the log transform at each \code{t}, \code{-Inf} below
+the support for the lower transform.
 \item \code{.pcens_tilt_available()}: \code{TRUE} if the transform is closed form and the
-tilted delay distribution exists for \code{xi}, otherwise \code{FALSE}. Callers use
-the numerical method when it is \code{FALSE}.
-\item \code{.pcens_tilt_fits()}: a logical for each \code{t}, \code{TRUE} if the transform
-can be evaluated at \code{t} for \code{xi} and is the method to use there. Callers
-use the numerical method for the points where it is \code{FALSE}.
+tilted delay distribution exists for \code{xi}, otherwise the numerical
+method is used.
+\item \code{.pcens_tilt_fits()}: \code{TRUE} at each \code{t} where the transform is used,
+otherwise the numerical method. The default is \code{TRUE}.
+\item \code{.pcens_tilt_pair()}: a matrix with columns \code{lower} and \code{upper}, the log
+transform up to and beyond each \code{t}. The default calls
+\code{.pcens_tilt_transform()} twice.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
-\item \code{.pcens_tilt_moments()}: a matrix with two columns, the log of the first
-and second moments of the delay about \code{t}, see
-\code{\link[=pcens_cdf.pcens_pexp_dexpgrowth]{pcens_cdf.pcens_pexp_dexpgrowth()}}.
+\item \code{.pcens_tilt_moments()}: a matrix of the log of the first and second
+moments of the delay about \code{t}, see \link{pcens_cdf_exptilt}.
 }
 }
 \description{
-The primary event censored CDF for several non-uniform primary event
-windows is a sum of terms built from
-\deqn{T_f(\xi; \tau) = \int_{-\infty}^{\tau} e^{\xi u} f(u) du,}
-the truncated exponential-moment transform of the delay density \eqn{f}.
-The lower limit is 0 for delay distributions on the non-negative reals.
-The primary event window fixes the tilts \eqn{\xi} and the coefficients.
-The delay distribution fixes whether \eqn{T_f} is closed form.
-}
-\details{
-These internal generics are the extension points for new delay families.
-Each is dispatched on the delay class of a \code{pcens} object, for example
-\code{pcens_pgamma}, so one set of methods serves every primary event window.
-A family is added by defining
-\itemize{
-\item \code{.pcens_tilt_lower()}, the lower end of the support.
-\item \code{.pcens_tilt_available()}, whether the closed form applies for a tilt.
-\item \code{.pcens_tilt_transform()}, the transform on the log scale.
-\item Optionally \code{.pcens_tilt_fits()}, for transforms that cannot be evaluated
-at every point or are slower than the numerical method there, as for the
-series of the lognormal. The default is \code{TRUE} at every point.
-\item Optionally \code{.pcens_tilt_moments()}, which is only needed by the small
-tilt forms of \code{\link[=pcens_cdf.pcens_pexp_dexpgrowth]{pcens_cdf.pcens_pexp_dexpgrowth()}}.
-\item Optionally \code{.pcens_tilt_pair()}, the lower and the upper transform
-together, for families where one evaluation gives both. The default calls
-\code{.pcens_tilt_transform()} twice.
-}
-
+Internal generics for the delay distribution part of the analytical
+solutions with an exponentially tilted primary event window, where the
+primary event censored CDF is built from
+\deqn{T_f(\xi; \tau) = \int_{-\infty}^{\tau} e^{\xi u} f(u) du.}
+The lower limit is 0 for delays on the non-negative reals.
+They dispatch on the delay class of a \code{pcens} object.
+A delay is added with methods for \code{.pcens_tilt_lower()},
+\code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()} and, for the small
+tilt forms, \code{.pcens_tilt_moments()}.
+\code{.pcens_tilt_fits()} and \code{.pcens_tilt_pair()} are optional.
 The Stan equivalents are \code{check_for_tilt_transform()},
-\code{log_tilt_transform()}, \code{log_tilt_transform_upper()},
 \code{log_tilt_transform_pair()} and \code{primarycensored_tilt_moments()}.
 }
-\concept{tilt}
 \keyword{internal}

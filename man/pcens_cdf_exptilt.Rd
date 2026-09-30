@@ -42,154 +42,50 @@ They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
 \details{
-With the window width \eqn{w}, delay CDF \eqn{F} and the transform
-\eqn{J(x) = T_f(-\rho; x)} of \link{tilt_transform}, the primary event censored
-CDF at \eqn{q} is
+With window width \eqn{w}, delay CDF \eqn{F} and the transform
+\eqn{J(x) = T_f(-\rho; x)} of \link{tilt_transform}, the CDF at \eqn{q} is
 \deqn{
 F_\rho(q) = F(q - w) + \frac{e^{\rho q} \{J(q) - J(q - w)\} -
-  \{F(q) - F(q - w)\}}{e^{\rho w} - 1},
+  \{F(q) - F(q - w)\}}{e^{\rho w} - 1}.
 }
-which is the same as the expression of
-\eqn{\{e^{\rho w} F(q - w) - F(q) + e^{\rho q} (J(q) - J(q - w))\} /
-(e^{\rho w} - 1)}.
-For delays on the non-negative reals \eqn{F(x) = J(x) = 0} for
-\eqn{x \le 0}. The normal delay has full support and its transforms start
-at \eqn{-\infty}.
-All terms depend on one endpoint, \eqn{q} or \eqn{q - w}, so each
-endpoint is evaluated once and reused when several \code{q} share an endpoint,
-as for the integer delays of \code{\link[=pcens_pmf]{pcens_pmf()}}.
+Every term depends on one endpoint, \eqn{q} or \eqn{q - w}, so each
+endpoint is evaluated once and shared between neighbouring \code{q}.
+Terms are on the log scale, and each difference is taken between the lower
+or the upper tail terms, whichever loses less precision.
 
-Closed forms of the transform, for \eqn{\xi = -\rho}:
+The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
+\eqn{\lambda}, so that the tilted delay distribution exists.
+Otherwise the numerical method is used.
+In Stan the numerical method is less accurate in the lower tail of a
+gamma with shape below 1.
+The lognormal transform has no closed form.
+It is evaluated by quadrature for \eqn{\rho > 0} and by a series for
+\eqn{\rho < 0}, see \link{tilt_transform_lognormal}.
+The numerical method is used where the transform does not apply or is
+slower, see \code{.pcens_tilt_fits()}.
+
+The direct form cancels as \eqn{\rho \to 0}.
+With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
+replace it.
 \itemize{
-\item Exponential with rate \eqn{\lambda}:
-\eqn{T_f(\xi; \tau) = \lambda / (\lambda - \xi)
-  \{1 - e^{-(\lambda - \xi) \tau}\}}.
-\item Gamma with shape \eqn{\alpha} and rate \eqn{\lambda}:
-\eqn{T_f(\xi; \tau) = (\lambda / (\lambda - \xi))^\alpha
-  P(\alpha, (\lambda - \xi) \tau)} with \eqn{P} the regularised lower
-incomplete gamma function.
-\item Normal with mean \eqn{\mu} and standard deviation \eqn{\sigma}:
-\eqn{T_f(\xi; \tau) = e^{\xi \mu + \xi^2 \sigma^2 / 2}
-  \Phi((\tau - \mu - \xi \sigma^2) / \sigma)}.
-\item Lognormal with \code{meanlog} \eqn{\mu} and \code{sdlog} \eqn{\sigma}: no closed
-form. The transform is evaluated by quadrature for \eqn{\rho > 0} and by
-a series for \eqn{\rho < 0}, see \link{tilt_transform_lognormal}.
+\item For \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}, the
+uniform window limit with its first order correction in \eqn{\rho},
+\eqn{\{G_1(q) - G_1(q - w)\} / w +
+  \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w)}.
+\item For delays on the non-negative reals with \eqn{q < w} and
+\eqn{|\rho| q < 10^{-4}},
+\eqn{\rho \{G_1(q) + \rho G_2(q) / 2\} / (e^{\rho w} - 1)}.
 }
 
-The terms are evaluated on the log scale, and differences are taken
-between the lower or the upper tail representations, whichever loses less
-precision, see \code{.log_diff_exp()}. Results agree with numerical integration
-to a relative difference of about 1e-9 or better away from the two regimes
-listed under \strong{Precision}.
+The value of both forms has a truncation error below 1e-9.
+The Stan gradient in \eqn{\rho} of both has a relative error of up to
+about 2e-5 at the thresholds.
 
-\strong{Admissibility.} The exponential and gamma forms need
-\eqn{\lambda - \xi = \lambda + \rho > 0}, so that the tilted delay
-distribution exists. Otherwise the method falls back to
-\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} for every \code{q}. The normal form has no restriction.
-In Stan the fallback is the ODE, whose accuracy is lower in the lower tail
-of a gamma with a shape below 1, where the density is singular at 0. For
-shape 0.3 with \eqn{\rho = -1} and rate 1 the relative error of the ODE is
-about 4e-2 at \eqn{q = 10^{-6}} and \eqn{10^{-3}}, against 2e-5 for the
-numerical method in R. Stable forms for these tilts, such as
-the expm1 closed form for the exponential and a Kummer series for the gamma,
-are not implemented, see #388.
-The lognormal falls back to the numerical method where
-\eqn{\rho \sigma^2 e^\mu} overflows, above about \eqn{e^{690}}. For
-\eqn{\rho < 0} it also uses the numerical method for the \code{q} with
-\eqn{|\rho| q} above 200, where the series is slower, unless
-\eqn{|\rho| w} is above 2, where the numerical method loses accuracy in
-the lower tail. The series is then kept up to 20000 terms, about
-\eqn{|\rho| q} of 18700.
-
-\strong{Tilts close to zero.} The expression above cancels as \eqn{\rho \to 0}.
-Two forms replace it where the cancellation would lose precision. With
-\eqn{G_k(t) = \int (t - u)^k f(u) du} over the support up to \eqn{t}:
-\itemize{
-\item If \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}, the
-uniform window limit with its first order correction in \eqn{\rho} is
-used,
-\deqn{F_\rho(q) = \frac{G_1(q) - G_1(q - w)}{w} +
-    \rho \frac{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)}{2 w} +
-    O((\rho w)^2).}
-At \eqn{\rho = 0} this is the uniform window solution.
-\item For delays on the non-negative reals with \eqn{q < w}, where
-\eqn{F(q - w) = J(q - w) = 0}, and \eqn{|\rho| q < 10^{-4}}, the form
-\eqn{F_\rho(q) = \rho \{G_1(q) + \rho G_2(q) / 2\} /
-  (e^{\rho w} - 1) + O((\rho q)^2)} is used. It keeps precision for \code{q}
-close to zero.
-}
-
-Away from these regions the error of the direct form is below 1e-9. The
-truncation error of the two forms is below 1e-9 at their thresholds.
-The first form subtracts terms of the size of \eqn{|q| + w}, so its
-rounding error is about \eqn{10^{-14} (|q| + w) / w (1 + |\rho| (|q| +
-w))}. That is above the error of the direct form once
-\eqn{|\rho| (|q| + w)} is above about 0.1, so the direct form is used
-there.
-
-\strong{Precision.} The R CDF agrees with numerical integration (\code{integrate()}
-at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
-better for delays that are not deep in the tails. For tilts close to zero
-the upper tail, \eqn{1 - F_\rho(q)}, has an absolute difference of up to
-about \eqn{10^{-15} G_1(q) / w}, which is about 1e-14 for \code{pwindow = 1}
-and up to about 1e-11 for \code{pwindow = 1e-3}.
-The Stan CDF agrees to a relative difference of about 1e-9 or better for
-windows of 0.5 or more, and of up to about 5e-9 for windows of 1e-3 with
-delays up to 25.
-The Stan gradients of the gamma solution are exact for any shape. The
-incomplete gamma function is taken from a series below the shape and from
-a continued fraction above it, as the shape derivatives of Stan's
-\code{gamma_lcdf()} and \code{gamma_lccdf()} are inaccurate in parts of the bulk
-and NaN for shapes of about 200 or more.
-The normal solution takes the lower tail beyond 37 standard deviations from
-an asymptotic series for the same reason.
-Three regimes are less accurate.
-\itemize{
-\item The small window form for a normal delay in the deep lower tail, about 30
-to 35 standard deviations below the mean, has a relative error of up to
-about 1e-7 in both R and Stan (3e-8 at 35 standard deviations for
-\code{pwindow = 1e-3}).
-\item A window much smaller than the delay loses precision to the difference of
-the terms at its two ends, up to about 1e-13 / \code{pwindow} in relative
-terms, as the uniform window solutions do. The first order correction of
-the small window form adds about \eqn{|\rho| q} times that. For a gamma
-delay with shape 2.5 and rate 0.4 and \code{pwindow = 1e-8} the relative error
-is 6e-7 for \eqn{\rho = 0.5} and 6e-5 for \eqn{\rho = 50}. Use
-\code{pwindow = 0} for a primary event at a known time.
-\item The small tilt forms have a Stan gradient in \eqn{\rho} that is less
-accurate than their value, which has a truncation error below 1e-9. The
-second order term of the expansion is not included. The relative error
-of the derivative in \eqn{\rho} is about \eqn{|\rho| w / 6} for the
-small window form, and of at most the same order in \eqn{|\rho| q} for
-the small delay form. It is up to about 2e-5 at the thresholds of
-\eqn{10^{-4}}. The gradients in the delay parameters have the error of
-the value.
-}
-
-\strong{Speed.} For many values of \code{q} the analytical method is faster than
-\code{use_numeric = TRUE}, as each endpoint is evaluated once. It is about 2 to
-2.5 times faster for 10 values and about 10 to 17 times faster for 100
-values. For a single \code{q} it is about 1.5 to 3 times slower, as the call
-evaluates four transforms at two endpoints. It is kept for single values
-as it is accurate where the numerical method has errors of up to 1e-2 in
-the tails of a normal delay.
-
-\strong{Lognormal precision and speed.} The quadrature is accurate to about
-1e-11 in the log transform for \code{sdlog} up to 1.8 and, with
-\code{ceiling(sdlog / 1.8)} panels, keeps the CDF accurate to about 1e-9 up to
-\code{sdlog} of 15. The CDF agrees with numerical integration to a relative
-difference of 1e-7 or better over the tested grid. The transform has a
-fixed cost, so \code{pcens_cdf()} uses the numerical method for fewer than 10
-\code{q} where \eqn{|\rho| w} is at most 1, and the transform otherwise.
-The Stan solution takes about as long as the ODE for one delay, and is 2
-to 4 times faster with the shared terms of the vectorised PMF.
-
-\strong{Extending.} A new delay distribution is supported by defining
-\code{.pcens_tilt_lower()}, \code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()}
-and, for the small tilt forms, \code{.pcens_tilt_moments()} for its class, and
-a \code{pcens_cdf} method for the class that calls \code{.pcens_cdf_exptilt()}. See
-\link{tilt_transform}. Other primary event windows reuse the same transforms
-with their own tilts and coefficients.
+The CDF agrees with numerical integration to a relative difference of
+about 1e-9 or better, except in the deep lower tail of a normal delay with
+a small tilt (about 1e-7) and for windows much smaller than the delay,
+which lose up to about 1e-13 / \code{pwindow} to the difference of the terms at
+the two endpoints.
 }
 \examples{
 # Exponential delay with a growing primary event process
@@ -213,22 +109,3 @@ pnorm_obj <- new_pcens(
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
 }
-\seealso{
-Low level primary event censored distribution objects and methods
-\code{\link{new_pcens}()},
-\code{\link{pcens_cdf}()},
-\code{\link{pcens_cdf.default}()},
-\code{\link{pcens_cdf.pcens_pdiscretehazard}()},
-\code{\link{pcens_cdf.pcens_pdiscretestep}()},
-\code{\link{pcens_cdf.pcens_pgamma_dunif}()},
-\code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
-\code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
-\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
-\code{\link{pcens_cdf.pcens_pweibull_dunif}()},
-\code{\link{pcens_pmf}()},
-\code{\link{pcens_pmf.default}()},
-\code{\link{pcens_quantile}()},
-\code{\link{pcens_quantile.default}()},
-\code{\link{update.pcens}()}
-}
-\concept{pcens}
