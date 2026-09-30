@@ -561,9 +561,12 @@ real primarycensored_tlogis_small_delay_lcdf(data real d, int dist_id,
   * more costs about 4 microseconds of 25 to 300 for a call, so the plan is
   * not passed through. The vectorised form computes them once for all delays.
   *
-  * The gradient with respect to the shape of a gamma delay inherits the
-  * accuracy of the gradient of Stan's `gamma_lcdf()`, which in the far tails
-  * can be wrong by a factor of about 3.
+  * The gradient with respect to the shape of a gamma delay comes from the
+  * gamma tilt transforms, see log_tilt_transform_pair(), which avoid the
+  * inaccurate gradients of Stan's `gamma_lccdf()` and of `gamma_lcdf()` far
+  * into the lower tail. It agrees with finite differences to a relative 1e-4
+  * or better, including where the series cancel for a scale that is large
+  * relative to the window.
   *
   * @param d Delay
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18

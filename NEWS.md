@@ -36,7 +36,9 @@
   The series are summed with binomial taper weights (the Euler transform after a number of direct terms), which converges near the location where the plain series does not.
   The number of terms comes from a bound on the truncation error, with a tolerance of 1e-10 relative to the mass of the window.
   Results agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails and for delays close to 0.
-  The gradient of the gamma shape inherits the accuracy of Stan's `gamma_lcdf()` in the far tails, where it can be wrong by a factor of about 3.
+  The gradient of the gamma shape agrees with finite differences to a relative 1e-4 or better, checked over the body and the tails at windows and scales up to 50 times the window.
+  Stan's gradients of `gamma_lccdf()` and of `gamma_lcdf()` in the shape are not that accurate, with relative errors of up to 1e-2 in the body and of 80% for probabilities below 1e-10.
+  The cancellation in the series amplified them, to errors of up to 7% in the body and a factor of 2.6, so the gamma tilt transform takes the upper tail from `gamma_lcdf()` unless it is below about 1e-7, and sums the lower incomplete gamma function as a series in autodiff for probabilities below about 1e-10.
   The exponential and gamma forms need the largest positive tilt of the series to be below the rate, so they apply for a location after the window or for a large rate, and otherwise use the numerical path.
   Stan chooses the path with the new `check_for_analytical_window()`, as the choice depends on the window.
   The normal form has no restriction.
