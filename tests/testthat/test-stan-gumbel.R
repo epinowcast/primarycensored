@@ -1090,11 +1090,11 @@ test_that("Gumbel gradients are finite for delays whose CDF has an
         case,
         d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
       )
-      elapsed <- system.time(
+      elapsed <- system.time({
         res <- gumbel_gradient_at(
           model, case, point$d, point$pwindow, point$mu, point$beta
         )
-      )[["elapsed"]]
+      })[["elapsed"]]
       expect_false(res$gradient_not_finite, info = label)
       expect_false(res$rejected, info = label)
       expect_length(res$gradient, 4)
@@ -1122,12 +1122,12 @@ test_that("the vectorised Gumbel log PMF has finite gradients for delays
         case,
         d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
       )
-      elapsed <- system.time(
+      elapsed <- system.time({
         res <- gumbel_gradient_at(
           model, case, point$d, point$pwindow, point$mu, point$beta,
           vectorised = TRUE
         )
-      )[["elapsed"]]
+      })[["elapsed"]]
       expect_false(res$gradient_not_finite, info = label)
       expect_false(res$rejected, info = label)
       expect_true(all(is.finite(res$gradient)), info = label)
