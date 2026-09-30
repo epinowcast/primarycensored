@@ -317,3 +317,13 @@ test_that("gamma_lcdf_logx_pair keeps P(a + 1) accurate when it is far
     }
   }
 })
+
+test_that("gamma_lcdf_logx and gamma_lcdf_logx_pair reject an invalid shape", {
+  for (a in c(0, -0.5, -3)) {
+    expect_error(gamma_lcdf_logx(log(2), a), "shape")
+    expect_error(gamma_lcdf_logx_pair(log(2), a), "shape")
+    expect_error(dist_lcdf(2, c(a, 1), 2), "shape")
+  }
+  expect_error(gamma_lcdf_logx(log(2), NaN), "shape")
+  expect_error(dist_lcdf(2, c(1.5, -1), 2))
+})
