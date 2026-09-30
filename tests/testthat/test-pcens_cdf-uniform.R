@@ -30,7 +30,7 @@ unif_reference <- function(pdist, q, pwindow, ...) {
 # working precision.
 expect_close <- function(object, expected, rtol = 1e-6, atol = 1e-13,
                          info = NULL) {
-  expect_true(
+  testthat::expect_true(
     all(abs(object - expected) <= atol + rtol * abs(expected)),
     info = info
   )
@@ -137,7 +137,8 @@ test_that("uniform primary analytical CDFs recycle a vector pwindow
       numeric(1)
     )
     expect_equal(
-      pcens_cdf(obj, q, pwindow), expected, tolerance = 1e-14,
+      pcens_cdf(obj, q, pwindow), expected,
+      tolerance = 1e-14,
       info = case$name
     )
   }
