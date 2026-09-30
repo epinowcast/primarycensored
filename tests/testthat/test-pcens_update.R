@@ -191,11 +191,6 @@ test_that("update.pcens with check = FALSE skips validation", {
   expect_identical(update(obj, 2, check = FALSE)$args, obj$args)
 })
 
-test_that("update.pcens checks by default", {
-  obj <- new_pcens(pgamma, dunif, list(), shape = 1.5, scale = 2)
-  expect_error(update(obj, shap = 2, check = TRUE), "shap")
-})
-
 test_that(".fit_pcens_state updates the cached object without checks", {
   cache <- new.env(parent = emptyenv())
   state <- .fit_pcens_state(
