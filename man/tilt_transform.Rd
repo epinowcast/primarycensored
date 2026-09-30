@@ -107,7 +107,8 @@ the support for the lower transform.
 tilted delay distribution exists for \code{xi}, otherwise the numerical
 method is used.
 \item \code{.pcens_tilt_fits()}: \code{TRUE} at each \code{t} where the transform is used,
-otherwise the numerical method. The default is \code{TRUE}.
+otherwise the numerical method. It is only called where
+\code{.pcens_tilt_available()} is \code{TRUE}. The default is \code{TRUE}.
 \item \code{.pcens_tilt_pair()}: a matrix with columns \code{lower} and \code{upper}, the log
 transform up to and beyond each \code{t}. The default calls
 \code{.pcens_tilt_transform()} twice.

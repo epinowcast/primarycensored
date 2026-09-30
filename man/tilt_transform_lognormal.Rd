@@ -45,8 +45,8 @@ The total diverges, so the upper transform is \code{Inf}.
 }
 }
 \details{
-The series costs about \eqn{\xi t} terms per point. \code{.pcens_tilt_fits()}
-is \code{FALSE} beyond \eqn{\xi t} of 200, where the numerical method is
-faster, unless \eqn{\xi w} is above 2, and beyond 20000 terms.
+The series needs about \eqn{\xi t} terms per point. \code{.pcens_tilt_fits()}
+is \code{FALSE} beyond \eqn{\xi t} of 200, unless \eqn{\xi w} is above 2, and
+beyond 20000 terms.
 }
 \keyword{internal}
