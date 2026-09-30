@@ -287,6 +287,67 @@ test_that("the lognormal CDF has no jump where series and quadrature meet", {
   }
 })
 
+test_that("the lognormal CDF is accurate far from the origin", {
+  # The small window form must not be used where |r| q^2 / w is large
+  pwindow <- 1
+  for (m in c(1e5, 1e6, 1e7, 1e8)) {
+    q <- m * seq(0.5, 2, length.out = 12)
+    delay <- list(
+      pdist = plnorm, args = list(meanlog = log(m), sdlog = 0.5)
+    )
+    for (rho in c(3e-5, -3e-5, 1e-6)) {
+      obj <- exptilt_object(delay, rho)
+      expected <- exptilt_reference(q, pwindow, rho, exptilt_cdf(delay))
+      expect_lt(
+        max_rel_diff(pcens_cdf(obj, q, pwindow), expected), 1e-7,
+        label = sprintf("m = %g, r = %g", m, rho)
+      )
+    }
+  }
+  # With a window that is small next to the delay the CDF is the delay CDF
+  delay <- list(pdist = plnorm, args = list(meanlog = 30, sdlog = 1))
+  q <- exp(30) * seq(0.3, 3, length.out = 12)
+  obj <- exptilt_object(delay, 1e-6)
+  expect_lt(
+    max_rel_diff(pcens_cdf(obj, q, 1), plnorm(q, 30, 1)), 1e-6
+  )
+})
+
+test_that("the lognormal series needs to fit the terms it is given", {
+  obj <- lnorm_object(cases[[2]], 0.1)
+  expect_true(all(.pcens_tilt_fits(obj, 0.5, c(1, 1e4))))
+  expect_true(all(.pcens_tilt_fits(obj, -0.5, c(1, 1e8))))
+  # A positive tilt needs about xi t + 9 sqrt(xi t) + 30 terms
+  expect_identical(
+    .pcens_tilt_fits(obj, 1, c(1.8e4, 1.9e4, 1e6)), c(TRUE, FALSE, FALSE)
+  )
+  expect_identical(.pcens_tilt_fits(obj, 1, c(-3, 0)), c(TRUE, TRUE))
+  # Delays without such a limit always fit
+  expect_true(all(.pcens_tilt_fits(
+    exptilt_object(exptilt_families()[[3]], 0.2), 0.5, 1e9
+  )))
+})
+
+test_that("the lognormal CDF uses the numerical method where the series is
+  too long", {
+  # xi q above about 1.9e4 needs too many terms. The quantiles that fit use
+  # the series and the rest use the numerical method, so nothing errors.
+  delay <- list(pdist = plnorm, args = list(meanlog = 6, sdlog = 0.5))
+  obj <- exptilt_object(delay, -20)
+  q <- c(seq(200, 900, length.out = 6), seq(950, 1100, length.out = 6))
+  expected <- exptilt_reference(q, 1, -20, exptilt_cdf(delay))
+  actual <- expect_no_error(pcens_cdf(obj, q, 1))
+  expect_true(all(actual >= 0 & actual <= 1))
+  # The numerical method has the tolerances of stats::integrate()
+  expect_lt(max(abs(actual - expected)), 1e-3)
+  # The quantiles that fit keep the accuracy of the series
+  expect_lt(max_rel_diff(actual[1:6], expected[1:6]), 1e-7)
+  expect_no_error(dprimarycensored(
+    q, plnorm, pwindow = 1, dprimary = dexpgrowth,
+    primary_args = list(r = -20), meanlog = 6, sdlog = 0.5
+  ))
+})
+
 test_that("the lognormal CDF is accurate for q near zero", {
   for (case in cases[c(1, 2, 4)]) {
     cdf <- exptilt_lnorm_cdf(case)

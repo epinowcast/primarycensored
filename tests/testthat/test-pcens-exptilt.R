@@ -195,6 +195,57 @@ test_that("the analytic CDF has no jump where the small tilt form ends", {
   }
 })
 
+test_that("the small window form is not used far from the origin", {
+  # The small window form cancels by about eps * |r| q^2 / w, so it applies
+  # only while |r| (|q| + w) is below 0.1. Beyond that the direct form is
+  # used, which does not depend on the distance from the origin.
+  pwindow <- 1
+  for (m in c(1e5, 1e6, 1e7, 1e8)) {
+    q <- m * c(0.5, 1, 2)
+    delays <- list(
+      list(
+        pdist = pgamma, args = list(shape = 4, rate = 4 / m), rate = 4 / m
+      ),
+      list(pdist = pnorm, args = list(mean = m, sd = m / 4), rate = Inf)
+    )
+    for (delay in delays) {
+      for (rho in c(3e-5, -3e-5, 1e-6)) {
+        if (delay$rate + rho <= 0) {
+          next
+        }
+        obj <- exptilt_object(delay, rho)
+        expected <- exptilt_reference(q, pwindow, rho, exptilt_cdf(delay))
+        expect_lt(
+          max_rel_diff(pcens_cdf(obj, q, pwindow), expected), 1e-7,
+          label = sprintf("m = %g, r = %g", m, rho)
+        )
+      }
+    }
+  }
+})
+
+test_that("the analytic CDF has no jump where the small window reach ends", {
+  # The small window form applies while |r| (|q| + w) is below 0.1 as well
+  # as |r| w below 1e-4. Either side of the reach both forms are accurate.
+  pwindow <- 1
+  for (m in c(1e3, 1e5, 1e6)) {
+    q <- m * c(0.5, 1, 2)
+    delay <- list(pdist = pnorm, args = list(mean = m, sd = m / 4))
+    for (sign in c(-1, 1)) {
+      reach <- 0.1 / (2 * m + pwindow)
+      below <- exptilt_object(delay, sign * 0.999 * reach)
+      above <- exptilt_object(delay, sign * 1.001 * reach)
+      expect_lt(
+        max_rel_diff(
+          pcens_cdf(below, q, pwindow), pcens_cdf(above, q, pwindow)
+        ),
+        1e-6,
+        label = sprintf("m = %g, sign = %g", m, sign)
+      )
+    }
+  }
+})
+
 test_that("the analytic CDF is accurate for q near zero", {
   # Direct evaluation loses accuracy when r * q is tiny, so there is a
   # separate form for that case.
