@@ -7,6 +7,7 @@ Dirichlet
 Formals
 Gumbel
 Inf
+Kummer
 Lifecycle
 Mba
 ORCID
@@ -41,6 +42,7 @@ dp
 dpcens
 dprimary
 dprimarycensored
+ds
 du
 dx
 dy
@@ -49,6 +51,7 @@ eps
 eq
 erroring
 expgrowth
+expm
 exptilt
 fcp
 fitdist
@@ -58,6 +61,7 @@ frac
 gammapartexp
 gengammapartexp
 geq
+gumbel
 hexsticker
 infty
 int
@@ -126,6 +130,7 @@ u
 underflowing
 unifprim
 varepsilon
+varsigma
 vee
 weibull
 weibullpartexp
