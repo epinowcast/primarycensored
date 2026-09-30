@@ -327,3 +327,16 @@ test_that("gamma_lcdf_logx and gamma_lcdf_logx_pair reject an invalid shape", {
   expect_error(gamma_lcdf_logx(log(2), NaN), "shape")
   expect_error(dist_lcdf(2, c(1.5, -1), 2))
 })
+
+test_that("the gamma log CDFs reject a rate that is not positive and finite", {
+  for (rate in c(0, -1, Inf, -Inf, NaN)) {
+    expect_error(dist_lcdf(1, c(2, rate), 2), "rate")
+    expect_error(
+      primarycensored_lcdf(1, 2L, c(2, rate), 1, 0, Inf, 1L, numeric(0)),
+      "rate"
+    )
+    expect_error(
+      primarycensored_gamma_uniform_terms(1, c(2, rate)), "rate"
+    )
+  }
+})
