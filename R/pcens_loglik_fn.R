@@ -150,7 +150,7 @@ pcens_loglik_fn <- function(
   max_D <- if (n > 0L) max(D) else Inf
 
   # Parameter names are checked when they change, as `update()` with
-  # `.check = FALSE` would otherwise hide a misspelt name.
+  # `check = FALSE` would otherwise hide a misspelt name.
   state <- new.env(parent = emptyenv())
   state$checked <- FALSE
   state$names <- NULL
@@ -164,7 +164,7 @@ pcens_loglik_fn <- function(
       state$names <- nms
       state$checked <- TRUE
     } else {
-      obj <- update(base, ..., .check = FALSE)
+      obj <- update(base, ..., check = FALSE)
     }
     log(.pcens_pmf_groups(obj, groups, n))
   }
