@@ -210,16 +210,14 @@ vector gamma_lcdf_logx_pair(real log_x, real a) {
   * Uses the Stacy parameterisation of `flexsurv::pgengamma.orig()` in R.
   * The CDF is the regularised lower incomplete gamma function
   * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
-  * distributions are special cases. Uses `gamma_lcdf_logx()` for
-  * lower-tail accuracy.
+  * distributions are special cases.
   *
-  * @param y Value at which to evaluate the log CDF (y >= 0). Negative y
-  * is rejected.
+  * @param y Value at which to evaluate the log CDF (y >= 0)
   * @param shape Shape (power) parameter
   * @param scale Scale parameter
   * @param k Shape parameter of the underlying Gamma distribution
   *
-  * @return Log CDF of the generalised gamma distribution, `-inf` for y = 0
+  * @return Log CDF of the generalised gamma distribution
   */
 real gengamma_lcdf(real y, real shape, real scale, real k) {
   if (y < 0) {

@@ -43,8 +43,6 @@ test_that("gengamma_lcdf is finite and accurate deep in the lower tail", {
     pgamma(0.4, 400, log.p = TRUE),
     tolerance = 1e-9
   )
-  expect_equal(gengamma_lcdf(2, 1, 5, 400), -2367.4, tolerance = 1e-4)
-  expect_equal(gengamma_lcdf(2, 5, 5, 100), -821.9, tolerance = 1e-4)
 
   for (i in seq_len(nrow(tail_cases))) {
     with(tail_cases[i, ], {

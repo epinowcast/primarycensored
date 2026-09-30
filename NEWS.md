@@ -6,13 +6,12 @@
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
 - `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, and its gradient with respect to `k` is accurate there.
-  This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary (#387).
-  `gengamma_lcdf()` now rejects negative `y` explicitly.
-- A bug was fixed where the Stan log CDF of a Gamma delay with a uniform primary returned `-Inf` deep in the lower tail and `NaN` once truncation normalisers were subtracted (#381).
-  Gradients with respect to the shape were also `NaN`, inaccurate or failing for large shapes.
-  The Gamma log CDF now uses an incomplete gamma series and a continued fraction on the log scale for a shape of 10 or more, with a relative error of 1e-9 or below for a shape up to 1e6.
-  `dist_lcdf()` and the analytical solution now reject a Gamma rate that is not positive and finite.
-  Evaluating the analytical solution with gradients takes up to about 2 times as long for a shape below 100 and is faster above.
+  This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary.
+  See #363.
+- A bug was fixed where the Stan log CDF of a Gamma delay with a uniform primary returned `-Inf` or `NaN` in the lower tail.
+  Shape gradients were also wrong or not finite for large shapes and in the lower tail.
+  A Gamma rate that is not positive and finite is now rejected.
+  See #381 and #405.
 
 ## Performance
 
