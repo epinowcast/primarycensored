@@ -137,10 +137,13 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   if (log_A == negative_infinity() && log_B == negative_infinity()) {
     return negative_infinity();
   }
+  real log_cdf = log_diff_exp(log_A, log_B) - log(pwindow);
   // A and B are sums of rounded terms, so the difference can land a few ulp
   // above 1 in the upper tail. A CDF is at most 1, so clamp the log at 0 to
-  // avoid a NaN from the log PMF differences.
-  return fmin(log_diff_exp(log_A, log_B) - log(pwindow), 0);
+  // avoid a NaN from the log PMF differences. `fmin` is not used because it
+  // returns the other argument for a NaN, which would turn a NaN log CDF into
+  // a CDF of 1. The comparison below leaves a NaN as it is.
+  return log_cdf > 0 ? 0 : log_cdf;
 }
 
 /**
@@ -165,8 +168,70 @@ int primarycensored_uniform_cdf_is_one(real q, data int dist_id) {
 }
 
 /**
+  * Compute the log regularised lower incomplete gamma function at shapes a
+  * and a + 1 from its series in y
+  * @ingroup analytical_solution_helpers
+  *
+  * The regularised lower incomplete gamma function is
+  *   P(a, y) = y^a e^{-y} / Gamma(a + 1) * S(a, y), with
+  *   S(a, y) = sum_{n >= 0} y^n / ((a + 1) (a + 2) ... (a + n)).
+  * The two shapes share one sum since S(a, y) = 1 + y / (a + 1) * S(a + 1, y).
+  *
+  * The prefactor and the sum are evaluated on the log scale. So this does
+  * not underflow where `gamma_lcdf` returns `-inf`, and it needs no
+  * cancelling recursion between the two shapes. Autodiff through the sum
+  * gives the derivative with respect to the shape exactly. The shape
+  * derivative of `gamma_lcdf` has a relative error from 1e-3 up to 1 once
+  * P(a, y) is below about 1e-13, and is not finite for a = 1000 at y = 100.
+  *
+  * The terms shrink by a factor of at most y / (a + 1 + n), so for
+  * `y <= (a + 1) / 2` they at least halve, and 100 terms reach a relative
+  * 1e-17 with room to spare. primarycensored_gamma_uniform_terms() only calls
+  * this function in that range.
+  *
+  * @param a Shape
+  * @param y Rate times time, at most `(a + 1) / 2`
+  *
+  * @return Vector [log P(a, y), log P(a + 1, y)]
+  */
+vector primarycensored_log_gamma_p_series(real a, real y) {
+  real log_y = log(y);
+  // term is y^n / ((a + 2) ... (a + 1 + n)), so S1 = S(a + 1, y)
+  real term = 1;
+  real S1 = 1;
+  for (n in 1:100) {
+    term *= y / (a + 1 + n);
+    S1 += term;
+    if (term < 1e-17 * S1) break;
+  }
+  real S0 = 1 + y / (a + 1) * S1;
+  real log_base = -y - lgamma(a + 1);
+  return [
+    a * log_y + log_base + log(S0),
+    (a + 1) * log_y + log_base - log(a + 1) + log(S1)
+  ]';
+}
+
+/**
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
+  *
+  * The terms need the log CDFs F_T(t; k) and F_T(t; k + 1), the Gamma CDF at
+  * shape k and at shape k + 1, with y = rate * t.
+  *
+  * For `y < (k + 1) / 2` both come from
+  * primarycensored_log_gamma_p_series(). There `gamma_lcdf` can underflow
+  * and its shape derivative is inaccurate, and the recursion between the two
+  * shapes below cancels.
+  *
+  * Otherwise F_T(t; k) is `gamma_lcdf` and F_T(t; k + 1) follows from
+  * P(k + 1, y) = P(k, y) - y^k e^{-y} / Gamma(k + 1). Both terms are
+  * `-inf` if `gamma_lcdf` underflows, which only happens for a shape of
+  * thousands (8000 or more degrees of freedom for the Chi-square). They are
+  * dropped whole, as in primarycensored_lognormal_uniform_terms(), because
+  * `log_diff_exp(-inf, x)` is NaN. The log CDF is then `-inf` if the terms at
+  * d and q are both dropped. It is NaN if only those at d are, where the
+  * series still covers q, and Stan rejects the draw.
   *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
@@ -181,14 +246,20 @@ vector primarycensored_gamma_uniform_terms(real t,
   }
   real shape = params[1];
   real rate = params[2];
+  real y = rate * t;
   // log E where E = k * theta = shape / rate is the mean of the delay
   real log_E = log(shape) - log(rate);
-  // F_T(t; k) and the recursion to F_T(t; k+1):
-  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1), with y = rate * t
+  if (y < 0.5 * (shape + 1)) {
+    vector[2] log_F_T = primarycensored_log_gamma_p_series(shape, y);
+    return [log(t) + log_F_T[1], log_E + log_F_T[2]]';
+  }
   real log_F_T_k = gamma_lcdf(t | shape, rate);
-  real gamma_kp1_pdf_log = shape * log(rate * t) - rate * t
-                           - lgamma(shape + 1);
-  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_kp1_pdf_log);
+  if (log_F_T_k == negative_infinity()) {
+    return rep_vector(negative_infinity(), 2);
+  }
+  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1)
+  real gamma_k_pdf_log = shape * log(y) - y - lgamma(shape + 1);
+  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_k_pdf_log);
   return [log(t) + log_F_T_k, log_E + log_F_T_kp1]';
 }
 

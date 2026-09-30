@@ -54,10 +54,10 @@ expect_rel_equal <- function(actual, expected, tolerance = 1e-9,
 # bound of the delay support.
 reference_uniform_lcdf <- function(lp, d, pwindow, lower = 0) {
   vapply(d, function(di) {
-    q <- max(di - pwindow, lower)
+    q_lower <- max(di - pwindow, lower)
     lp_d <- lp(di)
-    breaks <- sort(unique(c(q, di - (di - q) * 2^-(0:40), di)))
-    breaks <- breaks[breaks >= q & breaks <= di]
+    breaks <- sort(unique(c(q_lower, di - (di - q_lower) * 2^-(0:40), di)))
+    breaks <- breaks[breaks >= q_lower & breaks <= di]
     total <- 0
     for (i in seq_len(length(breaks) - 1L)) {
       total <- total + stats::integrate(

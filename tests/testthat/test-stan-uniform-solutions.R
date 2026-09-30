@@ -994,6 +994,15 @@ test_that("the gamma and chi-square log CDF is exact deep in the lower tail,
   }
 })
 
+test_that("the gamma log CDF is -Inf, not NaN or 0, where gamma_lcdf
+  underflows above the series range", {
+  # A shape of 20000 is far past practical use. `gamma_lcdf` underflows
+  # for a delay of 12000, above the range of the series, and both terms
+  # are then dropped whole
+  lcdf <- analytical_lcdf(12000, 2L, c(20000, 1), 1)
+  expect_identical(lcdf, -Inf)
+})
+
 test_that("the first interval PMF is exact for a gamma or chi-square delay
   with a far lower tail, for the scalar and vectorised PMF", {
   cases <- lower_tail_cases[c(1, 3)]
@@ -1022,7 +1031,8 @@ test_that("the gamma and chi-square lower tail gradients match finite
     list(id = 13L, params = 100, delays = c(1, 10, 40, 80)),
     list(id = 2L, params = c(20, 0.5), delays = c(0.5, 2, 4, 10, 20)),
     list(id = 2L, params = c(10, 2), delays = c(0.1, 0.5, 1, 3, 8)),
-    list(id = 2L, params = c(1000, 100), delays = c(1, 4, 8, 10))
+    list(id = 2L, params = c(0.5, 2), delays = c(0.01, 0.1, 0.5, 2)),
+    list(id = 2L, params = c(1000, 100), delays = c(1, 4))
   )
   for (case in cases) {
     for (d in case$delays) {
@@ -1036,7 +1046,8 @@ test_that("the gamma and chi-square lower tail gradients match finite
         expect_false(res$gradient_not_finite, info = info)
         expect_true(all(is.finite(res$gradient)), info = info)
         expect_equal(
-          res$gradient, res$finite_diff, tolerance = 1e-4, info = info
+          res$gradient, res$finite_diff,
+          tolerance = 1e-4, info = info
         )
       }
     }
