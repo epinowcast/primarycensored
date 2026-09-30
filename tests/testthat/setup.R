@@ -8,7 +8,7 @@ if (!on_ci() || not_on_cran()) {
     if (!is.null(cmdstanr::cmdstan_version())) {
       # nolint end
       library(cmdstanr) # nolint
-      temp_path <- file.path(tempdir(), "pcdfunctions.stan")
+      temp_path <- file.path(tempdir(), "pcd_stan_functions.stan")
       # Use local source Stan files if available (e.g. during
       # development), otherwise fall back to the installed package
       local_stan <- file.path("inst", "stan", "functions")
