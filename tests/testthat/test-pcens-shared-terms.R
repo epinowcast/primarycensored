@@ -67,10 +67,13 @@ test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
   expect_identical(
     count_evaluations(q, 2), length(unique(c(q, pmax(q - 2, 0))))
   )
+  q_half <- seq(0, 10, by = 0.5)
   expect_identical(
-    count_evaluations(q, 1.5), length(unique(c(q, pmax(q - 1.5, 0))))
+    count_evaluations(q_half, 1.5),
+    length(unique(c(q_half, pmax(q_half - 1.5, 0))))
   )
-  # Nothing overlaps, so each endpoint is evaluated directly
+  # Too little overlap to save evaluations, so each endpoint is direct
+  expect_identical(count_evaluations(q, 1.5), 2L * length(q))
   expect_identical(count_evaluations(c(2.3, 7.9), 1), 4L)
 })
 
