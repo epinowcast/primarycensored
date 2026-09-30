@@ -1,9 +1,8 @@
 skip_on_cran()
 
-# Gradient regression tests for #363. The log CDF of a generalised gamma in
-# the lower tail is finite only if the incomplete gamma function is
-# evaluated on the log scale, and its gradient with respect to `k` must stay
-# accurate there. Gradients are only observable from a compiled model, so
+# Gradient tests for the generalised gamma lower tail. The log CDF is
+# finite there only if the incomplete gamma function is evaluated on the
+# log scale, and its gradient with respect to `k` must stay accurate. Gradients are only observable from a compiled model, so
 # this builds a minimal one whose target is `primarycensored_lcdf` and runs
 # `stan_gradient_at()` from helper-stan-gradient.R.
 
@@ -64,8 +63,7 @@ expect_gradient_ok <- function(res, label) {
 test_that("primarycensored_lcdf has accurate finite gradients deep in the
    lower tail of a generalised gamma", {
   model <- gengamma_probe_model()
-  # Values from -20 to -2400. The first two returned -inf or a wrong
-  # gradient for k before the fix.
+  # Log CDF values from -20 to -2400.
   cases <- list(
     list(d = 2, p = c(1, 5, 400)),
     list(d = 2, p = c(5, 5, 100)),

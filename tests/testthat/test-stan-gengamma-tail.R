@@ -1,8 +1,8 @@
 skip_on_cran()
 
-# Regression tests for #363. `gamma_lcdf` underflows to -inf deep in the
-# lower tail of the generalised gamma, which gave NaN or +Inf log densities
-# once the truncation normaliser was subtracted. Stan's partial of the
+# Tests for the generalised gamma lower tail. `gamma_lcdf` underflows to
+# -inf deep in the lower tail of the generalised gamma, which gave NaN or
+# +Inf log densities once the truncation normaliser was subtracted. Stan's partial of the
 # regularised incomplete gamma with respect to its shape is also inaccurate
 # well before that point.
 #
@@ -44,7 +44,6 @@ tail_cases <- data.frame(
 )
 
 test_that("gengamma_lcdf is finite and accurate deep in the lower tail", {
-  # Examples from #363
   expect_equal(
     gengamma_lcdf(2, 1, 5, 400),
     pgamma(0.4, 400, log.p = TRUE),
@@ -181,8 +180,7 @@ test_that("truncation normalisers stay finite when the CDF is deep in the
   params <- c(1, 5, 400)
   pwindow <- 1
   d <- 2
-  # Upper truncation D also deep in the tail: log_cdf_D was -inf, so the
-  # normalised result was NaN or +Inf.
+  # Upper truncation D also deep in the tail.
   D <- 2.5
   expected <- ref_lcdf_unif(d, pwindow, 1, 5, 400) -
     ref_lcdf_unif(D, pwindow, 1, 5, 400)

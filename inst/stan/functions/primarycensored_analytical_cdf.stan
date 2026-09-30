@@ -191,15 +191,9 @@ vector primarycensored_weibull_uniform_terms(real t,
   * replaced by k + 1/shape, so this generalises the Gamma (shape = 1) and
   * Weibull (k = 1) solutions.
   *
-  * Both terms stay finite deep in the lower tail, where `gamma_lcdf`
-  * underflows to `-inf`, because they use `gamma_lcdf_logx()`.
-  * primarycensored_uniform_lcdf_from_terms() subtracts two nearly equal
-  * terms, which amplifies their rounding error by about k * shape. The
-  * absolute error of the log result is then about
-  * `eps * max(1, k * shape) * max(1, |log F|) * max(1, d / pwindow)`, where
-  * F is the result. On a grid with shape 0.3 to 30, scale 0.5 to 50 and k
-  * up to 1500 the largest error was 1.7e-6, at k * shape of 12000 or more
-  * and a log result near -1e5. It is below 1e-7 for k * shape below 12000.
+  * Both terms use `gamma_lcdf_logx()`, so they stay finite in the lower
+  * tail. The subtraction in `primarycensored_uniform_lcdf_from_terms()`
+  * loses precision for large `k * shape`.
   *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters
@@ -218,8 +212,6 @@ vector primarycensored_gengamma_uniform_terms(real t,
   real k = params[3];
   real k_shift = k + inv(shape);
   real log_E = log(scale) + lgamma(k_shift) - lgamma(k);
-  // Both CDFs are evaluated at the same log of (t / scale)^shape. They are
-  // finite deep in the lower tail, see `gamma_lcdf_logx()`.
   real log_t = log(t);
   real log_x = shape * (log_t - log(scale));
   return [
