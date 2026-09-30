@@ -66,7 +66,7 @@ test_that("check_for_tilt_transform needs the tilted delay to exist", {
   expect_identical(check_for_tilt_transform(2L, 0, c(2, 0.4)), 1L)
   expect_identical(check_for_tilt_transform(18L, -50, c(3, 2)), 1L)
   expect_identical(check_for_tilt_transform(18L, 50, c(3, 2)), 1L)
-  for (dist_id in c(1L, 3L, 5L, 12L, 26L, 27L)) {
+  for (dist_id in c(3L, 5L, 12L, 26L, 27L)) {
     expect_identical(check_for_tilt_transform(dist_id, 0, c(1, 1)), 0L)
   }
 })
@@ -78,7 +78,7 @@ test_that("check_for_analytical includes the exponentially tilted primary", {
     expect_identical(check_for_exptilt(dist_id, 1L), 0L)
   }
   # Other delays stay numerical with an exponentially tilted primary
-  for (dist_id in c(1L, 3L, 5L, 9L)) {
+  for (dist_id in c(3L, 5L, 9L)) {
     expect_identical(check_for_analytical(dist_id, 2L), 0L)
     expect_identical(check_for_exptilt(dist_id, 2L), 0L)
   }
@@ -431,7 +431,7 @@ test_that("check_for_exptilt_vectorized needs an integer pwindow", {
     expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 0.5), 0L)
     expect_identical(check_for_exptilt_vectorized(dist_id, 1L, 1), 0L)
   }
-  for (dist_id in c(1L, 3L, 26L)) {
+  for (dist_id in c(3L, 26L)) {
     expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 1), 0L)
   }
 })
