@@ -18,6 +18,8 @@ Numeric vector of the number of terms.
 The terms \eqn{\xi^k m_k(t) / k!} are below \eqn{e^{-40}} of the largest
 for \eqn{k} beyond \eqn{\xi t + 9 \sqrt{\xi t} + 30}, see
 \code{.lnorm_tilt_series()}. The series is used only where this is at most
-\code{.lnorm_max_terms}, which is for \eqn{\xi t} up to about 18700.
+\code{.lnorm_max_terms}, which is for \eqn{\xi t} up to about 18700, and where
+\eqn{\xi t} is at most \code{.lnorm_series_max_xt} or \eqn{\xi w} is above
+\code{.lnorm_series_min_xw}.
 }
 \keyword{internal}

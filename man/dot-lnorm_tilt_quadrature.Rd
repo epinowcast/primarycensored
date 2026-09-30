@@ -32,6 +32,7 @@ difference does not cancel.
 \details{
 The panels are accurate to an absolute difference of the log transform of
 about 1e-11 for sdlog up to 1.8 and of about 1e-13 for sdlog of 1 or
-below.
+below. Each range is split into more panels for a larger sdlog, see
+\code{.lnorm_n_panels()}, which keeps the same accuracy to an sdlog of 15.
 }
 \keyword{internal}

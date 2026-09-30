@@ -97,9 +97,13 @@ The lognormal has no tilted delay for \eqn{\rho < 0} and needs none, as
 the transform is truncated at \eqn{t}. It falls back to the numerical
 method for every \code{q} where \eqn{\rho \sigma^2 e^\mu} overflows, above
 about \eqn{e^{690}}. For \eqn{\rho < 0} the series needs about
-\eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms and is limited to 20000,
-which is for \eqn{|\rho| q} up to about 18700. The numerical method is
-used for the \code{q} above that, and the series for the others.
+\eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms per quantile, so it is slower
+than the numerical method beyond \eqn{|\rho| q} of about 200. The numerical
+method is used for the \code{q} above that, unless \eqn{|\rho| w} is above 2,
+where the numerical method loses accuracy in the lower tail (a relative
+error of up to 5e-3 at \eqn{|\rho| w} of 600). The series is then kept up
+to 20000 terms, which is for \eqn{|\rho| q} up to about 18700, and the
+numerical method is used beyond that.
 
 \strong{Tilts close to zero.} The expression above cancels as \eqn{\rho \to 0}.
 Two forms replace it where the cancellation would lose precision. With
@@ -177,16 +181,23 @@ the tails of a normal delay.
 
 \strong{Lognormal precision and speed.} The quadrature is accurate to an
 absolute difference of about 1e-11 in the log transform for \code{sdlog} up to
-1.8, and 1e-13 for \code{sdlog} of 1 or below. The CDF agrees with numerical
-integration to a relative difference of 1e-7 or better over the tested
-grid of tilts, windows and quantiles. The largest differences are deep in the
-lower tail, where the CDF is below 1e-100 and the direct form cancels
+1.8, and 1e-13 for \code{sdlog} of 1 or below. Each range of the quadrature is
+split into \code{ceiling(sdlog / 1.8)} panels, which keeps the CDF accurate to
+a relative difference of 1e-9 or better for \code{sdlog} up to 15, as tested.
+The CDF agrees with numerical integration to a relative difference of 1e-7
+or better over the tested grid of tilts, windows and quantiles. The
+largest differences are deep in the lower tail, where the CDF is below
+1e-100 and the direct form cancels
 by about \eqn{1 / (\rho q)} times the gap between \code{q} and the mean of the
 delays below it.
 The quadrature and the series have a fixed cost that the numerical method
 beats for fewer than 10 quantiles, so \code{pcens_cdf()} uses the numerical
 method for fewer than 10 \code{q} and the transform for 10 or more, which is
 1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
+The numerical method is used for fewer than 10 \code{q} only where
+\eqn{|\rho| w} is at most 1. Its relative error is about 1e-6 there, 1e-4
+at 50, and it fails at 1000, where the transform is accurate to 1e-9, so
+the transform is used for any number of \code{q} above that.
 The Stan solution takes about as long as the ODE for one delay, and is 2 to
 4 times faster with the shared terms of the vectorised PMF, see the NEWS.
 

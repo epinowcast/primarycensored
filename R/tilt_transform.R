@@ -16,8 +16,8 @@
 #' * `.pcens_tilt_available()`, whether the closed form applies for a tilt.
 #' * `.pcens_tilt_transform()`, the transform on the log scale.
 #' * Optionally `.pcens_tilt_fits()`, for transforms that cannot be evaluated
-#'   at every point, as for the series of the lognormal. The default is
-#'   `TRUE` at every point.
+#'   at every point or are slower than the numerical method there, as for the
+#'   series of the lognormal. The default is `TRUE` at every point.
 #' * Optionally `.pcens_tilt_moments()`, which is only needed by the small
 #'   tilt forms of [pcens_cdf.pcens_pexp_dexpgrowth()].
 #' * Optionally `.pcens_tilt_pair()`, the lower and the upper transform
@@ -37,6 +37,9 @@
 #'   with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the
 #'   delay CDF.
 #'
+#' @param pwindow Primary event window, used by `.pcens_tilt_fits()` to judge
+#'   the accuracy of the numerical method. The default 0 is no window.
+#'
 #' @param upper Logical. If `TRUE` return the transform over \eqn{(t, \infty)}
 #'   rather than over the lower end of the support up to `t`. Evaluating the
 #'   tail directly keeps precision where the lower transform is close to its
@@ -53,8 +56,8 @@
 #'   tilted delay distribution exists for `xi`, otherwise `FALSE`. Callers use
 #'   the numerical method when it is `FALSE`.
 #' * `.pcens_tilt_fits()`: a logical for each `t`, `TRUE` if the transform
-#'   can be evaluated at `t` for `xi`. Callers use the numerical method for
-#'   the points where it is `FALSE`.
+#'   can be evaluated at `t` for `xi` and is the method to use there. Callers
+#'   use the numerical method for the points where it is `FALSE`.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix with two columns, the log of the first
 #'   and second moments of the delay about `t`, see
@@ -77,7 +80,7 @@ NULL
 }
 
 #' @rdname tilt_transform
-.pcens_tilt_fits <- function(object, xi, t) {
+.pcens_tilt_fits <- function(object, xi, t, pwindow = 0) {
   UseMethod(".pcens_tilt_fits")
 }
 
@@ -113,7 +116,7 @@ NULL
 
 #' @rdname tilt_transform
 #' @exportS3Method
-.pcens_tilt_fits.default <- function(object, xi, t) {
+.pcens_tilt_fits.default <- function(object, xi, t, pwindow = 0) {
   rep(TRUE, length(t))
 }
 

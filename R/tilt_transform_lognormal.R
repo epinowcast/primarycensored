@@ -16,8 +16,11 @@
 #'   partial moments \eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2}
 #'   \Phi(z_t - k \sigma)}, see `.lnorm_tilt_series()`.
 #'   The total diverges, so the tail transform is `Inf` on the log scale.
-#'   The series is limited to 20000 terms, about \eqn{\xi t} up to 18700,
-#'   and `.pcens_tilt_fits()` is `FALSE` beyond that.
+#'   The series costs about \eqn{\xi t} terms per point. `.pcens_tilt_fits()`
+#'   is `FALSE` beyond \eqn{\xi t} of 200, where the numerical method is
+#'   faster, unless the window is wide in tilt terms, see
+#'   `.lnorm_series_max_xt`. It is `FALSE` beyond 20000 terms, about
+#'   \eqn{\xi t} of 18700, whatever the window.
 #'
 #' @inheritParams tilt_transform
 #'
@@ -117,7 +120,9 @@
 #' The log of
 #' \eqn{\int_a^b e^{-\rho e^{\mu + \sigma z}} \phi(z) dz}
 #' for each pair of limits by Gauss-Legendre quadrature, where \eqn{\phi} is
-#' the standard normal density.
+#' the standard normal density. The integrand falls from its plateau to zero
+#' over a width of about \eqn{1 / \sigma}, so the range of each pair is split
+#' into `.lnorm_n_panels()` equal panels, one for \eqn{\sigma} up to 1.8.
 #'
 #' @param a,b Numeric vectors of lower and upper limits of equal length.
 #'
@@ -127,10 +132,32 @@
 #'
 #' @param rule Output of `.lnorm_rule()`.
 #'
+#' @param n_panels Number of equal panels each range is split into.
+#'
 #' @return Numeric vector of the log integrals.
 #'
 #' @keywords internal
-.lnorm_panel <- function(a, b, meanlog, sdlog, rho, rule) {
+.lnorm_panel <- function(a, b, meanlog, sdlog, rho, rule,
+                         n_panels = .lnorm_n_panels(sdlog)) {
+  if (n_panels == 1L) {
+    return(.lnorm_one_panel(a, b, meanlog, sdlog, rho, rule))
+  }
+  width <- (b - a) / n_panels
+  Reduce(.log_sum_exp, lapply(seq_len(n_panels), function(j) {
+    .lnorm_one_panel(
+      a + (j - 1L) * width, a + j * width, meanlog, sdlog, rho, rule
+    )
+  }))
+}
+
+#' One Gauss-Legendre panel of a Gaussian weighted integral
+#'
+#' @inheritParams .lnorm_panel
+#'
+#' @return Numeric vector of the log integrals.
+#'
+#' @keywords internal
+.lnorm_one_panel <- function(a, b, meanlog, sdlog, rho, rule) {
   half <- (b - a) / 2
   z <- outer(half, rule$x) + (a + b) / 2
   log_f <- sweep(
@@ -138,6 +165,23 @@
   )
   peak <- log_f[cbind(seq_along(a), max.col(log_f, ties.method = "first"))]
   peak + log(rowSums(exp(log_f - peak))) + log(half) - 0.5 * log(2 * pi)
+}
+
+#' Number of panels for a lognormal tilt integral
+#'
+#' The 32 point rule on one panel per side is accurate to about 1e-11 in the
+#' log transform for `sdlog` up to 1.8, and loses accuracy beyond, to 1e-7 in
+#' the CDF at 4 and 3e-5 at 15. Splitting each range into
+#' \eqn{\lceil \sigma / 1.8 \rceil} panels keeps the width of a panel
+#' in units of \eqn{1 / \sigma} within the range that was tested.
+#'
+#' @inheritParams tilt_transform_lognormal
+#'
+#' @return Integer number of panels, at least 1.
+#'
+#' @keywords internal
+.lnorm_n_panels <- function(sdlog) {
+  max(1L, as.integer(ceiling(sdlog / 1.8)))
 }
 
 #' Mode and total of the tilted lognormal integrand
@@ -190,7 +234,8 @@
 #'
 #' The panels are accurate to an absolute difference of the log transform of
 #' about 1e-11 for sdlog up to 1.8 and of about 1e-13 for sdlog of 1 or
-#' below.
+#' below. Each range is split into more panels for a larger sdlog, see
+#' `.lnorm_n_panels()`, which keeps the same accuracy to an sdlog of 15.
 #'
 #' @inheritParams .lnorm_panel
 #'
@@ -253,7 +298,8 @@
 #' \eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles, up to `.lnorm_max_terms`,
 #' until the last term is below \eqn{e^{-40}} of the largest for every point.
 #' It stops with an error where that needs more than `.lnorm_max_terms`, so
-#' callers check `.pcens_tilt_fits()` first.
+#' callers check `.pcens_tilt_fits()` first, which also applies the cut-off
+#' of `.lnorm_series_max_xt`.
 #'
 #' @inheritParams .lnorm_tilt_quadrature
 #'
@@ -308,12 +354,29 @@
 
 .lnorm_max_terms <- 20000L
 
+# The series costs about xi t terms per quantile, about 0.05 microseconds
+# each, and the numerical method of `pcens_cdf.default()` a fixed cost of
+# about 20 microseconds per quantile. They cross at xi t of about 200 for
+# 12 to 200 quantiles (ratio 1.0 at 200, 0.7 at 100, 1.4 at 300 and 2 at
+# 500 for 200 quantiles), so the series is kept up to 200.
+.lnorm_series_max_xt <- 200
+
+# The numerical method integrates the delay CDF against the window density.
+# Where xi w is above 2 the density falls by more than e^2 across the window
+# and the integrator loses accuracy in the lower tail, where the CDF is
+# small and varies fast. The relative error was 6e-4 to 5e-3 at xi w of 600
+# for a CDF of 1e-7 to 1e-4, while the series stays accurate to 1e-13. The
+# series is kept there up to `.lnorm_max_terms`.
+.lnorm_series_min_xw <- 2
+
 #' Number of terms the lognormal series starts with
 #'
 #' The terms \eqn{\xi^k m_k(t) / k!} are below \eqn{e^{-40}} of the largest
 #' for \eqn{k} beyond \eqn{\xi t + 9 \sqrt{\xi t} + 30}, see
 #' `.lnorm_tilt_series()`. The series is used only where this is at most
-#' `.lnorm_max_terms`, which is for \eqn{\xi t} up to about 18700.
+#' `.lnorm_max_terms`, which is for \eqn{\xi t} up to about 18700, and where
+#' \eqn{\xi t} is at most `.lnorm_series_max_xt` or \eqn{\xi w} is above
+#' `.lnorm_series_min_xw`.
 #'
 #' @param xi Tilt, positive.
 #'
@@ -330,7 +393,11 @@
 # The quadrature and the series have a fixed cost of about 0.2 ms that the
 # numerical method of `pcens_cdf.default()` beats for fewer than about 10
 # quantiles, and they are faster beyond that, see the benchmarks in NEWS.md.
+# The numerical method is used for fewer quantiles only where it is accurate,
+# which is for |r| w up to 1. Its relative error is about 1e-6 there, 1e-4 at
+# 50, and it fails at 1000, where the transform is accurate to 1e-9.
 .lnorm_exptilt_min_q <- 10L
+.lnorm_exptilt_min_xw <- 1
 
 #' Log standard normal CDF at every point less every shift
 #'
@@ -381,12 +448,16 @@
 
 #' @rdname tilt_transform
 #' @exportS3Method
-.pcens_tilt_fits.pcens_plnorm <- function(object, xi, t) {
-  # The series for a positive tilt has a limit on the number of terms
+.pcens_tilt_fits.pcens_plnorm <- function(object, xi, t, pwindow = 0) {
+  # The series for a positive tilt is used where it is faster than the
+  # numerical method or the numerical method is not accurate, up to a limit
+  # on the number of terms
   if (xi <= 0) {
     return(rep(TRUE, length(t)))
   }
-  .lnorm_series_terms(xi, t) <= .lnorm_max_terms
+  (xi * pmax(t, 0) <= .lnorm_series_max_xt |
+    xi * pwindow > .lnorm_series_min_xw) &
+    .lnorm_series_terms(xi, t) <= .lnorm_max_terms
 }
 
 #' @rdname tilt_transform

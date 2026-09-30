@@ -38,7 +38,7 @@
 
 .pcens_tilt_available(object, xi)
 
-.pcens_tilt_fits(object, xi, t)
+.pcens_tilt_fits(object, xi, t, pwindow = 0)
 
 .pcens_tilt_lower(object)
 
@@ -50,7 +50,7 @@
 
 \method{.pcens_tilt_available}{default}(object, xi)
 
-\method{.pcens_tilt_fits}{default}(object, xi, t)
+\method{.pcens_tilt_fits}{default}(object, xi, t, pwindow = 0)
 
 \method{.pcens_tilt_transform}{default}(object, t, xi, upper = FALSE)
 
@@ -86,7 +86,7 @@
 
 \method{.pcens_tilt_available}{pcens_plnorm}(object, xi)
 
-\method{.pcens_tilt_fits}{pcens_plnorm}(object, xi, t)
+\method{.pcens_tilt_fits}{pcens_plnorm}(object, xi, t, pwindow = 0)
 
 \method{.pcens_tilt_transform}{pcens_plnorm}(object, t, xi, upper = FALSE)
 
@@ -108,6 +108,9 @@ delay CDF.}
 rather than over the lower end of the support up to \code{t}. Evaluating the
 tail directly keeps precision where the lower transform is close to its
 total.}
+
+\item{pwindow}{Primary event window, used by \code{.pcens_tilt_fits()} to judge
+the accuracy of the numerical method. The default 0 is no window.}
 }
 \value{
 \itemize{
@@ -121,8 +124,8 @@ delay with \code{xi > 0}, and callers then use the lower transform alone.
 tilted delay distribution exists for \code{xi}, otherwise \code{FALSE}. Callers use
 the numerical method when it is \code{FALSE}.
 \item \code{.pcens_tilt_fits()}: a logical for each \code{t}, \code{TRUE} if the transform
-can be evaluated at \code{t} for \code{xi}. Callers use the numerical method for
-the points where it is \code{FALSE}.
+can be evaluated at \code{t} for \code{xi} and is the method to use there. Callers
+use the numerical method for the points where it is \code{FALSE}.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
 \item \code{.pcens_tilt_moments()}: a matrix with two columns, the log of the first
 and second moments of the delay about \code{t}, see
@@ -148,8 +151,8 @@ A family is added by defining
 \item \code{.pcens_tilt_available()}, whether the closed form applies for a tilt.
 \item \code{.pcens_tilt_transform()}, the transform on the log scale.
 \item Optionally \code{.pcens_tilt_fits()}, for transforms that cannot be evaluated
-at every point, as for the series of the lognormal. The default is
-\code{TRUE} at every point.
+at every point or are slower than the numerical method there, as for the
+series of the lognormal. The default is \code{TRUE} at every point.
 \item Optionally \code{.pcens_tilt_moments()}, which is only needed by the small
 tilt forms of \code{\link[=pcens_cdf.pcens_pexp_dexpgrowth]{pcens_cdf.pcens_pexp_dexpgrowth()}}.
 \item Optionally \code{.pcens_tilt_pair()}, the lower and the upper transform

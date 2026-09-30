@@ -4,7 +4,15 @@
 \alias{.lnorm_panel}
 \title{Log of a Gaussian weighted integral over panels}
 \usage{
-.lnorm_panel(a, b, meanlog, sdlog, rho, rule)
+.lnorm_panel(
+  a,
+  b,
+  meanlog,
+  sdlog,
+  rho,
+  rule,
+  n_panels = .lnorm_n_panels(sdlog)
+)
 }
 \arguments{
 \item{a, b}{Numeric vectors of lower and upper limits of equal length.}
@@ -14,6 +22,8 @@
 \item{rho}{Tilt, \eqn{\rho = -\xi}, at least 0.}
 
 \item{rule}{Output of \code{.lnorm_rule()}.}
+
+\item{n_panels}{Number of equal panels each range is split into.}
 }
 \value{
 Numeric vector of the log integrals.
@@ -22,6 +32,8 @@ Numeric vector of the log integrals.
 The log of
 \eqn{\int_a^b e^{-\rho e^{\mu + \sigma z}} \phi(z) dz}
 for each pair of limits by Gauss-Legendre quadrature, where \eqn{\phi} is
-the standard normal density.
+the standard normal density. The integrand falls from its plateau to zero
+over a width of about \eqn{1 / \sigma}, so the range of each pair is split
+into \code{.lnorm_n_panels()} equal panels, one for \eqn{\sigma} up to 1.8.
 }
 \keyword{internal}

@@ -315,7 +315,7 @@ test_that("the lognormal CDF is accurate far from the origin", {
 
 test_that("the lognormal series needs to fit the terms it is given", {
   obj <- lnorm_object(cases[[2]], 0.1)
-  expect_true(all(.pcens_tilt_fits(obj, 0.5, c(1, 1e4), 1)))
+  expect_true(all(.pcens_tilt_fits(obj, 0.5, c(1, 300), 1)))
   expect_true(all(.pcens_tilt_fits(obj, -0.5, c(1, 1e8), 1)))
   # A positive tilt needs about xi t + 9 sqrt(xi t) + 30 terms, at most
   # 20000, where the window is wide in tilt terms (xi w above 2) and the
@@ -594,7 +594,9 @@ test_that("the lognormal transform is accurate for a large sdlog", {
   expect_identical(.lnorm_n_panels(4), 3L)
   expect_identical(.lnorm_n_panels(15), 9L)
   for (sdlog in c(4, 10, 15)) {
-    obj <- new_pcens(plnorm, dexpgrowth, list(r = 5), meanlog = 4, sdlog = sdlog)
+    obj <- new_pcens(
+      plnorm, dexpgrowth, list(r = 5), meanlog = 4, sdlog = sdlog
+    )
     t <- exp(4 + sdlog * c(-2, -1.5, -1, -0.5, 0, 0.5))
     for (xi in c(-5, -200)) {
       info <- sprintf("sdlog %g, xi %g", sdlog, xi)

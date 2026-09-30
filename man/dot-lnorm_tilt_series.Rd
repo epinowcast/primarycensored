@@ -26,6 +26,7 @@ Past \eqn{k = \xi t} the terms fall by at least a factor
 \eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles, up to \code{.lnorm_max_terms},
 until the last term is below \eqn{e^{-40}} of the largest for every point.
 It stops with an error where that needs more than \code{.lnorm_max_terms}, so
-callers check \code{.pcens_tilt_fits()} first.
+callers check \code{.pcens_tilt_fits()} first, which also applies the cut-off
+of \code{.lnorm_series_max_xt}.
 }
 \keyword{internal}

@@ -64,9 +64,13 @@
 #' the transform is truncated at \eqn{t}. It falls back to the numerical
 #' method for every `q` where \eqn{\rho \sigma^2 e^\mu} overflows, above
 #' about \eqn{e^{690}}. For \eqn{\rho < 0} the series needs about
-#' \eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms and is limited to 20000,
-#' which is for \eqn{|\rho| q} up to about 18700. The numerical method is
-#' used for the `q` above that, and the series for the others.
+#' \eqn{|\rho| q + 9 \sqrt{|\rho| q} + 30} terms per quantile, so it is slower
+#' than the numerical method beyond \eqn{|\rho| q} of about 200. The numerical
+#' method is used for the `q` above that, unless \eqn{|\rho| w} is above 2,
+#' where the numerical method loses accuracy in the lower tail (a relative
+#' error of up to 5e-3 at \eqn{|\rho| w} of 600). The series is then kept up
+#' to 20000 terms, which is for \eqn{|\rho| q} up to about 18700, and the
+#' numerical method is used beyond that.
 #'
 #' **Tilts close to zero.** The expression above cancels as \eqn{\rho \to 0}.
 #' Two forms replace it where the cancellation would lose precision. With
@@ -140,16 +144,23 @@
 #'
 #' **Lognormal precision and speed.** The quadrature is accurate to an
 #' absolute difference of about 1e-11 in the log transform for `sdlog` up to
-#' 1.8, and 1e-13 for `sdlog` of 1 or below. The CDF agrees with numerical
-#' integration to a relative difference of 1e-7 or better over the tested
-#' grid of tilts, windows and quantiles. The largest differences are deep in the
-#' lower tail, where the CDF is below 1e-100 and the direct form cancels
+#' 1.8, and 1e-13 for `sdlog` of 1 or below. Each range of the quadrature is
+#' split into `ceiling(sdlog / 1.8)` panels, which keeps the CDF accurate to
+#' a relative difference of 1e-9 or better for `sdlog` up to 15, as tested.
+#' The CDF agrees with numerical integration to a relative difference of 1e-7
+#' or better over the tested grid of tilts, windows and quantiles. The
+#' largest differences are deep in the lower tail, where the CDF is below
+#' 1e-100 and the direct form cancels
 #' by about \eqn{1 / (\rho q)} times the gap between `q` and the mean of the
 #' delays below it.
 #' The quadrature and the series have a fixed cost that the numerical method
 #' beats for fewer than 10 quantiles, so `pcens_cdf()` uses the numerical
 #' method for fewer than 10 `q` and the transform for 10 or more, which is
 #' 1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
+#' The numerical method is used for fewer than 10 `q` only where
+#' \eqn{|\rho| w} is at most 1. Its relative error is about 1e-6 there, 1e-4
+#' at 50, and it fails at 1000, where the transform is accurate to 1e-9, so
+#' the transform is used for any number of `q` above that.
 #' The Stan solution takes about as long as the ODE for one delay, and is 2 to
 #' 4 times faster with the shared terms of the vectorised PMF, see the NEWS.
 #'
@@ -232,7 +243,7 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 ) {
   .pcens_cdf_exptilt(
     object, q, pwindow, use_numeric,
-    min_q = .lnorm_exptilt_min_q
+    min_q = .lnorm_exptilt_min_q, min_xw = .lnorm_exptilt_min_xw
   )
 }
 
@@ -285,6 +296,10 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 #'   used, for delays whose transform has a fixed cost. The default 0 always
 #'   uses the closed forms.
 #'
+#' @param min_xw Largest \eqn{|\rho| w} at which `min_q` applies. The
+#'   numerical method loses accuracy for a larger tilt times the window, so
+#'   the closed forms are used there for any number of quantiles.
+#'
 #' @return Vector of computed primary event censored CDFs.
 #'
 #' @keywords internal
@@ -293,7 +308,8 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   q,
   pwindow,
   use_numeric = FALSE,
-  min_q = 0L
+  min_q = 0L,
+  min_xw = Inf
 ) {
   if (isTRUE(use_numeric)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
@@ -301,9 +317,12 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   rho <- .exptilt_rho(object)
   # The closed forms are for a single window and need the tilted delay. A
   # transform that is evaluated by quadrature has a fixed cost that the
-  # numerical method beats for a few quantiles.
+  # numerical method beats for a few quantiles, where it is accurate.
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0 ||
-    !.pcens_tilt_available(object, -rho) || length(q) < min_q) {
+    !.pcens_tilt_available(object, -rho)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  if (length(q) < min_q && abs(rho) * pwindow <= min_xw) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
 
@@ -314,7 +333,7 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   if (length(finite) > 0L) {
     # Transforms that cannot be evaluated at a large q use the numerical
     # method for that q alone
-    fits <- .pcens_tilt_fits(object, -rho, q[finite])
+    fits <- .pcens_tilt_fits(object, -rho, q[finite], pwindow)
     result[finite[fits]] <- .exptilt_cdf_finite(
       object, q[finite[fits]], pwindow, rho
     )

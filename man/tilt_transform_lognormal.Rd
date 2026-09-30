@@ -48,8 +48,11 @@ is the series \eqn{\sum_k \xi^k m_k(t) / k!} of positive terms with the
 partial moments \eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2}
   \Phi(z_t - k \sigma)}, see \code{.lnorm_tilt_series()}.
 The total diverges, so the tail transform is \code{Inf} on the log scale.
-The series is limited to 20000 terms, about \eqn{\xi t} up to 18700,
-and \code{.pcens_tilt_fits()} is \code{FALSE} beyond that.
+The series costs about \eqn{\xi t} terms per point. \code{.pcens_tilt_fits()}
+is \code{FALSE} beyond \eqn{\xi t} of 200, where the numerical method is
+faster, unless the window is wide in tilt terms, see
+\code{.lnorm_series_max_xt}. It is \code{FALSE} beyond 20000 terms, about
+\eqn{\xi t} of 18700, whatever the window.
 }
 }
 \keyword{internal}
