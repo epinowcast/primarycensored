@@ -52,6 +52,7 @@
 - The numerical paths, `pcens_cdf.default()` in R and `primarycensored_numeric_cdf()` in Stan, no longer return a CDF that is too small for a truncated logistic primary with a small scale.
   The density is a spike of width about `scale` at the location, or at the edge of the window nearest to it, which the quadrature and the ODE solver stepped over.
   The integral is now split at the location and at multiples of the scale from it, and the Stan ODE is solved in parts to a relative tolerance of 1e-9 and an absolute tolerance of 1e-10 for this primary.
+  The error of the Stan ODE for this primary is an absolute one of about 1e-9 to 1e-7, so CDFs and PMFs below about 1e-3 are not accurate in relative terms for the delays that have only the ODE path.
   See #370.
 - Fixed the normal tilt transform in R, shared with the exponentially tilted solutions, losing `xi * sd^2` to rounding when it is small relative to the mean.
   It now evaluates the normal CDF at `(t - mean) / sd - xi * sd`, as Stan does.

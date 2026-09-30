@@ -486,6 +486,7 @@ The density is a spike of width about $s$ at the location, or at the edge of the
 A quadrature or an ODE solver that takes large steps across the flat region steps over the spike, and returns a CDF that is too small without an error.
 Both paths therefore split the integral at the location and at multiples of the scale from it (up to 30 scales either side, clipped to the window).
 The Stan ODE is solved in parts between these points, to a relative tolerance of $10^{-9}$ and an absolute tolerance of $10^{-10}$ rather than the $10^{-6}$ of `ode_rk45`.
+The error is an absolute one of about $10^{-9}$ to $10^{-7}$ and the tolerance cannot follow the size of the CDF, so a CDF or a PMF below about $10^{-3}$ is not accurate in relative terms for delays that only have the ODE path.
 
 ## Delays much smaller than the scale
 

@@ -379,7 +379,9 @@ test_that("inadmissible series use the ODE path", {
 # `scale` where the delay is the window location, and a solver that takes
 # large steps across the flat region steps over it. The ODE is solved to a
 # relative tolerance of 1e-9 and an absolute tolerance of 1e-10 for this
-# primary, so these are compared in absolute terms at 1e-7.
+# primary. The error is an absolute one of about 1e-9 to 1e-7, so these are
+# compared in absolute terms at 1e-7 and small CDFs and PMFs are not compared
+# in relative terms.
 tlogis_narrow_cases <- list(
   list(dist_id = 4L, params = 1.5, pdist = pexp, args = list(rate = 1.5)),
   list(
@@ -389,6 +391,10 @@ tlogis_narrow_cases <- list(
   list(
     dist_id = 1L, params = c(1, 0.5), pdist = plnorm,
     args = list(meanlog = 1, sdlog = 0.5)
+  ),
+  list(
+    dist_id = 1L, params = c(0, 0.5), pdist = plnorm,
+    args = list(meanlog = 0, sdlog = 0.5)
   ),
   list(
     dist_id = 3L, params = c(2, 2), pdist = pweibull,
@@ -406,7 +412,7 @@ test_that("the ODE path resolves a narrow truncated logistic primary", {
   for (case in tlogis_narrow_cases) {
     cdf <- tlogis_case_cdf(case)
     for (location in c(-0.5, 0.7, 2.5)) {
-      for (scale in c(0.02, 0.005)) {
+      for (scale in c(0.02, 0.005, 0.001)) {
         window <- c(location, scale)
         expected <- tlogis_reference(
           d, pwindow, location, scale, cdf, case$dist_id != 18L
