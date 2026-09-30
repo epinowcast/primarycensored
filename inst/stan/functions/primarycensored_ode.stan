@@ -19,7 +19,9 @@ real gamma_lcdf_logx(real log_x, real a) {
   real x = exp(log_x);
   if (x < 0.9 * (a + 1)) {
     real log_lead = a * log_x - x - lgamma(a + 1);
-    // Use the series where gamma_lcdf can underflow or lose its gradient.
+    // Below exp(-10) gamma_lcdf can underflow or lose its gradient. The
+    // series terms shrink by at most 0.9 (x / (a + n)), so it converges in
+    // a few hundred terms.
     if (log_lead < -10) {
       real term = 1;
       real total = 1;
@@ -44,7 +46,8 @@ real gamma_lcdf_logx(real log_x, real a) {
   * distributions are special cases. Uses `gamma_lcdf_logx()` for
   * lower-tail accuracy.
   *
-  * @param y Value at which to evaluate the log CDF (y > 0)
+  * @param y Value at which to evaluate the log CDF (y >= 0). Negative y
+  * is rejected.
   * @param shape Shape (power) parameter
   * @param scale Scale parameter
   * @param k Shape parameter of the underlying Gamma distribution

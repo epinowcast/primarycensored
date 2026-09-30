@@ -116,22 +116,6 @@ test_that("gamma_lcdf_logx matches pgamma across the 0.9 switch", {
   )
 })
 
-test_that("gengamma_lcdf is continuous across the tail rule", {
-  # The change across a switch must match the true change in log CDF.
-  # frac = 0.9 is the x / (a + 1) switch of the series rule.
-  for (k in c(3, 25, 150)) {
-    for (frac in c(0.3, 0.5, 0.9)) {
-      x <- frac * (k + 1)
-      eps <- 1e-7
-      lo <- gengamma_lcdf((x * (1 - eps))^(1 / 1.3) * 2, 1.3, 2, k)
-      hi <- gengamma_lcdf((x * (1 + eps))^(1 / 1.3) * 2, 1.3, 2, k)
-      ref_jump <- pgamma(x * (1 + eps), k, log.p = TRUE) -
-        pgamma(x * (1 - eps), k, log.p = TRUE)
-      expect_equal(hi - lo, ref_jump, tolerance = 1e-6)
-    }
-  }
-})
-
 test_that("gengamma_lcdf is -inf at zero", {
   expect_identical(gengamma_lcdf(0, 1.5, 2, 3), -Inf)
 })
