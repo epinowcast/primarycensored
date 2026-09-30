@@ -289,28 +289,31 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
   * Log moments of a gamma delay about a point
   * @ingroup tilt_transforms
   *
-  * The log of G_k(t) = int_0^t (t - u)^k f(u) du for k = 1, 2, from gamma
+  * The log of G_k(t) = int_0^t (t - u)^k f(u) du for k = 1, 2, 3, from gamma
   * CDFs with the shape raised by k.
   *
   * @param t Point, positive
   * @param shape Shape
   * @param rate Rate
   *
-  * @return Vector [log G_1(t), log G_2(t)]
+  * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
   */
 vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   if (gamma_lcdf_underflows(t * rate, shape)
       || gamma_lcdf_underflows(t * rate, shape + 1)
-      || gamma_lcdf_underflows(t * rate, shape + 2)) {
-    return rep_vector(negative_infinity(), 2);
+      || gamma_lcdf_underflows(t * rate, shape + 2)
+      || gamma_lcdf_underflows(t * rate, shape + 3)) {
+    return rep_vector(negative_infinity(), 3);
   }
   // The CDFs are 1, so these are moments of the whole distribution
-  if (gamma_lccdf_underflows(t * rate, shape + 2)) {
-    real mean_delay = shape / rate;
-    real second_moment = shape * (shape + 1) / square(rate);
+  if (gamma_lccdf_underflows(t * rate, shape + 3)) {
+    real m1 = shape / rate;
+    real m2 = shape * (shape + 1) / square(rate);
+    real m3 = shape * (shape + 1) * (shape + 2) / pow(rate, 3);
     return [
-      log(t - mean_delay),
-      log(square(t) - 2 * t * mean_delay + second_moment)
+      log(t - m1),
+      log(square(t) - 2 * t * m1 + m2),
+      log(pow(t, 3) - 3 * square(t) * m1 + 3 * t * m2 - m3)
     ]';
   }
   real log_t = log(t);
@@ -320,38 +323,44 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
                 + primarycensored_log_gamma_p(x, shape + 1);
   real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate)
                 + primarycensored_log_gamma_p(x, shape + 2);
+  real log_m3 = log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate)
+                + primarycensored_log_gamma_p(x, shape + 3);
   real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
   real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
   real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
-  return [log_g1, log_g2]';
+  real log_a = primarycensored_log_diff_exp(log_t + log_m2, log_m3);
+  real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
+  real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
+  return [log_g1, log_g2, log_g3]';
 }
 
 /**
   * Log moments of a delay about a point
   * @ingroup tilt_transforms
   *
-  * The log of G_k(t) = int (t - u)^k f(u) du up to t for k = 1, 2, used by
+  * The log of G_k(t) = int (t - u)^k f(u) du up to t for k = 1, 2, 3, used by
   * the small tilt forms. `-inf` for t <= 0 for delays on the non-negative
   * reals.
   *
   * The exponential is the gamma with shape 1. The normal with
-  * z = (t - mu) / sigma has G_1 = sigma (phi(z) + z Phi(z)) and
-  * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)).
+  * z = (t - mu) / sigma has G_1 = sigma (phi(z) + z Phi(z)),
+  * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)) and
+  * G_3 = sigma^3 (z (z^2 + 3) Phi(z) + (z^2 + 2) phi(z)).
   *
   * @param t Point
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
   *   (Normal), see check_for_tilt_transform()
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
-  * @return Vector [log G_1(t), log G_2(t)]
+  * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
   */
 vector primarycensored_tilt_moments(real t, int dist_id,
                                     array[] real params) {
   if (dist_id == 2) {
-    if (t <= 0) return rep_vector(negative_infinity(), 2);
+    if (t <= 0) return rep_vector(negative_infinity(), 3);
     return primarycensored_gamma_tilt_moments(t, params[1], params[2]);
   } else if (dist_id == 4) {
-    if (t <= 0) return rep_vector(negative_infinity(), 2);
+    if (t <= 0) return rep_vector(negative_infinity(), 3);
     return primarycensored_gamma_tilt_moments(t, 1, params[1]);
   } else if (dist_id == 18) {
     real mu = params[1];
@@ -361,18 +370,27 @@ vector primarycensored_tilt_moments(real t, int dist_id,
     real log_Phi = primarycensored_log_std_normal_cdf(z);
     real log_g1;
     real log_g2;
+    real log_g3;
     if (z > -1) {
       // The direct form has a derivative at z = 0, unlike the log form
       log_g1 = log(exp(log_phi) + z * exp(log_Phi));
       log_g2 = log((square(z) + 1) * exp(log_Phi) + z * exp(log_phi));
+      log_g3 = log(
+        (square(z) + 2) * exp(log_phi) + z * (square(z) + 3) * exp(log_Phi)
+      );
     } else {
       // The terms have opposite signs, so the log form keeps the tail
       log_g1 = primarycensored_log_diff_exp(log_phi, log(-z) + log_Phi);
       log_g2 = primarycensored_log_diff_exp(
         log1p(square(z)) + log_Phi, log(-z) + log_phi
       );
+      log_g3 = primarycensored_log_diff_exp(
+        log(square(z) + 2) + log_phi, log(-z) + log(square(z) + 3) + log_Phi
+      );
     }
-    return [log(sigma) + log_g1, 2 * log(sigma) + log_g2]';
+    return [
+      log(sigma) + log_g1, 2 * log(sigma) + log_g2, 3 * log(sigma) + log_g3
+    ]';
   }
   reject("Invalid distribution identifier: ", dist_id);
 }

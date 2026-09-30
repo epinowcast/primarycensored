@@ -30,8 +30,8 @@
 #'   tilted delay distribution exists for `xi`, otherwise the numerical
 #'   method is used.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
-#' * `.pcens_tilt_moments()`: a matrix of the log of the first and second
-#'   moments of the delay about `t`, see [pcens_cdf_exptilt].
+#' * `.pcens_tilt_moments()`: a matrix of the log of the first, second and
+#'   third moments of the delay about `t`, see [pcens_cdf_exptilt].
 #'
 #' @keywords internal
 #' @name tilt_transform
@@ -234,14 +234,14 @@ NULL
 
 #' Log moments of a gamma delay about a point
 #'
-#' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2`,
+#' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2, 3`,
 #' from gamma CDFs with the shape raised by `k`.
 #'
 #' @param t Numeric vector of finite points.
 #'
 #' @param shape,rate Gamma delay parameters.
 #'
-#' @return A matrix with columns `G1` and `G2`, `-Inf` for `t <= 0`.
+#' @return A matrix with columns `G1`, `G2` and `G3`, `-Inf` for `t <= 0`.
 #'
 #' @noRd
 .gamma_moments <- function(t, shape, rate) {
@@ -253,12 +253,18 @@ NULL
     stats::pgamma(tp, shape + 1, rate, log.p = TRUE)
   log_m2 <- log(shape) + log(shape + 1) - 2 * log(rate) +
     stats::pgamma(tp, shape + 2, rate, log.p = TRUE)
+  log_m3 <- log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate) +
+    stats::pgamma(tp, shape + 3, rate, log.p = TRUE)
   log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
   log_h <- .log_diff_exp(log_t + log_m1, log_m2)
   log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
+  log_a <- .log_diff_exp(log_t + log_m2, log_m3)
+  log_b <- .log_diff_exp(log_t + log_h, log_a)
+  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
   cbind(
     G1 = ifelse(positive, log_g1, -Inf),
-    G2 = ifelse(positive, log_g2, -Inf)
+    G2 = ifelse(positive, log_g2, -Inf),
+    G3 = ifelse(positive, log_g3, -Inf)
   )
 }
 
@@ -295,5 +301,18 @@ NULL
     .log_diff_exp(log(z^2 + 1) + log_Phi, log_abs_z + log_phi),
     .log_sum_exp(log(z^2 + 1) + log_Phi, log_abs_z + log_phi)
   )
-  cbind(G1 = log(p$sd) + log_g1, G2 = 2 * log(p$sd) + log_g2)
+  log_g3 <- ifelse(
+    below,
+    .log_diff_exp(
+      log(z^2 + 2) + log_phi, log_abs_z + log(z^2 + 3) + log_Phi
+    ),
+    .log_sum_exp(
+      log(z^2 + 2) + log_phi, log_abs_z + log(z^2 + 3) + log_Phi
+    )
+  )
+  cbind(
+    G1 = log(p$sd) + log_g1,
+    G2 = 2 * log(p$sd) + log_g2,
+    G3 = 3 * log(p$sd) + log_g3
+  )
 }

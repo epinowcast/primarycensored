@@ -28,18 +28,22 @@ int check_for_exptilt(int dist_id, int primary_id) {
 }
 
 /**
-  * Check if the small tilt forms replace the direct form
+  * Check if the small window form replaces the direct form
   * @ingroup exponential_tilt_solutions
   *
-  * The direct form cancels as rho goes to zero, see ?pcens_cdf_exptilt.
+  * The direct form cancels as rho goes to zero, see ?pcens_cdf_exptilt. The
+  * limit on |rho| * pwindow is 1e-2 for delays on the non-negative reals and
+  * 1e-5 for delays on the reals.
   *
+  * @param dist_id Distribution identifier
   * @param rho Tilt
   * @param pwindow Primary event window
   *
-  * @return 1 if |rho| * pwindow is below 1e-4, 0 otherwise
+  * @return 1 if |rho| * pwindow is below the limit, 0 otherwise
   */
-int exptilt_is_small_window(real rho, data real pwindow) {
-  return abs(rho) * pwindow < 1e-4;
+int exptilt_is_small_window(int dist_id, real rho, data real pwindow) {
+  return abs(rho) * pwindow
+         < (dist_has_positive_support(dist_id) ? 1e-2 : 1e-5);
 }
 
 /**
@@ -55,12 +59,12 @@ int exptilt_is_small_window(real rho, data real pwindow) {
   * @param pwindow Primary event window
   *
   * @return 1 if the delay has non-negative support, d < pwindow and
-  * |rho| * d is below 1e-4, 0 otherwise
+  * |rho| * d is below 1e-2, 0 otherwise
   */
 int exptilt_is_small_delay(int dist_id, real rho, data real d,
                            data real pwindow) {
   return dist_has_positive_support(dist_id) && d < pwindow
-         && abs(rho) * d < 1e-4;
+         && abs(rho) * d < 1e-2;
 }
 
 /**
@@ -153,12 +157,14 @@ real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
   * Combine the moments at d and q into the small tilt log CDF
   * @ingroup exponential_tilt_solutions
   *
-  * The uniform window limit with its first order correction in the tilt,
+  * The uniform window limit with its corrections to second order in the tilt,
   * for exptilt_is_small_window() is 1. With G_k(t) = int (t - u)^k f(u) du,
   *   F_rho(d) = (G_1(d) - G_1(q)) / w
-  *     + rho (G_2(d) - w G_1(d) - G_2(q) - w G_1(q)) / (2 w).
+  *     + rho (G_2(d) - w G_1(d) - G_2(q) - w G_1(q)) / (2 w)
+  *     + rho^2 ((G_3(d) - G_3(q)) / 6 - w (G_2(d) + G_2(q)) / 4
+  *              + w^2 (G_1(d) - G_1(q)) / 12) / w.
   *
-  * @param moments_d Moments [log G_1, log G_2] at d from
+  * @param moments_d Moments [log G_1, log G_2, log G_3] at d from
   *   primarycensored_tilt_moments()
   * @param moments_q Moments at q = d - pwindow
   * @param rho Tilt
@@ -174,8 +180,13 @@ real primarycensored_exptilt_small_window_lcdf_from_terms(
   real g1_q = exp(moments_q[1] - scale);
   real g2_d = exp(moments_d[2] - scale);
   real g2_q = exp(moments_q[2] - scale);
+  real g3_d = exp(moments_d[3] - scale);
+  real g3_q = exp(moments_q[3] - scale);
   real relative = (1 - g1_q)
-                  + 0.5 * rho * (g2_d - pwindow - g2_q - pwindow * g1_q);
+                  + 0.5 * rho * (g2_d - pwindow - g2_q - pwindow * g1_q)
+                  + square(rho) * ((g3_d - g3_q) / 6
+                                   - pwindow * (g2_d + g2_q) / 4
+                                   + square(pwindow) * (1 - g1_q) / 12);
   if (relative <= 0) return negative_infinity();
   return fmin(scale + log(relative) - log(pwindow), 0);
 }
@@ -185,9 +196,10 @@ real primarycensored_exptilt_small_window_lcdf_from_terms(
   * @ingroup exponential_tilt_solutions
   *
   * For exptilt_is_small_delay() is 1 the terms at d - pwindow are zero and
-  * F_rho(d) = rho (G_1(d) + rho G_2(d) / 2) / (exp(rho w) - 1).
+  * F_rho(d) = rho (G_1(d) + rho G_2(d) / 2 + rho^2 G_3(d) / 6) /
+  *   (exp(rho w) - 1).
   *
-  * @param moments_d Moments [log G_1, log G_2] at d from
+  * @param moments_d Moments [log G_1, log G_2, log G_3] at d from
   *   primarycensored_tilt_moments()
   * @param rho Tilt, not zero
   * @param pwindow Primary event window
@@ -202,7 +214,8 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
                          : log1m_exp(rho * pwindow);
   return fmin(
     moments_d[1] + log(abs(rho)) - log_den
-    + log1p(0.5 * rho * exp(moments_d[2] - moments_d[1])),
+    + log1p(0.5 * rho * exp(moments_d[2] - moments_d[1])
+            + square(rho) * exp(moments_d[3] - moments_d[1]) / 6),
     0
   );
 }
@@ -233,7 +246,7 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   }
   if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
-  if (exptilt_is_small_window(rho, pwindow)) {
+  if (exptilt_is_small_window(dist_id, rho, pwindow)) {
     return primarycensored_exptilt_small_window_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params),
       primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
@@ -302,9 +315,9 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
   // Endpoints below 0 share the entry for 0 for non-negative delays
   int first = positive ? max(start - pw, 0) : start - pw;
   vector[n] log_cdfs;
-  if (exptilt_is_small_window(rho, pwindow)) {
+  if (exptilt_is_small_window(dist_id, rho, pwindow)) {
     // moments[t - first + 1] holds the moments at endpoint t
-    array[n - first + 1] vector[2] moments;
+    array[n - first + 1] vector[3] moments;
     for (t in first:n) {
       moments[t - first + 1] = primarycensored_tilt_moments(
         t, dist_id, params

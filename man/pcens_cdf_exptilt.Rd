@@ -57,26 +57,33 @@ gamma with shape below 1.
 
 The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
-replace it.
+replace it to second order in \eqn{\rho}.
 \itemize{
-\item For \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
-order correction in \eqn{\rho},
+\item For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-5}} for delays on
+the reals, the uniform window limit with its corrections,
 \eqn{\{G_1(q) - G_1(q - w)\} / w +
-  \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w)}.
+  \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
+  \rho^2 \{G_3(q) - G_3(q - w) - 3 w [G_2(q) + G_2(q - w)] / 2 +
+  w^2 [G_1(q) - G_1(q - w)] / 2\} / (6 w)}.
 \item For delays on the non-negative reals with \eqn{q < w} and
-\eqn{|\rho| q < 10^{-4}},
-\eqn{\rho \{G_1(q) + \rho G_2(q) / 2\} / (e^{\rho w} - 1)}.
+\eqn{|\rho| q < 10^{-2}},
+\eqn{\rho \{G_1(q) + \rho G_2(q) / 2 + \rho^2 G_3(q) / 6\} /
+  (e^{\rho w} - 1)}.
 }
 
-The value of both forms has a truncation error below 1e-9.
-The Stan gradient in \eqn{\rho} of both has a relative error of up to
-about 2e-5 at the thresholds.
+The truncation error of both forms is about \eqn{(|\rho| w)^4 / 10}, below
+3e-8 at their limits.
+The direct form loses about 1e-14 / \eqn{|\rho| w} for delays on the
+reals, which is why their limit is lower.
+For a gamma delay it also loses accuracy in proportion to the shape.
+The CDF stays within a relative 1e-6 of numerical integration for shapes
+up to 5000 and \eqn{|\rho|} from 1e-5 and loses accuracy above this.
 
 The CDF agrees with numerical integration to a relative difference of
-about 1e-9 or better, except in the deep lower tail of a normal delay with
-a small tilt (about 1e-7) and for windows much smaller than the delay,
-which lose up to about 1e-13 / \code{pwindow} to the difference of the terms at
-the two endpoints.
+about 1e-9 or better in the bulk and the tails, except in the deep lower
+tail of a normal delay with a small tilt (about 1e-7), for windows much
+smaller than the delay, which lose up to about 1e-13 / \code{pwindow} to the
+difference of the terms at the two endpoints, and for the cases above.
 }
 \examples{
 # Exponential delay with a growing primary event process
