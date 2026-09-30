@@ -45,7 +45,8 @@ test_that("tilt transforms match numerical integration of the density", {
       "normal mean 3" = function(u) dnorm(u, 3, 2),
       "normal mean -1" = function(u) dnorm(u, -1, 3)
     )
-    lower_end <- if (family$positive) 0 else -Inf
+    # The integrand of the normal is not finite at -Inf
+    lower_end <- if (family$positive) 0 else -60
     for (xi in xis) {
       if (family$positive && family$rate - xi <= 0) {
         expect_false(.pcens_tilt_available(obj, xi), info = family$label)
@@ -240,7 +241,8 @@ test_that("the analytic CDF is a CDF", {
       q <- seq(-2, 60, by = 0.25)
       result <- pcens_cdf(obj, q, 3)
       expect_true(all(result >= 0 & result <= 1))
-      expect_false(is.unsorted(result))
+      # Rounding can make the upper tail decrease by about 1e-14
+      expect_gte(min(diff(result)), -1e-12)
     }
   }
 })
