@@ -164,7 +164,7 @@ pcens_cdf.default <- function(
 #' @return Numeric vector of break points inside `(0, pwindow)`, possibly
 #'   empty.
 #'
-#' @keywords internal
+#' @noRd
 .primary_spike_breaks <- function(object, pwindow) {
   is_tlogis <- identical(object$dprimary, dtlogis) ||
     endsWith(class(object)[1L], "_dtlogis")

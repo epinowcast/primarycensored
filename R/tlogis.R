@@ -76,7 +76,7 @@ NULL
 #'
 #' @return `NULL` invisibly. Called for its error.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_check <- function(min, max, location, scale) {
   if (anyNA(min) || anyNA(max) || any(min >= max)) {
     stop("min must be less than max.", call. = FALSE)
@@ -102,7 +102,7 @@ NULL
 #'
 #' @return Numeric vector of log differences, `-Inf` where they are zero.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_log_diff <- function(lo, hi, location, scale) {
   n <- max(length(lo), length(hi), length(location), length(scale))
   lo <- rep_len(lo, n)

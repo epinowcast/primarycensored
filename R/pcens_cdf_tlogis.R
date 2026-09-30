@@ -122,25 +122,20 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Number of terms and taper of a series for the truncated logistic window
 #'
-#' The series \eqn{\sum (-x)^n c_n} is summed with the weights of
-#' [.tlogis_weights()], 1 for the first `n0` terms and then tapering to 0
-#' over `M` more. The error of the weighted sum of the geometric series for
-#' one \eqn{x} is \eqn{x^{n_0} ((1 - x) / 2)^M / (1 + x)}, see
-#' [pcens_cdf_tlogis]. Its largest value over \eqn{[x_{lo}, x_{hi}]} is at the
-#' point \eqn{n_0 / (n_0 + M)} clipped to the range, and at \eqn{x_{lo}} for
-#' \eqn{n_0 = 0}. This searches the plain partial sum and two tapers for the
-#' fewest terms with that bound below the tolerance.
+#' Searches the plain partial sum and two tapers for the fewest terms whose
+#' bound on the error, see [pcens_cdf_tlogis], is below the tolerance for
+#' every x in the range.
 #'
-#' @param log_lo,log_hi Log of the smallest and largest \eqn{x} of the series.
+#' @param log_lo,log_hi Log of the smallest and largest x of the series.
 #'
-#' @param log_tol Log of the tolerance on the bound of the error.
+#' @param log_tol Log of the tolerance.
 #'
 #' @param max_terms The most terms allowed.
 #'
-#' @return An integer vector with elements `n0` and `M`, or `NULL` if no rule
-#'   with at most `max_terms` terms meets the tolerance.
+#' @return An integer vector `c(n0, M)`, or `NULL` if no rule meets the
+#'   tolerance.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_series_terms <- function(log_lo, log_hi, log_tol,
                                  max_terms = .tlogis_max_terms) {
   if (!is.finite(log_tol)) {
@@ -182,18 +177,13 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Weights of the terms of a series of the truncated logistic window
 #'
-#' The weights of the average of the partial sums \eqn{S_{n_0}, \ldots,
-#' S_{n_0 + M}} with Binomial(\eqn{M}, 1/2) weights. They are 1 for
-#' \eqn{n < n_0} and the probability that the Binomial is more than
-#' \eqn{n - n_0} for the rest.
+#' 1 for the first `n0` terms, then the upper tail of a Binomial(`M`, 1/2).
 #'
-#' @param n0 Number of terms with weight 1, at least 0.
-#'
-#' @param M Number of terms that taper to 0, at least 0.
+#' @param n0,M Number of terms with weight 1 and number that taper to 0.
 #'
 #' @return A numeric vector of length `n0 + M`.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_weights <- function(n0, M) {
   c(
     rep(1, n0),
@@ -203,25 +193,17 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Plan the series for a truncated logistic primary
 #'
-#' Finds which series the primary event censored CDF needs for the window and
-#' location and scale of `object`, with the terms and weights of each, and
-#' whether the delay has the transforms they need.
-#'
 #' @param object A `pcens` object with a [dtlogis()] primary.
 #'
 #' @param pwindow Primary event window.
 #'
-#' @return `NULL` if the analytical solution does not apply, which is where
-#'   the window is not a single positive finite number, no truncation rule
-#'   exists or a tilt of the series is not available for the delay, see
-#'   [.pcens_tilt_available()]. Otherwise a list with the `location`,
-#'   `scale`, `pwindow`, the log mass `log_mass` of the window, the point
-#'   `split` of the window where the expansion changes and up to two
-#'   series, `pos` for the positive tilts and `neg` for the negative tilts.
-#'   Each series is a list with its `form`, the first tilt index `first`, the
-#'   number of terms `n0` and `M` and the `weights` of the terms.
+#' @return `NULL` if the analytical solution does not apply, otherwise a list
+#'   with the primary parameters, the log mass of the window, the split
+#'   point of the window and the series `pos` and `neg` of positive and
+#'   negative tilts, each with its `form`, first tilt index `first`, `n0`, `M`
+#'   and `weights`.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_plan <- function(object, pwindow) {
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0) {
     return(NULL)
@@ -252,11 +234,10 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @param log_mass Log of the mass of the window.
 #'
-#' @return `NULL` if a series that is needed has no truncation rule. Otherwise
-#'   a list with the series `pos` and `neg`, each `NULL` where the window does
-#'   not need it, see [.tlogis_plan()].
+#' @return `NULL` if a series that is needed has no truncation rule, otherwise
+#'   a list with the series `pos` and `neg`, each `NULL` if not needed.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_plan_series <- function(location, scale, pwindow, log_mass) {
   log_tol <- log(.tlogis_tol) + log_mass
   series <- function(form, first, log_lo, log_hi) {
@@ -296,20 +277,15 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Check the delay has the tilts of the truncated logistic series
 #'
-#' The series run to the tilts \eqn{\pm (\text{first} + n_0 + M - 1) / s}. The
-#' exponential and gamma delays need the positive one to be below their rate.
-#'
 #' @param object A `pcens` object.
 #'
-#' @param series List with the series `pos` and `neg`, see
-#'   [.tlogis_plan_series()].
+#' @param series List with the series `pos` and `neg`.
 #'
 #' @param scale Scale of the primary.
 #'
-#' @return `TRUE` if [.pcens_tilt_available()] is `TRUE` for the largest tilt
-#'   of each series, otherwise `FALSE`.
+#' @return `TRUE` if the largest tilt of each series is available.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_tilts_available <- function(object, series, scale) {
   largest <- function(x) (x$first + x$n0 + x$M - 1L) / scale
   (is.null(series$pos) ||
@@ -324,7 +300,7 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @return A list with `location` and `scale`, defaulting as in [dtlogis()].
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_primary_args <- function(object) {
   m <- object$primary_args$location
   s <- object$primary_args$scale
@@ -360,7 +336,7 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @return Vector of computed primary event censored CDFs.
 #'
-#' @keywords internal
+#' @noRd
 .pcens_cdf_tlogis <- function(object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
@@ -385,11 +361,11 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @param q Numeric vector of finite quantiles.
 #'
-#' @param plan The plan from [.tlogis_plan()].
+#' @param plan The plan from `.tlogis_plan()`.
 #'
 #' @return Vector of CDFs, clamped to \[0, 1\].
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_cdf_finite <- function(object, q, plan) {
   lower <- .pcens_tilt_lower(object)
   positive <- is.finite(lower)
@@ -413,21 +389,15 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Small delay form of the truncated logistic log CDF
 #'
-#' For delays on the non-negative reals with `q` below the window and
-#' \eqn{q / s} below 1e-4 only the primary event times \eqn{p \le q}
-#' contribute and \eqn{L(p) - L(0)} is expanded in \eqn{p}. With
-#' \eqn{G_k(q) = \int_0^q (q - u)^k f(u) du},
-#' \deqn{F_L(q) = \{L'(0) G_1(q) + L''(0) G_2(q) / 2\} / D_L + O((q / s)^2),}
-#' where \eqn{L'(0) = \sigma_0 / s}, \eqn{L''(0) = L'(0) (1 - 2 L(0)) / s}
-#' and \eqn{\sigma_0 = L(0) (1 - L(0))}. The direct form cancels here, losing
-#' about 1e-16 s / q of relative precision, while the truncation error of this
-#' form is about \eqn{(q / s)^2 / 6}. Both are below 1e-8 at the threshold.
+#' For delays on the non-negative reals with `q / scale` below 1e-4 the
+#' direct form cancels, so `L(p) - L(0)` is expanded to second order in `p`.
+#' The truncation error is about `(q / scale)^2 / 6`.
 #'
 #' @inheritParams .tlogis_cdf_finite
 #'
 #' @return Vector of log CDFs.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_lcdf_small_delay <- function(object, q, plan) {
   s <- plan$scale
   moments <- .pcens_tilt_moments(object, q)
@@ -443,9 +413,8 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Transforms of a delay at the endpoints of a truncated logistic series
 #'
-#' Evaluates the transforms at the unique endpoints, with all the endpoints
-#' at or below the lower end of the support sharing one entry, so each is
-#' computed once however many `q` use it.
+#' Evaluates the transforms at the unique endpoints, so each is computed once
+#' however many `q` use it.
 #'
 #' @param object A `pcens` object.
 #'
@@ -453,12 +422,11 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @param xi Numeric vector of tilts.
 #'
-#' @return A list with the sorted unique endpoints `t`, and the matrices
-#'   `lower` and `upper` of the log transforms over the lower and the upper
-#'   part of the support, with a row for each endpoint and a column for each
-#'   tilt.
+#' @return A list with the sorted unique endpoints `t` and the matrices
+#'   `lower` and `upper` of the log transforms, a row for each endpoint and a
+#'   column for each tilt.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_endpoint_terms <- function(object, t, xi) {
   lower <- .pcens_tilt_lower(object)
   if (is.finite(lower)) {
@@ -483,20 +451,18 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Log of the difference of a transform between two endpoints
 #'
-#' Evaluates \eqn{\log(T_f(\xi; hi) - T_f(\xi; lo))} for each tilt of
-#' `terms` and each pair of `lo` and `hi`, from the lower or the upper
-#' transforms, whichever loses less precision, see `.exptilt_tail_diff()`.
+#' Uses the lower or the upper transforms, whichever loses less precision.
 #'
-#' @param terms Output of [.tlogis_endpoint_terms()].
+#' @param terms Output of `.tlogis_endpoint_terms()`.
 #'
-#' @param lo,hi Numeric vectors of the ends of the intervals, `lo <= hi`,
-#'   that are among the endpoints of `terms`.
+#' @param lo,hi Numeric vectors of interval ends among the endpoints of
+#'   `terms`.
 #'
 #' @param lower Lower end of the support of the delay.
 #'
 #' @return A matrix with a row for each interval and a column for each tilt.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_endpoint_diff <- function(terms, lo, hi, lower) {
   if (is.finite(lower)) {
     lo <- pmax(lo, lower)
@@ -516,33 +482,27 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Weighted alternating sum of the terms of a series
 #'
-#' Evaluates \eqn{\sum_n (-1)^n W_n c_n} from the log of the terms \eqn{c_n}.
-#' The terms are scaled by `scale` so nothing underflows or overflows.
-#'
 #' @param log_terms Matrix of the log of the terms, a row for each `q`.
 #'
 #' @param weights Numeric vector of the weights, one for each column.
 #'
-#' @param scale Numeric vector of the log scale of each row, finite.
+#' @param scale Numeric vector of the log scale of each row.
 #'
 #' @return Numeric vector of the sums divided by `exp(scale)`.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_weighted_sum <- function(log_terms, weights, scale) {
   signs <- rep_len(c(1, -1), length(weights))
   drop(exp(log_terms - scale) %*% (signs * weights))
 }
 
-#' Truncated logistic log CDF
-#'
-#' The direct form, from the series of the plan. Each series gives a part of
-#' the integral \eqn{\Phi} on its own scale, see [pcens_cdf_tlogis].
+#' Truncated logistic log CDF, direct form
 #'
 #' @inheritParams .tlogis_cdf_finite
 #'
 #' @return Vector of log CDFs.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_lcdf <- function(object, q, plan) {
   lower <- .pcens_tilt_lower(object)
   a <- q - plan$pwindow
@@ -574,11 +534,6 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Part of the truncated logistic integral for a location before the window
 #'
-#' For \eqn{m < 0} the whole window is above the location and
-#' \eqn{\Phi = \sum_{n \ge 1} (-1)^{n - 1} e^{n m / s}
-#' \{\Delta F(a, b) - e^{-n q / s} \Delta T(n / s; a, b)\}}, with the
-#' terms weighted by the plan.
-#'
 #' @inheritParams .tlogis_cdf_finite
 #'
 #' @param a Numeric vector of the lower ends of the integral, `q - pwindow`.
@@ -588,7 +543,7 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @return A list with the `sum` of the part and the log `scale` it is in.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_part_before_window <- function(object, q, a, plan, diff_f) {
   lower <- .pcens_tilt_lower(object)
   s <- plan$scale
@@ -606,19 +561,13 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Part of the truncated logistic integral above the location
 #'
-#' For \eqn{0 \le m < w}, the part of the window with primary event time
-#' above the location, between `a` and \eqn{u^\star = q - m}, is
-#' \eqn{\Phi_P = \sum_{n \ge 0} (-1)^n e^{-n (q - m) / s}
-#' \Delta T(n / s; a, u^\star) - L(0) \Delta F(a, u^\star)}, with the terms
-#' weighted by the plan.
-#'
 #' @inheritParams .tlogis_part_before_window
 #'
-#' @param u Numeric vector of the split points \eqn{u^\star = q - m}.
+#' @param u Numeric vector of the split points `q - location`.
 #'
 #' @inherit .tlogis_part_before_window return
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_part_above <- function(object, q, a, u, plan, diff_f) {
   lower <- .pcens_tilt_lower(object)
   m <- plan$location
@@ -639,17 +588,11 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 #' Part of the truncated logistic integral below the location
 #'
-#' For \eqn{m > 0}, the part of the window with primary event time below the
-#' location, between \eqn{u^\star = q - \min(m, w)} and `q`, is
-#' \eqn{\Phi_N = \sum_{n \ge 1} (-1)^{n - 1} e^{-n m / s}
-#' \{e^{n q / s} \Delta T(-n / s; u^\star, b) - \Delta F(u^\star, b)\}},
-#' with the terms weighted by the plan.
-#'
 #' @inheritParams .tlogis_part_above
 #'
 #' @inherit .tlogis_part_before_window return
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_part_below <- function(object, q, u, plan, diff_f) {
   lower <- .pcens_tilt_lower(object)
   s <- plan$scale
@@ -673,7 +616,7 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #'
 #' @inherit .tlogis_part_before_window return
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_weighted_part <- function(log_c, weights) {
   scale <- .tlogis_row_max(log_c)
   list(sum = .tlogis_weighted_sum(log_c, weights, scale), scale = scale)
@@ -686,7 +629,7 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #' @return Numeric vector of the maximum of each row, with rows of only
 #'   `-Inf` given a finite value so they scale to zero.
 #'
-#' @keywords internal
+#' @noRd
 .tlogis_row_max <- function(x) {
   out <- apply(x, 1L, max)
   out[!is.finite(out)] <- 0
