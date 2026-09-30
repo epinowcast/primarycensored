@@ -9,124 +9,43 @@
 #' @inheritParams pcens_cdf
 #'
 #' @details
-#' With the window width \eqn{w}, delay CDF \eqn{F} and the transform
-#' \eqn{J(x) = T_f(-\rho; x)} of [tilt_transform], the primary event censored
-#' CDF at \eqn{q} is
+#' With window width \eqn{w}, delay CDF \eqn{F} and the transform
+#' \eqn{J(x) = T_f(-\rho; x)} of [tilt_transform], the CDF at \eqn{q} is
 #' \deqn{
 #' F_\rho(q) = F(q - w) + \frac{e^{\rho q} \{J(q) - J(q - w)\} -
-#'   \{F(q) - F(q - w)\}}{e^{\rho w} - 1},
+#'   \{F(q) - F(q - w)\}}{e^{\rho w} - 1}.
 #' }
-#' which is the same as the expression of
-#' \eqn{\{e^{\rho w} F(q - w) - F(q) + e^{\rho q} (J(q) - J(q - w))\} /
-#' (e^{\rho w} - 1)}.
-#' For delays on the non-negative reals \eqn{F(x) = J(x) = 0} for
-#' \eqn{x \le 0}. The normal delay has full support and its transforms start
-#' at \eqn{-\infty}.
-#' All terms depend on one endpoint, \eqn{q} or \eqn{q - w}, so each
-#' endpoint is evaluated once and reused when several `q` share an endpoint,
-#' as for the integer delays of [pcens_pmf()].
+#' Every term depends on one endpoint, \eqn{q} or \eqn{q - w}, so each
+#' endpoint is evaluated once and shared between neighbouring `q`.
+#' Terms are on the log scale, and each difference is taken between the lower
+#' or the upper tail terms, whichever loses less precision.
 #'
-#' Closed forms of the transform, for \eqn{\xi = -\rho}:
-#' * Exponential with rate \eqn{\lambda}:
-#'   \eqn{T_f(\xi; \tau) = \lambda / (\lambda - \xi)
-#'   \{1 - e^{-(\lambda - \xi) \tau}\}}.
-#' * Gamma with shape \eqn{\alpha} and rate \eqn{\lambda}:
-#'   \eqn{T_f(\xi; \tau) = (\lambda / (\lambda - \xi))^\alpha
-#'   P(\alpha, (\lambda - \xi) \tau)} with \eqn{P} the regularised lower
-#'   incomplete gamma function.
-#' * Normal with mean \eqn{\mu} and standard deviation \eqn{\sigma}:
-#'   \eqn{T_f(\xi; \tau) = e^{\xi \mu + \xi^2 \sigma^2 / 2}
-#'   \Phi((\tau - \mu - \xi \sigma^2) / \sigma)}.
+#' The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
+#' \eqn{\lambda}, so that the tilted delay distribution exists.
+#' Otherwise the numerical method is used.
+#' In Stan the numerical method is less accurate in the lower tail of a
+#' gamma with shape below 1.
 #'
-#' The terms are evaluated on the log scale, and differences are taken
-#' between the lower or the upper tail representations, whichever loses less
-#' precision, see `.log_diff_exp()`. Results agree with numerical integration
-#' to a relative difference of about 1e-9 or better away from the two regimes
-#' listed under **Precision**.
+#' The direct form cancels as \eqn{\rho \to 0}.
+#' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
+#' replace it.
+#' * For \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
+#'   order correction in \eqn{\rho},
+#'   \eqn{\{G_1(q) - G_1(q - w)\} / w +
+#'   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w)}.
+#' * For delays on the non-negative reals with \eqn{q < w} and
+#'   \eqn{|\rho| q < 10^{-4}},
+#'   \eqn{\rho \{G_1(q) + \rho G_2(q) / 2\} / (e^{\rho w} - 1)}.
 #'
-#' **Admissibility.** The exponential and gamma forms need
-#' \eqn{\lambda - \xi = \lambda + \rho > 0}, so that the tilted delay
-#' distribution exists. Otherwise the method falls back to
-#' [pcens_cdf.default()] for every `q`. The normal form has no restriction.
-#' In Stan the fallback is the ODE, whose accuracy is lower in the lower tail
-#' of a gamma with a shape below 1, where the density is singular at 0. For
-#' shape 0.3 with \eqn{\rho = -1} and rate 1 the relative error of the ODE is
-#' about 4e-2 at \eqn{q = 10^{-6}} and \eqn{10^{-3}}, against 2e-5 for the
-#' numerical method in R. Stable forms for these tilts, such as
-#' the expm1 closed form for the exponential and a Kummer series for the gamma,
-#' are not implemented, see #388.
+#' The value of both forms has a truncation error below 1e-9.
+#' The Stan gradient in \eqn{\rho} of both has a relative error of up to
+#' about 2e-5 at the thresholds.
 #'
-#' **Tilts close to zero.** The expression above cancels as \eqn{\rho \to 0}.
-#' Two forms replace it where the cancellation would lose precision. With
-#' \eqn{G_k(t) = \int (t - u)^k f(u) du} over the support up to \eqn{t}:
-#' * If \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
-#'   order correction in \eqn{\rho} is used,
-#'   \deqn{F_\rho(q) = \frac{G_1(q) - G_1(q - w)}{w} +
-#'     \rho \frac{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)}{2 w} +
-#'     O((\rho w)^2).}
-#'   At \eqn{\rho = 0} this is the uniform window solution.
-#' * For delays on the non-negative reals with \eqn{q < w}, where
-#'   \eqn{F(q - w) = J(q - w) = 0}, and \eqn{|\rho| q < 10^{-4}}, the form
-#'   \eqn{F_\rho(q) = \rho \{G_1(q) + \rho G_2(q) / 2\} /
-#'   (e^{\rho w} - 1) + O((\rho q)^2)} is used. It keeps precision for `q`
-#'   close to zero.
-#'
-#' Away from these regions the error of the direct form is below 1e-9. The
-#' truncation error of the two forms is below 1e-9 at their thresholds.
-#'
-#' **Precision.** The R CDF agrees with numerical integration (`integrate()`
-#' at a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
-#' better for delays that are not deep in the tails. For tilts close to zero
-#' the upper tail, \eqn{1 - F_\rho(q)}, has an absolute difference of up to
-#' about \eqn{10^{-15} G_1(q) / w}, which is about 1e-14 for `pwindow = 1`
-#' and up to about 1e-11 for `pwindow = 1e-3`.
-#' The Stan CDF agrees to a relative difference of about 1e-9 or better for
-#' windows of 0.5 or more, and of up to about 5e-9 for windows of 1e-3 with
-#' delays up to 25.
-#' The Stan gradients of the gamma solution are exact for any shape. The
-#' incomplete gamma function is taken from a series below the shape and from
-#' a continued fraction above it, as the shape derivatives of Stan's
-#' `gamma_lcdf()` and `gamma_lccdf()` are inaccurate in parts of the bulk
-#' and NaN for shapes of about 200 or more.
-#' The normal solution takes the lower tail beyond 37 standard deviations from
-#' an asymptotic series for the same reason.
-#' Three regimes are less accurate.
-#' * The small window form for a normal delay in the deep lower tail, about 30
-#'   to 35 standard deviations below the mean, has a relative error of up to
-#'   about 1e-7 in both R and Stan (3e-8 at 35 standard deviations for
-#'   `pwindow = 1e-3`).
-#' * A window much smaller than the delay loses precision to the difference of
-#'   the terms at its two ends, up to about 1e-13 / `pwindow` in relative
-#'   terms, as the uniform window solutions do. The first order correction of
-#'   the small window form adds about \eqn{|\rho| q} times that. For a gamma
-#'   delay with shape 2.5 and rate 0.4 and `pwindow = 1e-8` the relative error
-#'   is 6e-7 for \eqn{\rho = 0.5} and 6e-5 for \eqn{\rho = 50}. Use
-#'   `pwindow = 0` for a primary event at a known time.
-#' * The small tilt forms have a Stan gradient in \eqn{\rho} that is less
-#'   accurate than their value, which has a truncation error below 1e-9. The
-#'   second order term of the expansion is not included. The relative error
-#'   of the derivative in \eqn{\rho} is about \eqn{|\rho| w / 6} for the
-#'   small window form, and of at most the same order in \eqn{|\rho| q} for
-#'   the small delay form. It is up to about 2e-5 at the thresholds of
-#'   \eqn{10^{-4}}. The gradients in the delay parameters have the error of
-#'   the value.
-#'
-#' **Speed.** For many values of `q` the analytical method is faster than
-#' `use_numeric = TRUE`, as each endpoint is evaluated once. It is about 2 to
-#' 2.5 times faster for 10 values and about 10 to 17 times faster for 100
-#' values. For a single `q` it is about 1.5 to 3 times slower, as the call
-#' evaluates four transforms at two endpoints. It is kept for single values
-#' as it is accurate where the numerical method has errors of up to 1e-2 in
-#' the tails of a normal delay.
-#'
-#' **Extending.** A new delay distribution is supported by defining
-#' `.pcens_tilt_lower()`, `.pcens_tilt_available()`, `.pcens_tilt_transform()`
-#' and, for the small tilt forms, `.pcens_tilt_moments()` for its class, and
-#' a `pcens_cdf` method for the class that calls `.pcens_cdf_exptilt()`. See
-#' [tilt_transform]. Other primary event windows reuse the same transforms
-#' with their own tilts and coefficients.
-#'
-#' @family pcens
+#' The CDF agrees with numerical integration to a relative difference of
+#' about 1e-9 or better, except in the deep lower tail of a normal delay with
+#' a small tilt (about 1e-7) and for windows much smaller than the delay,
+#' which lose up to about 1e-13 / `pwindow` to the difference of the terms at
+#' the two endpoints.
 #'
 #' @inherit pcens_cdf return
 #'
@@ -188,22 +107,19 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
 }
 
-# Tilts with |rho| times the window (or q) below this use the small tilt
-# forms. The direct form loses about 1e-14 / (|rho| w) of relative precision
-# and the small tilt forms have a truncation error of about (|rho| w)^2 / 12,
-# which balance at about 1e-4 with both below 1e-9.
+# The direct form loses about 1e-14 / (|rho| w) and the small tilt forms
+# have a truncation error of about (|rho| w)^2 / 12, which balance near 1e-4
 .exptilt_small <- 1e-4
 
 #' Primary event censored CDF for an exponentially tilted primary
 #'
-#' Shared implementation of the [pcens_cdf_exptilt] methods. It dispatches
-#' on the delay class of `object` through the generics of [tilt_transform].
+#' Shared implementation of the [pcens_cdf_exptilt] methods.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @return Vector of computed primary event censored CDFs.
+#' @return Vector of CDFs.
 #'
-#' @keywords internal
+#' @noRd
 .pcens_cdf_exptilt <- function(object, q, pwindow, use_numeric = FALSE) {
   if (isTRUE(use_numeric)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
@@ -223,7 +139,6 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
       call. = FALSE
     )
   }
-  # The closed forms are for a single window and need the tilted delay
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0 ||
     !.pcens_tilt_available(object, -rho)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
@@ -241,22 +156,18 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Exponentially tilted CDF at finite points
 #'
-#' Chooses the form for each `q` and evaluates the transforms at the unique
-#' endpoints the forms need.
-#'
 #' @inheritParams pcens_cdf
 #'
 #' @param rho The tilt, the `r` of the exponential growth primary.
 #'
 #' @return Vector of CDFs, clamped to \[0, 1\].
 #'
-#' @keywords internal
+#' @noRd
 .exptilt_cdf_finite <- function(object, q, pwindow, rho) {
   lower <- .pcens_tilt_lower(object)
   positive <- is.finite(lower)
   log_cdf <- rep(-Inf, length(q))
 
-  # Below the support of the delay no mass has arrived
   active <- !positive | q > lower
   if (abs(rho) * pwindow < .exptilt_small) {
     small_window <- active
@@ -286,12 +197,9 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   pmin(1, exp(log_cdf))
 }
 
-#' Endpoints at which an exponentially tilted CDF needs the transforms
+#' Unique endpoints `q` and `q - pwindow` at which the transforms are needed
 #'
-#' The CDF at `q` needs the terms at `q` and at `q - pwindow`. The union is
-#' taken so each endpoint is evaluated once, even where neighbouring `q`
-#' share one. For delays with support bounded below, all endpoints at or
-#' below `lower` have the same terms and share one entry.
+#' Endpoints at or below a finite `lower` share one entry.
 #'
 #' @param q Numeric vector of finite quantiles.
 #'
@@ -299,10 +207,9 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @param lower Lower end of the support of the delay, 0 or `-Inf`.
 #'
-#' @return Sorted numeric vector of unique endpoints. The first is `lower`
-#'   if it is finite.
+#' @return Sorted numeric vector of unique endpoints.
 #'
-#' @keywords internal
+#' @noRd
 .exptilt_endpoints <- function(q, pwindow, lower) {
   endpoints <- sort.int(unique(c(q, q - pwindow)))
   if (is.finite(lower)) {
@@ -315,13 +222,11 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @param t Numeric vector of endpoints.
 #'
-#' @inheritParams .exptilt_endpoints
-#'
-#' @param endpoints Output of `.exptilt_endpoints()`.
+#' @param endpoints,lower As for `.exptilt_endpoints()`.
 #'
 #' @return Integer vector of positions.
 #'
-#' @keywords internal
+#' @noRd
 .exptilt_index <- function(t, endpoints, lower) {
   if (is.finite(lower)) {
     t <- pmax(t, lower)
@@ -331,22 +236,15 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Direct form of the exponentially tilted log CDF
 #'
-#' Evaluates
-#' \eqn{F(q - w) + \{e^{\rho q} (J(q) - J(q - w)) - (F(q) - F(q - w))\} /
-#' (e^{\rho w} - 1)} on the log scale from the transforms at the endpoints.
-#' Each of the differences \eqn{F(q) - F(q - w)} and
-#' \eqn{J(q) - J(q - w)} is taken between the lower tail terms or between the
-#' upper tail terms, whichever has the smaller ratio of the two terms.
-#' This avoids cancellation in the upper tail, where for positive tilts
-#' \eqn{e^{\rho q} J(q)} is much larger than the result.
+#' The expression of [pcens_cdf_exptilt] on the log scale.
 #'
-#' @inheritParams .exptilt_cdf_finite
+#' @param object A `pcens` object.
 #'
-#' @param lower Lower end of the support of the delay.
+#' @param q,pwindow,rho,lower As for `.exptilt_cdf_finite()`.
 #'
 #' @return Vector of log CDFs.
 #'
-#' @keywords internal
+#' @noRd
 .exptilt_lcdf_direct <- function(object, q, pwindow, rho, lower) {
   endpoints <- .exptilt_endpoints(q, pwindow, lower)
   endpoint_terms <- cbind(
@@ -381,22 +279,18 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Log of a difference between two points from either tail
 #'
-#' For a lower tail quantity `L` and upper tail quantity `U` with
-#' `L(t) + U(t)` constant, the difference `L(q) - L(y)` equals
-#' `U(y) - U(q)`. The relative precision of a difference is best when the
-#' subtracted term is small, so this takes the representation with the smaller
-#' ratio of the terms.
+#' With `L(t) + U(t)` constant, `L(q) - L(y)` equals `U(y) - U(q)`.
+#' This uses the form with the smaller ratio of the terms.
 #'
-#' @param lower_q,lower_y Log lower tail quantity at `q` and at `y`.
-#'
-#' @param upper_q,upper_y Log upper tail quantity at `q` and at `y`.
+#' @param lower_q,lower_y,upper_q,upper_y Log lower and upper tail
+#'   quantities at `q` and `y`.
 #'
 #' @return Vector of the log differences.
 #'
-#' @keywords internal
+#' @noRd
 .exptilt_tail_diff <- function(lower_q, lower_y, upper_q, upper_y) {
   use_upper <- lower_y - lower_q > upper_q - upper_y
-  # Terms that underflow on both sides give NaN, which is a zero difference
+  # NaN from terms that underflow on both sides is a zero difference
   use_upper[is.na(use_upper)] <- FALSE
   out <- .log_diff_exp(lower_q, lower_y)
   if (any(use_upper)) {
@@ -407,15 +301,11 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Small window form of the exponentially tilted log CDF
 #'
-#' The uniform window limit with its first order correction in the tilt,
-#' used for \eqn{|\rho| w < 10^{-4}}. It needs only the moments
-#' \eqn{G_1} and \eqn{G_2} at the endpoints, see [pcens_cdf_exptilt].
+#' Used for \eqn{|\rho| w < 10^{-4}}, see [pcens_cdf_exptilt].
 #'
 #' @inheritParams .exptilt_lcdf_direct
 #'
-#' @return Vector of log CDFs.
-#'
-#' @keywords internal
+#' @noRd
 .exptilt_lcdf_small_window <- function(object, q, pwindow, rho, lower) {
   endpoints <- .exptilt_endpoints(q, pwindow, lower)
   moments <- .pcens_tilt_moments(object, endpoints)
@@ -423,7 +313,7 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   at_y <- moments[.exptilt_index(q - pwindow, endpoints, lower), ,
     drop = FALSE
   ]
-  # Scale by G_1(q) so nothing underflows when the CDF is small
+  # Scaled by G_1(q) to avoid underflow for small CDFs
   scale <- at_q[, 1]
   g1_y <- exp(at_y[, 1] - scale)
   g2_q <- exp(at_q[, 2] - scale)
@@ -437,15 +327,12 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Small delay form of the exponentially tilted log CDF
 #'
-#' For delays on the non-negative reals with `q < pwindow` and
-#' \eqn{|\rho| q < 10^{-4}}, where the terms at `q - pwindow` are zero.
-#' See [pcens_cdf_exptilt].
+#' Used for delays on the non-negative reals with `q < pwindow` and
+#' \eqn{|\rho| q < 10^{-4}}, see [pcens_cdf_exptilt].
 #'
 #' @inheritParams .exptilt_lcdf_direct
 #'
-#' @return Vector of log CDFs.
-#'
-#' @keywords internal
+#' @noRd
 .exptilt_lcdf_tiny_delay <- function(object, q, pwindow, rho) {
   moments <- .pcens_tilt_moments(object, q)
   if (rho > 0) {
