@@ -148,6 +148,42 @@ test_that("Stan tilt transforms match the R transforms", {
   }
 })
 
+test_that("Stan gamma tilt transforms are accurate in both tails", {
+  # Only the smaller tail is evaluated and the other follows from it, so this
+  # covers the switch at the median for small and large shapes. Stan returns
+  # -Inf where a term is below the smallest double, where R gives the log.
+  ts <- 10^seq(-8, 4, by = 0.5)
+  for (shape in c(0.05, 0.3, 1, 7, 100, 1000)) {
+    obj <- new_pcens(
+      pgamma, dexpgrowth, list(r = 0.1),
+      shape = shape, rate = 1.7
+    )
+    params <- c(shape, 1.7)
+    for (xi in c(0, -0.5, 0.9)) {
+      for (upper in c(FALSE, TRUE)) {
+        stan_fun <- if (upper) log_tilt_transform_upper else log_tilt_transform
+        actual <- vapply(
+          ts, stan_fun, numeric(1), 2L, xi, params
+        )
+        expected <- .pcens_tilt_transform(obj, ts, xi, upper = upper)
+        # The total is always defined so compare the values that Stan keeps
+        keep <- is.finite(actual)
+        expect_equal(
+          actual[keep], expected[keep],
+          tolerance = 1e-9,
+          info = sprintf("shape %g, xi %g, upper %s", shape, xi, upper)
+        )
+        # The transforms of a gamma with a large total can be representable
+        # a little below the smallest probability
+        expect_true(
+          all(expected[!keep] < -600),
+          info = sprintf("shape %g, xi %g, upper %s", shape, xi, upper)
+        )
+      }
+    }
+  }
+})
+
 test_that("Stan tilt transforms are 0 or the total below the support", {
   for (case in exptilt_stan_cases[c(2, 4)]) {
     for (t in c(-3, -1e-9, 0)) {
@@ -263,7 +299,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
     lower <- exptilt_case_lower(case)
     cdf <- exptilt_case_cdf(case)
     for (pwindow in c(1, 3)) {
-      for (rho in c(-0.2, 1e-8, 0.4)) {
+      for (rho in c(-1, -0.5, -1e-8, 1e-8, 0.5, 1)) {
         if (case$dist_id != 18L &&
           exptilt_case_rate(case) + rho <= 0) {
           next
@@ -590,13 +626,26 @@ exptilt_gradient_at <- function(model, case, d, pwindow, rho,
 
 # Stan's gamma_lcdf has a gradient in the shape with a relative error of
 # about 1e-3, and of 1e-2 when the shape is large relative to the point
-# (for example shape 20 at 2), so gamma delays are compared to a looser
-# tolerance and the shape 20 case is left out. The points are also not at a
-# switch between forms, as finite differences would step across it.
+# (for example shape 20 at 2), so the shape is compared to a looser tolerance
+# for gamma delays and the shape 20 case is left out. The points are also not
+# at a switch between forms, as finite differences would step across it.
 exptilt_gradient_cases <- exptilt_stan_cases[c(1, 2, 3, 4, 6, 7)]
 
-exptilt_gradient_tolerance <- function(case) {
-  if (case$dist_id == 2L) 3e-3 else 1e-4
+# Compares the gradient with the finite difference gradient one component at a
+# time, relative to the size of the component with a floor for tiny ones.
+expect_gradient_close <- function(res, case, label, scale = 1) {
+  tolerance <- rep(1e-4, 3) * scale
+  if (case$dist_id == 2L) {
+    tolerance[1] <- 2e-2
+  }
+  allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2)
+  testthat::expect_true(
+    all(abs(res$gradient - res$finite_diff) <= allowed),
+    info = paste0(
+      label, ": gradient ", toString(signif(res$gradient, 5)),
+      ", finite difference ", toString(signif(res$finite_diff, 5))
+    )
+  )
 }
 
 test_that("tilted log CDFs have finite gradients matching finite
@@ -634,12 +683,9 @@ test_that("tilted log CDFs have finite gradients matching finite
       expect_false(res$rejected, info = label)
       expect_length(res$gradient, 3)
       expect_true(all(is.finite(res$gradient)), info = label)
-      expect_equal(
-        res$gradient, res$finite_diff,
-        tolerance = max(
-          exptilt_gradient_tolerance(case), point$tolerance
-        ),
-        info = label
+      expect_gradient_close(
+        res, case, label,
+        scale = if (is.null(point$scale)) 1 else point$scale
       )
     }
   }
@@ -657,7 +703,7 @@ test_that("the vectorised tilted log PMF has finite gradients matching
     list(d = 12, pwindow = 3, rho = 0.4),
     list(d = 12, pwindow = 3, rho = -0.15),
     list(d = 6, pwindow = 2, rho = 1e-6),
-    list(d = 6, pwindow = 10, rho = 1.5e-5, tolerance = 5e-4)
+    list(d = 6, pwindow = 10, rho = 1.5e-5, scale = 5)
   )
   for (case in exptilt_gradient_cases[c(2, 4, 5)]) {
     for (point in points) {
@@ -676,12 +722,9 @@ test_that("the vectorised tilted log PMF has finite gradients matching
       expect_false(res$gradient_not_finite, info = label)
       expect_false(res$rejected, info = label)
       expect_true(all(is.finite(res$gradient)), info = label)
-      expect_equal(
-        res$gradient, res$finite_diff,
-        tolerance = max(
-          exptilt_gradient_tolerance(case), point$tolerance
-        ),
-        info = label
+      expect_gradient_close(
+        res, case, label,
+        scale = if (is.null(point$scale)) 1 else point$scale
       )
     }
   }

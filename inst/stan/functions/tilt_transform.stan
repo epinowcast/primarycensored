@@ -8,9 +8,9 @@
  * event window fixes the tilts xi and the coefficients. The delay
  * distribution fixes whether T_f is closed form, and these functions are
  * the extension points for new delay distributions. A delay is added by a
- * branch in check_for_tilt_transform(), log_tilt_transform(),
- * log_tilt_transform_upper() and, for the small tilt forms of the
- * exponentially tilted window, primarycensored_tilt_moments().
+ * branch in check_for_tilt_transform(), log_tilt_transform_pair() and, for
+ * the small tilt forms of the exponentially tilted window,
+ * primarycensored_tilt_moments().
  * The R equivalents are the `.pcens_tilt_*()` generics.
  */
 
@@ -61,9 +61,11 @@ real primarycensored_log_std_normal_cdf(real z) {
   * Underflow of `gamma_p` makes `gamma_lcdf` `-inf` with an autodiff partial
   * that is not finite, which Stan's reverse pass chains into the parameters.
   * Callers test this before calling `gamma_lcdf`, rather than checking the
-  * result. It uses P(shape, x) <= x^shape / Gamma(shape + 1), and a margin
-  * below the smallest double, so a term dropped on this test cannot change a
-  * result at double precision.
+  * result. For x < shape + 1 it uses the bound
+  * P(shape, x) <= x^shape exp(-x) / (Gamma(shape + 1) (1 - x / (shape + 1)))
+  * with a margin below the smallest double, so a term dropped on this test is
+  * below 1e-300 of a probability. The transforms of a gamma with a large total
+  * can be representable below that, and are then dropped with it.
   *
   * @param x Point, positive
   * @param shape Shape
@@ -72,7 +74,9 @@ real primarycensored_log_std_normal_cdf(real z) {
   *   0 otherwise
   */
 int gamma_lcdf_underflows(real x, real shape) {
-  return shape * log(x) - lgamma(shape + 1) < -700;
+  if (x >= shape + 1) return 0;
+  return shape * log(x) - lgamma(shape + 1) - x - log1m(x / (shape + 1))
+         < -700;
 }
 
 /**
@@ -120,11 +124,107 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
 }
 
 /**
+  * Test whether the lower tail of a gamma is the smaller one
+  * @ingroup tilt_transforms
+  *
+  * The lower and the upper tail sum to one, so one is computed directly and
+  * the other from it by log1m_exp(), which is exact when the direct one is
+  * at most about a half. This chooses by the Wilson-Hilferty approximation
+  * to the median, and by the small shape limit of the median for a shape
+  * below 0.5, where that approximation fails. Either choice is valid near the
+  * median.
+  *
+  * @param x Point, positive
+  * @param shape Shape
+  *
+  * @return 1 if x is below the approximate median, 0 otherwise
+  */
+int gamma_lower_tail_is_smaller(real x, real shape) {
+  if (shape < 0.5) return log(x) < (lgamma(shape + 1) - log2()) / shape;
+  return cbrt(x / shape) < 1 - 1 / (9 * shape);
+}
+
+/**
+  * Log of the tilt transform over the lower and the upper part of the support
+  * @ingroup tilt_transforms
+  *
+  * The lower transform is T_f(xi; t). For xi = 0 it is the log CDF of the
+  * delay. For delays on the non-negative reals it is `-inf` for t <= 0. The
+  * upper transform is T_f(xi; Inf) - T_f(xi; t), the log of the total for
+  * t <= 0 for those delays. Evaluating the tail directly keeps precision
+  * where the lower transform is close to its total, see
+  * primarycensored_tail_diff(). Only defined where check_for_tilt_transform()
+  * is 1.
+  *
+  * For the gamma the tilted density is a gamma density with the rate lowered
+  * by xi, times the total (rate / (rate - xi))^shape. Only the smaller of its
+  * two tails is evaluated, see gamma_lower_tail_is_smaller(), and the other
+  * follows from it, which halves the cost of the incomplete gamma function
+  * and of its derivative in the shape. For the exponential
+  * T_f = rate / (rate - xi) (1 - exp(-(rate - xi) t)). For the normal,
+  * completing the square gives a normal density with mean mu + xi sigma^2.
+  *
+  * @param t Point
+  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
+  *   (Normal), see check_for_tilt_transform()
+  * @param xi Tilt
+  * @param params Array of distribution parameters, as for dist_lcdf()
+  *
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
+  */
+vector log_tilt_transform_pair(real t, int dist_id, real xi,
+                               array[] real params) {
+  if (dist_id == 2) {
+    real shape = params[1];
+    real rate = params[2];
+    real tilted_rate = rate - xi;
+    real log_total = shape * (log(rate) - log(tilted_rate));
+    if (t <= 0) return [negative_infinity(), log_total]';
+    real x = t * tilted_rate;
+    if (gamma_lcdf_underflows(x, shape)) {
+      return [negative_infinity(), log_total]';
+    }
+    // Beyond the point where the upper tail underflows the CDF is 1
+    if (gamma_lccdf_underflows(x, shape)) {
+      return [log_total, negative_infinity()]';
+    }
+    if (gamma_lower_tail_is_smaller(x, shape)) {
+      real log_lower = gamma_lcdf(x | shape, 1);
+      return [log_total + log_lower, log_total + log1m_exp(log_lower)]';
+    }
+    real log_upper = gamma_lccdf(x | shape, 1);
+    return [log_total + log1m_exp(log_upper), log_total + log_upper]';
+  } else if (dist_id == 4) {
+    real rate = params[1];
+    real tilted_rate = rate - xi;
+    real log_total = log(rate) - log(tilted_rate);
+    if (t <= 0) return [negative_infinity(), log_total]';
+    return [
+      log_total + log1m_exp(-tilted_rate * t), log_total - tilted_rate * t
+    ]';
+  } else if (dist_id == 18) {
+    // The upper tail is the lower tail of the reflected normal, as
+    // normal_lccdf() is -inf beyond 8.25 standard deviations, where the
+    // standard normal upper tail is still representable
+    real mu = params[1];
+    real sigma = params[2];
+    real z = (t - mu - xi * square(sigma)) / sigma;
+    real log_total = xi * mu + 0.5 * square(xi * sigma);
+    return [
+      log_total + primarycensored_log_std_normal_cdf(z),
+      log_total + primarycensored_log_std_normal_cdf(-z)
+    ]';
+  }
+  reject("Invalid distribution identifier: ", dist_id);
+}
+
+/**
   * Log of the tilt transform over the lower part of the support
   * @ingroup tilt_transforms
   *
   * For xi = 0 this is the log CDF of the delay. For delays on the
-  * non-negative reals it is `-inf` for t <= 0.
+  * non-negative reals it is `-inf` for t <= 0. See
+  * log_tilt_transform_pair(), which also gives the upper part.
   *
   * @param t Upper limit of the transform
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
@@ -135,36 +235,7 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * @return log T_f(xi; t)
   */
 real log_tilt_transform(real t, int dist_id, real xi, array[] real params) {
-  if (dist_id == 2) {
-    // The tilted density is a gamma density with the rate lowered by xi,
-    // times the total (rate / (rate - xi))^shape
-    if (t <= 0) return negative_infinity();
-    real shape = params[1];
-    real rate = params[2];
-    real tilted_rate = rate - xi;
-    real log_total = shape * (log(rate) - log(tilted_rate));
-    if (gamma_lcdf_underflows(t * tilted_rate, shape)) {
-      return negative_infinity();
-    }
-    // Beyond the point where the upper tail underflows the CDF is 1
-    if (gamma_lccdf_underflows(t * tilted_rate, shape)) return log_total;
-    return log_total + gamma_lcdf(t * tilted_rate | shape, 1);
-  } else if (dist_id == 4) {
-    // T_f = rate / (rate - xi) (1 - exp(-(rate - xi) t))
-    if (t <= 0) return negative_infinity();
-    real rate = params[1];
-    real tilted_rate = rate - xi;
-    return log(rate) - log(tilted_rate) + log1m_exp(-tilted_rate * t);
-  } else if (dist_id == 18) {
-    // Completing the square gives a normal density with mean mu + xi sigma^2
-    real mu = params[1];
-    real sigma = params[2];
-    return xi * mu + 0.5 * square(xi * sigma)
-           + primarycensored_log_std_normal_cdf(
-               (t - mu - xi * square(sigma)) / sigma
-             );
-  }
-  reject("Invalid distribution identifier: ", dist_id);
+  return log_tilt_transform_pair(t, dist_id, xi, params)[1];
 }
 
 /**
@@ -174,7 +245,8 @@ real log_tilt_transform(real t, int dist_id, real xi, array[] real params) {
   * The log of T_f(xi; Inf) - T_f(xi; t). Evaluating the tail directly keeps
   * precision where log_tilt_transform() is close to its total. For delays on
   * the non-negative reals it is the log of the total for t <= 0. Only
-  * defined where check_for_tilt_transform() is 1.
+  * defined where check_for_tilt_transform() is 1. See
+  * log_tilt_transform_pair().
   *
   * @param t Lower limit of the transform
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
@@ -186,34 +258,7 @@ real log_tilt_transform(real t, int dist_id, real xi, array[] real params) {
   */
 real log_tilt_transform_upper(real t, int dist_id, real xi,
                               array[] real params) {
-  if (dist_id == 2) {
-    real shape = params[1];
-    real rate = params[2];
-    real tilted_rate = rate - xi;
-    real log_total = shape * (log(rate) - log(tilted_rate));
-    if (t <= 0) return log_total;
-    if (gamma_lccdf_underflows(t * tilted_rate, shape)) {
-      return negative_infinity();
-    }
-    return log_total + gamma_lccdf(t * tilted_rate | shape, 1);
-  } else if (dist_id == 4) {
-    real rate = params[1];
-    real tilted_rate = rate - xi;
-    real log_total = log(rate) - log(tilted_rate);
-    if (t <= 0) return log_total;
-    return log_total - tilted_rate * t;
-  } else if (dist_id == 18) {
-    // normal_lccdf() is -inf beyond 8.25 standard deviations, where the
-    // standard normal upper tail is still representable, so use the
-    // symmetry Q(z) = Phi(-z)
-    real mu = params[1];
-    real sigma = params[2];
-    return xi * mu + 0.5 * square(xi * sigma)
-           + primarycensored_log_std_normal_cdf(
-               (mu + xi * square(sigma) - t) / sigma
-             );
-  }
-  reject("Invalid distribution identifier: ", dist_id);
+  return log_tilt_transform_pair(t, dist_id, xi, params)[2];
 }
 
 /**

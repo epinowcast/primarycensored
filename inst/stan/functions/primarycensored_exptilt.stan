@@ -93,12 +93,10 @@ int exptilt_is_small_delay(int dist_id, real rho, data real d,
   */
 vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
                                      array[] real params) {
-  return [
-    log_tilt_transform(t, dist_id, 0, params),
-    log_tilt_transform_upper(t, dist_id, 0, params),
-    log_tilt_transform(t, dist_id, -rho, params),
-    log_tilt_transform_upper(t, dist_id, -rho, params)
-  ]';
+  return append_row(
+    log_tilt_transform_pair(t, dist_id, 0, params),
+    log_tilt_transform_pair(t, dist_id, -rho, params)
+  );
 }
 
 /**
