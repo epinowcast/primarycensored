@@ -10,6 +10,17 @@
   now uses `gamma_lcdf()`, which gives the same values. See
   [\#364](https://github.com/epinowcast/primarycensored/issues/364).
 
+### Performance
+
+- [`update()`](https://rdrr.io/r/stats/update.html) for `pcens` objects
+  has a new `check` argument. With `check = FALSE` the delay and primary
+  event arguments are merged into the object without validating their
+  names. The default, `check = TRUE`, is unchanged.
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md)
+  now uses `check = FALSE` for its likelihood evaluations, as the
+  parameter names are the same throughout a fit. See
+  [\#379](https://github.com/epinowcast/primarycensored/issues/379).
+
 ## primarycensored 1.6.0
 
 CRAN release: 2026-09-25

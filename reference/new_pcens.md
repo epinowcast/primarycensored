@@ -142,13 +142,13 @@ new_pcens(
 #>     }
 #>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)
 #> }
-#> <bytecode: 0x559c2c1cdb10>
+#> <bytecode: 0x55a095afe058>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary
 #> function (x, min = 0, max = 1, log = FALSE) 
 #> .Call(C_dunif, x, min, max, log)
-#> <bytecode: 0x559c257fc350>
+#> <bytecode: 0x55a09527d700>
 #> <environment: namespace:stats>
 #> 
 #> $primary_args
@@ -170,7 +170,7 @@ new_pcens(
 #> $pprimary
 #> function (q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE) 
 #> .Call(C_punif, q, min, max, lower.tail, log.p)
-#> <bytecode: 0x559c2c21a160>
+#> <bytecode: 0x55a095b32b58>
 #> <environment: namespace:stats>
 #> 
 #> $args

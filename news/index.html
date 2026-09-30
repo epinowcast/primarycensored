@@ -68,6 +68,11 @@
 <h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail. Reverse-mode <code>gamma_p()</code> in Stan drops its gradients there, so <code>log_weibull_g()</code> now uses <code>gamma_lcdf()</code>, which gives the same values. See <a href="https://github.com/epinowcast/primarycensored/issues/364" class="external-link">#364</a>.</li>
 </ul></div>
+<div class="section level3">
+<h3 id="performance-development-version">Performance<a class="anchor" aria-label="anchor" href="#performance-development-version"></a></h3>
+<ul><li>
+<code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> for <code>pcens</code> objects has a new <code>check</code> argument. With <code>check = FALSE</code> the delay and primary event arguments are merged into the object without validating their names. The default, <code>check = TRUE</code>, is unchanged. <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> now uses <code>check = FALSE</code> for its likelihood evaluations, as the parameter names are the same throughout a fit. See <a href="https://github.com/epinowcast/primarycensored/issues/379" class="external-link">#379</a>.</li>
+</ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="1.6.0" id="primarycensored-160">primarycensored 1.6.0<a class="anchor" aria-label="anchor" href="#primarycensored-160"></a></h2><p class="text-muted">CRAN release: 2026-09-25</p>

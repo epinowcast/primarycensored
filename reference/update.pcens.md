@@ -16,7 +16,7 @@ example posterior draws.
 
 ``` r
 # S3 method for class 'pcens'
-update(object, ..., primary_args = NULL)
+update(object, ..., primary_args = NULL, check = TRUE)
 ```
 
 ## Arguments
@@ -39,6 +39,13 @@ update(object, ..., primary_args = NULL)
   into `object$args`. Defaults to `NULL`, which leaves the primary event
   distribution arguments unchanged.
 
+- check:
+
+  Logical. If `FALSE`, skip validation of `...` and `primary_args`. Use
+  this when repeatedly updating one object with names that have already
+  been checked. As `check` comes after `...`, a delay parameter called
+  `check` cannot be set. Defaults to `TRUE`.
+
 ## Value
 
 A `pcens` object with the same class as `object` and updated `args`,
@@ -58,6 +65,11 @@ A name in `...` that is not already in `object$args` must be an argument
 of `object$pdist` other than its first, unless `pdist` takes `...`.
 Otherwise an error is raised. Names in `primary_args` are not checked
 against `dprimary`.
+
+With `check = FALSE` none of these checks are run. Unnamed and misspelt
+parameters are not detected. A fully unnamed `...` is ignored. Misspelt
+names are added to the object and only fail, or are ignored, when the
+object is evaluated.
 
 ## See also
 

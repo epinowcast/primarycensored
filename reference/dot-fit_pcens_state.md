@@ -3,7 +3,8 @@
 Builds a `pcens` object with
 [`.build_pcens()`](https://primarycensored.epinowcast.org/reference/dot-build_pcens.md),
 or, when `cache` already holds one, updates its delay parameters with
-[update()](https://primarycensored.epinowcast.org/reference/update.pcens.md).
+[update()](https://primarycensored.epinowcast.org/reference/update.pcens.md)
+and `check = FALSE`.
 
 ## Usage
 

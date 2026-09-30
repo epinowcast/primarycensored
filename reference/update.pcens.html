@@ -91,7 +91,7 @@ evaluated for many parameter sets, for example posterior draws.</p>
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="co"># S3 method for class 'pcens'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, primary_args <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/update.html" class="external-link">update</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, primary_args <span class="op">=</span> <span class="cn">NULL</span>, check <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -114,6 +114,13 @@ arguments. These are merged into <code>object$primary_args</code> in the same wa
 as <code>...</code> is merged into <code>object$args</code>. Defaults to <code>NULL</code>, which leaves
 the primary event distribution arguments unchanged.</p></dd>
 
+
+<dt id="arg-check">check<a class="anchor" aria-label="anchor" href="#arg-check"></a></dt>
+<dd><p>Logical. If <code>FALSE</code>, skip validation of <code>...</code> and
+<code>primary_args</code>. Use this when repeatedly updating one object with names
+that have already been checked. As <code>check</code> comes after <code>...</code>, a delay
+parameter called <code>check</code> cannot be set. Defaults to <code>TRUE</code>.</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -130,6 +137,11 @@ parameters. Parameters cannot be removed; use <code><a href="new_pcens.html">new
 of <code>object$pdist</code> other than its first, unless <code>pdist</code> takes <code>...</code>.
 Otherwise an error is raised. Names in <code>primary_args</code> are not checked
 against <code>dprimary</code>.</p>
+<p>With <code>check = FALSE</code> none of these checks are run.
+Unnamed and misspelt parameters are not detected.
+A fully unnamed <code>...</code> is ignored.
+Misspelt names are added to the object and only fail, or are ignored,
+when the object is evaluated.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
