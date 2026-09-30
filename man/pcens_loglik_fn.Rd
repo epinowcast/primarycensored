@@ -67,8 +67,7 @@ overridden by, the parameters given to the returned function.}
 
 \item{check}{Logical; if \code{TRUE} (the default) \code{dprimary} is validated with
 \code{\link[=check_dprimary]{check_dprimary()}} when the function is built, and \code{pdist} is validated
-with \code{\link[=check_pdist]{check_pdist()}} the first time the function is called, and again
-whenever it is called with a different set of parameter names. Set to
+with \code{\link[=check_pdist]{check_pdist()}} on the first call that gives a valid result. Set to
 \code{FALSE} to skip both.}
 }
 \value{
@@ -85,56 +84,36 @@ function of the delay distribution parameters. It is intended for use
 inside an optimiser or sampler, where the same data are evaluated many
 times with different parameters.
 The setup that \code{\link[=dprimarycensored]{dprimarycensored()}} repeats on every call is done once
-here. Observations are grouped by their censoring and truncation
-settings, \code{pdist} and \code{dprimary} are resolved and checked, and a \code{pcens}
-object is built.
-The points at which the CDF is needed and the positions used to difference
-and normalise it are also worked out.
-Each call then only updates the delay parameters and evaluates
-\code{\link[=pcens_cdf]{pcens_cdf()}} once for each unique primary event window.
+here.
 
 The returned function is called as \code{ll(...)} with the delay distribution
 parameters as named arguments, for example \code{ll(shape = 2, rate = 1)}.
 Each call starts from the fixed parameters given in \code{...} here, so
 parameters from an earlier call are not carried over.
-Parameter names are checked against \code{pdist} whenever they differ from the
-previous call, so a misspelt parameter raises an error and is never
-silently ignored.
+A misspelt parameter name raises an error.
+Repeated delays are evaluated once.
+The result matches \code{log(dprimarycensored())} called on each observation.
 
-Within each group of observations that share settings, the likelihood is
-evaluated once at each unique value of \code{x} and copied to the matching
-rows. This makes the cost depend on the number of unique delays rather
-than the number of observations, which helps most with daily data.
-The primary event censored CDF depends on the primary event window and the
-point only.
-The unique CDF points, including any finite \code{L} and \code{D}, are therefore
-pooled over all groups with the same \code{pwindow}, sorted and matched to the
-rows at construction.
-A call does one \code{\link[=pcens_cdf]{pcens_cdf()}} evaluation per unique \code{pwindow}, so each
-endpoint is evaluated once however many groups use it, and then
-differences, normalises and takes logs.
-This repeats the steps of \code{\link[=pcens_pmf]{pcens_pmf()}} that do not depend on the
-parameters, and gives the same values as \code{log(dprimarycensored())}
-called on each observation.
-
-Errors from \code{pdist}, for example for parameters outside its support, are
-not caught. Wrap the call in \code{tryCatch()} if an optimiser should see a
-missing value instead. Zero probabilities are returned as \code{-Inf}.
+Parameters that make \code{pdist} return \code{NaN} give \code{NaN}.
+Errors raised by \code{pdist} are not caught, so wrap the call in \code{tryCatch()}
+if an optimiser should see a missing value instead.
+Zero probabilities are returned as \code{-Inf}.
 
 The construction checks that every observation satisfies \verb{L <= x < D}.
-A single message is given when any secondary interval extends past \code{D}
-and is clipped at \code{D}. No message is given when the returned function is
-called.
+A message is given at construction when any secondary interval extends
+past \code{D}. None is given when the returned function is called.
 }
 \examples{
 set.seed(1)
 pw <- 2
 x <- rprimarycensored(
-  200, rlnorm, meanlog = 1.3, sdlog = 0.5,
+  200, rlnorm,
+  meanlog = 1.3, sdlog = 0.5,
   pwindow = pw, swindow = 1, D = 20
 )
 ll <- pcens_loglik_fn(
-  floor(x), plnorm, pwindow = pw, swindow = 1, D = 20
+  floor(x), plnorm,
+  pwindow = pw, swindow = 1, D = 20
 )
 # Log-likelihood contributions for one set of parameters
 head(ll(meanlog = 1.3, sdlog = 0.5))
@@ -158,9 +137,9 @@ ll_mixed(shape = 2, rate = 1)
 \code{\link[=dprimarycensored]{dprimarycensored()}} for a single evaluation, and \code{\link[=new_pcens]{new_pcens()}} and
 \link[=update.pcens]{update()} for the underlying objects.
 
-Modelling wrappers for external fitting packages
-\code{\link{fitdistdoublecens}()},
-\code{\link{pcd_as_stan_data}()},
-\code{\link{pcd_cmdstan_model}()}
+Modelling wrappers for external fitting packages:
+\code{\link[=fitdistdoublecens]{fitdistdoublecens()}},
+\code{\link[=pcd_as_stan_data]{pcd_as_stan_data()}},
+\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}}
 }
 \concept{modelhelpers}

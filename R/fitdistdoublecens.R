@@ -201,23 +201,22 @@
 #' )
 #' }
 fitdistdoublecens <- function(
-  censdata,
-  distr,
-  left = "left",
-  right = "right",
-  pwindow = "pwindow",
-  L = "L",
-  D = "D",
-  dprimary = dunif,
-  primary_args = NULL,
-  pprimary = NULL,
-  dprimary_args = NULL,
-  truncation_check_multiplier = 2,
-  prior = NULL,
-  hazard_model = c("rw", "re"),
-  check = TRUE,
-  ...
-) {
+    censdata,
+    distr,
+    left = "left",
+    right = "right",
+    pwindow = "pwindow",
+    L = "L",
+    D = "D",
+    dprimary = dunif,
+    primary_args = NULL,
+    pprimary = NULL,
+    dprimary_args = NULL,
+    truncation_check_multiplier = 2,
+    prior = NULL,
+    hazard_model = c("rw", "re"),
+    check = TRUE,
+    ...) {
   hazard_model <- match.arg(hazard_model)
   if (!requireNamespace("fitdistrplus", quietly = TRUE)) {
     stop(
@@ -420,16 +419,15 @@ fitdistdoublecens <- function(
 #'   `NULL` (the default) builds both on every call.
 #' @keywords internal
 .dpcens <- function(
-  x,
-  params,
-  pdist,
-  dprimary,
-  primary_args,
-  pprimary = NULL,
-  check = TRUE,
-  pcens_cache = NULL,
-  ...
-) {
+    x,
+    params,
+    pdist,
+    dprimary,
+    primary_args,
+    pprimary = NULL,
+    check = TRUE,
+    pcens_cache = NULL,
+    ...) {
   tryCatch(
     {
       # Validate once for the whole vector. `pdist` and `dprimary` are the

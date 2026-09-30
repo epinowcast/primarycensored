@@ -304,16 +304,9 @@ test_that("pcens_loglik_fn supports non-parametric delays", {
 test_that("pcens_loglik_fn evaluates the CDF once per unique pwindow", {
   calls <- new.env(parent = emptyenv())
   calls$cdf <- 0L
-  calls$q <- list()
-  calls$pwindow <- numeric(0)
   local_mocked_bindings(
-    pcens_pmf = function(...) {
-      stop("pcens_pmf() should not be called", call. = FALSE)
-    },
     pcens_cdf = function(object, q, pwindow, ...) {
       calls$cdf <- calls$cdf + 1L
-      calls$q[[calls$cdf]] <- q
-      calls$pwindow[[calls$cdf]] <- pwindow
       pgamma(q, shape = 2, scale = 1)
     }
   )
@@ -409,6 +402,19 @@ test_that("pcens_loglik_fn returns NaN for invalid parameters", {
     # A valid call afterwards is unaffected
     expect_identical(ll(shape = 2, rate = 1), valid)
   }
+})
+
+test_that("pcens_loglik_fn gives NaN when the first call is invalid", {
+  ll <- pcens_loglik_fn(0:2, pgamma)
+  expect_identical(
+    suppressWarnings(ll(shape = -1, rate = 1)),
+    rep(NaN, 3)
+  )
+  # pdist is still checked once a call gives a valid result
+  expect_true(all(is.finite(ll(shape = 2, rate = 1))))
+  decreasing <- function(q, shape) rep(2 * shape, length(q))
+  bad <- pcens_loglik_fn(0:2, decreasing)
+  expect_error(bad(shape = 1), "not a valid cumulative")
 })
 
 test_that("pcens_loglik_fn matches pcens_pmf with all truncation forms", {

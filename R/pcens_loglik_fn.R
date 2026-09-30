@@ -7,13 +7,7 @@
 #' inside an optimiser or sampler, where the same data are evaluated many
 #' times with different parameters.
 #' The setup that [dprimarycensored()] repeats on every call is done once
-#' here. Observations are grouped by their censoring and truncation
-#' settings, `pdist` and `dprimary` are resolved and checked, and a `pcens`
-#' object is built.
-#' The points at which the CDF is needed and the positions used to difference
-#' and normalise it are also worked out.
-#' Each call then only updates the delay parameters and evaluates
-#' [pcens_cdf()] once for each unique primary event window.
+#' here.
 #'
 #' @inheritParams dprimarycensored
 #'
@@ -32,8 +26,7 @@
 #'
 #' @param check Logical; if `TRUE` (the default) `dprimary` is validated with
 #'   [check_dprimary()] when the function is built, and `pdist` is validated
-#'   with [check_pdist()] the first time the function is called, and again
-#'   whenever it is called with a different set of parameter names. Set to
+#'   with [check_pdist()] on the first call that gives a valid result. Set to
 #'   `FALSE` to skip both.
 #'
 #' @details
@@ -41,34 +34,18 @@
 #' parameters as named arguments, for example `ll(shape = 2, rate = 1)`.
 #' Each call starts from the fixed parameters given in `...` here, so
 #' parameters from an earlier call are not carried over.
-#' Parameter names are checked against `pdist` whenever they differ from the
-#' previous call, so a misspelt parameter raises an error and is never
-#' silently ignored.
+#' A misspelt parameter name raises an error.
+#' Repeated delays are evaluated once.
+#' The result matches `log(dprimarycensored())` called on each observation.
 #'
-#' Within each group of observations that share settings, the likelihood is
-#' evaluated once at each unique value of `x` and copied to the matching
-#' rows. This makes the cost depend on the number of unique delays rather
-#' than the number of observations, which helps most with daily data.
-#' The primary event censored CDF depends on the primary event window and the
-#' point only.
-#' The unique CDF points, including any finite `L` and `D`, are therefore
-#' pooled over all groups with the same `pwindow`, sorted and matched to the
-#' rows at construction.
-#' A call does one [pcens_cdf()] evaluation per unique `pwindow`, so each
-#' endpoint is evaluated once however many groups use it, and then
-#' differences, normalises and takes logs.
-#' This repeats the steps of [pcens_pmf()] that do not depend on the
-#' parameters, and gives the same values as `log(dprimarycensored())`
-#' called on each observation.
-#'
-#' Errors from `pdist`, for example for parameters outside its support, are
-#' not caught. Wrap the call in `tryCatch()` if an optimiser should see a
-#' missing value instead. Zero probabilities are returned as `-Inf`.
+#' Parameters that make `pdist` return `NaN` give `NaN`.
+#' Errors raised by `pdist` are not caught, so wrap the call in `tryCatch()`
+#' if an optimiser should see a missing value instead.
+#' Zero probabilities are returned as `-Inf`.
 #'
 #' The construction checks that every observation satisfies `L <= x < D`.
-#' A single message is given when any secondary interval extends past `D`
-#' and is clipped at `D`. No message is given when the returned function is
-#' called.
+#' A message is given at construction when any secondary interval extends
+#' past `D`. None is given when the returned function is called.
 #'
 #' @return A function of the delay distribution parameters that returns a
 #'   numeric vector of log-likelihood contributions, one per element of `x`
@@ -150,23 +127,29 @@ pcens_loglik_fn <- function(
   max_D <- if (n > 0L) max(D) else Inf
 
   # Parameter names are checked when they change, as `update()` with
-  # `check = FALSE` would otherwise hide a misspelt name.
+  # `check = FALSE` would otherwise hide a misspelt name. `pdist` is checked
+  # once a call gives a result without missing values, so invalid starting
+  # parameters give `NaN` rather than an error from `check_pdist()`.
   state <- new.env(parent = emptyenv())
   state$checked <- FALSE
   state$names <- NULL
+  state$pdist_pending <- isTRUE(check)
   function(...) {
     nms <- names(list(...))
     if (!state$checked || !identical(nms, state$names)) {
       obj <- update(base, ...)
-      if (isTRUE(check)) {
-        do.call(check_pdist, c(list(obj$pdist, D = max_D), obj$args))
-      }
       state$names <- nms
       state$checked <- TRUE
+      state$pdist_pending <- isTRUE(check)
     } else {
       obj <- update(base, ..., check = FALSE)
     }
-    log(.pcens_pmf_groups(obj, groups, n))
+    out <- log(.pcens_pmf_groups(obj, groups, n))
+    if (state$pdist_pending && !anyNA(out)) {
+      do.call(check_pdist, c(list(obj$pdist, D = max_D), obj$args))
+      state$pdist_pending <- FALSE
+    }
+    out
   }
 }
 
@@ -488,6 +471,10 @@ pcens_loglik_fn <- function(
 #' the set the group belongs to, and the positions needed to difference and
 #' normalise them from the group, rather than worked out on each call.
 #' A message about clipping at `D` is not given.
+#' The clipping at `D`, the normalisation by `F(D) - F(L)` and the
+#' non-negative clamp repeat [pcens_pmf()], and the input checks of
+#' [.check_row_inputs()] repeat [.check_truncation_bounds_df()] and the
+#' checks of [dprimarycensored()]. Keep them in step with those.
 #'
 #' @inheritParams .pcens_pmf_groups
 #'

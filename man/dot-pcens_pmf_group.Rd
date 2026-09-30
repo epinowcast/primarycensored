@@ -23,5 +23,9 @@ and copies them to the rows of the group. The CDF values are taken from
 the set the group belongs to, and the positions needed to difference and
 normalise them from the group, rather than worked out on each call.
 A message about clipping at \code{D} is not given.
+The clipping at \code{D}, the normalisation by \code{F(D) - F(L)} and the
+non-negative clamp repeat \code{\link[=pcens_pmf]{pcens_pmf()}}, and the input checks of
+\code{\link[=.check_row_inputs]{.check_row_inputs()}} repeat \code{\link[=.check_truncation_bounds_df]{.check_truncation_bounds_df()}} and the
+checks of \code{\link[=dprimarycensored]{dprimarycensored()}}. Keep them in step with those.
 }
 \keyword{internal}
