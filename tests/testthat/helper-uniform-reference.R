@@ -44,3 +44,29 @@ expect_rel_equal <- function(actual, expected, tolerance = 1e-9,
     info = paste(info, "far tail above the floor")
   )
 }
+
+# Log of the uniform primary event censored CDF from a delay log CDF `lp`
+#
+# The integral of F_T over [q, d] is taken relative to F_T(d), so it stays
+# representable when the CDF itself underflows. F_T is increasing, so the
+# integrand is largest at d. The range is split geometrically towards d to
+# resolve the narrow peak in the far lower tail. `lower` is the lower
+# bound of the delay support.
+reference_uniform_lcdf <- function(lp, d, pwindow, lower = 0) {
+  vapply(d, function(di) {
+    q <- max(di - pwindow, lower)
+    lp_d <- lp(di)
+    breaks <- sort(unique(c(q, di - (di - q) * 2^-(0:40), di)))
+    breaks <- breaks[breaks >= q & breaks <= di]
+    total <- 0
+    for (i in seq_len(length(breaks) - 1L)) {
+      total <- total + stats::integrate(
+        function(t) exp(vapply(t, lp, numeric(1)) - lp_d),
+        breaks[i], breaks[i + 1L],
+        rel.tol = 1e-13, abs.tol = 0, subdivisions = 500L,
+        stop.on.error = FALSE
+      )$value
+    }
+    lp_d + log(total) - log(pwindow)
+  }, numeric(1))
+}

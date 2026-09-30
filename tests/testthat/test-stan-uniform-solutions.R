@@ -941,3 +941,117 @@ test_that("the beta log CDF has a zero gradient once the window is above the
     }
   }
 })
+
+# Gamma and chi-square delays in the far lower tail, where the CDF is
+# below 1e-300 or where Stan's incomplete gamma has an inaccurate gradient.
+# The references integrate the R log CDF on the log scale, see
+# reference_uniform_lcdf().
+lower_tail_cases <- list(
+  list(
+    name = "gamma(1000, 100)", dist_id = 2L, params = c(1000, 100),
+    lp = function(t) pgamma(t, 1000, 100, log.p = TRUE),
+    delays = c(0.5, 1, 2)
+  ),
+  list(
+    name = "gamma(50, 0.5)", dist_id = 2L, params = c(50, 0.5),
+    lp = function(t) pgamma(t, 50, 0.5, log.p = TRUE),
+    delays = c(1e-6, 0.01, 1, 4)
+  ),
+  list(
+    name = "chi-square(400)", dist_id = 13L, params = 400,
+    lp = function(t) pchisq(t, 400, log.p = TRUE),
+    delays = c(0.5, 1, 3, 20)
+  ),
+  list(
+    name = "chi-square(100)", dist_id = 13L, params = 100,
+    lp = function(t) pchisq(t, 100, log.p = TRUE),
+    delays = c(1e-5, 0.1, 1, 10)
+  ),
+  list(
+    name = "chi-square(3)", dist_id = 13L, params = 3,
+    lp = function(t) pchisq(t, 3, log.p = TRUE),
+    delays = c(1e-6, 1e-3, 0.1)
+  )
+)
+
+test_that("the gamma and chi-square log CDF is exact deep in the lower tail,
+  never 0 or NaN", {
+  for (case in lower_tail_cases) {
+    for (pwindow in c(0.3, 1)) {
+      info <- paste(case$name, "pwindow", pwindow)
+      expected <- reference_uniform_lcdf(case$lp, case$delays, pwindow)
+      actual <- analytical_lcdf(
+        case$delays, case$dist_id, case$params, pwindow
+      )
+      expect_false(anyNA(actual), info = info)
+      expect_true(all(actual <= 0), info = info)
+      expect_equal(actual, expected, tolerance = 1e-8, info = info)
+      # `expect_equal()` is relative, so a log CDF of 0 against -1400 fails
+      # it, and this keeps the far tail from collapsing to the CDF of 1
+      far <- expected < -50
+      expect_true(all(actual[far] < -50), info = info)
+    }
+  }
+})
+
+test_that("the first interval PMF is exact for a gamma or chi-square delay
+  with a far lower tail, for the scalar and vectorised PMF", {
+  cases <- lower_tail_cases[c(1, 3)]
+  for (case in cases) {
+    expected <- reference_uniform_lcdf(case$lp, 1, 1)
+    scalar <- primarycensored_lpmf(
+      0L, case$dist_id, case$params, 1, 1, 0, Inf, 1L, numeric(0)
+    )
+    vectorised <- primarycensored_sone_lpmf_vectorized(
+      3, 0, Inf, case$dist_id, case$params, 1, 1L, numeric(0)
+    )
+    expect_equal(scalar, expected, tolerance = 1e-8, info = case$name)
+    expect_equal(vectorised[1], expected, tolerance = 1e-8, info = case$name)
+    expect_lt(scalar, -50)
+    expect_lt(vectorised[1], -50)
+    expect_false(anyNA(vectorised), info = case$name)
+  }
+})
+
+test_that("the gamma and chi-square lower tail gradients match finite
+  differences", {
+  model <- uniform_gradient_model()
+  cases <- list(
+    list(id = 13L, params = 20, delays = c(0.5, 2, 4, 10, 20)),
+    list(id = 13L, params = 40, delays = c(0.5, 1, 3, 5, 10, 15, 30)),
+    list(id = 13L, params = 100, delays = c(1, 10, 40, 80)),
+    list(id = 2L, params = c(20, 0.5), delays = c(0.5, 2, 4, 10, 20)),
+    list(id = 2L, params = c(10, 2), delays = c(0.1, 0.5, 1, 3, 8)),
+    list(id = 2L, params = c(1000, 100), delays = c(1, 4, 8, 10))
+  )
+  for (case in cases) {
+    for (d in case$delays) {
+      for (pwindow in c(0.5, 1, 3)) {
+        info <- sprintf(
+          "dist %d params = %s d = %g pwindow = %g", case$id,
+          toString(case$params), d, pwindow
+        )
+        res <- uniform_gradient_at(model, case$id, case$params, d, pwindow)
+        expect_false(res$rejected, info = info)
+        expect_false(res$gradient_not_finite, info = info)
+        expect_true(all(is.finite(res$gradient)), info = info)
+        expect_equal(
+          res$gradient, res$finite_diff, tolerance = 1e-4, info = info
+        )
+      }
+    }
+  }
+})
+
+test_that("the normal vectorised PMF is never NaN in the far upper tail", {
+  for (params in list(c(-3, 1), c(-6, 0.5), c(0, 1))) {
+    for (pwindow in c(1, 2)) {
+      pmf <- primarycensored_sone_lpmf_vectorized(
+        8, -Inf, 9, 18L, params, pwindow, 1L, numeric(0)
+      )
+      info <- paste("params", toString(params), "pwindow", pwindow)
+      expect_false(anyNA(pmf), info = info)
+      expect_true(all(pmf <= 0), info = info)
+    }
+  }
+})
