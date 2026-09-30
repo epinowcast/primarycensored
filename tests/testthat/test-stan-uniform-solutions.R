@@ -927,3 +927,17 @@ test_that("the analytical log CDF is never above 0", {
     }
   }
 })
+
+test_that("the beta log CDF has a zero gradient once the window is above the
+  support", {
+  model <- uniform_gradient_model()
+  for (pwindow in c(1, 2)) {
+    for (d in pwindow + c(1, 1.5, 6)) {
+      res <- uniform_gradient_at(model, 9L, c(2, 3), d, pwindow)
+      info <- sprintf("d = %g, pwindow = %g", d, pwindow)
+      expect_false(res$rejected, info = info)
+      expect_false(res$gradient_not_finite, info = info)
+      expect_identical(res$gradient, c(0, 0), info = info)
+    }
+  }
+})

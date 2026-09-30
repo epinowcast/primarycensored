@@ -137,7 +137,31 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   if (log_A == negative_infinity() && log_B == negative_infinity()) {
     return negative_infinity();
   }
-  return log_diff_exp(log_A, log_B) - log(pwindow);
+  // A and B are sums of rounded terms, so the difference can land a few ulp
+  // above 1 in the upper tail. A CDF is at most 1, so clamp the log at 0 to
+  // avoid a NaN from the log PMF differences.
+  return fmin(log_diff_exp(log_A, log_B) - log(pwindow), 0);
+}
+
+/**
+  * Check whether the uniform primary CDF is exactly 1 because the primary
+  * window is above the support of the delay
+  * @ingroup analytical_solution_helpers
+  *
+  * The Beta has support on [0, 1]. Once the lower end q of the primary window
+  * is at or above 1, F_{S+}(d) = 1 exactly. The terms give (d + E) - (q + E)
+  * over w_P, which rounds to a value a few ulp from 1 and can be above it.
+  * The other delays with uniform primary terms have an unbounded upper
+  * support.
+  *
+  * @param q Lower bound of integration, see
+  * primarycensored_uniform_lower_bound()
+  * @param dist_id Distribution identifier
+  *
+  * @return 1 if the CDF is exactly 1, 0 otherwise
+  */
+int primarycensored_uniform_cdf_is_one(real q, data int dist_id) {
+  return dist_id == 9 && q >= 1;
 }
 
 /**
@@ -763,6 +787,9 @@ real primarycensored_gengamma_uniform_lcdf(data real d, real q,
   */
 real primarycensored_uniform_lcdf(data real d, real q, data int dist_id,
                                   array[] real params, data real pwindow) {
+  if (primarycensored_uniform_cdf_is_one(q, dist_id)) {
+    return 0;
+  }
   return primarycensored_uniform_lcdf_from_terms(
     primarycensored_uniform_terms(d, dist_id, params),
     primarycensored_uniform_terms(q, dist_id, params), pwindow
@@ -842,8 +869,10 @@ real primarycensored_analytical_lcdf(data real d, int dist_id,
     d, dist_id, params, pwindow, primary_id, primary_params
   );
 
-  // Apply truncation normalization
-  if (!is_inf(D) || L > 0) {
+  // Apply truncation normalization. Skip when F(L) = 0 makes it a no-op
+  // (positive support, L <= 0), as in primarycensored_cdf().
+  if (!is_inf(D) || L > 0 ||
+      (!is_inf(L) && !dist_has_positive_support(dist_id))) {
     vector[2] bounds = primarycensored_truncation_bounds(
       L, D, dist_id, params, pwindow, primary_id, primary_params
     );
@@ -949,9 +978,10 @@ vector primarycensored_analytical_lcdf_vectorized(data int start,
   }
   for (d in start:n) {
     int q = dist_has_positive_support(dist_id) ? max(d - pw, 0) : d - pw;
-    log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
-      terms[d - first + 1], terms[q - first + 1], pwindow
-    );
+    log_cdfs[d] = primarycensored_uniform_cdf_is_one(q, dist_id) ? 0
+      : primarycensored_uniform_lcdf_from_terms(
+          terms[d - first + 1], terms[q - first + 1], pwindow
+        );
   }
   return log_cdfs;
 }
