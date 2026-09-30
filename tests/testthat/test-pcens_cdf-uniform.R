@@ -123,6 +123,43 @@ test_that("uniform primary analytical CDFs are 1 far into the upper tail,
   }
 })
 
+test_that("uniform primary analytical CDFs match numerical integration where
+  the upper tail form is used and the tail is not negligible", {
+  q <- c(30, 60, 120, 240)
+  for (case in unif_cases()) {
+    for (args in case$grid) {
+      obj <- do.call(new_pcens, c(list(case$pdist, dunif), args))
+      expect_close(
+        pcens_cdf(obj, q, 0.01),
+        do.call(unif_reference, c(list(case$pdist, q, 0.01), args)),
+        info = paste(case$name, toString(unlist(args)))
+      )
+    }
+  }
+})
+
+test_that("uniform primary analytical CDFs agree on either side of the
+  switch to the narrow window form", {
+  d <- 5
+  for (case in unif_cases()) {
+    for (args in case$grid[1:3]) {
+      obj <- do.call(new_pcens, c(list(case$pdist, dunif), args))
+      for (ratio in c(0.999, 1.001)) {
+        w <- d / (ratio * .narrow_window_ratio)
+        narrow <- pcens_cdf(obj, d, w)
+        wide <- with_mocked_bindings(
+          pcens_cdf(obj, d, w),
+          .narrow_window_ratio = Inf
+        )
+        expect_close(
+          narrow, wide, rtol = 1e-8,
+          info = paste(case$name, toString(unlist(args)), "ratio", ratio)
+        )
+      }
+    }
+  }
+})
+
 test_that("uniform primary analytical CDFs match numerical integration
   across the switch to the upper tail form and with narrow windows", {
   q <- c(0.5, 2, 5, 8, 15, 30, 60, 150)
