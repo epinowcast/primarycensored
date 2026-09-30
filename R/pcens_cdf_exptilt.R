@@ -193,9 +193,6 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
     !.pcens_tilt_available(object, -rho)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
-  if (length(q) < min_q && abs(rho) * pwindow <= min_xw) {
-    return(pcens_cdf.default(object, q, pwindow, use_numeric))
-  }
 
   result <- rep(NA_real_, length(q))
   result[!is.na(q) & q == Inf] <- 1
@@ -203,7 +200,10 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   finite <- which(is.finite(q))
   if (length(finite) > 0L) {
     # Use the numerical method for the q where the transform does not fit
-    fits <- .pcens_tilt_fits(object, -rho, q[finite], pwindow)
+    fits <- rep(FALSE, length(finite))
+    if (length(finite) >= min_q || abs(rho) * pwindow > min_xw) {
+      fits <- .pcens_tilt_fits(object, -rho, q[finite], pwindow)
+    }
     result[finite[fits]] <- .exptilt_cdf_finite(
       object, q[finite[fits]], pwindow, rho
     )

@@ -33,7 +33,8 @@
 #'   tilted delay distribution exists for `xi`, otherwise the numerical
 #'   method is used.
 #' * `.pcens_tilt_fits()`: `TRUE` at each `t` where the transform is used,
-#'   otherwise the numerical method. The default is `TRUE`.
+#'   otherwise the numerical method. It is only called where
+#'   `.pcens_tilt_available()` is `TRUE`. The default is `TRUE`.
 #' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
 #'   transform up to and beyond each `t`. The default calls
 #'   `.pcens_tilt_transform()` twice.

@@ -13,9 +13,9 @@
 #'   \eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
 #'   The total diverges, so the upper transform is `Inf`.
 #'
-#' The series costs about \eqn{\xi t} terms per point. `.pcens_tilt_fits()`
-#' is `FALSE` beyond \eqn{\xi t} of 200, where the numerical method is
-#' faster, unless \eqn{\xi w} is above 2, and beyond 20000 terms.
+#' The series needs about \eqn{\xi t} terms per point. `.pcens_tilt_fits()`
+#' is `FALSE` beyond \eqn{\xi t} of 200, unless \eqn{\xi w} is above 2, and
+#' beyond 20000 terms.
 #'
 #' @inheritParams tilt_transform
 #'
@@ -125,10 +125,9 @@
   max(1L, as.integer(ceiling(sdlog / 1.8)))
 }
 
-# Mode z0, limits lo and hi beyond which the integrand is below exp(-40) of
-# its peak, and the log total, for rho = -xi > 0. The log integrand
-# -rho exp(meanlog + sdlog z) - z^2 / 2 is concave with mode
-# -W_0(rho sdlog^2 exp(meanlog)) / sdlog. Independent of the point.
+# Mode z0 = -W_0(rho sdlog^2 exp(meanlog)) / sdlog of the concave log
+# integrand, limits lo and hi beyond which it is below exp(-40) of its peak,
+# and the log total, for rho = -xi > 0
 .lnorm_bump <- function(meanlog, sdlog, rho, rule) {
   w0 <- .lambert_w0(exp(log(rho) + 2 * log(sdlog) + meanlog))
   z0 <- -w0 / sdlog
@@ -144,10 +143,9 @@
   list(z0 = z0, lo = lo, hi = hi, total = .log_sum_exp(panels[1], panels[2]))
 }
 
-# Lower and upper transform for xi < 0, as a matrix. The transform on the
-# side of the mode that t is on is one panel that starts or ends at t. The
-# other is the difference from the total, which does not cancel as it is at
-# least the mass on the far side of the mode.
+# Lower and upper transform for xi < 0. The side of the mode that t is on is
+# one panel ending at t. The other is the difference from the total, which
+# does not cancel as it holds the mass on the far side of the mode.
 .lnorm_tilt_quadrature <- function(t, meanlog, sdlog, xi,
                                    rule = .lnorm_rule()) {
   rho <- -xi
@@ -186,11 +184,10 @@
 }
 
 # Log lower transform for xi > 0 as the sum of positive terms
-# xi^k m_k(t) / k!. Past k = xi t the terms fall by at least a factor
-# xi t / (k + 1), so the number of terms starts at about
-# xi t + 9 sqrt(xi t) + 30 and doubles up to `.lnorm_max_terms` until the last
-# term is below exp(-40) of the largest.
-.lnorm_tilt_series <- function(t, meanlog, sdlog, xi) {
+# xi^k m_k(t) / k!. The number of terms doubles up to `.lnorm_max_terms`
+# until the last is below exp(-40) of the largest. Points are taken in blocks
+# of at most `cells` terms to bound the memory.
+.lnorm_tilt_series <- function(t, meanlog, sdlog, xi, cells = 1e6) {
   out <- rep(-Inf, length(t))
   positive <- which(t > 0)
   if (length(positive) == 0L) {
@@ -198,43 +195,51 @@
   }
   z <- (log(t[positive]) - meanlog) / sdlog
   n_terms <- .lnorm_series_terms(xi, max(t[positive]))
-  too_long <- function() {
+  out[positive] <- .lnorm_series_blocks(z, meanlog, sdlog, xi, n_terms, cells)
+  out
+}
+
+.lnorm_series_blocks <- function(z, meanlog, sdlog, xi, n_terms, cells) {
+  if (n_terms > .lnorm_max_terms) {
     stop(
       "The lognormal tilt transform needs more than ", .lnorm_max_terms,
       " terms. Use use_numeric = TRUE.",
       call. = FALSE
     )
   }
-  if (n_terms > .lnorm_max_terms) {
-    too_long()
+  size <- max(1L, cells %/% (n_terms + 1L))
+  out <- numeric(length(z))
+  for (start in seq(1L, length(z), by = size)) {
+    i <- start:min(start + size - 1L, length(z))
+    out[i] <- .lnorm_series_block(z[i], meanlog, sdlog, xi, n_terms, cells)
   }
-  repeat {
-    k <- seq_len(n_terms + 1L) - 1L
-    log_terms <- .lnorm_log_pnorm(z, k * sdlog) +
-      rep(
-        k * (log(xi) + meanlog) + 0.5 * k^2 * sdlog^2 - lgamma(k + 1),
-        each = length(z)
-      )
-    peak <- log_terms[cbind(
-      seq_along(z), max.col(log_terms, ties.method = "first")
-    )]
-    last <- log_terms[, n_terms + 1L] - peak
-    if (all(last < -40)) {
-      break
-    }
-    if (n_terms >= .lnorm_max_terms) {
-      too_long()
-    }
-    n_terms <- min(2 * n_terms, .lnorm_max_terms)
-  }
-  out[positive] <- peak + log(rowSums(exp(log_terms - peak)))
   out
+}
+
+.lnorm_series_block <- function(z, meanlog, sdlog, xi, n_terms, cells) {
+  k <- seq_len(n_terms + 1L) - 1L
+  log_terms <- .lnorm_log_pnorm(z, k * sdlog) +
+    rep(
+      k * (log(xi) + meanlog) + 0.5 * k^2 * sdlog^2 - lgamma(k + 1),
+      each = length(z)
+    )
+  peak <- log_terms[cbind(
+    seq_along(z), max.col(log_terms, ties.method = "first")
+  )]
+  if (all(log_terms[, n_terms + 1L] - peak < -40)) {
+    return(peak + log(rowSums(exp(log_terms - peak))))
+  }
+  more <- if (n_terms >= .lnorm_max_terms) {
+    .lnorm_max_terms + 1L
+  } else {
+    min(2 * n_terms, .lnorm_max_terms)
+  }
+  .lnorm_series_blocks(z, meanlog, sdlog, xi, more, cells)
 }
 
 .lnorm_max_terms <- 20000L
 
-# The series and the numerical method of `pcens_cdf.default()` take equally
-# long at xi t of about 200
+# Largest xi t for the series, a speed cut-off against the numerical method
 .lnorm_series_max_xt <- 200
 
 # The numerical method loses accuracy in the lower tail where xi w is above 2,
