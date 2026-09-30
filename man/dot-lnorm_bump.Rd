@@ -2,7 +2,7 @@
 % Please edit documentation in R/tilt_transform_lognormal.R
 \name{.lnorm_bump}
 \alias{.lnorm_bump}
-\title{Panels for the tilted lognormal integrand}
+\title{Mode and total of the tilted lognormal integrand}
 \usage{
 .lnorm_bump(meanlog, sdlog, rho, rule)
 }
@@ -15,7 +15,7 @@
 }
 \value{
 A list with the mode \code{z0}, the limits \code{lo} and \code{hi}, and the log
-integrals \code{left} over \verb{[lo, z0]} and \code{right} over \verb{[z0, hi]}.
+\code{total} integral over \verb{[lo, hi]}.
 }
 \description{
 With \eqn{\rho = -\xi > 0} the log of the integrand is
@@ -31,8 +31,8 @@ and \eqn{\le -(z^2 - z_0^2) / 2 + \rho e^{\mu + \sigma z_0}}.
 }
 }
 \details{
-The integral over the whole line is the sum over the two panels that meet
-at the mode. The mode and the two panel integrals do not depend on the
-point, so they are computed once for all points.
+The total over the whole line is the sum over the two panels that meet at
+the mode. The mode and the total do not depend on the point, so they are
+computed once for all points.
 }
 \keyword{internal}

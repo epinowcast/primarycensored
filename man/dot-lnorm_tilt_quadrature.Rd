@@ -20,13 +20,14 @@ A matrix with columns \code{lower} and \code{upper}, the log of the
 transform over the lower and the upper part of the support.
 }
 \description{
-The lower and the upper transform for a tilt \eqn{\xi < 0}. For a point
-left of the mode the lower transform is one panel that ends at the point,
-bounded on the left from the slope of the integrand there. For a point
-right of the mode the upper transform is one panel that starts at the
-point. The other transform adds the integral over the mode to the
-precomputed integral of the bump, see \code{.lnorm_bump()}. All of the terms are
-positive, so nothing cancels.
+The lower and the upper transform for a tilt \eqn{\xi < 0}. Left of the
+mode the lower transform is one panel that ends at the point, bounded on
+the left from the slope of the integrand there. Right of the mode the
+upper transform is one panel that starts at the point, bounded on the
+right from the slope and the curvature there. The other transform is the
+difference from the total of the bump, see \code{.lnorm_bump()}. It is at least
+the mass on the other side of the mode, which is not small, so the
+difference does not cancel.
 }
 \details{
 The panels are accurate to an absolute difference of the log transform of

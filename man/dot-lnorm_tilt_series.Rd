@@ -22,8 +22,8 @@ terms \eqn{\xi^k m_k(t) / k!} over the partial moments
 \eqn{m_k(t) = \int_0^t u^k f(u) du =
 e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
 Past \eqn{k = \xi t} the terms fall by at least a factor
-\eqn{\xi t / (k + 1)} each, so \eqn{2 \xi t + 64} terms leave a relative
-truncation error below 1e-17. Terms are added in blocks until the last term
-is below that for every point.
+\eqn{\xi t / (k + 1)} each. The number of terms starts at about
+\eqn{\xi t + 9 \sqrt{\xi t} + 30} and doubles until the last term is below
+\eqn{e^{-40}} of the largest for every point.
 }
 \keyword{internal}
