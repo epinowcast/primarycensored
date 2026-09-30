@@ -25,6 +25,22 @@
 - The vectorised Stan PMF functions `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` use shared terms for the exponentially tilted solutions with an integer `pwindow`.
   The terms at each integer delay are computed once and used by the two windows that share it, in `primarycensored_exptilt_lcdf_vectorized()`.
   The gradient is about 5 to 15 times faster than with the ODE in a short benchmark, see #367.
+- Added the lognormal delay with an exponentially tilted primary event window, `pcens_cdf.pcens_plnorm_dexpgrowth()` in R and `dist_id` 1 with `primary_id` 2 in Stan.
+  The transform of the lognormal has no closed form.
+  For a tilt `r > 0` the log-concave integrand is integrated on 32 point Gauss-Legendre panels around its mode, which gives the lower and the upper transform without cancellation.
+  For `r < 0` the transform is a series of positive terms in the partial moments of the lognormal.
+  The transform is available for any tilt, so other windows can use it at their own tilts.
+  The log transform is accurate to about 1e-11 for `sdlog` up to 1.8, and the CDF to a relative difference of 1e-9 or better for a CDF above 1e-30 and 7e-8 or better below that.
+  A new generic `.pcens_tilt_pair()` in R and `log_tilt_transform_context()` with `log_tilt_transform_pair_shared()` in Stan give the lower and the upper transform together, and the setup shared by all the points of a call.
+  In Stan the mode and the total of the integrand are computed once per call, so `primarycensored_exptilt_lcdf_vectorized()` needs one panel per endpoint.
+  `primarycensored_tilt_moments()` and `.pcens_tilt_moments()` have closed forms for the small tilt forms.
+  The benchmarks are the gradient of the log PMF of 21 delays in Stan and a call of `pcens_cdf()` in R.
+  Stan takes about 70 to 150 microseconds for the vectorised PMF, 240 to 320 for 21 separate log CDFs, and 230 to 320 for the ODE at its default tolerance of 1e-6.
+  The vectorised PMF is 1.7 to 3.9 times faster than the ODE and 3 to 13 times faster than the ODE with a tolerance of 1e-10, which is closer to the accuracy of the solution.
+  One log CDF is 0.8 to 1.2 times as fast as the ODE at its default tolerance and 1.5 to 4 times faster than at 1e-10.
+  In R the transform has a fixed cost of about 0.2 ms, so `pcens_cdf()` uses the numerical method of `pcens_cdf.default()` for fewer than 10 quantiles.
+  At 12 quantiles it is 1.2 to 1.7 times faster, and at 40 about 3 times.
+  See #369.
 
 ## Bug fixes
 

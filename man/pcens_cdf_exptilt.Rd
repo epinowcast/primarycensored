@@ -179,8 +179,8 @@ The quadrature and the series have a fixed cost that the numerical method
 beats for fewer than 10 quantiles, so \code{pcens_cdf()} uses the numerical
 method for fewer than 10 \code{q} and the transform for 10 or more, which is
 1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
-The Stan solution is faster than the ODE with the shared terms of the
-vectorised PMF, and slower for one delay, so one delay uses the ODE there.
+The Stan solution takes about as long as the ODE for one delay, and is 2 to
+4 times faster with the shared terms of the vectorised PMF, see the NEWS.
 
 \strong{Extending.} A new delay distribution is supported by defining
 \code{.pcens_tilt_lower()}, \code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()}

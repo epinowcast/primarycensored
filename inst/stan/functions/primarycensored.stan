@@ -446,7 +446,7 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * Uses primarycensored_analytical_lcdf_vectorized() when
   * check_for_analytical_vectorized() is 1, and
   * primarycensored_exptilt_lcdf_vectorized() when
-  * check_for_exptilt_vectorized() and check_for_tilt_transform() are 1.
+  * check_for_exptilt_vectorized() and check_for_analytical_params() are 1.
   * Otherwise it calls primarycensored_lcdf() at each delay. No truncation
   * is applied.
   *
@@ -470,10 +470,9 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
       start, n, dist_id, params, pwindow
     );
   }
-  // The lognormal is here too, as it is faster with shared terms than the
-  // ODE although it is not for one delay, see check_for_analytical_params()
   if (check_for_exptilt_vectorized(dist_id, primary_id, pwindow)
-      && check_for_tilt_transform(dist_id, -primary_params[1], params)) {
+      && check_for_analytical_params(dist_id, params, primary_id,
+                                     primary_params)) {
     return primarycensored_exptilt_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_params[1]
     );

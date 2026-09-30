@@ -44,57 +44,14 @@ test_that("check_for_analytical includes the lognormal with a tilted
   expect_identical(check_for_analytical(1L, 1L), 1L)
   expect_identical(check_for_uniform_terms(1L, 1L), 1L)
   expect_identical(check_for_uniform_terms(1L, 2L), 0L)
-})
-
-test_that("a single lognormal delay uses the ODE, as it is faster than the
-  quadrature", {
-  # The quadrature is faster than the ODE only with the shared terms over
-  # integer delays, so the scalar functions keep the ODE.
   for (rho in c(-2, -0.3, 0.3, 2)) {
     expect_identical(
-      check_for_analytical_params(1L, c(1.6, 0.5), 2L, rho), 0L
+      check_for_analytical_params(1L, c(1.6, 0.5), 2L, rho), 1L
     )
-    for (d in c(0.5, 2, 5, 10)) {
-      ode <- primarycensored_numeric_cdf(d, 1L, c(1.6, 0.5), 2, 2L, rho)
-      expect_identical(
-        primarycensored_cdf(d, 1L, c(1.6, 0.5), 2, 0, Inf, 2L, rho), ode
-      )
-      expect_identical(
-        primarycensored_lcdf(d, 1L, c(1.6, 0.5), 2, 0, Inf, 2L, rho), log(ode)
-      )
-    }
   }
-})
-
-test_that("Stan lognormal tilt transforms match the R transforms", {
-  z <- c(-12, -6, -3, -1, 0, 0.5, 1, 2, 3)
-  for (case in lnorm_stan_cases) {
-    obj <- lnorm_object_stan(case, 0.1)
-    t <- exp(case$meanlog + case$sdlog * z)
-    params <- lnorm_params(case)
-    for (xi in c(-5, -1, -0.25, -0.01, 0, 1e-3, 0.1, 0.5, 1)) {
-      info <- sprintf(
-        "meanlog %g, sdlog %g, xi %g", case$meanlog, case$sdlog, xi
-      )
-      lower <- vapply(t, log_tilt_transform, numeric(1), 1L, xi, params)
-      upper <- vapply(t, log_tilt_transform_upper, numeric(1), 1L, xi, params)
-      expected <- .pcens_tilt_pair(obj, t, xi)
-      keep <- expected[, 1] > -700
-      expect_lt(
-        max(abs(lower[keep] - expected[keep, 1])), 1e-9,
-        label = info
-      )
-      if (xi > 0) {
-        expect_identical(upper, rep(Inf, length(t)), info = info)
-      } else {
-        keep <- expected[, 2] > -700
-        expect_lt(
-          max(abs(upper[keep] - expected[keep, 2])), 1e-9,
-          label = info
-        )
-      }
-    }
-  }
+  expect_identical(
+    check_for_analytical_params(1L, c(650, 1), 2L, 1e300), 0L
+  )
 })
 
 test_that("the shared setup of the tilt transform gives the same pair", {
@@ -266,8 +223,8 @@ test_that("the lognormal tilted CDF is continuous across the small tilt
   }
 })
 
-test_that("the lognormal analytical function matches the reference and the
-  ODE path", {
+test_that("primarycensored_lcdf and primarycensored_cdf use the lognormal
+  solution and agree with the ODE path", {
   d <- c(0.2, 1, 2.5, 6, 15)
   for (case in lnorm_stan_cases) {
     cdf <- exptilt_lnorm_cdf(case)
@@ -280,24 +237,29 @@ test_that("the lognormal analytical function matches the reference and the
         )
         expected <- exptilt_reference(d, pwindow, rho, cdf)
         lcdf <- vapply(
-          d, primarycensored_analytical_lcdf, numeric(1),
+          d, primarycensored_lcdf, numeric(1),
           1L, params, pwindow, 0, Inf, 2L, rho
         )
         expect_lt(max_rel_diff(exp(lcdf), expected), 1e-7, label = info)
+        plain <- vapply(
+          d, primarycensored_cdf, numeric(1),
+          1L, params, pwindow, 0, Inf, 2L, rho
+        )
+        expect_lt(max_rel_diff(plain, expected), 1e-7, label = info)
         # The ODE path has absolute and relative tolerances of 1e-6
         ode <- vapply(
           d, primarycensored_numeric_cdf, numeric(1),
           1L, params, pwindow, 2L, rho
         )
-        expect_lt(max(abs(exp(lcdf) - ode)), 1e-4, label = info)
+        expect_lt(max(abs(plain - ode)), 1e-4, label = info)
       }
     }
   }
 })
 
-test_that("the lognormal analytical function rejects a tilt that overflows", {
+test_that("the lognormal uses the ODE path where the tilt overflows", {
   params <- c(650, 1)
-  expect_identical(check_for_tilt_transform(1L, -1e300, params), 0L)
+  expect_identical(check_for_analytical_params(1L, params, 2L, 1e300), 0L)
   expect_error(
     primarycensored_analytical_lcdf(2, 1L, params, 2, 0, Inf, 2L, 1e300),
     "tilted delay distribution"
@@ -321,12 +283,10 @@ test_that("the lognormal uniform primary solution is unchanged", {
 })
 
 lnorm_per_delay_lcdf <- function(delays, params, pwindow, rho) {
-  # nolint start: object_usage_linter.
   vapply(
-    delays, primarycensored_exptilt_lcdf, numeric(1),
-    1L, params, pwindow, rho
+    delays, primarycensored_lcdf, numeric(1), # nolint: object_usage_linter.
+    1L, params, pwindow, 0, Inf, 2L, rho
   )
-  # nolint end
 }
 
 test_that("the vectorised lognormal tilted CDF matches the per delay CDF", {
@@ -362,25 +322,13 @@ test_that("primarycensored_lcdf_vectorized uses the lognormal shared terms", {
     primarycensored_lcdf_vectorized(1L, 20L, 1L, params, 3, 2L, 0.25),
     primarycensored_exptilt_lcdf_vectorized(1L, 20L, 1L, params, 3, 0.25)
   )
-  # A non-integer window uses the scalar function, which is the ODE
   expect_identical(
     primarycensored_lcdf_vectorized(1L, 10L, 1L, params, 1.5, 2L, 0.2),
-    vapply(
-      1:10, primarycensored_lcdf, numeric(1), # nolint: object_usage_linter.
-      1L, params, 1.5, 0, Inf, 2L, 0.2
-    )
-  )
-  # A tilt that overflows uses the scalar function too
-  expect_identical(
-    primarycensored_lcdf_vectorized(1L, 5L, 1L, c(650, 1), 3, 2L, 1e300),
-    vapply(
-      1:5, primarycensored_lcdf, numeric(1), # nolint: object_usage_linter.
-      1L, c(650, 1), 3, 0, Inf, 2L, 1e300
-    )
+    lnorm_per_delay_lcdf(1:10, params, 1.5, 0.2)
   )
 })
 
-test_that("the vectorised lognormal PMF matches the reference with
+test_that("the vectorised lognormal PMF matches the per delay PMF with
   truncation", {
   settings <- list(
     list(max_delay = 10, L = 0, D = 11),
@@ -390,7 +338,6 @@ test_that("the vectorised lognormal PMF matches the reference with
   )
   for (case in lnorm_stan_cases[1:4]) {
     params <- lnorm_params(case)
-    cdf <- exptilt_lnorm_cdf(case)
     for (setting in settings) {
       for (pwindow in c(1, 3)) {
         for (rho in c(-0.2, 1e-9, 0.3)) {
@@ -398,26 +345,22 @@ test_that("the vectorised lognormal PMF matches the reference with
           vectorised <- primarycensored_sone_lpmf_vectorized(
             max_delay, setting$L, setting$D, 1L, params, pwindow, 2L, rho
           )
-          ref <- function(x) exptilt_reference(x, pwindow, rho, cdf)
-          cdf_lower <- if (setting$L > 0) ref(setting$L) else 0
-          cdf_upper <- if (is.finite(setting$D)) ref(setting$D) else 1
-          delays <- 0:max_delay
-          pmf <- (ref(delays + 1) - ref(delays)) / (cdf_upper - cdf_lower)
-          pmf[delays < setting$L] <- 0
-          # Differences of the reference CDF are accurate to about 1e-16
-          keep <- pmf > 1e-8
-          # A finite D beyond max_delay + 1 is normalised with the scalar
-          # CDF, which is the ODE with a tolerance of 1e-6
-          beyond <- is.finite(setting$D) && setting$D > max_delay + 1
+          per_delay <- vapply(
+            0:max_delay, function(d) {
+              primarycensored_lpmf(
+                d, 1L, params, pwindow, d + 1, setting$L, setting$D, 2L, rho
+              )
+            },
+            numeric(1)
+          )
           expect_equal(
-            exp(vectorised)[keep], pmf[keep],
-            tolerance = if (beyond) 1e-5 else 1e-7,
+            vectorised, per_delay,
+            tolerance = 1e-10,
             info = sprintf(
               "meanlog %g, sdlog %g, pwindow %g, r %g, L %g, D %g",
               case$meanlog, case$sdlog, pwindow, rho, setting$L, setting$D
             )
           )
-          expect_true(all(is.infinite(vectorised[delays < setting$L])))
         }
       }
     }
@@ -441,9 +384,7 @@ test_that("the vectorised lognormal PMF matches differences of the
 
 # Gradients are only observable from a compiled model, so this builds a
 # minimal one whose target is the log CDF or the vectorised log PMF of the
-# lognormal, and runs `stan_gradient_at()` from helper-stan-gradient.R. The
-# scalar function is `primarycensored_exptilt_lcdf()`, as
-# `primarycensored_lcdf()` uses the ODE for the lognormal.
+# lognormal, and runs `stan_gradient_at()` from helper-stan-gradient.R.
 lnorm_gradient_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if(
@@ -471,8 +412,8 @@ lnorm_gradient_model <- function() {
     "      to_int(d), 0, positive_infinity(), 1, params, pwindow, 2, {rho}\n",
     "    ));\n",
     "  } else {\n",
-    "    target += primarycensored_exptilt_lcdf(\n",
-    "      d | 1, params, pwindow, rho\n",
+    "    target += primarycensored_lcdf(\n",
+    "      d | 1, params, pwindow, 0, positive_infinity(), 2, {rho}\n",
     "    );\n",
     "  }\n",
     "}\n"

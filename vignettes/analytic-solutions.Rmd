@@ -26,7 +26,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 2. Analyse the uniform primary event time case ($r=0$)
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
-5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays
+5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays, and with the lognormal delay by quadrature
 
 
 # Analytic solutions for exponentially tilted primary event times
@@ -401,6 +401,39 @@ Differences between the two endpoints are taken from the lower or the upper tran
 This matters in the upper tail for $r > 0$, where $e^{r d} J(d)$ is much larger than the result.
 All terms are evaluated on the log scale.
 
+## Lognormal delay by quadrature or series
+
+The lognormal has no closed form transform.
+With $u = e^{\mu + \sigma z}$ and $z_\tau = (\log \tau - \mu) / \sigma$,
+
+$$
+T_f(\xi; \tau) = \int_{-\infty}^{z_\tau} e^{\xi e^{\mu + \sigma z}} \phi(z) ~dz,
+$$
+
+where $\phi$ is the standard normal density.
+The method depends on the sign of $\xi = -r$.
+
+- For $r > 0$, $\xi < 0$, the log of the integrand $\ell(z) = -r e^{\mu + \sigma z} - z^2 / 2$ is concave with $\ell'' \leq -1$.
+  It has one mode, $z_0 = -W_0(r \sigma^2 e^\mu) / \sigma$ with $W_0$ the principal branch of the Lambert W function, and $\ell''(z_0) = -(1 + W_0)$.
+  Bounds from the curvature and from the decay of the tilt give limits beyond which the integrand is below $e^{-40}$ of its peak.
+  The total over the bump is integrated by two 32 point Gauss-Legendre panels that meet at the mode, once for all the points of a call.
+  For a point left of the mode the lower transform is one panel that ends at the point, with its left limit set from the slope of $\ell$ there.
+  For a point right of the mode the upper transform is one panel that starts at the point.
+  The other transform is the difference from the total, which is at least the mass on the other side of the mode, so it does not cancel.
+  The panels are accurate to about $10^{-11}$ for $\sigma$ up to 1.8, and $10^{-13}$ for $\sigma$ of 1 or below, in the log transform.
+- For $r < 0$, $\xi > 0$, the transform is the series $\sum_{k \geq 0} \xi^k m_k(\tau) / k!$ in the partial moments $m_k(\tau) = \int_0^\tau u^k f_T(u)~du = e^{k\mu + k^2\sigma^2/2}\,\Phi(z_\tau - k\sigma)$.
+  All terms are positive, so the sum does not cancel.
+  Past $k = \xi \tau$ the terms fall by at least a factor $\xi \tau / (k + 1)$, so about $\xi \tau + 9 \sqrt{\xi \tau} + 30$ terms are needed.
+  The total diverges, so there is no upper transform.
+
+The moments $G_1$ and $G_2$ of the small tilt forms come from $m_0$, $m_1$ and $m_2$.
+The transform is available for every tilt, for any other window that needs the transform at its own tilts, where the upper transform is `Inf` for $\xi > 0$.
+
+The transform is evaluated once for each of the two endpoints of a window.
+Its fixed cost is a few hundred microseconds in R, so `pcens_cdf()` uses the numerical method for fewer than 10 quantiles.
+In Stan the quadrature shares the mode and the total over all the delays of a call.
+It takes about as long as the ODE at its default tolerance of $10^{-6}$ for one delay, is 2 to 4 times faster for the vectorised PMF, and is 1.5 to 13 times faster than an ODE with a tolerance of $10^{-10}$, which is closer to its accuracy.
+
 ## Admissibility
 
 The exponential and gamma forms need $\lambda - \xi = \lambda + r > 0$ for the tilted delay distribution to exist.
@@ -408,7 +441,7 @@ Where $\lambda + r \leq 0$ the methods use the numerical path, `pcens_cdf.defaul
 In Stan `check_for_analytical_params()` makes the choice from the parameters.
 The ODE is less accurate than the closed forms in the lower tail of a gamma with a shape below 1, with a relative error of about $4 \times 10^{-2}$ for shape 0.3, $r = -1$ and $\lambda = 1$ at $d = 10^{-3}$.
 Closed forms for these tilts would need a stable representation that is not implemented, see #388.
-The normal form has no restriction.
+The normal form has no restriction, and nor does the lognormal, which needs only that $r \sigma^2 e^\mu$ is finite.
 
 ## Tilts close to zero
 

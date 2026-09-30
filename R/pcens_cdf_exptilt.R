@@ -142,8 +142,8 @@
 #' beats for fewer than 10 quantiles, so `pcens_cdf()` uses the numerical
 #' method for fewer than 10 `q` and the transform for 10 or more, which is
 #' 1.2 times faster at 12 and about 3 times faster at 40 in a benchmark.
-#' The Stan solution is faster than the ODE with the shared terms of the
-#' vectorised PMF, and slower for one delay, so one delay uses the ODE there.
+#' The Stan solution takes about as long as the ODE for one delay, and is 2 to
+#' 4 times faster with the shared terms of the vectorised PMF, see the NEWS.
 #'
 #' **Extending.** A new delay distribution is supported by defining
 #' `.pcens_tilt_lower()`, `.pcens_tilt_available()`, `.pcens_tilt_transform()`

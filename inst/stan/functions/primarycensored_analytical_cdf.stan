@@ -63,13 +63,8 @@ int check_for_analytical(int dist_id, int primary_id) {
   * This is check_for_analytical() and, for solutions that depend on the
   * parameters, their admissibility. The exponentially tilted solutions need
   * the tilted delay distribution to exist, see check_for_tilt_transform().
-  * Where it does not, the numerical path is used. The lognormal transform is
-  * evaluated by quadrature, which for one delay is slower than the ODE at the
-  * ODE tolerance, so the lognormal uses the numerical path here. It is faster
-  * with the shared terms over integer delays, where
-  * primarycensored_lcdf_vectorized() uses it, and
-  * primarycensored_exptilt_lcdf() gives it for one delay. This is the check used to choose the path in
-  * primarycensored_cdf() and primarycensored_lcdf().
+  * Where it does not, the numerical path is used. This is the check used to
+  * choose the path in primarycensored_cdf() and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
@@ -84,7 +79,6 @@ int check_for_analytical_params(int dist_id, array[] real params,
                                 array[] real primary_params) {
   if (!check_for_analytical(dist_id, primary_id)) return 0;
   if (check_for_exptilt(dist_id, primary_id)) {
-    if (dist_id == 1) return 0;
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
   }
   return 1;
