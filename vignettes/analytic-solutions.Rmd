@@ -406,6 +406,8 @@ All terms are evaluated on the log scale.
 The exponential and gamma forms need $\lambda - \xi = \lambda + r > 0$ for the tilted delay distribution to exist.
 Where $\lambda + r \leq 0$ the methods use the numerical path, `pcens_cdf.default()` in R and the ODE in Stan.
 In Stan `check_for_analytical_params()` makes the choice from the parameters.
+The ODE is less accurate than the closed forms in the lower tail of a gamma with a shape below 1, with a relative error of about $4 \times 10^{-2}$ for shape 0.3, $r = -1$ and $\lambda = 1$ at $d = 10^{-3}$.
+Closed forms for these tilts would need a stable representation that is not implemented, see #388.
 The normal form has no restriction.
 
 ## Tilts close to zero

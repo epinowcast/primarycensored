@@ -72,12 +72,20 @@ incomplete gamma function.
 The terms are evaluated on the log scale, and differences are taken
 between the lower or the upper tail representations, whichever loses less
 precision, see \code{.log_diff_exp()}. Results agree with numerical integration
-to a relative difference of about 1e-9 or better, including in the tails.
+to a relative difference of about 1e-9 or better away from the two regimes
+listed under \strong{Precision}.
 
 \strong{Admissibility.} The exponential and gamma forms need
 \eqn{\lambda - \xi = \lambda + \rho > 0}, so that the tilted delay
 distribution exists. Otherwise the method falls back to
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} for every \code{q}. The normal form has no restriction.
+In Stan the fallback is the ODE, whose accuracy is lower in the lower tail
+of a gamma with a shape below 1, where the density is singular at 0. For
+shape 0.3 with \eqn{\rho = -1} and rate 1 the relative error of the ODE is
+about 4e-2 at \eqn{q = 10^{-6}} and \eqn{10^{-3}}, against 2e-5 for the
+numerical method in R. Stable forms for these tilts, such as
+the expm1 closed form for the exponential and a Kummer series for the gamma,
+are not implemented, see #388.
 
 \strong{Tilts close to zero.} The expression above cancels as \eqn{\rho \to 0}.
 Two forms replace it where the cancellation would lose precision. With
@@ -99,13 +107,30 @@ close to zero.
 Away from these regions the error of the direct form is below 1e-9. The
 truncation error of the two forms is below 1e-9 at their thresholds.
 
-\strong{Precision.} The CDF is accurate to a relative difference of about 1e-9
-or better for delays that are not deep in the tails, and to an absolute
-difference of about 1e-14 in the upper tail for tilts close to zero. A
-window much smaller than the delay loses precision to the difference of
-the terms at its two ends, about 1e-13 / \code{pwindow} in relative terms, as the
-uniform window solutions do. Use \code{pwindow = 0} for a primary event at a
-known time.
+\strong{Precision.} The CDF agrees with numerical integration (\code{integrate()} at
+a relative tolerance of 1e-13) to a relative difference of about 1e-9 or
+better for delays that are not deep in the tails, and to an absolute
+difference of about 1e-14 in the upper tail for tilts close to zero.
+Two regimes are less accurate.
+\itemize{
+\item The small window form for a normal delay in the deep lower tail, about 30
+standard deviations below the mean, has a relative error of about 1e-7 in
+R and 4e-7 in Stan.
+\item A window much smaller than the delay loses precision to the difference of
+the terms at its two ends, up to about 1e-13 / \code{pwindow} in relative
+terms, as the uniform window solutions do. The first order correction of
+the small window form adds about \eqn{|\rho| q} times that. For a gamma
+delay with shape 2.5 and rate 0.4 and \code{pwindow = 1e-8} the relative error
+is 6e-7 for \eqn{\rho = 0.5} and 6e-5 for \eqn{\rho = 50}. Use
+\code{pwindow = 0} for a primary event at a known time.
+}
+
+\strong{Speed.} For many values of \code{q} the analytical method is about 3 to 8
+times faster than \code{use_numeric = TRUE}, as each endpoint is evaluated once.
+For a single \code{q} it is about 1.2 to 1.9 times slower, as the call
+evaluates four transforms at two endpoints. It is kept for single values
+as it is accurate where the numerical method has errors of up to 1e-2 in
+the tails of a normal delay.
 
 \strong{Extending.} A new delay distribution is supported by defining
 \code{.pcens_tilt_lower()}, \code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()}

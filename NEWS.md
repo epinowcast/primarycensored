@@ -6,9 +6,12 @@
   The solutions are built from the truncated exponential-moment transform of the delay density, which later windows and delay families reuse.
   In R, `pcens_cdf()` has methods `pcens_cdf.pcens_pexp_dexpgrowth()`, `pcens_cdf.pcens_pgamma_dexpgrowth()` and `pcens_cdf.pcens_pnorm_dexpgrowth()`, and a new delay is added by methods of the internal generics `.pcens_tilt_transform()`, `.pcens_tilt_available()`, `.pcens_tilt_lower()` and `.pcens_tilt_moments()`.
   In Stan the transforms are `check_for_tilt_transform()`, `log_tilt_transform()`, `log_tilt_transform_upper()` and `log_tilt_transform_pair()`, and the CDF is `primarycensored_exptilt_lcdf()`.
-  All terms are evaluated on the log scale and agree with numerical integration to a relative difference of about 1e-9 or better, including in the tails.
+  All terms are evaluated on the log scale and agree with numerical integration to a relative difference of about 1e-9 or better, except for the normal deep lower tail with a small tilt (about 1e-7) and windows below about 1e-5 of the delay (see `?pcens_cdf_exptilt`).
   Forms for a tilt or a delay close to zero keep the precision that the direct form loses as the tilt goes to zero.
   The exponential and gamma forms need the tilted delay to exist, `rate + r > 0`, and otherwise use the numerical path.
+  The Stan ODE path is less accurate in the lower tail of a gamma with a shape below 1, see `?pcens_cdf_exptilt`.
+  The R method is about 3 to 8 times faster than `use_numeric = TRUE` for many `q` and about 1.2 to 1.9 times slower for a single `q`, which is kept on accuracy grounds.
+  In Stan a primary window of width 0 gives the delay CDF.
   See #367.
 - The normal delay is the first analytical solution for a delay with support on the reals.
   Its terms are not zero for negative delays, and the analytical truncation now normalises a finite negative lower bound for such delays.

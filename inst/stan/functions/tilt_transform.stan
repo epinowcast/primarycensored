@@ -106,7 +106,9 @@ int gamma_lccdf_underflows(real x, real shape) {
   * The exponential (4) and gamma (2) forms are the total times the CDF of the
   * tilted delay, a delay with the rate lowered by xi. That delay exists only
   * if rate - xi > 0. The normal (18) form has no restriction. Callers use the
-  * numerical path when this is 0.
+  * numerical path when this is 0. The ODE is less accurate there for the
+  * lower tail of a gamma with a shape below 1 (a relative error of about
+  * 4e-2 for shape 0.3 at 1e-3 and tilt -1 with rate 1).
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param xi Tilt. The exponentially tilted window with tilt rho needs
