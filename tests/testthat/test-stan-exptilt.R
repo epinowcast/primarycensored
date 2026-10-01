@@ -233,7 +233,7 @@ test_that("the checks follow the delay, the primary and the tilt", {
     admissible(2L, c(2, 0.4), c(-0.3, 0.39, 0.4, 0)), c(1L, 1L, 0L, 1L)
   )
   expect_identical(admissible(18L, c(3, 2), c(-50, 50)), c(1L, 1L))
-  for (dist_id in c(1L, 3L, 5L, 12L, 26L, 27L)) {
+  for (dist_id in c(1L, 9L, 12L, 26L, 27L)) {
     expect_identical(check_for_tilt_transform(dist_id, 0, c(1, 1)), 0L)
   }
   for (dist_id in c(2L, 4L, 18L)) {
@@ -250,10 +250,10 @@ test_that("the checks follow the delay, the primary and the tilt", {
       )
     }
   }
-  for (dist_id in c(1L, 3L, 5L, 9L)) {
+  for (dist_id in c(1L, 9L, 12L)) {
     expect_identical(check_for_exptilt(dist_id, 2L), 0L)
   }
-  expect_identical(check_for_analytical_vectorized(3L, 2L, 1), 0L)
+  expect_identical(check_for_analytical_vectorized(9L, 2L, 1), 0L)
   expect_identical(check_for_analytical(4L, 1L), 0L)
   expect_identical(check_for_analytical(18L, 1L), 0L)
   expect_identical(check_for_analytical(2L, 1L), 1L)
@@ -266,7 +266,7 @@ test_that("the checks follow the delay, the primary and the tilt", {
     list(4L, 0.3, 2L, -0.25, 1L),
     list(18L, c(3, 2), 2L, -10, 1L),
     list(2L, c(2, 0.4), 1L, numeric(0), 1L),
-    list(3L, c(2, 1), 2L, 0.3, 0L),
+    list(1L, c(2, 1), 2L, 0.3, 0L),
     list(26L, c(0, 1, 2, 0.5, 0.5), 2L, 0.3, 1L)
   )
   for (check in checks) {
@@ -350,10 +350,10 @@ test_that("Stan tilt transforms are 0 or the total below the support", {
     )
   }
   expect_error(
-    tilt_lower(1, 3L, 0, c(1, 1)), "Invalid distribution identifier"
+    tilt_lower(1, 1L, 0, c(1, 1)), "Invalid distribution identifier"
   )
   expect_error(
-    primarycensored_tilt_moments(1, 3L, c(1, 1)),
+    primarycensored_tilt_moments(1, 1L, c(1, 1)),
     "Invalid distribution identifier"
   )
 })
