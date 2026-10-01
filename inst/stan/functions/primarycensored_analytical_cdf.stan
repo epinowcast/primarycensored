@@ -591,15 +591,8 @@ vector primarycensored_analytical_lcdf_vectorized(
   return log_cdfs;
 }
 
-/*
- * Truncated exponential-moment transforms of delay distributions
- *
- * T_f(xi; tau) = int_{-inf}^{tau} exp(xi u) f(u) du, with lower limit 0 for
- * delays on the non-negative reals. A delay is added by a branch in
- * check_for_tilt_transform(), log_tilt_transform_pair() and
- * primarycensored_tilt_moments(). The R equivalents are the
- * `.pcens_tilt_*()` generics.
- */
+// Tilt transforms T_f(xi; tau) = int exp(xi u) f(u) du up to tau, from 0 for
+// delays on the non-negative reals. The R equivalents are `.pcens_tilt_*()`.
 
 /**
   * Log of the difference of two exponentials, zero when it would be negative
@@ -648,9 +641,7 @@ real primarycensored_log_std_normal_cdf(real z) {
   * Log of the regularised lower incomplete gamma function from its series
   * @ingroup tilt_transforms
   *
-  * Built from elementary operations so that the shape derivative is exact,
-  * unlike gamma_lcdf(), whose shape derivative is inaccurate in parts of the
-  * bulk and NaN for shapes of about 200 or more. The series
+  * Unlike gamma_lcdf() the shape derivative is exact. The series
   * P(shape, x) = x^shape exp(-x) / Gamma(shape + 1) *
   *   sum_k x^k / ((shape + 1) ... (shape + k))
   * is for x < shape + 1.
@@ -683,8 +674,7 @@ real primarycensored_log_gamma_p_series(real x, real shape) {
   * @ingroup tilt_transforms
   *
   * The Legendre continued fraction, evaluated by the modified Lentz method,
-  * for x >= shape + 1. As for primarycensored_log_gamma_p_series() the
-  * derivatives are exact, unlike gamma_lccdf().
+  * for x >= shape + 1. The derivatives are exact, unlike gamma_lccdf().
   *
   * @param x Point, positive, at least shape + 1
   * @param shape Shape, positive
@@ -743,9 +733,9 @@ vector primarycensored_log_gamma_pq(real x, real shape) {
   * Test whether the gamma lower tail underflows at these arguments
   * @ingroup tilt_transforms
   *
-  * Terms below 1e-300 of a probability are dropped as `-inf`. For
-  * x < shape + 1 this uses the bound
-  * P(shape, x) <= x^shape exp(-x) / (Gamma(shape + 1) (1 - x / (shape + 1))).
+  * Terms below 1e-300 of a probability are dropped as `-inf`, using the
+  * bound P(shape, x) <= x^shape exp(-x) /
+  *   (Gamma(shape + 1) (1 - x / (shape + 1))) for x < shape + 1.
   *
   * @param x Point, positive
   * @param shape Shape
@@ -763,8 +753,8 @@ int gamma_lcdf_underflows(real x, real shape) {
   * Test whether the gamma upper tail underflows at these arguments
   * @ingroup tilt_transforms
   *
-  * As for gamma_lcdf_underflows(), using
-  * Q(shape, x) = x^(shape - 1) exp(-x) / Gamma(shape) x / (x - shape + 1)
+  * As for gamma_lcdf_underflows(), using the bound
+  * Q(shape, x) <= x^(shape - 1) exp(-x) / Gamma(shape) x / (x - shape + 1)
   * for x beyond shape + 1.
   *
   * @param x Point, positive
@@ -813,9 +803,7 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
   * (rate / (rate - xi))^shape, with both tails from
-  * primarycensored_log_gamma_pq(). The log total is -shape log1m(xi / rate)
-  * rather than a difference of logs, so the rate derivative does not lose a
-  * tail far below 1 to cancellation.
+  * primarycensored_log_gamma_pq().
   *
   * @param t Point
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18

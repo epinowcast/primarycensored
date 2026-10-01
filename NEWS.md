@@ -2,9 +2,7 @@
 
 ## New features
 
-- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan.
-  `pcens_cdf()` and the vectorised Stan PMF use them in place of numerical integration, with the numerical path kept as a fallback outside their valid region, see `?pcens_cdf_exptilt`.
-  The normal delay is the first analytical solution for a delay on the reals.
+- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
   See #367.
 
 ## Bug fixes
@@ -12,9 +10,7 @@
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
-- `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
-  A single integral returned 0 or an error for delays that are small relative to the primary window.
-  The Stan numerical path starts at 0 for delays on the non-negative reals for the same reason.
+- `pcens_cdf()` and the Stan numerical path no longer return 0 or an error for delays that are small relative to the primary window.
   See #367.
 
 ## Performance
