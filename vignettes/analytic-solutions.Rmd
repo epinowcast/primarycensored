@@ -26,7 +26,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 2. Analyse the uniform primary event time case ($r=0$)
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
-5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays
+5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma, normal, Weibull and generalised gamma delays
 
 
 # Analytic solutions for exponentially tilted primary event times
@@ -393,12 +393,29 @@ For $\xi = -r$ the closed form transforms are as follows.
 Differences between the two endpoints are taken from the lower or the upper tail transforms, whichever has the smaller ratio of the subtracted term to the first.
 All terms are evaluated on the log scale.
 
+## Incomplete gamma series transforms
+
+The Weibull and the generalised gamma are in the Stacy family, with CDF $F_T(x) = P(k, (x / \theta)^a)$ for the `shape` $a$, `scale` $\theta$ and $k$ of `flexsurv::pgengamma.orig()`, where $k = 1$ is the Weibull.
+Expanding $e^{\xi u}$ and integrating term by term gives
+
+$$
+T_f(\xi; \tau) = \sum_{n = 0}^{\infty} \frac{(\xi \theta)^n}{n!} \frac{\Gamma(k + n / a)}{\Gamma(k)} P\left(k + n / a, (\tau / \theta)^a\right).
+$$
+
+For $\xi < 0$ the terms alternate in sign and cancel.
+The sum of their absolute values is $T_f(|\xi|; \tau)$, and the series is used where this is less than $10^5$ times the sum.
+The series has no upper tail form, so differences between endpoints come from the lower transform and lose about $10^{-16}$ times the size of the terms over $e^{r w_P} - 1$.
+In R the numerical path is used where that size is more than $10^5$ times the smaller of the CDF and its survival function, which is in the upper tail.
+In Stan the ODE is used where the size is more than $10^5$, as the ODE has a larger absolute error below that.
+In the vectorised Stan PMF the ODE values are shifted by their difference from the series value at the delay before the switch, so the PMF across the switch is a difference of ODE values.
+The numerical path is also used where the terms cancel too much, and where $|\xi| \tau \geq 400$.
+
 ## Admissibility
 
 The exponential and gamma forms need $\lambda - \xi = \lambda + r > 0$ for the tilted delay distribution to exist.
 Where $\lambda + r \leq 0$ the methods use the numerical path, `pcens_cdf.default()` in R and the ODE in Stan.
 In Stan `check_for_analytical_params()` makes the choice from the parameters.
-The normal form has no restriction.
+The normal form and the series for the Weibull and the generalised gamma have no restriction.
 
 ## Tilts close to zero
 

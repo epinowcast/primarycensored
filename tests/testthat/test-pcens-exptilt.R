@@ -136,8 +136,8 @@ test_that("use_numeric = TRUE uses the default method", {
 
 test_that("delay families without a tilt form use the numerical method", {
   obj <- new_pcens(
-    pdist = pweibull, dprimary = dexpgrowth,
-    primary_args = list(r = 0.2), shape = 2, scale = 3
+    pdist = pcauchy, dprimary = dexpgrowth,
+    primary_args = list(r = 0.2), location = 2, scale = 3
   )
   expect_false(.pcens_tilt_available(obj, -0.2))
   q <- c(0.5, 2, 5)
