@@ -134,6 +134,16 @@ test_that("use_numeric = TRUE uses the default method", {
   )
 })
 
+test_that("delay families without a tilt form use the numerical method", {
+  obj <- new_pcens(
+    pdist = pweibull, dprimary = dexpgrowth,
+    primary_args = list(r = 0.2), shape = 2, scale = 3
+  )
+  expect_false(.pcens_tilt_available(obj, -0.2))
+  q <- c(0.5, 2, 5)
+  expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
+})
+
 test_that("inadmissible tilts use the numerical method", {
   for (family in families[c(2, 3, 4)]) {
     for (rho in c(-1, -0.5)) {
