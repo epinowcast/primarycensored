@@ -1036,6 +1036,47 @@ test_that("vectorised lognormal and Weibull gradients are finite", {
   }
 })
 
+test_that("gradients are finite for every positive support delay when the
+  window density is a spike at the window end", {
+  model <- gumbel_gradient_model()
+  cases <- list(
+    list(dist_id = 1L, params = c(1, 0.2)),
+    list(dist_id = 2L, params = c(50, 5)),
+    list(dist_id = 3L, params = c(20, 6)),
+    list(dist_id = 4L, params = 5),
+    list(dist_id = 13L, params = 20),
+    list(dist_id = 16L, params = c(3, 4)),
+    list(dist_id = 19L, params = 4),
+    list(dist_id = 22L, params = c(4, 1))
+  )
+  points <- list(
+    list(d = 1, pwindow = 1, mu = 1, beta = 0.1),
+    list(d = 2, pwindow = 2, mu = 2.5, beta = 0.3),
+    list(d = 1, pwindow = 1, mu = 1.5, beta = 0.05)
+  )
+  for (case in cases) {
+    for (point in points) {
+      label <- gumbel_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
+      )
+      res <- gumbel_gradient_at(
+        model, case, point$d, point$pwindow, point$mu, point$beta
+      )
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      vec <- gumbel_gradient_at(
+        model, case, 3 * point$d, point$pwindow, point$mu, point$beta,
+        vectorised = TRUE
+      )
+      expect_false(vec$gradient_not_finite, info = label)
+      expect_false(vec$rejected, info = label)
+      expect_true(all(is.finite(vec$gradient)), info = label)
+    }
+  }
+})
+
 test_that("a log CDF below -1000 is -inf in the numerical path", {
   # The window mass is at 2, so a delay of at most 1 needs u of exp(20)
   for (case in list(
@@ -1052,6 +1093,89 @@ test_that("a log CDF below -1000 is -inf in the numerical path", {
       primarycensored_lcdf(1, case$id, case$par, 2, 0, Inf, 4L, c(3, 0.1)),
       -Inf
     )
+  }
+})
+
+# Delays on the positive reals that start well after the window, for a
+# location above the window end
+gumbel_late_cases <- function() {
+  pinvgamma_ref <- function(q, shape, scale) {
+    pgamma(scale / q, shape, lower.tail = FALSE)
+  }
+  list(
+    list(
+      dist_id = 1L, params = c(1, 0.2), pdist = plnorm,
+      args = list(meanlog = 1, sdlog = 0.2)
+    ),
+    list(
+      dist_id = 1L, params = c(2, 0.1), pdist = plnorm,
+      args = list(meanlog = 2, sdlog = 0.1)
+    ),
+    list(
+      dist_id = 2L, params = c(50, 5), pdist = pgamma,
+      args = list(shape = 50, rate = 5)
+    ),
+    list(
+      dist_id = 3L, params = c(20, 6), pdist = pweibull,
+      args = list(shape = 20, scale = 6)
+    ),
+    list(
+      dist_id = 16L, params = c(3, 4), pdist = pinvgamma_ref,
+      args = list(shape = 3, scale = 4)
+    )
+  )
+}
+
+test_that("the Stan numerical path is -inf, not an error, where the delay
+  starts well after a spike at the window end", {
+  for (case in gumbel_late_cases()) {
+    for (mu in c(1.5, 2, 3)) {
+      for (beta in c(0.03, 0.05, 0.1)) {
+        label <- gumbel_case_label(case, mu = mu, beta = beta)
+        lcdf <- vapply(1:2, function(d) {
+          expect_no_error(
+            value <- primarycensored_lcdf(
+              d, case$dist_id, case$params, 1, 0, Inf, 4L, c(mu, beta)
+            ),
+            message = label
+          )
+          value
+        }, numeric(1))
+        r_cdf <- pcens_cdf(
+          gumbel_object(case, mu, beta), 1:2, 1
+        )
+        expect_false(anyNA(lcdf), info = label)
+        for (i in 1:2) {
+          if (r_cdf[i] > 1e-200) {
+            expect_equal(
+              lcdf[i], log(r_cdf[i]), tolerance = 1e-6, info = label
+            )
+          } else {
+            expect_lt(lcdf[i], -700, label = label)
+          }
+        }
+      }
+    }
+  }
+})
+
+test_that("the vectorised Gumbel log PMF does not reject a delay that starts
+  well after a spike at the window end", {
+  for (case in gumbel_late_cases()) {
+    label <- gumbel_case_label(case, mu = 1.5, beta = 0.05)
+    expect_no_error(
+      lpmf <- primarycensored_sone_lpmf_vectorized(
+        8, 0, Inf, case$dist_id, case$params, 1, 4L, c(1.5, 0.05)
+      ),
+      message = label
+    )
+    expect_false(anyNA(lpmf), info = label)
+    expected <- vapply(0:8, function(d) {
+      primarycensored_lpmf(
+        d, case$dist_id, case$params, 1, d + 1, 0, Inf, 4L, c(1.5, 0.05)
+      )
+    }, numeric(1))
+    expect_equal(lpmf, expected, tolerance = 1e-9, info = label)
   }
 })
 
