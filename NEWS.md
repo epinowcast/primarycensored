@@ -8,6 +8,8 @@
   See #367.
 - Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3).
   See #370.
+- Added analytical solutions for exponential, gamma and normal delays with a truncated logistic primary in R and Stan, with the numerical path used where they do not apply.
+  See #370.
 
 ## Bug fixes
 

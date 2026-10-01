@@ -259,7 +259,9 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
       return [negative_infinity(), log_total]';
     }
     if (gamma_lccdf_underflows(x, shape)) {
-      return [log_total, negative_infinity()]';
+      return [
+        log_total, log_total + primarycensored_log_gamma_q_fraction(x, shape)
+      ]';
     }
     vector[2] log_tails = primarycensored_log_gamma_pq(x, shape);
     return [log_total + log_tails[1], log_total + log_tails[2]]';

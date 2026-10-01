@@ -8,7 +8,8 @@
 #' They dispatch on the delay class of a `pcens` object.
 #' A delay is added with methods for `.pcens_tilt_lower()`,
 #' `.pcens_tilt_available()`, `.pcens_tilt_transform()` and, for the small
-#' tilt forms, `.pcens_tilt_moments()`.
+#' tilt forms and the small delay form of [pcens_cdf_tlogis],
+#' `.pcens_tilt_moments()`.
 #' The Stan equivalents are `check_for_tilt_transform()`,
 #' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
 #'
@@ -16,8 +17,9 @@
 #'
 #' @param t Numeric vector of finite points.
 #'
-#' @param xi Tilt, a single number. A window with tilt \eqn{\rho} needs
-#'   \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.
+#' @param xi Tilt, a single number or a vector of the length of `t`. A
+#'   window with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and \eqn{\xi = 0}
+#'   gives the delay CDF.
 #'
 #' @param upper If `TRUE` return the transform over \eqn{(t, \infty)}
 #'   rather than up to `t`, which keeps precision where the lower transform
@@ -144,12 +146,12 @@ NULL
 .pcens_tilt_transform.pcens_pgamma <- function(object, t, xi, upper = FALSE) {
   # Gamma CDF with rate - xi times the total (rate / (rate - xi))^shape
   p <- .gamma_shape_rate(object)
-  tilted_rate <- p$rate - xi
+  tilted_rate <- rep_len(p$rate - xi, length(t))
   log_total <- p$shape * (log(p$rate) - log(tilted_rate))
-  out <- rep(if (upper) log_total else -Inf, length(t))
+  out <- if (upper) log_total else rep(-Inf, length(t))
   positive <- t > 0
-  out[positive] <- log_total + stats::pgamma(
-    t[positive] * tilted_rate,
+  out[positive] <- log_total[positive] + stats::pgamma(
+    t[positive] * tilted_rate[positive],
     shape = p$shape, lower.tail = !upper, log.p = TRUE
   )
   out
@@ -181,14 +183,14 @@ NULL
 #' @exportS3Method
 .pcens_tilt_transform.pcens_pexp <- function(object, t, xi, upper = FALSE) {
   rate <- .exp_rate(object)
-  tilted_rate <- rate - xi
+  tilted_rate <- rep_len(rate - xi, length(t))
   log_total <- log(rate) - log(tilted_rate)
-  out <- rep(if (upper) log_total else -Inf, length(t))
+  out <- if (upper) log_total else rep(-Inf, length(t))
   positive <- t > 0
-  out[positive] <- log_total + if (upper) {
-    -tilted_rate * t[positive]
+  out[positive] <- log_total[positive] + if (upper) {
+    -tilted_rate[positive] * t[positive]
   } else {
-    .log1m_exp(-tilted_rate * t[positive])
+    .log1m_exp(-tilted_rate[positive] * t[positive])
   }
   out
 }
@@ -223,11 +225,11 @@ NULL
 #' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_transform.pcens_pnorm <- function(object, t, xi, upper = FALSE) {
-  # Completing the square gives a normal with mean mean + xi sd^2
+  # Completing the square gives a normal with mean mean + xi sd^2. The
+  # argument is formed as (t - mean) / sd - xi sd to avoid rounding.
   p <- .norm_mean_sd(object)
   xi * p$mean + 0.5 * xi^2 * p$sd^2 + stats::pnorm(
-    t,
-    mean = p$mean + xi * p$sd^2, sd = p$sd,
+    (t - p$mean) / p$sd - xi * p$sd,
     lower.tail = !upper, log.p = TRUE
   )
 }

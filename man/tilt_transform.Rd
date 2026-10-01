@@ -60,8 +60,9 @@
 
 \item{t}{Numeric vector of finite points.}
 
-\item{xi}{Tilt, a single number. A window with tilt \eqn{\rho} needs
-\eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.}
+\item{xi}{Tilt, a single number or a vector of the length of \code{t}. A
+window with tilt \eqn{\rho} needs \eqn{\xi = -\rho}, and \eqn{\xi = 0}
+gives the delay CDF.}
 
 \item{upper}{If \code{TRUE} return the transform over \eqn{(t, \infty)}
 rather than up to \code{t}, which keeps precision where the lower transform
@@ -88,7 +89,8 @@ The lower limit is 0 for delays on the non-negative reals.
 They dispatch on the delay class of a \code{pcens} object.
 A delay is added with methods for \code{.pcens_tilt_lower()},
 \code{.pcens_tilt_available()}, \code{.pcens_tilt_transform()} and, for the small
-tilt forms, \code{.pcens_tilt_moments()}.
+tilt forms and the small delay form of \link{pcens_cdf_tlogis},
+\code{.pcens_tilt_moments()}.
 The Stan equivalents are \code{check_for_tilt_transform()},
 \code{log_tilt_transform_pair()} and \code{primarycensored_tilt_moments()}.
 }

@@ -95,31 +95,31 @@ test_that("check_for_analytical includes the exponentially tilted primary", {
 
 test_that("check_for_analytical_params adds the admissibility of the tilt", {
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, 0.5), 1L
+    check_for_analytical_params(2L, c(2, 0.4), 2L, 0.5, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.3), 1L
+    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.3, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.4), 0L
+    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.4, 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(4L, 0.3, 2L, -0.5), 0L
+    check_for_analytical_params(4L, 0.3, 2L, -0.5, 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(4L, 0.3, 2L, -0.25), 1L
+    check_for_analytical_params(4L, 0.3, 2L, -0.25, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(18L, c(3, 2), 2L, -10), 1L
+    check_for_analytical_params(18L, c(3, 2), 2L, -10, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0)), 1L
+    check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0), 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(3L, c(2, 1), 2L, 0.3), 0L
+    check_for_analytical_params(3L, c(2, 1), 2L, 0.3, 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(26L, c(0, 1, 2, 0.5, 0.5), 2L, 0.3), 1L
+    check_for_analytical_params(26L, c(0, 1, 2, 0.5, 0.5), 2L, 0.3, 2), 1L
   )
 })
 
@@ -303,7 +303,9 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
         }
         info <- exptilt_case_label(case, pwindow = pwindow, r = rho)
         expect_identical(
-          check_for_analytical_params(case$dist_id, case$params, 2L, rho), 1L
+          check_for_analytical_params(
+            case$dist_id, case$params, 2L, rho, pwindow
+          ), 1L
         )
         expected <- exptilt_reference(d, pwindow, rho, cdf)
         lcdf <- vapply(
@@ -337,7 +339,7 @@ test_that("inadmissible tilts use the ODE path", {
   for (case in cases) {
     expect_identical(
       check_for_analytical_params(
-        case$dist_id, case$params, 2L, case$rho
+        case$dist_id, case$params, 2L, case$rho, 2
       ), 0L
     )
     for (d in c(0.5, 2, 5, 10)) {
@@ -1266,6 +1268,57 @@ test_that("the small tilt and direct forms have accurate gradients for large
       info = paste0(
         label, ": gradient ", toString(signif(res$gradient, 6)),
         ", reference ", toString(signif(expected, 6))
+      )
+    )
+  }
+})
+
+test_that("the tilted gamma log CDF has a finite, accurate gradient in the
+  shape at large shapes in both tails", {
+  model <- exptilt_gradient_model()
+  # The reference is the gradient of the integral, by central differences in
+  # the log shape with two Richardson extrapolations.
+  points <- list(
+    list(shape = 80, rate = 26.667, d = 4.6, rho = 0.3),
+    list(shape = 80, rate = 26.667, d = 4.9, rho = -0.3),
+    list(shape = 80, rate = 26.667, d = 1.2, rho = 0.3),
+    list(shape = 150, rate = 50, d = 4.6, rho = 0.3),
+    list(shape = 150, rate = 50, d = 4.9, rho = -0.3),
+    list(shape = 150, rate = 50, d = 1.2, rho = -0.3),
+    list(shape = 250, rate = 83.333, d = 4.7, rho = 0.3),
+    list(shape = 250, rate = 83.333, d = 4.9, rho = -0.3),
+    list(shape = 250, rate = 83.333, d = 1.8, rho = 0.3)
+  )
+  lcdf <- function(shape, point) {
+    log(exptilt_reference(
+      point$d, 1, point$rho, function(x) stats::pgamma(x, shape, point$rate)
+    ))
+  }
+  for (point in points) {
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- exptilt_case_label(
+      case,
+      d = point$d, pwindow = 1, r = point$rho
+    )
+    res <- exptilt_gradient_at(model, case, point$d, 1, point$rho)
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    central <- function(h) {
+      shape_up <- point$shape * (1 + h)
+      shape_down <- point$shape * (1 - h)
+      (lcdf(shape_up, point) - lcdf(shape_down, point)) /
+        (2 * point$shape * h)
+    }
+    r <- c(central(1e-2), central(5e-3), central(2.5e-3))
+    e <- (4 * r[2:3] - r[1:2]) / 3
+    reference <- (16 * e[2] - e[1]) / 15
+    expect_true(
+      abs(res$gradient[1] - reference) <=
+        1e-5 * max(abs(reference), 1e-3),
+      info = paste0(
+        label, ": gradient ", signif(res$gradient[1], 7),
+        ", reference ", signif(reference, 7)
       )
     )
   }

@@ -29,8 +29,8 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * extend the analytic path on its own: without a matching update here the
   * new primary silently falls back to numerical integration.
   *
-  * The exponentially tilted solutions may not apply for given parameters,
-  * see check_for_analytical_params().
+  * The exponentially tilted and truncated logistic solutions may not apply
+  * for given parameters, see check_for_analytical_params().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -42,6 +42,8 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
   // Exponential, Gamma and Normal with an exponentially tilted primary
   if (check_for_exptilt(dist_id, primary_id)) return 1;
+  // Exponential, Gamma and Normal with a truncated logistic primary
+  if (check_for_tlogis(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2 || primary_id == 3;
@@ -55,22 +57,28 @@ int check_for_analytical(int dist_id, int primary_id) {
   *
   * This is check_for_analytical() and, for the exponentially tilted
   * solutions, that the tilted delay exists, see check_for_tilt_transform().
+  * The truncated logistic solutions also need a truncation rule for each
+  * series and the largest tilt of the delay, see check_for_tlogis_params().
   * It chooses the path in primarycensored_cdf() and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
   * @param primary_id Distribution identifier for the primary distribution
   * @param primary_params Array of primary distribution parameters
+  * @param pwindow Primary event window
   *
   * @return 1 if the analytical solution applies, 0 if the numerical path is
   * needed
   */
 int check_for_analytical_params(int dist_id, array[] real params,
-                                int primary_id,
-                                array[] real primary_params) {
+                                int primary_id, array[] real primary_params,
+                                data real pwindow) {
   if (!check_for_analytical(dist_id, primary_id)) return 0;
   if (check_for_exptilt(dist_id, primary_id)) {
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
+  }
+  if (check_for_tlogis(dist_id, primary_id)) {
+    return check_for_tlogis_params(dist_id, params, primary_params, pwindow);
   }
   return 1;
 }
@@ -382,6 +390,11 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     }
     return primarycensored_exptilt_lcdf(
       d | dist_id, params, pwindow, primary_params[1]
+    );
+  }
+  if (check_for_tlogis(dist_id, primary_id)) {
+    return primarycensored_tlogis_lcdf(
+      d | dist_id, params, pwindow, primary_params[1], primary_params[2]
     );
   }
   if (dist_id == 2 && primary_id == 1) {

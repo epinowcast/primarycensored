@@ -420,6 +420,70 @@ $$
 is used instead.
 The truncation error of both forms is below $10^{-9}$ at the threshold.
 
+# Transform based solutions for truncated logistic primary event times
+
+A truncated logistic primary event window describes an exposure probability that increases smoothly and then saturates, for example an environmental source that becomes established.
+With the logistic CDF $L(z) = 1 / (1 + e^{-(z - m) / s})$, location $m$ and scale $s$, and $D_L = L(w_P) - L(0)$, the density on $[0, w_P]$ is $L'(z) / D_L$, which is the `dtlogis()` distribution.
+Changing variables and integrating by parts as for the other windows gives
+
+$$
+F_{S_+}(d) = F_T(a) + \frac{1}{D_L} \int_{a}^{d} \{L(d - u) - L(0)\} f_T(u) ~du, \quad a = d - w_P.
+(\#eq:logistic)
+$$
+
+With $p = d - u$ the primary event time, $L(p) = 1 / (1 + x)$ with $x = e^{-(p - m) / s}$.
+For $p > m$, $x < 1$ and $L(p) = \sum_{n \geq 0} (-x)^n$, so the integral is a sum of the transforms $T_f(n / s; \cdot)$ at the positive tilts $\xi = n / s$.
+For $p < m$, $L(p) = \sum_{n \geq 1} (-1)^{n - 1} x^{-n}$ needs the negative tilts $\xi = -n / s$.
+The window is split at $p = m$, at $u^\star = d - m$, when the location is inside it.
+With $\Delta T(\xi; a, b) = T_f(\xi; b) - T_f(\xi; a)$ and $\Delta F(a, b) = F_T(b) - F_T(a)$ the three cases are as follows.
+
+- For $m < 0$ the whole window is above the location and $\Phi = \int_a^d \{L(d - u) - L(0)\} f_T(u) du$ is
+  $$\sum_{n \geq 1} (-1)^{n - 1} e^{n m / s} \{\Delta F(a, d) - e^{-n d / s} \Delta T(n / s; a, d)\}.$$
+  Writing $L(0)$ as the series and subtracting it term by term removes the constant 1 of the series, so nothing cancels when $D_L$ is small.
+- For $0 \leq m < w_P$ the part above the location gives
+  $$\Phi_P = \sum_{n \geq 0} (-1)^n e^{-n (d - m) / s} \Delta T(n / s; a, u^\star) - L(0) \Delta F(a, u^\star),$$
+  and the part below it gives
+  $$\Phi_N = \sum_{n \geq 1} (-1)^{n - 1} e^{-n m / s} \{e^{n d / s} \Delta T(-n / s; u^\star, d) - \Delta F(u^\star, d)\}.$$
+- For $m \geq w_P$ only $\Phi_N$ is needed, with $u^\star = a$.
+
+In each case $F_{S_+}(d) = F_T(a) + \Phi / D_L$.
+
+## Truncating the series
+
+Near the location $x$ is close to 1 and the partial sums of the geometric series converge slowly.
+Each series $\sum (-1)^n c_n$ is instead summed with weights $W_n$ that are 1 for $n < n_0$ and taper to 0 at $n_0 + M$ as the upper tail of a Binomial($M$, 1/2).
+This is the Euler transform after $n_0$ terms, the average of the partial sums from $S_{n_0}$ to $S_{n_0 + M}$ with binomial weights.
+For one $x$ the error is $x^{n_0} ((1 - x) / 2)^M / (1 + x)$.
+Every $c_n$ is an integral of $x^n$ over the delay density, with $x$ in a known range, so the error of a series is at most the largest error over the range times the mass of the delay in the window.
+The range is $[e^{(m - w_P) / s}, e^{m / s}]$ for $m < 0$, $[e^{-(w_P - m) / s}, 1]$ for the part above the location and $[e^{-m / s}, \min(1, e^{(w_P - m) / s})]$ for the part below it.
+The fewest terms, among the plain partial sum and two tapers, for which this bound is below $10^{-10} D_L$ are used, so the error of $F_{S_+}(d)$ is below $10^{-10}$ of the mass of the delay in the window.
+It needs about 6 terms when $x \leq 0.01$ and about 23 when the range reaches 1.
+The same rule is used in R and in Stan.
+
+## Admissibility
+
+The series need the tilts up to $\pm (n_0 + M) / s$.
+The exponential and gamma forms need $\lambda - \xi > 0$ for the tilted delay to exist, which fails for the large positive tilts of a location before the end of the window unless the rate $\lambda$ is larger than the largest tilt.
+The negative tilts of a location after the window always exist, so for these delays the solution applies for $m \geq w_P$ and for a large rate.
+Where a tilt is not available, or no rule with at most 64 terms meets the tolerance, the methods use the numerical path, `pcens_cdf.default()` in R and the ODE in Stan.
+In Stan `check_for_analytical_params()` makes the choice from the parameters and the window.
+The normal form has no restriction.
+
+## Delays much smaller than the scale
+
+For a delay on the non-negative reals with $d < w_P$ and $d / s < 10^{-4}$ equation \@ref(eq:logistic) cancels, as only primary event times up to $d$ contribute and $L(p) - L(0)$ is small.
+With $G_k(d) = \int_0^d (d - u)^k f_T(u) ~du$ the expansion of $L(p) - L(0)$ in $p$ gives
+$$F_{S_+}(d) = \frac{L'(0) G_1(d) + L''(0) G_2(d) / 2}{D_L} + O\big((d / s)^2\big),$$
+with $L'(0) = L(0) \{1 - L(0)\} / s$ and $L''(0) = L'(0) \{1 - 2 L(0)\} / s$.
+Both forms are accurate to about $10^{-8}$ at the threshold.
+
+## Shared terms
+
+Every transform depends on one endpoint, $a$, $u^\star$ or $d$.
+For integer delays and an integer window the endpoints of neighbouring delays are the same integers, and so is $u^\star = d - m$ for an integer location.
+The transforms are evaluated once at the unique endpoints, in `pcens_pmf()` and in the vectorised Stan PMFs.
+For a location inside the window that is not an integer each $u^\star$ is a different point and is evaluated for its own delay.
+
 # Learning more
 
 - For more mathematical background on the analytic solutions see the `vignette("why-it-works")`.
