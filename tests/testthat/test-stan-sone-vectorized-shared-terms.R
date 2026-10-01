@@ -1,9 +1,9 @@
 skip_on_cran()
 
-# With a registered delay and primary pair and an integer pwindow,
+# With a uniform primary and an integer pwindow,
 # primarycensored_sone_lpmf_vectorized() uses
-# primarycensored_lcdf_vectorized(), which computes the terms of
-# primarycensored_terms() once per integer delay and shares them. These tests
+# primarycensored_analytical_lcdf_vectorized(), which computes the analytical
+# uniform primary terms once per integer delay and shares them. These tests
 # check it against per-delay Stan calls and the R functions.
 
 vectorized_dists <- list(
@@ -41,46 +41,6 @@ test_that("check_for_analytical_vectorized needs uniform terms and an
   }
 })
 
-test_that("check_for_terms registers the uniform primary delays only", {
-  for (dist_id in c(1L, 2L, 3L, 5L)) {
-    expect_identical(check_for_terms(dist_id, 1L), 1L)
-    expect_identical(check_for_terms(dist_id, 2L), 0L)
-  }
-  for (dist_id in c(4L, 18L, 26L, 27L, 28L)) {
-    expect_identical(check_for_terms(dist_id, 1L), 0L)
-  }
-})
-
-test_that("primarycensored_terms and primarycensored_lcdf_from_terms
-  dispatch to the uniform primary terms", {
-  for (dist in vectorized_dists) {
-    params <- dist$params[[1]]
-    for (t in c(0, 0.3, 2, 11)) {
-      expect_identical(
-        primarycensored_terms(t, dist$dist_id, 1L, params, numeric(0)),
-        primarycensored_uniform_terms(t, dist$dist_id, params)
-      )
-    }
-    terms_d <- primarycensored_terms(9, dist$dist_id, 1L, params, numeric(0))
-    terms_q <- primarycensored_terms(6, dist$dist_id, 1L, params, numeric(0))
-    expect_identical(
-      primarycensored_lcdf_from_terms(
-        terms_d, terms_q, dist$dist_id, 1L, 3, numeric(0)
-      ),
-      primarycensored_uniform_lcdf_from_terms(terms_d, terms_q, 3)
-    )
-  }
-  expect_error(
-    primarycensored_terms(1, 4L, 1L, 0.3, numeric(0)), "terms"
-  )
-  expect_error(
-    primarycensored_lcdf_from_terms(
-      c(0, 0), c(0, 0), 2L, 2L, 1, 0.2
-    ),
-    "terms"
-  )
-})
-
 test_that("uniform primary terms are -Inf for t <= 0", {
   for (dist in vectorized_dists) {
     for (t in c(0, -0.5, -3)) {
@@ -104,9 +64,8 @@ test_that(
   }
 )
 
-test_that("primarycensored_lcdf_vectorized and
-  primarycensored_analytical_lcdf_vectorized match primarycensored_lcdf at
-  each delay", {
+test_that("primarycensored_analytical_lcdf_vectorized matches
+  primarycensored_lcdf at each delay", {
   n <- 41L
   for (dist in vectorized_dists) {
     for (params in dist$params) {
@@ -116,17 +75,13 @@ test_that("primarycensored_lcdf_vectorized and
             "dist", dist$dist_id, "params", toString(params),
             "pwindow", pwindow, "start", start
           )
-          expected <- per_delay_lcdf(start:n, dist$dist_id, params, pwindow)
-          vectorised <- primarycensored_lcdf_vectorized(
-            start, n, dist$dist_id, params, pwindow, 1L, numeric(0)
+          vectorised <- primarycensored_analytical_lcdf_vectorized(
+            start, n, dist$dist_id, params, pwindow
           )
           expect_length(vectorised, n)
-          expect_identical(vectorised[start:n], expected, info = info)
           expect_identical(
-            primarycensored_analytical_lcdf_vectorized(
-              start, n, dist$dist_id, params, pwindow
-            )[start:n],
-            expected,
+            vectorised[start:n],
+            per_delay_lcdf(start:n, dist$dist_id, params, pwindow),
             info = info
           )
         }
@@ -288,11 +243,12 @@ vectorized_gradient_model <- function() {
     "  real L;\n",
     "  real D;\n",
     "  int dist_id;\n",
+    "  int K;\n",
     "  real pwindow;\n",
     "  vector[max_delay + 1] w;\n",
     "}\n",
     "parameters {\n",
-    "  array[2] real<lower=0> params;\n",
+    "  array[K] real<lower=0> params;\n",
     "}\n",
     "model {\n",
     "  target += dot_product(w, primarycensored_sone_pmf_vectorized(\n",
@@ -318,7 +274,8 @@ test_that("primarycensored_sone_pmf_vectorized gradients match finite
   cases <- list(
     list(dist_id = 1L, params = c(1.5, 0.5)),
     list(dist_id = 2L, params = c(2, 0.5)),
-    list(dist_id = 3L, params = c(1.5, 5))
+    list(dist_id = 3L, params = c(1.5, 5)),
+    list(dist_id = 5L, params = c(1.5, 3, 2))
   )
   max_delay <- 15
   for (case in cases) {
@@ -329,9 +286,10 @@ test_that("primarycensored_sone_pmf_vectorized gradients match finite
         )
         res <- vectorized_gradient_at(model, list(
           max_delay = max_delay, L = s$L, D = s$D, dist_id = case$dist_id,
-          pwindow = pwindow, w = seq(0.5, 1.5, length.out = max_delay + 1)
+          K = length(case$params), pwindow = pwindow,
+          w = seq(0.5, 1.5, length.out = max_delay + 1)
         ), case$params)
-        expect_length(res$gradient, 2)
+        expect_length(res$gradient, length(case$params))
         expect_true(all(is.finite(res$gradient)), info = info)
         expect_equal(
           res$gradient, res$finite_diff,

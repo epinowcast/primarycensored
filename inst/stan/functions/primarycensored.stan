@@ -406,12 +406,9 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * Compute the primary event censored log CDF at integer delays
   * @ingroup primary_censored_vectorized
   *
-  * When check_for_analytical_vectorized() is 1 the log CDF at d combines
-  * the terms at d and at q = max(d - pwindow, 0), see
-  * primarycensored_lcdf_from_terms(). Both are integer delays, so the terms
-  * are computed once per delay and used for both. Otherwise
-  * primarycensored_lcdf() is called at each delay. No truncation is
-  * applied.
+  * Uses primarycensored_analytical_lcdf_vectorized() when
+  * check_for_analytical_vectorized() is 1, and otherwise calls
+  * primarycensored_lcdf() at each delay. No truncation is applied.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
@@ -429,25 +426,9 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
   if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
-    int pw = to_int(pwindow);
-    vector[n] log_cdfs;
-    int n_terms = rows(
-      primarycensored_terms(0, dist_id, primary_id, params, primary_params)
+    return primarycensored_analytical_lcdf_vectorized(
+      start, n, dist_id, params, pwindow
     );
-    // terms[t + 1] holds the terms at delay t
-    array[n + 1] vector[n_terms] terms;
-    for (t in max(start - pw, 0):n) {
-      terms[t + 1] = primarycensored_terms(
-        t, dist_id, primary_id, params, primary_params
-      );
-    }
-    for (d in start:n) {
-      log_cdfs[d] = primarycensored_lcdf_from_terms(
-        terms[d + 1], terms[max(d - pw, 0) + 1], dist_id, primary_id,
-        pwindow, primary_params
-      );
-    }
-    return log_cdfs;
   }
   vector[n] log_cdfs;
   // The internal lower bound below is 0 for positive-support delays and -inf
