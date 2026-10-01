@@ -7,23 +7,15 @@ pwindows <- c(1, 2)
 series_tol <- 1e-8
 public_tol <- 1e-5
 
-test_that("truncated Gumbel primaries dispatch to analytic methods", {
-  expect_s3_class(
-    gumbel_object(families[[1]], 0, 1), "pcens_pexp_dtgumbel"
-  )
-  expect_s3_class(
-    gumbel_object(families[[2]], 0, 1), "pcens_pgamma_dtgumbel"
-  )
+test_that("normal delays dispatch to the series method", {
   expect_s3_class(
     gumbel_object(families[[4]], 0, 1), "pcens_pnorm_dtgumbel"
   )
-  for (cls in c(
-    "pcens_pexp_dtgumbel", "pcens_pgamma_dtgumbel", "pcens_pnorm_dtgumbel"
-  )) {
-    expect_false(
-      is.null(utils::getS3method("pcens_cdf", cls, optional = TRUE)),
-      info = cls
-    )
+  expect_false(is.null(
+    utils::getS3method("pcens_cdf", "pcens_pnorm_dtgumbel", optional = TRUE)
+  ))
+  for (cls in c("pcens_pexp_dtgumbel", "pcens_pgamma_dtgumbel")) {
+    expect_null(utils::getS3method("pcens_cdf", cls, optional = TRUE))
   }
 })
 
@@ -39,7 +31,7 @@ test_that("the number of terms meets the truncation bound", {
 })
 
 test_that("the series agrees with numerical integration where accepted", {
-  for (family in families) {
+  for (family in gumbel_series_families()) {
     cdf <- gumbel_cdf(family)
     for (pwindow in pwindows) {
       for (beta in betas) {
@@ -145,25 +137,29 @@ test_that("a large window value falls back to the numerical path", {
   expect_identical(pcens_cdf(obj, q, 1), pcens_cdf.default(obj, q, 1))
 })
 
-test_that("delays without the tilted delay fall back to numerical", {
-  # The rate must be above N / beta
-  obj <- do.call(
-    new_pcens,
-    c(
-      list(
-        pdist = pgamma, dprimary = dtgumbel,
-        primary_args = list(mu = 0, beta = 1)
-      ),
-      list(shape = 2, rate = 0.5)
-    )
-  )
-  expect_false(.gumbel_available(obj, 0, 1))
+test_that("exponential and gamma delays use the numerical path", {
   q <- c(0.5, 3, 8)
-  expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
-  # The exponential needs a rate above the largest tilt
-  exp_obj <- gumbel_object(families[[1]], 0, 1)
-  expect_true(.gumbel_available(exp_obj, 0, 1))
-  expect_false(.gumbel_available(exp_obj, 0, 0.1))
+  for (family in families[1:2]) {
+    obj <- gumbel_object(family, 0, 1)
+    expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
+  }
+})
+
+test_that("the series is skipped where its rounding estimate is large", {
+  # A wide normal delay with a large mu / beta loses the series precision
+  wide <- new_pcens(
+    pnorm, dtgumbel, primary_args = list(mu = 1.15, beta = 0.5),
+    mean = 0, sd = 4
+  )
+  expect_false(.gumbel_available(wide, 1.15, 0.5))
+  narrow <- gumbel_object(families[[4]], 0.5, 0.5)
+  expect_true(.gumbel_available(narrow, 0.5, 0.5))
+  q <- c(-5, 0, 3, 8)
+  expect_equal(
+    pcens_cdf(wide, q, 1),
+    gumbel_reference(q, 1, 1.15, 0.5, function(x) pnorm(x, 0, 4), FALSE),
+    tolerance = 1e-7
+  )
 })
 
 test_that("a narrow window relative to the scale uses the numerical path", {

@@ -268,22 +268,19 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
       positive_infinity(), primary_id, primary_params
     );
   } else {
-    // Use numerical integration. A CDF at or below 0, below the solver
-    // tolerance, is -inf, and one above 1 is capped, so the result is never
-    // NaN or above 0.
+    // Use numerical integration
     if (primary_id == 4) {
       // The truncated Gumbel integral is on the log scale, so a CDF below
-      // 1e-300 is not lost, see primarycensored_gumbel_numeric_lcdf()
+      // 1e-300 is not lost
       result = primarycensored_gumbel_numeric_lcdf(
         d | dist_id, params, pwindow, primary_params[1], primary_params[2]
       );
     } else {
-      real cdf = primarycensored_cdf(
+      result = log(primarycensored_cdf(
         d | dist_id, params, pwindow,
         dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
         positive_infinity(), primary_id, primary_params
-      );
-      result = cdf > 0 ? fmin(log(cdf), 0) : negative_infinity();
+      ));
     }
   }
 

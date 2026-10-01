@@ -35,22 +35,21 @@ gumbel_error <- function(actual, expected, floor = 1e-12) {
   max(abs(actual - expected) / pmax(expected, floor))
 }
 
-# Delay families with a transform for positive tilts. The exponential and
-# gamma rates are large as the series needs the rate above N / beta.
+# Delay families, with the observations q at which to compare the CDFs
 gumbel_families <- function() {
   list(
     list(
-      label = "exponential rate 60", pdist = pexp, args = list(rate = 60),
-      q = c(0.005, 0.02, 0.05, 0.1, 0.5, 1, 2.5), positive = TRUE
+      label = "exponential rate 1", pdist = pexp, args = list(rate = 1),
+      q = c(0.005, 0.02, 0.05, 0.1, 0.5, 1, 2.5, 8), positive = TRUE
     ),
     list(
-      label = "gamma shape 3 rate 80", pdist = pgamma,
-      args = list(shape = 3, rate = 80),
-      q = c(0.01, 0.03, 0.05, 0.1, 0.5, 1, 2.5), positive = TRUE
+      label = "gamma shape 3 rate 1", pdist = pgamma,
+      args = list(shape = 3, rate = 1),
+      q = c(0.01, 0.03, 0.05, 0.1, 0.5, 1, 2.5, 8), positive = TRUE
     ),
     list(
-      label = "gamma shape 0.6 rate 100", pdist = pgamma,
-      args = list(shape = 0.6, rate = 100),
+      label = "gamma shape 0.6 rate 2", pdist = pgamma,
+      args = list(shape = 0.6, rate = 2),
       q = c(0.002, 0.02, 0.1, 0.5, 1, 2.5), positive = TRUE
     ),
     list(
@@ -65,6 +64,9 @@ gumbel_families <- function() {
     )
   )
 }
+
+# The families with a series solution
+gumbel_series_families <- function() gumbel_families()[4:5]
 
 gumbel_cdf <- function(family) {
   function(x) do.call(family$pdist, c(list(x), family$args))
@@ -117,6 +119,16 @@ gumbel_spike_families <- function() {
     list(
       label = "gamma shape 3 rate 1", pdist = pgamma,
       args = list(shape = 3, rate = 1),
+      q = c(0.5, 1, 3, 8, 20), positive = TRUE
+    ),
+    list(
+      label = "lognormal meanlog 1 sdlog 0.5", pdist = plnorm,
+      args = list(meanlog = 1, sdlog = 0.5),
+      q = c(0.5, 1, 3, 8, 20), positive = TRUE
+    ),
+    list(
+      label = "Weibull shape 2 scale 3", pdist = pweibull,
+      args = list(shape = 2, scale = 3),
       q = c(0.5, 1, 3, 8, 20), positive = TRUE
     )
   )

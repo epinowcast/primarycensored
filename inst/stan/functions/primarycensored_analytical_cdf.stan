@@ -42,7 +42,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
   // Exponential, Gamma and Normal with an exponentially tilted primary
   if (check_for_exptilt(dist_id, primary_id)) return 1;
-  // Exponential, Gamma and Normal with a truncated Gumbel primary
+  // Normal with a truncated Gumbel primary
   if (check_for_gumbel(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {

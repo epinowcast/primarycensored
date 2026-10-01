@@ -1,7 +1,8 @@
 skip_on_cran()
 
-# Stan solutions for exponential, gamma and normal delays with a truncated
-# Gumbel primary (primary_id 4 with primary_params = [mu, beta])
+# Stan solutions for a truncated Gumbel primary (primary_id 4 with
+# primary_params = [mu, beta]). Normal delays have the series, and the other
+# delays use the numerical path.
 
 gumbel_stan_cases <- list(
   list(
@@ -21,6 +22,8 @@ gumbel_stan_cases <- list(
     args = list(mean = -1, sd = 3), d = c(-8, -1, 0.3, 1, 2.5, 4, 8)
   )
 )
+
+gumbel_series_cases <- gumbel_stan_cases[3:4]
 
 gumbel_case_lower <- function(case) {
   if (case$dist_id == 18L) -Inf else 0
@@ -104,13 +107,11 @@ test_that("gumbel_n_terms matches the R number of terms", {
 })
 
 test_that("check_for_gumbel is structural", {
-  for (dist_id in c(2L, 4L, 18L)) {
-    expect_identical(check_for_gumbel(dist_id, 4L), 1L)
-    expect_identical(check_for_gumbel(dist_id, 1L), 0L)
-    expect_identical(check_for_gumbel(dist_id, 2L), 0L)
-    expect_identical(check_for_analytical(dist_id, 4L), 1L)
-  }
-  for (dist_id in c(1L, 3L, 5L, 12L)) {
+  expect_identical(check_for_gumbel(18L, 4L), 1L)
+  expect_identical(check_for_gumbel(18L, 1L), 0L)
+  expect_identical(check_for_gumbel(18L, 2L), 0L)
+  expect_identical(check_for_analytical(18L, 4L), 1L)
+  for (dist_id in c(1L, 2L, 3L, 4L, 5L, 12L)) {
     expect_identical(check_for_gumbel(dist_id, 4L), 0L)
     expect_identical(check_for_analytical(dist_id, 4L), 0L)
   }
@@ -118,25 +119,22 @@ test_that("check_for_gumbel is structural", {
   expect_identical(check_for_analytical(26L, 4L), 0L)
 })
 
-test_that("check_for_gumbel_params needs a bounded window value and the
-  tilted delay", {
-  # exp(mu / beta) above 15 is not used
+test_that("check_for_gumbel_params needs a bounded window value and a small
+  rounding estimate", {
   expect_identical(check_for_gumbel_params(18L, c(3, 2), 0, 1), 1L)
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 2.7, 1), 1L)
+  expect_identical(check_for_gumbel_params(18L, c(3, 2), 1, 1), 1L)
+  # exp(mu / beta) above 15 is not used
   expect_identical(check_for_gumbel_params(18L, c(3, 2), 2.8, 1), 0L)
   expect_identical(check_for_gumbel_params(18L, c(3, 2), 0.5, 0.1), 0L)
   expect_identical(check_for_gumbel_params(18L, c(3, 2), -5, 0.1), 1L)
   expect_identical(check_for_gumbel_params(18L, c(3, 2), 0, 0), 0L)
   expect_identical(check_for_gumbel_params(18L, c(3, 2), 0, -1), 0L)
-  # The delay needs a rate above n_terms / beta
-  n_terms <- gumbel_n_terms(0)
-  expect_identical(
-    check_for_gumbel_params(4L, n_terms + 1, 0, 1), 1L
-  )
-  expect_identical(check_for_gumbel_params(4L, n_terms - 1, 0, 1), 0L)
-  expect_identical(check_for_gumbel_params(4L, 1, 0, 1), 0L)
-  expect_identical(check_for_gumbel_params(2L, c(2, 1), 0, 1), 0L)
-  expect_identical(check_for_gumbel_params(2L, c(2, 80), 0, 1), 1L)
+  # A wide delay and a large mu / beta make the rounding estimate large
+  expect_identical(check_for_gumbel_params(18L, c(0, 4), 1.15, 0.5), 0L)
+  expect_identical(check_for_gumbel_params(18L, c(0, 0.5), 1.15, 0.5), 1L)
+  # Only the normal delay has a series
+  expect_identical(check_for_gumbel_params(4L, 80, 0, 1), 0L)
+  expect_identical(check_for_gumbel_params(2L, c(2, 80), 0, 1), 0L)
   expect_identical(
     check_for_analytical_params(18L, c(3, 2), 4L, c(0, 1)), 1L
   )
@@ -144,8 +142,9 @@ test_that("check_for_gumbel_params needs a bounded window value and the
     check_for_analytical_params(18L, c(3, 2), 4L, c(0.5, 0.1)), 0L
   )
   expect_identical(
-    check_for_analytical_params(4L, 1, 4L, c(0, 1)), 0L
+    check_for_analytical_params(4L, 80, 4L, c(0, 1)), 0L
   )
+  expect_identical(gumbel_screen_tolerance(), .gumbel_screen_tol)
   # Unchanged for the other solutions
   expect_identical(
     check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0)), 1L
@@ -156,7 +155,7 @@ test_that("check_for_gumbel_params needs a bounded window value and the
 })
 
 test_that("Stan gumbel terms match the R transforms", {
-  for (case in gumbel_stan_cases) {
+  for (case in gumbel_series_cases) {
     obj <- gumbel_case_object(case, -0.5, 1)
     n_terms <- gumbel_n_terms(-0.5)
     ts <- c(0.01, 0.4, 1, 3.5)
@@ -193,7 +192,7 @@ pwindows <- c(1, 2)
 
 test_that("primarycensored_gumbel_lcdf matches the R series and the
   reference integral where the series applies", {
-  for (case in gumbel_stan_cases) {
+  for (case in gumbel_series_cases) {
     cdf <- gumbel_case_cdf(case)
     positive <- case$dist_id != 18L
     for (pwindow in pwindows) {
@@ -372,7 +371,9 @@ test_that("points where the series loses accuracy use the ODE", {
 gumbel_spike_stan_cases <- list(
   list(dist_id = 18L, params = c(3, 2), family = 1L),
   list(dist_id = 4L, params = 1, family = 2L),
-  list(dist_id = 2L, params = c(3, 1), family = 3L)
+  list(dist_id = 2L, params = c(3, 1), family = 3L),
+  list(dist_id = 1L, params = c(1, 0.5), family = 4L),
+  list(dist_id = 3L, params = c(2, 3), family = 5L)
 )
 
 test_that("the ODE path resolves a narrow spike of the window density", {
@@ -569,41 +570,6 @@ test_that("the series is used where its estimate is below the tolerance", {
   expect_gt(used, 0)
 })
 
-test_that("the series is not used for the gamma where it amplifies the
-  shape gradient error", {
-  case <- gumbel_stan_cases[[2]]
-  beta <- 1
-  d <- 0.1
-  fit_at <- function(mu) {
-    n_terms <- gumbel_n_terms(mu / beta)
-    as.vector(primarycensored_gumbel_lcdf_from_terms(
-      primarycensored_gumbel_terms(d, 2L, beta, n_terms, case$params),
-      primarycensored_gumbel_terms(d - 1, 2L, beta, n_terms, case$params),
-      d, 1, mu, beta, n_terms
-    ))
-  }
-  # The ratio of the absolute terms to the sum multiplies the error of the
-  # gamma shape derivative
-  fit <- fit_at(1.5)
-  expect_lt(fit[2], gumbel_error_tolerance())
-  expect_gt(
-    fit[3] * gumbel_gamma_shape_gradient_error(), gumbel_gradient_tolerance()
-  )
-  expect_identical(gumbel_series_accepted(2L, fit), 0L)
-  expect_identical(gumbel_series_accepted(18L, fit), 1L)
-  expect_identical(
-    primarycensored_gumbel_lcdf(d, 2L, case$params, 1, 1.5, beta),
-    primarycensored_gumbel_numeric_lcdf(d, 2L, case$params, 1, 1.5, beta)
-  )
-  # A ratio of 32 is accepted
-  fit <- fit_at(-8)
-  expect_lt(fit[3], 200)
-  expect_identical(gumbel_series_accepted(2L, fit), 1L)
-  expect_identical(
-    primarycensored_gumbel_lcdf(d, 2L, case$params, 1, -8, beta), fit[1]
-  )
-})
-
 test_that("Stan tgumbel is accurate for a spike and a far location", {
   # s(xmax) = exp(25), so the density needs the difference of s
   t <- c(0, 1e-13, 1e-12, 5e-12)
@@ -671,14 +637,12 @@ test_that("the analytical lcdf applies truncation for a normal delay", {
 })
 
 test_that("check_for_gumbel_vectorized needs an integer pwindow", {
-  for (dist_id in c(2L, 4L, 18L)) {
-    expect_identical(check_for_gumbel_vectorized(dist_id, 4L, 1), 1L)
-    expect_identical(check_for_gumbel_vectorized(dist_id, 4L, 7), 1L)
-    expect_identical(check_for_gumbel_vectorized(dist_id, 4L, 1.5), 0L)
-    expect_identical(check_for_gumbel_vectorized(dist_id, 4L, 0.5), 0L)
-    expect_identical(check_for_gumbel_vectorized(dist_id, 1L, 1), 0L)
-  }
-  for (dist_id in c(1L, 3L, 26L)) {
+  expect_identical(check_for_gumbel_vectorized(18L, 4L, 1), 1L)
+  expect_identical(check_for_gumbel_vectorized(18L, 4L, 7), 1L)
+  expect_identical(check_for_gumbel_vectorized(18L, 4L, 1.5), 0L)
+  expect_identical(check_for_gumbel_vectorized(18L, 4L, 0.5), 0L)
+  expect_identical(check_for_gumbel_vectorized(18L, 1L, 1), 0L)
+  for (dist_id in c(1L, 2L, 3L, 4L, 26L)) {
     expect_identical(check_for_gumbel_vectorized(dist_id, 4L, 1), 0L)
   }
 })
@@ -693,7 +657,7 @@ per_delay_gumbel_lcdf <- function(delays, case, pwindow, mu, beta) {
 
 test_that("the vectorised Gumbel CDF matches the per delay CDF", {
   n <- 21L
-  for (case in gumbel_stan_cases) {
+  for (case in gumbel_series_cases) {
     for (pwindow in c(1, 2, 5)) {
       for (beta in c(0.2, 1)) {
         for (mu in c(-1, 0, 1)) {
@@ -721,7 +685,7 @@ test_that("the vectorised Gumbel CDF matches the per delay CDF", {
 })
 
 test_that("primarycensored_lcdf_vectorized uses the Gumbel shared terms", {
-  for (case in gumbel_stan_cases) {
+  for (case in gumbel_series_cases) {
     expect_identical(
       primarycensored_lcdf_vectorized(
         1L, 15L, case$dist_id, case$params, 3, 4L, c(-1, 1)
@@ -917,9 +881,7 @@ test_that("Gumbel log CDF gradients match finite differences across the
   model <- gumbel_gradient_model()
   cases <- list(
     list(dist_id = 18L, params = c(0.5, 1), d = c(0.02, 1, 3)),
-    list(dist_id = 18L, params = c(3, 2), d = c(0.02, 1, 3, 6)),
-    list(dist_id = 4L, params = 60, d = c(0.02, 0.1, 0.5, 2.5)),
-    list(dist_id = 2L, params = c(3, 80), d = c(0.02, 0.1, 0.5, 2.5))
+    list(dist_id = 18L, params = c(3, 2), d = c(0.02, 1, 3, 6))
   )
   for (case in cases) {
     for (mu in c(-0.5, 0, 0.5, 1, 1.5)) {
@@ -939,8 +901,12 @@ test_that("Gumbel log CDF gradients match finite differences across the
             expect_false(res$gradient_not_finite, info = label)
             expect_false(res$rejected, info = label)
             expect_length(res$gradient, 4)
-            # Finite differences have an absolute error of about 3e-5
-            expect_gumbel_gradient_close(res, case, label, slack = 1e-4)
+            # Finite differences have an absolute error of about 3e-5, and
+            # a relative error of about 1e-4 from the solver on the
+            # numerical path
+            expect_gumbel_gradient_close(
+              res, case, label, scale = 10, slack = 1e-4
+            )
           }
         }
       }
@@ -1014,6 +980,79 @@ test_that("the vectorised Gumbel log PMF has finite gradients for delays
       expect_lt(elapsed, 5, label = label)
       expect_gumbel_gradient_close(res, case, label, scale = 5)
     }
+  }
+})
+
+test_that("lognormal and Weibull gradients are finite for a narrow window", {
+  model <- gumbel_gradient_model()
+  cases <- list(
+    list(dist_id = 1L, params = c(1, 0.5)),
+    list(dist_id = 3L, params = c(2, 3)),
+    list(dist_id = 2L, params = c(4, 2))
+  )
+  points <- list(
+    list(d = 1.9, pwindow = 2, mu = 2.1, beta = 0.1),
+    list(d = 1, pwindow = 2, mu = 2, beta = 0.5),
+    list(d = 1, pwindow = 2, mu = 2.2, beta = 0.2),
+    list(d = 4, pwindow = 2, mu = 3, beta = 0.1)
+  )
+  for (case in cases) {
+    for (point in points) {
+      label <- gumbel_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
+      )
+      elapsed <- system.time({
+        res <- gumbel_gradient_at(
+          model, case, point$d, point$pwindow, point$mu, point$beta
+        )
+      })[["elapsed"]]
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_lt(elapsed, 5, label = label)
+      expect_gumbel_gradient_close(res, case, label, scale = 5)
+    }
+  }
+})
+
+test_that("vectorised lognormal and Weibull gradients are finite", {
+  model <- gumbel_gradient_model()
+  cases <- list(
+    list(dist_id = 1L, params = c(1, 0.5)),
+    list(dist_id = 3L, params = c(2, 3))
+  )
+  for (case in cases) {
+    label <- gumbel_case_label(case, d = 6, pwindow = 2, mu = 2.1, beta = 0.3)
+    elapsed <- system.time({
+      res <- gumbel_gradient_at(
+        model, case, 6, 2, 2.1, 0.3, vectorised = TRUE
+      )
+    })[["elapsed"]]
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    expect_lt(elapsed, 5, label = label)
+    expect_gumbel_gradient_close(res, case, label, scale = 5)
+  }
+})
+
+test_that("a log CDF below -1000 is -inf in the numerical path", {
+  # The window mass is at 2, so a delay of at most 1 needs u of exp(20)
+  for (case in list(
+    list(id = 2L, par = c(4, 2)), list(id = 1L, par = c(1, 0.5)),
+    list(id = 4L, par = 1)
+  )) {
+    expect_identical(
+      primarycensored_gumbel_numeric_lcdf(
+        1, case$id, case$par, 2, 3, 0.1
+      ),
+      -Inf
+    )
+    expect_identical(
+      primarycensored_lcdf(1, case$id, case$par, 2, 0, Inf, 4L, c(3, 0.1)),
+      -Inf
+    )
   }
 })
 

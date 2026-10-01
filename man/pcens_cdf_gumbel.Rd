@@ -2,15 +2,9 @@
 % Please edit documentation in R/pcens_cdf_gumbel.R
 \name{pcens_cdf_gumbel}
 \alias{pcens_cdf_gumbel}
-\alias{pcens_cdf.pcens_pexp_dtgumbel}
-\alias{pcens_cdf.pcens_pgamma_dtgumbel}
 \alias{pcens_cdf.pcens_pnorm_dtgumbel}
-\title{Methods for delays with a truncated Gumbel primary}
+\title{Method for a normal delay with a truncated Gumbel primary}
 \usage{
-\method{pcens_cdf}{pcens_pexp_dtgumbel}(object, q, pwindow, use_numeric = FALSE)
-
-\method{pcens_cdf}{pcens_pgamma_dtgumbel}(object, q, pwindow, use_numeric = FALSE)
-
 \method{pcens_cdf}{pcens_pnorm_dtgumbel}(object, q, pwindow, use_numeric = FALSE)
 }
 \arguments{
@@ -31,10 +25,10 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with a truncated Gumbel primary event window, the
-\code{\link[=dtgumbel]{dtgumbel()}} primary distribution. They honour \code{use_numeric}, and use a
-numerical method when no accurate closed form applies.
+Analytical primary event censored CDF for a normal delay distribution with
+a truncated Gumbel primary event window, the \code{\link[=dtgumbel]{dtgumbel()}} primary
+distribution. It honours \code{use_numeric}, and uses a numerical method where
+the series below is not accurate.
 }
 \details{
 Write \eqn{G(z) = \exp[-\exp\{-(z - \mu) / \beta\}]} and
@@ -60,40 +54,22 @@ They are summed on the log scale with the odd and even terms separate.
 The series is truncated where the bound is below 1e-18.
 
 \strong{Fallback to the numerical method.} The relative error of the series is
-estimated for each \code{q}, see \code{.gumbel_error_bound()}.
+estimated for each \code{q}.
 Where it is above 1e-8 the numerical method is used for that \code{q}.
-Accepted values agree with a tight reference integral to a relative
-difference of 5e-10 or better in tests.
 The numerical method is used for every \code{q} where \eqn{\mu / \beta} is
-above \code{log(15)}, where the window is narrow relative to \eqn{\beta}, and
-where the delay has no transform at the largest tilt.
-The exponential and gamma transforms need the rate to be above
-\eqn{N / \beta}, so in practice these delays use the series only when they
-are short relative to the window.
-The normal delay has no such restriction.
+above \code{log(15)} or where the window is narrow relative to \eqn{\beta}.
 
 \strong{Numerical method.} The window density is a spike of width about
 \eqn{\beta} when \eqn{\mu / \beta} is large, which the integration of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} can miss.
-So \code{.gumbel_numeric()} integrates in a variable in which the integrand is
-smooth, over the range that holds the mass of the window.
-\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} uses it for any delay with this primary.
-
-A delay is added with \link{tilt_transform} methods and a \code{pcens_cdf} method
-that calls \code{.pcens_cdf_gumbel()}.
+So \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} integrates this primary in a variable in which
+the integrand is smooth, over the range that holds the mass of the window.
+This applies to any delay with this primary.
 }
 \examples{
-# Normal delay, for example a difference of event times
 pnorm_obj <- new_pcens(
   pdist = pnorm, dprimary = dtgumbel,
   primary_args = list(mu = 0.5, beta = 0.5), mean = 3, sd = 2
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
-
-# Exponential delay with a short mean, rate 40
-pexp_obj <- new_pcens(
-  pdist = pexp, dprimary = dtgumbel,
-  primary_args = list(mu = -1, beta = 0.5), rate = 40
-)
-pcens_cdf(pexp_obj, q = c(0.01, 0.1, 1), pwindow = 1)
 }

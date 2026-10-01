@@ -1,9 +1,9 @@
-#' Methods for delays with a truncated Gumbel primary
+#' Method for a normal delay with a truncated Gumbel primary
 #'
-#' Analytical primary event censored CDFs for exponential, gamma and normal
-#' delay distributions with a truncated Gumbel primary event window, the
-#' [dtgumbel()] primary distribution. They honour `use_numeric`, and use a
-#' numerical method when no accurate closed form applies.
+#' Analytical primary event censored CDF for a normal delay distribution with
+#' a truncated Gumbel primary event window, the [dtgumbel()] primary
+#' distribution. It honours `use_numeric`, and uses a numerical method where
+#' the series below is not accurate.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -31,69 +31,29 @@
 #' The series is truncated where the bound is below 1e-18.
 #'
 #' **Fallback to the numerical method.** The relative error of the series is
-#' estimated for each `q`, see `.gumbel_error_bound()`.
+#' estimated for each `q`.
 #' Where it is above 1e-8 the numerical method is used for that `q`.
-#' Accepted values agree with a tight reference integral to a relative
-#' difference of 5e-10 or better in tests.
 #' The numerical method is used for every `q` where \eqn{\mu / \beta} is
-#' above `log(15)`, where the window is narrow relative to \eqn{\beta}, and
-#' where the delay has no transform at the largest tilt.
-#' The exponential and gamma transforms need the rate to be above
-#' \eqn{N / \beta}, so in practice these delays use the series only when they
-#' are short relative to the window.
-#' The normal delay has no such restriction.
+#' above `log(15)` or where the window is narrow relative to \eqn{\beta}.
 #'
 #' **Numerical method.** The window density is a spike of width about
 #' \eqn{\beta} when \eqn{\mu / \beta} is large, which the integration of
 #' [pcens_cdf.default()] can miss.
-#' So `.gumbel_numeric()` integrates in a variable in which the integrand is
-#' smooth, over the range that holds the mass of the window.
-#' [pcens_cdf.default()] uses it for any delay with this primary.
-#'
-#' A delay is added with [tilt_transform] methods and a `pcens_cdf` method
-#' that calls `.pcens_cdf_gumbel()`.
+#' So [pcens_cdf.default()] integrates this primary in a variable in which
+#' the integrand is smooth, over the range that holds the mass of the window.
+#' This applies to any delay with this primary.
 #'
 #' @inherit pcens_cdf return
 #'
 #' @name pcens_cdf_gumbel
 #'
 #' @examples
-#' # Normal delay, for example a difference of event times
 #' pnorm_obj <- new_pcens(
 #'   pdist = pnorm, dprimary = dtgumbel,
 #'   primary_args = list(mu = 0.5, beta = 0.5), mean = 3, sd = 2
 #' )
 #' pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
-#'
-#' # Exponential delay with a short mean, rate 40
-#' pexp_obj <- new_pcens(
-#'   pdist = pexp, dprimary = dtgumbel,
-#'   primary_args = list(mu = -1, beta = 0.5), rate = 40
-#' )
-#' pcens_cdf(pexp_obj, q = c(0.01, 0.1, 1), pwindow = 1)
 NULL
-
-#' @rdname pcens_cdf_gumbel
-#' @export
-pcens_cdf.pcens_pexp_dtgumbel <- function(
-  object,
-  q,
-  pwindow,
-  use_numeric = FALSE
-) {
-  .pcens_cdf_gumbel(object, q, pwindow, use_numeric)
-}
-
-#' @rdname pcens_cdf_gumbel
-#' @export
-pcens_cdf.pcens_pgamma_dtgumbel <- function(
-  object,
-  q,
-  pwindow,
-  use_numeric = FALSE
-) {
-  .pcens_cdf_gumbel(object, q, pwindow, use_numeric)
-}
 
 #' @rdname pcens_cdf_gumbel
 #' @export
@@ -113,6 +73,9 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 # Largest estimated relative error for which the series is used, about the
 # accuracy of the numerical method
 .gumbel_tol <- 1e-8
+
+# Largest rounding estimate for which the series is tried
+.gumbel_screen_tol <- 1e-7
 
 .gumbel_num_tol <- 1e-10
 
@@ -153,10 +116,20 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   primary
 }
 
-# TRUE if the series can be used, which depends on the parameters only
+# TRUE if the series can be used, which depends on the parameters only. The
+# rounding error is about the machine precision times the size of the log
+# transform at the largest tilt times the terms exp(s0), so the series is
+# skipped where that is above .gumbel_screen_tol
 .gumbel_available <- function(object, mu, beta) {
-  mu / beta <= log(.gumbel_max_s0) &&
-    .pcens_tilt_available(object, .gumbel_n_terms(mu / beta) / beta)
+  log_s0 <- mu / beta
+  if (log_s0 > log(.gumbel_max_s0)) {
+    return(FALSE)
+  }
+  xi <- .gumbel_n_terms(log_s0) / beta
+  p <- .norm_mean_sd(object)
+  size <- xi * abs(p$mean) + 0.5 * (xi * p$sd)^2
+  log(.Machine$double.eps) + log1p(size) + exp(log_s0) <=
+    log(.gumbel_screen_tol)
 }
 
 # Shared implementation of the pcens_cdf_gumbel methods
@@ -206,11 +179,17 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
     sum(vapply(
       seq_len(length(breaks) - 1L),
       function(i) {
-        stats::integrate(
+        fit <- stats::integrate(
           integrand, breaks[i], breaks[i + 1L],
           rel.tol = .gumbel_num_tol, abs.tol = 0, subdivisions = 1000L,
           stop.on.error = FALSE
-        )$value
+        )
+        if (fit$message != "OK") {
+          warning(
+            "Truncated Gumbel integration: ", fit$message, call. = FALSE
+          )
+        }
+        fit$value
       },
       numeric(1)
     ))

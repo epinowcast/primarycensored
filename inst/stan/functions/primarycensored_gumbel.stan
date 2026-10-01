@@ -11,8 +11,8 @@
  * Every term depends on d or q alone, so the terms are computed once per
  * endpoint in primarycensored_gumbel_lcdf_vectorized().
  * The series alternates, so the terms are summed on the log scale with the
- * odd and even terms apart, and it is used where mu / beta is below log(15)
- * and its estimated relative error is below 1e-8.
+ * odd and even terms apart, and it is used for normal delays where mu / beta
+ * is below log(15) and its estimated relative error is below 1e-8.
  * Otherwise the numerical path of primarycensored_gumbel_numeric_cdf() is
  * used, which integrates in a variable where a narrow window density is
  * smooth.
@@ -44,31 +44,18 @@ real gumbel_error_tolerance() {
 }
 
 /**
-  * Relative error of the gamma shape gradient of the series per unit of
-  * amplification
+  * Largest rounding estimate for which the Gumbel series is tried
   * @ingroup truncated_gumbel_solutions
   *
-  * Stan's derivative of the gamma CDF in the shape has a relative error of
-  * about 1e-3. The alternating sum multiplies it by the ratio of the sum of
-  * the absolute terms to the sum. The value is calibrated against finite
-  * differences.
+  * The rounding error is about the machine precision times the size of the
+  * log transform at the largest tilt times exp(exp(mu / beta)). Above this
+  * the series is accurate at too few delays to be worth its cost, see
+  * check_for_gumbel_params().
   *
-  * @return 1e-4
+  * @return 1e-7
   */
-real gumbel_gamma_shape_gradient_error() {
-  return 1e-4;
-}
-
-/**
-  * Largest estimated gradient error for which the series is used for the gamma
-  * @ingroup truncated_gumbel_solutions
-  *
-  * See gumbel_gamma_shape_gradient_error().
-  *
-  * @return 2e-2, so an amplification of at most 200
-  */
-real gumbel_gradient_tolerance() {
-  return 2e-2;
+real gumbel_screen_tolerance() {
+  return 1e-7;
 }
 
 /**
@@ -96,26 +83,26 @@ int gumbel_n_terms(real log_s0) {
   * @ingroup truncated_gumbel_solutions
   *
   * The truncated Gumbel primary is primary_id 4 with primary_params =
-  * [mu, beta]. Whether the solution applies for given parameters is
-  * check_for_analytical_params().
+  * [mu, beta]. The series is for the normal delay. Whether it applies for
+  * given parameters is check_for_analytical_params().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
   *
   * @return 1 if the delay has a truncated Gumbel solution and the primary is
-  *   the
-  * truncated Gumbel, 0 otherwise
+  *   the truncated Gumbel, 0 otherwise
   */
 int check_for_gumbel(int dist_id, int primary_id) {
-  return primary_id == 4 && (dist_id == 2 || dist_id == 4 || dist_id == 18);
+  return primary_id == 4 && dist_id == 18;
 }
 
 /**
   * Check if the Gumbel series applies for the given parameters
   * @ingroup truncated_gumbel_solutions
   *
-  * Needs mu / beta below gumbel_max_log_s0() and the tilt transform of the
-  * delay at the largest tilt, see check_for_tilt_transform().
+  * Needs a normal delay, mu / beta below gumbel_max_log_s0() and a rounding
+  * estimate of at most gumbel_screen_tolerance(), from the size of the log
+  * transform at the largest tilt.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
@@ -126,11 +113,14 @@ int check_for_gumbel(int dist_id, int primary_id) {
   */
 int check_for_gumbel_params(int dist_id, array[] real params, real mu,
                             real beta) {
+  if (!check_for_gumbel(dist_id, 4)) return 0;
   if (!(beta > 0) || is_inf(beta) || is_nan(mu) || is_inf(mu)) return 0;
-  if (mu / beta > gumbel_max_log_s0()) return 0;
-  return check_for_tilt_transform(
-    dist_id, gumbel_n_terms(mu / beta) / beta, params
-  );
+  real log_s0 = mu / beta;
+  if (log_s0 > gumbel_max_log_s0()) return 0;
+  real xi = gumbel_n_terms(log_s0) / beta;
+  real size = xi * abs(params[1]) + 0.5 * square(xi * params[2]);
+  return log(machine_precision()) + log1p(size) + exp(log_s0)
+         <= log(gumbel_screen_tolerance());
 }
 
 /**
@@ -138,22 +128,13 @@ int check_for_gumbel_params(int dist_id, array[] real params, real mu,
   * @ingroup truncated_gumbel_solutions
   *
   * Needs an estimated relative error of at most gumbel_error_tolerance().
-  * For the gamma the amplification of the shape gradient error must also be
-  * within gumbel_gradient_tolerance().
   *
-  * @param dist_id Distribution identifier
   * @param fit Vector from primarycensored_gumbel_lcdf_from_terms()
   *
   * @return 1 if the series is used, 0 if the numerical path is
   */
-int gumbel_series_accepted(int dist_id, vector fit) {
-  if (!(fit[2] <= gumbel_error_tolerance())) return 0;
-  if (dist_id == 2
-      && !(fit[3] * gumbel_gamma_shape_gradient_error()
-           <= gumbel_gradient_tolerance())) {
-    return 0;
-  }
-  return 1;
+int gumbel_series_accepted(vector fit) {
+  return fit[2] <= gumbel_error_tolerance();
 }
 
 /**
@@ -196,11 +177,10 @@ real gumbel_finite_abs(real x) {
   * @param n_terms Number of terms, see gumbel_n_terms()
   * @param params Array of distribution parameters
   *
-  * @return Vector of length 2 (n_terms + 1) holding, for each tilt xi = n /
-  *   beta,
-  * n = 0, ..., n_terms, the pair [log T_f(xi; t), log(T_f(xi; Inf) -
-  * T_f(xi; t))] of log_tilt_transform_pair(). Only defined where
-  * check_for_gumbel_params() is 1.
+  * @return Vector of length 2 (n_terms + 1) holding, for each tilt
+  *   xi = n / beta, n = 0, ..., n_terms, the pair [log T_f(xi; t),
+  *   log(T_f(xi; Inf) - T_f(xi; t))] of log_tilt_transform_pair(). Only
+  *   defined where check_for_gumbel_params() is 1.
   */
 vector primarycensored_gumbel_terms(real t, int dist_id, real beta,
                                     int n_terms, array[] real params) {
@@ -221,8 +201,7 @@ vector primarycensored_gumbel_terms(real t, int dist_id, real beta,
   * Each difference of transforms is taken between the lower or the upper
   * tail terms, see primarycensored_tail_diff(). The estimated relative error
   * is the machine precision times the sum of the absolute terms over the
-  * bracket and the size of the log terms, plus the truncation bound. The
-  * amplification is the sum of the absolute terms over the bracket.
+  * bracket and the size of the log terms, plus the truncation bound.
   *
   * @param terms_d Terms at d from primarycensored_gumbel_terms()
   * @param terms_q Terms at q = d - pwindow
@@ -233,8 +212,7 @@ vector primarycensored_gumbel_terms(real t, int dist_id, real beta,
   * @param n_terms Number of terms, see gumbel_n_terms()
   *
   * @return Vector [log of the primary event censored CDF at d, estimated
-  *   relative
-  * error, amplification]
+  *   relative error]
   */
 vector primarycensored_gumbel_lcdf_from_terms(vector terms_d, vector terms_q,
                                               data real d,
@@ -248,7 +226,7 @@ vector primarycensored_gumbel_lcdf_from_terms(vector terms_d, vector terms_q,
   );
   // No delay mass in the window, so every term vanishes together
   if (log_delta0 == negative_infinity()) {
-    return [log_f_q, 0, 1]';
+    return [log_f_q, 0]';
   }
   real log_pos = log1m_exp(-exp(log_s0)) + log_delta0;
   real log_neg = negative_infinity();
@@ -278,10 +256,8 @@ vector primarycensored_gumbel_lcdf_from_terms(vector terms_d, vector terms_q,
   real log_d = -exp(log_s_w)
                + log1m_exp(-exp(log_s_w + log_diff_exp(pwindow / beta, 0)));
   real error;
-  real amplification;
   if (log_bracket == negative_infinity()) {
     error = positive_infinity();
-    amplification = positive_infinity();
   } else {
     int n_last = n_terms + 1;
     real log_rounding = log(machine_precision()) + log1p(scale)
@@ -290,10 +266,9 @@ vector primarycensored_gumbel_lcdf_from_terms(vector terms_d, vector terms_q,
                      - log1m(fmin(exp(log_s0) / (n_last + 1), 0.5))
                      - log_bracket;
     error = exp(log_rounding) + exp(log_trunc);
-    amplification = exp(gumbel_log_sum_exp(log_pos, log_neg) - log_bracket);
   }
   real log_cdf = gumbel_log_sum_exp(log_f_q, log_bracket - log_d);
-  return [fmin(log_cdf, 0), error, amplification]';
+  return [fmin(log_cdf, 0), error]';
 }
 
 /**
@@ -363,8 +338,8 @@ real gumbel_numeric_z_data_limit(data real d, int dist_id,
   * Log CDF of the delay for the numerical integral, with finite partials
   * @ingroup truncated_gumbel_solutions
   *
-  * The same as dist_lcdf(), with forms of the exponential, gamma and normal
-  * whose partials are finite where the CDF is very small.
+  * The same as dist_lcdf(), with forms of the lognormal, exponential, gamma
+  * and normal whose partials are finite where the CDF is very small.
   *
   * @param x Delay
   * @param params Array of distribution parameters
@@ -376,7 +351,14 @@ real gumbel_delay_lcdf(real x, array[] real params, int dist_id) {
   if (dist_has_positive_support(dist_id) && x <= 0) {
     return negative_infinity();
   }
-  if (dist_id == 4) {
+  if (dist_id == 1) {
+    if (lognormal_lcdf_underflows(x, params[1], params[2])) {
+      return negative_infinity();
+    }
+    return primarycensored_log_std_normal_cdf(
+      (log(x) - params[1]) / params[2]
+    );
+  } else if (dist_id == 4) {
     return log1m_exp(-params[1] * x);
   } else if (dist_id == 2) {
     if (gamma_lcdf_underflows(x * params[2], params[1])) {
@@ -497,8 +479,8 @@ vector primarycensored_gumbel_ode(real tau, vector y, data real d,
   * @param c Largest upper quantile of the piece, 1 - exp(-len)
   * @param log_shift Log of the delay CDF at the end of the piece
   *
-  * @return Log of the integral of the delay CDF times exp(-u) over the piece,
-  * `-inf` if it is 0
+  * @return Log of the integral of the delay CDF times exp(-u) over the
+  *   piece, `-inf` if it is 0
   */
 real gumbel_numeric_piece_lcdf(data real d, int dist_id, array[] real params,
                                data real pwindow, real mu, real beta, real a,
@@ -508,7 +490,7 @@ real gumbel_numeric_piece_lcdf(data real d, int dist_id, array[] real params,
   }
   vector[1] y0 = rep_vector(0.0, 1);
   real integral = ode_rk45_tol(
-    primarycensored_gumbel_ode, y0, 0.0, {1.0}, 1e-12, 1e-18, 1000000,
+    primarycensored_gumbel_ode, y0, 0.0, {1.0}, 1e-10, 1e-14, 200000,
     d, pwindow, dist_id, params, mu, beta, 0.0, c, a, log_shift
   )[1, 1];
   if (!(integral > 0)) {
@@ -527,7 +509,8 @@ real gumbel_numeric_piece_lcdf(data real d, int dist_id, array[] real params,
   * A piece is halved until the delay CDF changes by a factor of at most
   * exp(3) over its second half. The log delay CDF is concave in u, so the
   * pieces stop where the rest is below 1e-15 of the total. At most 300 are
-  * used.
+  * used. The result is `-inf` where the delay CDF is 0 for u below 1000, as
+  * the log CDF is then below -1000.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -546,8 +529,8 @@ real gumbel_numeric_spike_lcdf(data real d, int dist_id, array[] real params,
     // The delay CDF is 0 for u below the kink, where d - z is 0
     real log_uk = (mu - pwindow) / beta
                   + log_diff_exp((pwindow - d) / beta, 0);
-    // The CDF is 0 in double precision beyond u of 1e13
-    if (log_uk >= log_delta || log_uk > 30) {
+    // The CDF is below exp(-1000) beyond u of 1000
+    if (log_uk >= log_delta || log_uk > log(1000)) {
       return negative_infinity();
     }
     a = exp(log_uk);
@@ -674,7 +657,7 @@ real gumbel_numeric_z_half(data real d, int dist_id, array[] real params,
                            real z_from, real z_to, real log_shift) {
   vector[1] y0 = rep_vector(0.0, 1);
   return ode_rk45_tol(
-    primarycensored_gumbel_ode, y0, 0.0, {1.0}, 1e-12, 1e-18, 1000000,
+    primarycensored_gumbel_ode, y0, 0.0, {1.0}, 1e-10, 1e-14, 200000,
     d, pwindow, dist_id, params, mu, beta, z_from, z_to, 0.0, log_shift
   )[1, 1];
 }
@@ -785,7 +768,8 @@ real gumbel_numeric_z_lcdf(data real d, int dist_id, array[] real params,
   *
   * Integrates the delay CDF against the window density with an ODE solver in
   * a variable in which the integrand is smooth, on the log scale so a CDF
-  * below 1e-300 is not lost.
+  * below 1e-300 is not lost. The solver tolerances are 1e-10 relative, as
+  * tighter ones do not converge with the sensitivities of a delay CDF.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -872,8 +856,7 @@ real primarycensored_gumbel_numeric_lcdf(data real d, int dist_id,
   * check_for_gumbel_params() of 1.
   *
   * @param d Delay
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
+  * @param dist_id Distribution identifier, 18 (Normal)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param mu Location of the truncated Gumbel
@@ -888,12 +871,12 @@ real primarycensored_gumbel_lcdf(data real d, int dist_id,
     return negative_infinity();
   }
   int n_terms = gumbel_n_terms(mu / beta);
-  vector[3] fit = primarycensored_gumbel_lcdf_from_terms(
+  vector[2] fit = primarycensored_gumbel_lcdf_from_terms(
     primarycensored_gumbel_terms(d, dist_id, beta, n_terms, params),
     primarycensored_gumbel_terms(d - pwindow, dist_id, beta, n_terms, params),
     d, pwindow, mu, beta, n_terms
   );
-  if (gumbel_series_accepted(dist_id, fit)) {
+  if (gumbel_series_accepted(fit)) {
     return fit[1];
   }
   return primarycensored_gumbel_numeric_lcdf(
@@ -932,15 +915,14 @@ int check_for_gumbel_vectorized(int dist_id, int primary_id,
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
+  * @param dist_id Distribution identifier, 18 (Normal)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window, a positive integer
   * @param mu Location of the truncated Gumbel
   * @param beta Scale of the truncated Gumbel
   *
   * @return Vector whose element d is the log CDF at d, for d in start:n.
-  * Elements before start are not computed.
+  *   Elements before start are not computed.
   */
 vector primarycensored_gumbel_lcdf_vectorized(data int start, data int n,
                                               data int dist_id,
@@ -964,10 +946,10 @@ vector primarycensored_gumbel_lcdf_vectorized(data int start, data int n,
       log_cdfs[d] = negative_infinity();
     } else {
       int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-      vector[3] fit = primarycensored_gumbel_lcdf_from_terms(
+      vector[2] fit = primarycensored_gumbel_lcdf_from_terms(
         terms[d - first + 1], terms[q_index], d, pwindow, mu, beta, n_terms
       );
-      if (gumbel_series_accepted(dist_id, fit)) {
+      if (gumbel_series_accepted(fit)) {
         log_cdfs[d] = fit[1];
       } else {
         log_cdfs[d] = primarycensored_gumbel_numeric_lcdf(
