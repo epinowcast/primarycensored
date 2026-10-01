@@ -532,7 +532,8 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * so the terms are computed once per delay and used for both, halving the
   * CDF evaluations. The values are the same as from
   * primarycensored_analytical_lcdf() at each delay without truncation.
-  * Only for cases where check_for_analytical_vectorized() is 1.
+  * Uniform primary only, so check_for_uniform_terms() must be 1 and
+  * pwindow an integer of at least 1.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result

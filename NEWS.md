@@ -14,11 +14,9 @@
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
 - `pcens_cdf()`, and so `pprimarycensored()`, `dprimarycensored()`, `pcens_pmf()` and `fitdistdoublecens()`, share analytical terms between evaluation points for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary.
-  Results are unchanged.
-  See #366.
+  Results are unchanged up to rounding.
 - `primarycensored_lcdf_vectorized()` in Stan finds per-endpoint terms through a registry keyed by the delay and primary distribution.
   Existing function signatures are unchanged.
-  See #366.
 
 # primarycensored 1.6.0
 
