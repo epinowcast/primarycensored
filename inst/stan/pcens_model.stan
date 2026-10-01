@@ -34,14 +34,15 @@ data {
   array[N] real L;
   // upper truncation; +Inf for no upper truncation
   array[N] real D;
-  // Distribution identifier. 1..25 = parametric families. The
-  // non-parametric step CDF has the same likelihood for all three of
-  // the entries below; they only differ in the prior on the PMF /
-  // hazards:
+  // Distribution identifier. 1..25 and 31 = parametric families, 31 being the
+  // log-logistic with parameters [scale, shape]. 29 and 30 are reserved for
+  // the inverse Gaussian and Gompertz. The non-parametric step CDF has the
+  // same likelihood for all three of the entries below; they only differ in
+  // the prior on the PMF / hazards:
   //   26 = step CDF, Dirichlet prior on the PMF;
   //   27 = step CDF, Gaussian random walk on the logit hazards;
   //   28 = step CDF, IID logit random effects on the hazards.
-  int<lower=1, upper=28> dist_id;
+  int<lower=1, upper=31> dist_id;
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters
@@ -91,6 +92,11 @@ transformed data {
   // - parametric path: n_params
   // - non-parametric: 2 * K_np + 1 = (K_np + 1) boundaries + K_np weights
   int n_lpmf_params = nonparametric == 1 ? 2 * K_np + 1 : n_params;
+  // The reserved identifiers 29 and 30 pass the bounds of `dist_id`, so they
+  // are rejected here rather than inside the functions
+  if (dist_id == 29 || dist_id == 30) {
+    reject("dist_id = ", dist_id, " is reserved and is not a distribution");
+  }
   for (i in 1:N) {
     if (d[i] < L[i]) {
       reject("d[", i, "] = ", d[i], " is below the lower truncation L[", i,
