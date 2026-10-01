@@ -405,8 +405,10 @@ $$
 For $\xi < 0$ the terms alternate in sign and cancel.
 The sum of their absolute values is $T_f(|\xi|; \tau)$, and the series is used where this is less than $10^5$ times the sum.
 The series has no upper tail form, so differences between endpoints come from the lower transform and lose about $10^{-16}$ times the size of the terms over $e^{r w_P} - 1$.
-Where that size is more than $10^5$ times the smaller of the CDF and the survival function at $d$, which is in the upper tail, the numerical path is used.
-It is also used where the terms cancel too much, and where $|\xi| \tau \geq 400$.
+In R the numerical path is used where that size is more than $10^5$ times the smaller of the CDF and its survival function, which is in the upper tail.
+In Stan the ODE is used where the size is more than $10^5$, as the ODE has a larger absolute error below that.
+In the vectorised Stan PMF the ODE values are shifted by their difference from the series value at the delay before the switch, so the PMF across the switch is a difference of ODE values.
+The numerical path is also used where the terms cancel too much, and where $|\xi| \tau \geq 400$.
 
 ## Admissibility
 
