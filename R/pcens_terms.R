@@ -19,11 +19,11 @@
 
 #' Evaluate a CDF from terms shared between endpoints
 #'
-#' The CDF at `q` combines terms at `q` and at `max(q - pwindow, 0)`. Each
-#' distinct endpoint is evaluated once and reused where a point shifted by
-#' `pwindow` equals another point. Without enough overlap to halve the
-#' evaluations, or for a vector `pwindow`, the terms are evaluated directly
-#' at both endpoints.
+#' The CDF at `q` combines terms at `q` and at `max(q - pwindow, 0)`. Terms
+#' at `q` are reused for lower endpoints that equal another point. This is
+#' done when it saves at least a quarter of the evaluations. Otherwise, and
+#' for a vector `pwindow`, the terms are evaluated directly at both
+#' endpoints.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -56,7 +56,9 @@
     terms_d <- spec$terms(q)
     terms_q <- spec$terms(lower)
   }
-  pmin.int(1, pmax.int(0, spec$combine(terms_d, terms_q, pwindow)))
+  res <- pmin.int(1, pmax.int(0, spec$combine(terms_d, terms_q, pwindow)))
+  res[q <= 0] <- 0
+  res
 }
 
 #' Terms specification for an analytical primary event censored CDF

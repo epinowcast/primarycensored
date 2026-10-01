@@ -19,10 +19,10 @@ Vector of CDF values in [0, 1]. Missing values in \code{q} are an
 error.
 }
 \description{
-The CDF at \code{q} combines terms at \code{q} and at \code{max(q - pwindow, 0)}. Each
-distinct endpoint is evaluated once and reused where a point shifted by
-\code{pwindow} equals another point. Without enough overlap to halve the
-evaluations, or for a vector \code{pwindow}, the terms are evaluated directly
-at both endpoints.
+The CDF at \code{q} combines terms at \code{q} and at \code{max(q - pwindow, 0)}. Terms
+at \code{q} are reused for lower endpoints that equal another point. This is
+done when it saves at least a quarter of the evaluations. Otherwise, and
+for a vector \code{pwindow}, the terms are evaluated directly at both
+endpoints.
 }
 \keyword{internal}
