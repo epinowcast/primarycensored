@@ -27,7 +27,6 @@
 
 ## Breaking changes
 
-- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`.
 - The Stan function `primarycensored_analytical_lcdf_vectorized()` takes `primary_id` and `primary_params` as its last two arguments.
 
 # primarycensored 1.6.0

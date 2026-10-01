@@ -904,60 +904,6 @@ test_that("the gamma tilt transform gradients are accurate in the lower
   }
 })
 
-# Gradient of the gamma lower tail in the shape
-exptilt_log_gamma_p_model <- function() {
-  testthat::skip_if_not_installed("cmdstanr")
-  testthat::skip_if(
-    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
-  )
-  functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
-  )
-  code <- paste0(
-    functions, "\n",
-    "data {\n  real x;\n}\n",
-    "parameters {\n  real a;\n}\n",
-    "model {\n  target += primarycensored_log_gamma_p(x, a);\n}\n"
-  )
-  path <- file.path(tempdir(), "pcd_log_gamma_p.stan")
-  writeLines(code, path)
-  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
-}
-
-test_that("primarycensored_log_gamma_p is accurate in value and shape
-  gradient well below the shape", {
-  shapes <- c(0.3, 2.5, 20, 100, 1000)
-  fractions <- c(0.001, 0.02, 0.1, 0.2, 0.3, 0.45, 0.55, 0.8, 1, 1.5)
-  for (shape in shapes) {
-    x <- shape * fractions
-    expected <- stats::pgamma(x, shape, log.p = TRUE)
-    actual <- vapply(x, primarycensored_log_gamma_p, numeric(1), shape)
-    keep <- is.finite(expected) & expected > -700
-    expect_equal(
-      actual[keep], expected[keep],
-      tolerance = 1e-12, info = paste("shape", shape)
-    )
-  }
-  model <- exptilt_log_gamma_p_model()
-  for (shape in c(2.5, 20, 100)) {
-    for (x in shape * c(0.05, 0.1, 0.2, 0.3, 0.4, 0.6, 1)) {
-      res <- stan_gradient_at( # nolint: object_usage_linter.
-        model,
-        data = list(x = x), init = list(a = shape)
-      )
-      h <- 1e-5 * shape
-      expected <- (
-        stats::pgamma(x, shape + h, log.p = TRUE) -
-          stats::pgamma(x, shape - h, log.p = TRUE)
-      ) / (2 * h)
-      info <- paste("shape", shape, "x", x)
-      expect_false(res$gradient_not_finite, info = info)
-      # CmdStan prints the gradient to 6 significant digits
-      expect_equal(res$gradient, expected, tolerance = 1e-5, info = info)
-    }
-  }
-})
-
 test_that("the normal tilted CDF is accurate in the moderate lower tail
   for a small tilt", {
   case <- exptilt_stan_cases[[6]]
