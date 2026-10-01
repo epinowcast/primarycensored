@@ -191,8 +191,7 @@
   inv_scale <- 1 / scale
   a <- 1 + 1 / shape
   lgamma_a <- lgamma(a)
-  # Lower incomplete gamma function from the regularised form, which is
-  # stable where the unregularised series would overflow
+  # Regularised form avoids overflow in the unregularised series
   g <- function(t) {
     exp(pgamma((t * inv_scale)^shape, shape = a, log.p = TRUE) + lgamma_a)
   }
