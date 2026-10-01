@@ -29,8 +29,7 @@ test_that("Distribution IDs match Stan model definitions", {
   delay_dists <- pcd_distributions
   expect_identical(delay_dists$stan_id, seq_len(nrow(delay_dists)))
 
-  # Identifier 3 is the truncated logistic primary, so they need not be
-  # consecutive
+  # Primary identifiers need not be consecutive
   prim_dists <- pcd_primary_distributions
   expect_false(anyDuplicated(prim_dists$stan_id) > 0)
   expect_identical(prim_dists$stan_id, sort(prim_dists$stan_id))

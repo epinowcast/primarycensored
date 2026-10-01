@@ -133,7 +133,6 @@ test_that("check_for_gumbel_params needs a bounded window value and a small
   expect_identical(
     check_for_analytical_params(4L, 80, 4L, c(0, 1)), 0L
   )
-  expect_identical(gumbel_screen_tolerance(), .gumbel_screen_tol)
   # Unchanged for the other solutions
   expect_identical(
     check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0)), 1L
@@ -523,7 +522,6 @@ test_that("a log CDF from the ODE is never NaN or above zero", {
 })
 
 test_that("the series is used where its estimate is below the tolerance", {
-  expect_identical(gumbel_error_tolerance(), .gumbel_tol)
   case <- gumbel_stan_cases[[3]]
   used <- 0
   for (mu in c(0.2, 0.25, 0.27, 0.3)) {
@@ -537,7 +535,7 @@ test_that("the series is used where its estimate is below the tolerance", {
       ))
       lcdf <- primarycensored_gumbel_lcdf(d, 18L, case$params, 1, mu, beta)
       info <- sprintf("mu %g, d %g", mu, d)
-      if (fit[2] <= gumbel_error_tolerance()) {
+      if (fit[2] <= 1e-8) {
         expect_identical(lcdf, fit[1], info = info)
         used <- used + 1
       } else {
@@ -1167,15 +1165,10 @@ test_that("the Stan numerical path is -inf, not an error, where the delay
     for (mu in c(1.5, 2, 3)) {
       for (beta in c(0.03, 0.05, 0.1)) {
         label <- gumbel_case_label(case, mu = mu, beta = beta)
-        lcdf <- vapply(1:2, function(d) {
-          expect_no_error(
-            value <- primarycensored_lcdf(
-              d, case$dist_id, case$params, 1, 0, Inf, 4L, c(mu, beta)
-            ),
-            message = label
-          )
-          value
-        }, numeric(1))
+        lcdf <- vapply(
+          1:2, primarycensored_lcdf, numeric(1),
+          case$dist_id, case$params, 1, 0, Inf, 4L, c(mu, beta)
+        )
         r_cdf <- pcens_cdf(
           gumbel_object(case, mu, beta), 1:2, 1
         )
@@ -1198,11 +1191,8 @@ test_that("the vectorised Gumbel log PMF does not reject a delay that starts
   well after a spike at the window end", {
   for (case in gumbel_late_cases()) {
     label <- gumbel_case_label(case, mu = 1.5, beta = 0.05)
-    expect_no_error(
-      lpmf <- primarycensored_sone_lpmf_vectorized(
-        8, 0, Inf, case$dist_id, case$params, 1, 4L, c(1.5, 0.05)
-      ),
-      message = label
+    lpmf <- primarycensored_sone_lpmf_vectorized(
+      8, 0, Inf, case$dist_id, case$params, 1, 4L, c(1.5, 0.05)
     )
     expect_false(anyNA(lpmf), info = label)
     expected <- vapply(0:8, function(d) {

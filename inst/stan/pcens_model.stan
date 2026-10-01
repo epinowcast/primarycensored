@@ -79,9 +79,6 @@ data {
 }
 
 transformed data {
-  if (primary_id == 3) {
-    reject("primary_id 3 is not a supported primary distribution");
-  }
   array[N] int indexes = linspaced_int_array(N, 1, N);
   // Sizes for the non-parametric parameter branches. Exactly one is K_np;
   // both are 0 when nonparametric = 0. Stan forbids `simplex[0]`, so we

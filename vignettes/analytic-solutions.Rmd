@@ -446,7 +446,7 @@ $$
 The $n = 0$ term is $F_T(d) - F_T(q)$, so the package evaluates the bracket as $(1 - G(0)) \{F_T(d) - F_T(q)\}$ plus the terms with $n \geq 1$.
 This keeps precision when $\mu_G$ is far below the window and $D$ is small.
 As for the exponentially tilted window, every transform depends on $d$ or on $q$ alone.
-In Stan, `primarycensored_gumbel_terms()` returns the transforms at every tilt for one endpoint, so `primarycensored_gumbel_lcdf_vectorized()` computes them once per integer delay and uses them for the two windows that share the endpoint.
+In Stan, `primarycensored_gumbel_terms()` returns the transforms at every tilt for one endpoint, so `primarycensored_analytical_lcdf_vectorized()` computes them once per integer delay and uses them for the two windows that share the endpoint.
 
 ## Where the series is accurate
 
