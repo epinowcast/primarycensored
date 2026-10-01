@@ -41,6 +41,7 @@ dp
 dpcens
 dprimary
 dprimarycensored
+du
 dx
 dy
 dz
@@ -48,6 +49,7 @@ eps
 eq
 erroring
 expgrowth
+exptilt
 fcp
 fitdist
 fitdistdoublecens

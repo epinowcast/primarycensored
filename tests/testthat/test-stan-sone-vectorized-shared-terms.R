@@ -34,6 +34,8 @@ test_that("check_for_analytical_vectorized needs uniform terms and an
     expect_identical(check_for_analytical_vectorized(dist_id, 1L, 7), 1L)
     expect_identical(check_for_analytical_vectorized(dist_id, 1L, 1.5), 0L)
     expect_identical(check_for_analytical_vectorized(dist_id, 1L, 0.5), 0L)
+  }
+  for (dist_id in c(1L, 3L, 5L)) {
     expect_identical(check_for_analytical_vectorized(dist_id, 2L, 1), 0L)
   }
   for (dist_id in c(4L, 18L, 26L, 27L, 28L)) {
@@ -76,7 +78,7 @@ test_that("primarycensored_analytical_lcdf_vectorized matches
             "pwindow", pwindow, "start", start
           )
           vectorised <- primarycensored_analytical_lcdf_vectorized(
-            start, n, dist$dist_id, params, pwindow
+            start, n, dist$dist_id, params, pwindow, 1L, numeric(0)
           )
           expect_length(vectorised, n)
           expect_identical(

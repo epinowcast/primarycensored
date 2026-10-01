@@ -133,8 +133,9 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     return 1;
   }
 
-  // Check if an analytical solution exists
-  if (check_for_analytical(dist_id, primary_id)) {
+  // Check if an analytical solution exists and applies for these parameters
+  if (check_for_analytical_params(dist_id, params, primary_id,
+                                  primary_params)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
@@ -143,10 +144,13 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     // Use numerical integration for other cases. The integration variable
     // ranges over the primary-event time, so the natural lower bound is
     // d - pwindow. For positive-support delays the integrand `F_delay(t)` is
-    // 0 for t <= 0, so an unclipped lower bound just adds a flat zero region
-    // for negative t. Distributions with support on the reals also accept the
-    // unclipped lower bound directly.
-    real lower_bound = d - pwindow;
+    // 0 for t <= 0, so the integral starts at 0 and is 0 for d <= 0.
+    // Distributions with support on the reals use the unclipped bound.
+    if (dist_has_positive_support(dist_id) && d <= 0) {
+      return 0;
+    }
+    real lower_bound = dist_has_positive_support(dist_id)
+                       ? fmax(d - pwindow, 0) : d - pwindow;
     int n_params = num_elements(params);
     int n_primary_params = num_elements(primary_params);
     array[n_params + n_primary_params] real theta = append_array(params, primary_params);
@@ -225,7 +229,8 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
   // Check if an analytical solution exists. The internal lower bound is 0 for
   // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
   // and -inf for distributions with support on the reals.
-  if (check_for_analytical(dist_id, primary_id)) {
+  if (check_for_analytical_params(dist_id, params, primary_id,
+                                  primary_params)) {
     result = primarycensored_analytical_lcdf(
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
@@ -407,8 +412,9 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * @ingroup primary_censored_vectorized
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
-  * check_for_analytical_vectorized() is 1, and otherwise calls
-  * primarycensored_lcdf() at each delay. No truncation is applied.
+  * check_for_analytical_vectorized() and check_for_analytical_params() are 1,
+  * and otherwise calls primarycensored_lcdf() at each delay. No truncation
+  * is applied.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
@@ -425,9 +431,11 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data int dist_id, array[] real params,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
-  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
+  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)
+      && check_for_analytical_params(dist_id, params, primary_id,
+                                     primary_params)) {
     return primarycensored_analytical_lcdf_vectorized(
-      start, n, dist_id, params, pwindow
+      start, n, dist_id, params, pwindow, primary_id, primary_params
     );
   }
   vector[n] log_cdfs;
