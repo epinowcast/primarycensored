@@ -739,6 +739,7 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
   expect_equal(sum(pmf), expected, tolerance = 1e-9)
 })
 
+# nolint start: object_usage_linter.
 # Gradient of the gradient model at a point against the CmdStan finite
 # differences, relative to each component with a floor for tiny ones
 expect_fd_gradient <- function(model, case, point, vectorised, scale = 1) {
@@ -762,6 +763,7 @@ expect_fd_gradient <- function(model, case, point, vectorised, scale = 1) {
     )
   )
 }
+# nolint end
 
 # Finite differences amplify the small tilt error for tiny PMF values, and
 # the small delay form has a gradient in r with a relative error of about
@@ -922,6 +924,7 @@ exptilt_reference_points <- function() {
   )
 }
 
+# nolint start: object_usage_linter.
 expect_reference_gradient <- function(model, point) {
   case <- point$case
   expected <- exptilt_log_gradient(
@@ -945,6 +948,7 @@ expect_reference_gradient <- function(model, point) {
     )
   )
 }
+# nolint end
 
 test_that("tilted log CDF gradients match differences of the reference
   integral", {
