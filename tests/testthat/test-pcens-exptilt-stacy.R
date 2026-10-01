@@ -179,7 +179,7 @@ test_that("the PMF matches differences of the reference CDF", {
 
 test_that("the upper tail PMF matches a survival based reference", {
   x <- 0:70
-  for (family in stacy_families[c(1, 4)]) {
+  for (family in stacy_families) {
     for (rho in c(0.3, 0.05, -0.3)) {
       for (pwindow in c(1, 3)) {
         expected <- exptilt_pmf_reference(family, x, pwindow, rho)
@@ -192,6 +192,14 @@ test_that("the upper tail PMF matches a survival based reference", {
       }
     }
   }
+})
+
+test_that("a short tailed delay uses the direct form in the upper tail", {
+  family <- stacy_families[[6]]
+  obj <- exptilt_object(family, 2)
+  q <- c(0.5, 1.5, 2.5, 3)
+  expected <- exptilt_reference(q, 5, 2, exptilt_cdf(family))
+  expect_lt(max_rel_diff(pcens_cdf(obj, q, 5), expected), 1e-7)
 })
 
 test_that("the transform is evaluated once per unique endpoint", {

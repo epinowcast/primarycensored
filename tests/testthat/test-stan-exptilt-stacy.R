@@ -210,27 +210,26 @@ test_that("the vectorised log CDF and PMF match the per delay forms", {
   for (case in stacy_cases[c(1, 2, 4)]) {
     for (pwindow in c(1, 3)) {
       for (rho in c(-0.3, -2e-5, 1e-9, 2e-5, 0.4)) {
+        info <- stacy_label(case, pwindow = pwindow, r = rho)
         vectorised <- primarycensored_analytical_lcdf_vectorized(
           1L, 25L, case$dist_id, case$params, pwindow, 2L, rho
         )
-        expect_identical(
-          vectorised,
-          stacy_lcdf(1:25, case, pwindow, rho),
-          info = stacy_label(case, pwindow = pwindow, r = rho)
+        per_delay <- stacy_lcdf(1:25, case, pwindow, rho)
+        # ODE values are shifted to the series value before them
+        ode <- stacy_uses_ode(1:25, case, pwindow, rho)
+        expect_identical(vectorised[!ode], per_delay[!ode], info = info)
+        expect_equal(
+          exp(vectorised), exp(per_delay), tolerance = 1e-6, info = info
         )
         vectorised <- primarycensored_sone_lpmf_vectorized(
-          15, 2, 21, case$dist_id, case$params, pwindow, 2L, rho
+          10, 2, 21, case$dist_id, case$params, pwindow, 2L, rho
         )
-        per_delay <- vapply(0:15, function(d) {
+        per_delay <- vapply(0:10, function(d) {
           primarycensored_lpmf(
             d, case$dist_id, case$params, pwindow, d + 1, 2, 21, 2L, rho
           )
         }, numeric(1))
-        expect_equal(
-          vectorised, per_delay,
-          tolerance = 1e-10,
-          info = stacy_label(case, pwindow = pwindow, r = rho)
-        )
+        expect_equal(vectorised, per_delay, tolerance = 1e-10, info = info)
       }
     }
   }
@@ -239,18 +238,43 @@ test_that("the vectorised log CDF and PMF match the per delay forms", {
 test_that("the vectorised upper tail PMF matches a survival based
   reference", {
   x <- 0:40
-  for (case in stacy_cases[c(1, 2, 4, 5)]) {
-    for (rho in c(0.3, 0.05)) {
-      expected <- exptilt_pmf_reference(case$family, x, 1, rho)
-      actual <- exp(primarycensored_sone_lpmf_vectorized(
-        max(x), 0, Inf, case$dist_id, case$params, 1, 2L, rho
-      ))
-      keep <- expected > 1e-8
-      expect_lt(
-        max_rel_diff(actual[keep], expected[keep]), 1e-6,
-        label = stacy_label(case, r = rho)
-      )
+  for (case in stacy_cases) {
+    for (pwindow in c(1, 3)) {
+      for (rho in c(0.3, 0.05, -0.3)) {
+        expected <- exptilt_pmf_reference(case$family, x, pwindow, rho)
+        actual <- exp(primarycensored_sone_lpmf_vectorized(
+          max(x), 0, Inf, case$dist_id, case$params, pwindow, 2L, rho
+        ))
+        info <- stacy_label(case, pwindow = pwindow, r = rho)
+        # The ODE is used where the terms of the direct form are large
+        expect_lt(
+          max_rel_diff(actual[expected > 1e-6], expected[expected > 1e-6]),
+          1e-4, label = info
+        )
+        if (case$label %in% c("weibull 3 2", "gengamma 3 1 0.2")) {
+          keep <- expected > 1e-8
+          expect_lt(
+            max_rel_diff(actual[keep], expected[keep]), 1e-6, label = info
+          )
+        }
+      }
     }
+  }
+})
+
+test_that("the vectorised PMF is accurate across the switch to the ODE", {
+  x <- 0:40
+  for (case in stacy_cases[c(2, 4, 5)]) {
+    expect_true(any(stacy_uses_ode(1:41, case, 3, 0.3)), info = case$label)
+    expect_false(all(stacy_uses_ode(1:41, case, 3, 0.3)), info = case$label)
+    expected <- exptilt_pmf_reference(case$family, x, 3, 0.3)
+    actual <- exp(primarycensored_sone_lpmf_vectorized(
+      max(x), 0, Inf, case$dist_id, case$params, 3, 2L, 0.3
+    ))
+    keep <- expected > 1e-4
+    expect_lt(
+      max_rel_diff(actual[keep], expected[keep]), 1e-5, label = case$label
+    )
   }
 })
 

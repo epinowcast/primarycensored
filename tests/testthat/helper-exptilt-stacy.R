@@ -26,7 +26,9 @@ exptilt_stacy_families <- function() {
       stacy_family("gengamma 1.3 4 2.5", gengamma,
         list(shape = 1.3, scale = 4, k = 2.5), 1.3, 4, 2.5),
       stacy_family("gengamma 0.8 3 0.6", gengamma,
-        list(shape = 0.8, scale = 3, k = 0.6), 0.8, 3, 0.6)
+        list(shape = 0.8, scale = 3, k = 0.6), 0.8, 3, 0.6),
+      stacy_family("gengamma 3 1 0.2", gengamma,
+        list(shape = 3, scale = 1, k = 0.2), 3, 1, 0.2)
     ))
   }
   families
