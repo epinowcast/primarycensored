@@ -38,8 +38,8 @@ They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
 \details{
-With window width \eqn{w}, delay CDF \eqn{F} and the transform
-\eqn{J(x) = T_f(-\rho; x)} of \link{tilt_transform}, the CDF at \eqn{q} is
+With window width \eqn{w}, delay CDF \eqn{F} and
+\eqn{J(x) = \int e^{-\rho u} f(u) du} up to \eqn{x}, the CDF at \eqn{q} is
 \deqn{
 F_\rho(q) = F(q - w) + \frac{e^{\rho q} \{J(q) - J(q - w)\} -
   \{F(q) - F(q - w)\}}{e^{\rho w} - 1}.
@@ -59,7 +59,7 @@ The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
 replace it to second order in \eqn{\rho}.
 \itemize{
-\item For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-5}} for delays on
+\item For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-3}} for delays on
 the reals, the uniform window limit with its corrections,
 \eqn{\{G_1(q) - G_1(q - w)\} / w +
   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
@@ -71,19 +71,8 @@ the reals, the uniform window limit with its corrections,
   (e^{\rho w} - 1)}.
 }
 
-The truncation error of both forms is about \eqn{(|\rho| w)^4 / 10}, below
-3e-8 at their limits.
-The direct form loses about 1e-14 / \eqn{|\rho| w} for delays on the
-reals, which is why their limit is lower.
-For a gamma delay it also loses accuracy in proportion to the shape.
-The CDF stays within a relative 1e-6 of numerical integration for shapes
-up to 5000 and \eqn{|\rho|} from 1e-5 and loses accuracy above this.
-
-The CDF agrees with numerical integration to a relative difference of
-about 1e-9 or better in the bulk and the tails, except in the deep lower
-tail of a normal delay with a small tilt (about 1e-7), for windows much
-smaller than the delay, which lose up to about 1e-13 / \code{pwindow} to the
-difference of the terms at the two endpoints, and for the cases above.
+The CDF agrees with numerical integration to a relative 1e-6 in the
+package tests.
 }
 \examples{
 # Exponential delay with a growing primary event process

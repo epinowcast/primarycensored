@@ -540,7 +540,7 @@ vector primarycensored_analytical_lcdf_vectorized(
     int positive = dist_has_positive_support(dist_id);
     // Endpoints below 0 share the entry for 0 for non-negative delays
     int first = positive ? max(start - pw, 0) : start - pw;
-    if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-5)) {
+    if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-3)) {
       // moments[t - first + 1] holds the moments at endpoint t
       array[n - first + 1] vector[3] moments;
       for (t in first:n) {
@@ -986,7 +986,7 @@ vector primarycensored_tilt_moments(real t, int dist_id,
  * endpoint in primarycensored_analytical_lcdf_vectorized().
  *
  * The direct form cancels as rho goes to zero, see ?pcens_cdf_exptilt. For
- * |rho| * pwindow below 1e-2 (1e-5 for delays on the reals) the small window
+ * |rho| * pwindow below 1e-2 (1e-3 for delays on the reals) the small window
  * form replaces it. For delays on the non-negative reals with d < pwindow and
  * |rho| * d below 1e-2 the small delay form replaces it.
  */
@@ -1168,7 +1168,7 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   }
   if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
-  if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-5)) {
+  if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-3)) {
     return primarycensored_exptilt_small_window_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params),
       primarycensored_tilt_moments(q, dist_id, params), rho, pwindow

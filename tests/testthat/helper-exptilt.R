@@ -148,13 +148,13 @@ exptilt_normal_log_reference <- function(d, pwindow, rho, mu, sigma) {
 # Normal delay with mean -4 and sd 0.3 from 7 to 37 sds below its mean, with
 # tilts from |rho| w of 1e-5 to 1e-2 on both sides of the small window limit.
 exptilt_normal_tail_grid <- function() {
-  grid <- expand.grid(
+  tail_points <- expand.grid(
     z = c(-37, -27, -13, -7), pwindow = c(1, 7),
     scaled = c(1e-5, 1e-4, 1e-3, 1e-2), sign = c(-1, 1)
   )
   data.frame(
-    d = -4 + 0.3 * grid$z, pwindow = grid$pwindow,
-    rho = grid$sign * grid$scaled / grid$pwindow
+    d = -4 + 0.3 * tail_points$z, pwindow = tail_points$pwindow,
+    rho = tail_points$sign * tail_points$scaled / tail_points$pwindow
   )
 }
 

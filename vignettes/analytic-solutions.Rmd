@@ -402,11 +402,10 @@ The normal form has no restriction.
 
 ## Tilts close to zero
 
-Equation \@ref(eq:exptilt) cancels as $r \to 0$ and loses about $10^{-14} / (|r| w_P)$ of relative precision for delays on the reals.
-For a gamma delay it also loses precision in proportion to the shape.
+Equation \@ref(eq:exptilt) cancels as $r \to 0$, and for a gamma delay loses precision in proportion to the shape.
 Two forms replace it, with $G_k(t) = \int (t - u)^k f_T(u)~du$ over the support up to $t$.
 
-For $|r| w_P < 10^{-2}$, or $10^{-5}$ for delays on the reals, expanding the window density in $r$ gives the uniform solution and its corrections to second order,
+For $|r| w_P < 10^{-2}$, or $10^{-3}$ for delays on the reals, expanding the window density in $r$ gives the uniform solution and its corrections to second order,
 
 $$
 \begin{aligned}

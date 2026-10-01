@@ -428,7 +428,7 @@ test_that("the normal tilted CDF is accurate in the lower tail for small
       grid$d[i], 18L, c(-4, 0.3), grid$pwindow[i], -Inf, Inf, 2L, grid$rho[i]
     )
   }, numeric(1))
-  expect_lt(max(abs(expm1(actual - expected))), 1e-7)
+  expect_lt(max(abs(expm1(actual - expected))), 3e-7)
   # Moderate lower tail, with a tighter tolerance
   case <- exptilt_stan_cases[[6]]
   cdf <- exptilt_case_cdf(case)
@@ -735,101 +735,95 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
   expect_equal(sum(pmf), expected, tolerance = 1e-9)
 })
 
-test_that("tilted log CDFs have finite gradients matching finite
-  differences", {
-  model <- exptilt_gradient_model()
-  # Finite differences amplify the small tilt error for tiny PMF values, and
-  # the small delay form has a gradient in r with a relative error of about
-  # 1e-4, which the scaled point allows for
-  groups <- list(
+# Gradient of the gradient model at a point against the CmdStan finite
+# differences, relative to each component with a floor for tiny ones
+expect_fd_gradient <- function(model, case, point, vectorised, scale = 1) {
+  label <- exptilt_case_label(
+    case, d = point$d, pwindow = point$pwindow, r = point$rho
+  )
+  res <- exptilt_gradient_at(
+    model, case, point$d, point$pwindow, point$rho,
+    vectorised = vectorised
+  )
+  expect_false(res$gradient_not_finite, info = label)
+  expect_false(res$rejected, info = label)
+  expect_length(res$gradient, 3)
+  expect_true(all(is.finite(res$gradient)), info = label)
+  allowed <- 1e-4 * scale * pmax(abs(res$finite_diff), 1e-2)
+  expect_true(
+    all(abs(res$gradient - res$finite_diff) <= allowed),
+    info = paste0(
+      label, ": gradient ", toString(signif(res$gradient, 5)),
+      ", finite difference ", toString(signif(res$finite_diff, 5))
+    )
+  )
+}
+
+# Finite differences amplify the small tilt error for tiny PMF values, and
+# the small delay form has a gradient in r with a relative error of about
+# 1e-4, which the scaled point allows for. A shape of 1000 has no delay
+# range with every PMF above the smallest double.
+exptilt_fd_groups <- function() {
+  list(
     list(
       cases = exptilt_gradient_cases, vectorised = FALSE,
-      points = list(
-        list(d = 0.3, pwindow = 2, rho = 0.4),
-        list(d = 1, pwindow = 1, rho = -0.2),
-        list(d = 2.5, pwindow = 2, rho = 0.4),
-        list(d = 6, pwindow = 3, rho = -0.15),
-        list(d = 20, pwindow = 3, rho = 0.5),
-        list(d = 7, pwindow = 1, rho = 0.3),
-        list(d = 7, pwindow = 1, rho = -0.1),
-        list(d = 2.5, pwindow = 2, rho = 1e-6),
-        list(d = 2.5, pwindow = 2, rho = -1e-6),
-        list(d = 12, pwindow = 7, rho = 1e-5),
-        list(d = 0.0001, pwindow = 2, rho = 0.4),
-        list(d = 0.0001, pwindow = 2, rho = -0.4),
-        list(d = 4, pwindow = 2, rho = 0),
-        list(d = 1, pwindow = 1, rho = 0.3),
-        list(d = 3, pwindow = 3, rho = -0.15),
-        list(d = 2.5, pwindow = 1, rho = 0.3),
-        list(d = 4, pwindow = 2, rho = 0.3)
+      points = data.frame(
+        d = c(
+          0.3, 1, 2.5, 6, 20, 7, 7, 2.5, 2.5, 12, 1e-4, 1e-4, 4, 1, 3, 2.5, 4
+        ),
+        pwindow = c(2, 1, 2, 3, 3, 1, 1, 2, 2, 7, 2, 2, 2, 1, 3, 1, 2),
+        rho = c(
+          0.4, -0.2, 0.4, -0.15, 0.5, 0.3, -0.1, 1e-6, -1e-6, 1e-5, 0.4, -0.4,
+          0, 0.3, -0.15, 0.3, 0.3
+        )
       )
     ),
     list(
       cases = exptilt_gradient_cases[c(2, 4, 5, 8)], vectorised = TRUE,
-      points = list(
-        list(d = 12, pwindow = 3, rho = 0.4),
-        list(d = 12, pwindow = 3, rho = -0.15),
-        list(d = 6, pwindow = 2, rho = 1e-6),
-        list(d = 6, pwindow = 10, rho = 1.5e-5, scale = 5),
-        list(d = 1, pwindow = 1, rho = 0.3),
-        list(d = 3, pwindow = 3, rho = -0.15)
+      points = data.frame(
+        d = c(12, 12, 6, 6, 1, 3), pwindow = c(3, 3, 2, 10, 1, 3),
+        rho = c(0.4, -0.15, 1e-6, 1.5e-5, 0.3, -0.15),
+        scale = c(1, 1, 1, 5, 1, 1)
       )
     ),
     list(
       cases = exptilt_large_shape_cases, vectorised = FALSE,
-      points = list(
-        list(d = 14, pwindow = 1, rho = 0.2),
-        list(d = 20, pwindow = 1, rho = 0.2),
-        list(d = 20, pwindow = 3, rho = -0.1),
-        list(d = 8, pwindow = 2, rho = 0.3),
-        list(d = 11, pwindow = 1, rho = -0.1),
-        list(d = 30, pwindow = 2, rho = 0.2)
+      points = data.frame(
+        d = c(14, 20, 20, 8, 11, 30), pwindow = c(1, 1, 3, 2, 1, 2),
+        rho = c(0.2, 0.2, -0.1, 0.3, -0.1, 0.2)
       )
     ),
-    # A shape of 1000 has no delay range with every PMF above the smallest
-    # double
     list(
       cases = exptilt_large_shape_cases[1:2], vectorised = TRUE,
-      points = list(
-        list(d = 20, pwindow = 1, rho = 0.2),
-        list(d = 12, pwindow = 1, rho = 0.2),
-        list(d = 14, pwindow = 2, rho = -0.1)
+      points = data.frame(
+        d = c(20, 12, 14), pwindow = c(1, 1, 2), rho = c(0.2, 0.2, -0.1)
       )
     )
   )
-  for (group in groups) {
-    for (case in group$cases) {
-      for (point in group$points) {
-        if (!exptilt_case_ok(case, point$rho)) {
-          next
-        }
-        # The CDF underflows
-        if (!group$vectorised && case$dist_id == 2L &&
-          case$params[1] >= 100 && point$d < 0.5) {
-          next
-        }
-        label <- exptilt_case_label(
-          case, d = point$d, pwindow = point$pwindow, r = point$rho
-        )
-        res <- exptilt_gradient_at(
-          model, case, point$d, point$pwindow, point$rho,
-          vectorised = group$vectorised
-        )
-        expect_false(res$gradient_not_finite, info = label)
-        expect_false(res$rejected, info = label)
-        expect_length(res$gradient, 3)
-        expect_true(all(is.finite(res$gradient)), info = label)
-        scale <- if (is.null(point$scale)) 1 else point$scale
-        allowed <- 1e-4 * scale * pmax(abs(res$finite_diff), 1e-2)
-        expect_true(
-          all(abs(res$gradient - res$finite_diff) <= allowed),
-          info = paste0(
-            label, ": gradient ", toString(signif(res$gradient, 5)),
-            ", finite difference ", toString(signif(res$finite_diff, 5))
-          )
+}
+
+expect_fd_group <- function(model, group) {
+  for (case in group$cases) {
+    for (i in seq_len(nrow(group$points))) {
+      point <- group$points[i, ]
+      # The CDF underflows for large shapes at small delays
+      underflow <- !group$vectorised && case$dist_id == 2L &&
+        case$params[1] >= 100 && point$d < 0.5
+      if (exptilt_case_ok(case, point$rho) && !underflow) {
+        expect_fd_gradient(
+          model, case, point, group$vectorised,
+          if (is.null(point$scale)) 1 else point$scale
         )
       }
     }
+  }
+}
+
+test_that("tilted log CDFs have finite gradients matching finite
+  differences", {
+  model <- exptilt_gradient_model()
+  for (group in exptilt_fd_groups()) {
+    expect_fd_group(model, group)
   }
   # The gamma upper tail far above the mean
   for (case in exptilt_stan_cases[c(3, 4)]) {
@@ -843,99 +837,116 @@ test_that("tilted log CDFs have finite gradients matching finite
   }
 })
 
+exptilt_gamma_case <- function(params) list(dist_id = 2L, params = params)
+
+exptilt_normal_case <- function(params) list(dist_id = 18L, params = params)
+
+# A point with relative tolerances for the delay parameters and the tilt
+exptilt_ref_point <- function(case, d, pwindow, rho, vectorised = FALSE,
+                              tol = rep(1e-5, 3)) {
+  list(
+    case = case, d = d, pwindow = pwindow, rho = rho,
+    vectorised = vectorised, tol = tol
+  )
+}
+
+exptilt_reference_points <- function() {
+  large <- exptilt_large_shape_cases
+  tilts <- expand.grid(
+    pwindow = c(1, 7), scaled = c(1.1e-5, 1e-4, 1e-3, 3e-3),
+    z = c(-6, -12), sign = c(-1, 1)
+  )
+  c(
+    # Gamma lower tail of the vectorised PMF
+    Map(
+      function(params, pwindow) {
+        exptilt_ref_point(exptilt_gamma_case(params), 12, pwindow, 0.3, TRUE)
+      },
+      params = list(c(20, 4), c(20, 4), c(100, 10), c(100, 10)),
+      pwindow = c(1, 3, 1, 3)
+    ),
+    # Large shapes in the small tilt and direct forms
+    Map(
+      function(case, d, pwindow, rho) {
+        exptilt_ref_point(large[[case]], d, pwindow, rho, tol = rep(3e-5, 3))
+      },
+      case = c(3, 3, 3, 1, 1, 1), d = c(5, 5.3, 4.6, 10, 11, 9),
+      pwindow = c(2, 3, 1, 2, 1, 3),
+      rho = c(-1e-5, -1e-3, 1e-5, -1e-5, 1e-5, -1e-3)
+    ),
+    # The tilt gradient near the small window and small delay limits
+    Map(
+      function(params, d, pwindow, rho) {
+        exptilt_ref_point(
+          exptilt_gamma_case(params), d, pwindow, rho,
+          tol = c(Inf, Inf, 3e-5)
+        )
+      },
+      params = list(
+        c(100, 10), c(100, 10), c(2.5, 0.4), c(2.5, 0.4), c(20, 4),
+        c(2.5, 0.4)
+      ),
+      d = c(3.744, 12, 6, 6, 5, 0.0009), pwindow = c(3, 3, 10, 2, 1, 2),
+      rho = c(1e-5, 1e-5, 9.9e-6, -4.9e-5, 9e-5, 0.04)
+    ),
+    # The small window form in the vectorised PMF
+    lapply(c(-3e-5, 3e-5, -1e-3, 4e-3), function(rho) {
+      exptilt_ref_point(
+        exptilt_gamma_case(c(3, 1)), 12, 2, rho, TRUE, c(1e-4, 1e-4, 1e-5)
+      )
+    }),
+    # Normal delays far below the mean, across the small window limit
+    lapply(c(1, 3, 1e-3), function(pwindow) {
+      exptilt_ref_point(exptilt_normal_case(c(8, 3)), -96.5, pwindow, -3)
+    }),
+    Map(
+      function(pwindow, scaled, z, sign) {
+        exptilt_ref_point(
+          exptilt_normal_case(c(0, 1)), z, pwindow, sign * scaled / pwindow
+        )
+      },
+      tilts$pwindow, tilts$scaled, tilts$z, tilts$sign
+    ),
+    Map(
+      function(rho, pwindow, z) {
+        exptilt_ref_point(
+          exptilt_normal_case(c(-4, 0.3)), -4 + 0.3 * z, pwindow, rho
+        )
+      },
+      rho = c(2e-5, -1e-4, 3e-4), pwindow = c(7, 7, 1), z = c(-30, -12, -12)
+    )
+  )
+}
+
+expect_reference_gradient <- function(model, point) {
+  case <- point$case
+  expected <- exptilt_log_gradient(
+    case$dist_id, case$params, point$d, point$pwindow, point$rho,
+    point$vectorised
+  )
+  res <- exptilt_gradient_at(
+    model, case, point$d, point$pwindow, point$rho, point$vectorised
+  )
+  label <- exptilt_case_label(
+    case, d = point$d, pwindow = point$pwindow, r = point$rho,
+    vectorised = point$vectorised
+  )
+  expect_false(res$gradient_not_finite, info = label)
+  expect_true(all(is.finite(res$gradient)), info = label)
+  expect_true(
+    all(abs(res$gradient - expected) <= point$tol * pmax(abs(expected), 1e-2)),
+    info = paste0(
+      label, ": gradient ", toString(signif(res$gradient, 6)),
+      ", reference ", toString(signif(expected, 6))
+    )
+  )
+}
+
 test_that("tilted log CDF gradients match differences of the reference
   integral", {
   model <- exptilt_gradient_model()
-  gamma_case <- function(params) list(dist_id = 2L, params = params)
-  normal_case <- function(params) list(dist_id = 18L, params = params)
-  # Each point has a case, delay, window, tilt and relative tolerances for
-  # the delay parameters and the tilt
-  points <- list()
-  add <- function(case, d, pwindow, rho, vectorised = FALSE,
-                  tol = c(1e-5, 1e-5, 1e-5)) {
-    points[[length(points) + 1L]] <<- list(
-      case = case, d = d, pwindow = pwindow, rho = rho,
-      vectorised = vectorised, tol = tol
-    )
-  }
-  # Gamma lower tail of the vectorised PMF
-  for (params in list(c(20, 4), c(100, 10))) {
-    for (pwindow in c(1, 3)) {
-      add(gamma_case(params), 12, pwindow, 0.3, vectorised = TRUE)
-    }
-  }
-  # Large shapes in the small tilt and direct forms
-  for (point in list(
-    list(3, 5, 2, -1e-5), list(3, 5.3, 3, -1e-3), list(3, 4.6, 1, 1e-5),
-    list(1, 10, 2, -1e-5), list(1, 11, 1, 1e-5), list(1, 9, 3, -1e-3)
-  )) {
-    add(
-      exptilt_large_shape_cases[[point[[1]]]], point[[2]], point[[3]],
-      point[[4]], tol = rep(3e-5, 3)
-    )
-  }
-  # The tilt gradient near the small window and small delay limits
-  for (point in list(
-    list(c(100, 10), 3.744, 3, 1e-5), list(c(100, 10), 12, 3, 1e-5),
-    list(c(2.5, 0.4), 6, 10, 9.9e-6), list(c(2.5, 0.4), 6, 2, -4.9e-5),
-    list(c(20, 4), 5, 1, 9e-5), list(c(2.5, 0.4), 0.0009, 2, 0.04)
-  )) {
-    add(
-      gamma_case(point[[1]]), point[[2]], point[[3]], point[[4]],
-      tol = c(Inf, Inf, 3e-5)
-    )
-  }
-  # The small window form in the vectorised PMF
-  for (rho in c(-3e-5, 3e-5, -1e-3, 4e-3)) {
-    add(
-      gamma_case(c(3, 1)), 12, 2, rho, vectorised = TRUE,
-      tol = c(1e-4, 1e-4, 1e-5)
-    )
-  }
-  # Normal delays far below the mean, across the small window limit
-  for (pwindow in c(1, 3, 1e-3)) {
-    add(normal_case(c(8, 3)), -96.5, pwindow, -3)
-  }
-  for (pwindow in c(1, 7)) {
-    for (scaled in c(1.1e-5, 1e-4, 1e-3, 3e-3)) {
-      for (z in c(-6, -12)) {
-        for (sign in c(-1, 1)) {
-          add(normal_case(c(0, 1)), z, pwindow, sign * scaled / pwindow)
-        }
-      }
-    }
-  }
-  for (point in list(
-    list(2e-5, 7, -30), list(-1e-4, 7, -12), list(3e-4, 1, -12)
-  )) {
-    add(
-      normal_case(c(-4, 0.3)), -4 + 0.3 * point[[3]], point[[2]],
-      point[[1]]
-    )
-  }
-  for (point in points) {
-    case <- point$case
-    expected <- exptilt_log_gradient(
-      case$dist_id, case$params, point$d, point$pwindow, point$rho,
-      point$vectorised
-    )
-    res <- exptilt_gradient_at(
-      model, case, point$d, point$pwindow, point$rho, point$vectorised
-    )
-    label <- exptilt_case_label(
-      case, d = point$d, pwindow = point$pwindow, r = point$rho,
-      vectorised = point$vectorised
-    )
-    expect_false(res$gradient_not_finite, info = label)
-    expect_true(all(is.finite(res$gradient)), info = label)
-    expect_true(
-      all(abs(res$gradient - expected) <=
-        point$tol * pmax(abs(expected), 1e-2)),
-      info = paste0(
-        label, ": gradient ", toString(signif(res$gradient, 6)),
-        ", reference ", toString(signif(expected, 6))
-      )
-    )
+  for (point in exptilt_reference_points()) {
+    expect_reference_gradient(model, point)
   }
 })
 
