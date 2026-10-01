@@ -27,6 +27,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
 5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays
+6. Derive a series solution for a truncated Gumbel primary event time with a normal delay from the same transforms, and find where it is accurate
 
 
 # Analytic solutions for exponentially tilted primary event times
@@ -422,6 +423,49 @@ $$
 
 is used instead.
 The truncation error of both forms is below $3 \times 10^{-8}$ at the limit.
+
+# Transform based solutions for a truncated Gumbel primary event time
+
+A Gumbel window describes exposure that builds up and decays unevenly within the window.
+The primary event time has the Gumbel distribution with location $\mu_G$ and scale $\beta$ truncated to $[0, w_P]$, which is the `dtgumbel()` distribution.
+Write $G(z) = \exp[-\exp\{-(z - \mu_G) / \beta\}]$, $D = G(w_P) - G(0)$ and $c(d) = \exp\{-(d - \mu_G) / \beta\}$.
+With $q = d - w_P$, the reversed window on $u \in [q, d]$ is the power series
+
+$$
+G(d - u) = \exp\{-c(d) e^{u / \beta}\} = \sum_{n = 0}^\infty \frac{\{-c(d)\}^n}{n!} e^{n u / \beta}.
+$$
+
+Each term is a transform at the tilt $\xi = n / \beta$, so
+
+$$
+F_{S_+}(d) = F_T(q) + \frac{1}{D} \left[ \sum_{n = 0}^\infty \frac{\{-c(d)\}^n}{n!} \{T_f(n / \beta; d) - T_f(n / \beta; q)\} - G(0) \{F_T(d) - F_T(q)\} \right].
+(\#eq:gumbel)
+$$
+
+The $n = 0$ term is $F_T(d) - F_T(q)$, so the package evaluates the bracket as $(1 - G(0)) \{F_T(d) - F_T(q)\}$ plus the terms with $n \geq 1$.
+This keeps precision when $\mu_G$ is far below the window and $D$ is small.
+As for the exponentially tilted window, every transform depends on $d$ or on $q$ alone.
+In Stan, `primarycensored_gumbel_terms()` returns the transforms at every tilt for one endpoint, so `primarycensored_analytical_lcdf_vectorized()` computes them once per integer delay and uses them for the two windows that share the endpoint.
+
+## Where the series is accurate
+
+The series alternates.
+With $s_0 = e^{\mu_G / \beta}$, the $n$th term is at most $s_0^n / n!$ times the delay mass in the window.
+The terms reach about $e^{s_0}$ while the sum is of order 1, so the precision lost grows with $s_0$.
+The terms are evaluated on the log scale and truncated when the bound on the next term is below $10^{-18} \max(s_0, 1)$.
+The package uses the series only for $s_0 \leq 15$, and estimates the relative error at every $d$ from the machine precision, the sum of the absolute terms over the bracket and the truncation bound.
+Where it is above $10^{-8}$ the method uses the numerical path for that $d$.
+This also catches a window that is narrow relative to the scale, where the bracket is a small difference of large terms.
+
+The numerical path integrates in a variable in which a narrow window density is smooth, because the window density is a spike of width about $\beta$ when $\mu_G / \beta$ is large and integration over the window can miss it.
+In Stan it is evaluated on the log scale, so a CDF in the far lower tail is not lost.
+
+## Admissibility
+
+The transform is needed at the positive tilts $n / \beta$ for $n$ up to the number of terms.
+The normal delay has it at every tilt.
+The exponential and gamma transforms need a rate above $N / \beta$ for $N$ terms, which is a delay far shorter than the window, so these delays use the numerical path.
+In Stan `check_for_gumbel_params()` makes the choice from the parameters and `check_for_analytical_params()` uses it.
 
 # Learning more
 

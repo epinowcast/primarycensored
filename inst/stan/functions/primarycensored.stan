@@ -157,7 +157,13 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
 
     vector[1] y0 = rep_vector(0.0, 1);
-    result = ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
+    // The truncated Gumbel window can be a narrow spike, which the
+    // integration over the window would step over
+    result = primary_id == 4
+      ? primarycensored_gumbel_numeric_cdf(
+          d | dist_id, params, pwindow, primary_params[1], primary_params[2]
+        )
+      : ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
 
     // Apply truncation normalization on log scale for numerical stability.
     // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
@@ -238,11 +244,19 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
     );
   } else {
     // Use numerical integration
-    result = log(primarycensored_cdf(
-      d | dist_id, params, pwindow,
-      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-      positive_infinity(), primary_id, primary_params
-    ));
+    if (primary_id == 4) {
+      // The truncated Gumbel integral is on the log scale, so a CDF below
+      // 1e-300 is not lost
+      result = primarycensored_gumbel_numeric_lcdf(
+        d | dist_id, params, pwindow, primary_params[1], primary_params[2]
+      );
+    } else {
+      result = log(primarycensored_cdf(
+        d | dist_id, params, pwindow,
+        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+        positive_infinity(), primary_id, primary_params
+      ));
+    }
   }
 
   // Handle truncation normalization. Skip when F(L) = 0 makes it a no-op

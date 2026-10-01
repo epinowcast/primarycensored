@@ -110,6 +110,13 @@ pcens_cdf.default <- function(
   pwindow,
   use_numeric = FALSE
 ) {
+  # The truncated Gumbel window can be a narrow spike that the integration
+  # below misses
+  if (identical(object$dprimary, dtgumbel) && length(pwindow) == 1L &&
+    is.finite(pwindow) && pwindow > 0) {
+    primary <- .gumbel_primary_args(object)
+    return(.gumbel_numeric(object, q, pwindow, primary$mu, primary$beta))
+  }
   result <- vapply(
     q,
     function(d) {

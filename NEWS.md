@@ -4,6 +4,9 @@
 
 - Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
   See #367.
+- Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
+  Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
+  See #371.
 
 ## Bug fixes
 
@@ -23,6 +26,7 @@
 
 ## Breaking changes
 
+- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan` after `primarycensored_analytical_cdf.stan`.
 - The Stan function `primarycensored_analytical_lcdf_vectorized()` takes `primary_id` and `primary_params` as its last two arguments.
 
 # primarycensored 1.6.0
