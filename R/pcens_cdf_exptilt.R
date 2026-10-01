@@ -23,8 +23,8 @@
 #' The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
 #' \eqn{\lambda}, so that the tilted delay distribution exists.
 #' Otherwise the numerical method is used.
-#' In Stan the numerical method is less accurate in the lower tail of a
-#' gamma with shape below 1.
+#' The numerical method is less accurate in the lower tail of a gamma with
+#' shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
 #'
 #' The direct form cancels as \eqn{\rho \to 0}.
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
