@@ -40,7 +40,8 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
 int check_for_analytical(int dist_id, int primary_id) {
   // Gamma, Lognormal, Weibull and generalised gamma with a Uniform primary
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
-  // Exponential, Gamma and Normal with an exponentially tilted primary
+  // Exponential, Gamma, Normal and Lognormal with an exponentially tilted
+  // primary
   if (check_for_exptilt(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
@@ -71,6 +72,39 @@ int check_for_analytical_params(int dist_id, array[] real params,
   if (!check_for_analytical(dist_id, primary_id)) return 0;
   if (check_for_exptilt(dist_id, primary_id)) {
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
+  }
+  return 1;
+}
+
+/**
+  * Check if the analytical solution is the path to use at a delay
+  * @ingroup analytical_solution_helpers
+  *
+  * This is check_for_analytical_params() and, for the exponentially tilted
+  * solutions, that the tilt transform is the path to use at d, see
+  * check_for_tilt_transform_at().
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param primary_id Distribution identifier for the primary distribution
+  * @param primary_params Array of primary distribution parameters
+  * @param d Delay, the largest delay if there are several
+  * @param pwindow Primary event window
+  *
+  * @return 1 if the analytical solution is the path to use at d, 0 if the
+  * numerical path is needed
+  */
+int check_for_analytical_delay(int dist_id, array[] real params,
+                               int primary_id, array[] real primary_params,
+                               data real d, data real pwindow) {
+  if (!check_for_analytical_params(dist_id, params, primary_id,
+                                   primary_params)) {
+    return 0;
+  }
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform_at(
+      dist_id, -primary_params[1], params, d, pwindow
+    );
   }
   return 1;
 }

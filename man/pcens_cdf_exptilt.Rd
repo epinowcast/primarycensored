@@ -5,6 +5,7 @@
 \alias{pcens_cdf.pcens_pexp_dexpgrowth}
 \alias{pcens_cdf.pcens_pgamma_dexpgrowth}
 \alias{pcens_cdf.pcens_pnorm_dexpgrowth}
+\alias{pcens_cdf.pcens_plnorm_dexpgrowth}
 \title{Methods for delays with an exponentially tilted primary}
 \usage{
 \method{pcens_cdf}{pcens_pexp_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
@@ -12,6 +13,8 @@
 \method{pcens_cdf}{pcens_pgamma_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 
 \method{pcens_cdf}{pcens_pnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
+
+\method{pcens_cdf}{pcens_plnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by
@@ -31,9 +34,10 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-\code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt \eqn{\rho}.
+Analytical primary event censored CDFs for exponential, gamma, normal and
+lognormal delay distributions with an exponentially tilted primary event
+window, the \code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt
+\eqn{\rho}.
 They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
@@ -54,13 +58,18 @@ The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
 Otherwise the numerical method is used.
 In Stan the numerical method is less accurate in the lower tail of a
 gamma with shape below 1.
+The lognormal transform has no closed form.
+It is evaluated by quadrature for \eqn{\rho > 0} and by a series for
+\eqn{\rho < 0}, see \link{tilt_transform_lognormal}.
+The numerical method is used where the transform does not apply or is
+slower, see \code{.pcens_tilt_fits()}.
 
 The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
 replace it.
 \itemize{
-\item For \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
-order correction in \eqn{\rho},
+\item For \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}, the
+uniform window limit with its first order correction in \eqn{\rho},
 \eqn{\{G_1(q) - G_1(q - w)\} / w +
   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w)}.
 \item For delays on the non-negative reals with \eqn{q < w} and

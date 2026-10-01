@@ -9,6 +9,7 @@
 #' A delay is added with methods for `.pcens_tilt_lower()`,
 #' `.pcens_tilt_available()`, `.pcens_tilt_transform()` and, for the small
 #' tilt forms, `.pcens_tilt_moments()`.
+#' `.pcens_tilt_fits()` and `.pcens_tilt_pair()` are optional.
 #' The Stan equivalents are `check_for_tilt_transform()`,
 #' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
 #'
@@ -18,6 +19,8 @@
 #'
 #' @param xi Tilt, a single number. A window with tilt \eqn{\rho} needs
 #'   \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.
+#'
+#' @param pwindow Primary event window, used by `.pcens_tilt_fits()`.
 #'
 #' @param upper If `TRUE` return the transform over \eqn{(t, \infty)}
 #'   rather than up to `t`, which keeps precision where the lower transform
@@ -29,6 +32,12 @@
 #' * `.pcens_tilt_available()`: `TRUE` if the transform is closed form and the
 #'   tilted delay distribution exists for `xi`, otherwise the numerical
 #'   method is used.
+#' * `.pcens_tilt_fits()`: `TRUE` at each `t` where the transform is used,
+#'   otherwise the numerical method. It is only called where
+#'   `.pcens_tilt_available()` is `TRUE`. The default is `TRUE`.
+#' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
+#'   transform up to and beyond each `t`. The default calls
+#'   `.pcens_tilt_transform()` twice.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix of the log of the first and second
 #'   moments of the delay about `t`, see [pcens_cdf_exptilt].
@@ -48,6 +57,11 @@ NULL
 }
 
 #' @rdname tilt_transform
+.pcens_tilt_fits <- function(object, xi, t, pwindow = 0) {
+  UseMethod(".pcens_tilt_fits")
+}
+
+#' @rdname tilt_transform
 .pcens_tilt_lower <- function(object) {
   UseMethod(".pcens_tilt_lower")
 }
@@ -55,6 +69,26 @@ NULL
 #' @rdname tilt_transform
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
+}
+
+#' @rdname tilt_transform
+.pcens_tilt_pair <- function(object, t, xi) {
+  UseMethod(".pcens_tilt_pair")
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_pair.default <- function(object, t, xi) {
+  cbind(
+    lower = .pcens_tilt_transform(object, t, xi),
+    upper = .pcens_tilt_transform(object, t, xi, upper = TRUE)
+  )
+}
+
+#' @rdname tilt_transform
+#' @exportS3Method
+.pcens_tilt_fits.default <- function(object, xi, t, pwindow = 0) {
+  rep(TRUE, length(t))
 }
 
 #' @rdname tilt_transform

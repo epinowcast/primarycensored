@@ -26,7 +26,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 2. Analyse the uniform primary event time case ($r=0$)
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
-5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays
+5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays, and with the lognormal delay by quadrature
 
 
 # Analytic solutions for exponentially tilted primary event times
@@ -393,19 +393,50 @@ For $\xi = -r$ the closed form transforms are as follows.
 Differences between the two endpoints are taken from the lower or the upper tail transforms, whichever has the smaller ratio of the subtracted term to the first.
 All terms are evaluated on the log scale.
 
+## Lognormal delay by quadrature or series
+
+The lognormal has no closed form transform.
+With $u = e^{\mu + \sigma z}$ and $z_\tau = (\log \tau - \mu) / \sigma$,
+
+$$
+T_f(\xi; \tau) = \int_{-\infty}^{z_\tau} e^{\xi e^{\mu + \sigma z}} \phi(z) ~dz,
+$$
+
+where $\phi$ is the standard normal density.
+The method depends on the sign of $\xi = -r$.
+
+- For $r > 0$, $\xi < 0$, the log of the integrand $\ell(z) = -r e^{\mu + \sigma z} - z^2 / 2$ is concave with one mode, $z_0 = -W_0(r \sigma^2 e^\mu) / \sigma$, where $W_0$ is the principal branch of the Lambert W function.
+  The integrand is below $e^{-40}$ of its peak beyond limits set from the curvature and the decay of the tilt.
+  The total is integrated by two 32 point Gauss-Legendre panels that meet at the mode, once for all the points of a call.
+  For a point left of the mode the lower transform is one panel that ends at the point.
+  For a point right of the mode the upper transform is one panel that starts at the point.
+  The other transform is the difference from the total, which is at least the mass on the other side of the mode, so it does not cancel.
+  Each panel is split into `ceiling(sigma / 1.8)` equal panels for a larger $\sigma$, which keeps the CDF accurate to about $10^{-9}$ to $\sigma = 15$.
+- For $r < 0$, $\xi > 0$, the transform is the series $\sum_{k \geq 0} \xi^k m_k(\tau) / k!$ in the partial moments $m_k(\tau) = \int_0^\tau u^k f_T(u)~du = e^{k\mu + k^2\sigma^2/2}\,\Phi(z_\tau - k\sigma)$.
+  All terms are positive, so the sum does not cancel.
+  Past $k = \xi \tau$ the terms fall by at least a factor $\xi \tau / (k + 1)$, so about $\xi \tau + 9 \sqrt{\xi \tau} + 30$ terms are needed.
+  The total diverges, so there is no upper transform.
+
+The moments $G_1$ and $G_2$ of the small tilt forms come from $m_0$, $m_1$ and $m_2$.
+
 ## Admissibility
 
 The exponential and gamma forms need $\lambda - \xi = \lambda + r > 0$ for the tilted delay distribution to exist.
 Where $\lambda + r \leq 0$ the methods use the numerical path, `pcens_cdf.default()` in R and the ODE in Stan.
 In Stan `check_for_analytical_params()` makes the choice from the parameters.
 The normal form has no restriction.
+The lognormal needs that $r \sigma^2 e^\mu$ is finite.
+For $r < 0$ the series needs about $\xi d + 9 \sqrt{\xi d} + 30$ terms at a delay $d$, so the numerical path is used past $|r| d$ of 200 in R and 60 in Stan, where it is faster.
+The exception is a window that is wide in tilt terms, $|r| w_P > 2$, where the numerical path is less accurate in the lower tail.
+The series is kept there up to 20000 terms, which is $|r| d$ up to about 18700.
+For fewer than 10 quantiles in R the numerical method is used only where $|r| w_P \leq 1$, where its error is about $10^{-6}$.
 
 ## Tilts close to zero
 
 Equation \@ref(eq:exptilt) cancels as $r \to 0$ and loses about $10^{-14} / (|r| w_P)$ of relative precision.
 Two forms replace it, with $G_k(t) = \int (t - u)^k f_T(u)~du$ over the support up to $t$.
 
-For $|r| w_P < 10^{-4}$, expanding the window density in $r$ gives the uniform solution and its first order correction,
+For $|r| w_P < 10^{-4}$ and $|r| (|d| + w_P) < 0.1$, expanding the window density in $r$ gives the uniform solution and its first order correction,
 
 $$
 F_{S_+}(d) = \frac{G_1(d) - G_1(q)}{w_P} + r \frac{G_2(d) - w_P G_1(d) - G_2(q) - w_P G_1(q)}{2 w_P} + O\big((r w_P)^2\big).
@@ -419,6 +450,10 @@ $$
 
 is used instead.
 The truncation error of both forms is below $10^{-9}$ at the threshold.
+
+The first form subtracts terms of the size of $|d| + w_P$, so it has a rounding error of about $10^{-14} (|d| + w_P) / w_P \{1 + |r| (|d| + w_P)\}$.
+Equation \@ref(eq:exptilt) has a rounding error of about $10^{-15} / (|r| w_P)$ at any distance from the origin.
+The first form has the smaller error while $|r| (|d| + w_P)$ is below about 0.1, so equation \@ref(eq:exptilt) is used beyond that.
 
 # Learning more
 
