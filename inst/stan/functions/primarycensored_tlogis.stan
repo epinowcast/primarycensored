@@ -206,33 +206,28 @@ int tlogis_is_valid(real location, real scale, data real pwindow) {
   * Check if the delay has the tilts of a plan
   * @ingroup truncated_logistic_solutions
   *
-  * The series run to the tilts n / s for n up to the number of positive
-  * tilts, and -n / s for n up to the number of negative tilts.
-  *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
   * @param scale Scale of the logistic distribution
   * @param plan Plan from tlogis_plan()
   *
   * @return 1 if the plan has a truncation rule for each series and the
-  * delay has its tilts, 0 otherwise
+  * delay has the tilts n / s and -n / s the series run to, 0 otherwise
   */
 int tlogis_plan_applies(int dist_id, array[] real params, real scale,
                         array[] int plan) {
   if (plan[1] == 0) return 0;
-  if (tlogis_n_pos(plan) > 0) {
-    if (!check_for_tilt_transform(
-      dist_id, tlogis_n_pos(plan) / scale, params
-    )) {
-      return 0;
-    }
+  if (tlogis_n_pos(plan) > 0
+      && !check_for_tilt_transform(
+        dist_id, tlogis_n_pos(plan) / scale, params
+      )) {
+    return 0;
   }
-  if (tlogis_n_neg(plan) > 0) {
-    if (!check_for_tilt_transform(
-      dist_id, -tlogis_n_neg(plan) / scale, params
-    )) {
-      return 0;
-    }
+  if (tlogis_n_neg(plan) > 0
+      && !check_for_tilt_transform(
+        dist_id, -tlogis_n_neg(plan) / scale, params
+      )) {
+    return 0;
   }
   return 1;
 }
@@ -595,10 +590,8 @@ real primarycensored_tlogis_lcdf(data real d, int dist_id,
     return negative_infinity();
   }
   if (!tlogis_is_valid(location, scale, pwindow)) {
-    reject(
-      "The truncated logistic solution does not apply for location ",
-      location, ", scale ", scale, " and window ", pwindow, "."
-    );
+    reject("The truncated logistic solution needs a finite location, ",
+           "and a positive finite scale and window.");
   }
   real log_mass = tlogis_log_mass(0, pwindow, location, scale);
   array[6] int plan = tlogis_plan(location, scale, pwindow, log_mass);

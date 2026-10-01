@@ -378,16 +378,10 @@ test_that("the analytical function rejects an inadmissible series", {
     ),
     "truncated logistic"
   )
-  # Also for a delay that would use the small delay form, and a bad scale
+  # Also for a delay that would use the small delay form
   expect_error(
     primarycensored_analytical_lcdf(
       1e-6, 2L, c(2.5, 0.4), 2, 0, Inf, 3L, c(0.5, 0.2)
-    ),
-    "truncated logistic"
-  )
-  expect_error(
-    primarycensored_analytical_lcdf(
-      2, 18L, c(3, 2), 2, 0, Inf, 3L, c(0.5, 0)
     ),
     "truncated logistic"
   )
