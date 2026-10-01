@@ -21,8 +21,9 @@ error.
 \description{
 The CDF at \code{q} combines terms at \code{q} and at \code{max(q - pwindow, 0)}. Terms
 at \code{q} are reused for lower endpoints that equal another point. This is
-done when it saves at least a quarter of the evaluations. Otherwise, and
-for a vector \code{pwindow}, the terms are evaluated directly at both
-endpoints. Terms are only shared when the delay parameters are scalar.
+done when it saves at least a quarter of the evaluations. Otherwise the
+terms are evaluated directly at both endpoints. This also applies to
+fewer than 64 points and to a vector \code{pwindow}. Terms are only shared
+when the delay parameters are scalar.
 }
 \keyword{internal}

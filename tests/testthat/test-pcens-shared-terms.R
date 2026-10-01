@@ -25,7 +25,7 @@ shared_obj <- function(delay) {
   do.call(new_pcens, c(list(delay$pdist, dunif), delay$args))
 }
 
-# Delay CDF evaluated for each point on its own
+# Censored CDF evaluated for each point on its own
 per_point_cdf <- function(obj, q, pwindow) {
   vapply(q, function(x) pcens_cdf(obj, x, pwindow), numeric(1))
 }
@@ -63,11 +63,11 @@ test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
     .pcens_cdf_shared(spec, q, pwindow)
     counter$n
   }
-  q <- 0:10
+  q <- 0:80
   expect_identical(
     count_evaluations(q, 2), length(unique(c(q, pmax(q - 2, 0))))
   )
-  q_half <- seq(0, 10, by = 0.5)
+  q_half <- seq(0, 40, by = 0.5)
   expect_identical(
     count_evaluations(q_half, 1.5),
     length(unique(c(q_half, pmax(q_half - 1.5, 0))))
@@ -75,9 +75,11 @@ test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
   # Too little overlap to save evaluations, so each endpoint is direct
   expect_identical(count_evaluations(q, 1.5), 2L * length(q))
   expect_identical(count_evaluations(c(2.3, 7.9), 1), 4L)
+  # Short lattices skip the match
+  expect_identical(count_evaluations(0:30, 1), 62L)
   q_none <- seq(1.37, 40, length.out = 60)
   expect_identical(count_evaluations(q_none, 1), 2L * length(q_none))
-  q_mixed <- c(seq(0.37, 9.9, length.out = 30), 0:30)
+  q_mixed <- c(seq(0.37, 9.9, length.out = 30), 0:50)
   expect_identical(
     count_evaluations(q_mixed, 1),
     length(unique(c(q_mixed, pmax(q_mixed - 1, 0))))
@@ -86,14 +88,15 @@ test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
 
 test_that("shared terms match single-point evaluation", {
   grids <- list(
-    list(q = 0:40, pwindow = 1),
-    list(q = 0:40, pwindow = 3),
-    list(q = seq(0, 20, by = 0.5), pwindow = 1.5),
+    list(q = 0:100, pwindow = 1),
+    list(q = 0:100, pwindow = 3),
+    list(q = 0:20, pwindow = 1),
+    list(q = seq(0, 40, by = 0.5), pwindow = 1.5),
     list(q = c(-2, -0.5, 0, 0.2, 0.5, 1, 1.5, 4, 4, 30), pwindow = 1),
-    list(q = seq(0, 6, by = 0.25), pwindow = 0.25),
+    list(q = seq(0, 20, by = 0.25), pwindow = 0.25),
     list(q = seq(1.37, 40, length.out = 60), pwindow = 1),
-    list(q = as.numeric(1:30), pwindow = 0.7),
-    list(q = c(seq(0.37, 9.9, length.out = 30), 0:30), pwindow = 1)
+    list(q = as.numeric(1:80), pwindow = 0.7),
+    list(q = c(seq(0.37, 9.9, length.out = 30), 0:50), pwindow = 1)
   )
   for (delay in c(shared_delays, flexsurv_delays())) {
     obj <- shared_obj(delay)
@@ -133,7 +136,7 @@ test_that("shared terms match high accuracy integration", {
 })
 
 test_that("pprimarycensored and dprimarycensored share terms on a lattice", {
-  x <- 0:25
+  x <- 0:80
   for (delay in c(shared_delays, flexsurv_delays())) {
     for (pwindow in c(1, 2, 3)) {
       args <- c(list(pdist = delay$pdist, pwindow = pwindow), delay$args)
@@ -146,9 +149,9 @@ test_that("pprimarycensored and dprimarycensored share terms on a lattice", {
         ),
         tolerance = 1e-14
       )
-      d <- do.call(dprimarycensored, c(list(x = x, D = 26), args))
-      p_d <- do.call(pprimarycensored, c(list(q = x, L = 0, D = 26), args))
-      p_up <- do.call(pprimarycensored, c(list(q = x + 1, L = 0, D = 26), args))
+      d <- do.call(dprimarycensored, c(list(x = x, D = 81), args))
+      p_d <- do.call(pprimarycensored, c(list(q = x, L = 0, D = 81), args))
+      p_up <- do.call(pprimarycensored, c(list(q = x + 1, L = 0, D = 81), args))
       expect_equal(d, p_up - p_d, tolerance = 1e-12)
     }
   }

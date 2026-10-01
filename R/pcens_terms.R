@@ -2,9 +2,10 @@
 #'
 #' The CDF at `q` combines terms at `q` and at `max(q - pwindow, 0)`. Terms
 #' at `q` are reused for lower endpoints that equal another point. This is
-#' done when it saves at least a quarter of the evaluations. Otherwise, and
-#' for a vector `pwindow`, the terms are evaluated directly at both
-#' endpoints. Terms are only shared when the delay parameters are scalar.
+#' done when it saves at least a quarter of the evaluations. Otherwise the
+#' terms are evaluated directly at both endpoints. This also applies to
+#' fewer than 64 points and to a vector `pwindow`. Terms are only shared
+#' when the delay parameters are scalar.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -20,7 +21,8 @@
   }
   lower <- pmax.int(q - pwindow, 0)
   n <- length(q)
-  shared <- n > 1L && length(pwindow) == 1L && isTRUE(spec$scalar)
+  # Matching costs more than it saves for short inputs
+  shared <- n >= 64L && length(pwindow) == 1L && isTRUE(spec$scalar)
   if (shared) {
     # Probing a few points skips the full match when nothing coincides
     probe <- if (n <= 6L) seq_len(n) else round(seq.int(1, n, length.out = 6))
