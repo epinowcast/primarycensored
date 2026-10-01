@@ -116,10 +116,8 @@ real gamma_log_rate(real rate) {
   * @ingroup delay_log_cdfs
   *
   * Returns log P(a, x), the log of the regularised lower incomplete gamma
-  * function, for x = exp(log_x). Stan's `gamma_lcdf` underflows in the lower
-  * tail, where its gradient with respect to `a` is also inaccurate, and the
-  * gradient is not finite for large `a`. Taking `log_x` keeps the result
-  * finite when x underflows.
+  * function, for x = exp(log_x). Evaluated on the log scale so the value and
+  * its gradient stay finite in the tails.
   *
   * - `a >= 10`: the series for x < a + 1, otherwise the continued fraction.
   * - `a < 10`: the series for x < 0.9 (a + 1) where the leading term is
@@ -146,15 +144,16 @@ real gamma_lcdf_logx(real log_x, real a) {
   }
   real x = exp(log_x);
   real result = not_a_number();
-  real log_lead = gamma_log_lead_logx(log_x, a);
   if (a >= 10) {
     result = x < a + 1
-             ? log_lead + gamma_lseries_sum_logx(log_x, a)
+             ? gamma_log_lead_logx(log_x, a)
+               + gamma_lseries_sum_logx(log_x, a)
              : log1m_exp(gamma_lccdf_cf_logx(log_x, a));
-  } else if (x < 0.9 * (a + 1) && log_lead < -10) {
-    result = log_lead + gamma_lseries_sum_logx(log_x, a);
-  } else {
-    return gamma_lcdf(x | a, 1);
+  } else if (x < 0.9 * (a + 1)) {
+    real log_lead = gamma_log_lead_logx(log_x, a);
+    if (log_lead < -10) {
+      result = log_lead + gamma_lseries_sum_logx(log_x, a);
+    }
   }
   if (is_nan(result)) {
     return gamma_lcdf(x | a, 1);
@@ -195,9 +194,7 @@ vector gamma_lcdf_logx_pair(real log_x, real a) {
   real log_lead = gamma_log_lead_logx(log_x, a);
   vector[2] result = rep_vector(not_a_number(), 2);
   // Below 0.5 (a + 1) the recursion would cancel by more than a factor of 2
-  if (x < a + 1
-      && (a >= 10 || x < 0.5 * (a + 1)
-          || (x < 0.9 * (a + 1) && log_lead < -10))) {
+  if (x < a + 1 && (a >= 10 || x < 0.5 * (a + 1))) {
     // S for a + 1, from which S for a follows without subtraction
     real log_sum_kp1 = gamma_lseries_sum_logx(log_x, a + 1);
     result[1] = log_lead
