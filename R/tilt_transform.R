@@ -17,6 +17,15 @@
 #   * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #   * `.pcens_tilt_moments()`: a matrix of the log of the first, second and
 #     third moments of the delay about `t`, see ?pcens_cdf_exptilt.
+# The methods `.pcens_tilt_ill_conditioned()` and `.pcens_tilt_numeric()` are
+# optional and use the numerical method where the closed form loses precision
+# to rounding.
+#   * `.pcens_tilt_ill_conditioned()`: `TRUE` at each `q` where the closed
+#     form, the small window form if `small_window` and otherwise the direct
+#     form, is too inaccurate for tilt `rho` and log CDF `log_cdf`. `FALSE` by
+#     default.
+#   * `.pcens_tilt_numeric()`: the numerical CDF at each `q`, by default
+#     `pcens_cdf.default()`.
 
 .pcens_tilt_transform <- function(object, t, xi, upper = FALSE) {
   UseMethod(".pcens_tilt_transform")
@@ -34,9 +43,31 @@
   UseMethod(".pcens_tilt_moments")
 }
 
+.pcens_tilt_ill_conditioned <- function(
+  object, q, pwindow, rho, log_cdf, small_window
+) {
+  UseMethod(".pcens_tilt_ill_conditioned")
+}
+
+.pcens_tilt_numeric <- function(object, q, pwindow) {
+  UseMethod(".pcens_tilt_numeric")
+}
+
 #' @exportS3Method
 .pcens_tilt_available.default <- function(object, xi) {
   FALSE
+}
+
+#' @exportS3Method
+.pcens_tilt_ill_conditioned.default <- function(
+  object, q, pwindow, rho, log_cdf, small_window
+) {
+  rep(FALSE, length(q))
+}
+
+#' @exportS3Method
+.pcens_tilt_numeric.default <- function(object, q, pwindow) {
+  pcens_cdf.default(object, q, pwindow)
 }
 
 #' Gamma delay parameters of a pcens object

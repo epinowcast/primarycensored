@@ -235,6 +235,34 @@ test_that("pcd_stan_files returns correct files", {
   expect_length(non_existent, 0)
 })
 
+test_that("pcd_stan_functions finds every function defined at the start of
+  a line, including those returning array[] types", {
+  stan_files <- list.files(
+    pcd_stan_path(),
+    pattern = "[.]stan$", full.names = TRUE, recursive = TRUE
+  )
+  defined <- unlist(lapply(stan_files, function(file) {
+    content <- readLines(file)
+    content <- content[grepl("^[a-z].*[(]", content)]
+    sub("^.*\\s", "", sub("\\s*[(].*$", "", content))
+  }))
+  expect_gt(length(defined), 0)
+  expect_identical(setdiff(defined, pcd_stan_functions()), character(0))
+  expect_true("loglogistic_exptilt_terms" %in% pcd_stan_functions())
+})
+
+test_that("pcd_load_stan_functions dependencies include array[] returns", {
+  vectorised <- pcd_load_stan_functions(
+    "primarycensored_sone_lpmf_vectorized",
+    dependencies = TRUE
+  )
+  expect_true(
+    grepl("array[] vector loglogistic_exptilt_terms(", vectorised,
+      fixed = TRUE
+    )
+  )
+})
+
 test_that("pcd_stan_function_deps includes functions passed as arguments", {
   # The ODE functions are only passed to the solver by name
   expect_true(
@@ -250,7 +278,10 @@ test_that("functions loaded with their dependencies pass the Stan syntax
   check", {
   skip_if_not_installed("cmdstanr")
   skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
-  for (fn in c("primarycensored_lpmf", "loglogistic_numeric_lcdf")) {
+  for (fn in c(
+    "primarycensored_lpmf", "primarycensored_sone_lpmf_vectorized",
+    "primarycensored_exptilt_lcdf", "loglogistic_numeric_lcdf"
+  )) {
     code <- pcd_load_stan_functions(
       functions = fn, wrap_in_block = TRUE, dependencies = TRUE
     )

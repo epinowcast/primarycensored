@@ -5,7 +5,7 @@
 - Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
   See #367.
 - Added the log-logistic delay, Stan `dist_id` 31 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
-  There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
+  There are analytical solutions for the uniform and the exponentially tilted primary in R and Stan, with the numerical path used where they are ill conditioned, see `?pcens_cdf_loglogistic`.
   See #372, #104 and #321.
 
 ## Bug fixes
@@ -15,7 +15,7 @@
   See #364.
 - `pcens_cdf()` and the Stan numerical path no longer return 0 or an error for delays that are small relative to the primary window.
   See #367.
-- `pcd_stan_function_deps()` finds functions that are only passed by name to another function.
+- `pcd_stan_functions()`, `pcd_load_stan_functions()` and `pcd_stan_function_deps()` find Stan functions that return `array[]` types and functions that are only passed by name to another function.
   See #372.
 
 ## Performance
