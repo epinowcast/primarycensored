@@ -47,6 +47,8 @@
 #'
 #' @name pcens_cdf_exptilt
 #'
+#' @concept pcens
+#'
 #' @examples
 #' # Exponential delay with a growing primary event process
 #' pexp_obj <- new_pcens(

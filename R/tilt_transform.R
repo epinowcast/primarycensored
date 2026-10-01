@@ -125,7 +125,7 @@
   log_total <- p$shape * (log(p$rate) - log(tilted_rate))
   out <- rep(if (upper) log_total else -Inf, length(t))
   positive <- t > 0
-  out[positive] <- log_total + stats::pgamma(
+  out[positive] <- log_total + pgamma(
     t[positive] * tilted_rate,
     shape = p$shape, lower.tail = !upper, log.p = TRUE
   )
@@ -219,13 +219,13 @@
   positive <- t > 0
   tp <- pmax(t, 0)
   log_t <- log(tp)
-  log_m0 <- stats::pgamma(tp, shape, rate, log.p = TRUE)
+  log_m0 <- pgamma(tp, shape, rate, log.p = TRUE)
   log_m1 <- log(shape) - log(rate) +
-    stats::pgamma(tp, shape + 1, rate, log.p = TRUE)
+    pgamma(tp, shape + 1, rate, log.p = TRUE)
   log_m2 <- log(shape) + log(shape + 1) - 2 * log(rate) +
-    stats::pgamma(tp, shape + 2, rate, log.p = TRUE)
+    pgamma(tp, shape + 2, rate, log.p = TRUE)
   log_m3 <- log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate) +
-    stats::pgamma(tp, shape + 3, rate, log.p = TRUE)
+    pgamma(tp, shape + 3, rate, log.p = TRUE)
   log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
   log_h <- .log_diff_exp(log_t + log_m1, log_m2)
   log_g2 <- .log_diff_exp(log_t + log_g1, log_h)

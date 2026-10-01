@@ -96,3 +96,4 @@ pnorm_obj <- new_pcens(
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
 }
+\concept{pcens}
