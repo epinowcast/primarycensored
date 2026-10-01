@@ -1,63 +1,39 @@
-#' Truncated exponential-moment transforms of delay distributions
-#'
-#' Internal generics for the delay distribution part of the analytical
-#' solutions with an exponentially tilted primary event window, where the
-#' primary event censored CDF is built from
-#' \deqn{T_f(\xi; \tau) = \int_{-\infty}^{\tau} e^{\xi u} f(u) du.}
-#' The lower limit is 0 for delays on the non-negative reals.
-#' They dispatch on the delay class of a `pcens` object.
-#' A delay is added with methods for `.pcens_tilt_lower()`,
-#' `.pcens_tilt_available()`, `.pcens_tilt_transform()` and, for the small
-#' tilt forms, `.pcens_tilt_moments()`.
-#' The Stan equivalents are `check_for_tilt_transform()`,
-#' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
-#'
-#' @param object A `pcens` object as created by [new_pcens()].
-#'
-#' @param t Numeric vector of finite points.
-#'
-#' @param xi Tilt, a single number. A window with tilt \eqn{\rho} needs
-#'   \eqn{\xi = -\rho}, and \eqn{\xi = 0} gives the delay CDF.
-#'
-#' @param upper If `TRUE` return the transform over \eqn{(t, \infty)}
-#'   rather than up to `t`, which keeps precision where the lower transform
-#'   is close to its total.
-#'
-#' @return
-#' * `.pcens_tilt_transform()`: the log transform at each `t`, `-Inf` below
-#'   the support for the lower transform.
-#' * `.pcens_tilt_available()`: `TRUE` if the transform is closed form and the
-#'   tilted delay distribution exists for `xi`, otherwise the numerical
-#'   method is used.
-#' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
-#' * `.pcens_tilt_moments()`: a matrix of the log of the first, second and
-#'   third moments of the delay about `t`, see [pcens_cdf_exptilt].
-#'
-#' @keywords internal
-#' @name tilt_transform
-NULL
+# Truncated exponential-moment transforms of delay distributions
+#
+# Internal generics for the delay part of the analytical solutions with an
+# exponentially tilted primary event window, built from
+# T_f(xi; tau) = int_{-Inf}^{tau} exp(xi u) f(u) du, with lower limit 0 for
+# delays on the non-negative reals.
+# A delay is added with methods for `.pcens_tilt_lower()`,
+# `.pcens_tilt_available()`, `.pcens_tilt_transform()` and
+# `.pcens_tilt_moments()`, which dispatch on the delay class of a `pcens`
+# object. The Stan equivalents are `check_for_tilt_transform()`,
+# `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
+#   * `.pcens_tilt_transform()`: log T_f at each `t` (up to `t`, or over
+#     `(t, Inf)` with `upper = TRUE`) for a tilt `xi`. A window with tilt rho
+#     needs xi = -rho.
+#   * `.pcens_tilt_available()`: whether the transform is closed form and the
+#     tilted delay exists for `xi`, otherwise the numerical method is used.
+#   * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
+#   * `.pcens_tilt_moments()`: a matrix of the log of the first, second and
+#     third moments of the delay about `t`, see ?pcens_cdf_exptilt.
 
-#' @rdname tilt_transform
 .pcens_tilt_transform <- function(object, t, xi, upper = FALSE) {
   UseMethod(".pcens_tilt_transform")
 }
 
-#' @rdname tilt_transform
 .pcens_tilt_available <- function(object, xi) {
   UseMethod(".pcens_tilt_available")
 }
 
-#' @rdname tilt_transform
 .pcens_tilt_lower <- function(object) {
   UseMethod(".pcens_tilt_lower")
 }
 
-#' @rdname tilt_transform
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_available.default <- function(object, xi) {
   FALSE
@@ -74,14 +50,14 @@ NULL
 #'
 #' @noRd
 .gamma_shape_rate <- function(object) {
-  args <- object$args
-  shape <- args$shape
-  rate <- args$rate
+  dist_args <- object$args
+  shape <- dist_args$shape
+  rate <- dist_args$rate
   if (is.null(shape)) {
     stop("shape parameter is required for Gamma distribution", call. = FALSE)
   }
   if (is.null(rate)) {
-    rate <- if (is.null(args$scale)) 1 else 1 / args$scale
+    rate <- if (is.null(dist_args$scale)) 1 else 1 / dist_args$scale
   }
   list(shape = shape, rate = rate)
 }
@@ -131,19 +107,16 @@ NULL
   out
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_lower.pcens_pgamma <- function(object) {
   0
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_available.pcens_pgamma <- function(object, xi) {
   .gamma_shape_rate(object)$rate - xi > 0
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_transform.pcens_pgamma <- function(object, t, xi, upper = FALSE) {
   # Gamma CDF with rate - xi times the total (rate / (rate - xi))^shape
@@ -159,7 +132,6 @@ NULL
   out
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_lower.pcens_pexp <- function(object) {
   0
@@ -175,13 +147,11 @@ NULL
   if (is.null(rate)) 1 else rate
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_available.pcens_pexp <- function(object, xi) {
   .exp_rate(object) - xi > 0
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_transform.pcens_pexp <- function(object, t, xi, upper = FALSE) {
   rate <- .exp_rate(object)
@@ -212,19 +182,16 @@ NULL
   )
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_lower.pcens_pnorm <- function(object) {
   -Inf
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_available.pcens_pnorm <- function(object, xi) {
   TRUE
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_transform.pcens_pnorm <- function(object, t, xi, upper = FALSE) {
   # Completing the square gives a normal with mean mean + xi sd^2
@@ -272,21 +239,18 @@ NULL
   )
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_moments.pcens_pgamma <- function(object, t) {
   p <- .gamma_shape_rate(object)
   .gamma_moments(t, p$shape, p$rate)
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_moments.pcens_pexp <- function(object, t) {
   # Gamma with shape 1, as the closed forms cancel for small rate * t
   .gamma_moments(t, 1, .exp_rate(object))
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_moments.pcens_pnorm <- function(object, t) {
   p <- .norm_mean_sd(object)
