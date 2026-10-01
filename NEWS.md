@@ -8,6 +8,10 @@
 - `gengamma_lcdf()` in the Stan functions no longer returns `-Inf` deep in the lower tail, and its gradient with respect to `k` is accurate there.
   This removes `NaN` and `+Inf` log densities from truncated generalised gamma fits with a uniform primary.
   See #363.
+- A bug was fixed where the Stan log CDF of a Gamma delay with a uniform primary returned `-Inf` or `NaN` in the lower tail.
+  Shape gradients were also wrong or not finite for large shapes and in the lower tail.
+  A Gamma rate that is not positive and finite is now rejected.
+  See #381 and #405.
 
 ## Performance
 
