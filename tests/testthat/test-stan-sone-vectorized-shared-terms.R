@@ -2,7 +2,7 @@ skip_on_cran()
 
 # With a registered delay and primary pair and an integer pwindow,
 # primarycensored_sone_lpmf_vectorized() uses
-# primarycensored_analytical_lcdf_vectorized(), which computes the terms of
+# primarycensored_lcdf_vectorized(), which computes the terms of
 # primarycensored_terms() once per integer delay and shares them. These tests
 # check it against per-delay Stan calls and the R functions.
 
@@ -104,8 +104,9 @@ test_that(
   }
 )
 
-test_that("primarycensored_analytical_lcdf_vectorized matches
-  primarycensored_lcdf at each delay", {
+test_that("primarycensored_lcdf_vectorized and
+  primarycensored_analytical_lcdf_vectorized match primarycensored_lcdf at
+  each delay", {
   n <- 41L
   for (dist in vectorized_dists) {
     for (params in dist$params) {
@@ -115,13 +116,17 @@ test_that("primarycensored_analytical_lcdf_vectorized matches
             "dist", dist$dist_id, "params", toString(params),
             "pwindow", pwindow, "start", start
           )
-          vectorised <- primarycensored_analytical_lcdf_vectorized(
+          expected <- per_delay_lcdf(start:n, dist$dist_id, params, pwindow)
+          vectorised <- primarycensored_lcdf_vectorized(
             start, n, dist$dist_id, params, pwindow, 1L, numeric(0)
           )
           expect_length(vectorised, n)
+          expect_identical(vectorised[start:n], expected, info = info)
           expect_identical(
-            vectorised[start:n],
-            per_delay_lcdf(start:n, dist$dist_id, params, pwindow),
+            primarycensored_analytical_lcdf_vectorized(
+              start, n, dist$dist_id, params, pwindow
+            )[start:n],
+            expected,
             info = info
           )
         }

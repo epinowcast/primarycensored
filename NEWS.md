@@ -13,16 +13,11 @@
   The default, `check = TRUE`, is unchanged.
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
-- `pcens_cdf()`, and so `pprimarycensored()`, `dprimarycensored()`, `pcens_pmf()` and `fitdistdoublecens()`, now share the analytical terms between evaluation points for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary.
-  Where a point shifted by the primary window equals another point, such as integer delays with an integer window, each endpoint is evaluated once.
-  Otherwise each endpoint is evaluated directly as before.
-  Results are unchanged to rounding.
-  A missing value in `q` remains an error for these delays.
-- The vectorised Stan functions `primarycensored_lcdf_vectorized()`, `primarycensored_sone_lpmf_vectorized()` and `primarycensored_sone_pmf_vectorized()` find per-endpoint terms through a registry keyed by the delay and primary distribution.
-  Any registered pair shares terms across integer delays and other pairs use the single delay path.
-  The uniform primary is the only registered primary for now.
-  `primarycensored_analytical_lcdf_vectorized()` takes the primary distribution identifier and parameters as two new final arguments.
-  Per-observation windows in Stan need a new signature and are left for follow-up work.
+- `pcens_cdf()`, and so `pprimarycensored()`, `dprimarycensored()`, `pcens_pmf()` and `fitdistdoublecens()`, share analytical terms between evaluation points for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary.
+  Results are unchanged.
+  See #366.
+- `primarycensored_lcdf_vectorized()` in Stan finds per-endpoint terms through a registry keyed by the delay and primary distribution.
+  Existing function signatures are unchanged.
   See #366.
 
 # primarycensored 1.6.0

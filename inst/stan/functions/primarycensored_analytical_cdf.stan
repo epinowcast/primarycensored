@@ -506,10 +506,10 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   *
   * The analytical CDF at d combines terms at d and at
   * q = max(d - pwindow, 0). With an integer pwindow q is an integer delay
-  * too, so primarycensored_analytical_lcdf_vectorized() can compute the
-  * terms once per delay and share them. This needs a pair with per-endpoint
-  * terms, see check_for_terms(). The non-parametric delays in
-  * check_for_analytical() have no such terms.
+  * too, so primarycensored_lcdf_vectorized() can compute the terms once per
+  * delay and share them. This needs a pair with per-endpoint terms, see
+  * check_for_terms(). The non-parametric delays in check_for_analytical()
+  * have no such terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -528,42 +528,36 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * @ingroup primary_event_analytical_distributions
   *
   * The log CDF at d combines the terms at d and at q = max(d - pwindow, 0)
-  * (see primarycensored_lcdf_from_terms()). Both are integer delays, so the
-  * terms are computed once per delay and used for both. The values are the
-  * same as from primarycensored_analytical_lcdf() at each delay without
-  * truncation. Only for cases where check_for_analytical_vectorized() is 1.
+  * (see primarycensored_uniform_lcdf_from_terms()). Both are integer delays,
+  * so the terms are computed once per delay and used for both, halving the
+  * CDF evaluations. The values are the same as from
+  * primarycensored_analytical_lcdf() at each delay without truncation.
+  * Only for cases where check_for_analytical_vectorized() is 1.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window, a positive integer
-  * @param primary_id Primary distribution identifier
-  * @param primary_params Primary distribution parameters
   *
   * @return Vector whose element d is the log CDF at d, for d in start:n.
   * Elements before start are not computed.
   */
-vector primarycensored_analytical_lcdf_vectorized(
-  data int start, data int n, data int dist_id, array[] real params,
-  data real pwindow, data int primary_id, array[] real primary_params
-) {
+vector primarycensored_analytical_lcdf_vectorized(data int start,
+                                                  data int n,
+                                                  data int dist_id,
+                                                  array[] real params,
+                                                  data real pwindow) {
   int pw = to_int(pwindow);
   vector[n] log_cdfs;
-  int n_terms = rows(
-    primarycensored_terms(0, dist_id, primary_id, params, primary_params)
-  );
   // terms[t + 1] holds the terms at delay t
-  array[n + 1] vector[n_terms] terms;
+  array[n + 1] vector[2] terms;
   for (t in max(start - pw, 0):n) {
-    terms[t + 1] = primarycensored_terms(
-      t, dist_id, primary_id, params, primary_params
-    );
+    terms[t + 1] = primarycensored_uniform_terms(t, dist_id, params);
   }
   for (d in start:n) {
-    log_cdfs[d] = primarycensored_lcdf_from_terms(
-      terms[d + 1], terms[max(d - pw, 0) + 1], dist_id, primary_id, pwindow,
-      primary_params
+    log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
+      terms[d + 1], terms[max(d - pw, 0) + 1], pwindow
     );
   }
   return log_cdfs;
