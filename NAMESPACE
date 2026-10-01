@@ -74,10 +74,8 @@ export(rdiscretestep)
 export(rexpgrowth)
 export(rpcens)
 export(rprimarycensored)
-importFrom(stats,
-  dunif,
-  pgamma,
-  runif,
-  setNames,
-  update
-)
+importFrom(stats,dunif)
+importFrom(stats,pgamma)
+importFrom(stats,runif)
+importFrom(stats,setNames)
+importFrom(stats,update)

@@ -235,11 +235,11 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * @ingroup tilt_transforms
   *
   * This is check_for_tilt_transform() and, for the lognormal (1) with
-  * xi > 0, that the series is the faster accurate path at t. The series
-  * costs about xi t + 9 sqrt(xi t) + 30 terms. It is used up to xi t of 60,
-  * where it matches an ODE at tolerance 1e-10 in speed, and beyond that only
-  * where xi w is above 2, as the ODE is inaccurate in the lower tail there.
-  * The series is limited to 20000 terms.
+  * xi > 0, that the series is the path to use at t. The series costs about
+  * xi t + 9 sqrt(xi t) + 30 terms and is limited to 20000 terms. It is used
+  * up to xi t of 60, and beyond that only where xi w is above 2, as the ODE
+  * is inaccurate in the lower tail there. The cut-off of 60 is set for the
+  * ODE and differs from the one in R, which is set for the R numerical path.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param xi Tilt. The exponentially tilted window with tilt rho needs

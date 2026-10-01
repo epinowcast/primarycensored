@@ -240,6 +240,7 @@
 .lnorm_max_terms <- 20000L
 
 # Largest xi t for the series, a speed cut-off against the numerical method
+# set separately from the Stan cut-off, which is set for the ODE
 .lnorm_series_max_xt <- 200
 
 # The numerical method loses accuracy in the lower tail where xi w is above 2,
