@@ -57,6 +57,7 @@ Depends:
 Imports:
     lifecycle
 Suggests:
+    actuar,
     bookdown,
     cmdstanr,
     dplyr,
