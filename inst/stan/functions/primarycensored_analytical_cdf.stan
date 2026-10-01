@@ -393,14 +393,6 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     );
   }
   if (check_for_tlogis(dist_id, primary_id)) {
-    if (!check_for_tlogis_params(dist_id, params, primary_params, pwindow)) {
-      reject(
-        "The truncated logistic solution does not apply for location ",
-        primary_params[1], ", scale ", primary_params[2], " and window ",
-        pwindow, ". Use the numerical path, see ",
-        "check_for_analytical_params()."
-      );
-    }
     return primarycensored_tlogis_lcdf(
       d | dist_id, params, pwindow, primary_params[1], primary_params[2]
     );

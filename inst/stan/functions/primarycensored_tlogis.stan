@@ -186,6 +186,58 @@ int tlogis_n_neg(array[] int plan) {
 }
 
 /**
+  * Check the window, location and scale of a truncated logistic primary
+  * @ingroup truncated_logistic_solutions
+  *
+  * @param location Location of the logistic distribution
+  * @param scale Scale of the logistic distribution
+  * @param pwindow Primary event window
+  *
+  * @return 1 if the window and scale are positive and finite and the
+  * location is finite, 0 otherwise
+  */
+int tlogis_is_valid(real location, real scale, data real pwindow) {
+  if (!(pwindow > 0) || is_inf(pwindow)) return 0;
+  return scale > 0 && !is_inf(scale) && !is_nan(location)
+         && !is_inf(location);
+}
+
+/**
+  * Check if the delay has the tilts of a plan
+  * @ingroup truncated_logistic_solutions
+  *
+  * The series run to the tilts n / s for n up to the number of positive
+  * tilts, and -n / s for n up to the number of negative tilts.
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param scale Scale of the logistic distribution
+  * @param plan Plan from tlogis_plan()
+  *
+  * @return 1 if the plan has a truncation rule for each series and the
+  * delay has its tilts, 0 otherwise
+  */
+int tlogis_plan_applies(int dist_id, array[] real params, real scale,
+                        array[] int plan) {
+  if (plan[1] == 0) return 0;
+  if (tlogis_n_pos(plan) > 0) {
+    if (!check_for_tilt_transform(
+      dist_id, tlogis_n_pos(plan) / scale, params
+    )) {
+      return 0;
+    }
+  }
+  if (tlogis_n_neg(plan) > 0) {
+    if (!check_for_tilt_transform(
+      dist_id, -tlogis_n_neg(plan) / scale, params
+    )) {
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/**
   * Check if the truncated logistic solution applies for the parameters
   * @ingroup truncated_logistic_solutions
   *
@@ -209,30 +261,11 @@ int check_for_tlogis_params(int dist_id, array[] real params,
                             data real pwindow) {
   real location = primary_params[1];
   real scale = primary_params[2];
-  if (!(pwindow > 0) || is_inf(pwindow)) return 0;
-  if (!(scale > 0) || is_inf(scale) || is_nan(location) || is_inf(location)) {
-    return 0;
-  }
+  if (!tlogis_is_valid(location, scale, pwindow)) return 0;
   real log_mass = tlogis_log_mass(0, pwindow, location, scale);
-  array[6] int plan = tlogis_plan(location, scale, pwindow, log_mass);
-  if (plan[1] == 0) return 0;
-  // The series run to the tilts n / s for n up to the number of positive
-  // tilts, and -n / s for n up to the number of negative tilts
-  if (tlogis_n_pos(plan) > 0) {
-    if (!check_for_tilt_transform(
-      dist_id, tlogis_n_pos(plan) / scale, params
-    )) {
-      return 0;
-    }
-  }
-  if (tlogis_n_neg(plan) > 0) {
-    if (!check_for_tilt_transform(
-      dist_id, -tlogis_n_neg(plan) / scale, params
-    )) {
-      return 0;
-    }
-  }
-  return 1;
+  return tlogis_plan_applies(
+    dist_id, params, scale, tlogis_plan(location, scale, pwindow, log_mass)
+  );
 }
 
 /**
@@ -538,8 +571,8 @@ real primarycensored_tlogis_small_delay_lcdf(data real d, int dist_id,
   * @ingroup truncated_logistic_solutions
   *
   * Chooses the direct form or the small delay form, see
-  * tlogis_is_small_delay(). Only for check_for_tlogis() is 1 and
-  * check_for_tlogis_params() is 1.
+  * tlogis_is_small_delay(). Only for check_for_tlogis() is 1, and rejects
+  * where check_for_tlogis_params() is 0.
   *
   * The gamma shape gradient comes from the tilt transforms, see
   * log_tilt_transform_pair(), not from Stan's `gamma_lccdf()` and
@@ -561,13 +594,26 @@ real primarycensored_tlogis_lcdf(data real d, int dist_id,
   if (dist_has_positive_support(dist_id) && d <= 0) {
     return negative_infinity();
   }
+  if (!tlogis_is_valid(location, scale, pwindow)) {
+    reject(
+      "The truncated logistic solution does not apply for location ",
+      location, ", scale ", scale, " and window ", pwindow, "."
+    );
+  }
   real log_mass = tlogis_log_mass(0, pwindow, location, scale);
+  array[6] int plan = tlogis_plan(location, scale, pwindow, log_mass);
+  if (!tlogis_plan_applies(dist_id, params, scale, plan)) {
+    reject(
+      "The truncated logistic solution does not apply for location ",
+      location, ", scale ", scale, " and window ", pwindow,
+      ". Use the numerical path, see check_for_analytical_params()."
+    );
+  }
   if (tlogis_is_small_delay(dist_id, d, pwindow, scale)) {
     return primarycensored_tlogis_small_delay_lcdf(
       d | dist_id, params, location, scale, log_mass
     );
   }
-  array[6] int plan = tlogis_plan(location, scale, pwindow, log_mass);
   int n_pos = tlogis_n_pos(plan);
   int n_neg = tlogis_n_neg(plan);
   int has_pos = plan[2] > 0;
@@ -634,13 +680,11 @@ int check_for_tlogis_vectorized(int dist_id, int primary_id,
   * The log CDF at d combines the terms at d, at a = d - pwindow and, for a
   * location inside the window, at the split point u = d - location. The
   * first two are integer delays, so the terms are computed once per delay and
-  * shared, halving the transform evaluations. The split points are integer
-  * delays only for an integer location, where they are shared too. For a
-  * location inside the window that is not an integer each split point is
-  * different, so the delays use primarycensored_tlogis_lcdf() one at a time.
-  * The values are the same as from primarycensored_tlogis_lcdf() at each
-  * delay. Only for cases where check_for_tlogis_vectorized() is 1 and
-  * check_for_tlogis_params() is 1.
+  * shared. The split points are integer delays only for an integer location,
+  * where they are shared too. For any other location inside the window each
+  * split point is computed for its delay. The values are the same as from
+  * primarycensored_tlogis_lcdf() at each delay. Only for cases where
+  * check_for_tlogis_vectorized() is 1 and check_for_tlogis_params() is 1.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
@@ -668,8 +712,8 @@ vector primarycensored_tlogis_lcdf_vectorized(data int start, data int n,
   int n_neg = tlogis_n_neg(plan);
   int has_pos = plan[2] > 0;
   int has_neg = n_neg > 0;
-  // The integer split point, for a location that is an integer or outside
-  // the window
+  // The integer split point, -1 for a location inside the window that is
+  // not an integer
   int sp = -1;
   if (location <= 0) {
     sp = 0;
@@ -679,14 +723,6 @@ vector primarycensored_tlogis_lcdf_vectorized(data int start, data int n,
     for (i in 1:(pw - 1)) {
       if (location == i) sp = i;
     }
-  }
-  if (sp < 0) {
-    for (d in start:n) {
-      log_cdfs[d] = primarycensored_tlogis_lcdf(
-        d | dist_id, params, pwindow, location, scale
-      );
-    }
-    return log_cdfs;
   }
   vector[plan[3] + plan[4]] w_pos = tlogis_weights(plan[3], plan[4]);
   vector[plan[5] + plan[6]] w_neg = tlogis_weights(plan[5], plan[6]);
@@ -707,10 +743,18 @@ vector primarycensored_tlogis_lcdf_vectorized(data int start, data int n,
       );
     } else {
       int a_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-      int u_index = (positive ? max(d - sp, 0) : d - sp) - first + 1;
+      matrix[2, 1 + n_pos + n_neg] terms_u;
+      if (sp >= 0) {
+        terms_u = terms[(positive ? max(d - sp, 0) : d - sp) - first + 1];
+      } else {
+        terms_u = primarycensored_tlogis_terms(
+          d - location, dist_id, params, scale, n_pos, n_neg, has_pos,
+          has_neg
+        );
+      }
       log_cdfs[d] = primarycensored_tlogis_lcdf_from_terms(
-        terms[a_index], terms[u_index], terms[d - first + 1], d, location,
-        scale, log_mass, plan, w_pos, w_neg
+        terms[a_index], terms_u, terms[d - first + 1], d, location, scale,
+        log_mass, plan, w_pos, w_neg
       );
     }
   }

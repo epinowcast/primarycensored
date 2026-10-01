@@ -267,7 +267,8 @@ test_that("primarycensored_tlogis_lcdf matches Stan random draws", {
       )
     }
   }
-  # All windows of the large rates and the window after the window of the rest
+  # Every location for the large rates, and the location after the window
+  # for the other delays
   expect_identical(n_analytic, 11L)
 })
 
@@ -374,6 +375,19 @@ test_that("the analytical function rejects an inadmissible series", {
   expect_error(
     primarycensored_analytical_lcdf(
       2, 2L, c(2.5, 0.4), 2, 0, Inf, 3L, c(0.5, 0.2)
+    ),
+    "truncated logistic"
+  )
+  # Also for a delay that would use the small delay form, and a bad scale
+  expect_error(
+    primarycensored_analytical_lcdf(
+      1e-6, 2L, c(2.5, 0.4), 2, 0, Inf, 3L, c(0.5, 0.2)
+    ),
+    "truncated logistic"
+  )
+  expect_error(
+    primarycensored_analytical_lcdf(
+      2, 18L, c(3, 2), 2, 0, Inf, 3L, c(0.5, 0)
     ),
     "truncated logistic"
   )
