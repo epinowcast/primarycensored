@@ -748,11 +748,7 @@ pcens_cdf.pcens_pexp_dunif <- function(
     )
   }
 
-  # pexp defaults to a rate of 1
-  rate <- delay_args$rate
-  if (is.null(rate)) {
-    rate <- 1
-  }
+  rate <- if (is.null(delay_args$rate)) 1 else delay_args$rate
 
   # G(t) = 0 for t <= 0 as F_T(t) = 0 there, so clamp t at 0
   G <- function(t) {
@@ -801,15 +797,8 @@ pcens_cdf.pcens_pnorm_dunif <- function(
     )
   }
 
-  # pnorm defaults to a standard normal
-  mu <- delay_args$mean
-  sigma <- delay_args$sd
-  if (is.null(mu)) {
-    mu <- 0
-  }
-  if (is.null(sigma)) {
-    sigma <- 1
-  }
+  mu <- if (is.null(delay_args$mean)) 0 else delay_args$mean
+  sigma <- if (is.null(delay_args$sd)) 1 else delay_args$sd
 
   G <- function(t) {
     sigma * .norm_shortfall((t - mu) / sigma)
@@ -849,7 +838,6 @@ pcens_cdf.pcens_pchisq_dunif <- function(
   use_numeric = FALSE
 ) {
   delay_args <- .delay_args(object, c("df", "ncp"))
-  degrees <- delay_args$df
   if (
     isTRUE(use_numeric) || is.null(delay_args) ||
       .is_noncentral(delay_args$ncp)
@@ -858,6 +846,7 @@ pcens_cdf.pcens_pchisq_dunif <- function(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
+  degrees <- delay_args$df
   if (is.null(degrees)) {
     stop("df parameter is required for Chi-square distribution", call. = FALSE)
   }
@@ -900,8 +889,6 @@ pcens_cdf.pcens_pbeta_dunif <- function(
   use_numeric = FALSE
 ) {
   delay_args <- .delay_args(object, c("shape1", "shape2", "ncp"))
-  a <- delay_args$shape1
-  b <- delay_args$shape2
   if (
     isTRUE(use_numeric) || is.null(delay_args) ||
       .is_noncentral(delay_args$ncp)
@@ -910,6 +897,8 @@ pcens_cdf.pcens_pbeta_dunif <- function(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
   }
+  a <- delay_args$shape1
+  b <- delay_args$shape2
   if (is.null(a)) {
     stop("shape1 parameter is required for Beta distribution", call. = FALSE)
   }
