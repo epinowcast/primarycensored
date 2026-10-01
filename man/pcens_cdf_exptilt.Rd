@@ -76,7 +76,7 @@ For \eqn{\rho > 0} its terms alternate in sign and cancel.
 The numerical method is used at a \code{q} where the terms of the series cancel
 by more than 1e5, where \eqn{\rho q \ge 400}, and in the upper tail,
 where the series has no tail form and the terms of the difference between
-the endpoints exceed the smaller of the CDF and the survival function by
+the endpoints exceed the smaller of the CDF and its survival function by
 more than 1e5.
 
 The direct form cancels as \eqn{\rho \to 0}.

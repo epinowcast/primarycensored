@@ -514,7 +514,9 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * primarycensored_analytical_lcdf() at each delay without truncation.
   * For an exponentially tilted primary the terms are those of
   * primarycensored_exptilt_lcdf(), with the form chosen at each delay as
-  * there.
+  * there. Where that uses the ODE, its values are shifted by their difference
+  * from the analytical value at the delay before, so that the PMF across the
+  * switch is a difference of ODE values.
   * Only for cases where check_for_analytical_vectorized() and
   * check_for_analytical_params() are 1.
   *
@@ -563,20 +565,32 @@ vector primarycensored_analytical_lcdf_vectorized(
           log_tilt_transform_pair(t, dist_id, -rho, params)
         );
       }
+      // Offset of the ODE CDF from the analytical CDF at the delay before
+      real shift = 0;
+      int is_ode = 1;
       for (d in start:n) {
         if (positive && d < pwindow && abs(rho) * d < 1e-2) {
           log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
             primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
           );
+          is_ode = 0;
         } else {
           int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
           log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
             terms[d - first + 1], terms[q_index], d, rho, pwindow
           );
           if (is_nan(log_cdfs[d])) {
-            log_cdfs[d] = log(primarycensored_numeric_cdf(
+            if (!is_ode) {
+              shift = exp(log_cdfs[d - 1]) - primarycensored_numeric_cdf(
+                d - 1 | dist_id, params, pwindow, primary_id, primary_params
+              );
+            }
+            log_cdfs[d] = log(shift + primarycensored_numeric_cdf(
               d | dist_id, params, pwindow, primary_id, primary_params
             ));
+            is_ode = 1;
+          } else {
+            is_ode = 0;
           }
         }
       }
@@ -1174,8 +1188,7 @@ real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
   * primarycensored_tail_diff().
   *
   * The result is `nan` if J at d or q is. Where J has no upper tail, it is
-  * also `nan` if the terms of the numerator exceed the smaller of the CDF and
-  * the survival function at d by more than 1e5, which is in the upper tail.
+  * also `nan` if the terms of the numerator over the denominator exceed 1e5.
   *
   * @param terms_d Terms at d, the lower and upper terms of
   *   log_tilt_transform_pair() for xi = 0 and xi = -rho, then the log loss
@@ -1215,7 +1228,7 @@ real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
   int no_tail = is_nan(terms_d[4]) || is_nan(terms_q[4]);
   real log_size = rho * d + terms_d[3] + fmax(terms_d[5], terms_q[5]);
   if (no_tail && result > negative_infinity()
-      && log_size - log_den - fmin(result, terms_d[2]) > log(1e5)) {
+      && log_size - log_den > log(1e5)) {
     return not_a_number();
   }
   return result;

@@ -38,7 +38,7 @@
 #' The numerical method is used at a `q` where the terms of the series cancel
 #' by more than 1e5, where \eqn{\rho q \ge 400}, and in the upper tail,
 #' where the series has no tail form and the terms of the difference between
-#' the endpoints exceed the smaller of the CDF and the survival function by
+#' the endpoints exceed the smaller of the CDF and its survival function by
 #' more than 1e5.
 #'
 #' The direct form cancels as \eqn{\rho \to 0}.
@@ -326,7 +326,7 @@ pcens_cdf.pcens_pgengamma_dexpgrowth <- function(
 #' The expression of [pcens_cdf_exptilt] on the log scale.
 #' The result is `NaN` where the transform at either endpoint is, and where
 #' the transform has no upper tail and the terms of the numerator exceed the
-#' smaller of the CDF and the survival function by more than
+#' smaller of the CDF and its survival function by more than
 #' `.exptilt_max_loss`.
 #'
 #' @param object A `pcens` object.
@@ -368,9 +368,11 @@ pcens_cdf.pcens_pgengamma_dexpgrowth <- function(
   }
   log_size <- rho * q + at_q[, 3] + pmax(j_loss[pos$q], j_loss[pos$y])
   no_tail <- is.na(at_q[, 4]) | is.na(at_y[, 4])
+  # The delay survival function is a lower bound on that of the CDF
+  log_survival <- pmax(at_q[, 2], .log1m_exp(pmin(out, 0)))
   unreliable <- is.na(at_q[, 3]) | is.na(at_y[, 3]) |
     (no_tail & is.finite(out) &
-      log_size - log_den - pmin(out, at_q[, 2]) > log(.exptilt_max_loss))
+      log_size - log_den - pmin(out, log_survival) > log(.exptilt_max_loss))
   out[which(unreliable)] <- NaN
   out
 }
