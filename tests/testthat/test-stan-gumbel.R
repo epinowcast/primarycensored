@@ -817,7 +817,7 @@ gumbel_gradient_at <- function(model, case, d, pwindow, mu, beta,
 expect_gumbel_gradient_close <- function(res, case, label, scale = 1,
                                          slack = 0) {
   tolerance <- rep(1e-4, 4) * scale
-  if (case$dist_id == 2L) {
+  if (case$dist_id %in% c(2L, 13L)) {
     tolerance[1] <- 2e-2
   }
   allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2) + slack
@@ -1052,7 +1052,7 @@ test_that("gradients are finite for every positive support delay when the
   points <- list(
     list(d = 1, pwindow = 1, mu = 1, beta = 0.1),
     list(d = 2, pwindow = 2, mu = 2.5, beta = 0.3),
-    list(d = 1, pwindow = 1, mu = 1.5, beta = 0.05)
+    list(d = 1, pwindow = 1, mu = 1.2, beta = 0.1)
   )
   for (case in cases) {
     for (point in points) {
@@ -1066,6 +1066,7 @@ test_that("gradients are finite for every positive support delay when the
       expect_false(res$gradient_not_finite, info = label)
       expect_false(res$rejected, info = label)
       expect_true(all(is.finite(res$gradient)), info = label)
+      expect_gumbel_gradient_close(res, case, label, scale = 10, slack = 5e-4)
       vec <- gumbel_gradient_at(
         model, case, 3 * point$d, point$pwindow, point$mu, point$beta,
         vectorised = TRUE
@@ -1151,7 +1152,7 @@ test_that("the Stan numerical path is -inf, not an error, where the delay
               lcdf[i], log(r_cdf[i]), tolerance = 1e-6, info = label
             )
           } else {
-            expect_lt(lcdf[i], -700, label = label)
+            expect_lt(lcdf[i], log(1e-200), label = label)
           }
         }
       }

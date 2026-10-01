@@ -367,6 +367,33 @@ real gumbel_delay_lcdf(real x, array[] real params, int dist_id) {
     return gamma_lcdf(x | params[1], params[2]);
   } else if (dist_id == 18) {
     return primarycensored_log_std_normal_cdf((x - params[1]) / params[2]);
+  } else if (dist_id == 3) {
+    if (params[1] * (log(x) - log(params[2])) < -700) {
+      return negative_infinity();
+    }
+  } else if (dist_id == 13) {
+    if (gamma_lcdf_underflows(x / 2, params[1] / 2)) {
+      return negative_infinity();
+    }
+    return gamma_lcdf(x | params[1] / 2, 0.5);
+  } else if (dist_id == 16 || dist_id == 19 || dist_id == 22) {
+    // Inverse gamma, with the shape and scale of each family
+    real shape = dist_id == 16 ? params[1] : params[1] / 2;
+    real scale = dist_id == 16 ? params[2]
+                 : (dist_id == 19 ? 0.5 : params[1] * square(params[2]) / 2);
+    if (gamma_lccdf_underflows(scale / x, shape)) {
+      return negative_infinity();
+    }
+    return inv_gamma_lcdf(x | shape, scale);
+  } else if (dist_id == 9) {
+    if (x >= 1) {
+      return 0;
+    }
+    if (x < params[1] / (params[1] + params[2])
+        && params[1] * log(x) - log(params[1]) - lbeta(params[1], params[2])
+           < -700) {
+      return negative_infinity();
+    }
   }
   return dist_lcdf(x | params, dist_id);
 }
@@ -591,6 +618,10 @@ real gumbel_numeric_spike_lcdf(data real d, int dist_id, array[] real params,
       );
     }
     a += len;
+    // The CDF is below exp(-1000) beyond u of 1000
+    if (log_total == negative_infinity() && a > 1000) {
+      return negative_infinity();
+    }
     real slope = 2 * (log_f_end - log_f_mid) / len;
     if (last || a >= top
         || (slope < 0.99
