@@ -217,6 +217,20 @@ test_that("the analytic CDF is accurate for gamma delays with large shapes", {
   }
 })
 
+test_that("the analytic CDF is accurate in the lower tail of a normal delay
+  for small tilts", {
+  grid <- exptilt_normal_tail_grid()
+  expected <- exptilt_normal_tail_reference(grid)
+  actual <- vapply(seq_len(nrow(grid)), function(i) {
+    obj <- new_pcens(
+      pdist = pnorm, dprimary = dexpgrowth,
+      primary_args = list(r = grid$rho[i]), mean = -4, sd = 0.3
+    )
+    log(pcens_cdf(obj, grid$d[i], grid$pwindow[i]))
+  }, numeric(1))
+  expect_lt(max(abs(expm1(actual - expected))), 1e-7)
+})
+
 test_that("the tilt moments are the moments of the delay about t", {
   t <- c(0.05, 0.7, 2, 6, 15)
   for (family in families) {
