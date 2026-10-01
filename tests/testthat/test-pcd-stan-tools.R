@@ -234,3 +234,34 @@ test_that("pcd_stan_files returns correct files", {
   expect_type(non_existent, "character")
   expect_length(non_existent, 0)
 })
+
+test_that("pcd_stan_function_deps includes functions passed as arguments", {
+  # The ODE functions are only passed to the solver by name
+  expect_true(
+    "primarycensored_ode" %in% pcd_stan_function_deps("primarycensored_cdf")
+  )
+  expect_true(
+    "loglogistic_numeric_ode" %in%
+      pcd_stan_function_deps("loglogistic_numeric_lcdf")
+  )
+})
+
+test_that("functions loaded with their dependencies pass the Stan syntax
+  check", {
+  skip_if_not_installed("cmdstanr")
+  skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
+  for (fn in c("primarycensored_lpmf", "loglogistic_numeric_lcdf")) {
+    code <- pcd_load_stan_functions(
+      functions = fn, wrap_in_block = TRUE, dependencies = TRUE
+    )
+    path <- tempfile(fileext = ".stan")
+    writeLines(
+      c(code, "parameters { real x; } model { x ~ std_normal(); }"), path
+    )
+    model <- cmdstanr::cmdstan_model(path, compile = FALSE)
+    expect_true(
+      suppressMessages(model$check_syntax(quiet = TRUE)),
+      info = fn
+    )
+  }
+})
