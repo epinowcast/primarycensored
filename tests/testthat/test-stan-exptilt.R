@@ -420,6 +420,23 @@ test_that("inadmissible tilts use the ODE path", {
   }
 })
 
+test_that("the numerical path returns 0 for non-positive delays without a
+          lower truncation", {
+  cases <- list(
+    list(dist_id = 3L, params = c(1.5, 2), rho = 0.2),
+    list(dist_id = 4L, params = 1, rho = -2)
+  )
+  for (case in cases) {
+    for (d in c(0, -1)) {
+      expect_identical(
+        primarycensored_cdf(
+          d, case$dist_id, case$params, 1, -Inf, Inf, 2L, case$rho
+        ), 0
+      )
+    }
+  }
+})
+
 test_that("the analytical function rejects an inadmissible tilt", {
   expect_error(
     primarycensored_analytical_lcdf(
