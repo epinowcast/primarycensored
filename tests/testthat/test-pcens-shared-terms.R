@@ -30,28 +30,28 @@ per_point_cdf <- function(obj, q, pwindow) {
   vapply(q, function(x) pcens_cdf(obj, x, pwindow), numeric(1))
 }
 
-test_that(".pcens_terms_spec gives terms for registered pairs only", {
-  for (delay in c(shared_delays, flexsurv_delays())) {
-    spec <- .pcens_terms_spec(shared_obj(delay))
-    expect_type(spec$terms, "closure")
-    expect_type(spec$combine, "closure")
+test_that("uniform terms are zero for non-positive t and scalar flagged", {
+  specs <- list(
+    .uniform_terms_gamma(list(shape = 3, scale = 2)),
+    .uniform_terms_gamma(list(shape = 3, rate = 0.5)),
+    .uniform_terms_lnorm(list(meanlog = 1.5, sdlog = 0.5)),
+    .uniform_terms_weibull(list(shape = 1.5, scale = 5)),
+    .uniform_terms_gengamma(1.5, 3, 2),
+    .uniform_terms_prentice(list(mu = 1, sigma = 0.6, Q = 0.8))
+  )
+  for (spec in specs) {
+    expect_true(spec$scalar)
     expect_length(spec$terms(c(0, 1, 2.5)), 2)
     expect_identical(spec$terms(c(0, -1)), list(c(0, 0), c(0, 0)))
   }
-  expect_null(.pcens_terms_spec(new_pcens(
-    pgamma, dexpgrowth,
-    primary_args = list(r = 0.2), shape = 2, scale = 1
-  )))
-  expect_null(.pcens_terms_spec(new_pcens(pexp, dunif, rate = 1)))
-  skip_if_not_installed("flexsurv")
-  expect_null(.pcens_terms_spec(new_pcens(
-    flexsurv::pgengamma, dunif, mu = 1, sigma = 0.6, Q = -0.5
-  )))
+  expect_false(.uniform_terms_gamma(list(shape = 1:2, scale = 1))$scalar)
+  expect_null(.uniform_terms_prentice(list(mu = 1, sigma = 0.6, Q = -0.5)))
 })
 
 test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
   counter <- new.env()
   spec <- list(
+    scalar = TRUE,
     terms = function(t) {
       counter$n <- counter$n + length(t)
       list(t, t^2)
@@ -173,4 +173,33 @@ test_that("non-positive q give a zero CDF where the terms are undefined", {
   expect_identical(
     pcens_cdf(obj, c(-2, -1e-12, 0, 0), 1), rep(0, 4)
   )
+})
+
+test_that("vector delay parameters are evaluated per point", {
+  q <- 0:10
+  shape <- seq(1, 3, length.out = 11)
+  obj <- new_pcens(pgamma, dunif, shape = shape, scale = 1)
+  expected <- vapply(q, function(i) {
+    pcens_cdf(
+      new_pcens(pgamma, dunif, shape = shape[i + 1], scale = 1), i, 1
+    )
+  }, numeric(1))
+  expect_no_warning(pcens_cdf(obj, q, 1))
+  expect_equal(pcens_cdf(obj, q, 1), expected, tolerance = 1e-14)
+})
+
+test_that("a few zero delays in a continuous grid do not share terms", {
+  counter <- new.env()
+  spec <- list(
+    scalar = TRUE,
+    terms = function(t) {
+      counter$n <- counter$n + length(t)
+      list(t, t^2)
+    },
+    combine = function(td, tq, pwindow) (td[[1]] - tq[[1]]) / pwindow
+  )
+  q <- sort(c(0, 0, 0, seq(1.37, 40, length.out = 200)))
+  counter$n <- 0L
+  .pcens_cdf_shared(spec, q, 1)
+  expect_identical(counter$n, 2L * length(q))
 })

@@ -1,33 +1,14 @@
-#' Primary event censored CDF from per-endpoint terms
-#'
-#' Evaluates the analytical CDF of a `pcens` object when its class has a
-#' terms specification, see [.pcens_terms_spec()], and otherwise falls back
-#' to [pcens_cdf.default()].
-#'
-#' @inheritParams pcens_cdf
-#'
-#' @return Vector of computed primary event censored CDFs.
-#'
-#' @keywords internal
-.pcens_cdf_analytic <- function(object, q, pwindow, use_numeric) {
-  spec <- if (!isTRUE(use_numeric)) .pcens_terms_spec(object)
-  if (is.null(spec)) {
-    return(pcens_cdf.default(object, q, pwindow, use_numeric))
-  }
-  .pcens_cdf_shared(spec, q, pwindow)
-}
-
 #' Evaluate a CDF from terms shared between endpoints
 #'
 #' The CDF at `q` combines terms at `q` and at `max(q - pwindow, 0)`. Terms
 #' at `q` are reused for lower endpoints that equal another point. This is
 #' done when it saves at least a quarter of the evaluations. Otherwise, and
 #' for a vector `pwindow`, the terms are evaluated directly at both
-#' endpoints.
+#' endpoints. Terms are only shared when the delay parameters are scalar.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @param spec A terms specification from [.pcens_terms_spec()].
+#' @param spec A terms specification from [.uniform_terms()].
 #'
 #' @return Vector of CDF values in \[0, 1\]. Missing values in `q` are an
 #'   error.
@@ -39,17 +20,15 @@
   }
   lower <- pmax.int(q - pwindow, 0)
   n <- length(q)
-  shared <- n > 1L && length(pwindow) == 1L
+  shared <- n > 1L && length(pwindow) == 1L && isTRUE(spec$scalar)
   if (shared) {
-    # A few cheap scans skip the full match when nothing coincides
-    shared <- FALSE
+    # Probing a few points skips the full match when nothing coincides
     probe <- if (n <= 6L) seq_len(n) else round(seq.int(1, n, length.out = 6))
+    hits <- 0L
     for (i in probe) {
-      if (!is.na(match(lower[i], q))) {
-        shared <- TRUE
-        break
-      }
+      hits <- hits + !is.na(match(lower[i], q))
     }
+    shared <- 2L * hits >= length(probe)
   }
   if (shared) {
     idx <- match(lower, q)
@@ -72,35 +51,6 @@
   res
 }
 
-#' Terms specification for an analytical primary event censored CDF
-#'
-#' This is the registry of analytical solutions built from terms that each
-#' depend on one endpoint. A solution is added by returning its
-#' specification for the class of the `pcens` object. Objects with no
-#' specification return `NULL` and use the numerical or class specific
-#' methods.
-#'
-#' @param object A `pcens` object as created by [new_pcens()].
-#'
-#' @return `NULL`, or a list with `terms`, a function of time returning a
-#'   list of the terms, and `combine`, a function of the terms at the upper
-#'   and lower endpoints and `pwindow` returning the CDF.
-#'
-#' @keywords internal
-.pcens_terms_spec <- function(object) {
-  dist_args <- object$args
-  switch(class(object)[1],
-    pcens_pgamma_dunif = .uniform_terms_gamma(dist_args),
-    pcens_plnorm_dunif = .uniform_terms_lnorm(dist_args),
-    pcens_pweibull_dunif = .uniform_terms_weibull(dist_args),
-    pcens_pgengamma.orig_dunif = .uniform_terms_gengamma(
-      dist_args$shape, dist_args$scale, dist_args$k
-    ),
-    pcens_pgengamma_dunif = .uniform_terms_prentice(dist_args),
-    NULL
-  )
-}
-
 #' Uniform primary terms specification
 #'
 #' The CDF is
@@ -112,12 +62,17 @@
 #'
 #' @param mean Mean of the delay distribution.
 #'
-#' @return A terms specification, see [.pcens_terms_spec()].
+#' @param params List of the delay distribution parameters.
+#'
+#' @return A list with `terms`, `combine`, a function of the terms at the
+#'   upper and lower endpoints and `pwindow` returning the CDF, and
+#'   `scalar`, whether all of `params` have length one.
 #'
 #' @keywords internal
-.uniform_terms <- function(terms, mean) {
+.uniform_terms <- function(terms, mean, params) {
   list(
     terms = terms,
+    scalar = all(lengths(params) == 1L),
     combine = function(terms_d, terms_q, pwindow) {
       (terms_d[[1]] - terms_q[[1]] - mean * (terms_d[[2]] - terms_q[[2]])) /
         pwindow
@@ -155,7 +110,8 @@
         pgamma(t, shape = shape + 1, scale = scale)
       )
     },
-    shape * scale
+    shape * scale,
+    list(shape, scale)
   )
 }
 
@@ -184,7 +140,8 @@
         stats::plnorm(t, meanlog = mu + sigma^2, sdlog = sigma)
       )
     },
-    exp(mu + 0.5 * sigma^2)
+    exp(mu + 0.5 * sigma^2),
+    list(mu, sigma)
   )
 }
 
@@ -211,7 +168,8 @@
       t <- pmax.int(t, 0)
       list(t * stats::pweibull(t, shape = shape, scale = scale), g(t))
     },
-    scale
+    scale,
+    list(shape, scale)
   )
 }
 
@@ -245,7 +203,8 @@
       x <- (t / scale)^shape
       list(t * pgamma(x, shape = k), pgamma(x, shape = k_shift))
     },
-    scale * exp(lgamma(k_shift) - lgamma(k))
+    scale * exp(lgamma(k_shift) - lgamma(k)),
+    list(shape, scale, k)
   )
 }
 

@@ -7,7 +7,7 @@
 .pcens_cdf_shared(spec, q, pwindow)
 }
 \arguments{
-\item{spec}{A terms specification from \code{\link[=.pcens_terms_spec]{.pcens_terms_spec()}}.}
+\item{spec}{A terms specification from \code{\link[=.uniform_terms]{.uniform_terms()}}.}
 
 \item{q}{Vector of quantiles}
 
@@ -23,6 +23,6 @@ The CDF at \code{q} combines terms at \code{q} and at \code{max(q - pwindow, 0)}
 at \code{q} are reused for lower endpoints that equal another point. This is
 done when it saves at least a quarter of the evaluations. Otherwise, and
 for a vector \code{pwindow}, the terms are evaluated directly at both
-endpoints.
+endpoints. Terms are only shared when the delay parameters are scalar.
 }
 \keyword{internal}

@@ -25,7 +25,9 @@
 parameterisation of \code{flexsurv::pgengamma.orig()}.}
 }
 \value{
-A terms specification, see \code{\link[=.pcens_terms_spec]{.pcens_terms_spec()}}.
+A list with \code{terms}, \code{combine}, a function of the terms at the
+upper and lower endpoints and \code{pwindow} returning the CDF, and
+\code{scalar}, whether all of \code{params} have length one.
 }
 \description{
 Uniform primary terms for each delay distribution

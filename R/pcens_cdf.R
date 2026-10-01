@@ -297,7 +297,10 @@ pcens_cdf.pcens_pgamma_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_analytic(object, q, pwindow, use_numeric)
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  .pcens_cdf_shared(.uniform_terms_gamma(object$args), q, pwindow)
 }
 
 #' Method for Log-Normal delay with uniform primary
@@ -315,7 +318,10 @@ pcens_cdf.pcens_plnorm_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_analytic(object, q, pwindow, use_numeric)
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  .pcens_cdf_shared(.uniform_terms_lnorm(object$args), q, pwindow)
 }
 
 #' Method for Weibull delay with uniform primary
@@ -335,7 +341,10 @@ pcens_cdf.pcens_pweibull_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_analytic(object, q, pwindow, use_numeric)
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  .pcens_cdf_shared(.uniform_terms_weibull(object$args), q, pwindow)
 }
 
 #' Method for generalised gamma delay with uniform primary
@@ -375,7 +384,15 @@ pcens_cdf.pcens_pgengamma.orig_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_analytic(object, q, pwindow, use_numeric)
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  .pcens_cdf_shared(
+    .uniform_terms_gengamma(
+      object$args$shape, object$args$scale, object$args$k
+    ),
+    q, pwindow
+  )
 }
 
 #' Method for generalised gamma (Prentice parameterisation) delay with
@@ -403,5 +420,9 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_analytic(object, q, pwindow, use_numeric)
+  spec <- if (!isTRUE(use_numeric)) .uniform_terms_prentice(object$args)
+  if (is.null(spec)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  .pcens_cdf_shared(spec, q, pwindow)
 }

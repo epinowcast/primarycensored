@@ -4,15 +4,19 @@
 \alias{.uniform_terms}
 \title{Uniform primary terms specification}
 \usage{
-.uniform_terms(terms, mean)
+.uniform_terms(terms, mean, params)
 }
 \arguments{
 \item{terms}{Function of time returning a list of two vectors.}
 
 \item{mean}{Mean of the delay distribution.}
+
+\item{params}{List of the delay distribution parameters.}
 }
 \value{
-A terms specification, see \code{\link[=.pcens_terms_spec]{.pcens_terms_spec()}}.
+A list with \code{terms}, \code{combine}, a function of the terms at the
+upper and lower endpoints and \code{pwindow} returning the CDF, and
+\code{scalar}, whether all of \code{params} have length one.
 }
 \description{
 The CDF is
