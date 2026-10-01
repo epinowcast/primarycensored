@@ -243,11 +243,12 @@ vectorized_gradient_model <- function() {
     "  real L;\n",
     "  real D;\n",
     "  int dist_id;\n",
+    "  int K;\n",
     "  real pwindow;\n",
     "  vector[max_delay + 1] w;\n",
     "}\n",
     "parameters {\n",
-    "  array[2] real<lower=0> params;\n",
+    "  array[K] real<lower=0> params;\n",
     "}\n",
     "model {\n",
     "  target += dot_product(w, primarycensored_sone_pmf_vectorized(\n",
@@ -273,7 +274,8 @@ test_that("primarycensored_sone_pmf_vectorized gradients match finite
   cases <- list(
     list(dist_id = 1L, params = c(1.5, 0.5)),
     list(dist_id = 2L, params = c(2, 0.5)),
-    list(dist_id = 3L, params = c(1.5, 5))
+    list(dist_id = 3L, params = c(1.5, 5)),
+    list(dist_id = 5L, params = c(1.5, 3, 2))
   )
   max_delay <- 15
   for (case in cases) {
@@ -284,9 +286,10 @@ test_that("primarycensored_sone_pmf_vectorized gradients match finite
         )
         res <- vectorized_gradient_at(model, list(
           max_delay = max_delay, L = s$L, D = s$D, dist_id = case$dist_id,
-          pwindow = pwindow, w = seq(0.5, 1.5, length.out = max_delay + 1)
+          K = length(case$params), pwindow = pwindow,
+          w = seq(0.5, 1.5, length.out = max_delay + 1)
         ), case$params)
-        expect_length(res$gradient, 2)
+        expect_length(res$gradient, length(case$params))
         expect_true(all(is.finite(res$gradient)), info = info)
         expect_equal(
           res$gradient, res$finite_diff,

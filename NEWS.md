@@ -13,6 +13,9 @@
   The default, `check = TRUE`, is unchanged.
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
+- `pcens_cdf()`, and so `pprimarycensored()`, `dprimarycensored()` and `fitdistdoublecens()`, shares analytical terms between evaluation points for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary.
+  It also evaluates vector delay parameters per point, which were misaligned when some `q` were not positive.
+  See #366.
 
 # primarycensored 1.6.0
 
