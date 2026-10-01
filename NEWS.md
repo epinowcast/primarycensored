@@ -4,6 +4,8 @@
 
 - Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
   See #367.
+- Added exponentially tilted primary event solutions for Weibull and generalised gamma delays, in R and Stan.
+  See #368.
 
 ## Bug fixes
 
