@@ -74,14 +74,14 @@ NULL
 #'
 #' @noRd
 .gamma_shape_rate <- function(object) {
-  shape <- object$args$shape
-  scale <- object$args$scale
-  rate <- object$args$rate
+  args <- object$args
+  shape <- args$shape
+  rate <- args$rate
   if (is.null(shape)) {
     stop("shape parameter is required for Gamma distribution", call. = FALSE)
   }
   if (is.null(rate)) {
-    rate <- if (is.null(scale)) 1 else 1 / scale
+    rate <- if (is.null(args$scale)) 1 else 1 / args$scale
   }
   list(shape = shape, rate = rate)
 }
@@ -99,15 +99,19 @@ NULL
 #'
 #' @noRd
 .log1m_exp <- function(x) {
-  out <- log1p(-exp(x))
-  near_zero <- which(x > -log(2))
-  if (length(near_zero) > 0L) {
-    out[near_zero] <- log(-expm1(x[near_zero]))
+  near_zero <- x > -log(2)
+  if (!any(near_zero)) {
+    return(log1p(-exp(x)))
   }
+  out <- log1p(-exp(x))
+  out[near_zero] <- log(-expm1(x[near_zero]))
   out
 }
 
 .log_diff_exp <- function(a, b) {
+  if (length(a) == length(b) && !anyNA(a) && !anyNA(b) && all(a > b)) {
+    return(a + .log1m_exp(b - a))
+  }
   n <- max(length(a), length(b))
   a <- rep_len(a, n)
   b <- rep_len(b, n)

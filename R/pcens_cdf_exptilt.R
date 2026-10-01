@@ -243,6 +243,27 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   match(t, endpoints)
 }
 
+#' Endpoints and the positions of `q` and `q - pwindow` among them
+#'
+#' A single `q` skips the de-duplication.
+#'
+#' @inheritParams .exptilt_endpoints
+#'
+#' @return List with `endpoints` and the positions `q` and `y`.
+#'
+#' @noRd
+.exptilt_layout <- function(q, pwindow, lower) {
+  if (length(q) == 1L) {
+    return(list(endpoints = c(q, q - pwindow), q = 1L, y = 2L))
+  }
+  endpoints <- .exptilt_endpoints(q, pwindow, lower)
+  list(
+    endpoints = endpoints,
+    q = .exptilt_index(q, endpoints, lower),
+    y = .exptilt_index(q - pwindow, endpoints, lower)
+  )
+}
+
 #' Direct form of the exponentially tilted log CDF
 #'
 #' The expression of [pcens_cdf_exptilt] on the log scale.
@@ -255,21 +276,16 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @noRd
 .exptilt_lcdf_direct <- function(object, q, pwindow, rho, lower) {
-  endpoints <- .exptilt_endpoints(q, pwindow, lower)
+  pos <- .exptilt_layout(q, pwindow, lower)
+  endpoints <- pos$endpoints
   endpoint_terms <- cbind(
     .pcens_tilt_transform(object, endpoints, 0),
     .pcens_tilt_transform(object, endpoints, 0, upper = TRUE),
     .pcens_tilt_transform(object, endpoints, -rho),
     .pcens_tilt_transform(object, endpoints, -rho, upper = TRUE)
   )
-  at_q <- endpoint_terms[
-    .exptilt_index(q, endpoints, lower), ,
-    drop = FALSE
-  ]
-  at_y <- endpoint_terms[
-    .exptilt_index(q - pwindow, endpoints, lower), ,
-    drop = FALSE
-  ]
+  at_q <- endpoint_terms[pos$q, , drop = FALSE]
+  at_y <- endpoint_terms[pos$y, , drop = FALSE]
   log_diff_f <- .exptilt_tail_diff(
     at_q[, 1], at_y[, 1], at_q[, 2], at_y[, 2]
   )
@@ -316,12 +332,10 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @noRd
 .exptilt_lcdf_small_window <- function(object, q, pwindow, rho, lower) {
-  endpoints <- .exptilt_endpoints(q, pwindow, lower)
-  moments <- .pcens_tilt_moments(object, endpoints)
-  at_q <- moments[.exptilt_index(q, endpoints, lower), , drop = FALSE]
-  at_y <- moments[.exptilt_index(q - pwindow, endpoints, lower), ,
-    drop = FALSE
-  ]
+  pos <- .exptilt_layout(q, pwindow, lower)
+  moments <- .pcens_tilt_moments(object, pos$endpoints)
+  at_q <- moments[pos$q, , drop = FALSE]
+  at_y <- moments[pos$y, , drop = FALSE]
   # Scaled by G_1(q) to avoid underflow for small CDFs
   scale <- at_q[, 1]
   g1_y <- exp(at_y[, 1] - scale)
