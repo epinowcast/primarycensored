@@ -14,6 +14,7 @@
   See #364.
 - `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
   A single integral returned 0 or an error for delays that are small relative to the primary window.
+  The Stan numerical path starts at 0 for delays on the non-negative reals for the same reason.
   See #367.
 
 ## Performance
@@ -27,6 +28,7 @@
 ## Breaking changes
 
 - Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`.
+- The Stan function `primarycensored_analytical_lcdf_vectorized()` takes `primary_id` and `primary_params` as its last two arguments.
 
 # primarycensored 1.6.0
 

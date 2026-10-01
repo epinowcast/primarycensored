@@ -29,9 +29,6 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * its own: without a matching update here the new primary silently falls
   * back to numerical integration.
   *
-  * The exponentially tilted solutions may not apply for given parameters,
-  * see check_for_analytical_params().
-  *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
   *
@@ -40,8 +37,6 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
 int check_for_analytical(int dist_id, int primary_id) {
   // Gamma, Lognormal, Weibull and generalised gamma with a Uniform primary
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
-  // Exponential, Gamma and Normal with an exponentially tilted primary
-  if (check_for_exptilt(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
     return primary_id == 1 || primary_id == 2;
@@ -54,8 +49,9 @@ int check_for_analytical(int dist_id, int primary_id) {
   * @ingroup analytical_solution_helpers
   *
   * This is check_for_analytical() and, for the exponentially tilted
-  * solutions, that the tilted delay exists, see check_for_tilt_transform().
-  * It chooses the path in primarycensored_cdf() and primarycensored_lcdf().
+  * solutions, which check_for_analytical() does not include, that the tilted
+  * delay exists, see check_for_tilt_transform(). It chooses the path in
+  * primarycensored_cdf() and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
@@ -68,11 +64,10 @@ int check_for_analytical(int dist_id, int primary_id) {
 int check_for_analytical_params(int dist_id, array[] real params,
                                 int primary_id,
                                 array[] real primary_params) {
-  if (!check_for_analytical(dist_id, primary_id)) return 0;
   if (check_for_exptilt(dist_id, primary_id)) {
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
   }
-  return 1;
+  return check_for_analytical(dist_id, primary_id);
 }
 
 /**
@@ -487,13 +482,13 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   * Check if the analytical solution can be vectorised over integer delays
   * @ingroup analytical_solution_helpers
   *
-  * The analytical uniform primary CDF at d combines terms at d and at
-  * q = max(d - pwindow, 0). With an integer pwindow q is an integer delay
-  * too, so primarycensored_analytical_lcdf_vectorized() can compute the
-  * terms once per delay and share them. This needs the analytical solutions
-  * built from primarycensored_uniform_terms(), see
-  * check_for_uniform_terms(). The non-parametric delays in
-  * check_for_analytical() have no such terms.
+  * The analytical CDF at d combines terms at d and at q = max(d - pwindow, 0).
+  * With an integer pwindow q is an integer delay too, so
+  * primarycensored_analytical_lcdf_vectorized() can compute the terms once
+  * per delay and share them. This needs the analytical solutions built from
+  * primarycensored_uniform_terms(), see check_for_uniform_terms(), or the
+  * exponentially tilted solutions, see check_for_exptilt(). The
+  * non-parametric delays in check_for_analytical() have no such terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -503,7 +498,8 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   */
 int check_for_analytical_vectorized(int dist_id, int primary_id,
                                     data real pwindow) {
-  return check_for_uniform_terms(dist_id, primary_id) &&
+  return (check_for_uniform_terms(dist_id, primary_id)
+          || check_for_exptilt(dist_id, primary_id)) &&
     pwindow >= 1 && floor(pwindow) == pwindow;
 }
 
@@ -516,24 +512,72 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * so the terms are computed once per delay and used for both, halving the
   * CDF evaluations. The values are the same as from
   * primarycensored_analytical_lcdf() at each delay without truncation.
-  * Only for cases where check_for_analytical_vectorized() is 1.
+  * For an exponentially tilted primary the terms are those of
+  * primarycensored_exptilt_lcdf(), with the form chosen at each delay as
+  * there.
+  * Only for cases where check_for_analytical_vectorized() and
+  * check_for_analytical_params() are 1.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window, a positive integer
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
   *
   * @return Vector whose element d is the log CDF at d, for d in start:n.
   * Elements before start are not computed.
   */
-vector primarycensored_analytical_lcdf_vectorized(data int start,
-                                                  data int n,
-                                                  data int dist_id,
-                                                  array[] real params,
-                                                  data real pwindow) {
+vector primarycensored_analytical_lcdf_vectorized(
+  data int start, data int n, data int dist_id, array[] real params,
+  data real pwindow, data int primary_id, array[] real primary_params
+) {
   int pw = to_int(pwindow);
   vector[n] log_cdfs;
+  if (check_for_exptilt(dist_id, primary_id)) {
+    real rho = primary_params[1];
+    int positive = dist_has_positive_support(dist_id);
+    // Endpoints below 0 share the entry for 0 for non-negative delays
+    int first = positive ? max(start - pw, 0) : start - pw;
+    if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-5)) {
+      // moments[t - first + 1] holds the moments at endpoint t
+      array[n - first + 1] vector[3] moments;
+      for (t in first:n) {
+        moments[t - first + 1] = primarycensored_tilt_moments(
+          t, dist_id, params
+        );
+      }
+      for (d in start:n) {
+        int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
+        log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
+          moments[d - first + 1], moments[q_index], rho, pwindow
+        );
+      }
+    } else {
+      // terms[t - first + 1] holds the terms at endpoint t
+      array[n - first + 1] vector[4] terms;
+      for (t in first:n) {
+        terms[t - first + 1] = append_row(
+          log_tilt_transform_pair(t, dist_id, 0, params),
+          log_tilt_transform_pair(t, dist_id, -rho, params)
+        );
+      }
+      for (d in start:n) {
+        if (positive && d < pwindow && abs(rho) * d < 1e-2) {
+          log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
+            primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
+          );
+        } else {
+          int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
+          log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
+            terms[d - first + 1], terms[q_index], d, rho, pwindow
+          );
+        }
+      }
+    }
+    return log_cdfs;
+  }
   // terms[t + 1] holds the terms at delay t
   array[n + 1] vector[2] terms;
   for (t in max(start - pw, 0):n) {

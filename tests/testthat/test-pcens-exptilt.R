@@ -217,6 +217,36 @@ test_that("the analytic CDF is accurate for gamma delays with large shapes", {
   }
 })
 
+test_that("the tilt moments are the moments of the delay about t", {
+  t <- c(0.05, 0.7, 2, 6, 15)
+  for (family in families) {
+    obj <- exptilt_object(family, 0.1)
+    moments <- .pcens_tilt_moments(obj, t)
+    expect_identical(colnames(moments), c("G1", "G2", "G3"))
+    ddist <- if (identical(family$pdist, pexp)) {
+      dexp
+    } else if (identical(family$pdist, pgamma)) {
+      dgamma
+    } else {
+      dnorm
+    }
+    density <- function(x) do.call(ddist, c(list(x), family$args))
+    lower <- if (family$positive) 0 else -Inf
+    expected <- vapply(1:3, function(k) {
+      vapply(t, function(tt) {
+        stats::integrate(
+          function(u) (tt - u)^k * density(u), lower, tt,
+          rel.tol = 1e-12, abs.tol = 0
+        )$value
+      }, numeric(1))
+    }, numeric(length(t)))
+    expect_equal(
+      exp(moments), expected, tolerance = 1e-8, ignore_attr = TRUE,
+      info = family$label
+    )
+  }
+})
+
 test_that("the analytic CDF is accurate for q near zero", {
   for (family in families[c(2, 3, 4, 5)]) {
     cdf <- exptilt_cdf(family)

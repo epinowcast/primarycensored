@@ -7,7 +7,12 @@
  *   F_rho(d) = F(q) + (exp(rho d) (J(d) - J(q)) - (F(d) - F(q))) /
  *              (exp(rho w) - 1).
  * Every term depends on d or q alone, so the terms are computed once per
- * endpoint in primarycensored_exptilt_lcdf_vectorized().
+ * endpoint in primarycensored_analytical_lcdf_vectorized().
+ *
+ * The direct form cancels as rho goes to zero, see ?pcens_cdf_exptilt. For
+ * |rho| * pwindow below 1e-2 (1e-5 for delays on the reals) the small window
+ * form replaces it. For delays on the non-negative reals with d < pwindow and
+ * |rho| * d below 1e-2 the small delay form replaces it.
  */
 
 /**
@@ -25,67 +30,6 @@
   */
 int check_for_exptilt(int dist_id, int primary_id) {
   return primary_id == 2 && (dist_id == 2 || dist_id == 4 || dist_id == 18);
-}
-
-/**
-  * Check if the small window form replaces the direct form
-  * @ingroup exponential_tilt_solutions
-  *
-  * The direct form cancels as rho goes to zero, see ?pcens_cdf_exptilt. The
-  * limit on |rho| * pwindow is 1e-2 for delays on the non-negative reals and
-  * 1e-5 for delays on the reals.
-  *
-  * @param dist_id Distribution identifier
-  * @param rho Tilt
-  * @param pwindow Primary event window
-  *
-  * @return 1 if |rho| * pwindow is below the limit, 0 otherwise
-  */
-int exptilt_is_small_window(int dist_id, real rho, data real pwindow) {
-  return abs(rho) * pwindow
-         < (dist_has_positive_support(dist_id) ? 1e-2 : 1e-5);
-}
-
-/**
-  * Check if the small delay form replaces the direct form
-  * @ingroup exponential_tilt_solutions
-  *
-  * For delays on the non-negative reals with d < pwindow the terms at
-  * d - pwindow are zero and the direct form cancels as |rho| d goes to zero.
-  *
-  * @param dist_id Distribution identifier
-  * @param rho Tilt
-  * @param d Delay
-  * @param pwindow Primary event window
-  *
-  * @return 1 if the delay has non-negative support, d < pwindow and
-  * |rho| * d is below 1e-2, 0 otherwise
-  */
-int exptilt_is_small_delay(int dist_id, real rho, data real d,
-                           data real pwindow) {
-  return dist_has_positive_support(dist_id) && d < pwindow
-         && abs(rho) * d < 1e-2;
-}
-
-/**
-  * Compute the exponentially tilted terms at an endpoint
-  * @ingroup exponential_tilt_solutions
-  *
-  * @param t Endpoint, d or d - pwindow
-  * @param dist_id Distribution identifier, see check_for_exptilt()
-  * @param rho Tilt
-  * @param params Array of distribution parameters
-  *
-  * @return Vector [log F(t), log(1 - F(t)), log J(t), log(J(Inf) - J(t))].
-  * The lower tail terms are `-inf` for t <= 0 for delays on the non-negative
-  * reals. Only defined where check_for_tilt_transform() is 1 for -rho.
-  */
-vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
-                                     array[] real params) {
-  return append_row(
-    log_tilt_transform_pair(t, dist_id, 0, params),
-    log_tilt_transform_pair(t, dist_id, -rho, params)
-  );
 }
 
 /**
@@ -115,11 +59,12 @@ real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
   * Combine the exponentially tilted terms at d and q into the log CDF
   * @ingroup exponential_tilt_solutions
   *
-  * The direct form, for where exptilt_is_small_window() and
-  * exptilt_is_small_delay() are 0. The difference of each pair of terms is
-  * taken with primarycensored_tail_diff().
+  * The direct form, for where the small window and small delay forms do not
+  * apply. The difference of each pair of terms is taken with
+  * primarycensored_tail_diff().
   *
-  * @param terms_d Terms at d from primarycensored_exptilt_terms()
+  * @param terms_d Terms at d, the lower and upper terms of
+  *   log_tilt_transform_pair() for xi = 0 and xi = -rho
   * @param terms_q Terms at q = d - pwindow
   * @param d Delay
   * @param rho Tilt, not zero
@@ -158,7 +103,7 @@ real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
   * @ingroup exponential_tilt_solutions
   *
   * The uniform window limit with its corrections to second order in the tilt,
-  * for exptilt_is_small_window() is 1. With G_k(t) = int (t - u)^k f(u) du,
+  * for the small window form. With G_k(t) = int (t - u)^k f(u) du,
   *   F_rho(d) = (G_1(d) - G_1(q)) / w
   *     + rho (G_2(d) - w G_1(d) - G_2(q) - w G_1(q)) / (2 w)
   *     + rho^2 ((G_3(d) - G_3(q)) / 6 - w (G_2(d) + G_2(q)) / 4
@@ -195,7 +140,7 @@ real primarycensored_exptilt_small_window_lcdf_from_terms(
   * Compute the small delay log CDF from the moments at d
   * @ingroup exponential_tilt_solutions
   *
-  * For exptilt_is_small_delay() is 1 the terms at d - pwindow are zero and
+  * For the small delay form the terms at d - pwindow are zero and
   * F_rho(d) = rho (G_1(d) + rho G_2(d) / 2 + rho^2 G_3(d) / 6) /
   *   (exp(rho w) - 1).
   *
@@ -241,114 +186,32 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
 real primarycensored_exptilt_lcdf(data real d, int dist_id,
                                   array[] real params, data real pwindow,
                                   real rho) {
-  if (dist_has_positive_support(dist_id) && d <= 0) {
+  int positive = dist_has_positive_support(dist_id);
+  if (positive && d <= 0) {
     return negative_infinity();
   }
   if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
-  if (exptilt_is_small_window(dist_id, rho, pwindow)) {
+  if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-5)) {
     return primarycensored_exptilt_small_window_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params),
       primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
     );
   }
-  if (exptilt_is_small_delay(dist_id, rho, d, pwindow)) {
+  if (positive && d < pwindow && abs(rho) * d < 1e-2) {
     return primarycensored_exptilt_small_delay_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
     );
   }
   return primarycensored_exptilt_lcdf_from_terms(
-    primarycensored_exptilt_terms(d, dist_id, rho, params),
-    primarycensored_exptilt_terms(q, dist_id, rho, params), d, rho, pwindow
+    append_row(
+      log_tilt_transform_pair(d, dist_id, 0, params),
+      log_tilt_transform_pair(d, dist_id, -rho, params)
+    ),
+    append_row(
+      log_tilt_transform_pair(q, dist_id, 0, params),
+      log_tilt_transform_pair(q, dist_id, -rho, params)
+    ),
+    d, rho, pwindow
   );
-}
-
-/**
-  * Check if the exponentially tilted solution can be vectorised over integer
-  * delays
-  * @ingroup exponential_tilt_solutions
-  *
-  * With an integer pwindow, q = d - pwindow is an integer delay too, so the
-  * terms can be shared.
-  *
-  * @param dist_id Distribution identifier for the delay distribution
-  * @param primary_id Distribution identifier for the primary distribution
-  * @param pwindow Primary event window
-  *
-  * @return 1 if the vectorised exponentially tilted solution applies, 0
-  * otherwise
-  */
-int check_for_exptilt_vectorized(int dist_id, int primary_id,
-                                 data real pwindow) {
-  return check_for_exptilt(dist_id, primary_id)
-         && pwindow >= 1 && floor(pwindow) == pwindow;
-}
-
-/**
-  * Compute the exponentially tilted primary event censored log CDF at
-  * integer delays
-  * @ingroup exponential_tilt_solutions
-  *
-  * The terms at each integer delay are computed once and used for d and for
-  * d + pwindow. The values are those of primarycensored_exptilt_lcdf(). Only
-  * for check_for_exptilt_vectorized() is 1 and check_for_tilt_transform() is
-  * 1 for -rho.
-  *
-  * @param start First delay to compute
-  * @param n Last delay to compute, and the length of the result
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
-  * @param params Array of distribution parameters
-  * @param pwindow Primary event window, a positive integer
-  * @param rho Tilt, the exponential growth rate of the primary
-  *
-  * @return Vector whose element d is the log CDF at d, for d in start:n.
-  * Elements before start are not computed.
-  */
-vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
-                                               data int dist_id,
-                                               array[] real params,
-                                               data real pwindow,
-                                               real rho) {
-  int pw = to_int(pwindow);
-  int positive = dist_has_positive_support(dist_id);
-  // Endpoints below 0 share the entry for 0 for non-negative delays
-  int first = positive ? max(start - pw, 0) : start - pw;
-  vector[n] log_cdfs;
-  if (exptilt_is_small_window(dist_id, rho, pwindow)) {
-    // moments[t - first + 1] holds the moments at endpoint t
-    array[n - first + 1] vector[3] moments;
-    for (t in first:n) {
-      moments[t - first + 1] = primarycensored_tilt_moments(
-        t, dist_id, params
-      );
-    }
-    for (d in start:n) {
-      int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-      log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
-        moments[d - first + 1], moments[q_index], rho, pwindow
-      );
-    }
-  } else {
-    // terms[t - first + 1] holds the terms at endpoint t
-    array[n - first + 1] vector[4] terms;
-    for (t in first:n) {
-      terms[t - first + 1] = primarycensored_exptilt_terms(
-        t, dist_id, rho, params
-      );
-    }
-    for (d in start:n) {
-      if (exptilt_is_small_delay(dist_id, rho, d, pwindow)) {
-        log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
-          primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
-        );
-      } else {
-        int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-        log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
-          terms[d - first + 1], terms[q_index], d, rho, pwindow
-        );
-      }
-    }
-  }
-  return log_cdfs;
 }
