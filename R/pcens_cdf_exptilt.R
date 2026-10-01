@@ -9,8 +9,8 @@
 #' @inheritParams pcens_cdf
 #'
 #' @details
-#' With window width \eqn{w}, delay CDF \eqn{F} and the transform
-#' \eqn{J(x) = T_f(-\rho; x)} of [tilt_transform], the CDF at \eqn{q} is
+#' With window width \eqn{w}, delay CDF \eqn{F} and
+#' \eqn{J(x) = \int e^{-\rho u} f(u) du} up to \eqn{x}, the CDF at \eqn{q} is
 #' \deqn{
 #' F_\rho(q) = F(q - w) + \frac{e^{\rho q} \{J(q) - J(q - w)\} -
 #'   \{F(q) - F(q - w)\}}{e^{\rho w} - 1}.
@@ -29,7 +29,7 @@
 #' The direct form cancels as \eqn{\rho \to 0}.
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
 #' replace it to second order in \eqn{\rho}.
-#' * For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-5}} for delays on
+#' * For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-3}} for delays on
 #'   the reals, the uniform window limit with its corrections,
 #'   \eqn{\{G_1(q) - G_1(q - w)\} / w +
 #'   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
@@ -40,23 +40,14 @@
 #'   \eqn{\rho \{G_1(q) + \rho G_2(q) / 2 + \rho^2 G_3(q) / 6\} /
 #'   (e^{\rho w} - 1)}.
 #'
-#' The truncation error of both forms is about \eqn{(|\rho| w)^4 / 10}, below
-#' 3e-8 at their limits.
-#' The direct form loses about 1e-14 / \eqn{|\rho| w} for delays on the
-#' reals, which is why their limit is lower.
-#' For a gamma delay it also loses accuracy in proportion to the shape.
-#' The CDF stays within a relative 1e-6 of numerical integration for shapes
-#' up to 5000 and \eqn{|\rho|} from 1e-5 and loses accuracy above this.
-#'
-#' The CDF agrees with numerical integration to a relative difference of
-#' about 1e-9 or better in the bulk and the tails, except in the deep lower
-#' tail of a normal delay with a small tilt (about 1e-7), for windows much
-#' smaller than the delay, which lose up to about 1e-13 / `pwindow` to the
-#' difference of the terms at the two endpoints, and for the cases above.
+#' The CDF agrees with numerical integration to a relative 1e-6 in the
+#' package tests.
 #'
 #' @inherit pcens_cdf return
 #'
 #' @name pcens_cdf_exptilt
+#'
+#' @concept pcens
 #'
 #' @examples
 #' # Exponential delay with a growing primary event process
@@ -116,7 +107,7 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 # Largest |rho| w for the small tilt forms, see ?pcens_cdf_exptilt
 .exptilt_small <- function(lower) {
-  if (is.finite(lower)) 1e-2 else 1e-5
+  if (is.finite(lower)) 1e-2 else 1e-3
 }
 
 #' Primary event censored CDF for an exponentially tilted primary
@@ -326,7 +317,7 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Small window form of the exponentially tilted log CDF
 #'
-#' Used for \eqn{|\rho| w < 10^{-4}}, see [pcens_cdf_exptilt].
+#' Used below the limit of `.exptilt_small()`, see [pcens_cdf_exptilt].
 #'
 #' @inheritParams .exptilt_lcdf_direct
 #'
@@ -355,7 +346,8 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #' Small delay form of the exponentially tilted log CDF
 #'
 #' Used for delays on the non-negative reals with `q < pwindow` and
-#' \eqn{|\rho| q < 10^{-4}}, see [pcens_cdf_exptilt].
+#' `abs(rho) * q` below the limit of `.exptilt_small()`, see
+#' [pcens_cdf_exptilt].
 #'
 #' @inheritParams .exptilt_lcdf_direct
 #'

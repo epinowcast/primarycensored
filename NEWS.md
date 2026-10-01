@@ -2,9 +2,7 @@
 
 ## New features
 
-- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan.
-  `pcens_cdf()` and the vectorised Stan PMF use them in place of numerical integration, with the numerical path kept as a fallback outside their valid region, see `?pcens_cdf_exptilt`.
-  The normal delay is the first analytical solution for a delay on the reals.
+- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
   See #367.
 - Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
   Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
@@ -15,9 +13,7 @@
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
-- `pcens_cdf.default()` integrates either side of the point where the delay CDF leaves zero.
-  A single integral returned 0 or an error for delays that are small relative to the primary window.
-  The Stan numerical path starts at 0 for delays on the non-negative reals for the same reason.
+- `pcens_cdf()` and the Stan numerical path no longer return 0 or an error for delays that are small relative to the primary window.
   See #367.
 
 ## Performance
@@ -30,7 +26,7 @@
 
 ## Breaking changes
 
-- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include tilt_transform.stan` and `#include primarycensored_exptilt.stan` after `primarycensored_analytical_cdf.stan`, and also `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+- Stan models that include the function files one by one, rather than with `pcd_load_stan_functions()` or `pcd_cmdstan_model()`, need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan` after `primarycensored_analytical_cdf.stan`.
 - The Stan function `primarycensored_analytical_lcdf_vectorized()` takes `primary_id` and `primary_params` as its last two arguments.
 
 # primarycensored 1.6.0

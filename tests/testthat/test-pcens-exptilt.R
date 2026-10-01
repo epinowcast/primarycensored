@@ -134,6 +134,16 @@ test_that("use_numeric = TRUE uses the default method", {
   )
 })
 
+test_that("delay families without a tilt form use the numerical method", {
+  obj <- new_pcens(
+    pdist = pweibull, dprimary = dexpgrowth,
+    primary_args = list(r = 0.2), shape = 2, scale = 3
+  )
+  expect_false(.pcens_tilt_available(obj, -0.2))
+  q <- c(0.5, 2, 5)
+  expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
+})
+
 test_that("inadmissible tilts use the numerical method", {
   for (family in families[c(2, 3, 4)]) {
     for (rho in c(-1, -0.5)) {
@@ -175,7 +185,7 @@ test_that("the analytic CDF is continuous in the tilt through zero", {
 
 test_that("the analytic CDF has no jump where the small tilt form ends", {
   for (family in families) {
-    limit <- if (family$positive) 1e-2 else 1e-5
+    limit <- if (family$positive) 1e-2 else 1e-3
     for (pwindow in c(0.5, 2, 7)) {
       q <- c(1e-3, 0.3 * pwindow, pwindow, 3, 6, 12, 25)
       for (sign in c(-1, 1)) {
@@ -215,6 +225,20 @@ test_that("the analytic CDF is accurate for gamma delays with large shapes", {
       }
     }
   }
+})
+
+test_that("the analytic CDF is accurate in the lower tail of a normal delay
+  for small tilts", {
+  grid <- exptilt_normal_tail_grid()
+  expected <- exptilt_normal_tail_reference(grid)
+  actual <- vapply(seq_len(nrow(grid)), function(i) {
+    obj <- new_pcens(
+      pdist = pnorm, dprimary = dexpgrowth,
+      primary_args = list(r = grid$rho[i]), mean = -4, sd = 0.3
+    )
+    log(pcens_cdf(obj, grid$d[i], grid$pwindow[i]))
+  }, numeric(1))
+  expect_lt(max(abs(expm1(actual - expected))), 3e-7)
 })
 
 test_that("the tilt moments are the moments of the delay about t", {

@@ -33,7 +33,7 @@ the series below is not accurate.
 \details{
 Write \eqn{G(z) = \exp[-\exp\{-(z - \mu) / \beta\}]} and
 \eqn{D = G(w) - G(0)} for a window of width \eqn{w}, and let \eqn{F} be
-the delay CDF and \eqn{T_f(\xi; \tau)} the transform of \link{tilt_transform}.
+the delay CDF and \eqn{T_f(\xi; \tau)} the transform of \link{pcens_cdf_exptilt}.
 With \eqn{c(q) = \exp\{-(q - \mu) / \beta\}} the reversed window
 \eqn{G(q - u) = \exp\{-c(q) e^{u / \beta}\}} is a power series in
 \eqn{e^{u / \beta}}, which gives

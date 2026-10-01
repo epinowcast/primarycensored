@@ -3,7 +3,7 @@
  *
  * With the density of tgumbel.stan on [0, w], G(z) = exp(-exp(-(z - mu) /
  * beta)), D = G(w) - G(0), q = d - w, F the delay CDF and T_f(xi; t) the tilt
- * transform of tilt_transform.stan,
+ * transform of primarycensored_analytical_cdf.stan,
  *   F_G(d) = F(q) + B(d) / D,
  *   B(d) = (1 - G(0)) (F(d) - F(q))
  *          + sum_{n >= 1} (-c)^n / n! (T_f(n / beta; d) - T_f(n / beta; q)),

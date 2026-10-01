@@ -128,9 +128,8 @@ pcens_cdf.default <- function(
             c(list(x = p, min = 0, max = pwindow), object$dprimary_args)
           )
       }
-      # For delays on the non-negative reals the integrand leaves zero at
-      # p = d. A single integral can miss the mass on [0, d] when d is small
-      # relative to pwindow, so the two sides are integrated separately.
+      # The integrand leaves zero at p = d for non-negative delays, so the
+      # integral is split there
       breaks <- c(0, if (!is.na(d) && d > 0 && d < pwindow) d, pwindow)
       return(sum(vapply(
         seq_len(length(breaks) - 1L),
