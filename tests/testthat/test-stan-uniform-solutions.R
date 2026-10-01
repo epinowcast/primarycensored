@@ -755,8 +755,8 @@ uniform_gradient_at <- function(model, dist_id, params, d, pwindow) {
 test_that("the new analytical solutions have finite gradients that match
   finite differences", {
   model <- uniform_gradient_model()
-  # Shape gradients of the incomplete gamma and beta are less precise, so
-  # those cases use 1e-3 (5e-3 for shape 1.2) and the others 1e-4
+  # Shape gradients of the beta are less precise, so those cases use 1e-3
+  # and the exponential, normal, chi-square and Pareto cases 1e-4
   cases <- list(
     list(
       name = "exponential", id = 4L, params = 0.5, tol = 1e-4,
@@ -795,20 +795,53 @@ test_that("the new analytical solutions have finite gradients that match
       delays = c(0.05, 0.5, 0.95, 1.5)
     ),
     list(
-      name = "inverse gamma", id = 16L, params = c(3, 2), tol = 1e-3,
-      delays = c(0.3, 1, 5, 50)
+      name = "inverse gamma", id = 16L, params = c(2.5, 2), tol = 1e-5,
+      delays = c(0.3, 1, 5, 10)
     ),
     list(
-      name = "inverse gamma", id = 16L, params = c(1.2, 5), tol = 5e-3,
-      delays = c(0.5, 5, 50)
+      name = "inverse gamma", id = 16L, params = c(1.2, 5), tol = 1e-5,
+      delays = c(0.5, 5, 10)
     ),
     list(
-      name = "inverse chi-square", id = 19L, params = 5, tol = 1e-3,
-      delays = c(0.3, 1, 5, 50)
+      name = "inverse gamma", id = 16L, params = c(2, 2), tol = 1e-5,
+      delays = c(0.55, 0.6, 1.5, 10)
+    ),
+    list(
+      name = "inverse gamma", id = 16L, params = c(3, 3), tol = 1e-5,
+      delays = c(0.7, 0.75, 2, 10)
+    ),
+    list(
+      name = "inverse chi-square", id = 19L, params = 5, tol = 1e-5,
+      delays = c(0.3, 1, 5, 10)
+    ),
+    list(
+      name = "inverse chi-square", id = 19L, params = 4, tol = 1e-5,
+      delays = c(0.15, 0.2, 1, 10)
+    ),
+    list(
+      name = "inverse chi-square", id = 19L, params = 6, tol = 1e-5,
+      delays = c(0.15, 0.2, 1, 10)
     ),
     list(
       name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
-      tol = 1e-3, delays = c(0.3, 1, 5, 50)
+      tol = 1e-5, delays = c(0.3, 1, 5, 10)
+    ),
+    list(
+      # Gradients near 4e-4 leave finite difference noise at 1e-5
+      name = "inverse gamma", id = 16L, params = c(2.5, 2),
+      tol = 1e-3, delays = 50
+    ),
+    list(
+      name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
+      tol = 1e-3, delays = 50
+    ),
+    list(
+      name = "scaled inverse chi-square", id = 22L, params = c(4, 1),
+      tol = 1e-5, delays = c(0.6, 0.75, 0.9, 5)
+    ),
+    list(
+      name = "scaled inverse chi-square", id = 22L, params = c(6, 1),
+      tol = 1e-5, delays = c(0.6, 0.9, 5)
     ),
     list(
       # Gradients of about 4e-4 leave finite difference noise at 1e-4
