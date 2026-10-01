@@ -5,6 +5,9 @@
 \alias{pcens_cdf.pcens_pexp_dexpgrowth}
 \alias{pcens_cdf.pcens_pgamma_dexpgrowth}
 \alias{pcens_cdf.pcens_pnorm_dexpgrowth}
+\alias{pcens_cdf.pcens_pweibull_dexpgrowth}
+\alias{pcens_cdf.pcens_pgengamma.orig_dexpgrowth}
+\alias{pcens_cdf.pcens_pgengamma_dexpgrowth}
 \title{Methods for delays with an exponentially tilted primary}
 \usage{
 \method{pcens_cdf}{pcens_pexp_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
@@ -12,6 +15,12 @@
 \method{pcens_cdf}{pcens_pgamma_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 
 \method{pcens_cdf}{pcens_pnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
+
+\method{pcens_cdf}{pcens_pweibull_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
+
+\method{pcens_cdf}{pcens_pgengamma.orig_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
+
+\method{pcens_cdf}{pcens_pgengamma_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by
@@ -31,9 +40,10 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-\code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt \eqn{\rho}.
+Analytical primary event censored CDFs for exponential, gamma, normal,
+Weibull and generalised gamma delay distributions with an exponentially
+tilted primary event window, the \code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with
+\code{r} equal to the tilt \eqn{\rho}.
 They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
@@ -54,6 +64,20 @@ The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
 Otherwise the numerical method is used.
 The numerical method is less accurate in the lower tail of a gamma with
 shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
+
+The Weibull and the generalised gamma with power \eqn{a}, scale
+\eqn{\theta} and \eqn{k} (\eqn{k = 1} for the Weibull) have the transform
+\eqn{J(x) = \sum_n (-\rho \theta)^n / n!\,
+\Gamma(k + n / a) / \Gamma(k)\, P(k + n / a, (x / \theta)^a)},
+for the regularised incomplete gamma function \eqn{P}.
+It exists for every tilt, and needs \eqn{Q > 0} for
+\code{flexsurv::pgengamma()}.
+For \eqn{\rho > 0} its terms alternate in sign and cancel.
+The numerical method is used at a \code{q} where the terms of the series cancel
+by more than 1e5, where \eqn{\rho q \ge 400}, and in the upper tail,
+where the series has no tail form and the terms of the difference between
+the endpoints exceed the smaller of the CDF and the survival function by
+more than 1e5.
 
 The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
@@ -95,5 +119,12 @@ pnorm_obj <- new_pcens(
   primary_args = list(r = 0.1), mean = 3, sd = 2
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
+
+# Weibull delay
+pweibull_obj <- new_pcens(
+  pdist = pweibull, dprimary = dexpgrowth,
+  primary_args = list(r = 0.2), shape = 1.5, scale = 5
+)
+pcens_cdf(pweibull_obj, q = c(1, 4, 8), pwindow = 2)
 }
 \concept{pcens}
