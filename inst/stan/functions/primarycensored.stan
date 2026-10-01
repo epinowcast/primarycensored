@@ -144,9 +144,11 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     // Use numerical integration for other cases. The integration variable
     // ranges over the primary-event time, so the natural lower bound is
     // d - pwindow. For positive-support delays the integrand `F_delay(t)` is
-    // 0 for t <= 0, so the integral starts at 0, which keeps the solver from
-    // stepping over the kink there. Distributions with support on the reals
-    // accept the unclipped lower bound directly.
+    // 0 for t <= 0, so the integral starts at 0 and is 0 for d <= 0.
+    // Distributions with support on the reals use the unclipped bound.
+    if (dist_has_positive_support(dist_id) && d <= 0) {
+      return 0;
+    }
     real lower_bound = dist_has_positive_support(dist_id)
                        ? fmax(d - pwindow, 0) : d - pwindow;
     int n_params = num_elements(params);
