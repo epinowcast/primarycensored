@@ -354,8 +354,8 @@ vector primarycensored_beta_uniform_terms(real t, array[] real params) {
   * The CDF is Q(alpha, x) with x = beta / y. It is evaluated on the log scale
   * from the series for P(alpha, x) when x <= alpha + 1 and the continued
   * fraction for Q(alpha, x) (modified Lentz) above. Unlike `inv_gamma_lcdf`
-  * it does not underflow in the lower tail, and autodiff gives accurate
-  * shape gradients.
+  * it does not underflow in the lower tail. At an integer `alpha` the
+  * fraction terminates, so extra iterations keep the shape gradient exact.
   *
   * @param y Positive value at which the log CDF is evaluated
   * @param alpha Shape parameter
@@ -366,6 +366,7 @@ vector primarycensored_beta_uniform_terms(real t, array[] real params) {
 real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
   real x = beta / y;
   if (x > alpha + 1) {
+    int near_int = abs(alpha - round(alpha)) < 1e-9;
     real b = x + 1 - alpha;
     real c = 1e300;
     real d = inv(b);
@@ -378,7 +379,7 @@ real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
       c = b + an / c;
       c = abs(c) < 1e-300 ? 1e-300 : c;
       h *= d * c;
-      if (abs(d * c - 1) < 1e-15) break;
+      if (abs(d * c - 1) < 1e-15 && (i > alpha + 50 || !near_int)) break;
     }
     return (alpha - 1) * log(x) - x - lgamma(alpha) + log(x) + log(h);
   }

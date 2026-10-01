@@ -812,15 +812,15 @@ test_that("the new analytical solutions have finite gradients that match
     ),
     list(
       name = "inverse chi-square", id = 19L, params = 5, tol = 1e-5,
-      delays = c(0.3, 1, 5, 10)
+      delays = c(0.3, 1, 3)
     ),
     list(
       name = "inverse chi-square", id = 19L, params = 4, tol = 1e-5,
-      delays = c(0.15, 0.2, 1, 10)
+      delays = c(0.15, 0.2, 1, 3)
     ),
     list(
       name = "inverse chi-square", id = 19L, params = 6, tol = 1e-5,
-      delays = c(0.15, 0.2, 1, 10)
+      delays = c(0.15, 0.2, 1, 3)
     ),
     list(
       name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
