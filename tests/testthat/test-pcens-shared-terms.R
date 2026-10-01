@@ -75,6 +75,13 @@ test_that(".pcens_cdf_shared evaluates each distinct endpoint once", {
   # Too little overlap to save evaluations, so each endpoint is direct
   expect_identical(count_evaluations(q, 1.5), 2L * length(q))
   expect_identical(count_evaluations(c(2.3, 7.9), 1), 4L)
+  q_none <- seq(1.37, 40, length.out = 60)
+  expect_identical(count_evaluations(q_none, 1), 2L * length(q_none))
+  q_mixed <- c(seq(0.37, 9.9, length.out = 30), 0:30)
+  expect_identical(
+    count_evaluations(q_mixed, 1),
+    length(unique(c(q_mixed, pmax(q_mixed - 1, 0))))
+  )
 })
 
 test_that("shared terms match single-point evaluation", {
@@ -83,7 +90,10 @@ test_that("shared terms match single-point evaluation", {
     list(q = 0:40, pwindow = 3),
     list(q = seq(0, 20, by = 0.5), pwindow = 1.5),
     list(q = c(-2, -0.5, 0, 0.2, 0.5, 1, 1.5, 4, 4, 30), pwindow = 1),
-    list(q = seq(0, 6, by = 0.25), pwindow = 0.25)
+    list(q = seq(0, 6, by = 0.25), pwindow = 0.25),
+    list(q = seq(1.37, 40, length.out = 60), pwindow = 1),
+    list(q = as.numeric(1:30), pwindow = 0.7),
+    list(q = c(seq(0.37, 9.9, length.out = 30), 0:30), pwindow = 1)
   )
   for (delay in c(shared_delays, flexsurv_delays())) {
     obj <- shared_obj(delay)

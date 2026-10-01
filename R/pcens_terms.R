@@ -41,6 +41,17 @@
   n <- length(q)
   shared <- n > 1L && length(pwindow) == 1L
   if (shared) {
+    # A few cheap scans skip the full match when nothing coincides
+    shared <- FALSE
+    probe <- if (n <= 6L) seq_len(n) else round(seq.int(1, n, length.out = 6))
+    for (i in probe) {
+      if (!is.na(match(lower[i], q))) {
+        shared <- TRUE
+        break
+      }
+    }
+  }
+  if (shared) {
     idx <- match(lower, q)
     unmatched <- is.na(idx)
     extra <- unique(lower[unmatched])
