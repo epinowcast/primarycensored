@@ -155,6 +155,9 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 
 #' Exponentially tilted CDF at finite points
 #'
+#' Points where `.pcens_tilt_ill_conditioned()` is `TRUE` use
+#' `.pcens_tilt_numeric()`.
+#'
 #' @inheritParams pcens_cdf
 #'
 #' @param rho The tilt, the `r` of the exponential growth primary.
@@ -178,10 +181,14 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
       abs(rho) * q < small_limit
   }
   direct <- active & !small_window & !tiny_delay
+  ill <- rep(FALSE, length(q))
 
   if (any(small_window)) {
     log_cdf[small_window] <- .exptilt_lcdf_small_window(
       object, q[small_window], pwindow, rho, lower
+    )
+    ill[small_window] <- .pcens_tilt_ill_conditioned(
+      object, q[small_window], pwindow, rho, log_cdf[small_window], TRUE
     )
   }
   if (any(tiny_delay)) {
@@ -193,8 +200,15 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
     log_cdf[direct] <- .exptilt_lcdf_direct(
       object, q[direct], pwindow, rho, lower
     )
+    ill[direct] <- .pcens_tilt_ill_conditioned(
+      object, q[direct], pwindow, rho, log_cdf[direct], FALSE
+    )
   }
-  pmin(1, exp(log_cdf))
+  result <- pmin(1, exp(log_cdf))
+  if (any(ill)) {
+    result[ill] <- .pcens_tilt_numeric(object, q[ill], pwindow)
+  }
+  result
 }
 
 #' Unique endpoints `q` and `q - pwindow` at which the transforms are needed
@@ -306,7 +320,8 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #' @noRd
 .exptilt_tail_diff <- function(lower_q, lower_y, upper_q, upper_y) {
   use_upper <- lower_y - lower_q > upper_q - upper_y
-  # NaN from terms that underflow on both sides is a zero difference
+  # NaN from terms that underflow on both sides is a zero difference.
+  # Upper tail terms that are not available are NaN too, and use the lower.
   use_upper[is.na(use_upper)] <- FALSE
   out <- .log_diff_exp(lower_q, lower_y)
   if (any(use_upper)) {

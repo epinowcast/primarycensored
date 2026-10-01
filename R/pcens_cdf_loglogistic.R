@@ -1,7 +1,7 @@
 #' Methods for log-logistic delays
 #'
-#' Analytical primary event censored CDFs for a log-logistic delay with a
-#' uniform primary event window.
+#' Analytical primary event censored CDFs for a log-logistic delay with an
+#' exponentially tilted ([dexpgrowth()]) or a uniform primary event window.
 #' They honour `use_numeric`. The numerical method is used where the closed
 #' form does not apply or is ill conditioned.
 #'
@@ -13,22 +13,30 @@
 #' or `rate` for the latter. The Stan functions use `[scale, shape]`, the
 #' order of Stan's `loglogistic_cdf()`.
 #'
-#' With \eqn{G_1(t) = \int_0^t F(u) du} the CDF is
+#' **Uniform window.** With \eqn{G_1(t) = \int_0^t F(u) du} the CDF is
 #' \eqn{\{G_1(q) - G_1(q - w)\} / w}, where
-#' \eqn{G_1(t) = t F(t) (1 - r_{1/k}(A))}, \eqn{A = (t / \lambda)^k} and
+#' \eqn{G_1(t) = t F(t) (1 - r_{1/k}(A))} and \eqn{A = (t / \lambda)^k}.
+#' Each unique endpoint is evaluated once.
+#'
+#' **Tilted window.** The transform of [tilt_transform] is
+#' \eqn{T_f(\xi; t) = F(t) \sum_n (\xi t)^n / n!\, r_{n/k}(A)}, with
 #' \deqn{r_a(A) = \frac{1 + A}{A^{a + 1}} \int_0^A \frac{y^a}{(1 + y)^2} dy.}
 #' The ratio is at most \eqn{1 / (a + 1)}.
 #' Base R has no Gauss hypergeometric function, and the incomplete beta form
 #' holds only for \eqn{a < 1}.
 #' `.loglogistic_ratio()` therefore uses three series that do not cancel,
 #' for \eqn{A \le 1}, \eqn{1 < A \le 3} and \eqn{A > 3}.
-#' Each unique endpoint is evaluated once.
+#' The upper transform is `NaN` for \eqn{\xi \ne 0}, so the combination of
+#' terms takes differences of the lower transform.
 #'
-#' **Fallback to the numerical method.** The solution is used for a shape of
-#' at least 0.01. Within this limit a bound on the rounding error of the
-#' difference of \eqn{G_1} is compared with the smaller of the CDF and the
-#' survival. The numerical method is used where it exceeds 1e-8 of that tail,
-#' or 1e-6 of the density of the CDF.
+#' **Fallback to the numerical method.** The series is used where
+#' \eqn{|\xi| t \le 10} and the shape is at least 0.2. The uniform
+#' solution and the small tilt form are used for a shape of at least 0.01.
+#' Elsewhere the numerical method is used.
+#' Within these limits a bound on the rounding error of the closed form is
+#' compared with the smaller of the CDF and the survival. The numerical
+#' method is used where it exceeds 1e-8 of that tail, or 1e-6 of the density
+#' of the CDF for the solutions that difference \eqn{G_1}.
 #' The bound is not taken below 1e-15 in the upper tail.
 #' The same rule is used in Stan.
 #' The numerical method integrates the delay CDF, or the survival where the
@@ -44,7 +52,7 @@
 #' @concept pcens
 #'
 #' @examples
-#' # Log-logistic delay with a uniform primary
+#' # Log-logistic delay with a growing primary event process
 #' pllogis <- add_name_attribute(
 #'   function(q, shape, scale) {
 #'     plogis(shape * (log(pmax(q, 0)) - log(scale)))
@@ -52,13 +60,20 @@
 #'   "pllogis"
 #' )
 #' obj <- new_pcens(
+#'   pdist = pllogis, dprimary = dexpgrowth,
+#'   primary_args = list(r = 0.3), shape = 2, scale = 5
+#' )
+#' pcens_cdf(obj, q = c(1, 4, 8), pwindow = 2)
+#'
+#' # The same delay with a uniform primary
+#' obj <- new_pcens(
 #'   pdist = pllogis, dprimary = dunif,
 #'   primary_args = list(), shape = 2, scale = 5
 #' )
 #' pcens_cdf(obj, q = c(1, 4, 8), pwindow = 2)
 NULL
 
-# Smallest shape for which the solution is used, as the ratios involve
+# Smallest shape for which any solution is used, as the ratios involve
 # powers of 1 / shape that overflow when tiny
 .loglogistic_floor_shape <- 0.01
 
@@ -245,20 +260,18 @@ NULL
   out
 }
 
-#' Log of G_1(t) = int_0^t F(u) du for the delay
+#' Mean of the primary event time on the window, as in Stan
+#'
+#' The uniform mean is used for |rho| w of at most 1e-3.
 #'
 #' @noRd
-.loglogistic_log_g1 <- function(t, shape, scale) {
-  out <- rep(-Inf, length(t))
-  positive <- t > 0
-  if (!any(positive)) {
-    return(out)
+.loglogistic_primary_mean <- function(rho, pwindow) {
+  if (is.null(rho) || abs(rho) * pwindow <= 1e-3) {
+    return(pwindow / 2)
   }
-  log_t <- log(t[positive])
-  log_ratio <- shape * (log_t - log(scale))
-  r <- .loglogistic_ratio(1 / shape, log_ratio)[, 1L]
-  out[positive] <- log_t - .log1p_exp(-log_ratio) + log1p(-r)
-  out
+  a <- abs(rho) * pwindow
+  mean_up <- pwindow * (1 / -expm1(-a) - 1 / a)
+  if (rho > 0) mean_up else pwindow - mean_up
 }
 
 #' Numerical primary event censored CDF of a log-logistic delay
@@ -285,6 +298,8 @@ NULL
     )
   }
   offsets <- p$scale * exp(seq(-30, 30) / p$shape)
+  rho <- object$primary_args$r
+  mean_primary <- .loglogistic_primary_mean(rho, pwindow)
   result <- vapply(q, function(d) {
     if (is.na(d) || d <= 0) {
       return(0)
@@ -307,7 +322,7 @@ NULL
       ))
     }
     # Survival where the delay CDF at the mean primary time is above a half
-    if (d - pwindow / 2 > p$scale) 1 - integral(TRUE) else integral(FALSE)
+    if (d - mean_primary > p$scale) 1 - integral(TRUE) else integral(FALSE)
   }, numeric(1))
   pmin(1, pmax(0, result))
 }
@@ -349,7 +364,7 @@ pcens_cdf.pcens_pllogis_dunif <- function(
   p <- .loglogistic_shape_scale(object)
   lower <- 0
   endpoints <- .exptilt_endpoints(q, pwindow, lower)
-  log_g1 <- .loglogistic_log_g1(endpoints, p$shape, p$scale)
+  log_g1 <- .loglogistic_log_moments(endpoints, p$shape, p$scale, 1L)[, 1L]
   at_q <- log_g1[.exptilt_index(q, endpoints, lower)]
   at_y <- log_g1[.exptilt_index(q - pwindow, endpoints, lower)]
   bounds <- .loglogistic_window_error(object, q, pwindow)

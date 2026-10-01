@@ -426,13 +426,14 @@ The truncation error of both forms is below $3 \times 10^{-8}$ at the limit.
 # Log-logistic delays
 
 The log-logistic distribution with shape $k$ and scale $\lambda$ has CDF $F_T(x) = 1 / (1 + (x / \lambda)^{-k})$.
-The uniform primary needs the partial expectation $\int_0^t u f_T(u) du = t F_T(t) r_{1/k}(A)$, where $A = (t / \lambda)^k$ and
+The substitution $y = (u / \lambda)^k$ and the expansion of $e^{\xi u}$ give the transform
 
 $$
-r_a(A) = \frac{1 + A}{A^{a+1}} \int_0^A \frac{y^a}{(1 + y)^2} ~dy.
+T_f(\xi; \tau) = F_T(\tau) \sum_{n=0}^{\infty} \frac{(\xi \tau)^n}{n!} r_{n/k}(A), \quad
+r_a(A) = \frac{1 + A}{A^{a+1}} \int_0^A \frac{y^a}{(1 + y)^2} ~dy, \quad A = (\tau / \lambda)^k.
 $$
 
-The ratio $r_a(A)$ is the expectation of $(U / t)^a$ for a delay $U$ at most $t$, and is at most $1 / (a + 1)$.
+The ratio $r_a(A)$ is the expectation of $(U / \tau)^a$ for a delay $U$ at most $\tau$, and is at most $1 / (a + 1)$.
 The integral is an incomplete beta function for $a < 1$ only, and is also a Gauss hypergeometric function, which base R does not have.
 The package instead evaluates $r_a$ from three series that do not cancel.
 
@@ -440,9 +441,19 @@ The package instead evaluates $r_a$ from three series that do not cancel.
 - For $1 < A \leq 3$, the integral is its value at $A = 1$, from the digamma function, plus a power series in $(A - 1) / (A + 1) \leq 1/2$.
 - For $A > 3$, the integral is its value at $A = 3$ plus the integral from 3 to $A$ taken term by term in $(1 + y)^{-2} = \sum_m (-1)^m (m + 1) y^{-m-2}$.
 
-The solution differences $t F_T(t) r_{1/k}(A)$ at $d$ and $q$, and loses about $4 \times 10^{-16} (1 + |\log t F_T(t)|) t F_T(t) / w_P$ of the CDF.
-It is used for a shape of at least 0.01.
-The methods use the numerical path where the bound on this error exceeds $10^{-8}$ times the smaller of the CDF and the survival, or $10^{-6}$ times the density of the CDF, the scale of the PMF of a unit secondary window.
+The uniform primary needs only the partial expectation $\int_0^t u f_T(u) du = t F_T(t) r_{1/k}(A)$, which is finite for every shape.
+The small tilt forms use $G_1(t) = t F_T(t) (1 - r_{1/k}(A))$, $G_2(t) = t^2 F_T(t) (1 - 2 r_{1/k}(A) + r_{2/k}(A))$ and $G_3(t) = t^3 F_T(t) (1 - 3 r_{1/k}(A) + 3 r_{2/k}(A) - r_{3/k}(A))$.
+
+The exponentially tilted primary uses the transform with $\xi = -r$ in equation \@ref(eq:exptilt).
+Only the lower transform is available, so the differences in that equation are taken from the lower transform.
+The series is used where $|\xi| \tau \leq 10$ and the shape is at least 0.2.
+For $\xi < 0$ its terms alternate and the sum has an absolute error of about $10^{-16} e^{z} / \sqrt{1 + z}$ for $z = |\xi| \tau$.
+Equation \@ref(eq:exptilt) multiplies the error of a transform by $e^{r d} / |e^{r w_P} - 1|$.
+The uniform solution and the small tilt form instead difference $G_1$ and lose about $4 \times 10^{-16} (1 + |\log t F_T(t)|) t F_T(t) / w_P$ of the CDF.
+Both are used for a shape of at least 0.01.
+
+The methods use the numerical path where the bound on the error exceeds $10^{-8}$ times the smaller of the CDF and the survival.
+For the solutions that difference $G_1$ the bound must also be below $10^{-6}$ times the density of the CDF, the scale of the PMF of a unit secondary window.
 The bound is not taken below $10^{-15}$ in the upper tail, the resolution of a CDF close to 1.
 The R and Stan functions use the same rule.
 The numerical path integrates the delay CDF, or the survival where the delay CDF at the mean primary event time is above a half, with a relative tolerance of $10^{-13}$.

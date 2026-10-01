@@ -386,7 +386,8 @@ real loglogistic_tail_term(real a, int m, real log_A, real shrink) {
   * Pivot M_a(3) / 3^a of the tail series
   * @ingroup analytical_solution_helpers
   *
-  * It depends on the power alone.
+  * It depends on the power alone, so endpoints share it, see
+  * loglogistic_tilt_pivots().
   *
   * @param a Power, non-negative
   * @param tol Relative tolerance of the series
@@ -406,11 +407,13 @@ real loglogistic_tail_pivot(real a, real tol) {
   * @param a Power, non-negative
   * @param log_A Log of A, above log(3)
   * @param tol Relative tolerance of the series
+  * @param pivot M_a(3) / 3^a from loglogistic_tail_pivot(), or `nan` to
+  *   compute it
   *
   * @return r_a(A)
   */
-real loglogistic_ratio_large(real a, real log_A, real tol) {
-  real at_start = loglogistic_tail_pivot(a, tol);
+real loglogistic_ratio_large(real a, real log_A, real tol, real pivot) {
+  real at_start = is_nan(pivot) ? loglogistic_tail_pivot(a, tol) : pivot;
   real shrink = exp(-a * (log_A - log(3)));
   real total = shrink * at_start;
   for (m in 0:200) {
@@ -428,15 +431,16 @@ real loglogistic_ratio_large(real a, real log_A, real tol) {
   * @param a Power, non-negative
   * @param log_A Log of A
   * @param tol Relative tolerance of the series
+  * @param pivot M_a(3) / 3^a for the tail series, or `nan` to compute it
   *
   * @return r_a(A), at most 1 / (a + 1)
   */
-real loglogistic_moment_ratio(real a, real log_A, real tol) {
+real loglogistic_moment_ratio(real a, real log_A, real tol, real pivot) {
   if (log_A <= 0) {
     return loglogistic_ratio_small(a, log_A, tol);
   }
   if (log_A > log(3)) {
-    return loglogistic_ratio_large(a, log_A, tol);
+    return loglogistic_ratio_large(a, log_A, tol, pivot);
   }
   // 1 < A <= 3
   real A = exp(log_A);
@@ -540,78 +544,328 @@ int loglogistic_window_ill_conditioned(real log_t_cdf_d, real log_t_cdf_q,
 }
 
 /**
+  * Mean of the primary event time
+  * @ingroup analytical_solution_helpers
+  *
+  * For the uniform (primary_id 1) and the exponentially tilted (primary_id
+  * 2) primary on [0, pwindow]. The uniform mean is used for |r| pwindow at
+  * most 1e-3.
+  *
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  * @param pwindow Primary event window
+  *
+  * @return Mean of the primary event time
+  */
+real loglogistic_primary_mean(data int primary_id,
+                              array[] real primary_params,
+                              data real pwindow) {
+  if (primary_id == 2) {
+    real a = abs(primary_params[1]) * pwindow;
+    if (a > 1e-3) {
+      real mean_up = pwindow * (inv(-expm1(-a)) - inv(a));
+      return primary_params[1] > 0 ? mean_up : pwindow - mean_up;
+    }
+  }
+  return 0.5 * pwindow;
+}
+
+/**
   * ODE system for the numerical log-logistic primary event censored CDF
   * @ingroup ode
   *
-  * The integrand is the delay CDF, or the survival, at d - x, integrated
-  * from x = 0 so the resolution does not fall as d grows. It is divided by
-  * its bound so the absolute tolerance is relative to the integral. The
-  * bound is the delay CDF at d for the CDF.
+  * The integrand is the delay CDF, or the survival, at d - x times the
+  * primary density at x, integrated from x = 0 so the resolution does not
+  * fall as d grows. It is divided by its bound so the absolute tolerance is
+  * relative to the integral. The bound is the peak primary density, times
+  * the delay CDF at d for the CDF.
   *
   * @param x Primary event time
   * @param y State, the scaled integral
-  * @param theta Parameters [scale, shape, log of the scale of the integrand]
-  * @param x_r Real data [d]
-  * @param x_i Integer data [1 to integrate the survival]
+  * @param theta Parameters [scale, shape, primary parameters, log of the
+  *   scale of the integrand]
+  * @param x_r Real data [d, pwindow]
+  * @param x_i Integer data [primary_id, 1 to integrate the survival, number
+  *   of primary parameters]
   *
   * @return Derivative of the state
   */
 vector loglogistic_numeric_ode(real x, vector y, array[] real theta,
                                array[] real x_r, array[] int x_i) {
-  real u = x_r[1] - x;
+  real d = x_r[1];
+  real pwindow = x_r[2];
+  int primary_id = x_i[1];
+  int use_survival = x_i[2];
+  int n_primary = x_i[3];
+  array[n_primary] real primary_params;
+  if (n_primary) {
+    primary_params = theta[3:(2 + n_primary)];
+  }
+  real u = d - x;
   real log_delay;
   if (u <= 0) {
-    log_delay = x_i[1] ? 0 : negative_infinity();
-  } else if (x_i[1]) {
+    log_delay = use_survival ? 0 : negative_infinity();
+  } else if (use_survival) {
     log_delay = primarycensored_loglogistic_lccdf(u | theta[1], theta[2]);
   } else {
     log_delay = primarycensored_loglogistic_lcdf(u | theta[1], theta[2]);
   }
-  return rep_vector(exp(log_delay - theta[3]), 1);
+  real log_primary = primary_lpdf(
+    x | primary_id, primary_params, 0, pwindow
+  );
+  return rep_vector(
+    exp(log_delay + log_primary - theta[3 + n_primary]), 1
+  );
 }
 
 /**
   * Log of the numerical log-logistic primary event censored CDF
   * @ingroup analytical_solution_helpers
   *
-  * The CDF used where the uniform solution is not accurate. It integrates
+  * The CDF used where a log-logistic solution is not accurate. It integrates
   * the delay CDF over the primary event time with an ODE solver, see
   * loglogistic_numeric_ode(), with a relative tolerance of 1e-13 and an
   * absolute tolerance of 1e-20 for the scaled integrand. The survival is
-  * integrated where the delay CDF at the window midpoint is above a half, so
-  * the upper tail keeps its relative precision.
+  * integrated where the delay CDF at d minus the mean primary event time is
+  * above a half, so the upper tail keeps its relative precision.
   *
   * @param d Delay
   * @param params Array of log-logistic parameters [scale, shape]
   * @param pwindow Primary event window
+  * @param primary_id Primary distribution identifier, 1 or 2
+  * @param primary_params Primary distribution parameters
   *
-  * @return Log of the numerical primary event censored CDF with a uniform
-  * primary, at most 0, `-inf` for d <= 0
+  * @return Log of the numerical primary event censored CDF, at most 0,
+  * `-inf` for d <= 0
   */
 real loglogistic_numeric_lcdf(data real d, array[] real params,
-                              data real pwindow) {
+                              data real pwindow, data int primary_id,
+                              array[] real primary_params) {
   if (d <= 0) return negative_infinity();
   real x_end = fmin(d, pwindow);
-  real mid = d - 0.5 * pwindow;
+  real mid = d - loglogistic_primary_mean(primary_id, primary_params,
+                                          pwindow);
   int use_survival = mid > 0
               && primarycensored_loglogistic_lcdf(mid | params[1], params[2])
                  > -log2();
-  real log_scale = use_survival
-                   ? 0
-                   : primarycensored_loglogistic_lcdf(d | params[1], params[2]);
+  real x_peak = (primary_id == 2 && primary_params[1] > 0) ? x_end : 0;
+  real log_scale = primary_lpdf(
+    x_peak | primary_id, primary_params, 0, pwindow
+  );
+  if (!use_survival) {
+    log_scale += primarycensored_loglogistic_lcdf(d | params[1], params[2]);
+  }
+  int n_primary = num_elements(primary_params);
+  array[2 + n_primary + 1] real theta = append_array(
+    append_array(params, primary_params), {log_scale}
+  );
   real integral = ode_rk45_tol(
     loglogistic_numeric_ode, rep_vector(0.0, 1), 0.0, {x_end}, 1e-13, 1e-20,
-    1000000, {params[1], params[2], log_scale}, {d}, {use_survival}
+    1000000, theta, {d, pwindow}, {primary_id, use_survival, n_primary}
   )[1, 1];
   if (use_survival) {
-    real survival = integral / pwindow;
+    real survival = integral * exp(log_scale);
     if (d < pwindow) {
-      survival += 1 - d / pwindow;
+      survival += -expm1(primary_lcdf(d | primary_id, primary_params,
+                                      pwindow));
     }
     return survival >= 1 ? negative_infinity() : log1m(survival);
   }
-  return integral > 0 ? fmin(log(integral) + log_scale - log(pwindow), 0)
+  return integral > 0 ? fmin(log(integral) + log_scale, 0)
                       : negative_infinity();
+}
+
+/**
+  * Check if the log-logistic transform series is used at a point
+  * @ingroup tilt_transforms
+  *
+  * The series needs |xi| t at most 10 and a shape of at least 0.2. The
+  * transform at xi = 0, the CDF, has no limit.
+  *
+  * @param t Point
+  * @param xi Tilt
+  * @param shape Shape parameter
+  *
+  * @return 1 if the transform is available at t, 0 otherwise
+  */
+int loglogistic_tilt_in_range(real t, real xi, real shape) {
+  return xi == 0 || (shape >= 0.2 && abs(xi) * t <= 10);
+}
+
+/**
+  * Pivots of the tail series for the terms of the transform series
+  * @ingroup tilt_transforms
+  *
+  * Element n is loglogistic_tail_pivot(n / shape), for as many terms as the
+  * series needs up to t_max. The elements are `nan` where no point up to
+  * t_max uses the tail series or the shape is below 0.2, and the series then
+  * computes them where it needs them.
+  *
+  * @param scale Scale parameter
+  * @param shape Shape parameter
+  * @param xi Tilt
+  * @param t_max Largest point
+  *
+  * @return Vector of length 52 of the pivots
+  */
+vector loglogistic_tilt_pivots(real scale, real shape, real xi,
+                               data real t_max) {
+  vector[52] pivots = rep_vector(not_a_number(), 52);
+  if (t_max <= 0 || !loglogistic_tilt_in_range(0, xi, shape)
+      || shape * (log(t_max) - log(scale)) <= log(3)) {
+    return pivots;
+  }
+  real z_max = fmin(abs(xi) * t_max, 10);
+  int n = z_max < 1 ? 18 : z_max < 3 ? 27 : z_max < 5 ? 35
+          : z_max < 7 ? 42 : 52;
+  for (i in 1:n) {
+    pivots[i] = loglogistic_tail_pivot(i / shape, 1e-16);
+  }
+  return pivots;
+}
+
+/**
+  * Sum of the log-logistic transform series
+  * @ingroup tilt_transforms
+  *
+  * Each ratio has a tolerance that keeps its error in the sum near
+  * 1e-16 exp(|z|) / sqrt(1 + |z|).
+  *
+  * @param z Tilt times t, at most 10 in magnitude
+  * @param shape Shape parameter
+  * @param log_A Log of (t / scale)^shape
+  * @param pivots Pivots from loglogistic_tilt_pivots(), or of length 0
+  *
+  * @return Sum of z^n / n! r_{n/shape}(A) over n >= 0
+  */
+real loglogistic_tilt_sum(real z, real shape, real log_A, vector pivots) {
+  real abs_z = abs(z);
+  real largest = fmax(1, exp(abs_z) / sqrt(1 + abs_z));
+  int n_pivots = rows(pivots);
+  real total = 1;
+  real weight = 1;
+  int n = 0;
+  while (n < 400) {
+    n += 1;
+    weight *= z / n;
+    real a = n / shape;
+    real tol = fmax(
+      fmin(1e-3, 0.3e-16 * largest * (a + 1) / fmax(abs(weight), 1e-300)),
+      1e-17
+    );
+    total += weight * loglogistic_moment_ratio(
+      a, log_A, tol, n <= n_pivots ? pivots[n] : not_a_number()
+    );
+    if (n > abs_z && abs(weight) < 1e-17 * largest) break;
+  }
+  return total;
+}
+
+/**
+  * Log of the log-logistic tilt transform over the lower and upper part of
+  * the support
+  * @ingroup tilt_transforms
+  *
+  * @param t Point
+  * @param xi Tilt
+  * @param scale Scale parameter
+  * @param shape Shape parameter
+  * @param pivots Pivots from loglogistic_tilt_pivots(), or of length 0
+  *
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]. For
+  * xi != 0 the second element is `nan`, and both are `nan` for |xi| t above
+  * 10 or a shape below 0.2.
+  */
+vector loglogistic_log_tilt_pair(real t, real xi, real scale, real shape,
+                                 vector pivots) {
+  if (t <= 0) {
+    return [negative_infinity(), xi == 0 ? 0 : not_a_number()]';
+  }
+  real log_ratio = shape * (log(t) - log(scale));
+  real log_cdf = -log1p_exp(-log_ratio);
+  if (xi == 0) {
+    return [log_cdf, -log1p_exp(log_ratio)]';
+  }
+  if (!loglogistic_tilt_in_range(t, xi, shape)) {
+    return rep_vector(not_a_number(), 2);
+  }
+  return [
+    log_cdf + log(loglogistic_tilt_sum(xi * t, shape, log_ratio, pivots)),
+    not_a_number()
+  ]';
+}
+
+/**
+  * Exponentially tilted terms of a log-logistic delay at integer endpoints
+  * @ingroup tilt_transforms
+  *
+  * The terms are those of log_tilt_transform_pair() for xi = 0 and xi = -rho.
+  * The pivots are computed once for all endpoints.
+  *
+  * @param first First endpoint, non-negative
+  * @param last Last endpoint
+  * @param rho Tilt of the primary
+  * @param scale Scale parameter
+  * @param shape Shape parameter
+  *
+  * @return Array whose element t - first + 1 is the vector [log F(t),
+  * log(1 - F(t)), log J(t), log(J(Inf) - J(t))] at endpoint t
+  */
+array[] vector loglogistic_exptilt_terms(data int first, data int last,
+                                         real rho, real scale, real shape) {
+  array[last - first + 1] vector[4] terms;
+  vector[52] pivots = loglogistic_tilt_pivots(scale, shape, -rho, last);
+  for (t in first:last) {
+    terms[t - first + 1] = append_row(
+      loglogistic_log_tilt_pair(t, 0, scale, shape, pivots),
+      loglogistic_log_tilt_pair(t, -rho, scale, shape, pivots)
+    );
+  }
+  return terms;
+}
+
+/**
+  * Log moments of a log-logistic delay about a point
+  * @ingroup tilt_transforms
+  *
+  * @param t Point
+  * @param scale Scale parameter
+  * @param shape Shape parameter
+  *
+  * @return Vector [log G_1(t), log G_2(t), log G_3(t)], `-inf` for t <= 0
+  */
+vector loglogistic_tilt_moments(real t, real scale, real shape) {
+  if (t <= 0) return rep_vector(negative_infinity(), 3);
+  real log_ratio = shape * (log(t) - log(scale));
+  real log_cdf = -log1p_exp(-log_ratio);
+  real r1 = loglogistic_moment_ratio(1 / shape, log_ratio, 1e-16,
+                                     not_a_number());
+  real r2 = loglogistic_moment_ratio(2 / shape, log_ratio, 1e-16,
+                                     not_a_number());
+  real r3 = loglogistic_moment_ratio(3 / shape, log_ratio, 1e-16,
+                                     not_a_number());
+  return [
+    log(t) + log_cdf + log1m(r1),
+    2 * log(t) + log_cdf + log(1 - 2 * r1 + r2),
+    3 * log(t) + log_cdf + log(1 - 3 * r1 + 3 * r2 - r3)
+  ]';
+}
+
+/**
+  * Log of a bound on the error of the log-logistic transform series
+  * @ingroup tilt_transforms
+  *
+  * @param log_cdf Log of the delay CDF at t
+  * @param xi Tilt, not zero
+  * @param t Point
+  *
+  * @return log(4e-16 F(t) exp(z) / sqrt(1 + z)) for z = |xi| t, `-inf` for
+  * t <= 0
+  */
+real loglogistic_tilt_log_error(real log_cdf, real xi, real t) {
+  if (t <= 0) return negative_infinity();
+  real z = abs(xi) * t;
+  return log(4e-16) + log_cdf + z - 0.5 * log1p(z);
 }
 
 /**
@@ -638,7 +892,8 @@ vector primarycensored_loglogistic_uniform_terms(real t,
   real log_t_F_T = log(t) - log1p_exp(-log_ratio);
   return [
     log_t_F_T,
-    log_t_F_T + log(loglogistic_moment_ratio(1 / shape, log_ratio, 1e-16))
+    log_t_F_T + log(loglogistic_moment_ratio(1 / shape, log_ratio, 1e-16,
+                                             not_a_number()))
   ]';
 }
 
@@ -781,7 +1036,9 @@ real primarycensored_loglogistic_uniform_lcdf(data real d, real q,
   );
   if (loglogistic_window_ill_conditioned(terms_d[1], terms_q[1], d, pwindow,
                                          log_cdf)) {
-    return loglogistic_numeric_lcdf(d | params, pwindow);
+    return loglogistic_numeric_lcdf(
+      d | params, pwindow, 1, rep_array(0.0, 0)
+    );
   }
   return fmin(log_cdf, 0);
 }
@@ -949,7 +1206,8 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * primarycensored_exptilt_lcdf(), with the form chosen at each delay as
   * there.
   * The log-logistic uses the numerical CDF where the solution is ill
-  * conditioned, as primarycensored_loglogistic_uniform_lcdf() does.
+  * conditioned, as primarycensored_loglogistic_uniform_lcdf() and
+  * primarycensored_exptilt_lcdf() do.
   * Only for cases where check_for_analytical_vectorized() and
   * check_for_analytical_params() are 1.
   *
@@ -970,6 +1228,9 @@ vector primarycensored_analytical_lcdf_vectorized(
 ) {
   int pw = to_int(pwindow);
   vector[n] log_cdfs;
+  // The numerical CDF can be out of order by its tolerance, which would make
+  // the PMF NaN
+  array[n] int numerical = rep_array(0, n);
   if (check_for_exptilt(dist_id, primary_id)) {
     real rho = primary_params[1];
     int positive = dist_has_positive_support(dist_id);
@@ -988,27 +1249,57 @@ vector primarycensored_analytical_lcdf_vectorized(
         log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
           moments[d - first + 1], moments[q_index], rho, pwindow
         );
+        if (exptilt_small_window_is_ill_conditioned(dist_id, params, d,
+                                                    pwindow, log_cdfs[d])) {
+          log_cdfs[d] = loglogistic_numeric_lcdf(
+            d | params, pwindow, 2, {rho}
+          );
+          numerical[d] = 1;
+        }
       }
     } else {
       // terms[t - first + 1] holds the terms at endpoint t
       array[n - first + 1] vector[4] terms;
-      for (t in first:n) {
-        terms[t - first + 1] = append_row(
-          log_tilt_transform_pair(t, dist_id, 0, params),
-          log_tilt_transform_pair(t, dist_id, -rho, params)
-        );
+      if (dist_id == 31) {
+        terms = loglogistic_exptilt_terms(first, n, rho, params[1], params[2]);
+      } else {
+        for (t in first:n) {
+          terms[t - first + 1] = append_row(
+            log_tilt_transform_pair(t, dist_id, 0, params),
+            log_tilt_transform_pair(t, dist_id, -rho, params)
+          );
+        }
       }
       for (d in start:n) {
         if (positive && d < pwindow && abs(rho) * d < 1e-2) {
           log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
             primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
           );
+        } else if (dist_id == 31
+                   && !loglogistic_tilt_in_range(d, -rho, params[2])) {
+          log_cdfs[d] = loglogistic_numeric_lcdf(
+            d | params, pwindow, 2, {rho}
+          );
+          numerical[d] = 1;
         } else {
           int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
           log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
             terms[d - first + 1], terms[q_index], d, rho, pwindow
           );
+          if (exptilt_is_ill_conditioned(dist_id, terms[d - first + 1],
+                                         terms[q_index], d, rho, pwindow,
+                                         log_cdfs[d])) {
+            log_cdfs[d] = loglogistic_numeric_lcdf(
+              d | params, pwindow, 2, {rho}
+            );
+            numerical[d] = 1;
+          }
         }
+      }
+    }
+    for (d in (start + 1):n) {
+      if (numerical[d] || numerical[d - 1]) {
+        log_cdfs[d] = fmax(log_cdfs[d], log_cdfs[d - 1]);
       }
     }
     return log_cdfs;
@@ -1018,9 +1309,6 @@ vector primarycensored_analytical_lcdf_vectorized(
   for (t in max(start - pw, 0):n) {
     terms[t + 1] = primarycensored_uniform_terms(t, dist_id, params);
   }
-  // The numerical CDF can be out of order by its tolerance, which would make
-  // the PMF NaN
-  array[n] int numerical = rep_array(0, n);
   for (d in start:n) {
     vector[2] terms_q = terms[max(d - pw, 0) + 1];
     log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
@@ -1029,7 +1317,9 @@ vector primarycensored_analytical_lcdf_vectorized(
     if (dist_id == 31) {
       if (loglogistic_window_ill_conditioned(terms[d + 1][1], terms_q[1], d,
                                              pwindow, log_cdfs[d])) {
-        log_cdfs[d] = loglogistic_numeric_lcdf(d | params, pwindow);
+        log_cdfs[d] = loglogistic_numeric_lcdf(
+          d | params, pwindow, 1, rep_array(0.0, 0)
+        );
         numerical[d] = 1;
       }
       log_cdfs[d] = fmin(log_cdfs[d], 0);
@@ -1225,7 +1515,8 @@ int gamma_lccdf_underflows(real x, real shape) {
   *
   * The exponential (4) and gamma (2) forms need the delay with the rate
   * lowered by xi, which exists if rate - xi > 0. The normal (18) form has no
-  * restriction. Callers use the numerical path when this is 0.
+  * restriction. The log-logistic (31) needs a shape of at least 0.01.
+  * Callers use the numerical path when this is 0.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param xi Tilt. The exponentially tilted window with tilt rho needs
@@ -1239,6 +1530,7 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   if (dist_id == 4) return params[1] - xi > 0;
   if (dist_id == 2) return params[2] - xi > 0;
   if (dist_id == 18) return 1;
+  if (dist_id == 31) return params[2] >= 0.01;
   return 0;
 }
 
@@ -1256,12 +1548,14 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * primarycensored_log_gamma_pq().
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential), 18
+  *   (Normal) or 31 (Log-logistic), see check_for_tilt_transform()
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
-  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]. For the
+  * log-logistic with xi != 0 the second element is `nan`, as the upper
+  * transform is not available
   */
 vector log_tilt_transform_pair(real t, int dist_id, real xi,
                                array[] real params) {
@@ -1298,6 +1592,10 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
       log_total + primarycensored_log_std_normal_cdf(z),
       log_total + primarycensored_log_std_normal_cdf(-z)
     ]';
+  } else if (dist_id == 31) {
+    return loglogistic_log_tilt_pair(
+      t, xi, params[1], params[2], rep_vector(0, 0)
+    );
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -1365,8 +1663,8 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   * G_3 = sigma^3 (z (z^2 + 3) Phi(z) + (z^2 + 2) phi(z)).
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential), 18
+  *   (Normal) or 31 (Log-logistic), see check_for_tilt_transform()
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
   * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
@@ -1408,6 +1706,8 @@ vector primarycensored_tilt_moments(real t, int dist_id,
     return [
       log(sigma) + log_g1, 2 * log(sigma) + log_g2, 3 * log(sigma) + log_g3
     ]';
+  } else if (dist_id == 31) {
+    return loglogistic_tilt_moments(t, params[1], params[2]);
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -1443,7 +1743,72 @@ vector primarycensored_tilt_moments(real t, int dist_id,
   * primary is exponentially tilted, 0 otherwise
   */
 int check_for_exptilt(int dist_id, int primary_id) {
-  return primary_id == 2 && (dist_id == 2 || dist_id == 4 || dist_id == 18);
+  return primary_id == 2
+         && (dist_id == 2 || dist_id == 4 || dist_id == 18 || dist_id == 31);
+}
+
+/**
+  * Check if the direct form is too ill conditioned for a log-logistic delay
+  * @ingroup exponential_tilt_solutions
+  *
+  * The direct form multiplies an error in a transform by
+  * exp(rho d) / |exp(rho w) - 1|, see loglogistic_error_exceeds(). The other
+  * delays have no error beyond rounding of the result.
+  *
+  * @param dist_id Distribution identifier
+  * @param terms_d Terms at d from log_tilt_transform_pair() for xi = 0 and
+  *   xi = -rho
+  * @param terms_q Terms at q = d - pwindow
+  * @param d Delay
+  * @param rho Tilt, not zero
+  * @param pwindow Primary event window
+  * @param log_cdf Log CDF at d from primarycensored_exptilt_lcdf_from_terms()
+  *
+  * @return 1 if the numerical CDF is needed, 0 otherwise
+  */
+int exptilt_is_ill_conditioned(int dist_id, vector terms_d, vector terms_q,
+                               real d, real rho, data real pwindow,
+                               real log_cdf) {
+  if (dist_id != 31) return 0;
+  real q = d - pwindow;
+  real log_error = loglogistic_tilt_log_error(terms_d[1], -rho, d);
+  if (q > 0) {
+    log_error = log_sum_exp(
+      log_error, loglogistic_tilt_log_error(terms_q[1], -rho, q)
+    );
+  }
+  real log_den = rho > 0 ? log_diff_exp(rho * pwindow, 0)
+                         : log1m_exp(rho * pwindow);
+  return loglogistic_error_exceeds(rho * d + log_error - log_den, log_cdf);
+}
+
+/**
+  * Check if the small window form is too ill conditioned for a log-logistic
+  * delay
+  * @ingroup exponential_tilt_solutions
+  *
+  * The form differences G_1 at d and d - pwindow as the uniform solution
+  * does, see loglogistic_window_ill_conditioned(). The other delays have no
+  * error beyond rounding of the result.
+  *
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param d Delay
+  * @param pwindow Primary event window
+  * @param log_cdf Log CDF at d from
+  *   primarycensored_exptilt_small_window_lcdf_from_terms()
+  *
+  * @return 1 if the numerical CDF is needed, 0 otherwise
+  */
+int exptilt_small_window_is_ill_conditioned(int dist_id, array[] real params,
+                                            real d, data real pwindow,
+                                            real log_cdf) {
+  if (dist_id != 31) return 0;
+  return loglogistic_window_ill_conditioned(
+    loglogistic_log_tf(d, params[1], params[2]),
+    loglogistic_log_tf(d - pwindow, params[1], params[2]), d, pwindow,
+    log_cdf
+  );
 }
 
 /**
@@ -1462,8 +1827,10 @@ int check_for_exptilt(int dist_id, int primary_id) {
   */
 real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
                                real upper_q) {
-  // NaN from terms that both underflow is a zero difference
-  if (is_nan(lower_q - lower_d) || lower_q - lower_d <= upper_d - upper_q) {
+  // NaN from terms that both underflow is a zero difference. Upper terms
+  // that are not available are NaN too and the lower terms are used.
+  if (is_nan(lower_q - lower_d) || is_nan(upper_d - upper_q)
+      || lower_q - lower_d <= upper_d - upper_q) {
     return primarycensored_log_diff_exp(lower_d, lower_q);
   }
   return primarycensored_log_diff_exp(upper_q, upper_d);
@@ -1589,13 +1956,15 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
   * check_for_tilt_transform() is 1 for -rho.
   *
   * @param d Delay
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
+  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential), 18
+  *   (Normal) or 31 (Log-logistic)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param rho Tilt, the exponential growth rate of the primary
   *
-  * @return Log of the primary event censored CDF at d
+  * @return Log of the primary event censored CDF at d. For the log-logistic
+  * this is loglogistic_numeric_lcdf() beyond the transform limit or where the
+  * solution is ill conditioned
   */
 real primarycensored_exptilt_lcdf(data real d, int dist_id,
                                   array[] real params, data real pwindow,
@@ -1607,25 +1976,38 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
   if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-3)) {
-    return primarycensored_exptilt_small_window_lcdf_from_terms(
+    real log_cdf = primarycensored_exptilt_small_window_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params),
       primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
     );
+    if (exptilt_small_window_is_ill_conditioned(dist_id, params, d, pwindow,
+                                                log_cdf)) {
+      return loglogistic_numeric_lcdf(d | params, pwindow, 2, {rho});
+    }
+    return log_cdf;
   }
   if (positive && d < pwindow && abs(rho) * d < 1e-2) {
     return primarycensored_exptilt_small_delay_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
     );
   }
-  return primarycensored_exptilt_lcdf_from_terms(
-    append_row(
-      log_tilt_transform_pair(d, dist_id, 0, params),
-      log_tilt_transform_pair(d, dist_id, -rho, params)
-    ),
-    append_row(
-      log_tilt_transform_pair(q, dist_id, 0, params),
-      log_tilt_transform_pair(q, dist_id, -rho, params)
-    ),
-    d, rho, pwindow
+  if (dist_id == 31 && !loglogistic_tilt_in_range(d, -rho, params[2])) {
+    return loglogistic_numeric_lcdf(d | params, pwindow, 2, {rho});
+  }
+  vector[4] terms_d = append_row(
+    log_tilt_transform_pair(d, dist_id, 0, params),
+    log_tilt_transform_pair(d, dist_id, -rho, params)
   );
+  vector[4] terms_q = append_row(
+    log_tilt_transform_pair(q, dist_id, 0, params),
+    log_tilt_transform_pair(q, dist_id, -rho, params)
+  );
+  real log_cdf = primarycensored_exptilt_lcdf_from_terms(
+    terms_d, terms_q, d, rho, pwindow
+  );
+  if (exptilt_is_ill_conditioned(dist_id, terms_d, terms_q, d, rho, pwindow,
+                                 log_cdf)) {
+    return loglogistic_numeric_lcdf(d | params, pwindow, 2, {rho});
+  }
+  return log_cdf;
 }
