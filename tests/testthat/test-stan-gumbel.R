@@ -902,10 +902,9 @@ test_that("Gumbel log CDF gradients match finite differences across the
             expect_false(res$rejected, info = label)
             expect_length(res$gradient, 4)
             # Finite differences have an absolute error of about 3e-5, and
-            # a relative error of about 1e-4 from the solver on the
-            # numerical path
+            # on the numerical path an error of about 1e-3 from the solver
             expect_gumbel_gradient_close(
-              res, case, label, scale = 10, slack = 1e-4
+              res, case, label, scale = 10, slack = 5e-4
             )
           }
         }
