@@ -133,3 +133,68 @@ gumbel_spike_families <- function() {
     )
   )
 }
+
+# Inverse gamma CDF, 0 for a non-positive delay
+pinvgamma_ref <- function(q, shape, scale) {
+  ifelse(q > 0, pgamma(scale / q, shape, lower.tail = FALSE), 0)
+}
+
+# Delays on the positive reals that start well after the window, for a
+# location above the window end
+gumbel_late_cases <- function() {
+  list(
+    list(
+      dist_id = 1L, params = c(1, 0.2), pdist = plnorm,
+      args = list(meanlog = 1, sdlog = 0.2)
+    ),
+    list(
+      dist_id = 1L, params = c(2, 0.1), pdist = plnorm,
+      args = list(meanlog = 2, sdlog = 0.1)
+    ),
+    list(
+      dist_id = 2L, params = c(50, 5), pdist = pgamma,
+      args = list(shape = 50, rate = 5)
+    ),
+    list(
+      dist_id = 3L, params = c(20, 6), pdist = pweibull,
+      args = list(shape = 20, scale = 6)
+    ),
+    list(
+      dist_id = 16L, params = c(3, 4), pdist = pinvgamma_ref,
+      args = list(shape = 3, scale = 4)
+    )
+  )
+}
+
+# Delays on the positive reals with a guarded Stan log CDF, as
+# (dist_id, Stan parameters, R CDF)
+gumbel_guarded_cases <- function() {
+  list(
+    list(
+      dist_id = 13L, params = 20, pdist = pchisq, args = list(df = 20)
+    ),
+    list(
+      dist_id = 16L, params = c(3, 4), pdist = pinvgamma_ref,
+      args = list(shape = 3, scale = 4)
+    ),
+    list(
+      dist_id = 19L, params = 4, pdist = pinvgamma_ref,
+      args = list(shape = 2, scale = 0.5)
+    ),
+    list(
+      dist_id = 22L, params = c(4, 1), pdist = pinvgamma_ref,
+      args = list(shape = 2, scale = 2)
+    )
+  )
+}
+
+gumbel_case_cdf <- function(case) {
+  function(x) do.call(case$pdist, c(list(x), case$args))
+}
+
+gumbel_case_label <- function(case, ...) {
+  paste0(
+    "dist ", case$dist_id, " params ", toString(case$params), ", ",
+    paste(names(list(...)), unlist(list(...)), sep = " = ", collapse = ", ")
+  )
+}

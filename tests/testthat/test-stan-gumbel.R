@@ -29,17 +29,6 @@ gumbel_case_lower <- function(case) {
   if (case$dist_id == 18L) -Inf else 0
 }
 
-gumbel_case_cdf <- function(case) {
-  function(x) do.call(case$pdist, c(list(x), case$args))
-}
-
-gumbel_case_label <- function(case, ...) {
-  paste0(
-    "dist ", case$dist_id, " params ", toString(case$params), ", ",
-    paste(names(list(...)), unlist(list(...)), sep = " = ", collapse = ", ")
-  )
-}
-
 # The delay object to call the R implementation with
 gumbel_case_object <- function(case, mu, beta) {
   gumbel_object(
@@ -1097,35 +1086,80 @@ test_that("a log CDF below -1000 is -inf in the numerical path", {
   }
 })
 
-# Delays on the positive reals that start well after the window, for a
-# location above the window end
-gumbel_late_cases <- function() {
-  pinvgamma_ref <- function(q, shape, scale) {
-    pgamma(scale / q, shape, lower.tail = FALSE)
+test_that("the Stan numerical path matches the reference for chi-square
+  and inverse gamma delays", {
+  settings <- list(
+    c(w = 1, mu = 0.5, beta = 0.3), c(w = 1, mu = 1.5, beta = 0.1),
+    c(w = 2, mu = 2, beta = 0.05), c(w = 2, mu = -0.5, beta = 0.5)
+  )
+  for (case in gumbel_guarded_cases()) {
+    cdf <- gumbel_case_cdf(case)
+    for (s in settings) {
+      d <- c(0.5, 1, 2.5, 5, 12)
+      lcdf <- vapply(d, primarycensored_lcdf, numeric(1),
+        case$dist_id, case$params, s[["w"]], 0, Inf, 4L,
+        c(s[["mu"]], s[["beta"]])
+      )
+      expected <- gumbel_reference(
+        d, s[["w"]], s[["mu"]], s[["beta"]], cdf, TRUE
+      )
+      keep <- expected > 1e-12
+      expect_lt(
+        gumbel_error(exp(lcdf)[keep], expected[keep]), 1e-7,
+        label = gumbel_case_label(case, setting = toString(s))
+      )
+    }
   }
-  list(
+})
+
+test_that("the Stan numerical path matches rprimarycensored draws", {
+  families <- list(
     list(
-      dist_id = 1L, params = c(1, 0.2), pdist = plnorm,
-      args = list(meanlog = 1, sdlog = 0.2)
+      dist_id = 1L, params = c(1, 0.5), rdist = rlnorm,
+      args = list(meanlog = 1, sdlog = 0.5), pdist = plnorm
     ),
     list(
-      dist_id = 1L, params = c(2, 0.1), pdist = plnorm,
-      args = list(meanlog = 2, sdlog = 0.1)
+      dist_id = 3L, params = c(2, 3), rdist = rweibull,
+      args = list(shape = 2, scale = 3), pdist = pweibull
     ),
     list(
-      dist_id = 2L, params = c(50, 5), pdist = pgamma,
-      args = list(shape = 50, rate = 5)
-    ),
-    list(
-      dist_id = 3L, params = c(20, 6), pdist = pweibull,
-      args = list(shape = 20, scale = 6)
-    ),
-    list(
-      dist_id = 16L, params = c(3, 4), pdist = pinvgamma_ref,
-      args = list(shape = 3, scale = 4)
+      dist_id = 17L, params = c(2, 1), rdist = rlogis,
+      args = list(location = 2, scale = 1), pdist = plogis
     )
   )
-}
+  primaries <- list(
+    list(mu = -0.5, beta = 0.5), list(mu = 0.5, beta = 0.3),
+    list(mu = 1.5, beta = 0.1)
+  )
+  n <- 20000
+  q <- c(0.5, 2, 4, 8)
+  for (fam in families) {
+    for (primary in primaries) {
+      set.seed(11)
+      draws <- do.call(
+        rprimarycensored,
+        c(
+          list(
+            n = n, rdist = fam$rdist, pwindow = 1, swindow = 0,
+            rprimary = rtgumbel, rprimary_args = primary
+          ),
+          fam$args
+        )
+      )
+      ecdf_q <- vapply(q, function(x) mean(draws <= x), numeric(1))
+      lower <- if (fam$dist_id == 17L) -Inf else 0
+      stan_cdf <- exp(vapply(q, primarycensored_lcdf, numeric(1),
+        fam$dist_id, fam$params, 1, lower, Inf, 4L,
+        c(primary$mu, primary$beta)
+      ))
+      se <- sqrt(stan_cdf * (1 - stan_cdf) / n)
+      expect_true(
+        all(abs(ecdf_q - stan_cdf) < 4.5 * se + 1e-4),
+        info = paste(fam$dist_id, toString(unlist(primary)))
+      )
+    }
+  }
+})
 
 test_that("the Stan numerical path is -inf, not an error, where the delay
   starts well after a spike at the window end", {

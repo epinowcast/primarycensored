@@ -370,11 +370,34 @@ test_that("the numerical path keeps a small delay at the end of the window", {
   expect_equal(pcens_cdf(obj, 1, 1), expected, tolerance = 1e-7)
 })
 
+test_that("the numerical path agrees with the reference where the delay
+  starts well after a spike at the window end", {
+  for (case in gumbel_late_cases()) {
+    cdf <- gumbel_case_cdf(case)
+    for (mu in c(1.5, 2, 3)) {
+      for (beta in c(0.05, 0.1)) {
+        obj <- gumbel_object(case, mu, beta)
+        actual <- pcens_cdf(obj, c(1, 2, 3), 1)
+        expected <- gumbel_reference(c(1, 2, 3), 1, mu, beta, cdf, TRUE)
+        expect_lt(
+          max(abs(actual - expected)), 1e-9,
+          label = gumbel_case_label(case, mu = mu, beta = beta)
+        )
+        numeric <- pcens_cdf(obj, c(1, 2, 3), 1, use_numeric = TRUE)
+        expect_equal(actual, numeric, tolerance = 1e-12)
+      }
+    }
+  }
+})
+
 test_that("rprimarycensored samples match the analytic CDF", {
   args <- list(
     list(rdist = rexp, pdist = pexp, rate = 0.4),
     list(rdist = rgamma, pdist = pgamma, shape = 3, rate = 1),
-    list(rdist = rnorm, pdist = pnorm, mean = 5, sd = 1)
+    list(rdist = rnorm, pdist = pnorm, mean = 5, sd = 1),
+    list(rdist = rlnorm, pdist = plnorm, meanlog = 1, sdlog = 0.5),
+    list(rdist = rweibull, pdist = pweibull, shape = 2, scale = 3),
+    list(rdist = rlogis, pdist = plogis, location = 2, scale = 1)
   )
   # Location before, inside and after the window
   primaries <- list(
