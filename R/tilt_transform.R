@@ -30,8 +30,8 @@
 #'   tilted delay distribution exists for `xi`, otherwise the numerical
 #'   method is used.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
-#' * `.pcens_tilt_moments()`: a matrix of the log of the first and second
-#'   moments of the delay about `t`, see [pcens_cdf_exptilt].
+#' * `.pcens_tilt_moments()`: a matrix of the log of the first, second and
+#'   third moments of the delay about `t`, see [pcens_cdf_exptilt].
 #'
 #' @keywords internal
 #' @name tilt_transform
@@ -74,14 +74,14 @@ NULL
 #'
 #' @noRd
 .gamma_shape_rate <- function(object) {
-  shape <- object$args$shape
-  scale <- object$args$scale
-  rate <- object$args$rate
+  args <- object$args
+  shape <- args$shape
+  rate <- args$rate
   if (is.null(shape)) {
     stop("shape parameter is required for Gamma distribution", call. = FALSE)
   }
   if (is.null(rate)) {
-    rate <- if (is.null(scale)) 1 else 1 / scale
+    rate <- if (is.null(args$scale)) 1 else 1 / args$scale
   }
   list(shape = shape, rate = rate)
 }
@@ -99,15 +99,19 @@ NULL
 #'
 #' @noRd
 .log1m_exp <- function(x) {
-  out <- log1p(-exp(x))
-  near_zero <- which(x > -log(2))
-  if (length(near_zero) > 0L) {
-    out[near_zero] <- log(-expm1(x[near_zero]))
+  near_zero <- x > -log(2)
+  if (!any(near_zero)) {
+    return(log1p(-exp(x)))
   }
+  out <- log1p(-exp(x))
+  out[near_zero] <- log(-expm1(x[near_zero]))
   out
 }
 
 .log_diff_exp <- function(a, b) {
+  if (length(a) == length(b) && !anyNA(a) && !anyNA(b) && all(a > b)) {
+    return(a + .log1m_exp(b - a))
+  }
   n <- max(length(a), length(b))
   a <- rep_len(a, n)
   b <- rep_len(b, n)
@@ -234,14 +238,14 @@ NULL
 
 #' Log moments of a gamma delay about a point
 #'
-#' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2`,
+#' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2, 3`,
 #' from gamma CDFs with the shape raised by `k`.
 #'
 #' @param t Numeric vector of finite points.
 #'
 #' @param shape,rate Gamma delay parameters.
 #'
-#' @return A matrix with columns `G1` and `G2`, `-Inf` for `t <= 0`.
+#' @return A matrix with columns `G1`, `G2` and `G3`, `-Inf` for `t <= 0`.
 #'
 #' @noRd
 .gamma_moments <- function(t, shape, rate) {
@@ -253,12 +257,18 @@ NULL
     stats::pgamma(tp, shape + 1, rate, log.p = TRUE)
   log_m2 <- log(shape) + log(shape + 1) - 2 * log(rate) +
     stats::pgamma(tp, shape + 2, rate, log.p = TRUE)
+  log_m3 <- log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate) +
+    stats::pgamma(tp, shape + 3, rate, log.p = TRUE)
   log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
   log_h <- .log_diff_exp(log_t + log_m1, log_m2)
   log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
+  log_a <- .log_diff_exp(log_t + log_m2, log_m3)
+  log_b <- .log_diff_exp(log_t + log_h, log_a)
+  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
   cbind(
     G1 = ifelse(positive, log_g1, -Inf),
-    G2 = ifelse(positive, log_g2, -Inf)
+    G2 = ifelse(positive, log_g2, -Inf),
+    G3 = ifelse(positive, log_g3, -Inf)
   )
 }
 
@@ -295,5 +305,18 @@ NULL
     .log_diff_exp(log(z^2 + 1) + log_Phi, log_abs_z + log_phi),
     .log_sum_exp(log(z^2 + 1) + log_Phi, log_abs_z + log_phi)
   )
-  cbind(G1 = log(p$sd) + log_g1, G2 = 2 * log(p$sd) + log_g2)
+  log_g3 <- ifelse(
+    below,
+    .log_diff_exp(
+      log(z^2 + 2) + log_phi, log_abs_z + log(z^2 + 3) + log_Phi
+    ),
+    .log_sum_exp(
+      log(z^2 + 2) + log_phi, log_abs_z + log(z^2 + 3) + log_Phi
+    )
+  )
+  cbind(
+    G1 = log(p$sd) + log_g1,
+    G2 = 2 * log(p$sd) + log_g2,
+    G3 = 3 * log(p$sd) + log_g3
+  )
 }

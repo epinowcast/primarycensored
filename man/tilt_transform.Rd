@@ -75,8 +75,8 @@ the support for the lower transform.
 tilted delay distribution exists for \code{xi}, otherwise the numerical
 method is used.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
-\item \code{.pcens_tilt_moments()}: a matrix of the log of the first and second
-moments of the delay about \code{t}, see \link{pcens_cdf_exptilt}.
+\item \code{.pcens_tilt_moments()}: a matrix of the log of the first, second and
+third moments of the delay about \code{t}, see \link{pcens_cdf_exptilt}.
 }
 }
 \description{

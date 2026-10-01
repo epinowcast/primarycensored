@@ -77,14 +77,12 @@ test_that("check_for_tilt_transform needs the tilted delay to exist", {
   }
 })
 
-test_that("check_for_analytical includes the exponentially tilted primary", {
+test_that("check_for_exptilt identifies the exponentially tilted primary", {
   for (dist_id in c(2L, 4L, 18L)) {
-    expect_identical(check_for_analytical(dist_id, 2L), 1L)
     expect_identical(check_for_exptilt(dist_id, 2L), 1L)
     expect_identical(check_for_exptilt(dist_id, 1L), 0L)
   }
   for (dist_id in c(1L, 3L, 5L, 9L)) {
-    expect_identical(check_for_analytical(dist_id, 2L), 0L)
     expect_identical(check_for_exptilt(dist_id, 2L), 0L)
   }
   expect_identical(check_for_analytical(4L, 1L), 0L)
@@ -147,6 +145,20 @@ test_that("Stan tilt transforms match the R transforms", {
         info = info
       )
     }
+  }
+})
+
+test_that("Stan tilt moments match the R moments", {
+  ts <- c(1e-3, 0.4, 1, 3.5, 12, 40)
+  for (case in exptilt_stan_cases) {
+    obj <- exptilt_object(
+      list(pdist = case$pdist, args = case$args), 0.1
+    )
+    actual <- t(vapply(
+      ts, primarycensored_tilt_moments, numeric(3), case$dist_id, case$params
+    ))
+    expected <- unname(.pcens_tilt_moments(obj, ts))
+    expect_equal(actual, expected, tolerance = 1e-9, info = case$dist_id)
   }
 })
 
@@ -289,9 +301,64 @@ test_that("primarycensored_exptilt_lcdf matches Monte Carlo samples", {
   }
 })
 
+# The ODE branch of primarycensored_cdf() for given delays, as the CDF of a
+# fixed parameter run of a model that calls the ODE solver directly
+exptilt_ode_model <- function() {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  functions <- pcd_load_stan_functions(
+    wrap_in_block = TRUE, write_to_file = FALSE
+  )
+  code <- paste0(
+    functions, "\n",
+    "data {\n",
+    "  int n;\n",
+    "  array[n] real d;\n",
+    "  int dist_id;\n",
+    "  int n_params;\n",
+    "  array[n_params] real params;\n",
+    "  real pwindow;\n",
+    "  array[1] real primary_params;\n",
+    "}\n",
+    "generated quantities {\n",
+    "  array[n] real cdf;\n",
+    "  for (i in 1:n) {\n",
+    "    real lower_bound = dist_has_positive_support(dist_id)\n",
+    "      ? fmax(d[i] - pwindow, 0) : d[i] - pwindow;\n",
+    "    array[n_params + 1] real theta =\n",
+    "      append_array(params, primary_params);\n",
+    "    array[4] int ids = {dist_id, 2, n_params, 1};\n",
+    "    cdf[i] = ode_rk45(\n",
+    "      primarycensored_ode, rep_vector(0.0, 1), lower_bound, {d[i]},\n",
+    "      theta, {d[i], pwindow}, ids\n",
+    "    )[1, 1];\n",
+    "  }\n",
+    "}\n"
+  )
+  path <- file.path(tempdir(), "pcd_exptilt_ode.stan")
+  writeLines(code, path)
+  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
+}
+
+exptilt_ode_cdf <- function(model, case, d, pwindow, rho) {
+  fit <- model$sample(
+    data = list(
+      n = length(d), d = as.array(d), dist_id = case$dist_id,
+      n_params = length(case$params), params = as.array(case$params),
+      pwindow = pwindow, primary_params = as.array(rho)
+    ),
+    fixed_param = TRUE, chains = 1, iter_sampling = 1, refresh = 0,
+    show_messages = FALSE, sig_figs = 18
+  )
+  as.numeric(fit$draws("cdf", format = "matrix"))
+}
+
 test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
   solution and agree with the ODE path", {
   d <- c(0.2, 1, 2.5, 6, 15)
+  ode_model <- exptilt_ode_model()
   for (case in exptilt_stan_cases) {
     lower <- exptilt_case_lower(case)
     cdf <- exptilt_case_cdf(case)
@@ -317,10 +384,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
         )
         expect_lt(max_rel_diff(plain, expected), 1e-7, label = info)
         # ODE tolerances are 1e-6, and about 1e-4 for a shape below 1
-        ode <- vapply(
-          d, primarycensored_numeric_cdf, numeric(1),
-          case$dist_id, case$params, pwindow, 2L, rho
-        )
+        ode <- exptilt_ode_cdf(ode_model, case, d, pwindow, rho)
         expect_lt(max(abs(plain - ode)), 1e-4, label = info)
       }
     }
@@ -328,35 +392,31 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
 })
 
 test_that("inadmissible tilts use the ODE path", {
+  ode_model <- exptilt_ode_model()
   cases <- list(
     list(dist_id = 4L, params = 0.3, rho = -0.5),
     list(dist_id = 4L, params = 0.3, rho = -0.3),
     list(dist_id = 2L, params = c(2.5, 0.4), rho = -0.5),
     list(dist_id = 2L, params = c(2.5, 0.4), rho = -0.4)
   )
+  d <- c(0.5, 2, 5, 10)
   for (case in cases) {
     expect_identical(
       check_for_analytical_params(
         case$dist_id, case$params, 2L, case$rho
       ), 0L
     )
-    for (d in c(0.5, 2, 5, 10)) {
-      ode <- primarycensored_numeric_cdf(
-        d, case$dist_id, case$params, 2, 2L, case$rho
-      )
-      expect_identical(
-        primarycensored_cdf(
-          d, case$dist_id, case$params, 2, 0, Inf, 2L, case$rho
-        ),
-        ode
-      )
-      expect_identical(
-        primarycensored_lcdf(
-          d, case$dist_id, case$params, 2, 0, Inf, 2L, case$rho
-        ),
-        log(ode)
-      )
-    }
+    ode <- exptilt_ode_cdf(ode_model, case, d, 2, case$rho)
+    plain <- vapply(
+      d, primarycensored_cdf, numeric(1),
+      case$dist_id, case$params, 2, 0, Inf, 2L, case$rho
+    )
+    expect_equal(plain, ode, tolerance = 1e-12)
+    lcdf <- vapply(
+      d, primarycensored_lcdf, numeric(1),
+      case$dist_id, case$params, 2, 0, Inf, 2L, case$rho
+    )
+    expect_equal(lcdf, log(ode), tolerance = 1e-12)
   }
 })
 
@@ -367,15 +427,6 @@ test_that("the analytical function rejects an inadmissible tilt", {
     ),
     "tilted delay distribution"
   )
-})
-
-test_that("primarycensored_numeric_cdf is the CDF for other delays", {
-  for (d in c(0.5, 2, 5)) {
-    expect_identical(
-      primarycensored_cdf(d, 3L, c(1.5, 2), 2, 0, Inf, 2L, 0.3),
-      primarycensored_numeric_cdf(d, 3L, c(1.5, 2), 2, 2L, 0.3)
-    )
-  }
 })
 
 test_that("normal delays handle negative delays and truncation", {
@@ -417,16 +468,15 @@ per_delay_exptilt_lcdf <- function(delays, dist_id, params, pwindow, rho) {
   )
 }
 
-test_that("check_for_exptilt_vectorized needs an integer pwindow", {
+test_that("check_for_analytical_vectorized includes the tilted delays", {
   for (dist_id in c(2L, 4L, 18L)) {
-    expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 1), 1L)
-    expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 7), 1L)
-    expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 1.5), 0L)
-    expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 0.5), 0L)
-    expect_identical(check_for_exptilt_vectorized(dist_id, 1L, 1), 0L)
+    expect_identical(check_for_analytical_vectorized(dist_id, 2L, 1), 1L)
+    expect_identical(check_for_analytical_vectorized(dist_id, 2L, 7), 1L)
+    expect_identical(check_for_analytical_vectorized(dist_id, 2L, 1.5), 0L)
+    expect_identical(check_for_analytical_vectorized(dist_id, 2L, 0.5), 0L)
   }
   for (dist_id in c(1L, 3L, 26L)) {
-    expect_identical(check_for_exptilt_vectorized(dist_id, 2L, 1), 0L)
+    expect_identical(check_for_analytical_vectorized(dist_id, 2L, 1), 0L)
   }
 })
 
@@ -441,8 +491,8 @@ test_that("the vectorised tilted CDF matches the per delay CDF", {
           next
         }
         for (start in c(1L, 5L)) {
-          vectorised <- primarycensored_exptilt_lcdf_vectorized(
-            start, n, case$dist_id, case$params, pwindow, rho
+          vectorised <- primarycensored_analytical_lcdf_vectorized(
+            start, n, case$dist_id, case$params, pwindow, 2L, rho
           )
           expect_length(vectorised, n)
           expect_identical(
@@ -466,8 +516,8 @@ test_that("the vectorised tilted CDF mixes the small delay and direct forms", {
   rho <- 2e-5
   for (case in exptilt_stan_cases[c(2, 4, 5)]) {
     expect_identical(
-      primarycensored_exptilt_lcdf_vectorized(
-        1L, 25L, case$dist_id, case$params, pwindow, rho
+      primarycensored_analytical_lcdf_vectorized(
+        1L, 25L, case$dist_id, case$params, pwindow, 2L, rho
       )[1:25],
       per_delay_exptilt_lcdf(1:25, case$dist_id, case$params, pwindow, rho)
     )
@@ -481,8 +531,8 @@ test_that("primarycensored_lcdf_vectorized uses the tilted shared terms", {
       primarycensored_lcdf_vectorized(
         1L, 20L, case$dist_id, case$params, 3, 2L, rho
       ),
-      primarycensored_exptilt_lcdf_vectorized(
-        1L, 20L, case$dist_id, case$params, 3, rho
+      primarycensored_analytical_lcdf_vectorized(
+        1L, 20L, case$dist_id, case$params, 3, 2L, rho
       )
     )
   }
@@ -1265,6 +1315,72 @@ test_that("the small tilt and direct forms have accurate gradients for large
       all(abs(res$gradient - expected) <= 3e-5 * pmax(abs(expected), 1e-2)),
       info = paste0(
         label, ": gradient ", toString(signif(res$gradient, 6)),
+        ", reference ", toString(signif(expected, 6))
+      )
+    )
+  }
+})
+
+test_that("the tilted log CDF is accurate for gamma delays with large
+  shapes", {
+  q <- c(6, 8, 9.5, 10, 10.5)
+  for (shape in c(500, 1000, 5000)) {
+    for (pwindow in c(1, 7)) {
+      for (rho in c(-1e-3, -1e-5, 2e-5, 1.5e-4, 1e-3, 1e-2)) {
+        expected <- exptilt_gamma_log_reference(
+          q, pwindow, rho, shape, shape / 10
+        )
+        actual <- vapply(
+          q, primarycensored_lcdf, numeric(1),
+          2L, c(shape, shape / 10), pwindow, 0, Inf, 2L, rho
+        )
+        expect_lt(
+          max(abs(expm1(actual - expected))), 1e-6,
+          label = sprintf(
+            "shape = %g, pwindow = %g, r = %g", shape, pwindow, rho
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("the small window form has accurate gradients in the tilt", {
+  model <- exptilt_gradient_model()
+  case <- exptilt_stan_cases[[4]]
+  case$params <- c(3, 1)
+  max_delay <- 12
+  log_pmf_sum <- function(params, pwindow, rho) {
+    cdf <- function(x) stats::pgamma(x, params[1], params[2])
+    sum(log(diff(c(
+      0, exptilt_reference(1:(max_delay + 1), pwindow, rho, cdf)
+    ))))
+  }
+  pwindow <- 2
+  for (rho in c(-3e-5, 3e-5, -1e-3, 4e-3)) {
+    theta <- c(case$params, rho)
+    expected <- vapply(seq_along(theta), function(i) {
+      h <- if (i == 3) 1e-3 else 1e-3 * theta[i]
+      at <- function(step) {
+        shifted <- theta
+        shifted[i] <- theta[i] + step * h
+        log_pmf_sum(shifted[1:2], pwindow, shifted[3])
+      }
+      (-at(2) + 8 * at(1) - 8 * at(-1) + at(-2)) / (12 * h)
+    }, numeric(1))
+    # Log scale rate with a Jacobian term
+    expected[2] <- expected[2] * theta[2] + 1
+    res <- exptilt_gradient_at(
+      model, case, max_delay, pwindow, rho, vectorised = TRUE
+    )
+    expect_true(all(is.finite(res$gradient)))
+    # The tilt is held to 1e-5 and the delay parameters to 1e-4
+    tolerance <- c(1e-4, 1e-4, 1e-5)
+    allowed <- tolerance * pmax(abs(expected), 1e-2)
+    expect_true(
+      all(abs(res$gradient - expected) <= allowed),
+      info = paste0(
+        "r = ", rho, ": gradient ", toString(signif(res$gradient, 6)),
         ", reference ", toString(signif(expected, 6))
       )
     )

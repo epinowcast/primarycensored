@@ -23,29 +23,36 @@
 #' The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
 #' \eqn{\lambda}, so that the tilted delay distribution exists.
 #' Otherwise the numerical method is used.
-#' In Stan the numerical method is less accurate in the lower tail of a
-#' gamma with shape below 1.
+#' The numerical method is less accurate in the lower tail of a gamma with
+#' shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
 #'
 #' The direct form cancels as \eqn{\rho \to 0}.
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
-#' replace it.
-#' * For \eqn{|\rho| w < 10^{-4}}, the uniform window limit with its first
-#'   order correction in \eqn{\rho},
+#' replace it to second order in \eqn{\rho}.
+#' * For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-5}} for delays on
+#'   the reals, the uniform window limit with its corrections,
 #'   \eqn{\{G_1(q) - G_1(q - w)\} / w +
-#'   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w)}.
+#'   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
+#'   \rho^2 \{G_3(q) - G_3(q - w) - 3 w [G_2(q) + G_2(q - w)] / 2 +
+#'   w^2 [G_1(q) - G_1(q - w)] / 2\} / (6 w)}.
 #' * For delays on the non-negative reals with \eqn{q < w} and
-#'   \eqn{|\rho| q < 10^{-4}},
-#'   \eqn{\rho \{G_1(q) + \rho G_2(q) / 2\} / (e^{\rho w} - 1)}.
+#'   \eqn{|\rho| q < 10^{-2}},
+#'   \eqn{\rho \{G_1(q) + \rho G_2(q) / 2 + \rho^2 G_3(q) / 6\} /
+#'   (e^{\rho w} - 1)}.
 #'
-#' The value of both forms has a truncation error below 1e-9.
-#' The Stan gradient in \eqn{\rho} of both has a relative error of up to
-#' about 2e-5 at the thresholds.
+#' The truncation error of both forms is about \eqn{(|\rho| w)^4 / 10}, below
+#' 3e-8 at their limits.
+#' The direct form loses about 1e-14 / \eqn{|\rho| w} for delays on the
+#' reals, which is why their limit is lower.
+#' For a gamma delay it also loses accuracy in proportion to the shape.
+#' The CDF stays within a relative 1e-6 of numerical integration for shapes
+#' up to 5000 and \eqn{|\rho|} from 1e-5 and loses accuracy above this.
 #'
 #' The CDF agrees with numerical integration to a relative difference of
-#' about 1e-9 or better, except in the deep lower tail of a normal delay with
-#' a small tilt (about 1e-7) and for windows much smaller than the delay,
-#' which lose up to about 1e-13 / `pwindow` to the difference of the terms at
-#' the two endpoints.
+#' about 1e-9 or better in the bulk and the tails, except in the deep lower
+#' tail of a normal delay with a small tilt (about 1e-7), for windows much
+#' smaller than the delay, which lose up to about 1e-13 / `pwindow` to the
+#' difference of the terms at the two endpoints, and for the cases above.
 #'
 #' @inherit pcens_cdf return
 #'
@@ -107,9 +114,10 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
 }
 
-# The direct form loses about 1e-14 / (|rho| w) and the small tilt forms
-# have a truncation error of about (|rho| w)^2 / 12, which balance near 1e-4
-.exptilt_small <- 1e-4
+# Largest |rho| w for the small tilt forms, see ?pcens_cdf_exptilt
+.exptilt_small <- function(lower) {
+  if (is.finite(lower)) 1e-2 else 1e-5
+}
 
 #' Primary event censored CDF for an exponentially tilted primary
 #'
@@ -169,13 +177,14 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   log_cdf <- rep(-Inf, length(q))
 
   active <- !positive | q > lower
-  if (abs(rho) * pwindow < .exptilt_small) {
+  small_limit <- .exptilt_small(lower)
+  if (abs(rho) * pwindow < small_limit) {
     small_window <- active
     tiny_delay <- rep(FALSE, length(q))
   } else {
     small_window <- rep(FALSE, length(q))
     tiny_delay <- positive & active & q < pwindow &
-      abs(rho) * q < .exptilt_small
+      abs(rho) * q < small_limit
   }
   direct <- active & !small_window & !tiny_delay
 
@@ -234,6 +243,27 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   match(t, endpoints)
 }
 
+#' Endpoints and the positions of `q` and `q - pwindow` among them
+#'
+#' A single `q` skips the de-duplication.
+#'
+#' @inheritParams .exptilt_endpoints
+#'
+#' @return List with `endpoints` and the positions `q` and `y`.
+#'
+#' @noRd
+.exptilt_layout <- function(q, pwindow, lower) {
+  if (length(q) == 1L) {
+    return(list(endpoints = c(q, q - pwindow), q = 1L, y = 2L))
+  }
+  endpoints <- .exptilt_endpoints(q, pwindow, lower)
+  list(
+    endpoints = endpoints,
+    q = .exptilt_index(q, endpoints, lower),
+    y = .exptilt_index(q - pwindow, endpoints, lower)
+  )
+}
+
 #' Direct form of the exponentially tilted log CDF
 #'
 #' The expression of [pcens_cdf_exptilt] on the log scale.
@@ -246,21 +276,16 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @noRd
 .exptilt_lcdf_direct <- function(object, q, pwindow, rho, lower) {
-  endpoints <- .exptilt_endpoints(q, pwindow, lower)
+  pos <- .exptilt_layout(q, pwindow, lower)
+  endpoints <- pos$endpoints
   endpoint_terms <- cbind(
     .pcens_tilt_transform(object, endpoints, 0),
     .pcens_tilt_transform(object, endpoints, 0, upper = TRUE),
     .pcens_tilt_transform(object, endpoints, -rho),
     .pcens_tilt_transform(object, endpoints, -rho, upper = TRUE)
   )
-  at_q <- endpoint_terms[
-    .exptilt_index(q, endpoints, lower), ,
-    drop = FALSE
-  ]
-  at_y <- endpoint_terms[
-    .exptilt_index(q - pwindow, endpoints, lower), ,
-    drop = FALSE
-  ]
+  at_q <- endpoint_terms[pos$q, , drop = FALSE]
+  at_y <- endpoint_terms[pos$y, , drop = FALSE]
   log_diff_f <- .exptilt_tail_diff(
     at_q[, 1], at_y[, 1], at_q[, 2], at_y[, 2]
   )
@@ -307,19 +332,21 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @noRd
 .exptilt_lcdf_small_window <- function(object, q, pwindow, rho, lower) {
-  endpoints <- .exptilt_endpoints(q, pwindow, lower)
-  moments <- .pcens_tilt_moments(object, endpoints)
-  at_q <- moments[.exptilt_index(q, endpoints, lower), , drop = FALSE]
-  at_y <- moments[.exptilt_index(q - pwindow, endpoints, lower), ,
-    drop = FALSE
-  ]
+  pos <- .exptilt_layout(q, pwindow, lower)
+  moments <- .pcens_tilt_moments(object, pos$endpoints)
+  at_q <- moments[pos$q, , drop = FALSE]
+  at_y <- moments[pos$y, , drop = FALSE]
   # Scaled by G_1(q) to avoid underflow for small CDFs
   scale <- at_q[, 1]
   g1_y <- exp(at_y[, 1] - scale)
   g2_q <- exp(at_q[, 2] - scale)
   g2_y <- exp(at_y[, 2] - scale)
+  g3_q <- exp(at_q[, 3] - scale)
+  g3_y <- exp(at_y[, 3] - scale)
   relative <- (1 - g1_y) +
-    0.5 * rho * (g2_q - pwindow - g2_y - pwindow * g1_y)
+    0.5 * rho * (g2_q - pwindow - g2_y - pwindow * g1_y) +
+    rho^2 * ((g3_q - g3_y) / 6 - pwindow * (g2_q + g2_y) / 4 +
+      pwindow^2 * (1 - g1_y) / 12)
   out <- scale + log(pmax(relative, 0)) - log(pwindow)
   out[!is.finite(scale)] <- -Inf
   out
@@ -341,5 +368,6 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
     log_den <- .log1m_exp(rho * pwindow)
   }
   moments[, 1] + log(abs(rho)) - log_den +
-    log1p(0.5 * rho * exp(moments[, 2] - moments[, 1]))
+    log1p(rho * exp(moments[, 2] - moments[, 1]) / 2 +
+      rho^2 * exp(moments[, 3] - moments[, 1]) / 6)
 }

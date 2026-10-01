@@ -102,3 +102,27 @@ max_rel_diff <- function(actual, expected) {
   keep <- expected > 1e-300
   max(abs(actual[keep] / expected[keep] - 1))
 }
+
+# Log reference for a gamma delay in the lower tail, where the delay
+# density varies over many orders of magnitude within the window. The
+# integral over the window is scaled by the density at q and split at
+# geometric steps from q.
+exptilt_gamma_log_reference <- function(q, pwindow, rho, shape, rate) {
+  vapply(q, function(qq) {
+    scale <- stats::dgamma(qq, shape, rate, log = TRUE)
+    top <- min(pwindow, qq)
+    breaks <- sort(unique(c(0, top * 10^(-8:0))))
+    integral <- sum(vapply(seq_len(length(breaks) - 1L), function(i) {
+      stats::integrate(
+        function(x) {
+          exp(stats::dgamma(qq - x, shape, rate, log = TRUE) - scale) *
+            expm1(rho * x) / expm1(rho * pwindow)
+        },
+        breaks[i], breaks[i + 1L],
+        rel.tol = 1e-13, abs.tol = 0, subdivisions = 2000L
+      )$value
+    }, numeric(1)))
+    below <- stats::pgamma(qq - pwindow, shape, rate, log.p = TRUE) - scale
+    scale + log(integral + exp(below))
+  }, numeric(1))
+}

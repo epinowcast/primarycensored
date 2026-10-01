@@ -867,9 +867,6 @@ real primarycensored_gumbel_numeric_lcdf(data real d, int dist_id,
 real primarycensored_gumbel_lcdf(data real d, int dist_id,
                                  array[] real params, data real pwindow,
                                  real mu, real beta) {
-  if (dist_has_positive_support(dist_id) && d <= 0) {
-    return negative_infinity();
-  }
   int n_terms = gumbel_n_terms(mu / beta);
   vector[2] fit = primarycensored_gumbel_lcdf_from_terms(
     primarycensored_gumbel_terms(d, dist_id, beta, n_terms, params),
@@ -882,81 +879,4 @@ real primarycensored_gumbel_lcdf(data real d, int dist_id,
   return primarycensored_gumbel_numeric_lcdf(
     d | dist_id, params, pwindow, mu, beta
   );
-}
-
-/**
-  * Check if the truncated Gumbel solution can be vectorised over integer
-  * delays
-  * @ingroup truncated_gumbel_solutions
-  *
-  * With an integer pwindow, d - pwindow is an integer delay too, so the
-  * terms are computed once per delay and shared.
-  *
-  * @param dist_id Distribution identifier for the delay distribution
-  * @param primary_id Distribution identifier for the primary distribution
-  * @param pwindow Primary event window
-  *
-  * @return 1 if the vectorised solution applies, 0 otherwise
-  */
-int check_for_gumbel_vectorized(int dist_id, int primary_id,
-                                data real pwindow) {
-  return check_for_gumbel(dist_id, primary_id)
-         && pwindow >= 1 && floor(pwindow) == pwindow;
-}
-
-/**
-  * Compute the truncated Gumbel primary event censored log CDF at integer
-  * delays
-  * @ingroup truncated_gumbel_solutions
-  *
-  * The terms at each integer delay are computed once and used for both
-  * windows that share it. The values are those of
-  * primarycensored_gumbel_lcdf().
-  *
-  * @param start First delay to compute
-  * @param n Last delay to compute, and the length of the result
-  * @param dist_id Distribution identifier, 18 (Normal)
-  * @param params Array of distribution parameters
-  * @param pwindow Primary event window, a positive integer
-  * @param mu Location of the truncated Gumbel
-  * @param beta Scale of the truncated Gumbel
-  *
-  * @return Vector whose element d is the log CDF at d, for d in start:n.
-  *   Elements before start are not computed.
-  */
-vector primarycensored_gumbel_lcdf_vectorized(data int start, data int n,
-                                              data int dist_id,
-                                              array[] real params,
-                                              data real pwindow, real mu,
-                                              real beta) {
-  int pw = to_int(pwindow);
-  int positive = dist_has_positive_support(dist_id);
-  int n_terms = gumbel_n_terms(mu / beta);
-  // Endpoints below 0 share the terms at 0 for non-negative delays
-  int first = positive ? max(start - pw, 0) : start - pw;
-  vector[n] log_cdfs;
-  array[n - first + 1] vector[2 * (n_terms + 1)] terms;
-  for (t in first:n) {
-    terms[t - first + 1] = primarycensored_gumbel_terms(
-      t, dist_id, beta, n_terms, params
-    );
-  }
-  for (d in start:n) {
-    if (positive && d <= 0) {
-      log_cdfs[d] = negative_infinity();
-    } else {
-      int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-      vector[2] fit = primarycensored_gumbel_lcdf_from_terms(
-        terms[d - first + 1], terms[q_index], d, pwindow, mu, beta, n_terms
-      );
-      if (gumbel_series_accepted(fit)) {
-        log_cdfs[d] = fit[1];
-      } else {
-        log_cdfs[d] = primarycensored_gumbel_numeric_lcdf(
-          d | dist_id, params, pwindow, mu, beta
-        );
-      }
-    }
-  }
-  return log_cdfs;
 }

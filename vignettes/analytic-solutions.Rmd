@@ -380,7 +380,7 @@ F_{S_+}(d) = F_T(q) + \frac{e^{r d} \{J(d) - J(q)\} - \{F_T(d) - F_T(q)\}}{e^{r 
 $$
 
 with $F_T(x) = J(x) = 0$ for $x \leq 0$ for delays on the non-negative reals.
-Every term depends on $d$ or on $q$ alone, so `primarycensored_exptilt_lcdf_vectorized()` computes the terms once per integer delay and uses them for the two windows that share the endpoint.
+Every term depends on $d$ or on $q$ alone, so `primarycensored_analytical_lcdf_vectorized()` computes the terms once per integer delay and uses them for the two windows that share the endpoint.
 
 ## Closed form transforms
 
@@ -403,23 +403,27 @@ The normal form has no restriction.
 
 ## Tilts close to zero
 
-Equation \@ref(eq:exptilt) cancels as $r \to 0$ and loses about $10^{-14} / (|r| w_P)$ of relative precision.
+Equation \@ref(eq:exptilt) cancels as $r \to 0$ and loses about $10^{-14} / (|r| w_P)$ of relative precision for delays on the reals.
+For a gamma delay it also loses precision in proportion to the shape.
 Two forms replace it, with $G_k(t) = \int (t - u)^k f_T(u)~du$ over the support up to $t$.
 
-For $|r| w_P < 10^{-4}$, expanding the window density in $r$ gives the uniform solution and its first order correction,
+For $|r| w_P < 10^{-2}$, or $10^{-5}$ for delays on the reals, expanding the window density in $r$ gives the uniform solution and its corrections to second order,
 
 $$
-F_{S_+}(d) = \frac{G_1(d) - G_1(q)}{w_P} + r \frac{G_2(d) - w_P G_1(d) - G_2(q) - w_P G_1(q)}{2 w_P} + O\big((r w_P)^2\big).
+\begin{aligned}
+F_{S_+}(d) = {} & \frac{G_1(d) - G_1(q)}{w_P} + r \frac{G_2(d) - w_P G_1(d) - G_2(q) - w_P G_1(q)}{2 w_P} \\
+& + r^2 \frac{2 \{G_3(d) - G_3(q)\} - 3 w_P \{G_2(d) + G_2(q)\} + w_P^2 \{G_1(d) - G_1(q)\}}{12 w_P} + O\big((r w_P)^4\big).
+\end{aligned}
 $$
 
-For a delay on the non-negative reals with $d < w_P$, where the terms at $q$ are zero, and $|r| d < 10^{-4}$, the direct form cancels as $d \to 0$ and
+For a delay on the non-negative reals with $d < w_P$, where the terms at $q$ are zero, and $|r| d < 10^{-2}$, the direct form cancels as $d \to 0$ and
 
 $$
-F_{S_+}(d) = \frac{r \{G_1(d) + r G_2(d) / 2\}}{e^{r w_P} - 1} + O\big((r d)^2\big)
+F_{S_+}(d) = \frac{r \{G_1(d) + r G_2(d) / 2 + r^2 G_3(d) / 6\}}{e^{r w_P} - 1} + O\big((r d)^4\big)
 $$
 
 is used instead.
-The truncation error of both forms is below $10^{-9}$ at the threshold.
+The truncation error of both forms is below $3 \times 10^{-8}$ at the limit.
 
 # Transform based solutions for a truncated Gumbel primary event time
 

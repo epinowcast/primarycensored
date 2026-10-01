@@ -110,7 +110,7 @@ test_that("check_for_gumbel is structural", {
   expect_identical(check_for_gumbel(18L, 4L), 1L)
   expect_identical(check_for_gumbel(18L, 1L), 0L)
   expect_identical(check_for_gumbel(18L, 2L), 0L)
-  expect_identical(check_for_analytical(18L, 4L), 1L)
+  expect_identical(check_for_analytical_params(18L, c(3, 2), 4L, c(0, 1)), 1L)
   for (dist_id in c(1L, 2L, 3L, 4L, 5L, 12L)) {
     expect_identical(check_for_gumbel(dist_id, 4L), 0L)
     expect_identical(check_for_analytical(dist_id, 4L), 0L)
@@ -291,8 +291,8 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
           expect_equal(exp(lcdf), plain, tolerance = 1e-9, info = info)
           # Relative error where the reference is above 1e-8
           ode <- vapply(
-            case$d, primarycensored_numeric_cdf, numeric(1),
-            case$dist_id, case$params, pwindow, 4L, c(mu, beta)
+            case$d, primarycensored_gumbel_numeric_cdf, numeric(1),
+            case$dist_id, case$params, pwindow, mu, beta
           )
           reference <- gumbel_reference(
             case$d, pwindow, mu, beta, cdf, positive
@@ -327,7 +327,7 @@ test_that("the numerical path is used where the series does not apply", {
     check_for_analytical_params(18L, c(3, 2), 4L, c(0.5, 0.1)), 0L
   )
   for (d in c(-1, 3, 8)) {
-    ode <- primarycensored_numeric_cdf(d, 18L, c(3, 2), 1, 4L, c(0.5, 0.1))
+    ode <- primarycensored_gumbel_numeric_cdf(d, 18L, c(3, 2), 1, 0.5, 0.1)
     expect_identical(
       primarycensored_cdf(d, 18L, c(3, 2), 1, -Inf, Inf, 4L, c(0.5, 0.1)),
       ode
@@ -339,7 +339,7 @@ test_that("the numerical path is used where the series does not apply", {
     )
   }
   # A rate that is too small for the tilts needed
-  ode <- primarycensored_numeric_cdf(2, 2L, c(2, 0.5), 2, 4L, c(0, 1))
+  ode <- primarycensored_gumbel_numeric_cdf(2, 2L, c(2, 0.5), 2, 0, 1)
   expect_identical(
     primarycensored_cdf(2, 2L, c(2, 0.5), 2, 0, Inf, 4L, c(0, 1)),
     ode
@@ -354,8 +354,8 @@ test_that("points where the series loses accuracy use the ODE", {
   fit <- .gumbel_lcdf(obj, d, 1e-7, 0, 1, n_terms, -Inf)
   expect_true(all(fit$error > .gumbel_tol))
   ode <- vapply(
-    d, primarycensored_numeric_cdf, numeric(1),
-    18L, c(3, 2), 1e-7, 4L, c(0, 1)
+    d, primarycensored_gumbel_numeric_cdf, numeric(1),
+    18L, c(3, 2), 1e-7, 0, 1
   )
   expect_identical(
     vapply(
@@ -389,8 +389,8 @@ test_that("the ODE path resolves a narrow spike of the window density", {
       )
       primary <- c(s[["mu"]], s[["beta"]])
       ode <- vapply(
-        family$q, primarycensored_numeric_cdf, numeric(1),
-        case$dist_id, case$params, s[["w"]], 4L, primary
+        family$q, primarycensored_gumbel_numeric_cdf, numeric(1),
+        case$dist_id, case$params, s[["w"]], primary[1], primary[2]
       )
       expect_lt(
         gumbel_error(ode, reference, floor = 1e-8), 1e-7, label = label
@@ -427,8 +427,8 @@ test_that("the ODE path is accurate for a large mu over beta", {
     for (pwindow in c(0.4, 1, 3)) {
       reference <- gumbel_reference(family$q, pwindow, mu, beta, cdf, FALSE)
       ode <- vapply(
-        family$q, primarycensored_numeric_cdf, numeric(1),
-        18L, c(3, 2), pwindow, 4L, c(mu, beta)
+        family$q, primarycensored_gumbel_numeric_cdf, numeric(1),
+        18L, c(3, 2), pwindow, mu, beta
       )
       expect_lt(
         gumbel_error(ode, reference, floor = 1e-8), 1e-7,
@@ -446,8 +446,8 @@ test_that("the ODE path handles a location far below the window", {
   )) {
     primary <- c(s[["mu"]], s[["beta"]])
     ode <- vapply(
-      x, primarycensored_numeric_cdf, numeric(1),
-      4L, 1, s[["w"]], 4L, primary
+      x, primarycensored_gumbel_numeric_cdf, numeric(1),
+      4L, 1, s[["w"]], primary[1], primary[2]
     )
     reference <- vapply(x, function(d) {
       stats::integrate(
@@ -636,14 +636,14 @@ test_that("the analytical lcdf applies truncation for a normal delay", {
   )
 })
 
-test_that("check_for_gumbel_vectorized needs an integer pwindow", {
-  expect_identical(check_for_gumbel_vectorized(18L, 4L, 1), 1L)
-  expect_identical(check_for_gumbel_vectorized(18L, 4L, 7), 1L)
-  expect_identical(check_for_gumbel_vectorized(18L, 4L, 1.5), 0L)
-  expect_identical(check_for_gumbel_vectorized(18L, 4L, 0.5), 0L)
-  expect_identical(check_for_gumbel_vectorized(18L, 1L, 1), 0L)
+test_that("the vectorised Gumbel solution needs an integer pwindow", {
+  expect_identical(check_for_analytical_vectorized(18L, 4L, 1), 1L)
+  expect_identical(check_for_analytical_vectorized(18L, 4L, 7), 1L)
+  expect_identical(check_for_analytical_vectorized(18L, 4L, 1.5), 0L)
+  expect_identical(check_for_analytical_vectorized(18L, 4L, 0.5), 0L)
+  expect_identical(check_for_analytical_vectorized(18L, 3L, 1), 0L)
   for (dist_id in c(1L, 2L, 3L, 4L, 26L)) {
-    expect_identical(check_for_gumbel_vectorized(dist_id, 4L, 1), 0L)
+    expect_identical(check_for_analytical_vectorized(dist_id, 4L, 1), 0L)
   }
 })
 
@@ -665,8 +665,8 @@ test_that("the vectorised Gumbel CDF matches the per delay CDF", {
             next
           }
           for (start in c(1L, 5L)) {
-            vectorised <- primarycensored_gumbel_lcdf_vectorized(
-              start, n, case$dist_id, case$params, pwindow, mu, beta
+            vectorised <- primarycensored_analytical_lcdf_vectorized(
+              start, n, case$dist_id, case$params, pwindow, 4L, c(mu, beta)
             )
             expect_length(vectorised, n)
             expect_identical(
@@ -684,14 +684,14 @@ test_that("the vectorised Gumbel CDF matches the per delay CDF", {
   }
 })
 
-test_that("primarycensored_lcdf_vectorized uses the Gumbel shared terms", {
+test_that("primarycensored_lcdf_vectorized uses the shared Gumbel terms", {
   for (case in gumbel_series_cases) {
     expect_identical(
       primarycensored_lcdf_vectorized(
         1L, 15L, case$dist_id, case$params, 3, 4L, c(-1, 1)
       ),
-      primarycensored_gumbel_lcdf_vectorized(
-        1L, 15L, case$dist_id, case$params, 3, -1, 1
+      primarycensored_analytical_lcdf_vectorized(
+        1L, 15L, case$dist_id, case$params, 3, 4L, c(-1, 1)
       )
     )
   }
