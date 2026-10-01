@@ -95,31 +95,31 @@ test_that("check_for_analytical includes the exponentially tilted primary", {
 
 test_that("check_for_analytical_params adds the admissibility of the tilt", {
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, 0.5), 1L
+    check_for_analytical_params(2L, c(2, 0.4), 2L, 0.5, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.3), 1L
+    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.3, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.4), 0L
+    check_for_analytical_params(2L, c(2, 0.4), 2L, -0.4, 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(4L, 0.3, 2L, -0.5), 0L
+    check_for_analytical_params(4L, 0.3, 2L, -0.5, 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(4L, 0.3, 2L, -0.25), 1L
+    check_for_analytical_params(4L, 0.3, 2L, -0.25, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(18L, c(3, 2), 2L, -10), 1L
+    check_for_analytical_params(18L, c(3, 2), 2L, -10, 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0)), 1L
+    check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0), 2), 1L
   )
   expect_identical(
-    check_for_analytical_params(3L, c(2, 1), 2L, 0.3), 0L
+    check_for_analytical_params(3L, c(2, 1), 2L, 0.3, 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(26L, c(0, 1, 2, 0.5, 0.5), 2L, 0.3), 1L
+    check_for_analytical_params(26L, c(0, 1, 2, 0.5, 0.5), 2L, 0.3, 2), 1L
   )
 })
 
@@ -303,7 +303,9 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
         }
         info <- exptilt_case_label(case, pwindow = pwindow, r = rho)
         expect_identical(
-          check_for_analytical_params(case$dist_id, case$params, 2L, rho), 1L
+          check_for_analytical_params(
+            case$dist_id, case$params, 2L, rho, pwindow
+          ), 1L
         )
         expected <- exptilt_reference(d, pwindow, rho, cdf)
         lcdf <- vapply(
@@ -337,7 +339,7 @@ test_that("inadmissible tilts use the ODE path", {
   for (case in cases) {
     expect_identical(
       check_for_analytical_params(
-        case$dist_id, case$params, 2L, case$rho
+        case$dist_id, case$params, 2L, case$rho, 2
       ), 0L
     )
     for (d in c(0.5, 2, 5, 10)) {

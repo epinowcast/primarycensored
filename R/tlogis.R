@@ -217,3 +217,40 @@ rtlogis <- function(n, min = 0, max = 1, location = 0, scale = 1) {
 
 attr(dtlogis, "name") <- "dtlogis"
 attr(ptlogis, "name") <- "ptlogis"
+
+# Multiples of the scale from the centre of the density at which the numerical
+# method breaks the integral. The mass beyond 30 scales is below 1e-13.
+.tlogis_break_multiples <- c(-30, -12, -6, -3, -1.5, 0, 1.5, 3, 6, 12, 30)
+
+#' Location and scale of the truncated logistic primary of a pcens object
+#'
+#' @param object A `pcens` object with a truncated logistic primary.
+#'
+#' @return A list with `location` and `scale`, defaulting as in [dtlogis()].
+#'
+#' @noRd
+.tlogis_primary_args <- function(object) {
+  m <- object$primary_args$location
+  s <- object$primary_args$scale
+  if (is.null(m)) {
+    m <- 0
+  }
+  if (is.null(s)) {
+    s <- 1
+  }
+  if (!is.numeric(m) || length(m) != 1L || !is.finite(m)) {
+    stop(
+      "location must be a single finite number for the truncated logistic ",
+      "primary distribution",
+      call. = FALSE
+    )
+  }
+  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s <= 0) {
+    stop(
+      "scale must be a single positive finite number for the truncated ",
+      "logistic primary distribution",
+      call. = FALSE
+    )
+  }
+  list(location = m, scale = s)
+}

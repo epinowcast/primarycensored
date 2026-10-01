@@ -246,3 +246,105 @@ test_that("rprimarycensored and pprimarycensored run with tlogis", {
   )
   expect_equal(empirical(q), theoretical, tolerance = 0.04)
 })
+
+test_that("non-parametric delays use the truncated logistic CDF", {
+  boundaries <- c(0, 1, 3, 6, 10)
+  pmf <- c(0.2, 0.3, 0.35, 0.15)
+  obj <- new_pcens(
+    pdist = pdiscretestep, dprimary = dtlogis,
+    primary_args = list(location = 0.5, scale = 0.3),
+    boundaries = boundaries, pmf = pmf
+  )
+  q <- c(0.5, 1.5, 3, 5, 8, 12)
+  expect_equal(
+    pcens_cdf(obj, q, 2),
+    pcens_cdf(obj, q, 2, use_numeric = TRUE),
+    tolerance = 1e-6
+  )
+})
+
+narrow_delays <- list(
+  list(
+    label = "exponential rate 1.5", pdist = pexp, args = list(rate = 1.5),
+    positive = TRUE
+  ),
+  list(
+    label = "gamma shape 2", pdist = pgamma,
+    args = list(shape = 2, rate = 1), positive = TRUE
+  ),
+  list(
+    label = "lognormal", pdist = plnorm,
+    args = list(meanlog = 1, sdlog = 0.5), positive = TRUE
+  ),
+  list(
+    label = "weibull", pdist = pweibull,
+    args = list(shape = 2, scale = 2), positive = TRUE
+  ),
+  list(
+    label = "normal", pdist = pnorm, args = list(mean = 3, sd = 2),
+    positive = FALSE
+  )
+)
+
+# Relative difference, absolute below 1e-10 where `stats::integrate()` has
+# its absolute tolerance
+narrow_diff <- function(actual, expected) {
+  max(abs(actual - expected) / pmax(expected, 1e-10))
+}
+
+test_that("the numerical CDF resolves a narrow truncated logistic primary", {
+  pwindow <- 2
+  q <- c(0.5, 1, 3, 10)
+  for (delay in narrow_delays) {
+    cdf <- function(x) do.call(delay$pdist, c(list(x), delay$args))
+    for (location in c(-0.5, 0.7, 2.5)) {
+      for (scale in c(0.02, 0.005, 0.001)) {
+        obj <- tlogis_object(delay, location, scale)
+        expected <- tlogis_reference(
+          q, pwindow, location, scale, cdf, delay$positive
+        )
+        label <- tlogis_label(delay, pwindow, location, scale)
+        expect_lt(
+          narrow_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
+          label = label
+        )
+        expect_lt(
+          narrow_diff(
+            pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected
+          ), 1e-6,
+          label = paste("numeric:", label)
+        )
+      }
+    }
+  }
+})
+
+test_that("the numerical CDF resolves a named wrapper of dtlogis", {
+  # A named wrapper gets the tlogis classes and so the same break points
+  wrapper <- function(x, min = 0, max = 1, location = 0, scale = 1,
+                      log = FALSE) {
+    dtlogis(x, min, max, location, scale, log)
+  }
+  named <- add_name_attribute(wrapper, "dtlogis")
+  pwindow <- 2
+  q <- c(0.72, 1, 1.5, 3)
+  cdf <- function(x) pgamma(x, shape = 2, rate = 1)
+  for (scale in c(1e-3, 1e-4)) {
+    obj <- new_pcens(
+      pdist = pgamma, dprimary = named,
+      primary_args = list(location = 0.7, scale = scale),
+      shape = 2, rate = 1
+    )
+    expect_s3_class(obj, "pcens_pgamma_dtlogis")
+    expected <- tlogis_reference(q, pwindow, 0.7, scale, cdf)
+    expect_lt(
+      narrow_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
+      label = paste("scale", scale)
+    )
+    expect_lt(
+      narrow_diff(pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected),
+      1e-6,
+      label = paste("numeric, scale", scale)
+    )
+  }
+})

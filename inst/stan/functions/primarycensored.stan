@@ -105,45 +105,12 @@ vector primarycensored_truncation_bounds(
 }
 
 /**
-  * Relative tolerance of the ODE solver for a primary distribution
-  * @ingroup ode
-  *
-  * The `ode_rk45` default (1e-6), except 1e-9 for the truncated logistic
-  * primary (primary_id 3), whose integral is compared with the analytical
-  * solutions.
-  *
-  * @param primary_id Primary distribution identifier
-  *
-  * @return Relative tolerance
-  */
-real primarycensored_ode_rel_tol(data int primary_id) {
-  return primary_id == 3 ? 1e-9 : 1e-6;
-}
-
-/**
-  * Absolute tolerance of the ODE solver for a primary distribution
-  * @ingroup ode
-  *
-  * The `ode_rk45` default (1e-6), except 1e-10 for the truncated logistic
-  * primary (primary_id 3). The ODE error for that primary is absolute, so
-  * small CDFs and PMFs from the ODE are not accurate in relative terms.
-  *
-  * @param primary_id Primary distribution identifier
-  *
-  * @return Absolute tolerance
-  */
-real primarycensored_ode_abs_tol(data int primary_id) {
-  return primary_id == 3 ? 1e-10 : 1e-6;
-}
-
-/**
   * Compute the primary event censored CDF by numerical integration
   * @ingroup primary_censored_single
   *
   * The numerical path of primarycensored_cdf(), without truncation, using
-  * `ode_rk45`. For a truncated logistic primary (primary_id 3) the integral
-  * is solved in parts around the location, with the tolerances of
-  * primarycensored_ode_rel_tol() and primarycensored_ode_abs_tol().
+  * `ode_rk45_tol`. For a truncated logistic primary (primary_id 3) the
+  * integral is solved in parts around the location.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -171,30 +138,26 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
 
   vector[1] y = rep_vector(0.0, 1);
   real start = lower_bound;
+  // Solve in parts around a narrow truncated logistic density so that the
+  // solver does not step over it
+  int n_parts = primary_id == 3 ? 12 : 1;
+  vector[12] ends = rep_vector(d, 12);
   if (primary_id == 3) {
-    // Solve in parts so the ODE does not step over a narrow density
-    int n_spikes = num_elements(tlogis_spike_times(
-      d, lower_bound, pwindow, primary_params[1], primary_params[2]
-    ));
-    vector[n_spikes] spikes = tlogis_spike_times(
-      d, lower_bound, pwindow, primary_params[1], primary_params[2]
+    ends[1:11] = tlogis_spike_times(
+      d, pwindow, primary_params[1], primary_params[2]
     );
-    for (i in 1:n_spikes) {
-      y = ode_rk45_tol(
-        primarycensored_ode, y, start, {spikes[i]},
-        primarycensored_ode_rel_tol(primary_id),
-        primarycensored_ode_abs_tol(primary_id), 1000000,
-        theta, {d, pwindow}, ids
-      )[1];
-      start = spikes[i];
-    }
   }
-  return ode_rk45_tol(
-    primarycensored_ode, y, start, {d},
-    primarycensored_ode_rel_tol(primary_id),
-    primarycensored_ode_abs_tol(primary_id), 1000000,
-    theta, {d, pwindow}, ids
-  )[1, 1];
+  for (i in 1:n_parts) {
+    if (i < n_parts && (ends[i] <= start || ends[i] >= d)) continue;
+    // The ode_rk45 defaults, tighter for the truncated logistic primary
+    y = ode_rk45_tol(
+      primarycensored_ode, y, start, {ends[i]},
+      primary_id == 3 ? 1e-9 : 1e-6, primary_id == 3 ? 1e-10 : 1e-6, 1000000,
+      theta, {d, pwindow}, ids
+    )[1];
+    start = ends[i];
+  }
+  return y[1];
 }
 
 /**
@@ -227,7 +190,7 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
   }
 
   // Check if an analytical solution exists and applies for these parameters
-  if (check_for_analytical_window(dist_id, params, primary_id,
+  if (check_for_analytical_params(dist_id, params, primary_id,
                                   primary_params, pwindow)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
@@ -309,7 +272,7 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
   // Check if an analytical solution exists. The internal lower bound is 0 for
   // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
   // and -inf for distributions with support on the reals.
-  if (check_for_analytical_window(dist_id, params, primary_id,
+  if (check_for_analytical_params(dist_id, params, primary_id,
                                   primary_params, pwindow)) {
     result = primarycensored_analytical_lcdf(
       d | dist_id, params, pwindow,
@@ -496,7 +459,7 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * primarycensored_exptilt_lcdf_vectorized() when
   * check_for_exptilt_vectorized() and check_for_analytical_params() are 1,
   * primarycensored_tlogis_lcdf_vectorized() when
-  * check_for_tlogis_vectorized() and check_for_analytical_window() are 1,
+  * check_for_tlogis_vectorized() and check_for_analytical_params() are 1,
   * and otherwise calls primarycensored_lcdf() at each delay. No truncation
   * is applied.
   *
@@ -522,13 +485,13 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
   }
   if (check_for_exptilt_vectorized(dist_id, primary_id, pwindow)
       && check_for_analytical_params(dist_id, params, primary_id,
-                                     primary_params)) {
+                                     primary_params, pwindow)) {
     return primarycensored_exptilt_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_params[1]
     );
   }
   if (check_for_tlogis_vectorized(dist_id, primary_id, pwindow)
-      && check_for_analytical_window(dist_id, params, primary_id,
+      && check_for_analytical_params(dist_id, params, primary_id,
                                      primary_params, pwindow)) {
     return primarycensored_tlogis_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_params[1],

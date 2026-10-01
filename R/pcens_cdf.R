@@ -125,8 +125,7 @@ pcens_cdf.default <- function(
       # For delays on the non-negative reals the integrand leaves zero at
       # p = d. A single integral can miss the mass on [0, d] when d is small
       # relative to pwindow, so the two sides are integrated separately.
-      # The same holds for a narrow primary density, see
-      # `.primary_spike_breaks()`.
+      # A narrow primary density is split in the same way.
       breaks <- sort(unique(c(
         0, if (!is.na(d) && d > 0 && d < pwindow) d, spike, pwindow
       )))
@@ -152,17 +151,13 @@ pcens_cdf.default <- function(
 
 #' Break points for a narrow primary event density
 #'
-#' A quadrature that is not told where a narrow density has its mass steps
-#' over it and returns a CDF that is too small. For the truncated logistic
-#' primary ([dtlogis()]) the mass is within a few scales of the location, or
-#' of the nearest edge of the window when the location is outside. This
-#' returns break points at multiples of the scale from that centre, for
-#' [pcens_cdf.default()] to integrate between. Other primaries have none.
+#' For the truncated logistic primary ([dtlogis()]) the mass is within a few
+#' scales of the location, or of the nearest edge of the window. Other
+#' primaries have no break points.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @return Numeric vector of break points inside `(0, pwindow)`, possibly
-#'   empty.
+#' @return Numeric vector of break points inside `(0, pwindow)`.
 #'
 #' @noRd
 .primary_spike_breaks <- function(object, pwindow) {

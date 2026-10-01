@@ -30,7 +30,7 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * new primary silently falls back to numerical integration.
   *
   * The exponentially tilted and truncated logistic solutions may not apply
-  * for given parameters, see check_for_analytical_window().
+  * for given parameters, see check_for_analytical_params().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -57,42 +57,9 @@ int check_for_analytical(int dist_id, int primary_id) {
   *
   * This is check_for_analytical() and, for the exponentially tilted
   * solutions, that the tilted delay exists, see check_for_tilt_transform().
-  * The truncated logistic solutions also depend on the window, see
-  * check_for_analytical_window(), which chooses the path in
-  * primarycensored_cdf() and primarycensored_lcdf().
-  *
-  * @param dist_id Distribution identifier for the delay distribution
-  * @param params Array of delay distribution parameters
-  * @param primary_id Distribution identifier for the primary distribution
-  * @param primary_params Array of primary distribution parameters
-  *
-  * @return 1 if the analytical solution applies, 0 if the numerical path is
-  * needed
-  */
-int check_for_analytical_params(int dist_id, array[] real params,
-                                int primary_id,
-                                array[] real primary_params) {
-  if (!check_for_analytical(dist_id, primary_id)) return 0;
-  if (check_for_exptilt(dist_id, primary_id)) {
-    return check_for_tilt_transform(dist_id, -primary_params[1], params);
-  }
-  if (check_for_tlogis(dist_id, primary_id)) {
-    return primary_params[2] > 0;
-  }
-  return 1;
-}
-
-/**
-  * Check if the analytical solution applies for the parameters and window
-  * @ingroup analytical_solution_helpers
-  *
-  * This is check_for_analytical_params() and, for the solutions that depend
-  * on the primary event window, their admissibility. The truncated logistic
-  * solutions need a truncation rule for each series and the delay needs the
-  * largest tilt of each, see check_for_tlogis_params(). Where they do not
-  * apply the numerical path is used. This is the check used to choose the
-  * path in primarycensored_cdf(), primarycensored_lcdf() and
-  * primarycensored_lcdf_vectorized().
+  * The truncated logistic solutions also need a truncation rule for each
+  * series and the largest tilt of the delay, see check_for_tlogis_params().
+  * It chooses the path in primarycensored_cdf() and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
@@ -103,12 +70,12 @@ int check_for_analytical_params(int dist_id, array[] real params,
   * @return 1 if the analytical solution applies, 0 if the numerical path is
   * needed
   */
-int check_for_analytical_window(int dist_id, array[] real params,
+int check_for_analytical_params(int dist_id, array[] real params,
                                 int primary_id, array[] real primary_params,
                                 data real pwindow) {
-  if (!check_for_analytical_params(dist_id, params, primary_id,
-                                   primary_params)) {
-    return 0;
+  if (!check_for_analytical(dist_id, primary_id)) return 0;
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform(dist_id, -primary_params[1], params);
   }
   if (check_for_tlogis(dist_id, primary_id)) {
     return check_for_tlogis_params(dist_id, params, primary_params, pwindow);
@@ -426,15 +393,12 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     );
   }
   if (check_for_tlogis(dist_id, primary_id)) {
-    // The series need a truncation rule and the delay needs their tilts,
-    // otherwise the caller should have used the numerical path, see
-    // check_for_analytical_window().
     if (!check_for_tlogis_params(dist_id, params, primary_params, pwindow)) {
       reject(
         "The truncated logistic solution does not apply for location ",
         primary_params[1], ", scale ", primary_params[2], " and window ",
         pwindow, ". Use the numerical path, see ",
-        "check_for_analytical_window()."
+        "check_for_analytical_params()."
       );
     }
     return primarycensored_tlogis_lcdf(

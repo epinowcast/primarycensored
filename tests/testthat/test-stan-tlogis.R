@@ -169,8 +169,6 @@ test_that("tlogis_lcdf and tlogis_lpdf have finite gradients in the location
 })
 
 test_that("the ODE path integrates against the truncated logistic primary", {
-  # primarycensored_numeric_cdf is the ODE CDF the analytical solutions are
-  # tested against. It has relative and absolute tolerances of 1e-6.
   cases <- list(
     list(dist_id = 2L, params = c(2.5, 0.4), pdist = pgamma,
          args = list(shape = 2.5, rate = 0.4), pos = TRUE),
@@ -204,6 +202,186 @@ test_that("the ODE path integrates against the truncated logistic primary", {
       expect_lt(
         max(abs(r_numeric - stan_ode)), 1e-5,
         label = paste(case$dist_id, toString(window))
+      )
+    }
+  }
+})
+
+# Compared in absolute terms as the ODE error is absolute
+tlogis_narrow_cases <- list(
+  list(dist_id = 4L, params = 1.5, pdist = pexp, args = list(rate = 1.5)),
+  list(
+    dist_id = 2L, params = c(2, 1), pdist = pgamma,
+    args = list(shape = 2, rate = 1)
+  ),
+  list(
+    dist_id = 1L, params = c(1, 0.5), pdist = plnorm,
+    args = list(meanlog = 1, sdlog = 0.5)
+  ),
+  list(
+    dist_id = 1L, params = c(0, 0.5), pdist = plnorm,
+    args = list(meanlog = 0, sdlog = 0.5)
+  ),
+  list(
+    dist_id = 3L, params = c(2, 2), pdist = pweibull,
+    args = list(shape = 2, scale = 2)
+  ),
+  list(
+    dist_id = 18L, params = c(3, 2), pdist = pnorm,
+    args = list(mean = 3, sd = 2)
+  )
+)
+
+test_that("the ODE path resolves a narrow truncated logistic primary", {
+  pwindow <- 2
+  d <- c(0.5, 1, 3, 10)
+  for (case in tlogis_narrow_cases) {
+    cdf <- tlogis_case_cdf(case)
+    for (location in c(-0.5, 0.7, 2.5)) {
+      for (scale in c(0.02, 0.005, 0.001)) {
+        window <- c(location, scale)
+        expected <- tlogis_reference(
+          d, pwindow, location, scale, cdf, case$dist_id != 18L
+        )
+        ode <- vapply(
+          d, primarycensored_numeric_cdf, numeric(1),
+          case$dist_id, case$params, pwindow, 3L, window
+        )
+        expect_lt(
+          max(abs(ode - expected)), 1e-7,
+          label = tlogis_case_label(
+            case,
+            location = location, scale = scale
+          )
+        )
+      }
+    }
+  }
+})
+
+test_that("the log CDF and log PMF are correct for a narrow primary", {
+  pwindow <- 2
+  for (case in tlogis_narrow_cases) {
+    cdf <- tlogis_case_cdf(case)
+    lower <- tlogis_case_lower(case)
+    for (location in c(0.7, 1)) {
+      for (scale in c(0.02, 0.005)) {
+        window <- c(location, scale)
+        label <- tlogis_case_label(case, location = location, scale = scale)
+        d <- c(0.5, 1, 3, 10)
+        expected <- tlogis_reference(
+          d, pwindow, location, scale, cdf, case$dist_id != 18L
+        )
+        lcdf <- vapply(
+          d, primarycensored_lcdf, numeric(1),
+          case$dist_id, case$params, pwindow, lower, Inf, 3L, window
+        )
+        expect_lt(max(abs(exp(lcdf) - expected)), 1e-7, label = label)
+        # The PMF over integer delays
+        ref <- tlogis_reference(
+          0:6, pwindow, location, scale, cdf, case$dist_id != 18L
+        )
+        pmf <- exp(primarycensored_sone_lpmf_vectorized(
+          5, lower, Inf, case$dist_id, case$params, pwindow, 3L, window
+        ))
+        expect_lt(
+          max(abs(pmf - diff(ref)[1:6])), 1e-7,
+          label = paste("pmf:", label)
+        )
+      }
+    }
+  }
+})
+
+test_that("non-parametric delays are analytic with a truncated logistic
+  primary", {
+  boundaries <- c(0, 1, 3, 6, 10)
+  pmf <- c(0.2, 0.3, 0.35, 0.15)
+  params <- c(boundaries, pmf)
+  window <- c(0.5, 0.3)
+  obj <- new_pcens(
+    pdist = pdiscretestep, dprimary = dtlogis,
+    primary_args = list(location = 0.5, scale = 0.3),
+    boundaries = boundaries, pmf = pmf
+  )
+  d <- c(0.5, 1.5, 3, 5, 8, 12)
+  expect_identical(check_for_analytical(26L, 3L), 1L)
+  analytic <- vapply(
+    d, primarycensored_cdf, numeric(1), 26L, params, 2, -Inf, Inf, 3L, window
+  )
+  expect_equal(analytic, pcens_cdf(obj, d, 2), tolerance = 1e-9)
+  # The step CDF has kinks, so the ODE path is accurate to about 1e-4
+  ode <- vapply(
+    d, primarycensored_numeric_cdf, numeric(1), 26L, params, 2, 3L, window
+  )
+  expect_lt(max(abs(analytic - ode)), 1e-4)
+})
+
+test_that("the ODE path matches Stan random draws", {
+  set.seed(20260930)
+  n <- 5000
+  pwindow <- 2
+  probs <- seq(0.1, 0.9, by = 0.2)
+  for (case in tlogis_stan_cases[c(1, 4, 7)]) {
+    rdist <- switch(as.character(case$dist_id),
+      "4" = function(n) rexp(n, case$args$rate),
+      "2" = function(n) rgamma(n, case$args$shape, case$args$rate),
+      "18" = function(n) rnorm(n, case$args$mean, case$args$sd)
+    )
+    for (window in list(c(-0.5, 0.3), c(1, 0.4), c(4, 0.5))) {
+      primary <- vapply(
+        seq_len(n),
+        function(i) tlogis_rng(0, pwindow, window[1], window[2]),
+        numeric(1)
+      )
+      q <- unname(quantile(primary + rdist(n), probs))
+      cdf <- vapply(
+        q, primarycensored_numeric_cdf, numeric(1),
+        case$dist_id, case$params, pwindow, 3L, window
+      )
+      expect_lt(
+        max(abs(cdf - probs)), 0.03,
+        label = tlogis_case_label(
+          case,
+          pwindow = pwindow, location = window[1], scale = window[2]
+        )
+      )
+    }
+  }
+})
+
+test_that("the ODE path with a truncated logistic primary has finite
+  gradients matching finite differences", {
+  model <- tlogis_gradient_model()
+  # The integral is split at times that depend on the location and scale,
+  # and the gradients through them must cancel
+  cases <- list(tlogis_stan_cases[[4]], tlogis_stan_cases[[2]])
+  points <- list(
+    list(d = 3, pwindow = 2, location = 0.7, scale = 0.05),
+    list(d = 1, pwindow = 2, location = 0.7, scale = 0.02),
+    list(d = 3, pwindow = 2, location = -0.5, scale = 0.05),
+    list(d = 4, pwindow = 2, location = 2.5, scale = 0.05)
+  )
+  for (case in cases) {
+    for (point in points) {
+      label <- tlogis_case_label(
+        case,
+        d = point$d, pwindow = point$pwindow, location = point$location,
+        scale = point$scale
+      )
+      res <- tlogis_gradient_at(
+        model, case, point$d, point$pwindow, point$location, point$scale
+      )
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      allowed <- 1e-2 * pmax(abs(res$finite_diff), 1e-2)
+      expect_true(
+        all(abs(res$gradient - res$finite_diff) <= allowed),
+        info = paste0(
+          label, ": gradient ", toString(signif(res$gradient, 5)),
+          ", finite difference ", toString(signif(res$finite_diff, 5))
+        )
       )
     }
   }

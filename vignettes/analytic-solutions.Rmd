@@ -456,7 +456,7 @@ This is the Euler transform after $n_0$ terms, the average of the partial sums f
 For one $x$ the error is $x^{n_0} ((1 - x) / 2)^M / (1 + x)$.
 Every $c_n$ is an integral of $x^n$ over the delay density, with $x$ in a known range, so the error of a series is at most the largest error over the range times the mass of the delay in the window.
 The range is $[e^{(m - w_P) / s}, e^{m / s}]$ for $m < 0$, $[e^{-(w_P - m) / s}, 1]$ for the part above the location and $[e^{-m / s}, \min(1, e^{(w_P - m) / s})]$ for the part below it.
-`.tlogis_series_terms()` takes the fewest terms, among the plain partial sum and two tapers, for which this bound is below $10^{-10} D_L$, so the error of $F_{S_+}(d)$ is below $10^{-10}$ of the mass of the delay in the window.
+The fewest terms, among the plain partial sum and two tapers, for which this bound is below $10^{-10} D_L$ are used, so the error of $F_{S_+}(d)$ is below $10^{-10}$ of the mass of the delay in the window.
 It needs about 6 terms when $x \leq 0.01$ and about 23 when the range reaches 1.
 The same rule is used in R and in Stan.
 
@@ -466,15 +466,13 @@ The series need the tilts up to $\pm (n_0 + M) / s$.
 The exponential and gamma forms need $\lambda - \xi > 0$ for the tilted delay to exist, which fails for the large positive tilts of a location before the end of the window unless the rate $\lambda$ is larger than the largest tilt.
 The negative tilts of a location after the window always exist, so for these delays the solution applies for $m \geq w_P$ and for a large rate.
 Where a tilt is not available, or no rule with at most 64 terms meets the tolerance, the methods use the numerical path, `pcens_cdf.default()` in R and the ODE in Stan.
-In Stan `check_for_analytical_window()` makes the choice from the parameters and the window.
+In Stan `check_for_analytical_params()` makes the choice from the parameters and the window.
 The normal form has no restriction.
 
-The numerical paths are told where the density of a narrow window has its mass.
-The density is a spike of width about $s$ at the location, or at the edge of the window nearest to it when the location is outside.
-A quadrature or an ODE solver that takes large steps across the flat region steps over the spike, and returns a CDF that is too small without an error.
-Both paths therefore split the integral at the location and at multiples of the scale from it (up to 30 scales either side, clipped to the window).
-The Stan ODE is solved in parts between these points, to a relative tolerance of $10^{-9}$ and an absolute tolerance of $10^{-10}$ rather than the $10^{-6}$ of `ode_rk45`.
-The error is an absolute one of about $10^{-9}$ to $10^{-7}$ and the tolerance cannot follow the size of the CDF, so a CDF or a PMF below about $10^{-3}$ is not accurate in relative terms for delays that only have the ODE path.
+The numerical paths split the integral at the location and at multiples of the scale from it, up to 30 scales either side and clipped to the window.
+Otherwise a quadrature or an ODE solver can step over the narrow density of a small scale and return a CDF that is too small.
+The Stan ODE for this primary uses a relative tolerance of $10^{-9}$ and an absolute tolerance of $10^{-10}$ rather than the $10^{-6}$ of `ode_rk45`.
+A CDF or a PMF below about $10^{-3}$ from the ODE is then not accurate in relative terms.
 
 ## Delays much smaller than the scale
 

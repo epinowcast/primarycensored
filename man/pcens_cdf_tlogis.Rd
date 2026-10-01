@@ -68,9 +68,9 @@ is not a single positive finite number, \code{\link[=pcens_cdf.default]{pcens_cd
 normal form has no restriction.
 
 \strong{Precision.} The CDF agrees with a reference integral to a relative
-difference of about 1e-9 or better, including in the tails.
-The relative error grows with the cancellation in the integral, which is
-large only for a scale much larger than the window.
+difference of about 1e-8 in general.
+In the far tails the error grows with the cancellation in the integral,
+to about 1e-7 for a scale much larger than the window.
 
 A new delay distribution is supported by the methods of \link{tilt_transform}
 and a \code{pcens_cdf} method for its class that calls \code{.pcens_cdf_tlogis()}.
@@ -92,3 +92,4 @@ pgamma_obj <- new_pcens(
 )
 pcens_cdf(pgamma_obj, q = c(1, 4, 8), pwindow = 2)
 }
+\concept{pcens}

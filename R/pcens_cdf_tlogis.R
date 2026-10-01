@@ -39,15 +39,16 @@
 #' normal form has no restriction.
 #'
 #' **Precision.** The CDF agrees with a reference integral to a relative
-#' difference of about 1e-9 or better, including in the tails.
-#' The relative error grows with the cancellation in the integral, which is
-#' large only for a scale much larger than the window.
+#' difference of about 1e-8 in general.
+#' In the far tails the error grows with the cancellation in the integral,
+#' to about 1e-7 for a scale much larger than the window.
 #'
 #' A new delay distribution is supported by the methods of [tilt_transform]
 #' and a `pcens_cdf` method for its class that calls `.pcens_cdf_tlogis()`.
 #'
-#'
 #' @inherit pcens_cdf return
+#'
+#' @concept pcens
 #'
 #' @name pcens_cdf_tlogis
 #'
@@ -107,11 +108,6 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 
 # Most terms of a series before the numerical method is used
 .tlogis_max_terms <- 64L
-
-# Multiples of the scale from the centre of a narrow window density at which
-# the numerical method breaks the integral. The density falls by about e^-x
-# at x scales, so the mass beyond 30 scales is below 1e-13.
-.tlogis_break_multiples <- c(-30, -12, -6, -3, -1.5, 0, 1.5, 3, 6, 12, 30)
 
 # Fraction of the terms of a series kept with weight 1 by the taper
 .tlogis_taper <- 0.35
@@ -292,39 +288,6 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
     .pcens_tilt_available(object, largest(series$pos))) &&
     (is.null(series$neg) ||
       .pcens_tilt_available(object, -largest(series$neg)))
-}
-
-#' Location and scale of the truncated logistic primary of a pcens object
-#'
-#' @inheritParams .tlogis_plan
-#'
-#' @return A list with `location` and `scale`, defaulting as in [dtlogis()].
-#'
-#' @noRd
-.tlogis_primary_args <- function(object) {
-  m <- object$primary_args$location
-  s <- object$primary_args$scale
-  if (is.null(m)) {
-    m <- 0
-  }
-  if (is.null(s)) {
-    s <- 1
-  }
-  if (!is.numeric(m) || length(m) != 1L || !is.finite(m)) {
-    stop(
-      "location must be a single finite number for the truncated logistic ",
-      "primary distribution",
-      call. = FALSE
-    )
-  }
-  if (!is.numeric(s) || length(s) != 1L || !is.finite(s) || s <= 0) {
-    stop(
-      "scale must be a single positive finite number for the truncated ",
-      "logistic primary distribution",
-      call. = FALSE
-    )
-  }
-  list(location = m, scale = s)
 }
 
 #' Primary event censored CDF for a truncated logistic primary

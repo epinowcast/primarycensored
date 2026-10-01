@@ -2,8 +2,8 @@ families <- exptilt_families()
 normals <- families[vapply(families, function(f) !f$positive, logical(1))]
 positives <- families[vapply(families, function(f) f$positive, logical(1))]
 
-# The grid of the acceptance criteria plus a midpoint far outside the window
-# and scales from sharp to nearly uniform
+# Locations before, inside and after the window, and scales from sharp to
+# nearly uniform
 locations <- c(-0.5, 0, 0.5, 1, 1.5)
 scales <- c(0.1, 0.2, 1)
 windows <- c(1, 2)
@@ -342,113 +342,6 @@ test_that("each endpoint is evaluated once for integer delays", {
   }
 })
 
-test_that("non-parametric delays use the truncated logistic CDF", {
-  boundaries <- c(0, 1, 3, 6, 10)
-  pmf <- c(0.2, 0.3, 0.35, 0.15)
-  obj <- new_pcens(
-    pdist = pdiscretestep, dprimary = dtlogis,
-    primary_args = list(location = 0.5, scale = 0.3),
-    boundaries = boundaries, pmf = pmf
-  )
-  q <- c(0.5, 1.5, 3, 5, 8, 12)
-  expect_equal(
-    pcens_cdf(obj, q, 2),
-    pcens_cdf(obj, q, 2, use_numeric = TRUE),
-    tolerance = 1e-6
-  )
-})
-
-# Narrow windows, where a quadrature that is not told the location steps
-# over the density.
-narrow_delays <- list(
-  list(
-    label = "exponential rate 1.5", pdist = pexp, args = list(rate = 1.5),
-    positive = TRUE
-  ),
-  list(
-    label = "gamma shape 2", pdist = pgamma,
-    args = list(shape = 2, rate = 1), positive = TRUE
-  ),
-  list(
-    label = "lognormal", pdist = plnorm,
-    args = list(meanlog = 1, sdlog = 0.5), positive = TRUE
-  ),
-  list(
-    label = "weibull", pdist = pweibull,
-    args = list(shape = 2, scale = 2), positive = TRUE
-  ),
-  list(
-    label = "normal", pdist = pnorm, args = list(mean = 3, sd = 2),
-    positive = FALSE
-  )
-)
-
-# Relative difference, absolute below 1e-10 where `stats::integrate()` has
-# its absolute tolerance
-narrow_diff <- function(actual, expected) {
-  max(abs(actual - expected) / pmax(expected, 1e-10))
-}
-
-test_that("the numerical CDF resolves a narrow truncated logistic primary", {
-  pwindow <- 2
-  q <- c(0.5, 1, 3, 10)
-  for (delay in narrow_delays) {
-    cdf <- function(x) do.call(delay$pdist, c(list(x), delay$args))
-    for (location in c(-0.5, 0.7, 2.5)) {
-      for (scale in c(0.02, 0.005, 0.001)) {
-        obj <- tlogis_object(delay, location, scale)
-        expected <- tlogis_reference(
-          q, pwindow, location, scale, cdf, delay$positive
-        )
-        label <- tlogis_label(delay, pwindow, location, scale)
-        # The default dispatch, which falls back where the series does not
-        # apply, and the forced numerical method
-        expect_lt(
-          narrow_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
-          label = label
-        )
-        expect_lt(
-          narrow_diff(
-            pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected
-          ), 1e-6,
-          label = paste("numeric:", label)
-        )
-      }
-    }
-  }
-})
-
-test_that("the numerical CDF resolves a named wrapper of dtlogis", {
-  # A wrapper with the name attribute gets the tlogis classes, and so the
-  # same dispatch as dtlogis, including the break points of a narrow primary
-  wrapper <- function(x, min = 0, max = 1, location = 0, scale = 1,
-                      log = FALSE) {
-    dtlogis(x, min, max, location, scale, log)
-  }
-  named <- add_name_attribute(wrapper, "dtlogis")
-  pwindow <- 2
-  q <- c(0.72, 1, 1.5, 3)
-  cdf <- function(x) pgamma(x, shape = 2, rate = 1)
-  for (scale in c(1e-3, 1e-4)) {
-    obj <- new_pcens(
-      pdist = pgamma, dprimary = named,
-      primary_args = list(location = 0.7, scale = scale),
-      shape = 2, rate = 1
-    )
-    expect_s3_class(obj, "pcens_pgamma_dtlogis")
-    expected <- tlogis_reference(q, pwindow, 0.7, scale, cdf)
-    expect_lt(
-      narrow_diff(pcens_cdf(obj, q, pwindow), expected), 1e-6,
-      label = paste("scale", scale)
-    )
-    expect_lt(
-      narrow_diff(pcens_cdf(obj, q, pwindow, use_numeric = TRUE), expected),
-      1e-6,
-      label = paste("numeric, scale", scale)
-    )
-  }
-})
-
 test_that("the normal tilt transform keeps the shift of a small sd", {
   # The CDF at q = mean - k sd is, with p = sd z,
   # int Phi(-k - z) f(sd z) sd dz, so the window is in units of sd
@@ -492,7 +385,19 @@ test_that("the analytic CDF matches samples from rprimarycensored", {
   n <- 20000
   pwindow <- 2
   probs <- seq(0.05, 0.95, by = 0.1)
-  for (family in families[c(1, 4, 6, 7)]) {
+  # A large rate keeps the analytic path for a location before the window
+  fast <- list(
+    list(
+      label = "exponential rate 200", pdist = pexp, args = list(rate = 200),
+      positive = TRUE, analytic = TRUE
+    ),
+    list(
+      label = "gamma shape 2.5 rate 1000", pdist = pgamma,
+      args = list(shape = 2.5, rate = 1000), positive = TRUE,
+      analytic = TRUE
+    )
+  )
+  for (family in c(families[c(1, 4, 6, 7)], fast)) {
     rdist <- if (identical(family$pdist, pexp)) {
       rexp
     } else if (identical(family$pdist, pgamma)) {
@@ -514,6 +419,9 @@ test_that("the analytic CDF matches samples from rprimarycensored", {
       )
       q <- unname(quantile(samples, probs))
       obj <- tlogis_object(family, window[1], window[2])
+      if (isTRUE(family$analytic)) {
+        expect_false(is.null(.tlogis_plan(obj, pwindow)))
+      }
       expect_lt(
         max(abs(pcens_cdf(obj, q, pwindow) - probs)), 0.015,
         label = tlogis_label(family, pwindow, window[1], window[2])

@@ -6,17 +6,9 @@
   `pcens_cdf()` and the vectorised Stan PMF use them in place of numerical integration, with the numerical path kept as a fallback outside their valid region, see `?pcens_cdf_exptilt`.
   The normal delay is the first analytical solution for a delay on the reals.
   See #367.
-- Added a truncated logistic primary event distribution, `dtlogis()`, `ptlogis()` and `rtlogis()` in R and `tlogis_lpdf()`, `tlogis_lcdf()`, `tlogis_cdf()` and `tlogis_rng()` in Stan, registered as `tlogis` with Stan `primary_id` 3.
+- Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3).
   See #370.
-- Added analytical solutions for exponential, gamma and normal delays with a truncated logistic primary, built from series of the tilt transforms.
-  In R these are methods of `pcens_cdf()` and in Stan `primarycensored_tlogis_lcdf()`, chosen with the new `check_for_analytical_window()`.
-  They agree with numerical integration to a relative 1e-9 or better, and the vectorised Stan PMF functions share the terms at integer delays.
-  The exponential and gamma forms need the largest tilt of the series to be below the rate, and otherwise use the numerical path.
-  The gamma shape gradient agrees with a reference integral to about 1e-5 for shapes of 2 to 250.
-  See #370.
-- The numerical paths split the integral around a narrow truncated logistic density, and the Stan ODE uses tighter tolerances for it, so the CDF is no longer too small for a small scale.
-  See #370.
-- The gamma tilt transform in Stan keeps the log of the far upper tail finite, and the normal tilt transform in R no longer loses `xi * sd^2` to rounding.
+- Added analytical solutions for exponential, gamma and normal delays with a truncated logistic primary in R and Stan, with the numerical path used where they do not apply.
   See #370.
 
 ## Bug fixes

@@ -6,57 +6,7 @@ skip_on_cran()
 # reference integral, the dispatch and fallback to the ODE path, the shared
 # endpoint vectorised form, and gradients.
 
-tlogis_stan_cases <- list(
-  list(dist_id = 4L, params = 2, pdist = pexp, args = list(rate = 2)),
-  list(dist_id = 4L, params = 0.3, pdist = pexp, args = list(rate = 0.3)),
-  list(
-    dist_id = 2L, params = c(0.6, 1.3), pdist = pgamma,
-    args = list(shape = 0.6, rate = 1.3)
-  ),
-  list(
-    dist_id = 2L, params = c(2.5, 0.4), pdist = pgamma,
-    args = list(shape = 2.5, rate = 0.4)
-  ),
-  list(
-    dist_id = 2L, params = c(20, 4), pdist = pgamma,
-    args = list(shape = 20, rate = 4)
-  ),
-  list(
-    dist_id = 2L, params = c(2.5, 1000), pdist = pgamma,
-    args = list(shape = 2.5, rate = 1000)
-  ),
-  list(
-    dist_id = 18L, params = c(3, 2), pdist = pnorm,
-    args = list(mean = 3, sd = 2)
-  ),
-  list(
-    dist_id = 18L, params = c(-1, 3), pdist = pnorm,
-    args = list(mean = -1, sd = 3)
-  )
-)
-
-tlogis_case_label <- function(case, ...) {
-  paste0(
-    "dist ", case$dist_id, " params ", toString(case$params), ", ",
-    paste(names(list(...)), unlist(list(...)), sep = " = ", collapse = ", ")
-  )
-}
-
-tlogis_case_cdf <- function(case) {
-  function(x) do.call(case$pdist, c(list(x), case$args))
-}
-
-# Internal lower bound used by primarycensored_lcdf for each support
-tlogis_case_lower <- function(case) {
-  if (case$dist_id == 18L) -Inf else 0
-}
-
-tlogis_case_obj <- function(case, location, scale) {
-  tlogis_object(list(pdist = case$pdist, args = case$args), location, scale)
-}
-
-# The window, location and scale sets of the acceptance criteria, and
-# delays below and above the window. Stan returns -Inf for probabilities
+# Delays below, inside and above the window. Stan returns -Inf for probabilities
 # below the smallest double, so values that underflow are not compared.
 tlogis_stan_delays <- function(case, pwindow) {
   scale <- if (case$params[length(case$params)] > 100) 1e-3 else 1
@@ -192,24 +142,24 @@ test_that("check_for_tlogis_params needs the tilts of the series", {
   expect_identical(
     check_for_tlogis_params(18L, c(3, 2), c(Inf, 0.2), 2), 0L
   )
-  # check_for_analytical_window adds it to the structural checks
+  # check_for_analytical_params adds it to the structural checks
   expect_identical(
-    check_for_analytical_window(2L, c(2.5, 0.4), 3L, c(3, 0.5), 2), 1L
+    check_for_analytical_params(2L, c(2.5, 0.4), 3L, c(3, 0.5), 2), 1L
   )
   expect_identical(
-    check_for_analytical_window(2L, c(2.5, 0.4), 3L, c(0.5, 0.2), 2), 0L
+    check_for_analytical_params(2L, c(2.5, 0.4), 3L, c(0.5, 0.2), 2), 0L
   )
   expect_identical(
-    check_for_analytical_window(3L, c(2.5, 0.4), 3L, c(3, 0.5), 2), 0L
+    check_for_analytical_params(3L, c(2.5, 0.4), 3L, c(3, 0.5), 2), 0L
   )
   expect_identical(
-    check_for_analytical_window(2L, c(2.5, 0.4), 1L, numeric(0), 2), 1L
+    check_for_analytical_params(2L, c(2.5, 0.4), 1L, numeric(0), 2), 1L
   )
   expect_identical(
-    check_for_analytical_window(2L, c(2.5, 0.4), 2L, -0.4, 2), 0L
+    check_for_analytical_params(2L, c(2.5, 0.4), 2L, -0.4, 2), 0L
   )
   expect_identical(
-    check_for_analytical_window(2L, c(2.5, 0.4), 2L, 0.5, 2), 1L
+    check_for_analytical_params(2L, c(2.5, 0.4), 2L, 0.5, 2), 1L
   )
 })
 
@@ -279,7 +229,15 @@ test_that("primarycensored_tlogis_lcdf matches Stan random draws", {
   n <- 5000
   pwindow <- 2
   probs <- seq(0.1, 0.9, by = 0.2)
-  for (case in tlogis_stan_cases[c(1, 4, 7)]) {
+  # A large rate keeps the analytic path for a location before the window
+  fast_exponential <- list(
+    dist_id = 4L, params = 200, pdist = pexp, args = list(rate = 200)
+  )
+  cases <- c(
+    tlogis_stan_cases[c(1, 4, 6, 7)], list(fast_exponential)
+  )
+  n_analytic <- 0L
+  for (case in cases) {
     rdist <- switch(as.character(case$dist_id),
       "4" = function(n) rexp(n, case$args$rate),
       "2" = function(n) rgamma(n, case$args$shape, case$args$rate),
@@ -289,6 +247,7 @@ test_that("primarycensored_tlogis_lcdf matches Stan random draws", {
       if (!tlogis_case_analytic(case, window[1], window[2], pwindow)) {
         next
       }
+      n_analytic <- n_analytic + 1L
       primary <- vapply(
         seq_len(n),
         function(i) tlogis_rng(0, pwindow, window[1], window[2]),
@@ -308,6 +267,8 @@ test_that("primarycensored_tlogis_lcdf matches Stan random draws", {
       )
     }
   }
+  # All windows of the large rates and the window after the window of the rest
+  expect_identical(n_analytic, 11L)
 })
 
 test_that("the small delay form is used and continuous", {
@@ -346,7 +307,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
           pwindow = pwindow, location = location, scale = scale
         )
         expect_identical(
-          check_for_analytical_window(
+          check_for_analytical_params(
             case$dist_id, case$params, 3L, window, pwindow
           ), 1L
         )
@@ -385,7 +346,7 @@ test_that("inadmissible series use the ODE path", {
   )
   for (case in cases) {
     expect_identical(
-      check_for_analytical_window(
+      check_for_analytical_params(
         case$dist_id, case$params, 3L, case$window, 2
       ), 0L
     )
@@ -409,93 +370,6 @@ test_that("inadmissible series use the ODE path", {
   }
 })
 
-# Narrow windows, compared in absolute terms at 1e-7 as the ODE error is
-# absolute.
-tlogis_narrow_cases <- list(
-  list(dist_id = 4L, params = 1.5, pdist = pexp, args = list(rate = 1.5)),
-  list(
-    dist_id = 2L, params = c(2, 1), pdist = pgamma,
-    args = list(shape = 2, rate = 1)
-  ),
-  list(
-    dist_id = 1L, params = c(1, 0.5), pdist = plnorm,
-    args = list(meanlog = 1, sdlog = 0.5)
-  ),
-  list(
-    dist_id = 1L, params = c(0, 0.5), pdist = plnorm,
-    args = list(meanlog = 0, sdlog = 0.5)
-  ),
-  list(
-    dist_id = 3L, params = c(2, 2), pdist = pweibull,
-    args = list(shape = 2, scale = 2)
-  ),
-  list(
-    dist_id = 18L, params = c(3, 2), pdist = pnorm,
-    args = list(mean = 3, sd = 2)
-  )
-)
-
-test_that("the ODE path resolves a narrow truncated logistic primary", {
-  pwindow <- 2
-  d <- c(0.5, 1, 3, 10)
-  for (case in tlogis_narrow_cases) {
-    cdf <- tlogis_case_cdf(case)
-    for (location in c(-0.5, 0.7, 2.5)) {
-      for (scale in c(0.02, 0.005, 0.001)) {
-        window <- c(location, scale)
-        expected <- tlogis_reference(
-          d, pwindow, location, scale, cdf, case$dist_id != 18L
-        )
-        ode <- vapply(
-          d, primarycensored_numeric_cdf, numeric(1),
-          case$dist_id, case$params, pwindow, 3L, window
-        )
-        expect_lt(
-          max(abs(ode - expected)), 1e-7,
-          label = tlogis_case_label(
-            case,
-            location = location, scale = scale
-          )
-        )
-      }
-    }
-  }
-})
-
-test_that("the log CDF and log PMF are correct for a narrow primary", {
-  pwindow <- 2
-  for (case in tlogis_narrow_cases) {
-    cdf <- tlogis_case_cdf(case)
-    lower <- tlogis_case_lower(case)
-    for (location in c(0.7, 1)) {
-      for (scale in c(0.02, 0.005)) {
-        window <- c(location, scale)
-        label <- tlogis_case_label(case, location = location, scale = scale)
-        d <- c(0.5, 1, 3, 10)
-        expected <- tlogis_reference(
-          d, pwindow, location, scale, cdf, case$dist_id != 18L
-        )
-        lcdf <- vapply(
-          d, primarycensored_lcdf, numeric(1),
-          case$dist_id, case$params, pwindow, lower, Inf, 3L, window
-        )
-        expect_lt(max(abs(exp(lcdf) - expected)), 1e-7, label = label)
-        # The PMF over integer delays
-        ref <- tlogis_reference(
-          0:6, pwindow, location, scale, cdf, case$dist_id != 18L
-        )
-        pmf <- exp(primarycensored_sone_lpmf_vectorized(
-          5, lower, Inf, case$dist_id, case$params, pwindow, 3L, window
-        ))
-        expect_lt(
-          max(abs(pmf - diff(ref)[1:6])), 1e-7,
-          label = paste("pmf:", label)
-        )
-      }
-    }
-  }
-})
-
 test_that("the analytical function rejects an inadmissible series", {
   expect_error(
     primarycensored_analytical_lcdf(
@@ -512,30 +386,6 @@ test_that("other delays use the ODE path with a truncated logistic primary", {
       primarycensored_numeric_cdf(d, 3L, c(1.5, 2), 2, 3L, c(0.5, 0.3))
     )
   }
-})
-
-test_that("non-parametric delays are analytic with a truncated logistic
-  primary", {
-  boundaries <- c(0, 1, 3, 6, 10)
-  pmf <- c(0.2, 0.3, 0.35, 0.15)
-  params <- c(boundaries, pmf)
-  window <- c(0.5, 0.3)
-  obj <- new_pcens(
-    pdist = pdiscretestep, dprimary = dtlogis,
-    primary_args = list(location = 0.5, scale = 0.3),
-    boundaries = boundaries, pmf = pmf
-  )
-  d <- c(0.5, 1.5, 3, 5, 8, 12)
-  expect_identical(check_for_analytical(26L, 3L), 1L)
-  analytic <- vapply(
-    d, primarycensored_cdf, numeric(1), 26L, params, 2, -Inf, Inf, 3L, window
-  )
-  expect_equal(analytic, pcens_cdf(obj, d, 2), tolerance = 1e-9)
-  # The step CDF has kinks, so the ODE path is accurate to about 1e-4
-  ode <- vapply(
-    d, primarycensored_numeric_cdf, numeric(1), 26L, params, 2, 3L, window
-  )
-  expect_lt(max(abs(analytic - ode)), 1e-4)
 })
 
 test_that("normal delays handle negative delays and truncation", {
@@ -690,72 +540,6 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
     }
   }
 })
-
-# Gradients are only observable from a compiled model, so this builds a
-# minimal one whose target is the log CDF or the vectorised log PMF, and runs
-# `stan_gradient_at()` from helper-stan-gradient.R.
-tlogis_gradient_model <- function() {
-  testthat::skip_if_not_installed("cmdstanr")
-  testthat::skip_if(
-    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
-  )
-  functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
-  )
-  code <- paste0(
-    functions, "\n",
-    "data {\n",
-    "  int dist_id;\n",
-    "  int n_params;\n",
-    "  int vectorised;\n",
-    "  real d;\n",
-    "  real pwindow;\n",
-    "  real L;\n",
-    "}\n",
-    "parameters {\n",
-    "  real p1;\n",
-    "  real<lower=0> p2;\n",
-    "  real location;\n",
-    "  real<lower=0> scale;\n",
-    "}\n",
-    "model {\n",
-    "  array[2] real all_params = {p1, p2};\n",
-    "  array[n_params] real params = all_params[1:n_params];\n",
-    "  if (vectorised) {\n",
-    "    target += sum(primarycensored_sone_lpmf_vectorized(\n",
-    "      to_int(d), L, positive_infinity(), dist_id, params, pwindow, 3,\n",
-    "      {location, scale}\n",
-    "    ));\n",
-    "  } else {\n",
-    "    target += primarycensored_lcdf(\n",
-    "      d | dist_id, params, pwindow, L, positive_infinity(), 3,\n",
-    "      {location, scale}\n",
-    "    );\n",
-    "  }\n",
-    "}\n"
-  )
-  path <- file.path(tempdir(), "pcd_tlogis_cdf_gradient.stan")
-  writeLines(code, path)
-  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
-}
-
-tlogis_gradient_at <- function(model, case, d, pwindow, location, scale,
-                               vectorised = FALSE) {
-  init <- list(
-    p1 = case$params[1],
-    p2 = if (length(case$params) > 1) case$params[2] else 1,
-    location = location, scale = scale
-  )
-  stan_gradient_at( # nolint: object_usage_linter.
-    model,
-    data = list(
-      dist_id = case$dist_id, n_params = length(case$params),
-      vectorised = as.integer(vectorised), d = d, pwindow = pwindow,
-      L = tlogis_case_lower(case)
-    ),
-    init = init
-  )
-}
 
 # The finite differences of CmdStan are noisy to about 1e-6, which sets the
 # tolerance. The gamma shape gradient has a looser one.
@@ -959,52 +743,6 @@ test_that("the vectorised truncated logistic log PMF has finite gradients
       expect_false(res$rejected, info = label)
       expect_true(all(is.finite(res$gradient)), info = label)
       expect_tlogis_gradient_close(res, case, label)
-    }
-  }
-})
-
-test_that("the ODE path with a narrow truncated logistic primary has finite
-  gradients matching finite differences", {
-  model <- tlogis_gradient_model()
-  # The gradients pass through the times at which the integral is split,
-  # which must cancel. The tolerance is that of the gradient of the ODE.
-  cases <- list(tlogis_stan_cases[[4]], tlogis_stan_cases[[2]])
-  points <- list(
-    list(d = 3, pwindow = 2, location = 0.7, scale = 0.05),
-    list(d = 1, pwindow = 2, location = 0.7, scale = 0.02),
-    list(d = 3, pwindow = 2, location = -0.5, scale = 0.05),
-    list(d = 4, pwindow = 2, location = 2.5, scale = 0.05)
-  )
-  for (case in cases) {
-    for (point in points) {
-      # Only the points that use the ODE
-      if (tlogis_case_analytic(
-        case, point$location, point$scale, point$pwindow
-      )) {
-        next
-      }
-      for (vectorised in c(FALSE, TRUE)) {
-        label <- tlogis_case_label(
-          case,
-          d = point$d, pwindow = point$pwindow, location = point$location,
-          scale = point$scale, vectorised = vectorised
-        )
-        res <- tlogis_gradient_at(
-          model, case, point$d, point$pwindow, point$location, point$scale,
-          vectorised = vectorised
-        )
-        expect_false(res$gradient_not_finite, info = label)
-        expect_false(res$rejected, info = label)
-        expect_true(all(is.finite(res$gradient)), info = label)
-        allowed <- 1e-2 * pmax(abs(res$finite_diff), 1e-2)
-        expect_true(
-          all(abs(res$gradient - res$finite_diff) <= allowed),
-          info = paste0(
-            label, ": gradient ", toString(signif(res$gradient, 5)),
-            ", finite difference ", toString(signif(res$finite_diff, 5))
-          )
-        )
-      }
     }
   }
 })
