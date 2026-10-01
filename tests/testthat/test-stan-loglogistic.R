@@ -59,9 +59,17 @@ test_that("the Stan partial moment ratio matches the R series", {
   for (i in seq_along(log_A)) {
     for (j in seq_along(a)) {
       expect_equal(
-        loglogistic_moment_ratio(a[j], log_A[i], 1e-16), expected[i, j],
+        loglogistic_moment_ratio(a[j], log_A[i], 1e-16, NaN), expected[i, j],
         tolerance = 1e-10,
         info = sprintf("a = %g, log A = %g", a[j], log_A[i])
+      )
+      # The shared pivot of the tail series gives the same ratio
+      expect_equal(
+        loglogistic_moment_ratio(
+          a[j], log_A[i], 1e-16, loglogistic_tail_pivot(a[j], 1e-16)
+        ),
+        expected[i, j],
+        tolerance = 1e-10
       )
     }
   }
@@ -351,7 +359,7 @@ test_that("the Stan numerical CDF matches the R numerical CDF", {
     )
     r_cdf <- .loglogistic_numeric_cdf(uniform_object(family), case[4], case[3])
     stan_cdf <- exp(loglogistic_numeric_lcdf(
-      case[4], c(case[1], case[2]), case[3]
+      case[4], c(case[1], case[2]), case[3], 1L, numeric(0)
     ))
     smaller <- min(r_cdf, 1 - r_cdf)
     expect_lt(
