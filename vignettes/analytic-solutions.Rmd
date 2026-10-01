@@ -469,11 +469,6 @@ Where a tilt is not available, or no rule with at most 64 terms meets the tolera
 In Stan `check_for_analytical_params()` makes the choice from the parameters and the window.
 The normal form has no restriction.
 
-The numerical paths split the integral at the location and at multiples of the scale from it, up to 30 scales either side and clipped to the window.
-Otherwise a quadrature or an ODE solver can step over the narrow density of a small scale and return a CDF that is too small.
-The Stan ODE for this primary uses a relative tolerance of $10^{-9}$ and an absolute tolerance of $10^{-10}$ rather than the $10^{-6}$ of `ode_rk45`.
-A CDF or a PMF below about $10^{-3}$ from the ODE is then not accurate in relative terms.
-
 ## Delays much smaller than the scale
 
 For a delay on the non-negative reals with $d < w_P$ and $d / s < 10^{-4}$ equation \@ref(eq:logistic) cancels, as only primary event times up to $d$ contribute and $L(p) - L(0)$ is small.
@@ -486,8 +481,8 @@ Both forms are accurate to about $10^{-8}$ at the threshold.
 
 Every transform depends on one endpoint, $a$, $u^\star$ or $d$.
 For integer delays and an integer window the endpoints of neighbouring delays are the same integers, and so is $u^\star = d - m$ for an integer location.
-`pcens_pmf()` evaluates the transforms once at the unique endpoints in R, and `primarycensored_tlogis_lcdf_vectorized()` does so in Stan.
-For a location inside the window that is not an integer each $u^\star$ is a different point, so those delays use `primarycensored_tlogis_lcdf()` one at a time.
+The transforms are evaluated once at the unique endpoints, in `pcens_pmf()` and in the vectorised Stan PMFs.
+For a location inside the window that is not an integer each $u^\star$ is a different point and is evaluated for its own delay.
 
 # Learning more
 
