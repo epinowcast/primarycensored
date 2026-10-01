@@ -105,6 +105,44 @@ vector primarycensored_truncation_bounds(
 }
 
 /**
+  * Compute the primary event censored CDF by numerical integration
+  * @ingroup primary_censored_single
+  *
+  * The numerical path of primarycensored_cdf(), without truncation, using
+  * `ode_rk45`. The integration variable ranges over the primary event time,
+  * from d - pwindow to d. For delays on the non-negative reals the integrand
+  * is 0 below 0, so the integral starts at 0 to keep the solver from stepping
+  * over the kink there.
+  *
+  * @param d Delay
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return Primary event censored CDF, not normalized for truncation
+  */
+real primarycensored_numeric_cdf(data real d, data int dist_id,
+                                 array[] real params, data real pwindow,
+                                 data int primary_id,
+                                 array[] real primary_params) {
+  real lower_bound = dist_has_positive_support(dist_id)
+                     ? fmax(d - pwindow, 0) : d - pwindow;
+  int n_params = num_elements(params);
+  int n_primary_params = num_elements(primary_params);
+  array[n_params + n_primary_params] real theta = append_array(
+    params, primary_params
+  );
+  array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
+
+  vector[1] y0 = rep_vector(0.0, 1);
+  return ode_rk45(
+    primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids
+  )[1, 1];
+}
+
+/**
   * Compute the primary event censored CDF for a single delay
   * @ingroup primary_censored_single
   *
@@ -141,23 +179,13 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
     );
   } else {
-    // Use numerical integration for other cases. The integration variable
-    // ranges over the primary-event time, so the natural lower bound is
-    // d - pwindow. For positive-support delays the integrand `F_delay(t)` is
-    // 0 for t <= 0, so the integral starts at 0 and is 0 for d <= 0.
-    // Distributions with support on the reals use the unclipped bound.
+    // Use numerical integration for other cases
     if (dist_has_positive_support(dist_id) && d <= 0) {
       return 0;
     }
-    real lower_bound = dist_has_positive_support(dist_id)
-                       ? fmax(d - pwindow, 0) : d - pwindow;
-    int n_params = num_elements(params);
-    int n_primary_params = num_elements(primary_params);
-    array[n_params + n_primary_params] real theta = append_array(params, primary_params);
-    array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
-
-    vector[1] y0 = rep_vector(0.0, 1);
-    result = ode_rk45(primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids)[1, 1];
+    result = primarycensored_numeric_cdf(
+      d | dist_id, params, pwindow, primary_id, primary_params
+    );
 
     // Apply truncation normalization on log scale for numerical stability.
     // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
