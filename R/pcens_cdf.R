@@ -711,3 +711,322 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 
   return(result)
 }
+
+#' Method for Exponential delay with uniform primary
+#'
+#' Analytical solution for the exponential distribution, which is the gamma
+#' solution with `shape = 1` without the incomplete gamma function.
+#' Delay arguments other than `rate`, such as `lower.tail`, use the numerical
+#' [pcens_cdf.default()] method.
+#' See `vignette("analytic-solutions")` for the derivation.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pexp,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   rate = 0.5
+#' )
+#' pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
+pcens_cdf.pcens_pexp_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, "rate")
+  if (isTRUE(use_numeric) || is.null(delay_args)) {
+    return(
+      pcens_cdf.default(object, q, pwindow, use_numeric)
+    )
+  }
+
+  rate <- if (is.null(delay_args$rate)) 1 else delay_args$rate
+
+  # G(t) = 0 for t <= 0 as F_T(t) = 0 there, so clamp t at 0
+  G <- function(t) {
+    .expon_shortfall(rate * pmax(t, 0)) / rate
+  }
+
+  .pcens_cdf_antiderivative(q, pwindow, G)
+}
+
+#' Method for Normal delay with uniform primary
+#'
+#' Analytical solution for the normal distribution, which has support on
+#' the reals.
+#' The primary event window \eqn{[d - w_P, d]} is not clipped at zero.
+#' Below \eqn{z = -10} an asymptotic series avoids cancellation.
+#' Delay arguments other than `mean` and `sd`, such as `lower.tail`, use the
+#' numerical [pcens_cdf.default()] method.
+#' See `vignette("analytic-solutions")` for the derivation.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pnorm,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   mean = 5,
+#'   sd = 2
+#' )
+#' pcens_cdf(pcens_obj, q = c(-1, 2, 5, 8), pwindow = 1)
+pcens_cdf.pcens_pnorm_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("mean", "sd"))
+  if (isTRUE(use_numeric) || is.null(delay_args)) {
+    return(
+      pcens_cdf.default(object, q, pwindow, use_numeric)
+    )
+  }
+
+  mu <- if (is.null(delay_args$mean)) 0 else delay_args$mean
+  sigma <- if (is.null(delay_args$sd)) 1 else delay_args$sd
+
+  G <- function(t) {
+    sigma * .norm_shortfall((t - mu) / sigma)
+  }
+
+  .pcens_cdf_antiderivative(q, pwindow, G)
+}
+
+#' Method for Chi-square delay with uniform primary
+#'
+#' The chi-square distribution with `df` degrees of freedom is the gamma
+#' distribution with `shape = df / 2` and `scale = 2`, so this uses
+#' [pcens_cdf.pcens_pgamma_dunif()].
+#' A non-central chi-square (`ncp` not zero) has no such form and uses the
+#' numerical [pcens_cdf.default()] method.
+#' So do delay arguments other than `df` and `ncp`, such as `lower.tail`.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pchisq,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   df = 4
+#' )
+#' pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
+pcens_cdf.pcens_pchisq_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("df", "ncp"))
+  if (
+    isTRUE(use_numeric) || is.null(delay_args) ||
+      .is_noncentral(delay_args$ncp)
+  ) {
+    return(
+      pcens_cdf.default(object, q, pwindow, use_numeric)
+    )
+  }
+  degrees <- delay_args$df
+  if (is.null(degrees)) {
+    stop("df parameter is required for Chi-square distribution", call. = FALSE)
+  }
+
+  gamma_obj <- object
+  gamma_obj$pdist <- pgamma
+  gamma_obj$args <- list(shape = degrees / 2, scale = 2)
+  pcens_cdf.pcens_pgamma_dunif(gamma_obj, q, pwindow)
+}
+
+#' Method for Beta delay with uniform primary
+#'
+#' Analytical solution for the beta distribution, which has support on
+#' \eqn{[0, 1]}.
+#' A non-central beta (`ncp` not zero) uses the numerical
+#' [pcens_cdf.default()] method.
+#' So do delay arguments other than `shape1`, `shape2` and `ncp`, such as
+#' `lower.tail`.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pbeta,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   shape1 = 2,
+#'   shape2 = 3
+#' )
+#' pcens_cdf(pcens_obj, q = c(0.2, 0.6, 1.5), pwindow = 0.5)
+pcens_cdf.pcens_pbeta_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("shape1", "shape2", "ncp"))
+  if (
+    isTRUE(use_numeric) || is.null(delay_args) ||
+      .is_noncentral(delay_args$ncp)
+  ) {
+    return(
+      pcens_cdf.default(object, q, pwindow, use_numeric)
+    )
+  }
+  a <- delay_args$shape1
+  b <- delay_args$shape2
+  if (is.null(a)) {
+    stop("shape1 parameter is required for Beta distribution", call. = FALSE)
+  }
+  if (is.null(b)) {
+    stop("shape2 parameter is required for Beta distribution", call. = FALSE)
+  }
+
+  E_T <- a / (a + b)
+
+  # Clamp t to [0, 1] and add the linear part above the support
+  G <- function(t) {
+    t_in <- pmin(pmax(t, 0), 1)
+    t_in * stats::pbeta(t_in, a, b) -
+      E_T * stats::pbeta(t_in, a + 1, b) + pmax(t - 1, 0)
+  }
+
+  .pcens_cdf_antiderivative(q, pwindow, G)
+}
+
+#' Delay distribution arguments an analytical solution handles
+#'
+#' Arguments the solution does not use, such as `lower.tail`, would be
+#' ignored, so the numerical [pcens_cdf.default()] method is used instead.
+#'
+#' @param object A `pcens` object as created by [new_pcens()].
+#'
+#' @param allowed Character vector of the argument names the solution uses.
+#'
+#' @return The named list of delay arguments, or `NULL` if any argument is
+#'  unnamed or not in `allowed`.
+#'
+#' @keywords internal
+.delay_args <- function(object, allowed) {
+  delay_args <- object$args
+  arg_names <- names(delay_args)
+  if (length(delay_args) == 0L) {
+    return(delay_args)
+  }
+  if (is.null(arg_names) || !all(arg_names %in% allowed)) {
+    return(NULL)
+  }
+  delay_args
+}
+
+#' Test for a non-central delay distribution
+#'
+#' @param ncp The `ncp` argument of a delay CDF, or `NULL`.
+#'
+#' @return `TRUE` if `ncp` is supplied and not zero.
+#'
+#' @keywords internal
+.is_noncentral <- function(ncp) {
+  !is.null(ncp) && !isTRUE(all(ncp == 0))
+}
+
+#' Primary event censored CDF from an antiderivative of the delay CDF
+#'
+#' The CDF is \eqn{(G(d) - G(d - w_P)) / w_P} for an antiderivative
+#' \eqn{G} of the delay CDF.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @param G Function giving an antiderivative of the delay CDF at a vector
+#'  of times.
+#'
+#' @inherit pcens_cdf return
+#'
+#' @keywords internal
+.pcens_cdf_antiderivative <- function(q, pwindow, G) {
+  result <- (G(q) - G(q - pwindow)) / pwindow
+  # Both antiderivatives are infinite at q = Inf, and the CDF is 1
+  result[which(q == Inf)] <- 1
+
+  # Ensure the result is in [0, 1] (accounts for numerical errors)
+  pmin(1, pmax(0, result))
+}
+
+#' Evaluate x - 1 + exp(-x) for x >= 0
+#'
+#' A series is used for `x < 0.1` where the direct form cancels.
+#'
+#' @param x Non-negative numeric vector.
+#'
+#' @return Vector of `x - 1 + exp(-x)`.
+#'
+#' @keywords internal
+.expon_shortfall <- function(x) {
+  out <- x + expm1(-x)
+  small <- which(x < 0.1)
+  if (length(small) > 0L) {
+    # x^2 / 2 * sum_k 2 (-x)^k / (k + 2)!
+    xs <- x[small]
+    term <- 1
+    series <- 1
+    for (k in 1:10) {
+      term <- term * -xs / (k + 2)
+      series <- series + term
+    }
+    out[small] <- xs^2 / 2 * series
+  }
+  out
+}
+
+#' Expected shortfall of a standard normal
+#'
+#' Evaluates \eqn{g(z) = z \Phi(z) + \phi(z)}.
+#' Below `z = -10` the asymptotic series
+#' \eqn{\phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with 20
+#' terms, as the direct form cancels.
+#'
+#' @param z Numeric vector of standardised values.
+#'
+#' @return Vector of `g(z)`.
+#'
+#' @keywords internal
+.norm_shortfall <- function(z) {
+  out <- stats::dnorm(z) + z * stats::pnorm(z)
+  far <- which(z < -10)
+  if (length(far) > 0L) {
+    zf <- z[far]
+    y <- 1 / zf^2
+    term <- 1
+    series <- 1
+    for (k in 1:20) {
+      term <- term * -(2 * k + 1) * y
+      series <- series + term
+    }
+    out[far] <- stats::dnorm(zf) * y * series
+  }
+  out
+}

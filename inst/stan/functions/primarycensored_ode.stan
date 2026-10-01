@@ -121,7 +121,10 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
   else if (dist_id == 5) return gengamma_lcdf(delay | params[1], params[2], params[3]);
-  else if (dist_id == 9) return beta_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 9) {
+    // The Beta has support on [0, 1], and beta_lcdf rejects delay > 1
+    return delay >= 1 ? 0 : beta_lcdf(delay | params[1], params[2]);
+  }
   else if (dist_id == 12) return cauchy_lcdf(delay | params[1], params[2]);
   else if (dist_id == 13) return chi_square_lcdf(delay | params[1]);
   else if (dist_id == 15) return gumbel_lcdf(delay | params[1], params[2]);
