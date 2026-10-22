@@ -406,7 +406,7 @@ The normal form has no restriction.
 Equation \@ref(eq:exptilt) cancels as $r \to 0$, and for a gamma delay loses precision in proportion to the shape.
 Two forms replace it, with $G_k(t) = \int (t - u)^k f_T(u)~du$ over the support up to $t$.
 
-For $|r| w_P < 10^{-2}$, or $10^{-3}$ for delays on the reals, expanding the window density in $r$ gives the uniform solution and its corrections to second order,
+For $|r| w_P < 10^{-2}$, or $10^{-3}$ for delays on the reals, and $|r| (|d| + w_P) < 0.1$, expanding the window density in $r$ gives the uniform solution and its corrections to second order,
 
 $$
 \begin{aligned}
@@ -423,6 +423,10 @@ $$
 
 is used instead.
 The relative truncation errors are below $(|r| w_P)^3 / 160$ and $(|r| d)^3 / 24$, so both are below $10^{-8}$ at these limits.
+
+The first form subtracts terms of the size of $|d| + w_P$, so it has a rounding error of about $10^{-14} (|d| + w_P) / w_P \{1 + |r| (|d| + w_P)\}$.
+Equation \@ref(eq:exptilt) has a rounding error of about $10^{-15} / (|r| w_P)$ at any distance from the origin.
+The first form has the smaller error while $|r| (|d| + w_P)$ is below about 0.1, so equation \@ref(eq:exptilt) is used beyond that.
 
 # Transform based solutions for truncated logistic primary event times
 
