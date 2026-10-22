@@ -16,23 +16,23 @@ loglogistic_families <- function() {
   list(
     list(
       label = "log-logistic shape 0.6", pdist = pllogis_test,
-      args = list(shape = 0.6, scale = 2), positive = TRUE
+      args = list(shape = 0.6, scale = 2)
     ),
     list(
       label = "log-logistic shape 1", pdist = pllogis_test,
-      args = list(shape = 1, scale = 3), positive = TRUE
+      args = list(shape = 1, scale = 3)
     ),
     list(
       label = "log-logistic shape 2", pdist = pllogis_test,
-      args = list(shape = 2, scale = 5), positive = TRUE
+      args = list(shape = 2, scale = 5)
     ),
     list(
       label = "log-logistic shape 4.5", pdist = pllogis_test,
-      args = list(shape = 4.5, scale = 8), positive = TRUE
+      args = list(shape = 4.5, scale = 8)
     ),
     list(
       label = "log-logistic shape 12", pdist = pllogis_test,
-      args = list(shape = 12, scale = 6), positive = TRUE
+      args = list(shape = 12, scale = 6)
     )
   )
 }
@@ -67,20 +67,12 @@ uniform_object <- function(family) {
 }
 
 # Independent reference for the primary event censored CDF and survival of a
-# log-logistic delay. The CDF is the expectation of F(q - P) and the survival
-# the expectation of S(q - P) over the primary event time P in (0, pwindow)
-# with a uniform density for `rho = 0` and otherwise density
-# rho exp(rho p) / (exp(rho pwindow) - 1). Each is integrated over p with
-# breaks where the delay CDF moves, so the upper tail is accurate to 1e-13 of
-# the survival rather than of the CDF.
-loglogistic_censored_reference <- function(q, shape, scale, rho, pwindow) {
-  primary_density <- function(p) {
-    if (rho == 0) {
-      rep(1 / pwindow, length(p))
-    } else {
-      rho * exp(rho * p) / expm1(rho * pwindow)
-    }
-  }
+# log-logistic delay with a uniform primary. The CDF is the expectation of
+# F(q - P) and the survival the expectation of S(q - P) over the primary event
+# time P in (0, pwindow). Each is integrated over p with breaks where the
+# delay CDF moves, so the upper tail is accurate to 1e-13 of the survival
+# rather than of the CDF.
+loglogistic_censored_reference <- function(q, shape, scale, pwindow) {
   lcdf <- function(u) {
     ifelse(u <= 0, -Inf, -log1p(exp(-shape * (log(pmax(u, 1e-300)) -
       log(scale)))))
@@ -93,7 +85,7 @@ loglogistic_censored_reference <- function(q, shape, scale, rho, pwindow) {
   integral <- function(g) {
     sum(vapply(seq_len(length(breaks) - 1L), function(i) {
       stats::integrate(
-        function(p) g(p) * primary_density(p), breaks[i], breaks[i + 1L],
+        function(p) g(p) / pwindow, breaks[i], breaks[i + 1L],
         rel.tol = 1e-13, abs.tol = 0, subdivisions = 10000L,
         stop.on.error = FALSE
       )$value
@@ -140,16 +132,14 @@ rllogis_test <- function(n, shape, scale = 1) {
   scale * (u / (1 - u))^(1 / shape)
 }
 
-# Samples from rprimarycensored() with a uniform (`rho = 0`) or a tilted
-# primary event window
-loglogistic_samples <- function(n, family, pwindow, rho) {
+# Samples from rprimarycensored() with a uniform primary event window
+loglogistic_samples <- function(n, family, pwindow) {
   do.call(
     rprimarycensored,
     c(
       list(
         n = n, rdist = rllogis_test, pwindow = pwindow, swindow = 0,
-        rprimary = if (rho == 0) stats::runif else rexpgrowth,
-        rprimary_args = if (rho == 0) list() else list(r = rho)
+        rprimary = stats::runif, rprimary_args = list()
       ),
       family$args
     )
@@ -180,8 +170,9 @@ ll_case_family <- function(case) {
   list(pdist = pllogis_test, args = case$args)
 }
 
-# The ODE branch of primarycensored_cdf() for given delays, as the CDF of a
-# fixed parameter run of a model that calls the ODE solver directly
+# The ODE branch of primarycensored_cdf() for given delays with a uniform
+# primary, as the CDF of a fixed parameter run of a model that calls the ODE
+# solver directly
 ll_ode_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if(
@@ -197,20 +188,14 @@ ll_ode_model <- function() {
     "  array[n] real d;\n",
     "  array[2] real params;\n",
     "  real pwindow;\n",
-    "  int primary_id;\n",
-    "  int n_primary;\n",
-    "  array[n_primary] real primary_params;\n",
     "}\n",
     "generated quantities {\n",
     "  array[n] real cdf;\n",
     "  for (i in 1:n) {\n",
     "    real lower_bound = fmax(d[i] - pwindow, 0);\n",
-    "    array[2 + n_primary] real theta =\n",
-    "      append_array(params, primary_params);\n",
-    "    array[4] int ids = {31, primary_id, 2, n_primary};\n",
     "    cdf[i] = ode_rk45(\n",
     "      primarycensored_ode, rep_vector(0.0, 1), lower_bound, {d[i]},\n",
-    "      theta, {d[i], pwindow}, ids\n",
+    "      params, {d[i], pwindow}, {31, 1, 2, 0}\n",
     "    )[1, 1];\n",
     "  }\n",
     "}\n"
@@ -220,13 +205,11 @@ ll_ode_model <- function() {
   suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
 }
 
-ll_ode_cdf <- function(model, params, d, pwindow, primary_id, primary_params) {
+ll_ode_cdf <- function(model, params, d, pwindow) {
   fit <- model$sample(
     data = list(
       n = length(d), d = as.array(d), params = as.array(params),
-      pwindow = pwindow, primary_id = primary_id,
-      n_primary = length(primary_params),
-      primary_params = as.array(primary_params)
+      pwindow = pwindow
     ),
     fixed_param = TRUE, chains = 1, iter_sampling = 1, refresh = 0,
     show_messages = FALSE, sig_figs = 18
@@ -235,8 +218,8 @@ ll_ode_cdf <- function(model, params, d, pwindow, primary_id, primary_params) {
 }
 
 # Gradients are only observable from a compiled model, so this builds a
-# minimal one whose target is the log CDF or the vectorised log PMF, and runs
-# `stan_gradient_at()` from helper-stan-gradient.R.
+# minimal one whose target is the log CDF or the vectorised log PMF with a
+# uniform primary, and runs `stan_gradient_at()` from helper-stan-gradient.R.
 ll_gradient_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if(
@@ -248,7 +231,6 @@ ll_gradient_model <- function() {
   code <- paste0(
     functions, "\n",
     "data {\n",
-    "  int primary_id;\n",
     "  int vectorised;\n",
     "  real d;\n",
     "  real pwindow;\n",
@@ -256,20 +238,18 @@ ll_gradient_model <- function() {
     "parameters {\n",
     "  real<lower=0> scale;\n",
     "  real<lower=0> shape;\n",
-    "  real rho;\n",
     "}\n",
     "model {\n",
     "  array[2] real params = {scale, shape};\n",
-    "  array[primary_id == 2 ? 1 : 0] real primary_params;\n",
-    "  if (primary_id == 2) primary_params[1] = rho;\n",
+    "  array[0] real primary_params;\n",
     "  if (vectorised) {\n",
     "    target += sum(primarycensored_sone_lpmf_vectorized(\n",
-    "      to_int(d), 0.0, positive_infinity(), 31, params, pwindow,\n",
-    "      primary_id, primary_params\n",
+    "      to_int(d), 0.0, positive_infinity(), 31, params, pwindow, 1,\n",
+    "      primary_params\n",
     "    ));\n",
     "  } else {\n",
     "    target += primarycensored_lcdf(\n",
-    "      d | 31, params, pwindow, 0.0, positive_infinity(), primary_id,\n",
+    "      d | 31, params, pwindow, 0.0, positive_infinity(), 1,\n",
     "      primary_params\n",
     "    );\n",
     "  }\n",
@@ -282,20 +262,18 @@ ll_gradient_model <- function() {
 
 # Checks the gradient is finite and matches the finite difference gradient one
 # component at a time, relative to its size with a floor for tiny ones.
-expect_ll_gradient <- function(model, case, point, primary_id,
-                               vectorised = FALSE, tolerance = 1e-4) {
-  rho <- if (is.null(point$rho)) 0 else point$rho
+expect_ll_gradient <- function(model, case, point, vectorised = FALSE,
+                               tolerance = 1e-4) {
   label <- ll_case_label(
-    case, d = point$d, pwindow = point$pwindow, r = rho,
-    vectorised = vectorised
+    case, d = point$d, pwindow = point$pwindow, vectorised = vectorised
   )
   res <- stan_gradient_at( # nolint: object_usage_linter.
     model,
     data = list(
-      primary_id = primary_id, vectorised = as.integer(vectorised),
-      d = point$d, pwindow = point$pwindow
+      vectorised = as.integer(vectorised), d = point$d,
+      pwindow = point$pwindow
     ),
-    init = list(scale = case$params[1], shape = case$params[2], rho = rho)
+    init = list(scale = case$params[1], shape = case$params[2])
   )
   expect_false(res$gradient_not_finite, info = label)
   expect_false(res$rejected, info = label)

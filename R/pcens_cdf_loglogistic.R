@@ -330,106 +330,89 @@ pcens_cdf.pcens_pllogis_dunif <- function(
   result[!is.na(q) & q == -Inf] <- 0
   finite <- which(is.finite(q))
   if (length(finite) > 0L) {
-    uniform <- .loglogistic_uniform_terms(object, q[finite], pwindow)
-    result[finite] <- uniform$cdf
-    ill <- .loglogistic_uniform_ill(uniform)
+    q_finite <- q[finite]
+    cdf <- .loglogistic_uniform_cdf(q_finite, pwindow, p)
+    ill <- .loglogistic_uniform_ill(q_finite, pwindow, p, cdf)
     if (any(ill)) {
-      result[finite[ill]] <- .loglogistic_numeric_cdf(
-        object, q[finite[ill]], pwindow
-      )
+      cdf[ill] <- .loglogistic_numeric_cdf(object, q_finite[ill], pwindow)
     }
+    result[finite] <- cdf
   }
   result
 }
 
-#' Uniform CDF of a log-logistic delay and its error bound
+#' Log CDF of the log-logistic delay, `-Inf` for t <= 0
 #'
 #' @noRd
-.loglogistic_uniform_terms <- function(object, q, pwindow) {
-  p <- .loglogistic_shape_scale(object)
+.loglogistic_lcdf <- function(t, shape, scale) {
+  out <- rep(-Inf, length(t))
+  positive <- t > 0
+  out[positive] <- -.log1p_exp(-shape * (log(t[positive]) - log(scale)))
+  out
+}
+
+#' Uniform primary CDF of a log-logistic delay at finite `q`
+#'
+#' Each unique endpoint is evaluated once.
+#'
+#' @param p Shape and scale, from `.loglogistic_shape_scale()`.
+#'
+#' @noRd
+.loglogistic_uniform_cdf <- function(q, pwindow, p) {
   lower <- 0
   endpoints <- .exptilt_endpoints(q, pwindow, lower)
   log_g1 <- .loglogistic_log_g1(endpoints, p$shape, p$scale)
   at_q <- log_g1[.exptilt_index(q, endpoints, lower)]
   at_y <- log_g1[.exptilt_index(q - pwindow, endpoints, lower)]
-  bounds <- .loglogistic_window_error(object, q, pwindow)
-  list(
-    cdf = pmin(1, exp(.log_diff_exp(at_q, at_y) - log(pwindow))),
-    log_error = bounds$log_error,
-    log_density = bounds$log_density
-  )
-}
-
-#' Error bound of a difference of G_1 over a window
-#'
-#' The bound is 4e-16 (1 + |log tF|) tF / w at each endpoint, with the
-#' density of the CDF for the PMF check.
-#'
-#' @noRd
-.loglogistic_window_error <- function(object, q, pwindow) {
-  p <- .loglogistic_shape_scale(object)
-  log_tf <- function(t) {
-    out <- rep(-Inf, length(t))
-    positive <- t > 0
-    out[positive] <- log(t[positive]) -
-      .log1p_exp(-p$shape * (log(t[positive]) - log(p$scale)))
-    out
-  }
-  log_cdf <- function(t) {
-    out <- rep(-Inf, length(t))
-    positive <- t > 0
-    out[positive] <- -.log1p_exp(-p$shape * (log(t[positive]) - log(p$scale)))
-    out
-  }
-  list(
-    log_error = log(.loglogistic_error_constant) - log(pwindow) +
-      .log_sum_exp(
-        .log_error_scale(log_tf(q)), .log_error_scale(log_tf(q - pwindow))
-      ),
-    log_density = .log_diff_exp(log_cdf(q), log_cdf(q - pwindow)) -
-      log(pwindow)
-  )
-}
-
-#' Rounding error scale of a value held on the log scale
-#'
-#' @noRd
-.log_error_scale <- function(x) {
-  ifelse(is.finite(x), x + log1p(abs(x)), -Inf)
+  pmin(1, exp(.log_diff_exp(at_q, at_y) - log(pwindow)))
 }
 
 #' Check if the uniform solution is ill conditioned
 #'
+#' The error of the difference of G_1 is bounded by
+#' 4e-16 (1 + |log tF|) tF / w at each endpoint. It is checked against the
+#' smaller tail and the density of the CDF.
+#'
+#' @param cdf The uniform CDF at `q`.
+#'
 #' @noRd
-.loglogistic_uniform_ill <- function(uniform) {
-  .log_error_exceeds(
-    uniform$log_error, log(uniform$cdf), uniform$log_density
-  )
+.loglogistic_uniform_ill <- function(q, pwindow, p, cdf) {
+  log_cdf_q <- .loglogistic_lcdf(q, p$shape, p$scale)
+  log_cdf_y <- .loglogistic_lcdf(q - pwindow, p$shape, p$scale)
+  # Rounding error scale of log(t F(t)), held on the log scale
+  log_error_scale <- function(t, log_cdf) {
+    x <- log(pmax(t, 0)) + log_cdf
+    ifelse(is.finite(x), x + log1p(abs(x)), -Inf)
+  }
+  log_error <- log(.loglogistic_error_constant) - log(pwindow) +
+    .log_sum_exp(
+      log_error_scale(q, log_cdf_q), log_error_scale(q - pwindow, log_cdf_y)
+    )
+  log_density <- .log_diff_exp(log_cdf_q, log_cdf_y) - log(pwindow)
+  .log_error_exceeds(log_error, log(cdf), log_density)
 }
 
 #' Test an error bound against the smaller tail and the PMF
 #'
 #' The bound is too large if it exceeds `.loglogistic_precision` times the
 #' smaller of the CDF and the survival, not taken below 1e-15 in the upper
-#' tail. With a density it must also be below `.loglogistic_pmf_precision`
-#' times the density, not taken below 1e-13 times the smaller tail.
+#' tail. It must also be below `.loglogistic_pmf_precision` times the
+#' density, not taken below 1e-13 times the smaller tail.
 #'
 #' @noRd
-.log_error_exceeds <- function(log_error, log_cdf, log_density = NULL) {
+.log_error_exceeds <- function(log_error, log_cdf, log_density) {
   log_cdf <- pmin(log_cdf, 0)
   log_tail <- pmin(log_cdf, .log1m_exp(log_cdf))
   log_limit <- log(.loglogistic_precision) + log_tail
   upper <- log_cdf > -log(2)
   log_limit[upper] <- pmax(log_limit[upper], log(1e-15))
-  if (!is.null(log_density)) {
-    log_limit <- pmin(
-      log_limit,
-      pmax(
-        log(.loglogistic_pmf_precision) + log_density,
-        log(1e-13) + log_tail
-      )
+  log_limit <- pmin(
+    log_limit,
+    pmax(
+      log(.loglogistic_pmf_precision) + log_density,
+      log(1e-13) + log_tail
     )
-  }
+  )
   ill <- log_error > log_limit
   ill[is.na(ill)] <- TRUE
   ill

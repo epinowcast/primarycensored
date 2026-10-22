@@ -383,23 +383,6 @@ real loglogistic_tail_term(real a, int m, real log_A, real shrink) {
 }
 
 /**
-  * Pivot M_a(3) / 3^a of the tail series
-  * @ingroup analytical_solution_helpers
-  *
-  * It depends on the power alone.
-  *
-  * @param a Power, non-negative
-  * @param tol Relative tolerance of the series
-  *
-  * @return M_a(3) / 3^a
-  */
-real loglogistic_tail_pivot(real a, real tol) {
-  return (loglogistic_partial_at_one(a)
-          + loglogistic_tau_integral(a, 0.5, tol))
-         * exp(-a * log(3));
-}
-
-/**
   * Partial moment ratio of the log-logistic for A above the tail start
   * @ingroup analytical_solution_helpers
   *
@@ -410,7 +393,10 @@ real loglogistic_tail_pivot(real a, real tol) {
   * @return r_a(A)
   */
 real loglogistic_ratio_large(real a, real log_A, real tol) {
-  real at_start = loglogistic_tail_pivot(a, tol);
+  // M_a(3) / 3^a, the integral up to the start of the tail series
+  real at_start = (loglogistic_partial_at_one(a)
+                   + loglogistic_tau_integral(a, 0.5, tol))
+                  * exp(-a * log(3));
   real shrink = exp(-a * (log_A - log(3)));
   real total = shrink * at_start;
   for (m in 0:200) {
@@ -443,21 +429,6 @@ real loglogistic_moment_ratio(real a, real log_A, real tol) {
   real tau = (A - 1) / (A + 1);
   return (loglogistic_partial_at_one(a) + loglogistic_tau_integral(a, tau, tol))
          * (1 + A) / A * exp(-a * log_A);
-}
-
-/**
-  * Log of t F(t) for the log-logistic
-  * @ingroup analytical_solution_helpers
-  *
-  * @param t Point
-  * @param scale Scale parameter
-  * @param shape Shape parameter
-  *
-  * @return log(t F(t)), `-inf` for t <= 0
-  */
-real loglogistic_log_tf(real t, real scale, real shape) {
-  if (t <= 0) return negative_infinity();
-  return log(t) + primarycensored_loglogistic_lcdf(t | scale, shape);
 }
 
 /**
@@ -509,9 +480,10 @@ int loglogistic_error_exceeds(real log_error, real log_cdf) {
   * large where it exceeds 1e-8 of the smaller tail, see
   * loglogistic_error_exceeds(), or 1e-6 of the density of the CDF, not taken
   * below 1e-13 times the smaller tail. The R equivalent is
-  * `.loglogistic_window_error()`.
+  * `.loglogistic_uniform_ill()`.
   *
-  * @param log_t_cdf_d Log of d F(d), see loglogistic_log_tf()
+  * @param log_t_cdf_d Log of d F(d), see
+  * primarycensored_loglogistic_uniform_terms()
   * @param log_t_cdf_q Log of q F(q), `-inf` for q <= 0
   * @param d Delay
   * @param pwindow Primary event window
@@ -1020,22 +992,24 @@ vector primarycensored_analytical_lcdf_vectorized(
   }
   // The numerical CDF can be out of order by its tolerance, which would make
   // the PMF NaN
-  array[n] int numerical = rep_array(0, n);
+  int previous_numerical = 0;
   for (d in start:n) {
     vector[2] terms_q = terms[max(d - pw, 0) + 1];
     log_cdfs[d] = primarycensored_uniform_lcdf_from_terms(
       terms[d + 1], terms_q, pwindow
     );
     if (dist_id == 31) {
-      if (loglogistic_window_ill_conditioned(terms[d + 1][1], terms_q[1], d,
-                                             pwindow, log_cdfs[d])) {
+      int numerical = loglogistic_window_ill_conditioned(
+        terms[d + 1][1], terms_q[1], d, pwindow, log_cdfs[d]
+      );
+      if (numerical) {
         log_cdfs[d] = loglogistic_numeric_lcdf(d | params, pwindow);
-        numerical[d] = 1;
       }
       log_cdfs[d] = fmin(log_cdfs[d], 0);
-      if (d > start && (numerical[d] || numerical[d - 1])) {
+      if (d > start && (numerical || previous_numerical)) {
         log_cdfs[d] = fmax(log_cdfs[d], log_cdfs[d - 1]);
       }
+      previous_numerical = numerical;
     }
   }
   return log_cdfs;

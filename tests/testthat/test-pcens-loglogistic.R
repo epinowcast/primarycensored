@@ -114,7 +114,7 @@ test_that("the CDF is accurate where the difference cancels", {
       pdist = pllogis_test, dprimary = dunif, primary_args = list(),
       shape = case[1], scale = case[2]
     )
-    ref <- loglogistic_censored_reference(case[4], case[1], case[2], 0, case[3])
+    ref <- loglogistic_censored_reference(case[4], case[1], case[2], case[3])
     actual <- pcens_cdf(obj, case[4], case[3])
     # The survival is resolved to 1e-15 in absolute terms
     expect_lt(
@@ -132,7 +132,7 @@ test_that("the uniform PMF is positive and accurate at large q", {
     )
     ref <- vapply(
       case[4] + 0:1, loglogistic_censored_reference, numeric(2),
-      shape = case[1], scale = case[2], rho = 0, pwindow = case[3]
+      shape = case[1], scale = case[2], pwindow = case[3]
     )
     expected <- -diff(ref["survival", ])
     actual <- pcens_pmf(obj, case[4], pwindow = case[3])
@@ -145,10 +145,10 @@ test_that("the uniform PMF is positive and accurate at large q", {
 })
 
 test_that("the uniform CDF keeps the series where it is well conditioned", {
-  obj <- uniform_object(families[[3]])
+  p <- list(shape = 2, scale = 5)
   # Shape 2, scale 5 and q / w of 10 is well within the tolerance
   ill <- function(q) {
-    .loglogistic_uniform_ill(.loglogistic_uniform_terms(obj, q, 1))
+    .loglogistic_uniform_ill(q, 1, p, .loglogistic_uniform_cdf(q, 1, p))
   }
   expect_false(ill(10))
   expect_true(ill(1e6))
@@ -214,7 +214,7 @@ test_that("the analytic CDF matches rprimarycensored samples", {
   n <- 20000
   pwindow <- 2
   for (family in families[c(1, 3, 5)]) {
-    samples <- loglogistic_samples(n, family, pwindow, 0)
+    samples <- loglogistic_samples(n, family, pwindow)
     qs <- unname(stats::quantile(samples, c(0.05, 0.25, 0.5, 0.75, 0.95)))
     expect_lt(
       max(abs(

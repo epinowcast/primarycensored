@@ -440,7 +440,8 @@ The package instead evaluates $r_a$ from three series that do not cancel.
 - For $1 < A \leq 3$, the integral is its value at $A = 1$, from the digamma function, plus a power series in $(A - 1) / (A + 1) \leq 1/2$.
 - For $A > 3$, the integral is its value at $A = 3$ plus the integral from 3 to $A$ taken term by term in $(1 + y)^{-2} = \sum_m (-1)^m (m + 1) y^{-m-2}$.
 
-The solution differences $t F_T(t) r_{1/k}(A)$ at $d$ and $q$, and loses about $4 \times 10^{-16} (1 + |\log t F_T(t)|) t F_T(t) / w_P$ of the CDF.
+The CDF is the difference of $\int_0^t F_T(u) du = t F_T(t) (1 - r_{1/k}(A))$ at $d$ and $q$, divided by $w_P$.
+This difference loses about $4 \times 10^{-16} (1 + |\log t F_T(t)|) t F_T(t) / w_P$ of the CDF to rounding.
 It is used for a shape of at least 0.01.
 The methods use the numerical path where the bound on this error exceeds $10^{-8}$ times the smaller of the CDF and the survival, or $10^{-6}$ times the density of the CDF, the scale of the PMF of a unit secondary window.
 The bound is not taken below $10^{-15}$ in the upper tail, the resolution of a CDF close to 1.

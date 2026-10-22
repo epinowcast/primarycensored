@@ -3,7 +3,6 @@ skip_on_cran()
 # Log-logistic delay (dist_id 31, params = [scale, shape]) with a uniform
 # primary (primary_id 1).
 
-
 test_that("the log-logistic delay is registered in Stan", {
   expect_identical(dist_has_positive_support(31L), 1L)
   x <- c(1e-6, 0.3, 1, 4, 30, 1e3)
@@ -71,7 +70,7 @@ test_that("a shape below 0.01 uses the ODE path", {
   tiny <- c(3, 0.005)
   expect_identical(
     primarycensored_lcdf(2, 31L, tiny, 2, 0, Inf, 1L, numeric(0)),
-    log(ll_ode_cdf(ll_ode_model(), tiny, 2, 2, 1L, numeric(0)))
+    log(ll_ode_cdf(ll_ode_model(), tiny, 2, 2))
   )
 })
 
@@ -125,7 +124,7 @@ test_that("primary terms and CDFs match a reference integral", {
         31L, case$params, pwindow, 0, Inf, 1L, numeric(0)
       )
       expect_identical(direct, lcdf)
-      ode <- ll_ode_cdf(ode_model, case$params, d, pwindow, 1L, numeric(0))
+      ode <- ll_ode_cdf(ode_model, case$params, d, pwindow)
       expect_lt(max(abs(exp(lcdf) - ode)), 1e-4, label = info)
     }
   }
@@ -210,9 +209,7 @@ test_that("log-logistic uniform log CDFs have finite gradients matching
   )
   for (case in ll_cases) {
     for (point in points) {
-      res <- expect_ll_gradient(model, case, point, 1L)
-      # The tilt does not enter, so its gradient is 0
-      expect_identical(unname(res$gradient[3]), 0)
+      expect_ll_gradient(model, case, point)
     }
   }
 })
@@ -221,12 +218,12 @@ test_that("the vectorised log-logistic log PMF has finite gradients
   matching finite differences", {
   model <- ll_gradient_model()
   points <- list(
-    list(d = 12, pwindow = 3, rho = 0, primary_id = 1L),
-    list(d = 20, pwindow = 4, rho = 0, primary_id = 1L)
+    list(d = 12, pwindow = 3),
+    list(d = 20, pwindow = 4)
   )
   for (case in ll_cases[c(2, 3, 4)]) {
     for (point in points) {
-      expect_ll_gradient(model, case, point, point$primary_id, TRUE)
+      expect_ll_gradient(model, case, point, TRUE)
     }
   }
 })
@@ -267,7 +264,7 @@ test_that("pcd_cmdstan_model rejects the reserved distribution identifiers", {
 
 test_that("the Stan uniform CDF is accurate where the difference cancels", {
   for (case in uniform_conditioning_cases) {
-    ref <- loglogistic_censored_reference(case[4], case[1], case[2], 0, case[3])
+    ref <- loglogistic_censored_reference(case[4], case[1], case[2], case[3])
     actual <- exp(primarycensored_lcdf(
       case[4], 31L, c(case[2], case[1]), case[3], 0, Inf, 1L, numeric(0)
     ))
@@ -284,7 +281,7 @@ test_that("the Stan uniform PMF is positive and accurate at large q", {
     params <- c(case[2], case[1])
     ref <- vapply(
       case[4] + 0:1, loglogistic_censored_reference, numeric(2),
-      shape = case[1], scale = case[2], rho = 0, pwindow = case[3]
+      shape = case[1], scale = case[2], pwindow = case[3]
     )
     expected <- -diff(ref["survival", ])
     actual <- exp(primarycensored_lpmf(
@@ -370,7 +367,7 @@ test_that("the log-logistic fallback has gradients matching differences", {
     list(case = list(params = c(16.9, 115.5)), d = 19.8, pwindow = 0.00179)
   )
   for (point in uniform) {
-    expect_ll_gradient(model, point$case, point, 1L, tolerance = 1e-3)
+    expect_ll_gradient(model, point$case, point, tolerance = 1e-3)
   }
 })
 
@@ -379,7 +376,7 @@ test_that("Stan log-logistic CDFs match rprimarycensored samples", {
   n <- 20000
   pwindow <- 2
   for (case in ll_cases[c(1, 3, 5)]) {
-    samples <- loglogistic_samples(n, ll_case_family(case), pwindow, 0)
+    samples <- loglogistic_samples(n, ll_case_family(case), pwindow)
     qs <- unname(stats::quantile(samples, c(0.05, 0.25, 0.5, 0.75, 0.95)))
     stan_cdf <- exp(vapply(
       qs, primarycensored_lcdf, numeric(1), 31L, case$params, pwindow, 0,
