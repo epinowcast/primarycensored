@@ -16,12 +16,14 @@ tlogis_stan_delays <- function(case, pwindow) {
   ) * scale)
 }
 
+# nolint start: object_usage_linter.
 # Whether a case uses the analytic path for a location, scale and window
 tlogis_case_analytic <- function(case, location, scale, pwindow) {
   as.logical(check_for_tlogis_params(
     case$dist_id, case$params, c(location, scale), pwindow
   ))
 }
+# nolint end
 
 test_that("check_for_tlogis is structural and for primary_id 3", {
   for (dist_id in c(2L, 4L, 18L)) {
@@ -606,6 +608,7 @@ test_that("truncated logistic log CDFs have finite gradients matching finite
   }
 })
 
+# nolint start: object_usage_linter.
 # Gamma shape gradients at points that use the analytic path, with `compare`
 # given the result, the point and a label.
 expect_shape_gradients <- function(model, points, compare,
@@ -632,6 +635,7 @@ expect_shape_gradients <- function(model, points, compare,
     compare(res, point, label)
   }
 }
+# nolint end
 
 expect_close_to_finite_diff <- function(res, point, label) {
   allowed <- 1e-3 * pmax(abs(res$finite_diff), 1e-2)
@@ -644,6 +648,7 @@ expect_close_to_finite_diff <- function(res, point, label) {
   )
 }
 
+# nolint start: object_usage_linter.
 # The reference is the gradient of the integral, as CmdStan's finite
 # differences are not accurate enough at large shapes. The tolerance is 1e-5
 # relative, with a floor for gradients close to zero.
@@ -662,6 +667,7 @@ expect_close_to_reference <- function(vectorised = FALSE) {
     )
   }
 }
+# nolint end
 
 test_that("the gamma shape gradient matches finite differences where the
   series cancel and in the lower tail", {

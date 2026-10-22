@@ -548,7 +548,7 @@ real primarycensored_tlogis_small_delay_lcdf(data real d, int dist_id,
                                              array[] real params,
                                              real location, real scale,
                                              real log_mass) {
-  vector[2] moments = primarycensored_tilt_moments(d, dist_id, params);
+  vector[3] moments = primarycensored_tilt_moments(d, dist_id, params);
   if (moments[1] == negative_infinity()) return negative_infinity();
   real log_l1 = log_inv_logit(-location / scale)
                 + log_inv_logit(location / scale) - log(scale);

@@ -50,7 +50,7 @@
 #'
 #' @inherit pcens_cdf return
 #'
-#' @concept pcens
+#' @family pcens
 #'
 #' @name pcens_cdf_tlogis
 #'
