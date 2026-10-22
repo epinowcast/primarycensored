@@ -535,3 +535,50 @@ pcd_dist_name <- function(name, type = c("delay", "primary")) {
 
   return(suggestions)
 }
+
+#' Log-scale arithmetic helpers
+#'
+#' Vectorised. `.log_diff_exp()` gives `-Inf` rather than `NaN` for a zero or
+#' negative difference.
+#'
+#' @param a,b,x Numeric vectors on the log scale.
+#'
+#' @return `log(1 - exp(x))`, `log(exp(a) - exp(b))` and
+#'   `log(exp(a) + exp(b))` for `.log1m_exp()`, `.log_diff_exp()` and
+#'   `.log_sum_exp()`.
+#'
+#' @keywords internal
+.log1m_exp <- function(x) {
+  near_zero <- x > -log(2)
+  if (!any(near_zero)) {
+    return(log1p(-exp(x)))
+  }
+  out <- log1p(-exp(x))
+  out[near_zero] <- log(-expm1(x[near_zero]))
+  out
+}
+
+#' @rdname dot-log1m_exp
+.log_diff_exp <- function(a, b) {
+  if (length(a) == length(b) && !anyNA(a) && !anyNA(b) && all(a > b)) {
+    return(a + .log1m_exp(b - a))
+  }
+  n <- max(length(a), length(b))
+  a <- rep_len(a, n)
+  b <- rep_len(b, n)
+  out <- rep(-Inf, n)
+  ok <- !is.na(a) & !is.na(b) & a > b
+  out[ok] <- a[ok] + .log1m_exp(b[ok] - a[ok])
+  out
+}
+
+#' @rdname dot-log1m_exp
+.log_sum_exp <- function(a, b) {
+  larger <- pmax(a, b)
+  gap <- -abs(a - b)
+  # Both -Inf gives NaN
+  gap[is.na(gap)] <- 0
+  out <- larger + log1p(exp(gap))
+  out[larger == -Inf] <- -Inf
+  out
+}
