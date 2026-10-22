@@ -19,6 +19,12 @@
 
 ## Performance
 
+- The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster.
+  They cost less per call and, for 64 or more points on a lattice such as the one used by `dprimarycensored()` and `fitdistdoublecens()`, evaluate the delay terms once per distinct point.
+  They also return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay.
+  They error for missing `q` or invalid `pwindow`, recycle `q`, `pwindow` and vector delay parameters element-wise with a warning for uneven lengths, and give the delay CDF for zero-width windows.
+  Vector delay parameters were previously misaligned when some `q` were not positive.
+  See #366, #378 and #380.
 - `update()` for `pcens` objects has a new `check` argument.
   With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names.
   The default, `check = TRUE`, is unchanged.
