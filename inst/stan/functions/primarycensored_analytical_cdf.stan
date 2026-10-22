@@ -621,16 +621,8 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
   real q = dist_has_positive_support(dist_id) ? max({d - pwindow, 0.0})
                                               : d - pwindow;
 
-  if (dist_id == 2 && primary_id == 1) {
-    return primarycensored_gamma_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 1 && primary_id == 1) {
-    return primarycensored_lognormal_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 3 && primary_id == 1) {
-    return primarycensored_weibull_uniform_lcdf(d | q, params, pwindow);
-  } else if (dist_id == 5 && primary_id == 1) {
-    return primarycensored_gengamma_uniform_lcdf(d | q, params, pwindow);
-  } else if (check_for_uniform_terms(dist_id, primary_id)) {
-    // The remaining delays with uniform primary terms
+  if (check_for_uniform_terms(dist_id, primary_id)) {
+    // The Beta CDF is exactly 1 once the window is above its support
     if (dist_id == 9 && q >= 1) return 0;
     return primarycensored_uniform_lcdf_from_terms(
       primarycensored_uniform_terms(d, dist_id, params),

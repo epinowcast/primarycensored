@@ -4,19 +4,27 @@
 \alias{.delay_args}
 \title{Delay distribution arguments an analytical solution handles}
 \usage{
-.delay_args(object, allowed)
+.delay_args(object, allowed, use_numeric = FALSE)
 }
 \arguments{
-\item{object}{A \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
+\item{object}{A \code{primarycensored} object as created by
+\code{\link[=new_pcens]{new_pcens()}}.}
 
 \item{allowed}{Character vector of the argument names the solution uses.}
+
+\item{use_numeric}{Logical, if TRUE forces use of numeric integration
+even for distributions with analytical solutions. This is primarily
+useful for testing purposes or for settings where the analytical solution
+breaks down.}
 }
 \value{
-The named list of delay arguments, or \code{NULL} if any argument is
-unnamed or not in \code{allowed}.
+The named list of delay arguments, or \code{NULL} if \code{use_numeric} is
+\code{TRUE}, any argument is unnamed or not in \code{allowed}, or \code{ncp} is not
+zero.
 }
 \description{
 Arguments the solution does not use, such as \code{lower.tail}, would be
-ignored, so the numerical \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method is used instead.
+ignored, and a non-zero \code{ncp} changes the distribution, so the numerical
+\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method is used instead.
 }
 \keyword{internal}

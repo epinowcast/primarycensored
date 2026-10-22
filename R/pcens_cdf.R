@@ -741,21 +741,16 @@ pcens_cdf.pcens_pexp_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  delay_args <- .delay_args(object, "rate")
-  if (isTRUE(use_numeric) || is.null(delay_args)) {
-    return(
-      pcens_cdf.default(object, q, pwindow, use_numeric)
-    )
+  delay_args <- .delay_args(object, "rate", use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
-
   rate <- if (is.null(delay_args$rate)) 1 else delay_args$rate
 
   # G(t) = 0 for t <= 0 as F_T(t) = 0 there, so clamp t at 0
-  G <- function(t) {
+  .pcens_cdf_antiderivative(q, pwindow, function(t) {
     .expon_shortfall(rate * pmax(t, 0)) / rate
-  }
-
-  .pcens_cdf_antiderivative(q, pwindow, G)
+  })
 }
 
 #' Method for Normal delay with uniform primary
@@ -790,21 +785,16 @@ pcens_cdf.pcens_pnorm_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  delay_args <- .delay_args(object, c("mean", "sd"))
-  if (isTRUE(use_numeric) || is.null(delay_args)) {
-    return(
-      pcens_cdf.default(object, q, pwindow, use_numeric)
-    )
+  delay_args <- .delay_args(object, c("mean", "sd"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
-
   mu <- if (is.null(delay_args$mean)) 0 else delay_args$mean
   sigma <- if (is.null(delay_args$sd)) 1 else delay_args$sd
 
-  G <- function(t) {
+  .pcens_cdf_antiderivative(q, pwindow, function(t) {
     sigma * .norm_shortfall((t - mu) / sigma)
-  }
-
-  .pcens_cdf_antiderivative(q, pwindow, G)
+  })
 }
 
 #' Method for Chi-square delay with uniform primary
@@ -837,24 +827,17 @@ pcens_cdf.pcens_pchisq_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  delay_args <- .delay_args(object, c("df", "ncp"))
-  if (
-    isTRUE(use_numeric) || is.null(delay_args) ||
-      .is_noncentral(delay_args$ncp)
-  ) {
-    return(
-      pcens_cdf.default(object, q, pwindow, use_numeric)
-    )
+  delay_args <- .delay_args(object, c("df", "ncp"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
-  degrees <- delay_args$df
-  if (is.null(degrees)) {
+  if (is.null(delay_args$df)) {
     stop("df parameter is required for Chi-square distribution", call. = FALSE)
   }
 
-  gamma_obj <- object
-  gamma_obj$pdist <- pgamma
-  gamma_obj$args <- list(shape = degrees / 2, scale = 2)
-  pcens_cdf.pcens_pgamma_dunif(gamma_obj, q, pwindow)
+  object$pdist <- pgamma
+  object$args <- list(shape = delay_args$df / 2, scale = 2)
+  pcens_cdf.pcens_pgamma_dunif(object, q, pwindow)
 }
 
 #' Method for Beta delay with uniform primary
@@ -888,70 +871,60 @@ pcens_cdf.pcens_pbeta_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  delay_args <- .delay_args(object, c("shape1", "shape2", "ncp"))
-  if (
-    isTRUE(use_numeric) || is.null(delay_args) ||
-      .is_noncentral(delay_args$ncp)
-  ) {
-    return(
-      pcens_cdf.default(object, q, pwindow, use_numeric)
-    )
+  delay_args <- .delay_args(
+    object, c("shape1", "shape2", "ncp"), use_numeric
+  )
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
   a <- delay_args$shape1
   b <- delay_args$shape2
-  if (is.null(a)) {
-    stop("shape1 parameter is required for Beta distribution", call. = FALSE)
+  if (is.null(a) || is.null(b)) {
+    stop(
+      "shape1 and shape2 parameters are required for Beta distribution",
+      call. = FALSE
+    )
   }
-  if (is.null(b)) {
-    stop("shape2 parameter is required for Beta distribution", call. = FALSE)
-  }
-
   E_T <- a / (a + b)
 
   # Clamp t to [0, 1] and add the linear part above the support
-  G <- function(t) {
+  .pcens_cdf_antiderivative(q, pwindow, function(t) {
     t_in <- pmin(pmax(t, 0), 1)
     t_in * stats::pbeta(t_in, a, b) -
       E_T * stats::pbeta(t_in, a + 1, b) + pmax(t - 1, 0)
-  }
-
-  .pcens_cdf_antiderivative(q, pwindow, G)
+  })
 }
 
 #' Delay distribution arguments an analytical solution handles
 #'
 #' Arguments the solution does not use, such as `lower.tail`, would be
-#' ignored, so the numerical [pcens_cdf.default()] method is used instead.
+#' ignored, and a non-zero `ncp` changes the distribution, so the numerical
+#' [pcens_cdf.default()] method is used instead.
 #'
-#' @param object A `pcens` object as created by [new_pcens()].
+#' @inheritParams pcens_cdf
 #'
 #' @param allowed Character vector of the argument names the solution uses.
 #'
-#' @return The named list of delay arguments, or `NULL` if any argument is
-#'  unnamed or not in `allowed`.
+#' @return The named list of delay arguments, or `NULL` if `use_numeric` is
+#'  `TRUE`, any argument is unnamed or not in `allowed`, or `ncp` is not
+#'  zero.
 #'
 #' @keywords internal
-.delay_args <- function(object, allowed) {
+.delay_args <- function(object, allowed, use_numeric = FALSE) {
+  if (isTRUE(use_numeric)) {
+    return(NULL)
+  }
   delay_args <- object$args
-  arg_names <- names(delay_args)
   if (length(delay_args) == 0L) {
     return(delay_args)
   }
-  if (is.null(arg_names) || !all(arg_names %in% allowed)) {
+  if (
+    is.null(names(delay_args)) || !all(names(delay_args) %in% allowed) ||
+      !isTRUE(all(delay_args[["ncp"]] == 0))
+  ) {
     return(NULL)
   }
   delay_args
-}
-
-#' Test for a non-central delay distribution
-#'
-#' @param ncp The `ncp` argument of a delay CDF, or `NULL`.
-#'
-#' @return `TRUE` if `ncp` is supplied and not zero.
-#'
-#' @keywords internal
-.is_noncentral <- function(ncp) {
-  !is.null(ncp) && !isTRUE(all(ncp == 0))
 }
 
 #' Primary event censored CDF from an antiderivative of the delay CDF

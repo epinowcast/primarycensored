@@ -1,17 +1,21 @@
 # primarycensored (development version)
 
-## Features
+## New features
 
-- Uniform primary analytical solutions for the exponential, beta, chi-square, inverse gamma, normal, inverse chi-square, Pareto and scaled inverse chi-square delays in Stan, and for the exponential, normal, chi-square and beta delays in `pcens_cdf()`. See #377.
+- Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square, inverse gamma, inverse chi-square, scaled inverse chi-square and Pareto delays.
+  `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
+  The inverse gamma family needs a finite mean and otherwise uses the numerical path.
+  See #377.
 
 ## Bug fixes
 
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
-- The analytical Stan log CDF for the gamma, lognormal, Weibull and generalised gamma delays is at most 0.
-- The Stan log PMF is `-Inf` rather than NaN for an interval far in the upper tail.
-- The beta delay no longer errors in the Stan numerical path for delays above 1.
+- The analytical Stan log CDF for gamma, lognormal, Weibull and generalised gamma delays is now at most 0.
+  The Stan log PMF is `-Inf` rather than NaN for an interval far in the upper tail.
+  A beta delay no longer errors in the Stan numerical path for delays above 1.
+  See #377.
 
 ## Performance
 

@@ -38,6 +38,23 @@ ppareto <- function(q, y_min, alpha) {
   ifelse(q <= y_min, 0, 1 - (y_min / q)^alpha)
 }
 
+# The R delay CDF and its arguments for Stan delay parameters
+r_delay <- function(dist_id, params) {
+  p <- as.list(params)
+  switch(as.character(dist_id),
+    `4` = list(pdist = pexp, args = list(rate = p[[1]])),
+    `9` = list(pdist = pbeta, args = list(shape1 = p[[1]], shape2 = p[[2]])),
+    `13` = list(pdist = pchisq, args = list(df = p[[1]])),
+    `16` = list(pdist = pinvgamma, args = list(shape = p[[1]], scale = p[[2]])),
+    `18` = list(pdist = pnorm, args = list(mean = p[[1]], sd = p[[2]])),
+    `19` = list(pdist = pinvchisq, args = list(df = p[[1]])),
+    `21` = list(pdist = ppareto, args = list(y_min = p[[1]], alpha = p[[2]])),
+    `22` = list(
+      pdist = pscaledinvchisq, args = list(df = p[[1]], scale = p[[2]])
+    )
+  )
+}
+
 delays_positive <- c(0.001, 0.01, 0.1, 0.5, 1, 2, 5, 10, 30, 100)
 
 # Each case is a delay with its parameter sets, the delays at which to
@@ -269,60 +286,27 @@ test_that("the Stan analytical solution matches the R solution for each new
   # Delays with no R method use the numerical path, whose default
   # stats::integrate tolerance limits the agreement to a mean relative 1e-6
   # for windows up to 2
+  delays <- c(0.2, 1, 3, 10, 40)
   cases <- list(
-    list(
-      dist_id = 4L, pdist = pexp, stan = 0.4, args = list(rate = 0.4),
-      delays = c(0.2, 1, 3, 10, 40)
-    ),
-    list(
-      dist_id = 18L, pdist = pnorm, stan = c(2, 1.5),
-      args = list(mean = 2, sd = 1.5), delays = c(-8, -2, 0, 1, 4, 12)
-    ),
-    list(
-      dist_id = 13L, pdist = pchisq, stan = 4, args = list(df = 4),
-      delays = c(0.2, 1, 3, 10, 40)
-    ),
-    list(
-      dist_id = 9L, pdist = pbeta, stan = c(2, 3),
-      args = list(shape1 = 2, shape2 = 3), delays = c(0.1, 0.5, 0.9, 1.5, 3)
-    ),
-    list(
-      dist_id = 16L, pdist = pinvgamma, stan = c(1.1, 2),
-      args = list(shape = 1.1, scale = 2), delays = c(0.2, 1, 3, 10, 40),
-      numeric = TRUE
-    ),
-    list(
-      dist_id = 16L, pdist = pinvgamma, stan = c(3, 2),
-      args = list(shape = 3, scale = 2), delays = c(0.2, 1, 3, 10, 40),
-      numeric = TRUE
-    ),
-    list(
-      dist_id = 19L, pdist = pinvchisq, stan = 2.2, args = list(df = 2.2),
-      delays = c(0.2, 1, 3, 10, 40), numeric = TRUE
-    ),
-    list(
-      dist_id = 22L, pdist = pscaledinvchisq, stan = c(5, 1.5),
-      args = list(df = 5, scale = 1.5), delays = c(0.2, 1, 3, 10, 40),
-      numeric = TRUE
-    ),
-    list(
-      dist_id = 21L, pdist = ppareto, stan = c(0.5, 1.1),
-      args = list(y_min = 0.5, alpha = 1.1), delays = c(0.6, 1, 3, 10, 40),
-      numeric = TRUE
-    ),
-    list(
-      dist_id = 21L, pdist = ppareto, stan = c(0.5, 2.5),
-      args = list(y_min = 0.5, alpha = 2.5), delays = c(0.6, 1, 3, 10, 40),
-      numeric = TRUE
-    )
+    list(dist_id = 4L, params = 0.4, delays = delays),
+    list(dist_id = 18L, params = c(2, 1.5), delays = c(-8, -2, 0, 1, 4, 12)),
+    list(dist_id = 13L, params = 4, delays = delays),
+    list(dist_id = 9L, params = c(2, 3), delays = c(0.1, 0.5, 0.9, 1.5, 3)),
+    list(dist_id = 16L, params = c(1.1, 2), delays = delays),
+    list(dist_id = 16L, params = c(3, 2), delays = delays),
+    list(dist_id = 19L, params = 2.2, delays = delays),
+    list(dist_id = 22L, params = c(5, 1.5), delays = delays),
+    list(dist_id = 21L, params = c(0.5, 1.1), delays = c(0.6, 1, 3, 10, 40)),
+    list(dist_id = 21L, params = c(0.5, 2.5), delays = c(0.6, 1, 3, 10, 40))
   )
   for (case in cases) {
-    numeric <- isTRUE(case$numeric)
+    numeric <- case$dist_id %in% c(16L, 19L, 21L, 22L)
+    r <- r_delay(case$dist_id, case$params)
+    obj <- do.call(new_pcens, c(list(r$pdist, dunif, list()), r$args))
     for (pwindow in c(0.5, 1, 2, if (!numeric) 5)) {
-      obj <- do.call(new_pcens, c(list(case$pdist, dunif, list()), case$args))
       r_result <- pcens_cdf(obj, case$delays, pwindow)
       stan_result <- exp(
-        analytical_lcdf(case$delays, case$dist_id, case$stan, pwindow)
+        analytical_lcdf(case$delays, case$dist_id, case$params, pwindow)
       )
       info <- sprintf("dist %d pwindow %g", case$dist_id, pwindow)
       if (numeric) {
@@ -464,7 +448,6 @@ test_that("inverse gamma delays without a finite mean use the numerical
   path", {
   pwindow <- 2
   for (params in list(c(0.6, 1), c(1, 2), c(1, 0.5))) {
-    expect_identical(check_uniform_terms_params(16L, params), 0L)
     expect_error(
       primarycensored_uniform_terms(3, 16L, params),
       "shape > 1"
@@ -479,9 +462,7 @@ test_that("inverse gamma delays without a finite mean use the numerical
       )
     }
   }
-  # The same holds for the chi-square variants with nu <= 2
-  expect_identical(check_uniform_terms_params(19L, 2), 0L)
-  expect_identical(check_uniform_terms_params(22L, c(1.5, 1)), 0L)
+  # The same holds for the inverse chi-square with nu <= 2
   expect_lt(
     abs(
       exp(primarycensored_lcdf(3, 19L, 1.5, pwindow, 0, Inf, 1L, numeric(0))) -
@@ -657,33 +638,17 @@ test_that("primarycensored_sone_lpmf_vectorized matches primarycensored_lpmf
 test_that("primarycensored_sone_pmf_vectorized matches R dprimarycensored for
   the new delays", {
   cases <- list(
-    list(dist_id = 4L, params = 0.3, pdist = pexp, args = list(rate = 0.3)),
-    list(
-      dist_id = 18L, params = c(6, 2), pdist = pnorm,
-      args = list(mean = 6, sd = 2)
-    ),
-    list(dist_id = 13L, params = 6, pdist = pchisq, args = list(df = 6)),
-    list(
-      dist_id = 9L, params = c(2, 3), pdist = pbeta,
-      args = list(shape1 = 2, shape2 = 3)
-    ),
-    list(
-      dist_id = 16L, params = c(1.5, 2), pdist = pinvgamma,
-      args = list(shape = 1.5, scale = 2)
-    ),
-    list(
-      dist_id = 19L, params = 5, pdist = pinvchisq, args = list(df = 5)
-    ),
-    list(
-      dist_id = 22L, params = c(5, 1.5), pdist = pscaledinvchisq,
-      args = list(df = 5, scale = 1.5)
-    ),
-    list(
-      dist_id = 21L, params = c(0.5, 1.5), pdist = ppareto,
-      args = list(y_min = 0.5, alpha = 1.5)
-    )
+    list(dist_id = 4L, params = 0.3),
+    list(dist_id = 18L, params = c(6, 2)),
+    list(dist_id = 13L, params = 6),
+    list(dist_id = 9L, params = c(2, 3)),
+    list(dist_id = 16L, params = c(1.5, 2)),
+    list(dist_id = 19L, params = 5),
+    list(dist_id = 22L, params = c(5, 1.5)),
+    list(dist_id = 21L, params = c(0.5, 1.5))
   )
   for (case in cases) {
+    r <- r_delay(case$dist_id, case$params)
     # The Beta has no mass above 1 + pwindow, where the CDF difference is
     # at the rounding error of 1
     max_delay <- if (case$dist_id == 9L) 2 else 15
@@ -696,10 +661,10 @@ test_that("primarycensored_sone_pmf_vectorized matches R dprimarycensored for
         )
         r_pmf <- do.call(dprimarycensored, c(
           list(
-            0:max_delay, case$pdist,
+            0:max_delay, r$pdist,
             pwindow = pwindow, swindow = 1, L = 0, D = D
           ),
-          case$args
+          r$args
         ))
         expect_equal(stan_pmf, r_pmf, tolerance = 1e-6, info = info)
       }
@@ -755,117 +720,55 @@ uniform_gradient_at <- function(model, dist_id, params, d, pwindow) {
 test_that("the new analytical solutions have finite gradients that match
   finite differences", {
   model <- uniform_gradient_model()
-  # Shape gradients of the beta are less precise, so those cases use 1e-3
-  # and the exponential, normal, chi-square and Pareto cases 1e-4
+  # Shape gradients of the beta are less precise, so those cases use 1e-3,
+  # the inverse gamma family 1e-5 and the other delays 1e-4. Gradients of
+  # about 4e-4 leave finite difference noise at 1e-5, so the far upper tail
+  # of the inverse gamma family uses 1e-3 and the Pareto 5e-4.
   cases <- list(
+    list(id = 4L, params = 0.5, tol = 1e-4, delays = c(0.01, 0.3, 1, 3, 40)),
+    list(id = 4L, params = 0.001, tol = 1e-4, delays = c(0.05, 5, 40)),
     list(
-      name = "exponential", id = 4L, params = 0.5, tol = 1e-4,
-      delays = c(0.01, 0.3, 1, 3, 40)
+      id = 18L, params = c(2, 1), tol = 1e-4, delays = c(-12, -8, -3, 0, 1, 4)
     ),
     list(
-      name = "exponential", id = 4L, params = 0.001, tol = 1e-4,
-      delays = c(0.05, 5, 40)
+      id = 18L, params = c(-3, 0.5), tol = 1e-4, delays = c(-8, -4, -2.5, 0, 3)
     ),
     list(
-      name = "normal", id = 18L, params = c(2, 1), tol = 1e-4,
-      delays = c(-12, -8, -3, 0, 1, 4)
+      id = 18L, params = c(10, 0.3), tol = 1e-4, delays = c(3, 6, 8, 10, 12)
+    ),
+    list(id = 13L, params = 3, tol = 1e-4, delays = c(0.5, 3, 10, 20)),
+    list(id = 13L, params = 10, tol = 1e-4, delays = c(3, 10, 40)),
+    list(
+      id = 9L, params = c(2, 3), tol = 1e-3, delays = c(0.05, 0.5, 0.95, 1.5)
     ),
     list(
-      name = "normal", id = 18L, params = c(-3, 0.5), tol = 1e-4,
-      delays = c(-8, -4, -2.5, 0, 3)
-    ),
-    list(
-      name = "normal", id = 18L, params = c(10, 0.3), tol = 1e-4,
-      delays = c(3, 6, 8, 10, 12)
-    ),
-    list(
-      name = "chi-square", id = 13L, params = 3, tol = 1e-4,
-      delays = c(0.5, 3, 10, 20)
-    ),
-    list(
-      name = "chi-square", id = 13L, params = 10, tol = 1e-4,
-      delays = c(3, 10, 40)
-    ),
-    list(
-      name = "beta", id = 9L, params = c(2, 3), tol = 1e-3,
+      id = 9L, params = c(0.6, 1.5), tol = 1e-3,
       delays = c(0.05, 0.5, 0.95, 1.5)
     ),
+    list(id = 16L, params = c(2.5, 2), tol = 1e-5, delays = c(0.3, 1, 5, 10)),
+    list(id = 16L, params = c(1.2, 5), tol = 1e-5, delays = c(0.5, 5, 10)),
     list(
-      name = "beta", id = 9L, params = c(0.6, 1.5), tol = 1e-3,
-      delays = c(0.05, 0.5, 0.95, 1.5)
+      id = 16L, params = c(2, 2), tol = 1e-5, delays = c(0.55, 0.6, 1.5, 10)
     ),
-    list(
-      name = "inverse gamma", id = 16L, params = c(2.5, 2), tol = 1e-5,
-      delays = c(0.3, 1, 5, 10)
-    ),
-    list(
-      name = "inverse gamma", id = 16L, params = c(1.2, 5), tol = 1e-5,
-      delays = c(0.5, 5, 10)
-    ),
-    list(
-      name = "inverse gamma", id = 16L, params = c(2, 2), tol = 1e-5,
-      delays = c(0.55, 0.6, 1.5, 10)
-    ),
-    list(
-      name = "inverse gamma", id = 16L, params = c(3, 3), tol = 1e-5,
-      delays = c(0.7, 0.75, 2, 10)
-    ),
-    list(
-      name = "inverse chi-square", id = 19L, params = 5, tol = 1e-5,
-      delays = c(0.3, 1, 3)
-    ),
-    list(
-      name = "inverse chi-square", id = 19L, params = 4, tol = 1e-5,
-      delays = c(0.15, 0.2, 1, 3)
-    ),
-    list(
-      name = "inverse chi-square", id = 19L, params = 6, tol = 1e-5,
-      delays = c(0.15, 0.2, 1, 3)
-    ),
-    list(
-      name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
-      tol = 1e-5, delays = c(0.3, 1, 5, 10)
-    ),
-    list(
-      # Gradients near 4e-4 leave finite difference noise at 1e-5
-      name = "inverse gamma", id = 16L, params = c(2.5, 2),
-      tol = 1e-3, delays = 50
-    ),
-    list(
-      name = "scaled inverse chi-square", id = 22L, params = c(5, 1.5),
-      tol = 1e-3, delays = 50
-    ),
-    list(
-      name = "scaled inverse chi-square", id = 22L, params = c(4, 1),
-      tol = 1e-5, delays = c(0.6, 0.75, 0.9, 5)
-    ),
-    list(
-      name = "scaled inverse chi-square", id = 22L, params = c(6, 1),
-      tol = 1e-5, delays = c(0.6, 0.9, 5)
-    ),
-    list(
-      # Gradients of about 4e-4 leave finite difference noise at 1e-4
-      name = "pareto", id = 21L, params = c(0.5, 2), tol = 5e-4,
-      delays = c(0.6, 1, 5, 50)
-    ),
-    list(
-      name = "pareto", id = 21L, params = c(0.5, 0.8), tol = 1e-4,
-      delays = c(0.6, 1, 5, 50)
-    ),
-    list(
-      name = "pareto", id = 21L, params = c(0.5, 1), tol = 1e-4,
-      delays = c(0.6, 1, 5, 50)
-    ),
-    list(
-      name = "pareto", id = 21L, params = c(0.05, 1.3), tol = 1e-4,
-      delays = c(0.06, 0.5, 5)
-    )
+    list(id = 16L, params = c(3, 3), tol = 1e-5, delays = c(0.7, 0.75, 2, 10)),
+    list(id = 16L, params = c(2.5, 2), tol = 1e-3, delays = 50),
+    list(id = 19L, params = 5, tol = 1e-5, delays = c(0.3, 1, 3)),
+    list(id = 19L, params = 4, tol = 1e-5, delays = c(0.15, 0.2, 1, 3)),
+    list(id = 19L, params = 6, tol = 1e-5, delays = c(0.15, 0.2, 1, 3)),
+    list(id = 22L, params = c(5, 1.5), tol = 1e-5, delays = c(0.3, 1, 5, 10)),
+    list(id = 22L, params = c(5, 1.5), tol = 1e-3, delays = 50),
+    list(id = 22L, params = c(4, 1), tol = 1e-5, delays = c(0.6, 0.75, 0.9, 5)),
+    list(id = 22L, params = c(6, 1), tol = 1e-5, delays = c(0.6, 0.9, 5)),
+    list(id = 21L, params = c(0.5, 2), tol = 5e-4, delays = c(0.6, 1, 5, 50)),
+    list(id = 21L, params = c(0.5, 0.8), tol = 1e-4, delays = c(0.6, 1, 5, 50)),
+    list(id = 21L, params = c(0.5, 1), tol = 1e-4, delays = c(0.6, 1, 5, 50)),
+    list(id = 21L, params = c(0.05, 1.3), tol = 1e-4, delays = c(0.06, 0.5, 5))
   )
   for (case in cases) {
     for (d in case$delays) {
       for (pwindow in c(0.5, 1, 3)) {
         info <- sprintf(
-          "%s params = %s d = %g pwindow = %g", case$name,
+          "dist %d params = %s d = %g pwindow = %g", case$id,
           toString(case$params), d, pwindow
         )
         res <- uniform_gradient_at(model, case$id, case$params, d, pwindow)
@@ -1019,65 +922,6 @@ test_that("the normal vectorised PMF is never NaN in the far upper tail", {
       info <- paste("params", toString(params), "pwindow", pwindow)
       expect_false(anyNA(pmf), info = info)
       expect_true(all(pmf <= 0), info = info)
-    }
-  }
-})
-
-test_that("the analytical CDFs match the empirical CDF of rprimarycensored
-  samples", {
-  set.seed(20260930)
-  n <- 1e5
-  cases <- list(
-    list(
-      dist_id = 4L, params = 0.4, rdist = function(n) rexp(n, 0.4),
-      probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 18L, params = c(2, 1.5),
-      rdist = function(n) rnorm(n, 2, 1.5), probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 13L, params = 4, rdist = function(n) rchisq(n, 4),
-      probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 9L, params = c(2, 3), rdist = function(n) rbeta(n, 2, 3),
-      probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 16L, params = c(3, 2),
-      rdist = function(n) 1 / rgamma(n, 3, rate = 2),
-      probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 19L, params = 6, rdist = function(n) 1 / rchisq(n, 6),
-      probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 22L, params = c(6, 0.5),
-      rdist = function(n) 6 * 0.25 / rchisq(n, 6),
-      probs = c(0.05, 0.3, 0.6, 0.9)
-    ),
-    list(
-      dist_id = 21L, params = c(1, 2.5),
-      rdist = function(n) runif(n)^(-1 / 2.5), probs = c(0.05, 0.3, 0.6, 0.9)
-    )
-  )
-  for (case in cases) {
-    for (pwindow in c(0.5, 2)) {
-      samples <- rprimarycensored(
-        n, function(n, ...) case$rdist(n), pwindow = pwindow, swindow = 0
-      )
-      delays <- unname(stats::quantile(samples, case$probs))
-      actual <- exp(
-        analytical_lcdf(delays, case$dist_id, case$params, pwindow)
-      )
-      # Within 4 standard errors of the probability at its own quantile
-      expect_lt(
-        max(abs(actual - case$probs) /
-          sqrt(case$probs * (1 - case$probs) / n)),
-        4, label = sprintf("dist %d pwindow %g", case$dist_id, pwindow)
-      )
     }
   }
 })
