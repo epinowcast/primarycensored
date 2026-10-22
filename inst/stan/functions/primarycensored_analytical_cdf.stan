@@ -552,41 +552,56 @@ vector primarycensored_analytical_lcdf_vectorized(
     int positive = dist_has_positive_support(dist_id);
     // Endpoints below 0 share the entry for 0 for non-negative delays
     int first = positive ? max(start - pw, 0) : start - pw;
-    // The small window form does not depend on the delay
-    if (primarycensored_exptilt_form(start, dist_id, rho, pwindow) == 1) {
-      // moments[t - first + 1] holds the moments at endpoint t
-      array[n - first + 1] vector[3] moments;
-      for (t in first:n) {
-        moments[t - first + 1] = primarycensored_tilt_moments(
-          t, dist_id, params
-        );
+    int n_endpoints = n - first + 1;
+    // Each delay uses the form of primarycensored_exptilt_form(), with each
+    // endpoint computed once
+    array[n] int form;
+    array[n_endpoints] int needs_moments = rep_array(0, n_endpoints);
+    array[n_endpoints] int needs_terms = rep_array(0, n_endpoints);
+    for (d in start:n) {
+      int d_index = d - first + 1;
+      int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
+      form[d] = primarycensored_exptilt_form(d, dist_id, rho, pwindow);
+      if (form[d] == 1) {
+        needs_moments[d_index] = 1;
+        needs_moments[q_index] = 1;
+      } else if (form[d] == 2) {
+        needs_moments[d_index] = 1;
+      } else {
+        needs_terms[d_index] = 1;
+        needs_terms[q_index] = 1;
       }
-      for (d in start:n) {
-        int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-        log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
-          moments[d - first + 1], moments[q_index], rho, pwindow
-        );
+    }
+    // moments and terms at endpoint t are at index t - first + 1
+    array[n_endpoints] vector[3] moments;
+    array[n_endpoints] vector[4] terms;
+    for (t in first:n) {
+      int t_index = t - first + 1;
+      if (needs_moments[t_index]) {
+        moments[t_index] = primarycensored_tilt_moments(t, dist_id, params);
       }
-    } else {
-      // terms[t - first + 1] holds the terms at endpoint t
-      array[n - first + 1] vector[4] terms;
-      for (t in first:n) {
-        terms[t - first + 1] = append_row(
+      if (needs_terms[t_index]) {
+        terms[t_index] = append_row(
           log_tilt_transform_pair(t, dist_id, 0, params),
           log_tilt_transform_pair(t, dist_id, -rho, params)
         );
       }
-      for (d in start:n) {
-        if (primarycensored_exptilt_form(d, dist_id, rho, pwindow) == 2) {
-          log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
-            primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
-          );
-        } else {
-          int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-          log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
-            terms[d - first + 1], terms[q_index], d, rho, pwindow
-          );
-        }
+    }
+    for (d in start:n) {
+      int d_index = d - first + 1;
+      int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
+      if (form[d] == 1) {
+        log_cdfs[d] = primarycensored_exptilt_small_window_lcdf_from_terms(
+          moments[d_index], moments[q_index], rho, pwindow
+        );
+      } else if (form[d] == 2) {
+        log_cdfs[d] = primarycensored_exptilt_small_delay_lcdf_from_terms(
+          moments[d_index], rho, pwindow
+        );
+      } else {
+        log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
+          terms[d_index], terms[q_index], d, rho, pwindow
+        );
       }
     }
     return log_cdfs;
@@ -724,6 +739,31 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
 }
 
 /**
+  * Log moments about a point from log partial moments
+  * @ingroup tilt_transforms
+  *
+  * The log of G_k(t) = int_0^t (t - u)^k f(u) du for k = 1, 2, 3 from the
+  * partial moments m_k(t) = int_0^t u^k f(u) du, with G_1 = t m_0 - m_1,
+  * G_2 = t G_1 - (t m_1 - m_2) and
+  * G_3 = t G_2 - (t (t m_1 - m_2) - (t m_2 - m_3)), each a difference of
+  * positive integrals.
+  *
+  * @param log_t Log of the point
+  * @param log_m Vector [log m_0, log m_1, log m_2, log m_3]
+  *
+  * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
+  */
+vector primarycensored_moments_from_partial(real log_t, vector log_m) {
+  real log_g1 = primarycensored_log_diff_exp(log_t + log_m[1], log_m[2]);
+  real log_h = primarycensored_log_diff_exp(log_t + log_m[2], log_m[3]);
+  real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
+  real log_a = primarycensored_log_diff_exp(log_t + log_m[3], log_m[4]);
+  real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
+  real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
+  return [log_g1, log_g2, log_g3]';
+}
+
+/**
   * Log moments of a gamma delay about a point
   * @ingroup tilt_transforms
   *
@@ -747,13 +787,9 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate) + log_p23[1];
   real log_m3 = log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate)
                 + log_p23[2];
-  real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
-  real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
-  real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
-  real log_a = primarycensored_log_diff_exp(log_t + log_m2, log_m3);
-  real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
-  real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
-  return [log_g1, log_g2, log_g3]';
+  return primarycensored_moments_from_partial(
+    log_t, [log_m0, log_m1, log_m2, log_m3]'
+  );
 }
 
 /**
@@ -854,11 +890,12 @@ int check_for_exptilt(int dist_id, int primary_id) {
   * @ingroup exponential_tilt_solutions
   *
   * The small window form is used for |rho| * pwindow below 1e-2, or 1e-3 for
-  * delays on the reals. Otherwise, for delays on the non-negative reals with
-  * d < pwindow and |rho| * d below 5e-3, the small delay form is used. Both
-  * truncate at third order in the tilt, with a relative error below
-  * (|rho| pwindow)^3 / 160 and (|rho| d)^3 / 24, so below 1e-8 at these
-  * limits. The direct form is used elsewhere.
+  * delays on the reals, and |rho| * (|d| + pwindow) below 0.1, as it
+  * subtracts terms of the size of |d| + pwindow. Otherwise, for delays on
+  * the non-negative reals with d < pwindow and |rho| * d below 5e-3, the
+  * small delay form is used. Both truncate at third order in the tilt, with
+  * a relative error below (|rho| pwindow)^3 / 160 and (|rho| d)^3 / 24, so
+  * below 1e-8 at these limits. The direct form is used elsewhere.
   *
   * @param d Delay
   * @param dist_id Distribution identifier for the delay distribution
@@ -871,7 +908,10 @@ int check_for_exptilt(int dist_id, int primary_id) {
 int primarycensored_exptilt_form(data real d, int dist_id, real rho,
                                  data real pwindow) {
   int positive = dist_has_positive_support(dist_id);
-  if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-3)) return 1;
+  if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-3)
+      && abs(rho) * (abs(d) + pwindow) < 0.1) {
+    return 1;
+  }
   if (positive && d < pwindow && abs(rho) * d < 5e-3) return 2;
   return 0;
 }
