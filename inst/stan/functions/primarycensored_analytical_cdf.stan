@@ -457,41 +457,14 @@ real loglogistic_log_error_scale(real x) {
 }
 
 /**
-  * Check if an error bound is too large for the CDF
-  * @ingroup analytical_solution_helpers
-  *
-  * The bound is too large if it exceeds 1e-8 times the smaller of the CDF
-  * and the survival, not taken below 1e-15. The R equivalent is
-  * `.log_error_exceeds()`.
-  *
-  * @param log_error Log of the bound on the absolute error of the CDF
-  * @param log_cdf Log CDF, NaN where the solution failed
-  *
-  * @return 1 if the numerical CDF is needed, 0 otherwise
-  */
-int loglogistic_error_exceeds(real log_error, real log_cdf) {
-  if (is_nan(log_cdf) || is_nan(log_error)) return 1;
-  real log_floor = log(1e-15);
-  real log_limit;
-  if (log_cdf >= 0) {
-    log_limit = log_floor;
-  } else if (log_cdf > -log2()) {
-    log_limit = fmax(log(1e-8) + log1m_exp(log_cdf), log_floor);
-  } else {
-    log_limit = fmax(log(1e-8) + log_cdf, log_floor);
-  }
-  return log_error > log_limit;
-}
-
-/**
   * Check if a window difference of the partial expectation is ill conditioned
   * @ingroup analytical_solution_helpers
   *
   * The CDF is a difference of t F(t) terms at d and d - pwindow over pwindow.
   * The bound on its error is 4e-16 times the two scaled terms. It is too
-  * large where it exceeds 1e-8 of the smaller tail, see
-  * loglogistic_error_exceeds(), or 1e-6 of the density of the CDF, not taken
-  * below 1e-13 times the smaller tail. The R equivalent is
+  * large where it exceeds 1e-8 of the smaller of the CDF and the survival,
+  * not taken below 1e-15 in the upper tail, or 1e-6 of the density of the
+  * CDF, not taken below 1e-13 of the smaller tail. The R equivalent is
   * `.loglogistic_uniform_ill()`.
   *
   * @param log_t_cdf_d Log of d F(d), see
@@ -512,15 +485,21 @@ int loglogistic_window_ill_conditioned(real log_t_cdf_d, real log_t_cdf_q,
     loglogistic_log_error_scale(log_t_cdf_d),
     loglogistic_log_error_scale(log_t_cdf_q)
   );
-  if (loglogistic_error_exceeds(log_error, log_cdf)) return 1;
   real log_cdf_q = log_t_cdf_q == negative_infinity()
                    ? negative_infinity() : log_t_cdf_q - log(d - pwindow);
   real log_density = primarycensored_log_diff_exp(
     log_t_cdf_d - log(d), log_cdf_q
   ) - log(pwindow);
-  real log_tail = log_cdf >= 0 ? negative_infinity()
-                  : (log_cdf > -log2() ? log1m_exp(log_cdf) : log_cdf);
-  return log_error > fmax(log(1e-6) + log_density, log(1e-13) + log_tail);
+  real log_capped = fmin(log_cdf, 0);
+  real log_tail = fmin(log_capped, log1m_exp(log_capped));
+  real log_limit = log(1e-8) + log_tail;
+  if (log_capped > -log2()) {
+    log_limit = fmax(log_limit, log(1e-15));
+  }
+  log_limit = fmin(
+    log_limit, fmax(log(1e-6) + log_density, log(1e-13) + log_tail)
+  );
+  return log_error > log_limit;
 }
 
 /**

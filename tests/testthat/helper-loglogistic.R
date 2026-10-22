@@ -146,75 +146,16 @@ loglogistic_samples <- function(n, family, pwindow) {
   )
 }
 
-# Parameters of the Stan tests, `c(scale, shape)`, with the R arguments
-ll_cases <- list(
-  list(params = c(2, 0.6), args = list(shape = 0.6, scale = 2)),
-  list(params = c(3, 1), args = list(shape = 1, scale = 3)),
-  list(params = c(5, 2), args = list(shape = 2, scale = 5)),
-  list(params = c(8, 4.5), args = list(shape = 4.5, scale = 8)),
-  list(params = c(6, 12), args = list(shape = 12, scale = 6))
-)
+# The families with the Stan parameters, `c(scale, shape)`
+ll_cases <- lapply(loglogistic_families(), function(family) {
+  c(family, list(params = c(family$args$scale, family$args$shape)))
+})
 
 ll_case_label <- function(case, ...) {
   paste0(
     "params ", toString(case$params), ", ",
     paste(names(list(...)), unlist(list(...)), sep = " = ", collapse = ", ")
   )
-}
-
-ll_case_cdf <- function(case) {
-  function(x) do.call(pllogis_test, c(list(x), case$args))
-}
-
-ll_case_family <- function(case) {
-  list(pdist = pllogis_test, args = case$args)
-}
-
-# The ODE branch of primarycensored_cdf() for given delays with a uniform
-# primary, as the CDF of a fixed parameter run of a model that calls the ODE
-# solver directly
-ll_ode_model <- function() {
-  testthat::skip_if_not_installed("cmdstanr")
-  testthat::skip_if(
-    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
-  )
-  functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
-  )
-  code <- paste0(
-    functions, "\n",
-    "data {\n",
-    "  int n;\n",
-    "  array[n] real d;\n",
-    "  array[2] real params;\n",
-    "  real pwindow;\n",
-    "}\n",
-    "generated quantities {\n",
-    "  array[n] real cdf;\n",
-    "  for (i in 1:n) {\n",
-    "    real lower_bound = fmax(d[i] - pwindow, 0);\n",
-    "    cdf[i] = ode_rk45(\n",
-    "      primarycensored_ode, rep_vector(0.0, 1), lower_bound, {d[i]},\n",
-    "      params, {d[i], pwindow}, {31, 1, 2, 0}\n",
-    "    )[1, 1];\n",
-    "  }\n",
-    "}\n"
-  )
-  path <- file.path(tempdir(), "pcd_loglogistic_ode.stan")
-  writeLines(code, path)
-  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
-}
-
-ll_ode_cdf <- function(model, params, d, pwindow) {
-  fit <- model$sample(
-    data = list(
-      n = length(d), d = as.array(d), params = as.array(params),
-      pwindow = pwindow
-    ),
-    fixed_param = TRUE, chains = 1, iter_sampling = 1, refresh = 0,
-    show_messages = FALSE, sig_figs = 18
-  )
-  as.numeric(fit$draws("cdf", format = "matrix"))
 }
 
 # Gradients are only observable from a compiled model, so this builds a

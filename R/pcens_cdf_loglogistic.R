@@ -359,19 +359,19 @@ pcens_cdf.pcens_pllogis_dunif <- function(
 #'
 #' @noRd
 .loglogistic_uniform_cdf <- function(q, pwindow, p) {
-  lower <- 0
-  endpoints <- .exptilt_endpoints(q, pwindow, lower)
-  log_g1 <- .loglogistic_log_g1(endpoints, p$shape, p$scale)
-  at_q <- log_g1[.exptilt_index(q, endpoints, lower)]
-  at_y <- log_g1[.exptilt_index(q - pwindow, endpoints, lower)]
-  pmin(1, exp(.log_diff_exp(at_q, at_y) - log(pwindow)))
+  pos <- .exptilt_layout(q, pwindow, 0)
+  log_g1 <- .loglogistic_log_g1(pos$endpoints, p$shape, p$scale)
+  pmin(1, exp(.log_diff_exp(log_g1[pos$q], log_g1[pos$y]) - log(pwindow)))
 }
 
 #' Check if the uniform solution is ill conditioned
 #'
 #' The error of the difference of G_1 is bounded by
-#' 4e-16 (1 + |log tF|) tF / w at each endpoint. It is checked against the
-#' smaller tail and the density of the CDF.
+#' 4e-16 (1 + |log tF|) tF / w at each endpoint.
+#' The bound is too large if it exceeds `.loglogistic_precision` times the
+#' smaller of the CDF and the survival, not taken below 1e-15 in the upper
+#' tail, or `.loglogistic_pmf_precision` times the density of the CDF, not
+#' taken below 1e-13 times the smaller tail.
 #'
 #' @param cdf The uniform CDF at `q`.
 #'
@@ -389,19 +389,7 @@ pcens_cdf.pcens_pllogis_dunif <- function(
       log_error_scale(q, log_cdf_q), log_error_scale(q - pwindow, log_cdf_y)
     )
   log_density <- .log_diff_exp(log_cdf_q, log_cdf_y) - log(pwindow)
-  .log_error_exceeds(log_error, log(cdf), log_density)
-}
-
-#' Test an error bound against the smaller tail and the PMF
-#'
-#' The bound is too large if it exceeds `.loglogistic_precision` times the
-#' smaller of the CDF and the survival, not taken below 1e-15 in the upper
-#' tail. It must also be below `.loglogistic_pmf_precision` times the
-#' density, not taken below 1e-13 times the smaller tail.
-#'
-#' @noRd
-.log_error_exceeds <- function(log_error, log_cdf, log_density) {
-  log_cdf <- pmin(log_cdf, 0)
+  log_cdf <- pmin(log(cdf), 0)
   log_tail <- pmin(log_cdf, .log1m_exp(log_cdf))
   log_limit <- log(.loglogistic_precision) + log_tail
   upper <- log_cdf > -log(2)

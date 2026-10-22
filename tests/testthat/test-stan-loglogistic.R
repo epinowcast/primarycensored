@@ -33,14 +33,14 @@ test_that("dispatch checks include the log-logistic delay", {
   expect_identical(check_for_analytical_vectorized(31L, 1L, 3), 1L)
   expect_identical(check_for_analytical_vectorized(31L, 1L, 2.5), 0L)
   expect_identical(
-    check_for_analytical_params(31L, c(3, 0.5), 1L, numeric(0)), 1L
+    check_for_analytical_params(31L, c(3, 0.5), 1L, numeric(0), 2), 1L
   )
   # A tiny shape has no solution at all
   expect_identical(
-    check_for_analytical_params(31L, c(3, 0.005), 1L, numeric(0)), 0L
+    check_for_analytical_params(31L, c(3, 0.005), 1L, numeric(0), 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(31L, c(3, 0.01), 1L, numeric(0)), 1L
+    check_for_analytical_params(31L, c(3, 0.01), 1L, numeric(0), 2), 1L
   )
 })
 
@@ -70,14 +70,16 @@ test_that("a shape below 0.01 uses the ODE path", {
   tiny <- c(3, 0.005)
   expect_identical(
     primarycensored_lcdf(2, 31L, tiny, 2, 0, Inf, 1L, numeric(0)),
-    log(ll_ode_cdf(ll_ode_model(), tiny, 2, 2))
+    log(primarycensored_numeric_cdf(2, 31L, tiny, 2, 1L, numeric(0)))
   )
 })
 
 test_that("the vectorised and single uniform paths use the same rule", {
   # Below the minimum shape both use the numerical path
   params <- c(2, 0.009)
-  expect_identical(check_for_analytical_params(31L, params, 1L, numeric(0)), 0L)
+  expect_identical(
+    check_for_analytical_params(31L, params, 1L, numeric(0), 1), 0L
+  )
   vec <- primarycensored_lcdf_vectorized(1L, 3L, 31L, params, 1, 1L, numeric(0))
   single <- vapply(
     1:3, primarycensored_lcdf, numeric(1),
@@ -99,9 +101,8 @@ test_that("the vectorised and single uniform paths use the same rule", {
 })
 
 test_that("primary terms and CDFs match a reference integral", {
-  ode_model <- ll_ode_model()
   for (case in ll_cases) {
-    cdf <- ll_case_cdf(case)
+    cdf <- function(x) do.call(pllogis_test, c(list(x), case$args))
     for (pwindow in c(0.5, 1, 2, 7)) {
       d <- sort(c(
         1e-6, 1e-3, 0.3 * pwindow, pwindow - 1e-3, pwindow, pwindow + 1e-3,
@@ -124,7 +125,10 @@ test_that("primary terms and CDFs match a reference integral", {
         31L, case$params, pwindow, 0, Inf, 1L, numeric(0)
       )
       expect_identical(direct, lcdf)
-      ode <- ll_ode_cdf(ode_model, case$params, d, pwindow)
+      ode <- vapply(
+        d, primarycensored_numeric_cdf, numeric(1),
+        31L, case$params, pwindow, 1L, numeric(0)
+      )
       expect_lt(max(abs(exp(lcdf) - ode)), 1e-4, label = info)
     }
   }
@@ -150,15 +154,7 @@ test_that("the uniform terms are the endpoint terms of the analytic CDF", {
 test_that("the uniform CDF matches the R implementation", {
   d <- c(0.3, 1, 2.5, 6, 15, 1e3)
   for (case in ll_cases) {
-    obj <- do.call(
-      new_pcens,
-      c(
-        list(
-          pdist = pllogis_test, dprimary = dunif, primary_args = list()
-        ),
-        case$args
-      )
-    )
+    obj <- uniform_object(case)
     expect_equal(
       exp(vapply(
         d, primarycensored_lcdf, numeric(1),
@@ -376,7 +372,7 @@ test_that("Stan log-logistic CDFs match rprimarycensored samples", {
   n <- 20000
   pwindow <- 2
   for (case in ll_cases[c(1, 3, 5)]) {
-    samples <- loglogistic_samples(n, ll_case_family(case), pwindow)
+    samples <- loglogistic_samples(n, case, pwindow)
     qs <- unname(stats::quantile(samples, c(0.05, 0.25, 0.5, 0.75, 0.95)))
     stan_cdf <- exp(vapply(
       qs, primarycensored_lcdf, numeric(1), 31L, case$params, pwindow, 0,
