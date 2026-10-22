@@ -176,7 +176,7 @@ NULL
   out
 }
 
-#' Normal delay mean and sd of a pcens object, defaulting as in
+#' Normal delay mean and standard deviation of a pcens object, defaulting as in
 #' [stats::pnorm()]
 #'
 #' @inheritParams pcens_tilt
