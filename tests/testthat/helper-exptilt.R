@@ -212,3 +212,18 @@ exptilt_log_gradient <- function(dist_id, params, d, pwindow, rho,
   grad[2] <- grad[2] * theta[2] + 1
   grad
 }
+
+# Points just below the limits of the small tilt forms, for an exponential
+# delay with a high rate, where the truncation error is largest. The window
+# limit is |r| w = 1e-2, with the largest error at q = w / 3. The delay limit
+# is |r| q = 5e-3. The last two cases have |r| q just below 1e-2, where the
+# small delay form would have an error of about 4e-8.
+exptilt_limit_cases <- function() {
+  small_window <- lapply(c(-1, 1), function(sign) {
+    list(rate = 1e4, pwindow = 1, q = c(0.2, 1 / 3, 0.5), rho = sign * 9.99e-3)
+  })
+  small_delay <- lapply(c(-1, 1, -2, 2) * 4.995e-3, function(scaled) {
+    list(rate = 200, pwindow = 10, q = 0.5, rho = scaled / 0.5)
+  })
+  c(small_window, small_delay)
+}

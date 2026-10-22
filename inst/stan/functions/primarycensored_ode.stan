@@ -1,4 +1,178 @@
 /**
+  * Compute the log of the leading term of the incomplete gamma series
+  * @ingroup delay_log_cdfs
+  *
+  * Returns log(x^a exp(-x) / Gamma(a + 1)) for x = exp(log_x).
+  * For `a >= 100` the Stirling series of lgamma(a + 1) cancels the terms of
+  * size a analytically, so rounding error does not grow with a.
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return log(x^a exp(-x) / Gamma(a + 1))
+  */
+real gamma_log_lead_logx(real log_x, real a) {
+  real x = exp(log_x);
+  if (a < 100) {
+    return a * log_x - x - lgamma(a + 1);
+  }
+  real inv_a = inv(a);
+  real inv_a2 = square(inv_a);
+  real delta = inv_a * (1.0 / 12
+                        - inv_a2 * (1.0 / 360
+                                    - inv_a2 * (1.0 / 1260
+                                                - inv_a2 / 1680)));
+  real r = x / a;
+  // r - 1 is exact near 1, so log1p avoids cancellation
+  real log_r = r > 0.5 && r < 2 ? log1p(r - 1) : log_x - log(a);
+  return a * (log_r - (r - 1))
+         - 0.5 * (log(a) + log(2 * pi())) - delta;
+}
+
+/**
+  * Compute the log CDF and log CCDF of a unit rate Gamma distribution from
+  * the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * Returns log P(a, x) and log Q(a, x) = log(1 - P(a, x)), the logs of the
+  * regularised incomplete gamma functions, for x = exp(log_x).
+  * For x < a + 1, P comes from its series.
+  * Otherwise Q comes from its continued fraction (modified Lentz).
+  * The other tail is `log1m_exp()` of the first, which is accurate because
+  * the first is not close to 1 in its region.
+  * Both stay finite, with accurate gradients, when x underflows or the
+  * other tail is below the smallest double.
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return Vector [log P(a, exp(log_x)), log Q(a, exp(log_x))]. Rejects
+  * a <= 0, `nan` and `inf`.
+  */
+vector gamma_log_pq_logx(real log_x, real a) {
+  if (!(a > 0) || is_inf(a)) {
+    reject("gamma_log_pq_logx: shape must be positive finite, found a = ", a);
+  }
+  real x = exp(log_x);
+  if (log_x == negative_infinity()) {
+    return [negative_infinity(), 0]';
+  }
+  if (is_inf(x)) {
+    return [0, negative_infinity()]';
+  }
+  real log_lead = gamma_log_lead_logx(log_x, a);
+  // Both need about 9 sqrt(a) terms at worst, near x = a + 1
+  real max_terms = 20 * sqrt(a) + 200;
+  if (x < a + 1) {
+    real term = 1;
+    real total = 1;
+    int n = 0;
+    while (term >= 1e-17 * total) {
+      n += 1;
+      if (n > max_terms) {
+        reject("gamma_log_pq_logx: series did not converge for log_x = ",
+               log_x, " and a = ", a);
+      }
+      term *= x / (a + n);
+      total += term;
+    }
+    real log_p = log_lead + log(total);
+    return [log_p, log1m_exp(log_p)]';
+  }
+  real b = x + 1 - a;
+  real c = 1e300;
+  real d = 1 / b;
+  real h = d;
+  real delta = 1;
+  // err tracks |delta - 1|, which each step multiplies by
+  // |an * d * d_prev / delta_prev|. Flooring |i - a| in an at 1 keeps it
+  // from reaching 0 at an integer shape, where the fraction terminates but
+  // its shape gradient does not.
+  real err = 1;
+  int i = 0;
+  while (err >= 1e-15) {
+    i += 1;
+    if (i > max_terms) {
+      reject("gamma_log_pq_logx: continued fraction did not converge for ",
+             "log_x = ", log_x, " and a = ", a);
+    }
+    real an = -i * (i - a);
+    real d_prev = d;
+    b += 2;
+    d = an * d + b;
+    if (abs(d) < 1e-300) d = 1e-300;
+    c = b + an / c;
+    if (abs(c) < 1e-300) c = 1e-300;
+    d = 1 / d;
+    err *= i * fmax(abs(i - a), 1) * abs(d * d_prev / delta);
+    delta = d * c;
+    h *= delta;
+  }
+  real log_q = log_lead + log(a) + log(h);
+  return [log1m_exp(log_q), log_q]';
+}
+
+/**
+  * Compute the log CDF of a unit rate Gamma distribution from the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return log P(a, exp(log_x)), the first element of
+  * `gamma_log_pq_logx()`
+  */
+real gamma_lcdf_logx(real log_x, real a) {
+  return gamma_log_pq_logx(log_x, a)[1];
+}
+
+/**
+  * Compute the log CDFs of Gamma(a) and Gamma(a + 1) from the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * Returns [log P(a, x), log P(a + 1, x)] with unit rate, as needed by the
+  * uniform primary solution for a Gamma delay.
+  * Uses one `gamma_log_pq_logx()` evaluation and the recursion
+  * P(a + 1, x) = P(a, x) - x^a exp(-x) / Gamma(a + 1).
+  * Below a + 1 it starts from P(a + 1, x) and above from Q(a, x), so that
+  * the recursion adds terms rather than subtracting them.
+  *
+  * @param log_x Log of the argument, log(x) with x > 0
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return Vector [log P(a, exp(log_x)), log P(a + 1, exp(log_x))].
+  * Rejects a <= 0, `nan` and `inf`.
+  */
+vector gamma_lcdf_logx_pair(real log_x, real a) {
+  if (is_inf(log_x)) {
+    real log_p = gamma_lcdf_logx(log_x, a);
+    return [log_p, log_p]';
+  }
+  real log_lead = gamma_log_lead_logx(log_x, a);
+  if (exp(log_x) < a + 1) {
+    real log_p_ap1 = gamma_lcdf_logx(log_x, a + 1);
+    return [log_sum_exp(log_p_ap1, log_lead), log_p_ap1]';
+  }
+  real log_q = gamma_log_pq_logx(log_x, a)[2];
+  return [log1m_exp(log_q), log1m_exp(log_sum_exp(log_q, log_lead))]';
+}
+
+/**
+  * Compute the log of a Gamma rate
+  * @ingroup delay_log_cdfs
+  *
+  * @param rate Rate parameter of the Gamma distribution
+  *
+  * @return log(rate). Rejects a rate that is not positive and finite.
+  */
+real gamma_log_rate(real rate) {
+  if (!(rate > 0) || is_inf(rate)) {
+    reject("Gamma rate must be positive finite, found ", rate);
+  }
+  return log(rate);
+}
+
+/**
   * Compute the log CDF of the generalised gamma distribution
   * @ingroup delay_log_cdfs
   *
@@ -7,7 +181,7 @@
   * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
   * distributions are special cases.
   *
-  * @param y Value at which to evaluate the log CDF (y > 0)
+  * @param y Value at which to evaluate the log CDF (y >= 0)
   * @param shape Shape (power) parameter
   * @param scale Scale parameter
   * @param k Shape parameter of the underlying Gamma distribution
@@ -15,7 +189,13 @@
   * @return Log CDF of the generalised gamma distribution
   */
 real gengamma_lcdf(real y, real shape, real scale, real k) {
-  return gamma_lcdf(pow(y / scale, shape) | k, 1);
+  if (y < 0) {
+    reject("gengamma_lcdf: y must be non-negative, found y = ", y);
+  }
+  if (y == 0) {
+    return negative_infinity();
+  }
+  return gamma_lcdf_logx(shape * (log(y) - log(scale)), k);
 }
 
 /**
@@ -120,7 +300,9 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
            ? negative_infinity()
            : lognormal_lcdf(delay | params[1], params[2]);
   }
-  else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 2) {
+    return gamma_lcdf_logx(log(delay) + gamma_log_rate(params[2]), params[1]);
+  }
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
   else if (dist_id == 5) return gengamma_lcdf(delay | params[1], params[2], params[3]);
