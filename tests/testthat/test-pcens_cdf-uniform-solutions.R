@@ -132,6 +132,9 @@ test_that("the normal method handles infinite q and is continuous across the
   switch to the asymptotic series", {
   obj <- new_pcens(pnorm, dunif, list(), mean = 1, sd = 2)
   expect_identical(pcens_cdf(obj, c(-Inf, Inf), 1), c(0, 1))
+  expect_identical(
+    pcens_cdf(obj, c(-Inf, 2, Inf), c(1, 0, 0)), c(0, pnorm(2, 1, 2), 1)
+  )
   obj <- new_pcens(pnorm, dunif, list(), mean = 0, sd = 1)
   expect_equal(
     pcens_cdf(obj, -10 + 1e-9 - 1e-7, 1), pcens_cdf(obj, -10 + 1e-9 + 1e-7, 1),
@@ -185,6 +188,30 @@ test_that("the new pcens_cdf methods use the numerical path for arguments
   )
 })
 
+test_that("the normal method shares the input handling of the other uniform
+  primary methods", {
+  obj <- new_pcens(pnorm, dunif, list(), mean = 1, sd = 2)
+  expect_identical(pcens_cdf(obj, numeric(0), 1), numeric(0))
+  expect_error(pcens_cdf(obj, c(1, NA), 1), "missing")
+  expect_error(pcens_cdf(obj, 1, -1), "pwindow")
+  q <- c(-3, 0.5, 2, 6)
+  mean <- c(-1, 0, 2, 5)
+  expect_identical(
+    pcens_cdf(new_pcens(pnorm, dunif, list(), mean = mean, sd = 2), q, 1),
+    vapply(seq_along(q), function(i) {
+      obj_i <- new_pcens(pnorm, dunif, list(), mean = mean[i], sd = 2)
+      pcens_cdf(obj_i, q[i], 1)
+    }, numeric(1))
+  )
+  # The window is far narrower than the delay but not than the sd
+  far <- new_pcens(pnorm, dunif, list(), mean = 1e7, sd = 1)
+  centred <- new_pcens(pnorm, dunif, list(), mean = 0, sd = 1)
+  expect_equal(
+    pcens_cdf(far, 1e7 + c(-1, 0, 2), 3), pcens_cdf(centred, c(-1, 0, 2), 3),
+    tolerance = 1e-8
+  )
+})
+
 test_that("the new pcens_cdf methods error for missing parameters", {
   expect_error(
     pcens_cdf(new_pcens(pchisq, dunif, list()), 1, 1),
@@ -215,35 +242,4 @@ test_that("pprimarycensored and dprimarycensored work end to end for the new
   # The window is not clipped at 0, so a normal delay has mass below 0
   lower <- pprimarycensored(-1, pnorm, pwindow = 2, mean = 2, sd = 2)
   expect_gt(lower, 0)
-})
-
-test_that("pprimarycensored matches the empirical CDF of rprimarycensored
-  samples for the new delays", {
-  set.seed(20260930)
-  n <- 1e5
-  probs <- c(0.05, 0.3, 0.6, 0.9)
-  cases <- list(
-    list(pdist = pexp, rdist = rexp, args = list(rate = 0.4)),
-    list(pdist = pnorm, rdist = rnorm, args = list(mean = 2, sd = 1.5)),
-    list(pdist = pchisq, rdist = rchisq, args = list(df = 4)),
-    list(pdist = pbeta, rdist = rbeta, args = list(shape1 = 2, shape2 = 3))
-  )
-  for (case in cases) {
-    for (pwindow in c(0.5, 2)) {
-      samples <- do.call(
-        rprimarycensored,
-        c(list(n, case$rdist, pwindow = pwindow, swindow = 0), case$args)
-      )
-      delays <- unname(stats::quantile(samples, probs))
-      actual <- do.call(
-        pprimarycensored,
-        c(list(delays, case$pdist, pwindow = pwindow), case$args)
-      )
-      # Within 4 standard errors of the probability at its own quantile
-      expect_lt(
-        max(abs(actual - probs) / sqrt(probs * (1 - probs) / n)), 4,
-        label = sprintf("pwindow %g", pwindow)
-      )
-    }
-  }
 })

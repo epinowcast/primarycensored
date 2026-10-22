@@ -53,10 +53,23 @@ unif_cases <- function() {
         list(shape = 1.6, scale = 6), list(shape = 4, scale = 5),
         list(shape = 0.3, scale = 1)
       )
+    ),
+    list(
+      name = "exponential", pdist = pexp, rdist = rexp,
+      grid = list(
+        list(rate = 0.4), list(rate = 1), list(rate = 0.1), list(rate = 3)
+      )
+    ),
+    list(
+      name = "beta", pdist = pbeta, rdist = rbeta,
+      grid = list(
+        list(shape1 = 2, shape2 = 3), list(shape1 = 0.5, shape2 = 0.5),
+        list(shape1 = 1, shape2 = 4), list(shape1 = 5, shape2 = 1.5)
+      )
     )
   )
   if (requireNamespace("flexsurv", quietly = TRUE)) {
-    cases[[4]] <- list(
+    cases[[length(cases) + 1L]] <- list(
       name = "gengamma", pdist = flexsurv::pgengamma.orig,
       rdist = flexsurv::rgengamma.orig,
       grid = list(

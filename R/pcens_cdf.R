@@ -286,22 +286,23 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'
 #' For a delay with mean \eqn{E} and a uniform primary event window of width
 #' \eqn{w}, the CDF at \eqn{d} is \eqn{(G(d) - G(q)) / w} with
-#' \eqn{q = \max(d - w, 0)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
-#' \eqn{F} is the delay CDF and \eqn{\tilde F} is the CDF of the partial
-#' expectation distribution.
+#' \eqn{q = \max(d - w, L)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
+#' \eqn{L} is the lower end of the delay support, \eqn{F} is the delay CDF
+#' and \eqn{E \tilde F(t)} is the partial expectation
+#' \eqn{\int_L^t x f(x) dx}.
 #'
-#' Delays at or below zero give 0, delays of `Inf` give 1 and missing delays
-#' are an error.
+#' Delays at or below \eqn{L} give 0, delays of `Inf` give 1 and missing
+#' delays are an error.
 #' Zero-width windows give the delay CDF.
 #' `q`, `pwindow` and the elements of `params` are recycled against each
 #' other.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @param terms_fn Function of delays greater than or equal to zero and
+#' @param terms_fn Function of delays greater than or equal to `lower` and
 #'  `params` returning \eqn{G}.
 #'
-#' @param upper_fn Function of delays greater than or equal to zero and
+#' @param upper_fn Function of delays greater than or equal to `lower` and
 #'  `params` returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and
 #'  \eqn{\tilde S} are the upper tails of \eqn{F} and \eqn{\tilde F}.
 #'
@@ -310,11 +311,14 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #' @param params Named list of delay parameters, including the delay mean
 #'  \eqn{E} as `mean`.
 #'
+#' @param lower Lower end of the delay support, \eqn{L}: 0, or `-Inf` for
+#'  a delay on the reals.
+#'
 #' @return Numeric vector of CDF values in \[0, 1\].
 #'
 #' @keywords internal
 .pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn, delay_cdf,
-                               params) {
+                               params, lower = 0) {
   .check_pwindow(q, pwindow)
   if (length(q) == 0L) {
     return(numeric(0))
@@ -334,11 +338,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   if (!scalar_params) {
     params <- lapply(params, rep_len, n)
   }
-  active <- q > 0 & q < Inf
+  active <- q > lower & q < Inf
   exact <- active & pwindow == 0
   if (!any(exact) && all(active)) {
     result <- .uniform_window_cdf(
-      q, pwindow, terms_fn, upper_fn, delay_cdf, params, share
+      q, pwindow, terms_fn, upper_fn, delay_cdf, params, share, lower
     )
     return(pmin.int(1, pmax.int(0, result)))
   }
@@ -352,7 +356,7 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   if (any(active)) {
     result[active] <- .uniform_window_cdf(
       q[active], pwindow[active], terms_fn, upper_fn, delay_cdf,
-      .index_params(params, active), share
+      .index_params(params, active), share, lower
     )
   }
   pmin.int(1, pmax.int(0, result))
@@ -396,11 +400,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 # Delays more than this many windows wide use the mean of the delay CDF
 .narrow_window_ratio <- 1e6
 
-#' Uniform primary CDF for positive finite delays and windows
+#' Uniform primary CDF for finite delays and positive windows
 #'
 #' @inheritParams .pcens_cdf_uniform
 #'
-#' @param d Positive finite delays.
+#' @param d Finite delays above `lower`.
 #'
 #' @param w Primary event windows greater than zero, one per delay.
 #'
@@ -412,7 +416,7 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'
 #' @keywords internal
 .uniform_window_cdf <- function(d, w, terms_fn, upper_fn, delay_cdf, params,
-                                share) {
+                                share, lower) {
   # Both forms lose about 1e-16 * d / w for narrow windows (1e-10 at the
   # cutoff), so the mean of the delay CDF over the window is used instead
   narrow <- d > .narrow_window_ratio * w
@@ -426,11 +430,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
     )
     result[!narrow] <- .uniform_window_cdf(
       d[!narrow], w[!narrow], terms_fn, upper_fn, delay_cdf,
-      .index_params(params, !narrow), share
+      .index_params(params, !narrow), share, lower
     )
     return(result)
   }
-  lo <- pmax.int(d - w, 0)
+  lo <- pmax.int(d - w, lower)
   # In the far upper tail G(d) - G(lo) cancels, unlike 1 - (H(d) - H(lo)) / w
   # with G(t) = t - mean - H(t). This only pays off past the delay mean.
   up <- lo > params$mean & d > .upper_tail_ratio * w
@@ -870,10 +874,14 @@ pcens_cdf.pcens_pexp_dunif <- function(
   }
   rate <- if (is.null(delay_args$rate)) 1 else delay_args$rate
 
-  # G(t) = 0 for t <= 0 as F_T(t) = 0 there, so clamp t at 0
-  .pcens_cdf_antiderivative(q, pwindow, function(t) {
-    .expon_shortfall(rate * pmax(t, 0)) / rate
-  })
+  terms_fn <- function(t, p) .expon_shortfall(p$rate * t) * p$mean
+  upper_fn <- function(t, p) -exp(-p$rate * t) * p$mean
+  delay_cdf <- function(t, p) stats::pexp(t, p$rate)
+
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(rate = rate, mean = 1 / rate)
+  )
 }
 
 #' Method for Normal delay with uniform primary
@@ -915,9 +923,16 @@ pcens_cdf.pcens_pnorm_dunif <- function(
   mu <- if (is.null(delay_args$mean)) 0 else delay_args$mean
   sigma <- if (is.null(delay_args$sd)) 1 else delay_args$sd
 
-  .pcens_cdf_antiderivative(q, pwindow, function(t) {
-    sigma * .norm_shortfall((t - mu) / sigma)
-  })
+  # Centre the delay, as the narrow window and upper tail forms are chosen
+  # by the size of the delay. With mean 0, H(t) = t - G(t) = -sigma g(-z).
+  terms_fn <- function(t, p) p$sigma * .norm_shortfall(t / p$sigma)
+  upper_fn <- function(t, p) -p$sigma * .norm_shortfall(-t / p$sigma)
+  delay_cdf <- function(t, p) stats::pnorm(t, 0, p$sigma)
+
+  .pcens_cdf_uniform(
+    q - mu, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(sigma = sigma, mean = 0), lower = -Inf
+  )
 }
 
 #' Method for Chi-square delay with uniform primary
@@ -1008,14 +1023,22 @@ pcens_cdf.pcens_pbeta_dunif <- function(
       call. = FALSE
     )
   }
-  E_T <- a / (a + b)
 
-  # Clamp t to [0, 1] and add the linear part above the support
-  .pcens_cdf_antiderivative(q, pwindow, function(t) {
-    t_in <- pmin(pmax(t, 0), 1)
-    t_in * stats::pbeta(t_in, a, b) -
-      E_T * stats::pbeta(t_in, a + 1, b) + pmax(t - 1, 0)
-  })
+  # The partial expectation distribution is a beta with shape1 + 1.
+  # The terms need no clamping, as they give G(t) = t - mean above 1.
+  terms_fn <- function(t, p) {
+    t * stats::pbeta(t, p$a, p$b) - p$mean * stats::pbeta(t, p$a + 1, p$b)
+  }
+  upper_fn <- function(t, p) {
+    t * stats::pbeta(t, p$a, p$b, lower.tail = FALSE) -
+      p$mean * stats::pbeta(t, p$a + 1, p$b, lower.tail = FALSE)
+  }
+  delay_cdf <- function(t, p) stats::pbeta(t, p$a, p$b)
+
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(a = a, b = b, mean = a / (a + b))
+  )
 }
 
 #' Delay distribution arguments an analytical solution handles
@@ -1048,28 +1071,6 @@ pcens_cdf.pcens_pbeta_dunif <- function(
     return(NULL)
   }
   delay_args
-}
-
-#' Primary event censored CDF from an antiderivative of the delay CDF
-#'
-#' The CDF is \eqn{(G(d) - G(d - w_P)) / w_P} for an antiderivative
-#' \eqn{G} of the delay CDF.
-#'
-#' @inheritParams pcens_cdf
-#'
-#' @param G Function giving an antiderivative of the delay CDF at a vector
-#'  of times.
-#'
-#' @inherit pcens_cdf return
-#'
-#' @keywords internal
-.pcens_cdf_antiderivative <- function(q, pwindow, G) {
-  result <- (G(q) - G(q - pwindow)) / pwindow
-  # Both antiderivatives are infinite at q = Inf, and the CDF is 1
-  result[which(q == Inf)] <- 1
-
-  # Ensure the result is in [0, 1] (accounts for numerical errors)
-  pmin(1, pmax(0, result))
 }
 
 #' Evaluate x - 1 + exp(-x) for x >= 0
