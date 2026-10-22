@@ -2,7 +2,7 @@
 % Please edit documentation in R/tilt_transform.R
 \name{.norm_mean_sd}
 \alias{.norm_mean_sd}
-\title{Normal delay mean and sd of a pcens object, defaulting as in
+\title{Normal delay mean and standard deviation of a pcens object, defaulting as in
 \code{\link[stats:Normal]{stats::pnorm()}}}
 \usage{
 .norm_mean_sd(object)
@@ -14,7 +14,7 @@
 A list with \code{mean} and \code{sd}.
 }
 \description{
-Normal delay mean and sd of a pcens object, defaulting as in
+Normal delay mean and standard deviation of a pcens object, defaulting as in
 \code{\link[stats:Normal]{stats::pnorm()}}
 }
 \keyword{internal}
