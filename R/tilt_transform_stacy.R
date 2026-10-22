@@ -214,17 +214,11 @@
     j * log(scale) + lgamma(k + j / shape) - lgamma(k) +
       pgamma(x, k + j / shape, log.p = TRUE)
   }
-  log_g1 <- .log_diff_exp(log_t + log_m(0), log_m(1))
-  log_h <- .log_diff_exp(log_t + log_m(1), log_m(2))
-  log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
-  log_a <- .log_diff_exp(log_t + log_m(2), log_m(3))
-  log_b <- .log_diff_exp(log_t + log_h, log_a)
-  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
-  cbind(
-    G1 = ifelse(positive, log_g1, -Inf),
-    G2 = ifelse(positive, log_g2, -Inf),
-    G3 = ifelse(positive, log_g3, -Inf)
+  moments <- .moments_from_partial(
+    log_t, log_m(0), log_m(1), log_m(2), log_m(3)
   )
+  moments[!positive, ] <- -Inf
+  moments
 }
 
 .stacy_tilt_lower <- function(object) 0

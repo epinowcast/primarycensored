@@ -927,13 +927,9 @@ vector primarycensored_stacy_tilt_moments(real t, real shape, real scale,
                 + gamma_lcdf_logx(log_x, k2);
   real log_m3 = 3 * log(scale) + lgamma(k3) - log_k
                 + gamma_lcdf_logx(log_x, k3);
-  real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
-  real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
-  real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
-  real log_a = primarycensored_log_diff_exp(log_t + log_m2, log_m3);
-  real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
-  real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
-  return [log_g1, log_g2, log_g3]';
+  return primarycensored_moments_from_partial(
+    log_t, [log_m0, log_m1, log_m2, log_m3]'
+  );
 }
 
 /**
