@@ -40,13 +40,18 @@ gamma_delay_probe_model <- function() {
   )
 }
 
-# A function of (log x, a) on its own, with d standing in for x. The shape is
-# unconstrained so that the gradient is with respect to the shape itself.
-gamma_logx_probe_model <- function(fn = "gamma_lcdf_logx") {
-  gamma_probe_model(
-    paste0(fn, "(log(d), a)"),
-    "  real a;\n",
-    paste0("pcd_", fn, "_gradient")
+# An expression in (d, a) on its own, with d standing in for log x. The shape
+# is unconstrained so that the gradient is with respect to the shape itself.
+gamma_logx_probe_model <- function(target, name) {
+  gamma_probe_model(target, "  real a;\n", name)
+}
+
+# Shape gradient of `target` at log x = d
+gamma_logx_gradient_at <- function(model, d, a) {
+  stan_gradient_at( # nolint: object_usage_linter.
+    model,
+    data = list(d = d, pwindow = 1, L = 0, D = Inf),
+    init = list(a = a)
   )
 }
 
@@ -71,11 +76,12 @@ expect_gamma_gradient_ok <- function(res, label) {
   )
 }
 
-# Derivative of log P(a, x) with respect to a, by a fifth order central
-# difference of `pgamma()` with a step that shrinks with a
-ref_dlogp_da <- function(x, a) {
+# Derivative of log P(a, x), or log Q(a, x) if `upper`, with respect to a,
+# by a fifth order central difference of `pgamma()` with a step that shrinks
+# with a
+ref_dlogp_da <- function(x, a, upper = FALSE) {
   h <- a * min(1e-4, 0.01 / sqrt(a))
-  f <- function(e) pgamma(x, a + e, log.p = TRUE)
+  f <- function(e) pgamma(x, a + e, lower.tail = !upper, log.p = TRUE)
   (-f(2 * h) + 8 * f(h) - 8 * f(-h) + f(-2 * h)) / (12 * h)
 }
 
@@ -173,55 +179,65 @@ test_that("primarycensored_lcdf has finite gradients with truncation when
   }
 })
 
-test_that("gamma_lcdf_logx gradient with respect to the shape is accurate", {
-  model <- gamma_logx_probe_model()
-  # Includes integer shapes, where the continued fraction terminates
-  for (a in c(0.7, 2, 5.5, 9.5, 10, 10.5, 12, 20.5, 25, 50, 100, 400, 700.5,
-              1000, 1500.5, 3000, 10000, 1e5, 1e6)) {
-    for (frac in c(0.3, 0.8, 0.95, 1, 1.02, 1.1, 1.5, 3)) {
-      x <- frac * (a + 1)
-      res <- stan_gradient_at(
-        model,
-        data = list(d = x, pwindow = 1, L = 0, D = Inf),
-        init = list(a = a)
-      )
-      label <- sprintf("a = %g, x over (a + 1) = %g", a, frac)
-      expect_false(res$rejected, info = label)
-      expect_false(res$gradient_not_finite, info = label)
-      expect_gradient_close(res$gradient, ref_dlogp_da(x, a), label)
-    }
-  }
-})
-
-test_that("gamma_lcdf_logx_pair gradients with respect to the shape are
-   accurate", {
+test_that("gamma_log_pq_logx gradients with respect to the shape are
+   accurate in both tails", {
+  # Integer shapes, where the continued fraction terminates, and large shapes
   for (component in 1:2) {
-    model <- gamma_probe_model(
-      paste0("gamma_lcdf_logx_pair(log(d), a)[", component, "]"),
-      "  real a;\n",
-      paste0("pcd_gamma_pair_gradient_", component)
+    model <- gamma_logx_probe_model(
+      paste0("gamma_log_pq_logx(d, a)[", component, "]"),
+      paste0("pcd_gamma_pq_gradient_", component)
     )
-    # The second component is the CDF of a + 1
-    shift <- component - 1
-    for (a in c(0.3, 2, 5.5, 9.5, 10.5, 20.5, 100, 700.5, 3000, 10000,
-                1e5)) {
-      for (frac in c(1e-4, 0.05, 0.3, 0.6, 0.95, 1, 1.05, 1.5, 3)) {
+    for (a in c(0.01, 0.7, 1, 2, 3, 5, 5.5, 9.5, 10, 10.5, 25, 100, 700.5,
+                1000, 3000, 1e4, 1e5, 1e6)) {
+      for (frac in c(0.3, 0.8, 0.95, 1, 1.02, 1.1, 1.5, 3)) {
         x <- frac * (a + 1)
-        res <- stan_gradient_at(
-          model,
-          data = list(d = x, pwindow = 1, L = 0, D = Inf),
-          init = list(a = a)
-        )
+        res <- gamma_logx_gradient_at(model, log(x), a)
         label <- sprintf(
           "component = %d, a = %g, x over (a + 1) = %g", component, a, frac
         )
         expect_false(res$rejected, info = label)
         expect_false(res$gradient_not_finite, info = label)
         expect_gradient_close(
-          res$gradient,
-          ref_dlogp_da(x, a + shift),
-          label
+          res$gradient, ref_dlogp_da(x, a, upper = component == 2), label
         )
+      }
+    }
+  }
+})
+
+test_that("gamma_lcdf_logx shape gradient is accurate when x underflows", {
+  model <- gamma_logx_probe_model(
+    "gamma_lcdf_logx(d, a)", "pcd_gamma_lcdf_logx_gradient"
+  )
+  # log P = a log x - lgamma(a + 1) as x tends to 0
+  for (a in c(0.01, 1, 10, 1000, 1e5)) {
+    res <- gamma_logx_gradient_at(model, -1000, a)
+    expect_gradient_close(
+      res$gradient, -1000 - digamma(a + 1), sprintf("a = %g", a)
+    )
+  }
+})
+
+test_that("gamma_lcdf_logx_pair gradients with respect to the shape are
+   accurate", {
+  for (component in 1:2) {
+    model <- gamma_logx_probe_model(
+      paste0("gamma_lcdf_logx_pair(d, a)[", component, "]"),
+      paste0("pcd_gamma_pair_gradient_", component)
+    )
+    # The second component is the CDF of a + 1
+    shift <- component - 1
+    for (a in c(0.3, 1, 2, 5, 5.5, 9.5, 10.5, 20.5, 100, 700.5, 3000, 10000,
+                1e5)) {
+      for (frac in c(1e-4, 0.05, 0.3, 0.6, 0.95, 1, 1.05, 1.5, 3)) {
+        x <- frac * (a + 1)
+        res <- gamma_logx_gradient_at(model, log(x), a)
+        label <- sprintf(
+          "component = %d, a = %g, x over (a + 1) = %g", component, a, frac
+        )
+        expect_false(res$rejected, info = label)
+        expect_false(res$gradient_not_finite, info = label)
+        expect_gradient_close(res$gradient, ref_dlogp_da(x, a + shift), label)
       }
     }
   }

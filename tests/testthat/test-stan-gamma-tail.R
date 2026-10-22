@@ -25,7 +25,7 @@ test_that("dist_lcdf for a Gamma delay is finite and accurate deep in the
       for (y in c(0.05, 0.3, 1, 2, 3, 4.5)) {
         expect_equal(
           dist_lcdf(y, c(shape, rate), 2),
-          ref_lgamma_delay(y, shape, rate),
+          pgamma(y * rate, shape, log.p = TRUE),
           tolerance = 1e-9,
           info = sprintf("y = %g, shape = %g, rate = %g", y, shape, rate)
         )
@@ -130,9 +130,8 @@ test_that("analytical gamma matches Stan's numerical path", {
   }
 })
 
-test_that("Stan analytical gamma matches the R implementation for shapes
-   of 10 or more", {
-  for (shape in c(10, 30, 400, 1500)) {
+test_that("Stan analytical gamma matches the R implementation", {
+  for (shape in c(1, 2.5, 10, 30, 400, 1500)) {
     for (rate in c(0.2, 10)) {
       obj <- new_pcens(pgamma, dunif, list(), shape = shape, rate = rate)
       q <- shape / rate * c(0.3, 0.6, 0.9, 1, 1.1, 1.5, 3)
@@ -181,40 +180,49 @@ test_that("Stan analytical gamma matches rprimarycensored samples", {
   }
 })
 
-test_that("gamma_lcdf_logx matches pgamma across the evaluation rules", {
-  # frac = x / (a + 1) spans the lower tail, the body and the upper tail
-  for (a in c(0.1, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 30000, 1e5,
-              1e6)) {
+test_that("gamma_log_pq_logx matches pgamma in both tails", {
+  # frac = x / (a + 1) spans the lower tail, the body and the upper tail on
+  # both sides of the switch from the series to the continued fraction
+  for (a in c(0.01, 0.1, 1, 2, 3, 5, 9.5, 10, 10.001, 40, 400, 4000, 30000,
+              1e5, 1e6)) {
     for (frac in c(
-      1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.89, 0.9, 0.99, 1 - 1e-7, 1,
-      1 + 1e-7, 1.01, 1.05, 1.2, 1.5, 3, 10, 100
+      1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1 - 1e-7, 1, 1 + 1e-7,
+      1.01, 1.05, 1.2, 1.5, 3, 10, 100
     )) {
       x <- frac * (a + 1)
+      label <- sprintf("a = %g, x over (a + 1) = %g", a, frac)
+      pq <- gamma_log_pq_logx(log(x), a)
+      expect_length(pq, 2)
+      expect_lcdf_close(pq[1], pgamma(x, a, log.p = TRUE), label)
       expect_lcdf_close(
-        gamma_lcdf_logx(log(x), a),
-        pgamma(x, a, log.p = TRUE),
-        sprintf("a = %g, x over (a + 1) = %g", a, frac)
+        pq[2], pgamma(x, a, lower.tail = FALSE, log.p = TRUE), label
       )
+      expect_identical(gamma_lcdf_logx(log(x), a), pq[1])
     }
   }
 })
 
-test_that("gamma_lcdf_logx does not underflow when x does", {
-  # exp(-800) underflows to 0 but the log CDF is finite
-  expect_equal(
-    gamma_lcdf_logx(-800, 30.5), 30.5 * -800 - lgamma(31.5),
-    tolerance = 1e-12
-  )
-  expect_identical(gamma_lcdf_logx(-Inf, 30.5), -Inf)
+test_that("gamma_log_pq_logx does not underflow when x does", {
+  # exp(-1000) is 0 but log P is finite
+  for (a in c(0.01, 1, 3, 30.5, 1e5)) {
+    log_p <- a * -1000 - lgamma(a + 1)
+    expect_equal(
+      gamma_log_pq_logx(-1000, a), c(log_p, log1p(-exp(log_p))),
+      tolerance = 1e-12, info = sprintf("a = %g", a)
+    )
+  }
+  expect_identical(gamma_log_pq_logx(-Inf, 3), c(-Inf, 0))
+  # exp(800) overflows
+  expect_identical(gamma_log_pq_logx(800, 3), c(0, -Inf))
+  expect_identical(gamma_log_pq_logx(Inf, 3), c(0, -Inf))
 })
 
 test_that("gamma_lcdf_logx_pair matches pgamma for a and a + 1", {
-  # frac = x / (a + 1) covers the series, the continued fraction and
-  # `gamma_lcdf`
-  for (a in c(0.05, 0.5, 1, 5, 9.5, 9.999, 10, 10.001, 40, 400, 4000, 3e4)) {
+  # frac = x / (a + 1) covers the series and the continued fraction
+  for (a in c(0.01, 0.5, 1, 2, 5, 9.5, 10, 10.001, 40, 400, 4000, 3e4)) {
     for (frac in c(
-      1e-8, 1e-4, 0.01, 0.1, 0.3, 0.49, 0.5, 0.51, 0.7, 0.89, 0.9, 0.99, 1,
-      1.01, 1.2, 1.5, 3, 10, 100
+      1e-8, 1e-4, 0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1, 1.01, 1.2, 1.5, 3,
+      10, 100
     )) {
       x <- frac * (a + 1)
       pair <- gamma_lcdf_logx_pair(log(x), a)
@@ -243,16 +251,13 @@ test_that("gamma_lcdf_logx_pair does not underflow when x does", {
   expect_identical(gamma_lcdf_logx_pair(Inf, 3), c(0, 0))
 })
 
-test_that("gamma_lcdf_logx and gamma_lcdf_logx_pair reject an invalid shape", {
-  for (a in c(0, -0.5, -3)) {
+test_that("the gamma log CDF helpers reject an invalid shape", {
+  for (a in c(0, -0.5, -3, NaN, Inf)) {
+    expect_error(gamma_log_pq_logx(log(2), a), "shape")
     expect_error(gamma_lcdf_logx(log(2), a), "shape")
     expect_error(gamma_lcdf_logx_pair(log(2), a), "shape")
     expect_error(dist_lcdf(2, c(a, 1), 2), "shape")
   }
-  expect_error(gamma_lcdf_logx(log(2), NaN), "shape")
-  expect_error(gamma_lcdf_logx(log(2), Inf), "shape")
-  expect_error(gamma_lcdf_logx_pair(log(2), Inf), "shape")
-  expect_error(dist_lcdf(2, c(Inf, 1), 2), "shape")
   expect_error(dist_lcdf(2, c(1.5, -1), 2))
 })
 

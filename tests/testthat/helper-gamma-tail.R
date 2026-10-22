@@ -1,30 +1,34 @@
-# References for the tests in test-stan-gamma-tail.R and
-# test-stan-gamma-tail-gradient.R
+# References for the tests in test-stan-gamma-tail.R,
+# test-stan-gamma-tail-gradient.R and test-stan-gengamma-tail.R
 
-# log F_T(t) for a Gamma delay via R
-ref_lgamma_delay <- function(t, shape, rate) {
-  pgamma(t * rate, shape = shape, log.p = TRUE)
+# log F_T(t) for the generalised gamma (Stacy parameterisation) via R
+ref_lgengamma <- function(t, shape, scale, k) {
+  pgamma((t / scale)^shape, shape = k, log.p = TRUE)
 }
 
-# log of the uniform primary event censored CDF, by integrating F_T over
-# [max(d - pwindow, 0), d] scaled by its maximum so that it does not
-# underflow. The range is cut where the integrand is below exp(-40).
-ref_lcdf_unif_gamma <- function(d, pwindow, shape, rate) {
+# Log uniform primary censored CDF, (1 / w) int_{max(d - w, 0)}^{d} F_T(u) du.
+# The integrand is scaled by its value at d and cut once it is below exp(-40).
+ref_lcdf_unif <- function(d, pwindow, shape, scale, k) {
   q_lo <- max(d - pwindow, 0)
-  log_max <- ref_lgamma_delay(d, shape, rate)
+  log_max <- ref_lgengamma(d, shape, scale, k)
   target <- log_max - 40
   lower <- q_lo
-  if (ref_lgamma_delay(q_lo, shape, rate) < target) {
+  if (ref_lgengamma(q_lo, shape, scale, k) < target) {
     lower <- uniroot(
-      function(u) ref_lgamma_delay(u, shape, rate) - target,
+      function(u) ref_lgengamma(u, shape, scale, k) - target,
       lower = q_lo, upper = d, tol = 1e-14
     )$root
   }
   scaled <- integrate(
-    function(u) exp(ref_lgamma_delay(u, shape, rate) - log_max),
+    function(u) exp(ref_lgengamma(u, shape, scale, k) - log_max),
     lower = lower, upper = d, rel.tol = 1e-13, subdivisions = 1000L
   )$value
   log_max + log(scaled) - log(pwindow)
+}
+
+# The same for a Gamma delay, the generalised gamma with shape 1
+ref_lcdf_unif_gamma <- function(d, pwindow, shape, rate) {
+  ref_lcdf_unif(d, pwindow, 1, 1 / rate, shape)
 }
 
 # log of the truncated uniform primary event censored CDF,
