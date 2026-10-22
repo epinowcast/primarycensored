@@ -59,19 +59,28 @@
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Changelog</h1>
-      <small>Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
+      <small>Source: <a href="https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/NEWS.md" class="external-link"><code>NEWS.md</code></a></small>
     </div>
 
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="development version" id="primarycensored-development-version">primarycensored (development version)<a class="anchor" aria-label="anchor" href="#primarycensored-development-version"></a></h2>
 <div class="section level3">
+<h3 id="new-features-development-version">New features<a class="anchor" aria-label="anchor" href="#new-features-development-version"></a></h3>
+<ul><li>Added analytical solutions for an exponentially tilted primary event window (<code><a href="../reference/expgrowth.html">dexpgrowth()</a></code>) with exponential, gamma and normal delays, in R and Stan, see <code><a href="../reference/pcens_cdf_exptilt.html">?pcens_cdf_exptilt</a></code>. The numerical paths of <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window. The Stan function <code>primarycensored_analytical_lcdf_vectorized()</code> now takes <code>primary_id</code> and <code>primary_params</code> as its last two arguments. See <a href="https://github.com/epinowcast/primarycensored/issues/367" class="external-link">#367</a>.</li>
+</ul></div>
+<div class="section level3">
 <h3 id="bug-fixes-development-version">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-development-version"></a></h3>
 <ul><li>A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail. Reverse-mode <code>gamma_p()</code> in Stan drops its gradients there, so <code>log_weibull_g()</code> now uses <code>gamma_lcdf()</code>, which gives the same values. See <a href="https://github.com/epinowcast/primarycensored/issues/364" class="external-link">#364</a>.</li>
+<li>The Stan log CDFs of Gamma and generalised gamma delays no longer return <code>-Inf</code> or <code>NaN</code> in the lower tail, and their shape gradients are accurate in both tails, including for integer and large shapes. This affects <code>dist_lcdf()</code>, <code>gengamma_lcdf()</code> and the analytical solutions with a uniform primary, and removes <code>NaN</code> and <code>+Inf</code> log densities from truncated fits. A Gamma rate that is not positive and finite is now rejected, as is a negative <code>y</code> in <code>gengamma_lcdf()</code>. See <a href="https://github.com/epinowcast/primarycensored/issues/363" class="external-link">#363</a>, <a href="https://github.com/epinowcast/primarycensored/issues/381" class="external-link">#381</a> and <a href="https://github.com/epinowcast/primarycensored/issues/395" class="external-link">#395</a>.</li>
 </ul></div>
 <div class="section level3">
 <h3 id="performance-development-version">Performance<a class="anchor" aria-label="anchor" href="#performance-development-version"></a></h3>
 <ul><li>
 <code><a href="https://rdrr.io/r/stats/update.html" class="external-link">update()</a></code> for <code>pcens</code> objects has a new <code>check</code> argument. With <code>check = FALSE</code> the delay and primary event arguments are merged into the object without validating their names. The default, <code>check = TRUE</code>, is unchanged. <code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code> now uses <code>check = FALSE</code> for its likelihood evaluations, as the parameter names are the same throughout a fit. See <a href="https://github.com/epinowcast/primarycensored/issues/379" class="external-link">#379</a>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-development-version">Documentation<a class="anchor" aria-label="anchor" href="#documentation-development-version"></a></h3>
+<ul><li>The “Analytic solutions” vignette now derives each analytic solution from truncated exponential-moment transforms of the delay, and lists the solution, numerical fallback and safeguards used for each pair of window and delay. See <a href="https://github.com/epinowcast/primarycensored/issues/375" class="external-link">#375</a>.</li>
 </ul></div>
 </div>
     <div class="section level2">

@@ -296,6 +296,10 @@ handling censored distributions.
   : Method for Log-Normal delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pweibull_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md)
   : Method for Weibull delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pexp_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
+  [`pcens_cdf(`*`<pcens_pgamma_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
+  [`pcens_cdf(`*`<pcens_pnorm_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
+  : Methods for delays with an exponentially tilted primary
 - [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
   : Compute primary event censored PMF
 - [`pcens_pmf(`*`<default>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md)

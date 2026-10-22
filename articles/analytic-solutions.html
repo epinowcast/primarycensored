@@ -92,7 +92,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Analytic solutions for censored delay distributions</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/vignettes/analytic-solutions.Rmd" class="external-link"><code>vignettes/analytic-solutions.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/vignettes/analytic-solutions.Rmd" class="external-link"><code>vignettes/analytic-solutions.Rmd</code></a></small>
       <div class="d-none name"><code>analytic-solutions.Rmd</code></div>
     </div>
 
@@ -102,348 +102,793 @@
 <h2 id="introduction">
 <span class="header-section-number">1</span> Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<div class="section level3" number="1.1">
-<h3 id="what-are-we-going-to-do-in-this-vignette">
-<span class="header-section-number">1.1</span> What are we going to do in this vignette<a class="anchor" aria-label="anchor" href="#what-are-we-going-to-do-in-this-vignette"></a>
-</h3>
-<p>In this vignette, we’ll derive the analytic solutions for the primary censored delay distributions for a range of commonly used distributions.</p>
-<ol style="list-style-type: decimal">
-<li>Examine the case of exponentially tilted primary event times</li>
-<li>Analyse the uniform primary event time case (<span class="math inline">\(r=0\)</span>)</li>
-<li>Explore general partial expectation and its role in solving equation <a href="#eq:unifprim">(3.1)</a>
-</li>
-<li>Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression</li>
-</ol>
-</div>
+<p>For a non-uniform primary event window each analytic solution for a continuous delay in the package writes the primary event censored distribution function as a weighted sum of truncated exponential-moment transforms of the delay density<span class="citation"><sup>[<a href="#ref-TransformPaperPlaceholder">1</a>]</sup></span>.
+The uniform window is the limit of this sum as the tilt goes to zero, and needs only the delay CDF and its partial moment.
+Where no tractable form applies the package integrates numerically.
+In R it uses <code><a href="../reference/pcens_cdf.default.html">pcens_cdf.default()</a></code> and in Stan an ODE solver, or for some pairs a numerical method specific to the pair.</p>
+<p>This vignette gives the definitions, the result for each window and the transform for each delay family.
+It then lists which pairs of window and delay the package solves analytically.
+The derivations are in the transform paper<span class="citation"><sup>[<a href="#ref-TransformPaperPlaceholder">1</a>]</sup></span>.
+The double interval censored model is in Brand et al.<span class="citation"><sup>[<a href="#ref-BrandInPrepPrimaryCensored">2</a>]</sup></span>.</p>
 </div>
 <div class="section level2" number="2">
-<h2 id="analytic-solutions-for-exponentially-tilted-primary-event-times">
-<span class="header-section-number">2</span> Analytic solutions for exponentially tilted primary event times<a class="anchor" aria-label="anchor" href="#analytic-solutions-for-exponentially-tilted-primary-event-times"></a>
+<h2 id="notation">
+<span class="header-section-number">2</span> Notation<a class="anchor" aria-label="anchor" href="#notation"></a>
 </h2>
-<p>In epidemiological analysis, it is common for primary events to occur at exponentially increasing or decreasing rates, for example, incidence of new infections in an epidemic. In this case, the distribution of the primary event time within its censoring window is biased by the exponential growth or decay<span class="citation"><sup>[<a href="#ref-Park2024">1</a>]</sup></span> (i.e. for exponential growth, the event time will more likely to be closer to the end of the censoring window and vice versa for decay). If we assume a reference uniform distribution within a primary censoring window <span class="math inline">\([k, k + w_P)\)</span> then the distribution of the primary event time within the censoring window is the <a href="https://en.wikipedia.org/wiki/Exponential_tilting" class="external-link">exponential tilted</a> uniform distribution:</p>
-<p><span class="math display">\[
-f_P(t) \propto \exp(r t) \mathbb{1}_{[k, k + w_P]}(t).
-\]</span></p>
-<p>In this case, the distribution function for <span class="math inline">\(C_P\)</span>, that is the length of time left in the primary censor window <em>after</em> the primary event time, is given by:</p>
-<p><span class="math display" id="eq:fcp">\[
-F_{C_P}(p; r) = {  1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p \in [0, w_P]. \tag{2.1}
-\]</span>
-Note that taking the limit <span class="math inline">\(\lim_r \rightarrow 0\)</span> in equation <a href="#eq:fcp">(2.1)</a> gives the uniform distribution function <span class="math inline">\(F_{C_P}(p, 0) = p / w_P\)</span>.</p>
-<p>In the following, it is convenient to use a (linear) difference operator defined as:</p>
-<p><span class="math display">\[
-\Delta_{w}f(t) = f(t + w) - f(t).
-\]</span></p>
+<p>The notation follows the transform paper<span class="citation"><sup>[<a href="#ref-TransformPaperPlaceholder">1</a>]</sup></span>.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Symbol</th>
+<th align="left">Meaning</th>
+<th align="left">In the package</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+<span class="math inline">\(F_{\mathrm{IP}}\)</span>, <span class="math inline">\(f_{\mathrm{IP}}\)</span>
+</td>
+<td align="left">CDF and density of the delay</td>
+<td align="left">
+<code>pdist</code> and its arguments</td>
+</tr>
+<tr class="even">
+<td align="left">
+<span class="math inline">\(w\)</span>, <span class="math inline">\(w_P\)</span>
+</td>
+<td align="left">width of the primary event window</td>
+<td align="left"><code>pwindow</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(z \in [0, w]\)</span></td>
+<td align="left">primary event time, measured from the window start</td>
+<td align="left"></td>
+</tr>
+<tr class="even">
+<td align="left"><span class="math inline">\(q\)</span></td>
+<td align="left">evaluation time, measured from the window start</td>
+<td align="left">
+<code>q</code> of <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code>
+</td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(f_{\mathrm{win}}(z; w)\)</span></td>
+<td align="left">density of the primary event time in the window</td>
+<td align="left">
+<code>dprimary</code> and <code>primary_args</code>
+</td>
+</tr>
+<tr class="even">
+<td align="left"><span class="math inline">\(H_w(z)\)</span></td>
+<td align="left">CDF of the primary event time in the window</td>
+<td align="left"><code>pprimary</code></td>
+</tr>
+<tr class="odd">
+<td align="left"><span class="math inline">\(F_{\mathrm{cens}}(q; w)\)</span></td>
+<td align="left">primary event censored CDF</td>
+<td align="left"><code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code></td>
+</tr>
+<tr class="even">
+<td align="left"><span class="math inline">\(\rho\)</span></td>
+<td align="left">exponential tilt of the window</td>
+<td align="left">
+<code>r</code> of <code><a href="../reference/expgrowth.html">dexpgrowth()</a></code>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The general results write the width as <span class="math inline">\(w\)</span> and the window sections write it as <span class="math inline">\(w_P\)</span>.
+The window sections add the window parameters to <span class="math inline">\(f_{\mathrm{win}}\)</span>, for example <span class="math inline">\(f_{\mathrm{win}}(z; w_P, \rho)\)</span>.
+The subscript IP stands for incubation period.
+<span class="math inline">\(F_{\mathrm{IP}}\)</span> may be any delay.
+A delay on the non-negative reals has <span class="math inline">\(F_{\mathrm{IP}}(x) = f_{\mathrm{IP}}(x) = 0\)</span> for <span class="math inline">\(x &lt; 0\)</span>.
+The main text of the transform paper takes the delay to be non-negative.
+The normal delay has support on the reals.
+For the normal delay the integrals over the delay <span class="math inline">\(u\)</span> in equations <a href="#eq:kernel">(3.3)</a>, <a href="#eq:transform">(3.4)</a>, <a href="#eq:partial-moment">(3.7)</a> and <a href="#eq:kn">(3.8)</a> have lower limit <span class="math inline">\(-\infty\)</span> instead of 0, as in the normal appendix of the transform paper.
+<span class="math inline">\(F_{\mathrm{IP}}(q - w)\)</span> is then not zero for <span class="math inline">\(q &lt; w\)</span>.</p>
 </div>
 <div class="section level2" number="3">
-<h2 id="uniform-primary-event-time-r0">
-<span class="header-section-number">3</span> Uniform primary event time (<span class="math inline">\(r=0\)</span>)<a class="anchor" aria-label="anchor" href="#uniform-primary-event-time-r0"></a>
+<h2 id="the-transform-reduction">
+<span class="header-section-number">3</span> The transform reduction<a class="anchor" aria-label="anchor" href="#the-transform-reduction"></a>
 </h2>
-<p>Applying a uniform primary event time distribution to equation 3.1 from <a href="why-it-works.html">“Why it works”</a> gives:</p>
-<p><span class="math display">\[
-Q_{S_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~ dp.
+<p>The primary event censored CDF is</p>
+<p><span class="math display" id="eq:cens">\[
+F_{\mathrm{cens}}(q; w) = \int_0^w F_{\mathrm{IP}}(q - z) f_{\mathrm{win}}(z; w)\,dz.
+\tag{3.1}
 \]</span></p>
-<p>This is analytically solvable whenever the upper distribution function of <span class="math inline">\(T\)</span> is known and the mean of <span class="math inline">\(T\)</span> is analytically solvable from its integral definition.</p>
-<p>In each case considered below it is easier to change the integration variable:</p>
-<p><span class="math display" id="eq:unifprim">\[
-\begin{aligned}
-Q_{S_+}(t) &amp;= Q_T(t + w_P) + { 1 \over w_P} \int_t^{t+w_P} f_T(z) (z-t)~ dz \\
-&amp;= Q_T(t + w_P) + { 1 \over w_P} \Big[  \int_t^{t+w_P} f_T(z) z~ dz - t \Delta_{w_P}F_T(t) \Big].
-\end{aligned} \tag{3.1}
+<p>Let</p>
+<p><span class="math display" id="eq:window-cdf">\[
+H_w(z) = \int_0^z f_{\mathrm{win}}(s; w)\,ds,
+\tag{3.2}
 \]</span></p>
-<div class="section level3" number="3.1">
-<h3 id="general-partial-expectation">
-<span class="header-section-number">3.1</span> General partial expectation<a class="anchor" aria-label="anchor" href="#general-partial-expectation"></a>
-</h3>
-<p>Note that for any distribution with an analytically available distribution function <span class="math inline">\(F_T\)</span> equation <a href="#eq:unifprim">(3.1)</a> can be solved so long as the <em>partial expectation</em></p>
-<p><span class="math display" id="eq:partexp">\[
-\int_t^{t+w_P} f_T(z) z~ dz \tag{3.2}
+<p>with <span class="math inline">\(H_w(z) = 0\)</span> for <span class="math inline">\(z \leq 0\)</span> and <span class="math inline">\(H_w(z) = 1\)</span> for <span class="math inline">\(z \geq w\)</span>.
+Exchanging the order of integration in equation <a href="#eq:cens">(3.1)</a> gives</p>
+<p><span class="math display" id="eq:kernel">\[
+F_{\mathrm{cens}}(q; w) = \int_0^q H_w(q - u) f_{\mathrm{IP}}(u)\,du.
+\tag{3.3}
 \]</span></p>
-<p>can be reduced to an analytic expression.</p>
-<p>The insight here is that this will be possible for any distribution where the average of the distribution can be calculated analytically, which includes commonly used non-negative distributions such as the Gamma, Log-Normal and Weibull distributions.</p>
-</div>
-<div class="section level3" number="3.2">
-<h3 id="general-discrete-censored-delay-distribution">
-<span class="header-section-number">3.2</span> General discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#general-discrete-censored-delay-distribution"></a>
-</h3>
-<p>First, we note that equation 3.3 from <a href="why-it-works.html">“Why it works”</a> can be written using the difference operator: <span class="math inline">\(f_n = -\Delta_1 Q_{S_+}(n-1)\)</span>. We can insert this expression into equation <a href="#eq:unifprim">(3.1)</a> to give the discrete censored delay distribution for uniformly distributed primary event times:</p>
-<p><span class="math display" id="eq:disccensunifprim">\[
-\begin{aligned}
-f_n &amp;= \Delta_1\Big[(n-1) \Delta_1F_T(n-1)\Big] - \Delta_1Q_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
-&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big].
-\end{aligned}  \tag{3.3}
+<p>The truncated exponential-moment transform of the delay density is</p>
+<p><span class="math display" id="eq:transform">\[
+T_f(\xi; \tau) = \int_0^\tau e^{\xi u} f_{\mathrm{IP}}(u)\,du,
+\tag{3.4}
 \]</span></p>
-<p>We now consider some specific delay distributions.</p>
-</div>
-<div class="section level3" number="3.3">
-<h3 id="gamma-distributed-delay-times">
-<span class="header-section-number">3.3</span> Gamma distributed delay times<a class="anchor" aria-label="anchor" href="#gamma-distributed-delay-times"></a>
-</h3>
-<p>The Gamma distribution has the density function:</p>
-<p><span class="math display">\[
-f_T(z;k, \theta) = {1 \over \Gamma(k) \theta^k} z^{k-1} \exp(-z/\theta).
-\]</span>
-Where <span class="math inline">\(\Gamma\)</span> is the Gamma function.</p>
-<p>The Gamma distribution has the distribution function:</p>
-<p><span class="math display">\[
-\begin{aligned}
-F_T(z;k, \theta) &amp;= {\gamma(k, z/\theta) \over \Gamma(k)}, \qquad z\geq 0,\\
-F_T(z;k, \theta) &amp;= 0, \qquad z &lt; 0.
-\end{aligned}
-\]</span>
-Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma function.</p>
-<div class="section level4" number="3.3.1">
-<h4 id="gamma-partial-expectation">
-<span class="header-section-number">3.3.1</span> Gamma partial expectation<a class="anchor" aria-label="anchor" href="#gamma-partial-expectation"></a>
-</h4>
-<p>We know that the full expectation of the Gamma distribution is <span class="math inline">\(\mathbb{E}[T] = k\theta\)</span>, which can be calculated as a standard integral. Doing the same integral for the partial expectation gives:</p>
-<p><span class="math display" id="eq:gammapartexp">\[
-\begin{aligned}
-\int_t^{t+w_P} f_T(z) z~ dz &amp;= {1 \over \Gamma(k) \theta^k} \int_t^{t+w_P} \mathbb{1}(z \geq 0)  z  z^{k-1} \exp(-z/\theta)~dz \\
-&amp;=  {\Gamma(k+1) \theta^{k+1} \over \Gamma(k) \theta^k}  {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P} \mathbb{1}(z \geq 0)  z^{k}  \exp(-z/\theta)~dz\\
-&amp;= k\theta \Delta_{w_P} F_T(t; k + 1, \theta).
-\end{aligned} \tag{3.4}
-\]</span></p>
-</div>
-<div class="section level4" number="3.3.2">
-<h4 id="survival-function-of-s_-for-gamma-distribution">
-<span class="header-section-number">3.3.2</span> Survival function of <span class="math inline">\(S_{+}\)</span> for Gamma distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-gamma-distribution"></a>
-</h4>
-<p>By substituting equation <a href="#eq:gammapartexp">(3.4)</a> into equation <a href="#eq:disccensunifprim">(3.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
-<p><span class="math display" id="eq:survgammaunifprim">\[
-Q_{S_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P} \big[ k \theta \Delta_{w_P}F_T(t; k+1, \theta) - t \Delta_{w_P}F_T(t; k, \theta) \big].
+<p>with <span class="math inline">\(T_f(\xi; \tau) = 0\)</span> for <span class="math inline">\(\tau \leq 0\)</span> when the delay is non-negative.
+The delay CDF is <span class="math inline">\(F_{\mathrm{IP}}(\tau) = T_f(0; \tau)\)</span>.
+Suppose the reversed kernel <span class="math inline">\(H_w(q - u)\)</span> has the expansion</p>
+<p><span class="math display" id="eq:expansion">\[
+H_w(q - u) = \sum_k a_k(q, w) e^{\xi_k u}
 \tag{3.5}
 \]</span></p>
-</div>
-<div class="section level4" number="3.3.3">
-<h4 id="cdf-form-of-s_-for-gamma-distribution">
-<span class="header-section-number">3.3.3</span> CDF form of <span class="math inline">\(S_{+}\)</span> for Gamma distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-gamma-distribution"></a>
-</h4>
-<p>Rearranging equation <a href="#eq:survgammaunifprim">(3.5)</a> via <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> gives the equivalent CDF-direct form</p>
-<p><span class="math display">\[
-F_{S_+}(d; k, \theta) = \frac{1}{w_P}\Big[ d\, F_T(d; k, \theta) - q\, F_T(q; k, \theta) - k\theta\big( F_T(d; k{+}1, \theta) - F_T(q; k{+}1, \theta) \big) \Big],
+<p>for every <span class="math inline">\(u\)</span> in the support of the delay up to <span class="math inline">\(q\)</span>.
+Substituting it into equation <a href="#eq:kernel">(3.3)</a> gives</p>
+<p><span class="math display" id="eq:reduction">\[
+F_{\mathrm{cens}}(q; w) = \sum_k a_k(q, w) T_f(\xi_k; q).
+\tag{3.6}
 \]</span></p>
-<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.</p>
-</div>
-<div class="section level4" number="3.3.4">
-<h4 id="gamma-discrete-censored-delay-distribution">
-<span class="header-section-number">3.3.4</span> Gamma discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#gamma-discrete-censored-delay-distribution"></a>
-</h4>
-<p>By substituting <a href="#eq:survgammaunifprim">(3.5)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:
-<span class="math display">\[
-\begin{aligned}
-f_n &amp;= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1, \theta)\\
-&amp;= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2  n F_T(n; k, \theta) \\
-&amp;+ k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1; k+1, \theta) - F_T(n+1; k+1,\theta)  \Big) \qquad n = 0, 1, \dots.
-\end{aligned}
+<p>The window fixes the coefficients <span class="math inline">\(a_k(q, w)\)</span> and the tilts <span class="math inline">\(\xi_k\)</span>.
+The delay fixes whether <span class="math inline">\(T_f\)</span> is tractable at those tilts.</p>
+<p>The reversed kernel is 1 for <span class="math inline">\(u \leq q - w\)</span>.
+This saturated part contributes <span class="math inline">\(F_{\mathrm{IP}}(q - w)\)</span>.
+The expansion is then needed only on <span class="math inline">\([q - w, q]\)</span>, and it may differ between parts of that interval.
+Each result below for the exponentially tilted, logistic and Gumbel windows has the form <span class="math inline">\(F_{\mathrm{IP}}(q - w)\)</span> plus weighted differences <span class="math inline">\(T_f(\xi_k; \tau^+) - T_f(\xi_k; \tau^-)\)</span>.
+The endpoints <span class="math inline">\(\tau^\pm\)</span> are <span class="math inline">\(q\)</span> and <span class="math inline">\(q - w\)</span>, and for the logistic window also a split point <span class="math inline">\(u^\star\)</span>.</p>
+<p>The uniform window uses the partial moment</p>
+<p><span class="math display" id="eq:partial-moment">\[
+M(\tau) = \left. \frac{\partial T_f(\xi; \tau)}{\partial \xi} \right|_{\xi = 0} = \int_0^\tau u f_{\mathrm{IP}}(u)\,du
+\tag{3.7}
 \]</span></p>
-<p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">2</a>]</sup></span>.</p>
-</div>
-</div>
-<div class="section level3" number="3.4">
-<h3 id="log-normal-distribution">
-<span class="header-section-number">3.4</span> Log-Normal distribution<a class="anchor" aria-label="anchor" href="#log-normal-distribution"></a>
-</h3>
-<p>The Log-Normal distribution has the density function:</p>
-<p><span class="math display">\[
-\begin{aligned}
-f_T(z;\mu, \sigma) &amp;= {1 \over z \sigma \sqrt{2\pi}} \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right)\\
-F_T(z;\mu, \sigma) &amp;= 0, \qquad z &lt; 0.
-\end{aligned}
-\]</span>
-And distribution function:</p>
-<p><span class="math display">\[
-F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
-\]</span>
-Where <span class="math inline">\(\Phi\)</span> is the standard normal distribution function.</p>
-<div class="section level4" number="3.4.1">
-<h4 id="log-normal-partial-expectation">
-<span class="header-section-number">3.4.1</span> Log-Normal partial expectation<a class="anchor" aria-label="anchor" href="#log-normal-partial-expectation"></a>
-</h4>
-<p>We know that the full expectation of the Log-Normal distribution is <span class="math inline">\(\mathbb{E}[T] = e^{\mu + \frac{1}{2} \sigma^2}\)</span>, which can be calculated by integration with the integration substitution <span class="math inline">\(y = (\ln z - \mu) / \sigma\)</span>. This has transformation Jacobian:</p>
-<p><span class="math display">\[
-\frac{dz}{dy} = \sigma e^{\sigma y + \mu}.
+<p>and, for <span class="math inline">\(n \geq 1\)</span>,</p>
+<p><span class="math display" id="eq:kn">\[
+K_n(t) = \int_0^t (t - u)^n f_{\mathrm{IP}}(u)\,du.
+\tag{3.8}
 \]</span></p>
-<p>Doing the same integral for the partial expectation, and using the same integration substitution gives:</p>
-<p><span class="math display" id="eq:lognormpartexp">\[
-\begin{aligned}
-\int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &amp;= {1 \over \sigma \sqrt{2\pi}} \int_t^{t+w_P}  \mathbb{1}(z \geq 0)  \exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\
-&amp;= {1 \over \sqrt{2\pi}} \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{\sigma y + \mu} e^{-y^2/2} dy\\
-&amp;= {e^{\mu + \frac{1}{2} \sigma^2} \over \sqrt{2 \pi} } \int_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\
-&amp;= e^{\mu + \frac{1}{2} \sigma^2} \Big[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) - \Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big]\\
-&amp;= e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma).
-\end{aligned} \tag{3.6}
-\]</span></p>
-</div>
-<div class="section level4" number="3.4.2">
-<h4 id="survival-function-of-s_-for-log-normal-distribution">
-<span class="header-section-number">3.4.2</span> Survival function of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-log-normal-distribution"></a>
-</h4>
-<p>By substituting equation <a href="#eq:lognormpartexp">(3.6)</a> into equation <a href="#eq:disccensunifprim">(3.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
-<p><span class="math display">\[
-Q_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P} \Big[ e^{\mu + \frac{1}{2} \sigma^2} \Delta_{w_P}F_T(t; \mu + \sigma^2, \sigma) - t\Delta_{w_P}F_T(t; \mu, \sigma) \Big]
-\]</span></p>
-</div>
-<div class="section level4" number="3.4.3">
-<h4 id="cdf-form-of-s_-for-log-normal-distribution">
-<span class="header-section-number">3.4.3</span> CDF form of <span class="math inline">\(S_{+}\)</span> for Log-Normal distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-log-normal-distribution"></a>
-</h4>
-<p>Applying <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> to the preceding survival form gives the equivalent CDF-direct form</p>
-<p><span class="math display">\[
-F_{S_+}(d; \mu, \sigma) = \frac{1}{w_P}\Big[ d\, F_T(d; \mu, \sigma) - q\, F_T(q; \mu, \sigma) - e^{\mu + \sigma^2/2}\big( F_T(d; \mu{+}\sigma^2, \sigma) - F_T(q; \mu{+}\sigma^2, \sigma) \big) \Big],
-\]</span></p>
-<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.</p>
-</div>
-<div class="section level4" number="3.4.4">
-<h4 id="log-normal-discrete-censored-delay-distribution">
-<span class="header-section-number">3.4.4</span> Log-Normal discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#log-normal-discrete-censored-delay-distribution"></a>
-</h4>
-<p>By substituting <a href="#eq:lognormpartexp">(3.6)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
-<p><span class="math display">\[
-\begin{aligned}
-f_n &amp;= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\
-&amp;- e^{\mu + \frac{1}{2} \sigma^2} \Delta_1^{(2)}F_T(n-1;\mu + \sigma^2, \sigma) \\
-&amp;= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\
-  &amp;+ e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n; \mu + \sigma^2, \sigma) - F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n-1; \mu + \sigma^2, \sigma)  \Big)\qquad n = 0, 1, \dots.
-\end{aligned}
-\]</span></p>
-</div>
-</div>
-<div class="section level3" number="3.5">
-<h3 id="weibull-distribution">
-<span class="header-section-number">3.5</span> Weibull distribution<a class="anchor" aria-label="anchor" href="#weibull-distribution"></a>
-</h3>
-<p>The Weibull distribution has the density function:</p>
-<p><span class="math display">\[
-f_T(z;\lambda,k) =
-\begin{cases}
-\frac{k}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}}, &amp; z\geq0 ,\\
-0, &amp; z&lt;0,
-\end{cases}
-\]</span>
-And distribution function:</p>
-<p><span class="math display">\[
-F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, &amp; z\geq0,\\ 0, &amp; z&lt;0.\end{cases}
-\]</span>
-Where <span class="math inline">\(\Phi\)</span> is the standard normal distribution function.</p>
-<div class="section level4" number="3.5.1">
-<h4 id="weibull-partial-expectation">
-<span class="header-section-number">3.5.1</span> Weibull partial expectation<a class="anchor" aria-label="anchor" href="#weibull-partial-expectation"></a>
-</h4>
-<p>We know that the full expectation of the Weibull distribution is <span class="math inline">\(\mathbb{E}[T] = \lambda \Gamma(1 + 1/k)\)</span>, which can be calculated by integration using the integration substitution <span class="math inline">\(y = (z / \lambda)^k\)</span>, which has transformation Jacobian:</p>
-<p><span class="math display">\[
-\frac{dz}{dy} = \frac{\lambda}{k}y^{1/k - 1}.
-\]</span></p>
-<p>Doing the same integral for the partial expectation, and using the same integration substitution gives:</p>
-<p><span class="math display" id="eq:weibullpartexp">\[
-\begin{aligned}
-\int_{t}^{t+w_P} z~ f_T(z; \lambda,k) dz  &amp;= \int_t^{t+w_P} \mathbb{1}(z \geq 0) \frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}} dz \\
-&amp;= k\int_t^{t+w_P} \mathbb{1}(z \geq 0) \left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz  \\
-&amp;= \lambda k \int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0) y y^{1/k - 1} e^{-y} dy  \\
-&amp;= \lambda\int_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0)  y^{1/k} e^{-y} dy\\
-&amp;= \lambda \Delta_{w_P} g(t; \lambda,k)
-\end{aligned} \tag{3.7}
-\]</span></p>
-<p>Where</p>
-<p><span class="math display">\[
-g(t; \lambda, k) =  \gamma\left(1 + 1/k, \left({t\vee 0 \over \lambda}\right)^k\right) =  \frac{1}{k}\gamma\left(1/k, \left({t\vee 0 \over \lambda}\right)^k\right) - \frac{t}{\lambda}\exp\left(-\left({t\vee 0 \over \lambda}\right)^k\right)
-\]</span>
-is a reparametrisation of the lower incomplete gamma function. Note that the <span class="math inline">\(\vee\)</span> operator <span class="math inline">\(t \vee 0 = \text{max}(0, t)\)</span> comes into the expression due to <span class="math inline">\(\mathbb{1}(y \geq 0)\)</span> term in the integrand.</p>
-</div>
-</div>
-<div class="section level3" number="3.6">
-<h3 id="survival-function-of-s_-for-weibull-distribution">
-<span class="header-section-number">3.6</span> Survival function of <span class="math inline">\(S_{+}\)</span> for Weibull distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-weibull-distribution"></a>
-</h3>
-<p>By substituting equation <a href="#eq:weibullpartexp">(3.7)</a> into equation <a href="#eq:disccensunifprim">(3.3)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
-<p><span class="math display">\[
-Q_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P} \Big[ \lambda \Delta_{w_P} g(t; \lambda,k) - t\Delta_{w_P}F_T(t; \lambda,k)\Big].
-\]</span></p>
-<div class="section level4" number="3.6.1">
-<h4 id="cdf-form-of-s_-for-weibull-distribution">
-<span class="header-section-number">3.6.1</span> CDF form of <span class="math inline">\(S_{+}\)</span> for Weibull distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-weibull-distribution"></a>
-</h4>
-<p>Applying <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> to the preceding survival form gives the equivalent CDF-direct form</p>
-<p><span class="math display">\[
-F_{S_+}(d; \lambda, k) = \frac{1}{w_P}\Big[ d\, F_T(d; \lambda, k) - q\, F_T(q; \lambda, k) - \lambda\big( g(d; \lambda, k) - g(q; \lambda, k) \big) \Big],
-\]</span></p>
-<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span> and <span class="math inline">\(g\)</span> is as defined in equation <a href="#eq:weibullpartexp">(3.7)</a>.</p>
-</div>
-<div class="section level4" number="3.6.2">
-<h4 id="weibull-discrete-censored-delay-distribution">
-<span class="header-section-number">3.6.2</span> Weibull discrete censored delay distribution<a class="anchor" aria-label="anchor" href="#weibull-discrete-censored-delay-distribution"></a>
-</h4>
-<p>By substituting <a href="#eq:weibullpartexp">(3.7)</a> into <a href="#eq:disccensunifprim">(3.3)</a> we get the discrete censored delay distribution in terms of analytically available functions:</p>
-<p><span class="math display">\[
-\begin{aligned}
-f_n &amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big[ \int_{n-1}^n f_T(z) z ~dz \Big] \\
-&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) - \lambda \Delta_1^{(2)} g(n-1; \lambda,k) \\
-&amp;= (n+1)F_T(n+1)  + (n-1)F_T(n-1) - 2nF_T(n) \\
-&amp;+ \lambda [2 g(n; \lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)] \qquad n = 0, 1, \dots.
-\end{aligned}
-\]</span></p>
-<p>Which was also found by Cori <em>et al</em><span class="citation"><sup>[<a href="#ref-cori2013new">2</a>]</sup></span>.</p>
-</div>
-</div>
-<div class="section level3" number="3.7">
-<h3 id="generalised-gamma-distribution">
-<span class="header-section-number">3.7</span> Generalised gamma distribution<a class="anchor" aria-label="anchor" href="#generalised-gamma-distribution"></a>
-</h3>
-<p>The generalised gamma distribution, in the parameterisation of Stacy<span class="citation"><sup>[<a href="#ref-stacy1962generalization">3</a>]</sup></span> as implemented by <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.html" class="external-link">flexsurv::pgengamma.orig()</a></code>, has the density function:</p>
-<p><span class="math display">\[
-f_T(z; a, \theta, k) =
-\begin{cases}
-\frac{a}{\Gamma(k)\theta}\left(\frac{z}{\theta}\right)^{a k-1}e^{-(z/\theta)^{a}}, &amp; z\geq0 ,\\
-0, &amp; z&lt;0,
-\end{cases}
-\]</span>
-And distribution function:</p>
-<p><span class="math display">\[
-F_T(z; a, \theta, k) =\begin{cases} {\gamma\left(k, (z/\theta)^a\right) \over \Gamma(k)}, &amp; z\geq0,\\ 0, &amp; z&lt;0.\end{cases}
-\]</span>
-Where <span class="math inline">\(\gamma\)</span> is the lower incomplete gamma function.
-The Gamma distribution is the special case <span class="math inline">\(a = 1\)</span> and the Weibull distribution is the special case <span class="math inline">\(k = 1\)</span>.</p>
-<div class="section level4" number="3.7.1">
-<h4 id="generalised-gamma-partial-expectation">
-<span class="header-section-number">3.7.1</span> Generalised gamma partial expectation<a class="anchor" aria-label="anchor" href="#generalised-gamma-partial-expectation"></a>
-</h4>
-<p>Using the integration substitution <span class="math inline">\(y = (z / \theta)^a\)</span> as for the Weibull distribution, the full expectation is <span class="math inline">\(\mathbb{E}[T] = \theta \Gamma(k + 1/a) / \Gamma(k)\)</span>.
-Doing the same integral for the partial expectation gives:</p>
-<p><span class="math display" id="eq:gengammapartexp">\[
-\begin{aligned}
-\int_{t}^{t+w_P} z~ f_T(z; a, \theta, k) dz  &amp;= \frac{\theta}{\Gamma(k)} \int_{(t / \theta)^a}^{((t + w_P) / \theta)^a} \mathbb{1}(y \geq 0)  y^{k + 1/a - 1} e^{-y} dy\\
-&amp;= \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta_{w_P} F_T(t; a, \theta, k + 1/a).
-\end{aligned} \tag{3.8}
-\]</span></p>
-<p>That is, the partial expectation distribution is the generalised gamma distribution with <span class="math inline">\(k\)</span> replaced by <span class="math inline">\(k + 1/a\)</span>.
-For <span class="math inline">\(a = 1\)</span> this recovers equation <a href="#eq:gammapartexp">(3.4)</a> and for <span class="math inline">\(k = 1\)</span> it recovers equation <a href="#eq:weibullpartexp">(3.7)</a>.</p>
-</div>
-<div class="section level4" number="3.7.2">
-<h4 id="survival-function-of-s_-for-generalised-gamma-distribution">
-<span class="header-section-number">3.7.2</span> Survival function of <span class="math inline">\(S_{+}\)</span> for generalised gamma distribution<a class="anchor" aria-label="anchor" href="#survival-function-of-s_-for-generalised-gamma-distribution"></a>
-</h4>
-<p>By substituting equation <a href="#eq:gengammapartexp">(3.8)</a> into equation <a href="#eq:unifprim">(3.1)</a> we can solve for the survival function of <span class="math inline">\(S_+\)</span> in terms of analytically available functions:</p>
-<p><span class="math display" id="eq:survgengammaunifprim">\[
-Q_{S_+}(t; a, \theta, k) = Q_T(t + w_P; a, \theta, k) + { 1 \over w_P} \Big[ \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta_{w_P}F_T(t; a, \theta, k + 1/a) - t \Delta_{w_P}F_T(t; a, \theta, k) \Big].
+<p><span class="math inline">\(K_1(t)\)</span> is the integral of <span class="math inline">\(F_{\mathrm{IP}}\)</span> up to <span class="math inline">\(t\)</span>, and</p>
+<p><span class="math display" id="eq:k1">\[
+K_1(t) = t\,T_f(0; t) - M(t).
 \tag{3.9}
 \]</span></p>
 </div>
-<div class="section level4" number="3.7.3">
-<h4 id="cdf-form-of-s_-for-generalised-gamma-distribution">
-<span class="header-section-number">3.7.3</span> CDF form of <span class="math inline">\(S_{+}\)</span> for generalised gamma distribution<a class="anchor" aria-label="anchor" href="#cdf-form-of-s_-for-generalised-gamma-distribution"></a>
-</h4>
-<p>Rearranging equation <a href="#eq:survgengammaunifprim">(3.9)</a> via <span class="math inline">\(F_{S_+} = 1 - Q_{S_+}\)</span> gives the equivalent CDF-direct form</p>
-<p><span class="math display">\[
-F_{S_+}(d; a, \theta, k) = \frac{1}{w_P}\Big[ d\, F_T(d; a, \theta, k) - q\, F_T(q; a, \theta, k) - \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \big( F_T(d; a, \theta, k + 1/a) - F_T(q; a, \theta, k + 1/a) \big) \Big],
-\]</span></p>
-<p>where <span class="math inline">\(q = \max(d - w_P, 0)\)</span>.
-This is the form implemented in <code><a href="../reference/pcens_cdf.html">pcens_cdf()</a></code> and in the Stan function <code>primarycensored_gengamma_uniform_lcdf()</code>.
-The discrete censored delay distribution follows from equation <a href="#eq:disccensunifprim">(3.3)</a> exactly as for the Gamma distribution, with <span class="math inline">\(k\theta F_T(\cdot; k + 1, \theta)\)</span> replaced by <span class="math inline">\(\theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} F_T(\cdot; a, \theta, k + 1/a)\)</span>.</p>
-</div>
-</div>
-</div>
 <div class="section level2" number="4">
+<h2 id="primary-event-windows">
+<span class="header-section-number">4</span> Primary event windows<a class="anchor" aria-label="anchor" href="#primary-event-windows"></a>
+</h2>
+<table style="width:100%;" class="table">
+<colgroup>
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+<col width="16%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Window</th>
+<th align="left">R primary</th>
+<th align="left">Stan primary id</th>
+<th align="left"><span class="math inline">\(f_{\mathrm{win}}\)</span></th>
+<th align="left">Tilts <span class="math inline">\(\xi_k\)</span>
+</th>
+<th align="left">Result</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Uniform</td>
+<td align="left"><code>dunif</code></td>
+<td align="left">1</td>
+<td align="left"><span class="math inline">\(1 / w_P\)</span></td>
+<td align="left">none, uses <span class="math inline">\(M\)</span>
+</td>
+<td align="left"><a href="#eq:uniform">(4.2)</a></td>
+</tr>
+<tr class="even">
+<td align="left">Exponential tilt</td>
+<td align="left">
+<code><a href="../reference/expgrowth.html">dexpgrowth()</a></code>, <code>r</code> <span class="math inline">\(= \rho\)</span>
+</td>
+<td align="left">2</td>
+<td align="left"><span class="math inline">\(\rho e^{\rho z} / (e^{\rho w_P} - 1)\)</span></td>
+<td align="left">
+<span class="math inline">\(0\)</span> and <span class="math inline">\(-\rho\)</span>
+</td>
+<td align="left"><a href="#eq:exptilt">(4.1)</a></td>
+</tr>
+<tr class="odd">
+<td align="left">Truncated logistic</td>
+<td align="left">
+<code>dtlogis()</code>, <code>location</code> <span class="math inline">\(= m\)</span>, <code>scale</code> <span class="math inline">\(= s\)</span>
+</td>
+<td align="left">3</td>
+<td align="left"><span class="math inline">\(L'(z) / D_L\)</span></td>
+<td align="left">
+<span class="math inline">\(n / s\)</span> for <span class="math inline">\(n \geq 0\)</span>, <span class="math inline">\(-n / s\)</span> for <span class="math inline">\(n \geq 1\)</span>
+</td>
+<td align="left">
+<a href="#eq:logistic-left">(4.3)</a> to <a href="#eq:logistic-split">(4.5)</a>
+</td>
+</tr>
+<tr class="even">
+<td align="left">Truncated Gumbel</td>
+<td align="left">
+<code>dtgumbel()</code>, <code>mu</code> <span class="math inline">\(= \mu_G\)</span>, <code>beta</code> <span class="math inline">\(= \beta\)</span>
+</td>
+<td align="left">4</td>
+<td align="left"><span class="math inline">\(G'(z) / D_G\)</span></td>
+<td align="left">
+<span class="math inline">\(n / \beta\)</span> for <span class="math inline">\(n \geq 0\)</span>
+</td>
+<td align="left"><a href="#eq:gumbel">(4.6)</a></td>
+</tr>
+</tbody>
+</table>
+<div class="section level3" number="4.1">
+<h3 id="exponentially-tilted-window">
+<span class="header-section-number">4.1</span> Exponentially tilted window<a class="anchor" aria-label="anchor" href="#exponentially-tilted-window"></a>
+</h3>
+<p>The window density is <span class="math inline">\(f_{\mathrm{win}}(z; w_P, \rho) = \rho e^{\rho z} / (e^{\rho w_P} - 1)\)</span> and the window CDF is</p>
+<p><span class="math display">\[
+H_{\rho, w_P}(z) = \frac{e^{\rho z} - 1}{e^{\rho w_P} - 1}, \qquad 0 \leq z \leq w_P.
+\]</span></p>
+<p>A tilt <span class="math inline">\(\rho &gt; 0\)</span> places more mass late in the window, as for a growing primary event process<span class="citation"><sup>[<a href="#ref-Park2024">3</a>,<a href="#ref-Zhao2021BETS">4</a>]</sup></span>.
+A tilt <span class="math inline">\(\rho &lt; 0\)</span> places more mass early in the window.
+Let <span class="math inline">\(J_\rho(x) = T_f(-\rho; x)\)</span>.
+The CDF is</p>
+<p><span class="math display" id="eq:exptilt">\[
+F_\rho(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{e^{\rho q} \{J_\rho(q) - J_\rho(q - w_P)\} - \{F_{\mathrm{IP}}(q) - F_{\mathrm{IP}}(q - w_P)\}}{e^{\rho w_P} - 1}.
+\tag{4.1}
+\]</span></p>
+<p>Collecting the <span class="math inline">\(F_{\mathrm{IP}}(q - w_P)\)</span> terms gives the main result of the transform paper<span class="citation"><sup>[<a href="#ref-TransformPaperPlaceholder">1</a>]</sup></span>.
+In the collected form the numerator loses precision through cancellation.
+Equation <a href="#eq:exptilt">(4.1)</a> keeps <span class="math inline">\(F_{\mathrm{IP}}(q - w_P)\)</span> out of the numerator, and the package evaluates it on the log scale.
+Writing <span class="math inline">\(e^{\rho q} = e^{\rho w_P} e^{\rho (q - w_P)}\)</span> makes each term a function of <span class="math inline">\(q\)</span> or of <span class="math inline">\(q - w_P\)</span> alone.
+For an integer <code>pwindow</code> of at least 1, <span class="math inline">\(q - w_P\)</span> is an integer delay too.
+<code>primarycensored_analytical_lcdf_vectorized()</code> in Stan therefore computes the terms once per integer delay <span class="math inline">\(t\)</span> and uses them for the CDF at <span class="math inline">\(t\)</span> and at <span class="math inline">\(t + w_P\)</span>.</p>
+</div>
+<div class="section level3" number="4.2">
+<h3 id="uniform-window-as-the-limit-rho-to-0">
+<span class="header-section-number">4.2</span> Uniform window as the limit <span class="math inline">\(\rho \to 0\)</span><a class="anchor" aria-label="anchor" href="#uniform-window-as-the-limit-rho-to-0"></a>
+</h3>
+<p>As <span class="math inline">\(\rho \to 0\)</span> the window density tends to <span class="math inline">\(1 / w_P\)</span> and equation <a href="#eq:exptilt">(4.1)</a> tends to</p>
+<p><span class="math display" id="eq:uniform">\[
+F_0(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{1}{w_P} \int_{q - w_P}^q (q - u) f_{\mathrm{IP}}(u)\,du = \frac{K_1(q) - K_1(q - w_P)}{w_P}.
+\tag{4.2}
+\]</span></p>
+<p>By equation <a href="#eq:k1">(3.9)</a> this needs only <span class="math inline">\(F_{\mathrm{IP}}\)</span> and the partial moment <span class="math inline">\(M\)</span>.
+It is closed form whenever <span class="math inline">\(M\)</span> is.
+More families have a closed form <span class="math inline">\(M\)</span> than a closed form tilted transform, for example the lognormal.
+Brand et al. give <span class="math inline">\(M\)</span> for the gamma, lognormal and Weibull delays<span class="citation"><sup>[<a href="#ref-BrandInPrepPrimaryCensored">2</a>]</sup></span>.
+For a gamma delay with daily windows the resulting probability mass function matches that of Cori et al.<span class="citation"><sup>[<a href="#ref-cori2013new">5</a>]</sup></span>.</p>
+</div>
+<div class="section level3" number="4.3">
+<h3 id="truncated-logistic-window">
+<span class="header-section-number">4.3</span> Truncated logistic window<a class="anchor" aria-label="anchor" href="#truncated-logistic-window"></a>
+</h3>
+<p>With midpoint <span class="math inline">\(m\)</span> and scale <span class="math inline">\(s &gt; 0\)</span> let</p>
+<p><span class="math display">\[
+L(z) = \frac{1}{1 + e^{-(z - m) / s}}, \qquad D_L = L(w_P) - L(0), \qquad A(q) = e^{-(q - m) / s}, \qquad u^\star = q - m.
+\]</span></p>
+<p>The window density is <span class="math inline">\(f_{\mathrm{win}}(z; w_P, m, s) = L'(z) / D_L\)</span> and the window CDF is <span class="math inline">\(H_{L, w_P}(z) = \{L(z) - L(0)\} / D_L\)</span>.
+The reversed function <span class="math inline">\(L(q - u) = 1 / \{1 + A(q) e^{u / s}\}\)</span> is a geometric series in <span class="math inline">\(e^{u / s}\)</span> for <span class="math inline">\(u &lt; u^\star\)</span> and in <span class="math inline">\(e^{-u / s}\)</span> for <span class="math inline">\(u &gt; u^\star\)</span>.
+For <span class="math inline">\(m &lt; 0\)</span>,</p>
+<p><span class="math display" id="eq:logistic-left">\[
+F_L(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{1}{D_L} \Big[ \sum_{n = 0}^\infty (-1)^n A(q)^n \{T_f(n / s; q) - T_f(n / s; q - w_P)\} - L(0) \{F_{\mathrm{IP}}(q) - F_{\mathrm{IP}}(q - w_P)\} \Big].
+\tag{4.3}
+\]</span></p>
+<p>For <span class="math inline">\(m \geq w_P\)</span>,</p>
+<p><span class="math display" id="eq:logistic-right">\[
+F_L(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{1}{D_L} \Big[ \sum_{n = 1}^\infty (-1)^{n - 1} A(q)^{-n} \{T_f(-n / s; q) - T_f(-n / s; q - w_P)\} - L(0) \{F_{\mathrm{IP}}(q) - F_{\mathrm{IP}}(q - w_P)\} \Big].
+\tag{4.4}
+\]</span></p>
+<p>For <span class="math inline">\(0 \leq m &lt; w_P\)</span> the integral is split at <span class="math inline">\(u^\star\)</span>,</p>
+<p><span class="math display" id="eq:logistic-split">\[
+\begin{aligned}
+F_L(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{1}{D_L} \Big[ &amp;\sum_{n = 0}^\infty (-1)^n A(q)^n \{T_f(n / s; u^\star) - T_f(n / s; q - w_P)\} \\
++ &amp;\sum_{n = 1}^\infty (-1)^{n - 1} A(q)^{-n} \{T_f(-n / s; q) - T_f(-n / s; u^\star)\} - L(0) \{F_{\mathrm{IP}}(q) - F_{\mathrm{IP}}(q - w_P)\} \Big].
+\end{aligned}
+\tag{4.5}
+\]</span></p>
+</div>
+<div class="section level3" number="4.4">
+<h3 id="truncated-gumbel-window">
+<span class="header-section-number">4.4</span> Truncated Gumbel window<a class="anchor" aria-label="anchor" href="#truncated-gumbel-window"></a>
+</h3>
+<p>With location <span class="math inline">\(\mu_G\)</span> and scale <span class="math inline">\(\beta &gt; 0\)</span> let</p>
+<p><span class="math display">\[
+G(z) = \exp\left[-e^{-(z - \mu_G) / \beta}\right], \qquad D_G = G(w_P) - G(0), \qquad c(q) = e^{-(q - \mu_G) / \beta}.
+\]</span></p>
+<p>The window density is <span class="math inline">\(f_{\mathrm{win}}(z; w_P, \mu_G, \beta) = G'(z) / D_G\)</span> and the window CDF is <span class="math inline">\(H_{G, w_P}(z) = \{G(z) - G(0)\} / D_G\)</span>.
+The reversed function <span class="math inline">\(G(q - u) = \exp\{-c(q) e^{u / \beta}\}\)</span> is a power series in <span class="math inline">\(e^{u / \beta}\)</span>, which gives</p>
+<p><span class="math display" id="eq:gumbel">\[
+F_G(q; w_P) = F_{\mathrm{IP}}(q - w_P) + \frac{1}{D_G} \Big[ \sum_{n = 0}^\infty \frac{\{-c(q)\}^n}{n!} \{T_f(n / \beta; q) - T_f(n / \beta; q - w_P)\} - G(0) \{F_{\mathrm{IP}}(q) - F_{\mathrm{IP}}(q - w_P)\} \Big].
+\tag{4.6}
+\]</span></p>
+<p>The series converges for every <span class="math inline">\(q\)</span> and needs no split.</p>
+</div>
+</div>
+<div class="section level2" number="5">
+<h2 id="delay-transforms">
+<span class="header-section-number">5</span> Delay transforms<a class="anchor" aria-label="anchor" href="#delay-transforms"></a>
+</h2>
+<p>The table gives <span class="math inline">\(T_f\)</span> and <span class="math inline">\(M\)</span> for each delay family with a transform in the package.
+<span class="math inline">\(\gamma(\alpha, x)\)</span> is the lower incomplete gamma function and <span class="math inline">\(P(\alpha, x) = \gamma(\alpha, x) / \Gamma(\alpha)\)</span>.
+<span class="math inline">\(\Phi\)</span> and <span class="math inline">\(\phi\)</span> are the standard normal CDF and density.
+The classes are those of the transform paper<span class="citation"><sup>[<a href="#ref-TransformPaperPlaceholder">1</a>]</sup></span>.
+A transform is analytic if it is a closed form in elementary or standard functions such as <span class="math inline">\(P\)</span> and <span class="math inline">\(\Phi\)</span>, semi-analytic if it needs a convergent series of special functions, and numerical if it needs quadrature.
+The numerical class is distinct from the numerical method, which integrates equation <a href="#eq:cens">(3.1)</a> directly.</p>
+<table class="table">
+<colgroup>
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Family (R; Stan id)</th>
+<th align="left"><span class="math inline">\(T_f(\xi; \tau)\)</span></th>
+<th align="left"><span class="math inline">\(M(\tau)\)</span></th>
+<th align="left">Class</th>
+<th align="left">Transform used when</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Exponential, rate <span class="math inline">\(\lambda\)</span> (<code>pexp</code>; 4)</td>
+<td align="left"><span class="math inline">\(\frac{\lambda}{\lambda - \xi} \{1 - e^{-(\lambda - \xi) \tau}\}\)</span></td>
+<td align="left"><span class="math inline">\(P(2, \lambda \tau) / \lambda\)</span></td>
+<td align="left">analytic</td>
+<td align="left"><span class="math inline">\(\xi &lt; \lambda\)</span></td>
+</tr>
+<tr class="even">
+<td align="left">Gamma, shape <span class="math inline">\(\alpha\)</span>, rate <span class="math inline">\(\lambda\)</span> (<code>pgamma</code>; 2)</td>
+<td align="left"><span class="math inline">\(\left(\frac{\lambda}{\lambda - \xi}\right)^\alpha P(\alpha, (\lambda - \xi) \tau)\)</span></td>
+<td align="left"><span class="math inline">\(\frac{\alpha}{\lambda} P(\alpha + 1, \lambda \tau)\)</span></td>
+<td align="left">analytic</td>
+<td align="left"><span class="math inline">\(\xi &lt; \lambda\)</span></td>
+</tr>
+<tr class="odd">
+<td align="left">Normal, mean <span class="math inline">\(\mu\)</span>, standard deviation <span class="math inline">\(\sigma\)</span> (<code>pnorm</code>; 18)</td>
+<td align="left"><span class="math inline">\(e^{\xi \mu + \xi^2 \sigma^2 / 2}\, \Phi\left(\frac{\tau - \mu - \xi \sigma^2}{\sigma}\right)\)</span></td>
+<td align="left">
+<span class="math inline">\(\mu \Phi(z_\tau) - \sigma \phi(z_\tau)\)</span>, <span class="math inline">\(z_\tau = \frac{\tau - \mu}{\sigma}\)</span>
+</td>
+<td align="left">analytic</td>
+<td align="left">always</td>
+</tr>
+<tr class="even">
+<td align="left">Weibull, shape <span class="math inline">\(k\)</span>, scale <span class="math inline">\(\lambda\)</span> (<code>pweibull</code>; 3)</td>
+<td align="left"><span class="math inline">\(\sum_{n \geq 0} \frac{(\xi \lambda)^n}{n!} \gamma\left(1 + \frac{n}{k}, (\tau / \lambda)^k\right)\)</span></td>
+<td align="left"><span class="math inline">\(\lambda \gamma\left(1 + \frac{1}{k}, (\tau / \lambda)^k\right)\)</span></td>
+<td align="left">semi-analytic</td>
+<td align="left">
+<span class="math inline">\(|\xi| \tau &lt; 400\)</span> and the checks under Numerical safeguards pass</td>
+</tr>
+<tr class="odd">
+<td align="left">Generalised gamma, <span class="math inline">\((a, b, c)\)</span> (<code>pgengamma.orig</code>; 5, and <code>pgengamma</code> in R)</td>
+<td align="left"><span class="math inline">\(\sum_{n \geq 0} \frac{\xi^n}{n!} b^{-n / c} \frac{\gamma(a + n / c, b \tau^c)}{\Gamma(a)}\)</span></td>
+<td align="left"><span class="math inline">\(b^{-1 / c} \frac{\gamma(a + 1 / c, b \tau^c)}{\Gamma(a)}\)</span></td>
+<td align="left">semi-analytic</td>
+<td align="left">
+<span class="math inline">\(|\xi| \tau &lt; 400\)</span> and the checks under Numerical safeguards pass</td>
+</tr>
+<tr class="even">
+<td align="left">Lognormal, <span class="math inline">\(\mu\)</span>, <span class="math inline">\(\sigma\)</span> (<code>plnorm</code>; 1)</td>
+<td align="left"><span class="math inline">\(\int_{-\infty}^{\log \tau} e^{\xi e^x} \frac{1}{\sigma} \phi\left(\frac{x - \mu}{\sigma}\right) dx\)</span></td>
+<td align="left"><span class="math inline">\(e^{\mu + \sigma^2 / 2}\, \Phi\left(\frac{\log \tau - \mu}{\sigma} - \sigma\right)\)</span></td>
+<td align="left">numerical for <span class="math inline">\(\xi &lt; 0\)</span>, semi-analytic for <span class="math inline">\(\xi &gt; 0\)</span>
+</td>
+<td align="left">
+<span class="math inline">\(\xi &lt; 0\)</span> with <span class="math inline">\(\log(-\xi) + 2 \log \sigma + \mu &lt; 690\)</span>, or <span class="math inline">\(\xi &gt; 0\)</span> within the series limits below</td>
+</tr>
+</tbody>
+</table>
+<p>The generalised gamma row uses the density <span class="math inline">\(c b^a u^{a c - 1} e^{-b u^c} / \Gamma(a)\)</span> of the transform paper.
+The Stacy form of <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.html" class="external-link">flexsurv::pgengamma.orig()</a></code><span class="citation"><sup>[<a href="#ref-stacy1962generalization">6</a>]</sup></span> has <code>shape</code> <span class="math inline">\(= c\)</span>, <code>scale</code> <span class="math inline">\(= b^{-1 / c}\)</span> and <code>k</code> <span class="math inline">\(= a\)</span>.
+The Weibull is the case <span class="math inline">\(a = 1\)</span>.
+The Prentice form of <code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.html" class="external-link">flexsurv::pgengamma()</a></code> with <span class="math inline">\(Q &gt; 0\)</span> is mapped in R to the Stacy form with <code>shape</code> <span class="math inline">\(= Q / \sigma\)</span>, <code>scale</code> <span class="math inline">\(= e^\mu Q^{2 \sigma / Q}\)</span> and <code>k</code> <span class="math inline">\(= Q^{-2}\)</span>.
+For <span class="math inline">\(Q \leq 0\)</span> the numerical method is used.</p>
+<p>The lognormal transform has no closed form.
+The package uses Gauss-Legendre quadrature for <span class="math inline">\(\xi &lt; 0\)</span>.
+For <span class="math inline">\(\xi &gt; 0\)</span> it uses the series <span class="math inline">\(\sum_{j \geq 0} \xi^j e^{j \mu + j^2 \sigma^2 / 2} \Phi\left(\frac{\log \tau - \mu}{\sigma} - j \sigma\right) / j!\)</span> of positive terms.
+In R this series is used where <span class="math inline">\(\xi \tau \leq 200\)</span> or <span class="math inline">\(\xi w_P &gt; 2\)</span>.
+In Stan it is used where <span class="math inline">\(\xi \tau \leq 60\)</span> or <span class="math inline">\(\xi w_P &gt; 2\)</span>.
+Both use at most 20000 terms.
+Elsewhere the numerical method is used for that <span class="math inline">\(q\)</span>.</p>
+<p>Some families have a closed form <span class="math inline">\(M\)</span> or <span class="math inline">\(K_1\)</span> but no tilted transform in the package.
+They have analytic solutions for the uniform window only.
+Here <span class="math inline">\(I_x(\cdot, \cdot)\)</span> is the regularised incomplete beta function, <span class="math inline">\(A_\tau = (\tau / \lambda)^k\)</span> and <span class="math inline">\(r_a\)</span> is defined below.</p>
+<table class="table">
+<colgroup>
+<col width="25%">
+<col width="25%">
+<col width="25%">
+<col width="25%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Family (Stan id)</th>
+<th align="left">
+<span class="math inline">\(M(\tau)\)</span> or <span class="math inline">\(K_1(t)\)</span>
+</th>
+<th align="left">Needs</th>
+<th align="left">Available in</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Log-logistic, shape <span class="math inline">\(k\)</span>, scale <span class="math inline">\(\lambda\)</span> (31)</td>
+<td align="left"><span class="math inline">\(M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(A_\tau)\)</span></td>
+<td align="left"><span class="math inline">\(k \geq 0.01\)</span></td>
+<td align="left">R and Stan</td>
+</tr>
+<tr class="even">
+<td align="left">Beta, shapes <span class="math inline">\(\alpha_1\)</span>, <span class="math inline">\(\alpha_2\)</span> (9)</td>
+<td align="left"><span class="math inline">\(M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)\)</span></td>
+<td align="left">non-centrality 0</td>
+<td align="left">R and Stan</td>
+</tr>
+<tr class="odd">
+<td align="left">Chi-square, <span class="math inline">\(\nu\)</span> degrees of freedom (13)</td>
+<td align="left">the gamma with <span class="math inline">\(\alpha = \nu / 2\)</span> and <span class="math inline">\(\lambda = 1 / 2\)</span>
+</td>
+<td align="left">non-centrality 0</td>
+<td align="left">R and Stan</td>
+</tr>
+<tr class="even">
+<td align="left">Inverse gamma, shape <span class="math inline">\(\alpha\)</span>, scale <span class="math inline">\(\theta\)</span> (16)</td>
+<td align="left"><span class="math inline">\(M(\tau) = \frac{\theta}{\alpha - 1} \{1 - P(\alpha - 1, \theta / \tau)\}\)</span></td>
+<td align="left"><span class="math inline">\(\alpha &gt; 1\)</span></td>
+<td align="left">Stan</td>
+</tr>
+<tr class="odd">
+<td align="left">Inverse chi-square, <span class="math inline">\(\nu\)</span> (19)</td>
+<td align="left">the inverse gamma with <span class="math inline">\(\alpha = \nu / 2\)</span> and <span class="math inline">\(\theta = 1 / 2\)</span>
+</td>
+<td align="left"><span class="math inline">\(\nu &gt; 2\)</span></td>
+<td align="left">Stan</td>
+</tr>
+<tr class="even">
+<td align="left">Scaled inverse chi-square, <span class="math inline">\(\nu\)</span> and scale <span class="math inline">\(\varsigma\)</span> (22)</td>
+<td align="left">the inverse gamma with <span class="math inline">\(\alpha = \nu / 2\)</span> and <span class="math inline">\(\theta = \nu \varsigma^2 / 2\)</span>
+</td>
+<td align="left"><span class="math inline">\(\nu &gt; 2\)</span></td>
+<td align="left">Stan</td>
+</tr>
+<tr class="odd">
+<td align="left">Pareto, shape <span class="math inline">\(\alpha\)</span>, minimum <span class="math inline">\(y_m\)</span> (21)</td>
+<td align="left">
+<span class="math inline">\(K_1(t) = y_m \left\{e^{\ell} - 1 + \frac{e^{-(\alpha - 1) \ell} - 1}{\alpha - 1}\right\}\)</span>, <span class="math inline">\(\ell = \log(t / y_m)\)</span>, for <span class="math inline">\(t \geq y_m\)</span>
+</td>
+<td align="left"></td>
+<td align="left">Stan</td>
+</tr>
+</tbody>
+</table>
+<p>For the Pareto with <span class="math inline">\(\alpha = 1\)</span> the second term takes its limit <span class="math inline">\(-\ell\)</span>.
+The non-central beta and chi-square use the numerical method.</p>
+<p>The log-logistic ratio is</p>
+<p><span class="math display">\[
+r_a(A_\tau) = \frac{1 + A_\tau}{A_\tau^{a + 1}} \int_0^{A_\tau} \frac{y^a}{(1 + y)^2}\,dy.
+\]</span></p>
+<p>For a delay <span class="math inline">\(U\)</span> with CDF <span class="math inline">\(F_{\mathrm{IP}}\)</span> it is <span class="math inline">\(E[(U / \tau)^{a k} \mid U \leq \tau]\)</span>.
+The integral is a Gauss hypergeometric function, which base R does not have, so the package evaluates <span class="math inline">\(r_a\)</span> by one of three series in <span class="math inline">\(A_\tau\)</span>.
+In Stan the log-logistic parameters are ordered <code>[scale, shape]</code>.</p>
+<p>The step and hazard delays of <code><a href="../reference/pdiscretestep.html">pdiscretestep()</a></code> and <code><a href="../reference/pdiscretehazard.html">pdiscretehazard()</a></code> (Stan ids 26, 27 and 28) do not use a transform.
+Their CDF is piecewise constant, so equation <a href="#eq:cens">(3.1)</a> is a finite sum of differences of the window CDF.
+In R <code><a href="../reference/pcens_cdf.pcens_pdiscretestep.html">pcens_cdf.pcens_pdiscretestep()</a></code> and <code><a href="../reference/pcens_cdf.pcens_pdiscretehazard.html">pcens_cdf.pcens_pdiscretehazard()</a></code> compute this exactly for any window with a <code>pprimary</code> function.</p>
+</div>
+<div class="section level2" number="6">
+<h2 id="coverage-by-window-and-delay">
+<span class="header-section-number">6</span> Coverage by window and delay<a class="anchor" aria-label="anchor" href="#coverage-by-window-and-delay"></a>
+</h2>
+<p>The table lists the pairs of window and delay that the package solves.
+Each entry is the class of the quantities the window needs, “exact” for a finite sum, or “numerical method”.
+The uniform window needs <span class="math inline">\(M\)</span> or <span class="math inline">\(K_1\)</span>, and the other windows need <span class="math inline">\(T_f\)</span>.
+The log-logistic <span class="math inline">\(M\)</span> is semi-analytic because it is evaluated by series in <span class="math inline">\(A_\tau\)</span>.
+The logistic and Gumbel windows add a truncated series over the tilts.
+The R method for a pair is <code>pcens_cdf.pcens_p&lt;delay&gt;_d&lt;primary&gt;</code>, for example <code><a href="../reference/pcens_cdf_exptilt.html">pcens_cdf.pcens_pgamma_dexpgrowth()</a></code>.</p>
+<table class="table">
+<colgroup>
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+<col width="20%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Delay</th>
+<th align="left">Uniform</th>
+<th align="left">Exponential tilt</th>
+<th align="left">Truncated logistic</th>
+<th align="left">Truncated Gumbel</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Exponential</td>
+<td align="left">analytic</td>
+<td align="left">analytic if <span class="math inline">\(\lambda &gt; -\rho\)</span>
+</td>
+<td align="left">analytic if <span class="math inline">\(m \geq w_P\)</span> or <span class="math inline">\(\lambda\)</span> exceeds the largest tilt</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="even">
+<td align="left">Gamma</td>
+<td align="left">analytic</td>
+<td align="left">analytic if <span class="math inline">\(\lambda &gt; -\rho\)</span>
+</td>
+<td align="left">analytic if <span class="math inline">\(m \geq w_P\)</span> or <span class="math inline">\(\lambda\)</span> exceeds the largest tilt</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="odd">
+<td align="left">Normal</td>
+<td align="left">analytic</td>
+<td align="left">analytic</td>
+<td align="left">analytic</td>
+<td align="left">analytic</td>
+</tr>
+<tr class="even">
+<td align="left">Weibull</td>
+<td align="left">analytic</td>
+<td align="left">semi-analytic</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="odd">
+<td align="left">Generalised gamma</td>
+<td align="left">analytic</td>
+<td align="left">semi-analytic</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="even">
+<td align="left">Lognormal</td>
+<td align="left">analytic</td>
+<td align="left">numerical for <span class="math inline">\(\rho &gt; 0\)</span>, semi-analytic for <span class="math inline">\(\rho &lt; 0\)</span>
+</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="odd">
+<td align="left">Log-logistic</td>
+<td align="left">semi-analytic</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="even">
+<td align="left">Beta, chi-square</td>
+<td align="left">analytic</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="odd">
+<td align="left">Inverse gamma, inverse chi-square, scaled inverse chi-square, Pareto</td>
+<td align="left">analytic in Stan, numerical method in R</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="even">
+<td align="left">Step and hazard</td>
+<td align="left">exact</td>
+<td align="left">exact</td>
+<td align="left">exact</td>
+<td align="left">exact in R, numerical method in Stan</td>
+</tr>
+</tbody>
+</table>
+<p>The logistic window needs the tilts <span class="math inline">\(n / s\)</span> and <span class="math inline">\(-n / s\)</span> up to the number of series terms.
+For <span class="math inline">\(m \geq w_P\)</span> it needs no positive tilt.
+The Gumbel window needs the tilts <span class="math inline">\(n / \beta\)</span> for <span class="math inline">\(n = 0, \ldots, N\)</span>, with <span class="math inline">\(N\)</span> at least 2.
+The normal delay has a transform at every tilt, and is the only delay the package pairs with the Gumbel window.
+The Gumbel series checks under Numerical safeguards still apply to it.
+The Weibull, generalised gamma and lognormal delays have transforms, but no method pairs them with the logistic or Gumbel windows.</p>
+<p>In Stan <code>primarycensored_cdf()</code> and <code>primarycensored_lcdf()</code> choose between the analytical and the numerical path with <code>check_for_analytical_params()</code>.
+It takes <code>pwindow</code>, as the admissibility of some windows, such as the truncated logistic, depends on it.
+<code>primarycensored_analytical_lcdf()</code> rejects parameters that fail these checks.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Window</th>
+<th align="left">Stan functions</th>
+<th align="left">Parameter check</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">Uniform</td>
+<td align="left">
+<code>primarycensored_&lt;dist&gt;_uniform_terms()</code> and <code>primarycensored_uniform_lcdf_from_terms()</code>
+</td>
+<td align="left">
+<code>check_for_uniform_terms()</code> and <code>check_uniform_terms_params()</code>
+</td>
+</tr>
+<tr class="even">
+<td align="left">Exponential tilt</td>
+<td align="left">
+<code>primarycensored_exptilt_lcdf()</code> and <code>primarycensored_analytical_lcdf_vectorized()</code>, with <code>log_tilt_transform_pair()</code>
+</td>
+<td align="left">
+<code>check_for_tilt_transform()</code>, with <code>check_for_tilt_transform_at()</code> for the lognormal</td>
+</tr>
+<tr class="odd">
+<td align="left">Truncated logistic</td>
+<td align="left">
+<code>primarycensored_tlogis_lcdf()</code> and <code>primarycensored_tlogis_lcdf_vectorized()</code>
+</td>
+<td align="left"><code>check_for_tlogis_params()</code></td>
+</tr>
+<tr class="even">
+<td align="left">Truncated Gumbel</td>
+<td align="left">
+<code>primarycensored_gumbel_lcdf()</code>, and <code>primarycensored_gumbel_terms()</code> with <code>primarycensored_gumbel_lcdf_from_terms()</code> in <code>primarycensored_analytical_lcdf_vectorized()</code>
+</td>
+<td align="left"><code>check_for_gumbel_params()</code></td>
+</tr>
+</tbody>
+</table>
+<p>For the Gumbel window, with any delay, and for the log-logistic delay with the uniform window the numerical method is specific to the pair.
+In R these are <code>.gumbel_numeric()</code> and <code>.loglogistic_numeric_cdf()</code>.
+In Stan they are <code>primarycensored_gumbel_numeric_lcdf()</code> and <code>loglogistic_numeric_lcdf()</code>.
+The numerical method is used in the following cases.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th align="left">Condition</th>
+<th align="left">R</th>
+<th align="left">Stan</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td align="left">The transform is not available at the parameters</td>
+<td align="left">numerical method for every <code>q</code>
+</td>
+<td align="left">numerical method</td>
+</tr>
+<tr class="even">
+<td align="left">
+<code>pwindow</code> is not a single positive finite number</td>
+<td align="left">numerical method for every <code>q</code>
+</td>
+<td align="left">not applicable</td>
+</tr>
+<tr class="odd">
+<td align="left">A series or error check fails at one <code>q</code>
+</td>
+<td align="left">numerical method for that <code>q</code>
+</td>
+<td align="left">numerical method for that <code>q</code>
+</td>
+</tr>
+<tr class="even">
+<td align="left">Lognormal delay, exponential tilt, fewer than 10 <code>q</code> and <span class="math inline">\(|\rho| w_P \leq 1\)</span>
+</td>
+<td align="left">numerical method for every <code>q</code>
+</td>
+<td align="left">not applicable</td>
+</tr>
+<tr class="odd">
+<td align="left"><code>use_numeric = TRUE</code></td>
+<td align="left">numerical method for every <code>q</code>
+</td>
+<td align="left">not applicable</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section level2" number="7">
+<h2 id="numerical-safeguards">
+<span class="header-section-number">7</span> Numerical safeguards<a class="anchor" aria-label="anchor" href="#numerical-safeguards"></a>
+</h2>
+<div class="section level3" number="7.1">
+<h3 id="small-tilt">
+<span class="header-section-number">7.1</span> Small tilt<a class="anchor" aria-label="anchor" href="#small-tilt"></a>
+</h3>
+<p>The numerator of equation <a href="#eq:exptilt">(4.1)</a> loses precision through cancellation as <span class="math inline">\(\rho \to 0\)</span>.
+For a gamma delay the loss grows with the shape.
+For <span class="math inline">\(|\rho| w_P &lt; 10^{-2}\)</span>, or <span class="math inline">\(10^{-3}\)</span> for delays on the reals, and <span class="math inline">\(|\rho| (|q| + w_P) &lt; 0.1\)</span>, the package replaces equation <a href="#eq:exptilt">(4.1)</a> with its Taylor expansion in <span class="math inline">\(\rho\)</span> about the uniform solution, written in the <span class="math inline">\(K_n\)</span> of equation <a href="#eq:kn">(3.8)</a>.
+To first order this is <span class="math inline">\(F_0(q; w_P) + \rho \{K_2(q) - w_P K_1(q) - K_2(q - w_P) - w_P K_1(q - w_P)\} / (2 w_P)\)</span>.
+The package also keeps the second order term, <span class="math inline">\(\rho^2 [2 \{K_3(q) - K_3(q - w_P)\} - 3 w_P \{K_2(q) + K_2(q - w_P)\} + w_P^2 \{K_1(q) - K_1(q - w_P)\}] / (12 w_P)\)</span>, so the error is third order, <span class="math inline">\(O\big((\rho w_P)^3\big)\)</span>.
+The relative truncation error is below <span class="math inline">\((|\rho| w_P)^3 / 160\)</span>.</p>
+<p>This form subtracts terms of the size of <span class="math inline">\(|q| + w_P\)</span>, so its rounding error grows with the distance from the origin.
+Equation <a href="#eq:exptilt">(4.1)</a> has a rounding error of about <span class="math inline">\(10^{-15} / (|\rho| w_P)\)</span> at any <span class="math inline">\(q\)</span>.
+The expansion has the smaller error while <span class="math inline">\(|\rho| (|q| + w_P)\)</span> is below about 0.1, so equation <a href="#eq:exptilt">(4.1)</a> is used beyond that.
+In R <code><a href="../reference/dot-exptilt_cdf_finite.html">.exptilt_cdf_finite()</a></code> and in Stan <code>primarycensored_exptilt_form()</code> choose the form for each delay.</p>
+</div>
+<div class="section level3" number="7.2">
+<h3 id="small-delay">
+<span class="header-section-number">7.2</span> Small delay<a class="anchor" aria-label="anchor" href="#small-delay"></a>
+</h3>
+<p>For a delay on the non-negative reals with <span class="math inline">\(q &lt; w_P\)</span> the exponential tilt CDF is <span class="math inline">\(\{e^{\rho q} J_\rho(q) - F_{\mathrm{IP}}(q)\} / (e^{\rho w_P} - 1)\)</span>.
+For <span class="math inline">\(|\rho| q &lt; 5 \times 10^{-3}\)</span> the package replaces the numerator with its Taylor expansion in <span class="math inline">\(\rho\)</span>, <span class="math inline">\(\rho K_1(q) + \rho^2 K_2(q) / 2 + \rho^3 K_3(q) / 6\)</span>.
+The relative truncation error is below <span class="math inline">\((|\rho| q)^3 / 24\)</span>.
+The errors of both small tilt forms are below <span class="math inline">\(10^{-8}\)</span> at these limits.
+For delays on the non-negative reals the <span class="math inline">\(K_n\)</span> are computed from the partial moments <span class="math inline">\(\int_0^t u^j f_{\mathrm{IP}}(u)\,du\)</span>, <span class="math inline">\(j = 0, \ldots, 3\)</span>, by <code><a href="../reference/dot-moments_from_partial.html">.moments_from_partial()</a></code> in R and <code>primarycensored_moments_from_partial()</code> in Stan.
+The logistic window uses <span class="math inline">\(\{L'(0) K_1(q) + L''(0) K_2(q) / 2\} / D_L\)</span> for <span class="math inline">\(q &lt; w_P\)</span> and <span class="math inline">\(q &lt; 10^{-4} s\)</span>.</p>
+</div>
+<div class="section level3" number="7.3">
+<h3 id="tail-choice">
+<span class="header-section-number">7.3</span> Tail choice<a class="anchor" aria-label="anchor" href="#tail-choice"></a>
+</h3>
+<p>A transform difference is taken from the lower transforms or from the upper transforms <span class="math inline">\(T_f(\xi; \infty) - T_f(\xi; \tau)\)</span>, whichever loses less precision.
+The exponential, gamma and normal have upper transforms for every admissible tilt, the lognormal for <span class="math inline">\(\xi \leq 0\)</span> and the other families only at <span class="math inline">\(\xi = 0\)</span>.</p>
+</div>
+<div class="section level3" number="7.4">
+<h3 id="weibull-and-generalised-gamma-series">
+<span class="header-section-number">7.4</span> Weibull and generalised gamma series<a class="anchor" aria-label="anchor" href="#weibull-and-generalised-gamma-series"></a>
+</h3>
+<p>The series is used only where <span class="math inline">\(|\xi| \tau &lt; 400\)</span> and it converges within 400 terms.
+For <span class="math inline">\(\xi &lt; 0\)</span> its terms alternate, and it is used only where the sum of the absolute terms is below <span class="math inline">\(10^5\)</span> times the transform.
+R and Stan apply this check in the same way.</p>
+<p>These series have no upper tail form, so a second check is made at each <span class="math inline">\(q\)</span> on the numerator of equation <a href="#eq:exptilt">(4.1)</a>.
+It compares the size of the terms of the numerator, divided by <span class="math inline">\(e^{\rho w_P} - 1\)</span>, with a reference.
+Where the ratio is above <span class="math inline">\(10^5\)</span> that <span class="math inline">\(q\)</span> uses the numerical method.
+In R the reference is the smaller of the CDF and its survival function, so the check bounds the relative error in both tails.
+In Stan the reference is 1, so the check bounds the absolute error of the CDF at about <span class="math inline">\(10^{-11}\)</span>.
+Upper tail probability masses of about this size or smaller can therefore lose relative accuracy in Stan.</p>
+</div>
+<div class="section level3" number="7.5">
+<h3 id="log-logistic-partial-moment">
+<span class="header-section-number">7.5</span> Log-logistic partial moment<a class="anchor" aria-label="anchor" href="#log-logistic-partial-moment"></a>
+</h3>
+<p>The uniform solution differences <span class="math inline">\(K_1(t) = t F_{\mathrm{IP}}(t) \{1 - r_{1 / k}(A_t)\}\)</span> at <span class="math inline">\(q\)</span> and <span class="math inline">\(q - w_P\)</span>.
+Each <span class="math inline">\(q\)</span> is screened with a bound on the rounding error of this difference.
+That <span class="math inline">\(q\)</span> uses the numerical method where the bound exceeds <span class="math inline">\(10^{-8}\)</span> times the smaller of the CDF and its survival function, or <span class="math inline">\(10^{-6}\)</span> times the density of <span class="math inline">\(F_{\mathrm{cens}}\)</span>.
+R and Stan use the same rule.</p>
+</div>
+<div class="section level3" number="7.6">
+<h3 id="logistic-series">
+<span class="header-section-number">7.6</span> Logistic series<a class="anchor" aria-label="anchor" href="#logistic-series"></a>
+</h3>
+<p>The geometric series converge slowly near <span class="math inline">\(u^\star\)</span>.
+They are summed with a binomial taper of the partial sums (Euler summation) to an error below <span class="math inline">\(10^{-10} D_L\)</span>, with at most 64 terms.</p>
+</div>
+<div class="section level3" number="7.7">
+<h3 id="gumbel-series">
+<span class="header-section-number">7.7</span> Gumbel series<a class="anchor" aria-label="anchor" href="#gumbel-series"></a>
+</h3>
+<p>The terms alternate.
+The sum of their absolute values is up to about <span class="math inline">\(e^{c(0)}\)</span> times the delay mass in the window, so the relative precision lost grows as <span class="math inline">\(e^{c(0)}\)</span>.
+The series is used only for <span class="math inline">\(c(0) \leq 15\)</span> and where its estimated relative error is below <span class="math inline">\(10^{-8}\)</span>.
+The estimate adds the rounding error, from the sum of the absolute terms, and a bound on the truncation error.
+Where it is above <span class="math inline">\(10^{-8}\)</span> that <span class="math inline">\(q\)</span> uses the numerical method.</p>
+</div>
+</div>
+<div class="section level2" number="8">
+<h2 id="departures-from-the-paper">
+<span class="header-section-number">8</span> Departures from the paper<a class="anchor" aria-label="anchor" href="#departures-from-the-paper"></a>
+</h2>
+<ol style="list-style-type: decimal">
+<li>The exponential and gamma transforms are finite for every <span class="math inline">\(\xi\)</span>, but the package has no stable form for <span class="math inline">\(\xi \geq \lambda\)</span>.</li>
+<li>The lognormal transform is semi-analytic for <span class="math inline">\(\xi &gt; 0\)</span>, where the transform paper evaluates it by quadrature.</li>
+<li>The transform paper states the logistic regimes with strict inequalities.
+The package includes the boundaries as above.</li>
+<li>The logistic and Gumbel series coefficients are rearranged so that the <span class="math inline">\(L(0)\)</span> and <span class="math inline">\(G(0)\)</span> terms do not cancel when <span class="math inline">\(D_L\)</span> or <span class="math inline">\(D_G\)</span> is small.
+The result is unchanged.</li>
+</ol>
+</div>
+<div class="section level2" number="9">
+<h2 id="extending-the-package">
+<span class="header-section-number">9</span> Extending the package<a class="anchor" aria-label="anchor" href="#extending-the-package"></a>
+</h2>
+<p>A new delay needs its transform.
+In R it needs methods for <code><a href="../reference/pcens_tilt.html">.pcens_tilt_transform()</a></code>, <code><a href="../reference/pcens_tilt.html">.pcens_tilt_available()</a></code>, <code><a href="../reference/pcens_tilt.html">.pcens_tilt_lower()</a></code> and <code><a href="../reference/pcens_tilt.html">.pcens_tilt_moments()</a></code>.
+In Stan it needs an entry in <code>log_tilt_transform_pair()</code>, <code>primarycensored_tilt_moments()</code>, <code>check_for_tilt_transform()</code> and <code>check_for_exptilt()</code>.
+A delay whose transform holds only at some <code>q</code> also needs the per-point checks that the lognormal uses, <code>.pcens_tilt_fits()</code> in R and <code>check_for_tilt_transform_at()</code> in Stan.
+A pair of window and delay then needs its <code>pcens_cdf</code> method in R and its dispatch in Stan.</p>
+</div>
+<div class="section level2" number="10">
 <h2 id="learning-more">
-<span class="header-section-number">4</span> Learning more<a class="anchor" aria-label="anchor" href="#learning-more"></a>
+<span class="header-section-number">10</span> Learning more<a class="anchor" aria-label="anchor" href="#learning-more"></a>
 </h2>
 <ul>
 <li>For more mathematical background on the analytic solutions see the <code><a href="../articles/why-it-works.html">vignette("why-it-works")</a></code>.</li>
@@ -454,17 +899,30 @@ The discrete censored delay distribution follows from equation <a href="#eq:disc
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <div id="refs" class="references csl-bib-body" entry-spacing="0" line-spacing="2">
-<div id="ref-Park2024" class="csl-entry">
+<div id="ref-TransformPaperPlaceholder" class="csl-entry">
 <div class="csl-left-margin">1. </div>
+<div class="csl-right-inline">PLACEHOLDER: authors to be confirmed. (n.d.). <em>A transform-based marginalisation approach for non-uniform primary-censored epidemiological delays</em> [Unpublished manuscript].</div>
+</div>
+<div id="ref-BrandInPrepPrimaryCensored" class="csl-entry">
+<div class="csl-left-margin">2. </div>
+<div class="csl-right-inline">Brand, S. P. C., Nemcova, B., Pearson, C. A. B., Jamieson, N., Charniga, K., Azam, J. M., Howes, A., Ward, T., Meyers, L. A., Funk, S., Overton, C. E., Park, S. W., &amp; Abbott, S. (2026). <em>A scalable marginalisation approach for double interval censored epidemiological delays</em>. In press.</div>
+</div>
+<div id="ref-Park2024" class="csl-entry">
+<div class="csl-left-margin">3. </div>
 <div class="csl-right-inline">Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G., Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M., Lipsitch, M., Lison, A., Overton, C. E., Ward, T., &amp; Abbott, S. (2024). Estimating epidemiological delay distributions for infectious diseases. <em>bioRxiv</em>. <a href="https://doi.org/10.1101/2024.01.12.24301247" class="external-link">https://doi.org/10.1101/2024.01.12.24301247</a>
 </div>
 </div>
+<div id="ref-Zhao2021BETS" class="csl-entry">
+<div class="csl-left-margin">4. </div>
+<div class="csl-right-inline">Zhao, Q., Ju, N., Bacallado, S., &amp; Shah, R. D. (2021). <span>BETS</span>: The dangers of selection bias in early analyses of the coronavirus disease (<span>COVID-19</span>) pandemic. <em>The Annals of Applied Statistics</em>, <em>15</em>(1), 363–390. <a href="https://doi.org/10.1214/20-AOAS1401" class="external-link">https://doi.org/10.1214/20-AOAS1401</a>
+</div>
+</div>
 <div id="ref-cori2013new" class="csl-entry">
-<div class="csl-left-margin">2. </div>
+<div class="csl-left-margin">5. </div>
 <div class="csl-right-inline">Cori, A., Ferguson, N. M., Fraser, C., &amp; Cauchemez, S. (2013). A new framework and software to estimate time-varying reproduction numbers during epidemics. <em>American Journal of Epidemiology</em>, <em>178</em>(9), 1505–1512.</div>
 </div>
 <div id="ref-stacy1962generalization" class="csl-entry">
-<div class="csl-left-margin">3. </div>
+<div class="csl-left-margin">6. </div>
 <div class="csl-right-inline">Stacy, E. W. (1962). A generalization of the gamma distribution. <em>Ann. Math. Stat.</em>, <em>33</em>(3), 1187–1192. <a href="https://doi.org/10.1214/aoms/1177704481" class="external-link">https://doi.org/10.1214/aoms/1177704481</a>
 </div>
 </div>

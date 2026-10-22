@@ -422,19 +422,19 @@ pcd_fit
     ## Warning: NAs introduced by coercion
 
     ##        variable     mean   median   sd  mad       q5      q95 rhat ess_bulk
-    ##  lp__           -3422.80 -3422.48 1.08 0.76 -3424.88 -3421.80 1.00     1273
-    ##  params[1]          1.55     1.54 0.05 0.05     1.47     1.63 1.00     1248
-    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.84 1.00     1257
+    ##  lp__           -3422.74 -3422.43 1.01 0.70 -3424.81 -3421.79 1.00     1227
+    ##  params[1]          1.55     1.54 0.05 0.05     1.48     1.63 1.00     1012
+    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.84 1.00      929
     ##  np_pmf[1]          1.00     1.00 0.00 0.00     1.00     1.00   NA       NA
-    ##  lpmf_params[1]     1.55     1.54 0.05 0.05     1.47     1.63 1.00     1248
-    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00     1257
+    ##  lpmf_params[1]     1.55     1.54 0.05 0.05     1.48     1.63 1.00     1012
+    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.84 1.00      929
     ##  ess_tail
-    ##      1502
-    ##      1300
-    ##      1407
+    ##      1301
+    ##       969
+    ##      1147
     ##        NA
-    ##      1300
-    ##      1407
+    ##       969
+    ##      1147
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and

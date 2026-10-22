@@ -2,6 +2,21 @@
 
 ## primarycensored (development version)
 
+### New features
+
+- Added analytical solutions for an exponentially tilted primary event
+  window
+  ([`dexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md))
+  with exponential, gamma and normal delays, in R and Stan, see
+  [`?pcens_cdf_exptilt`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md).
+  The numerical paths of
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  and the Stan functions no longer return 0 or an error for delays that
+  are small relative to the primary window. The Stan function
+  `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id`
+  and `primary_params` as its last two arguments. See
+  [\#367](https://github.com/epinowcast/primarycensored/issues/367).
+
 ### Bug fixes
 
 - A bug was fixed where Stan gradients for a Weibull delay with a
@@ -9,6 +24,16 @@
   `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()`
   now uses `gamma_lcdf()`, which gives the same values. See
   [\#364](https://github.com/epinowcast/primarycensored/issues/364).
+- The Stan log CDFs of Gamma and generalised gamma delays no longer
+  return `-Inf` or `NaN` in the lower tail, and their shape gradients
+  are accurate in both tails, including for integer and large shapes.
+  This affects `dist_lcdf()`, `gengamma_lcdf()` and the analytical
+  solutions with a uniform primary, and removes `NaN` and `+Inf` log
+  densities from truncated fits. A Gamma rate that is not positive and
+  finite is now rejected, as is a negative `y` in `gengamma_lcdf()`. See
+  [\#363](https://github.com/epinowcast/primarycensored/issues/363),
+  [\#381](https://github.com/epinowcast/primarycensored/issues/381) and
+  [\#395](https://github.com/epinowcast/primarycensored/issues/395).
 
 ### Performance
 
@@ -20,6 +45,14 @@
   now uses `check = FALSE` for its likelihood evaluations, as the
   parameter names are the same throughout a fit. See
   [\#379](https://github.com/epinowcast/primarycensored/issues/379).
+
+### Documentation
+
+- The “Analytic solutions” vignette now derives each analytic solution
+  from truncated exponential-moment transforms of the delay, and lists
+  the solution, numerical fallback and safeguards used for each pair of
+  window and delay. See
+  [\#375](https://github.com/epinowcast/primarycensored/issues/375).
 
 ## primarycensored 1.6.0
 

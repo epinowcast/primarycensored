@@ -366,9 +366,10 @@ In addition to these main functions, the package also includes:
 
 - **Analytical solutions:** For common combinations of primary event and
   delay distributions (e.g., uniform primary events with gamma,
-  lognormal, or Weibull delays), the package includes analytical
-  solutions that provide significant computational speedups compared to
-  numerical integration.
+  lognormal, or Weibull delays, and exponentially tilted primary events
+  with exponential, gamma, or normal delays), the package includes
+  analytical solutions that provide significant computational speedups
+  compared to numerical integration.
 
 - **Stan versions of all functions and R functions to interface with
   Stan:** All R functions have a corresponding Stan function. These Stan

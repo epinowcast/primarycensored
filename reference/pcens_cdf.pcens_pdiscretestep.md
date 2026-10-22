@@ -65,6 +65,7 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
+[`pcens_cdf_exptilt`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md),
 [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
 [`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),

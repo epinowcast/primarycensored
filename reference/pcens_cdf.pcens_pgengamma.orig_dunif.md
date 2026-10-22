@@ -9,9 +9,9 @@ function, \\a\\ the `shape` and \\\theta\\ the `scale`. The mean is
 \\E\[T\] = \theta \Gamma(k + 1/a) / \Gamma(k)\\ and the partial
 expectation distribution is \\\tilde F_T(t) = P(k + 1/a, (t /
 \theta)^a)\\, so the solution generalises the gamma (`shape = 1`) and
-Weibull (`k = 1`) cases. See
+Weibull (`k = 1`) cases.
 [`vignette("analytic-solutions")`](https://primarycensored.epinowcast.org/articles/analytic-solutions.md)
-for the derivation.
+gives the partial moment and cites the derivation.
 
 ## Usage
 
@@ -59,6 +59,7 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
+[`pcens_cdf_exptilt`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md),
 [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
 [`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),
