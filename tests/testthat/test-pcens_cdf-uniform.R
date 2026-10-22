@@ -44,26 +44,31 @@ test_that("uniform primary analytical CDFs are 0 at and below 0 and tend to
   }
 })
 
-test_that("uniform primary analytical CDFs handle empty, missing and
-  non-positive q", {
+test_that("uniform primary analytical CDFs handle empty input and error for
+  missing q and invalid pwindow", {
   for (case in unif_cases()) {
     obj <- do.call(
       new_pcens, c(list(case$pdist, dunif), case$grid[[1]])
     )
     expect_identical(pcens_cdf(obj, numeric(0), 1), numeric(0))
+    expect_identical(pcens_cdf(obj, numeric(0), c(1, 2)), numeric(0))
     expect_error(pcens_cdf(obj, c(1, NA), 1), "missing")
     expect_error(pcens_cdf(obj, NaN, 1), "missing")
-    expect_identical(pcens_cdf(obj, -Inf, 1), 0)
+    expect_error(pcens_cdf(obj, c(1, 2), NA_real_), "pwindow")
+    expect_error(pcens_cdf(obj, c(1, 2), c(1, NA)), "pwindow")
+    expect_error(pcens_cdf(obj, c(1, 2), -1), "pwindow")
   }
 })
 
-test_that("uniform primary analytical CDFs recycle a vector pwindow
-  element-wise, including when some q are not positive", {
-  q <- c(-1, 0.4, 2, 5, 0, 9)
-  pwindow <- c(1, 2, 0.5, 3, 1, 4)
+test_that("uniform primary analytical CDFs with a vector pwindow match
+  element-wise calls across non-positive, narrow and upper tail cases", {
+  q <- c(-1, 0.4, 2, 5, 0, 9, 5, 4e3, 1e5, 3, 1e6, 1e9, 60, 25, Inf)
+  pwindow <- c(
+    1, 2, 0.5, 3, 1, 4, 1e-7, 1, 1e-2, 1e-9, 0.1, 5, 0.01, 1, 1
+  )
   for (case in unif_cases()) {
     obj <- do.call(
-      new_pcens, c(list(case$pdist, dunif), case$grid[[3]])
+      new_pcens, c(list(case$pdist, dunif), case$grid[[1]])
     )
     expected <- vapply(
       seq_along(q), function(i) pcens_cdf(obj, q[[i]], pwindow[[i]]),
@@ -73,6 +78,11 @@ test_that("uniform primary analytical CDFs recycle a vector pwindow
       pcens_cdf(obj, q, pwindow), expected,
       tolerance = 1e-14,
       info = case$name
+    )
+    expect_equal(
+      pcens_cdf(obj, 2, c(1, 2)),
+      vapply(c(1, 2), function(w) pcens_cdf(obj, 2, w), numeric(1)),
+      tolerance = 1e-14
     )
   }
 })
@@ -316,26 +326,6 @@ test_that("uniform primary analytical CDFs match numerical integration for
   }
 })
 
-test_that("uniform primary analytical CDFs handle a vector pwindow with both
-  narrow and wide windows", {
-  q <- c(5, 4e3, 1e5, 3)
-  pwindow <- c(1e-7, 1, 1e-2, 1e-9)
-  for (case in unif_cases()) {
-    obj <- do.call(
-      new_pcens, c(list(case$pdist, dunif), case$grid[[3]])
-    )
-    expect_equal(
-      pcens_cdf(obj, q, pwindow),
-      vapply(
-        seq_along(q), function(i) pcens_cdf(obj, q[[i]], pwindow[[i]]),
-        numeric(1)
-      ),
-      tolerance = 1e-14,
-      info = case$name
-    )
-  }
-})
-
 test_that(".check_pwindow errors for missing q and invalid pwindow", {
   expect_null(.check_pwindow(c(1, 2), c(0, 1)))
   expect_error(.check_pwindow(NA_real_, 1), "q must not")
@@ -362,24 +352,6 @@ test_that("uniform primary analytical CDFs warn when q and a vector pwindow
   }
 })
 
-test_that("uniform primary analytical CDFs check pwindow", {
-  for (case in unif_cases()) {
-    obj <- do.call(
-      new_pcens, c(list(case$pdist, dunif), case$grid[[3]])
-    )
-    expect_error(pcens_cdf(obj, c(1, 2), NA_real_), "pwindow")
-    expect_error(pcens_cdf(obj, c(1, 2), c(1, NA)), "pwindow")
-    expect_error(pcens_cdf(obj, c(1, 2), -1), "pwindow")
-    expect_equal(
-      pcens_cdf(obj, 2, c(1, 2)),
-      vapply(c(1, 2), function(w) pcens_cdf(obj, 2, w), numeric(1)),
-      tolerance = 1e-14
-    )
-    expect_identical(pcens_cdf(obj, numeric(0), 1), numeric(0))
-    expect_identical(pcens_cdf(obj, numeric(0), c(1, 2)), numeric(0))
-  }
-})
-
 test_that("uniform primary analytical CDFs give the delay CDF for the zero
   width elements of a vector pwindow", {
   q <- c(2, 2, 5, -1, 0)
@@ -397,27 +369,6 @@ test_that("uniform primary analytical CDFs give the delay CDF for the zero
       pcens_cdf(obj, q, pwindow), expected, tolerance = 1e-14,
       info = case$name
     )
-  }
-})
-
-test_that("uniform primary analytical CDFs with a vector pwindow match
-  element-wise calls when some windows use the upper tail form", {
-  q <- c(0.5, 1e6, 3, 1e9, 60, 25, Inf, -2)
-  pwindow <- c(1, 0.1, 2, 5, 0.01, 1, 1, 1)
-  for (case in unif_cases()) {
-    obj <- do.call(
-      new_pcens, c(list(case$pdist, dunif), case$grid[[1]])
-    )
-    expected <- vapply(
-      seq_along(q), function(i) pcens_cdf(obj, q[[i]], pwindow[[i]]),
-      numeric(1)
-    )
-    expect_equal(
-      pcens_cdf(obj, q, pwindow), expected,
-      tolerance = 1e-14,
-      info = case$name
-    )
-    expect_equal(expected[c(2, 4)], c(1, 1), tolerance = 1e-9)
   }
 })
 
