@@ -263,6 +263,7 @@ fit_haz <- fitdistdoublecens(
 
 Modelling wrappers for external fitting packages
 \code{\link{pcd_as_stan_data}()},
-\code{\link{pcd_cmdstan_model}()}
+\code{\link{pcd_cmdstan_model}()},
+\code{\link{pcens_loglik_fn}()}
 }
 \concept{modelhelpers}

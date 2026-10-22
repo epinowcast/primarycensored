@@ -66,8 +66,8 @@ its full name, as it follows \code{...}.}
 \item{pcens_cache}{Optional environment shared across calls with the same
 \code{params}, \code{pdist} and \code{dprimary}, as made by \code{\link[=.build_pcens_closures]{.build_pcens_closures()}}.
 The \code{pcens} object and the grouping of \code{params} are built on the first
-call and kept in it, and later calls only \link[=update.pcens]{update()} the
-parameters. \code{NULL} (the default) builds them on every call.}
+call and kept in it.
+\code{NULL} (the default) builds them on every call.}
 
 \item{...}{Additional arguments to be passed to pdist}
 }
