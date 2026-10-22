@@ -35,6 +35,13 @@ test_that("uniform primary analytical CDFs are 0 at and below 0 and tend to
     expect_identical(pcens_cdf(obj, c(-5, -0.1, 0), 1), c(0, 0, 0))
     expect_equal(pcens_cdf(obj, 1e4, 1), 1, tolerance = 1e-10)
   }
+  if (requireNamespace("flexsurv", quietly = TRUE)) {
+    # A small Q gives a large shape, where the terms at q < 0 are undefined
+    obj <- new_pcens(
+      flexsurv::pgengamma, dunif, mu = 1, sigma = 0.6, Q = 1e-3
+    )
+    expect_identical(pcens_cdf(obj, c(-2, -1e-12, 0, 0), 1), rep(0, 4))
+  }
 })
 
 test_that("uniform primary analytical CDFs handle empty, missing and
@@ -74,20 +81,127 @@ test_that(".pcens_cdf_uniform combines the terms at both ends of the window
   for a new delay family", {
   # Exponential delay, with partial expectation (1 - exp(-rt) (1 + rt)) / r
   rate <- 0.4
-  terms_fn <- function(t) {
-    t * -expm1(-rate * t) - (1 - exp(-rate * t) * (1 + rate * t)) / rate
+  terms_fn <- function(t, p) {
+    t * -expm1(-p$rate * t) - p$mean * (1 - exp(-p$rate * t) * (1 + p$rate * t))
   }
-  upper_fn <- function(t) -exp(-rate * t) / rate
+  upper_fn <- function(t, p) -p$mean * exp(-p$rate * t)
+  delay_cdf <- function(t, p) pexp(t, p$rate)
   q <- c(-1, 0, 0.2, 0.9, 1, 3, 10, 40)
   for (pwindow in c(0.5, 1, 4)) {
     expect_close(
       .pcens_cdf_uniform(
-        q, pwindow, terms_fn, upper_fn, 1 / rate,
-        function(t) pexp(t, rate)
+        q, pwindow, terms_fn, upper_fn, delay_cdf,
+        list(rate = rate, mean = 1 / rate)
       ),
       unif_reference(pexp, q, pwindow, rate = rate)
     )
   }
+})
+
+test_that(".uniform_endpoint_diff evaluates each distinct window end once
+  when enough lower ends match a delay", {
+  counter <- new.env()
+  fn <- function(t, p) {
+    counter$n <- counter$n + length(t)
+    t^2
+  }
+  count_evaluations <- function(q, pwindow, share = TRUE) {
+    counter$n <- 0L
+    lo <- pmax.int(q - pwindow, 0)
+    expect_identical(
+      .uniform_endpoint_diff(fn, q, lo, list(), share), q^2 - lo^2
+    )
+    counter$n
+  }
+  distinct_ends <- function(q, pwindow) {
+    length(unique(c(q, pmax.int(q - pwindow, 0))))
+  }
+  q <- 0:80
+  expect_identical(count_evaluations(q, 2), distinct_ends(q, 2))
+  q_half <- seq(0, 40, by = 0.5)
+  expect_identical(count_evaluations(q_half, 1.5), distinct_ends(q_half, 1.5))
+  q_mixed <- c(seq(0.37, 9.9, length.out = 30), 0:50)
+  expect_identical(count_evaluations(q_mixed, 1), distinct_ends(q_mixed, 1))
+  # Not shared without the flag, for short inputs, or when few lower ends
+  # match a delay
+  expect_identical(count_evaluations(q, 2, share = FALSE), 2L * length(q))
+  expect_identical(count_evaluations(0:30, 1), 62L)
+  expect_identical(count_evaluations(q, 1.5), 2L * length(q))
+  q_none <- seq(1.37, 40, length.out = 60)
+  expect_identical(count_evaluations(q_none, 1), 2L * length(q_none))
+  q_zeros <- sort(c(0, 0, 0, seq(1.37, 40, length.out = 200)))
+  expect_identical(count_evaluations(q_zeros, 1), 2L * length(q_zeros))
+})
+
+test_that("uniform primary analytical CDFs that share terms match single
+  point evaluation", {
+  grids <- list(
+    list(q = 0:100, pwindow = 1),
+    list(q = 0:100, pwindow = 3),
+    list(q = seq(0, 40, by = 0.5), pwindow = 1.5),
+    list(q = seq(0, 20, by = 0.25), pwindow = 0.25),
+    list(q = c(seq(0.37, 9.9, length.out = 30), 0:50), pwindow = 1),
+    list(q = c(0:100, 2e3, 5e3), pwindow = 1)
+  )
+  for (case in unif_cases()) {
+    for (args in case$grid[1:2]) {
+      obj <- do.call(new_pcens, c(list(case$pdist, dunif), args))
+      for (grid in grids) {
+        expect_equal(
+          pcens_cdf(obj, grid$q, grid$pwindow),
+          vapply(
+            grid$q, function(x) pcens_cdf(obj, x, grid$pwindow), numeric(1)
+          ),
+          tolerance = 1e-14,
+          info = paste(case$name, toString(unlist(args)))
+        )
+      }
+    }
+  }
+})
+
+test_that("pprimarycensored and dprimarycensored agree on a lattice where
+  uniform primary terms are shared", {
+  x <- 0:80
+  for (case in unif_cases()) {
+    args <- c(list(pdist = case$pdist, pwindow = 2), case$grid[[3]])
+    p <- do.call(pprimarycensored, c(list(q = x), args))
+    expect_equal(
+      p,
+      vapply(
+        x, function(i) do.call(pprimarycensored, c(list(q = i), args)),
+        numeric(1)
+      ),
+      tolerance = 1e-14,
+      info = case$name
+    )
+    d <- do.call(dprimarycensored, c(list(x = x, D = 81), args))
+    p_lo <- do.call(pprimarycensored, c(list(q = x, L = 0, D = 81), args))
+    p_up <- do.call(
+      pprimarycensored, c(list(q = x + 1, L = 0, D = 81), args)
+    )
+    expect_equal(d, p_up - p_lo, tolerance = 1e-12, info = case$name)
+  }
+})
+
+test_that("uniform primary analytical CDFs evaluate vector delay parameters
+  per point", {
+  q <- c(0:10, 2e3, 1e7)
+  shape <- seq(1, 3, length.out = 13)
+  obj <- new_pcens(pgamma, dunif, shape = shape, scale = 1)
+  expected <- vapply(seq_along(q), function(i) {
+    pcens_cdf(new_pcens(pgamma, dunif, shape = shape[i], scale = 1), q[i], 1)
+  }, numeric(1))
+  expect_no_warning(pcens_cdf(obj, q, 1))
+  expect_equal(pcens_cdf(obj, q, 1), expected, tolerance = 1e-14)
+  expect_equal(
+    pcens_cdf(obj, 2, 1),
+    vapply(shape, function(s) {
+      pcens_cdf(new_pcens(pgamma, dunif, shape = s, scale = 1), 2, 1)
+    }, numeric(1)),
+    tolerance = 1e-14
+  )
+  expect_warning(pcens_cdf(obj, 1:5, 1), "multiple")
 })
 
 test_that("uniform primary analytical CDFs are 1 at Inf and 0 at -Inf", {

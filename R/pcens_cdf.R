@@ -293,44 +293,52 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #' Delays at or below zero give 0, delays of `Inf` give 1 and missing delays
 #' are an error.
 #' Zero-width windows give the delay CDF.
-#' `q` and `pwindow` are recycled against each other.
+#' `q`, `pwindow` and the elements of `params` are recycled against each
+#' other.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @param terms_fn Function of delays greater than or equal to zero returning
-#'  \eqn{G}.
+#' @param terms_fn Function of delays greater than or equal to zero and
+#'  `params` returning \eqn{G}.
 #'
-#' @param upper_fn Function of delays greater than or equal to zero returning
-#'  \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and \eqn{\tilde S} are
-#'  the upper tails of \eqn{F} and \eqn{\tilde F}.
+#' @param upper_fn Function of delays greater than or equal to zero and
+#'  `params` returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and
+#'  \eqn{\tilde S} are the upper tails of \eqn{F} and \eqn{\tilde F}.
 #'
-#' @param mean Mean of the delay distribution, \eqn{E}.
+#' @param delay_cdf Function of delays and `params` returning the delay CDF.
 #'
-#' @param delay_cdf Function of delays returning the delay CDF.
+#' @param params Named list of delay parameters, including the delay mean
+#'  \eqn{E} as `mean`.
 #'
 #' @return Numeric vector of CDF values in \[0, 1\].
 #'
 #' @keywords internal
-.pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn, mean,
-                               delay_cdf) {
+.pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn, delay_cdf,
+                               params) {
   .check_pwindow(q, pwindow)
   if (length(q) == 0L) {
     return(numeric(0))
   }
-  n <- max(length(q), length(pwindow))
-  if (n %% length(q) != 0L || n %% length(pwindow) != 0L) {
+  param_lengths <- lengths(params)
+  n <- max(length(q), length(pwindow), param_lengths)
+  if (any(n %% c(length(q), length(pwindow), param_lengths) != 0L)) {
     warning(
       "longer object length is not a multiple of shorter object length",
       call. = FALSE
     )
   }
+  scalar_params <- all(param_lengths == 1L)
+  share <- scalar_params && length(pwindow) == 1L
   q <- rep_len(q, n)
   pwindow <- rep_len(pwindow, n)
+  if (!scalar_params) {
+    params <- lapply(params, rep_len, n)
+  }
   active <- q > 0 & q < Inf
   exact <- active & pwindow == 0
   if (!any(exact) && all(active)) {
     result <- .uniform_window_cdf(
-      q, pwindow, terms_fn, upper_fn, mean, delay_cdf
+      q, pwindow, terms_fn, upper_fn, delay_cdf, params, share
     )
     return(pmin.int(1, pmax.int(0, result)))
   }
@@ -338,18 +346,25 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   result <- numeric(n)
   result[q == Inf] <- 1
   if (any(exact)) {
-    result[exact] <- delay_cdf(q[exact])
+    result[exact] <- delay_cdf(q[exact], .index_params(params, exact))
     active <- active & !exact
   }
   if (any(active)) {
     result[active] <- .uniform_window_cdf(
-      q[active], pwindow[active], terms_fn, upper_fn, mean, delay_cdf
+      q[active], pwindow[active], terms_fn, upper_fn, delay_cdf,
+      .index_params(params, active), share
     )
   }
   pmin.int(1, pmax.int(0, result))
 }
 
-# Errors if q has missing values or pwindow is empty, missing or negative
+#' Check the delays and windows of a uniform primary CDF
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @return Invisible NULL if valid, otherwise stops with an error message.
+#'
+#' @keywords internal
 .check_pwindow <- function(q, pwindow) {
   if (anyNA(q)) {
     stop("q must not contain missing values.", call. = FALSE)
@@ -363,46 +378,127 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   invisible(NULL)
 }
 
+#' Index vector delay parameters
+#'
+#' @inheritParams .pcens_cdf_uniform
+#'
+#' @param i Logical or integer index.
+#'
+#' @return `params` with each element longer than one indexed by `i`.
+#'
+#' @keywords internal
+.index_params <- function(params, i) {
+  lapply(params, function(x) if (length(x) == 1L) x else x[i])
+}
+
 # Delays more than this many windows wide may use the survival form
 .upper_tail_ratio <- 1e3
 # Delays more than this many windows wide use the mean of the delay CDF
 .narrow_window_ratio <- 1e6
 
-# Uniform primary CDF for finite delays and windows greater than 0, with one
-# window per delay. Values are not clamped to [0, 1].
-.uniform_window_cdf <- function(d, w, terms_fn, upper_fn, mean, delay_cdf) {
+#' Uniform primary CDF for positive finite delays and windows
+#'
+#' @inheritParams .pcens_cdf_uniform
+#'
+#' @param d Positive finite delays.
+#'
+#' @param w Primary event windows greater than zero, one per delay.
+#'
+#' @param share Whether terms may be shared between window ends, as in
+#'  [.uniform_endpoint_diff()]. Only valid for a scalar window and scalar
+#'  `params`.
+#'
+#' @return Numeric vector of CDF values, not clamped to \[0, 1\].
+#'
+#' @keywords internal
+.uniform_window_cdf <- function(d, w, terms_fn, upper_fn, delay_cdf, params,
+                                share) {
   # Both forms lose about 1e-16 * d / w for narrow windows (1e-10 at the
   # cutoff), so the mean of the delay CDF over the window is used instead
   narrow <- d > .narrow_window_ratio * w
   if (any(narrow)) {
     if (all(narrow)) {
-      return(.narrow_window_cdf(d, w, delay_cdf))
+      return(.narrow_window_cdf(d, w, delay_cdf, params))
     }
     result <- numeric(length(d))
-    result[narrow] <- .narrow_window_cdf(d[narrow], w[narrow], delay_cdf)
+    result[narrow] <- .narrow_window_cdf(
+      d[narrow], w[narrow], delay_cdf, .index_params(params, narrow)
+    )
     result[!narrow] <- .uniform_window_cdf(
-      d[!narrow], w[!narrow], terms_fn, upper_fn, mean, delay_cdf
+      d[!narrow], w[!narrow], terms_fn, upper_fn, delay_cdf,
+      .index_params(params, !narrow), share
     )
     return(result)
   }
   lo <- pmax.int(d - w, 0)
   # In the far upper tail G(d) - G(lo) cancels, unlike 1 - (H(d) - H(lo)) / w
   # with G(t) = t - mean - H(t). This only pays off past the delay mean.
-  up <- lo > mean & d > .upper_tail_ratio * w
+  up <- lo > params$mean & d > .upper_tail_ratio * w
   if (!any(up)) {
-    return((terms_fn(d) - terms_fn(lo)) / w)
+    return(.uniform_endpoint_diff(terms_fn, d, lo, params, share) / w)
   }
   if (all(up)) {
-    return(1 - (upper_fn(d) - upper_fn(lo)) / w)
+    return(1 - .uniform_endpoint_diff(upper_fn, d, lo, params, share) / w)
   }
   result <- numeric(length(d))
-  result[up] <- 1 - (upper_fn(d[up]) - upper_fn(lo[up])) / w[up]
-  result[!up] <- (terms_fn(d[!up]) - terms_fn(lo[!up])) / w[!up]
+  result[up] <- 1 - .uniform_endpoint_diff(
+    upper_fn, d[up], lo[up], .index_params(params, up), share
+  ) / w[up]
+  result[!up] <- .uniform_endpoint_diff(
+    terms_fn, d[!up], lo[!up], .index_params(params, !up), share
+  ) / w[!up]
   result
 }
 
-# Mean of the delay CDF over [d - w, d] from a 5 point Gauss-Legendre rule
-.narrow_window_cdf <- function(d, w, delay_cdf) {
+#' Difference of terms between the ends of uniform primary windows
+#'
+#' Returns `fn(d, params) - fn(lo, params)`.
+#' With `share = TRUE` and at least 64 delays, lower ends that equal a delay
+#' reuse the terms at that delay, so `fn` is evaluated once per distinct
+#' window end.
+#' This is tried only when at least 3 of 6 sampled lower ends match a delay,
+#' which skips the full match when few ends coincide, and used only when at
+#' most half as many unmatched distinct lower ends as delays remain.
+#'
+#' @inheritParams .uniform_window_cdf
+#'
+#' @param fn Function of delays and `params`, such as `terms_fn` or
+#'  `upper_fn`.
+#'
+#' @param lo Lower window ends, one per delay.
+#'
+#' @return Numeric vector of differences, one per delay.
+#'
+#' @keywords internal
+.uniform_endpoint_diff <- function(fn, d, lo, params, share) {
+  n <- length(d)
+  # Matching costs more than it saves for short inputs
+  if (share && n >= 64L) {
+    probe <- round(seq.int(1, n, length.out = 6L))
+    if (sum(lo[probe] %in% d) >= 3L) {
+      idx <- match(lo, d)
+      unmatched <- is.na(idx)
+      extra <- unique(lo[unmatched])
+      if (2L * length(extra) <= n) {
+        idx[unmatched] <- n + match(lo[unmatched], extra)
+        at_d <- fn(d, params)
+        return(at_d - c(at_d, fn(extra, params))[idx])
+      }
+    }
+  }
+  fn(d, params) - fn(lo, params)
+}
+
+#' Mean of the delay CDF over narrow uniform primary windows
+#'
+#' Uses a 5 point Gauss-Legendre rule over \[d - w, d\].
+#'
+#' @inheritParams .uniform_window_cdf
+#'
+#' @return Numeric vector of CDF values, one per delay.
+#'
+#' @keywords internal
+.narrow_window_cdf <- function(d, w, delay_cdf, params) {
   # Weights are halved so they sum to 1
   nodes <- c(-0.906179845938664, -0.5384693101056831, 0,
              0.5384693101056831, 0.906179845938664)
@@ -411,7 +507,8 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   n <- length(d)
   half <- w / 2
   x <- rep(d - half, 5) + rep(nodes, each = n) * rep(half, 5)
-  drop(matrix(delay_cdf(x), nrow = n) %*% gl_weights)
+  cdf <- delay_cdf(x, .index_params(params, rep(seq_len(n), 5)))
+  drop(matrix(cdf, nrow = n) %*% gl_weights)
 }
 
 #' Method for Gamma delay with uniform primary
@@ -453,18 +550,20 @@ pcens_cdf.pcens_pgamma_dunif <- function(
   }
 
   # The partial expectation distribution is a gamma with shape + 1
-  E_T <- shape * scale
-  terms_fn <- function(t) {
-    t * pgamma(t, shape, scale = scale) -
-      E_T * pgamma(t, shape + 1, scale = scale)
+  terms_fn <- function(t, p) {
+    t * pgamma(t, p$shape, scale = p$scale) -
+      p$mean * pgamma(t, p$shape + 1, scale = p$scale)
   }
-  upper_fn <- function(t) {
-    t * pgamma(t, shape, scale = scale, lower.tail = FALSE) -
-      E_T * pgamma(t, shape + 1, scale = scale, lower.tail = FALSE)
+  upper_fn <- function(t, p) {
+    t * pgamma(t, p$shape, scale = p$scale, lower.tail = FALSE) -
+      p$mean * pgamma(t, p$shape + 1, scale = p$scale, lower.tail = FALSE)
   }
-  delay_cdf <- function(t) pgamma(t, shape, scale = scale)
+  delay_cdf <- function(t, p) pgamma(t, p$shape, scale = p$scale)
 
-  .pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, E_T, delay_cdf)
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(shape = shape, scale = scale, mean = shape * scale)
+  )
 }
 
 #' Method for Log-Normal delay with uniform primary
@@ -506,19 +605,21 @@ pcens_cdf.pcens_plnorm_dunif <- function(
 
   # The partial expectation distribution has meanlog + sdlog^2, which gives
   # z - sdlog for the standardised log delay z
-  E_T <- exp(mu + 0.5 * sigma^2)
-  terms_fn <- function(t) {
-    z <- (log(t) - mu) / sigma
-    t * stats::pnorm(z) - E_T * stats::pnorm(z - sigma)
+  terms_fn <- function(t, p) {
+    z <- (log(t) - p$mu) / p$sigma
+    t * stats::pnorm(z) - p$mean * stats::pnorm(z - p$sigma)
   }
-  upper_fn <- function(t) {
-    z <- (log(t) - mu) / sigma
+  upper_fn <- function(t, p) {
+    z <- (log(t) - p$mu) / p$sigma
     t * stats::pnorm(z, lower.tail = FALSE) -
-      E_T * stats::pnorm(z - sigma, lower.tail = FALSE)
+      p$mean * stats::pnorm(z - p$sigma, lower.tail = FALSE)
   }
-  delay_cdf <- function(t) stats::plnorm(t, mu, sigma)
+  delay_cdf <- function(t, p) stats::plnorm(t, p$mu, p$sigma)
 
-  .pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, E_T, delay_cdf)
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(mu = mu, sigma = sigma, mean = exp(mu + 0.5 * sigma^2))
+  )
 }
 
 #' Method for Weibull delay with uniform primary
@@ -554,29 +655,31 @@ pcens_cdf.pcens_pweibull_dunif <- function(
     stop("scale parameter is required for Weibull distribution", call. = FALSE)
   }
 
-  # Precompute constants
-  inv_scale <- 1 / scale
-  a <- 1 + 1 / shape
-  lgamma_a <- lgamma(a)
-
-  # E[T] F~_T(t) = scale * gamma(a, x) with x = (t / scale)^shape, formed on
-  # the log scale from the regularised pgamma to avoid overflow
-  terms_fn <- function(t) {
-    x <- (t * inv_scale)^shape
+  # E[T] F~_T(t) = scale * gamma(a, x) with a = 1 + 1 / shape and
+  # x = (t / scale)^shape, formed on the log scale from the regularised
+  # pgamma to avoid overflow
+  terms_fn <- function(t, p) {
+    x <- (t / p$scale)^p$shape
     t * -expm1(-x) -
-      scale * exp(pgamma(x, a, log.p = TRUE) + lgamma_a)
+      p$scale * exp(pgamma(x, p$a, log.p = TRUE) + p$lgamma_a)
   }
-  upper_fn <- function(t) {
-    x <- (t * inv_scale)^shape
+  upper_fn <- function(t, p) {
+    x <- (t / p$scale)^p$shape
     t * exp(-x) -
-      scale * exp(
-        pgamma(x, a, lower.tail = FALSE, log.p = TRUE) + lgamma_a
+      p$scale * exp(
+        pgamma(x, p$a, lower.tail = FALSE, log.p = TRUE) + p$lgamma_a
       )
   }
-  delay_cdf <- function(t) -expm1(-(t * inv_scale)^shape)
+  delay_cdf <- function(t, p) -expm1(-(t / p$scale)^p$shape)
 
+  a <- 1 + 1 / shape
+  lgamma_a <- lgamma(a)
   .pcens_cdf_uniform(
-    q, pwindow, terms_fn, upper_fn, scale * exp(lgamma_a), delay_cdf
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(
+      shape = shape, scale = scale, a = a, lgamma_a = lgamma_a,
+      mean = scale * exp(lgamma_a)
+    )
   )
 }
 
@@ -711,19 +814,23 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 #' @keywords internal
 .pcens_cdf_gengamma_unif <- function(q, pwindow, shape, scale, k) {
   # The partial expectation distribution has shape k + 1 / shape
+  terms_fn <- function(t, p) {
+    x <- (t / p$scale)^p$shape
+    t * pgamma(x, p$k) - p$mean * pgamma(x, p$k_shift)
+  }
+  upper_fn <- function(t, p) {
+    x <- (t / p$scale)^p$shape
+    t * pgamma(x, p$k, lower.tail = FALSE) -
+      p$mean * pgamma(x, p$k_shift, lower.tail = FALSE)
+  }
+  delay_cdf <- function(t, p) pgamma((t / p$scale)^p$shape, p$k)
+
   k_shift <- k + 1 / shape
-  E_T <- scale * exp(lgamma(k_shift) - lgamma(k))
-
-  terms_fn <- function(t) {
-    x <- (t / scale)^shape
-    t * pgamma(x, k) - E_T * pgamma(x, k_shift)
-  }
-  upper_fn <- function(t) {
-    x <- (t / scale)^shape
-    t * pgamma(x, k, lower.tail = FALSE) -
-      E_T * pgamma(x, k_shift, lower.tail = FALSE)
-  }
-  delay_cdf <- function(t) pgamma((t / scale)^shape, k)
-
-  .pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, E_T, delay_cdf)
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(
+      shape = shape, scale = scale, k = k, k_shift = k_shift,
+      mean = scale * exp(lgamma(k_shift) - lgamma(k))
+    )
+  )
 }

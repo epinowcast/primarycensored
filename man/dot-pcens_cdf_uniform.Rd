@@ -4,7 +4,7 @@
 \alias{.pcens_cdf_uniform}
 \title{Uniform primary event censored CDF from terms at the window ends}
 \usage{
-.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, mean, delay_cdf)
+.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, delay_cdf, params)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -12,16 +12,17 @@
 \item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
 observed primary event, in which case the delay CDF is used directly.}
 
-\item{terms_fn}{Function of delays greater than or equal to zero returning
-\eqn{G}.}
+\item{terms_fn}{Function of delays greater than or equal to zero and
+\code{params} returning \eqn{G}.}
 
-\item{upper_fn}{Function of delays greater than or equal to zero returning
-\eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and \eqn{\tilde S} are
-the upper tails of \eqn{F} and \eqn{\tilde F}.}
+\item{upper_fn}{Function of delays greater than or equal to zero and
+\code{params} returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and
+\eqn{\tilde S} are the upper tails of \eqn{F} and \eqn{\tilde F}.}
 
-\item{mean}{Mean of the delay distribution, \eqn{E}.}
+\item{delay_cdf}{Function of delays and \code{params} returning the delay CDF.}
 
-\item{delay_cdf}{Function of delays returning the delay CDF.}
+\item{params}{Named list of delay parameters, including the delay mean
+\eqn{E} as \code{mean}.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -37,6 +38,7 @@ expectation distribution.
 Delays at or below zero give 0, delays of \code{Inf} give 1 and missing delays
 are an error.
 Zero-width windows give the delay CDF.
-\code{q} and \code{pwindow} are recycled against each other.
+\code{q}, \code{pwindow} and the elements of \code{params} are recycled against each
+other.
 }
 \keyword{internal}
