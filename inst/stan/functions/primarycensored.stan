@@ -197,7 +197,11 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
     );
   } else {
-    // Use numerical integration for other cases
+    // Use numerical integration for other cases. For positive-support
+    // delays the integrand is 0 for t <= 0, so the CDF is 0 for d <= 0.
+    if (dist_has_positive_support(dist_id) && d <= 0) {
+      return 0;
+    }
     result = primarycensored_numeric_cdf(
       d | dist_id, params, pwindow, primary_id, primary_params
     );
@@ -455,9 +459,7 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * @ingroup primary_censored_vectorized
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
-  * check_for_analytical_vectorized() is 1, and
-  * primarycensored_exptilt_lcdf_vectorized() when
-  * check_for_exptilt_vectorized() and check_for_analytical_params() are 1,
+  * check_for_analytical_vectorized() and check_for_analytical_params() are 1,
   * and otherwise calls primarycensored_lcdf() at each delay. No truncation
   * is applied.
   *
@@ -476,16 +478,11 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data int dist_id, array[] real params,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
-  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
-    return primarycensored_analytical_lcdf_vectorized(
-      start, n, dist_id, params, pwindow
-    );
-  }
-  if (check_for_exptilt_vectorized(dist_id, primary_id, pwindow)
+  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)
       && check_for_analytical_params(dist_id, params, primary_id,
                                      primary_params)) {
-    return primarycensored_exptilt_lcdf_vectorized(
-      start, n, dist_id, params, pwindow, primary_params[1]
+    return primarycensored_analytical_lcdf_vectorized(
+      start, n, dist_id, params, pwindow, primary_id, primary_params
     );
   }
   vector[n] log_cdfs;
@@ -527,8 +524,7 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
   *
   * The log CDFs at the integer delays come from
   * primarycensored_lcdf_vectorized(), which uses the analytical solution
-  * with shared terms where check_for_analytical_vectorized() or
-  * check_for_exptilt_vectorized() allows it.
+  * where check_for_analytical_vectorized() allows it.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
