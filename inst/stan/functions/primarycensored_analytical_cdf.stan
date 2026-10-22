@@ -108,6 +108,11 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
+  * Both terms come from one `gamma_lcdf_logx_pair()` evaluation. The
+  * subtraction in `primarycensored_uniform_lcdf_from_terms()` amplifies their
+  * rounding error by about d / pwindow. Rejects a rate that is not positive
+  * and finite.
+  *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
   *
@@ -121,15 +126,13 @@ vector primarycensored_gamma_uniform_terms(real t,
   }
   real shape = params[1];
   real rate = params[2];
+  real log_rate = gamma_log_rate(rate);
   // log E where E = k * theta = shape / rate is the mean of the delay
-  real log_E = log(shape) - log(rate);
-  // F_T(t; k) and the recursion to F_T(t; k+1):
-  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1), with y = rate * t
-  real log_F_T_k = gamma_lcdf(t | shape, rate);
-  real gamma_kp1_pdf_log = shape * log(rate * t) - rate * t
-                           - lgamma(shape + 1);
-  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_kp1_pdf_log);
-  return [log(t) + log_F_T_k, log_E + log_F_T_kp1]';
+  real log_E = log(shape) - log_rate;
+  // Both CDFs share one series or fraction evaluation at log(rate * t)
+  real log_t = log(t);
+  vector[2] log_F_T = gamma_lcdf_logx_pair(log_t + log_rate, shape);
+  return [log_t + log_F_T[1], log_E + log_F_T[2]]';
 }
 
 /**
@@ -221,6 +224,12 @@ vector primarycensored_weibull_uniform_terms(real t,
   * replaced by k + 1/shape, so this generalises the Gamma (shape = 1) and
   * Weibull (k = 1) solutions.
   *
+  * The subtraction in `primarycensored_uniform_lcdf_from_terms()` loses
+  * precision for large `k * shape`, with errors above 1e-6 possible once it
+  * exceeds about 12000.
+  * The two terms use separate `gamma_lcdf_logx()` calls, since the shapes
+  * k and k + 1 / shape do not differ by one.
+  *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters
   * [shape, scale, k]
@@ -238,9 +247,11 @@ vector primarycensored_gengamma_uniform_terms(real t,
   real k = params[3];
   real k_shift = k + inv(shape);
   real log_E = log(scale) + lgamma(k_shift) - lgamma(k);
+  real log_t = log(t);
+  real log_x = shape * (log_t - log(scale));
   return [
-    log(t) + gengamma_lcdf(t | shape, scale, k),
-    log_E + gengamma_lcdf(t | shape, scale, k_shift)
+    log_t + gamma_lcdf_logx(log_x, k),
+    log_E + gamma_lcdf_logx(log_x, k_shift)
   ]';
 }
 
