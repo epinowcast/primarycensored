@@ -56,20 +56,25 @@ The numerical method is less accurate in the lower tail of a gamma with
 shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
 
 The direct form cancels as \eqn{\rho \to 0}.
-With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
-replace it to second order in \eqn{\rho}.
+With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in
+\eqn{\rho} truncated after the second order replace it.
 \itemize{
 \item For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-3}} for delays on
-the reals, the uniform window limit with its corrections,
+the reals, and \eqn{|\rho| (|q| + w) < 0.1}, the uniform window limit
+with its corrections,
 \eqn{\{G_1(q) - G_1(q - w)\} / w +
   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
   \rho^2 \{G_3(q) - G_3(q - w) - 3 w [G_2(q) + G_2(q - w)] / 2 +
   w^2 [G_1(q) - G_1(q - w)] / 2\} / (6 w)}.
-\item For delays on the non-negative reals with \eqn{q < w} and
-\eqn{|\rho| q < 10^{-2}},
+Its relative error is below \eqn{(|\rho| w)^3 / 160}.
+\item Otherwise, for delays on the non-negative reals with \eqn{q < w} and
+\eqn{|\rho| q < 5 \times 10^{-3}},
 \eqn{\rho \{G_1(q) + \rho G_2(q) / 2 + \rho^2 G_3(q) / 6\} /
   (e^{\rho w} - 1)}.
+Its relative error is below \eqn{(|\rho| q)^3 / 24}.
 }
+
+Both errors are below \eqn{10^{-8}} at these limits.
 
 The CDF agrees with numerical integration to a relative 1e-6 in the
 package tests.
@@ -95,5 +100,23 @@ pnorm_obj <- new_pcens(
   primary_args = list(r = 0.1), mean = 3, sd = 2
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
+}
+\seealso{
+Low level primary event censored distribution objects and methods
+\code{\link{new_pcens}()},
+\code{\link{pcens_cdf}()},
+\code{\link{pcens_cdf.default}()},
+\code{\link{pcens_cdf.pcens_pdiscretehazard}()},
+\code{\link{pcens_cdf.pcens_pdiscretestep}()},
+\code{\link{pcens_cdf.pcens_pgamma_dunif}()},
+\code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
+\code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
+\code{\link{pcens_cdf.pcens_plnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_pweibull_dunif}()},
+\code{\link{pcens_pmf}()},
+\code{\link{pcens_pmf.default}()},
+\code{\link{pcens_quantile}()},
+\code{\link{pcens_quantile.default}()},
+\code{\link{update.pcens}()}
 }
 \concept{pcens}
