@@ -171,10 +171,11 @@ new_pcens <- function(
 #' Otherwise an error is raised. Names in `primary_args` are not checked
 #' against `dprimary`.
 #'
-#' With `check = FALSE` none of these checks are run.
-#' Unnamed or misspelt parameters are not detected and can silently change
-#' the result of the numerical path.
-#' Only use it with names that have already been validated.
+#' With `check = FALSE` none of these checks are run, so only use it with
+#' names that have already been checked.
+#' A fully unnamed `...` is then ignored.
+#' Misspelt or partly unnamed parameters are added to the object, and when
+#' it is evaluated they may give an error, be ignored or change the result.
 #'
 #' @return A `pcens` object with the same class as `object` and updated
 #'   `args`, `primary_args` and `dprimary_args` fields. See [new_pcens()] for
@@ -207,29 +208,25 @@ update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   if (isTRUE(check)) {
     if (length(new_args) > 0L) {
       .check_named_list(new_args, "Delay parameters passed to update()")
-      unknown <- nms[!nms %in% names(object$args)]
-      if (length(unknown) > 0L) {
-        # Drop the first formal, the point at which pdist is evaluated
-        pdist_args <- names(formals(object$pdist))[-1]
-        if (!is.null(pdist_args) && !"..." %in% pdist_args) {
-          unknown <- unknown[!unknown %in% pdist_args]
-          if (length(unknown) > 0L) {
-            stop(
-              "Unknown delay parameter(s) for pdist: ", toString(unknown),
-              ".",
-              call. = FALSE
-            )
-          }
-        }
+    }
+    unknown <- setdiff(nms, names(object$args))
+    if (length(unknown) > 0L) {
+      # Drop the first formal, the point at which pdist is evaluated
+      pdist_args <- names(formals(object$pdist))[-1]
+      unknown <- setdiff(unknown, pdist_args)
+      if (length(unknown) > 0L && !is.null(pdist_args) &&
+        !"..." %in% pdist_args) {
+        stop(
+          "Unknown delay parameter(s) for pdist: ", toString(unknown), ".",
+          call. = FALSE
+        )
       }
     }
-    if (!is.null(primary_args)) {
-      if (!is.list(primary_args)) {
-        stop("primary_args must be a list.", call. = FALSE)
-      }
-      if (length(primary_args) > 0L) {
-        .check_named_list(primary_args, "primary_args")
-      }
+    if (!is.null(primary_args) && !is.list(primary_args)) {
+      stop("primary_args must be a list.", call. = FALSE)
+    }
+    if (length(primary_args) > 0L) {
+      .check_named_list(primary_args, "primary_args")
     }
   }
   if (length(new_args) > 0L) {

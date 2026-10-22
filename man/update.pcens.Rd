@@ -48,10 +48,11 @@ of \code{object$pdist} other than its first, unless \code{pdist} takes \code{...
 Otherwise an error is raised. Names in \code{primary_args} are not checked
 against \code{dprimary}.
 
-With \code{check = FALSE} none of these checks are run.
-Unnamed or misspelt parameters are not detected and can silently change
-the result of the numerical path.
-Only use it with names that have already been validated.
+With \code{check = FALSE} none of these checks are run, so only use it with
+names that have already been checked.
+A fully unnamed \code{...} is then ignored.
+Misspelt or partly unnamed parameters are added to the object, and when
+it is evaluated they may give an error, be ignored or change the result.
 }
 \examples{
 obj <- new_pcens(

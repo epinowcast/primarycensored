@@ -8,7 +8,8 @@
 
 ## Performance
 
-- `update()` for `pcens` objects gains `check`, and `fitdistdoublecens()` uses `check = FALSE` for its likelihood evaluations.
+- `update()` for `pcens` objects has a new `check` argument.
+  `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
 
 # primarycensored 1.6.0
