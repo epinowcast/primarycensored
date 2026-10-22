@@ -135,7 +135,7 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
 
   // Check if an analytical solution exists and applies for these parameters
   if (check_for_analytical_params(dist_id, params, primary_id,
-                                  primary_params)) {
+                                  primary_params, pwindow)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
@@ -230,7 +230,7 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
   // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
   // and -inf for distributions with support on the reals.
   if (check_for_analytical_params(dist_id, params, primary_id,
-                                  primary_params)) {
+                                  primary_params, pwindow)) {
     result = primarycensored_analytical_lcdf(
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
@@ -433,7 +433,7 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        array[] real primary_params) {
   if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)
       && check_for_analytical_params(dist_id, params, primary_id,
-                                     primary_params)) {
+                                     primary_params, pwindow)) {
     return primarycensored_analytical_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_id, primary_params
     );

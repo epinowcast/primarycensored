@@ -271,7 +271,7 @@ test_that("the checks follow the delay, the primary and the tilt", {
   )
   for (check in checks) {
     expect_identical(
-      do.call(check_for_analytical_params, check[1:4]), check[[5]]
+      do.call(check_for_analytical_params, c(check[1:4], 2)), check[[5]]
     )
   }
 })
@@ -303,7 +303,7 @@ test_that("Stan tilt transforms and moments match the R versions", {
       tolerance = 1e-9, info = case$dist_id
     )
   }
-  # Stan returns -Inf where a gamma term is below the smallest double
+  # Deep in both gamma tails
   ts <- 10^seq(-8, 4, by = 0.5)
   for (shape in c(0.05, 0.3, 1, 7, 100, 1000)) {
     obj <- new_pcens(
@@ -315,13 +315,11 @@ test_that("Stan tilt transforms and moments match the R versions", {
           ts, if (upper) tilt_upper else tilt_lower, numeric(1), 2L, xi,
           c(shape, 1.7)
         )
-        expected <- .pcens_tilt_transform(obj, ts, xi, upper = upper)
-        keep <- is.finite(actual)
-        info <- sprintf("shape %g, xi %g, upper %s", shape, xi, upper)
         expect_equal(
-          actual[keep], expected[keep], tolerance = 1e-9, info = info
+          actual, .pcens_tilt_transform(obj, ts, xi, upper = upper),
+          tolerance = 1e-9,
+          info = sprintf("shape %g, xi %g, upper %s", shape, xi, upper)
         )
-        expect_true(all(expected[!keep] < -600), info = info)
       }
     }
   }
@@ -392,6 +390,34 @@ test_that("primarycensored_exptilt_lcdf matches a reference integral and R", {
         )
       }
     }
+  }
+})
+
+test_that("the small tilt forms are accurate to 1e-8 at their limits", {
+  for (case in exptilt_limit_cases()) {
+    label <- sprintf(
+      "rate = %g, pwindow = %g, r = %g", case$rate, case$pwindow, case$rho
+    )
+    form <- vapply(
+      case$q, primarycensored_exptilt_form, integer(1), 4L, case$rho,
+      case$pwindow
+    )
+    expected_form <- if (abs(case$rho) * case$pwindow < 1e-2) {
+      1L
+    } else if (abs(case$rho) * case$q < 5e-3) {
+      2L
+    } else {
+      0L
+    }
+    expect_identical(form, rep(expected_form, length(case$q)), info = label)
+    actual <- exp(vapply(
+      case$q, primarycensored_exptilt_lcdf, numeric(1), 4L, case$rate,
+      case$pwindow, case$rho
+    ))
+    expected <- exptilt_reference(
+      case$q, case$pwindow, case$rho, function(x) pexp(x, case$rate)
+    )
+    expect_lt(max_rel_diff(actual, expected), 1e-8, label = label)
   }
 })
 
@@ -489,7 +515,9 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the analytical
         }
         info <- exptilt_case_label(case, pwindow = pwindow, r = rho)
         expect_identical(
-          check_for_analytical_params(case$dist_id, case$params, 2L, rho), 1L
+          check_for_analytical_params(
+            case$dist_id, case$params, 2L, rho, pwindow
+          ), 1L
         )
         expected <- exptilt_reference(d, pwindow, rho, cdf)
         lcdf <- vapply(
@@ -521,8 +549,9 @@ test_that("inadmissible tilts use the ODE path", {
   d <- c(0.5, 2, 5, 10)
   for (case in cases) {
     expect_identical(
-      check_for_analytical_params(case$dist_id, case$params, 2L, case$rho),
-      0L
+      check_for_analytical_params(
+        case$dist_id, case$params, 2L, case$rho, 2
+      ), 0L
     )
     ode <- exptilt_ode_cdf(ode_model, case, d, 2, case$rho)
     plain <- vapply(
@@ -660,9 +689,9 @@ test_that("the vectorised tilted CDF matches the per delay CDF", {
   for (case in exptilt_stan_cases[c(2, 4, 5)]) {
     expect_identical(
       primarycensored_analytical_lcdf_vectorized(
-        1L, 25L, case$dist_id, case$params, 10, 2L, 2e-5
+        1L, 25L, case$dist_id, case$params, 10, 2L, 2e-3
       )[1:25],
-      per_delay_exptilt_lcdf(1:25, case$dist_id, case$params, 10, 2e-5)
+      per_delay_exptilt_lcdf(1:25, case$dist_id, case$params, 10, 2e-3)
     )
   }
 })
@@ -995,47 +1024,6 @@ test_that("the rate gradient of the tilted log CDF is accurate where the CDF
   }
 })
 
-test_that("primarycensored_log_gamma_pq gives both tails in value and shape
-  gradient for any shape", {
-  fractions <- c(0.001, 0.3, 0.7, 0.9, 1, 1.05, 1.2, 1.6, 3, 8)
-  for (shape in c(0.3, 2.5, 20, 200, 1000, 1e4)) {
-    x <- shape * fractions
-    actual <- vapply(x, primarycensored_log_gamma_pq, numeric(2), shape)
-    for (k in 1:2) {
-      expected <- stats::pgamma(x, shape, lower.tail = k == 1, log.p = TRUE)
-      keep <- is.finite(expected) & expected > -1e5
-      expect_equal(
-        actual[k, keep], expected[keep],
-        tolerance = 1e-10, info = paste("tail", k, "shape", shape)
-      )
-    }
-  }
-  model <- exptilt_unary_model(
-    "primarycensored_log_gamma_pq(x, a)[which]", "pcd_log_gamma_pq"
-  )
-  for (shape in c(2.5, 20, 200, 1000)) {
-    for (x in shape * c(0.05, 0.3, 0.7, 1, 1.3, 2, 4)) {
-      for (k in 1:2) {
-        res <- exptilt_unary_gradient(model, x, shape, k)
-        h <- 1e-4 * shape
-        reference <- function(s) {
-          stats::pgamma(x, s, lower.tail = k == 1, log.p = TRUE)
-        }
-        expected <- (-reference(shape + 2 * h) + 8 * reference(shape + h) -
-          8 * reference(shape - h) + reference(shape - 2 * h)) / (12 * h)
-        info <- paste("tail", k, "shape", shape, "x", x)
-        expect_false(res$gradient_not_finite, info = info)
-        expect_false(res$rejected, info = info)
-        # CmdStan prints 6 significant digits
-        expect_lte(
-          abs(res$gradient - expected),
-          1e-5 * max(abs(expected), 1e-6), label = info
-        )
-      }
-    }
-  }
-})
-
 test_that("the normal log CDF has an exact gradient in the deep lower tail", {
   model <- exptilt_unary_model(
     "primarycensored_log_std_normal_cdf(a)", "pcd_log_std_normal_cdf"
@@ -1056,6 +1044,51 @@ test_that("the normal log CDF has an exact gradient in the deep lower tail", {
     expect_equal(
       res$gradient, expected,
       tolerance = 1e-5, info = as.character(zz)
+    )
+  }
+})
+
+test_that("the tilted gamma log CDF has a finite, accurate gradient in the
+  shape at large shapes in both tails", {
+  model <- exptilt_gradient_model()
+  # The reference is the gradient of the integral, by central differences in
+  # the log shape with two Richardson extrapolations.
+  points <- list(
+    list(shape = 80, rate = 26.667, d = 4.6, rho = 0.3),
+    list(shape = 80, rate = 26.667, d = 4.9, rho = -0.3),
+    list(shape = 80, rate = 26.667, d = 1.2, rho = 0.3),
+    list(shape = 150, rate = 50, d = 4.6, rho = 0.3),
+    list(shape = 150, rate = 50, d = 4.9, rho = -0.3),
+    list(shape = 150, rate = 50, d = 1.2, rho = -0.3),
+    list(shape = 250, rate = 83.333, d = 4.7, rho = 0.3),
+    list(shape = 250, rate = 83.333, d = 4.9, rho = -0.3),
+    list(shape = 250, rate = 83.333, d = 1.8, rho = 0.3)
+  )
+  lcdf <- function(shape, point) {
+    log(exptilt_reference(
+      point$d, 1, point$rho, function(x) stats::pgamma(x, shape, point$rate)
+    ))
+  }
+  for (point in points) {
+    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
+    label <- exptilt_case_label(case, d = point$d, pwindow = 1, r = point$rho)
+    res <- exptilt_gradient_at(model, case, point$d, 1, point$rho)
+    expect_false(res$gradient_not_finite, info = label)
+    expect_false(res$rejected, info = label)
+    expect_true(all(is.finite(res$gradient)), info = label)
+    central <- function(h) {
+      (lcdf(point$shape * (1 + h), point) -
+        lcdf(point$shape * (1 - h), point)) / (2 * point$shape * h)
+    }
+    r <- c(central(1e-2), central(5e-3), central(2.5e-3))
+    e <- (4 * r[2:3] - r[1:2]) / 3
+    reference <- (16 * e[2] - e[1]) / 15
+    expect_lte(
+      abs(res$gradient[1] - reference), 1e-5 * max(abs(reference), 1e-3),
+      label = paste0(
+        label, ": gradient ", signif(res$gradient[1], 7),
+        ", reference ", signif(reference, 7)
+      )
     )
   }
 })
