@@ -109,7 +109,10 @@ vector primarycensored_truncation_bounds(
   * @ingroup primary_censored_single
   *
   * The numerical path of primarycensored_cdf(), without truncation, using
-  * `ode_rk45`.
+  * `ode_rk45`. The integration variable ranges over the primary event time,
+  * from d - pwindow to d. For delays on the non-negative reals the integrand
+  * is 0 below 0, so the integral starts at 0 to keep the solver from stepping
+  * over the kink there.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -124,8 +127,6 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
                                  array[] real params, data real pwindow,
                                  data int primary_id,
                                  array[] real primary_params) {
-  // Start at 0 for positive-support delays, as the solver steps over the
-  // kink at 0 with a relative error of order 1e-3 for small d
   real lower_bound = dist_has_positive_support(dist_id)
                      ? fmax(d - pwindow, 0) : d - pwindow;
   int n_params = num_elements(params);
@@ -179,6 +180,9 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     );
   } else {
     // Use numerical integration for other cases
+    if (dist_has_positive_support(dist_id) && d <= 0) {
+      return 0;
+    }
     result = primarycensored_numeric_cdf(
       d | dist_id, params, pwindow, primary_id, primary_params
     );
@@ -436,11 +440,8 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * @ingroup primary_censored_vectorized
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
-  * check_for_analytical_vectorized() is 1, and
-  * primarycensored_exptilt_lcdf_vectorized() when
-  * check_for_exptilt_vectorized() and check_for_analytical_delay() at the
-  * largest delay are 1.
-  * Otherwise it calls primarycensored_lcdf() at each delay. No truncation
+  * check_for_analytical_vectorized() is 1 and check_for_analytical_delay() is
+  * 1 at the largest delay, and otherwise calls primarycensored_lcdf() at each delay. No truncation
   * is applied.
   *
   * @param start First delay to compute
@@ -458,16 +459,11 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data int dist_id, array[] real params,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
-  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
-    return primarycensored_analytical_lcdf_vectorized(
-      start, n, dist_id, params, pwindow
-    );
-  }
-  if (check_for_exptilt_vectorized(dist_id, primary_id, pwindow)
+  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)
       && check_for_analytical_delay(dist_id, params, primary_id,
                                     primary_params, n, pwindow)) {
-    return primarycensored_exptilt_lcdf_vectorized(
-      start, n, dist_id, params, pwindow, primary_params[1]
+    return primarycensored_analytical_lcdf_vectorized(
+      start, n, dist_id, params, pwindow, primary_id, primary_params
     );
   }
   vector[n] log_cdfs;
@@ -509,8 +505,7 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
   *
   * The log CDFs at the integer delays come from
   * primarycensored_lcdf_vectorized(), which uses the analytical solution
-  * with shared terms where check_for_analytical_vectorized() or
-  * check_for_exptilt_vectorized() allows it.
+  * where check_for_analytical_vectorized() allows it.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution

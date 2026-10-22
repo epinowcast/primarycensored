@@ -42,8 +42,8 @@ They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
 \details{
-With window width \eqn{w}, delay CDF \eqn{F} and the transform
-\eqn{J(x) = T_f(-\rho; x)} of \link{tilt_transform}, the CDF at \eqn{q} is
+With window width \eqn{w}, delay CDF \eqn{F} and
+\eqn{J(x) = \int e^{-\rho u} f(u) du} up to \eqn{x}, the CDF at \eqn{q} is
 \deqn{
 F_\rho(q) = F(q - w) + \frac{e^{\rho q} \{J(q) - J(q - w)\} -
   \{F(q) - F(q - w)\}}{e^{\rho w} - 1}.
@@ -56,36 +56,33 @@ or the upper tail terms, whichever loses less precision.
 The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
 \eqn{\lambda}, so that the tilted delay distribution exists.
 Otherwise the numerical method is used.
-In Stan the numerical method is less accurate in the lower tail of a
-gamma with shape below 1.
+The numerical method is less accurate in the lower tail of a gamma with
+shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
 The lognormal transform has no closed form.
-It is evaluated by quadrature for \eqn{\rho > 0} and by a series for
-\eqn{\rho < 0}, see \link{tilt_transform_lognormal}.
-The numerical method is used where the transform does not apply or is
-slower, see \code{.pcens_tilt_fits()}.
+It is evaluated by quadrature for \eqn{\rho > 0} and by a series of
+partial moments for \eqn{\rho < 0}.
+The numerical method is used where the series needs too many terms or is
+slower than numerical integration.
 
 The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two forms
-replace it.
+replace it to second order in \eqn{\rho}.
 \itemize{
-\item For \eqn{|\rho| w < 10^{-4}} and \eqn{|\rho| (|q| + w) < 0.1}, the
-uniform window limit with its first order correction in \eqn{\rho},
+\item For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-3}} for delays on
+the reals, and \eqn{|\rho| (|q| + w) < 0.1}, the uniform window limit
+with its corrections,
 \eqn{\{G_1(q) - G_1(q - w)\} / w +
-  \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w)}.
+  \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
+  \rho^2 \{G_3(q) - G_3(q - w) - 3 w [G_2(q) + G_2(q - w)] / 2 +
+  w^2 [G_1(q) - G_1(q - w)] / 2\} / (6 w)}.
 \item For delays on the non-negative reals with \eqn{q < w} and
-\eqn{|\rho| q < 10^{-4}},
-\eqn{\rho \{G_1(q) + \rho G_2(q) / 2\} / (e^{\rho w} - 1)}.
+\eqn{|\rho| q < 10^{-2}},
+\eqn{\rho \{G_1(q) + \rho G_2(q) / 2 + \rho^2 G_3(q) / 6\} /
+  (e^{\rho w} - 1)}.
 }
 
-The value of both forms has a truncation error below 1e-9.
-The Stan gradient in \eqn{\rho} of both has a relative error of up to
-about 2e-5 at the thresholds.
-
-The CDF agrees with numerical integration to a relative difference of
-about 1e-9 or better, except in the deep lower tail of a normal delay with
-a small tilt (about 1e-7) and for windows much smaller than the delay,
-which lose up to about 1e-13 / \code{pwindow} to the difference of the terms at
-the two endpoints.
+The CDF agrees with numerical integration to a relative 1e-6 in the
+package tests.
 }
 \examples{
 # Exponential delay with a growing primary event process
@@ -109,3 +106,4 @@ pnorm_obj <- new_pcens(
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
 }
+\concept{pcens}

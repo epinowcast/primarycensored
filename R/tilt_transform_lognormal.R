@@ -1,34 +1,25 @@
-#' Tilt transform of a lognormal delay
+# Tilt transform of a lognormal delay
+#
+# The truncated exponential-moment transform of the lognormal has no closed
+# form. With z_t = (log t - meanlog) / sdlog,
+# T_f(xi; t) = int_{-Inf}^{z_t} exp(xi exp(meanlog + sdlog z)) phi(z) dz.
+#   * For xi = 0 it is the lognormal CDF.
+#   * For xi < 0 the integrand is log-concave and is integrated by
+#     Gauss-Legendre quadrature on panels around its mode. The upper
+#     transform is integrated in the same way, so it does not cancel.
+#   * For xi > 0 the transform is the series sum_k xi^k m_k(t) / k! of
+#     positive terms in the partial moments
+#     m_k(t) = exp(k meanlog + k^2 sdlog^2 / 2) Phi(z_t - k sdlog).
+#     The total diverges, so the upper transform is `Inf`.
+# The series needs about xi t terms per point. `.pcens_tilt_fits()` is
+# `FALSE` beyond xi t of 200, unless xi w is above 2, and beyond 20000 terms.
+
+#' Lognormal delay meanlog and sdlog of a pcens object, defaulting as in
+#' [stats::plnorm()]
 #'
-#' The truncated exponential-moment transform of the lognormal has no closed
-#' form. With \eqn{z_t = (\log t - \mu) / \sigma},
-#' \deqn{T_f(\xi; t) = \int_{-\infty}^{z_t} e^{\xi e^{\mu + \sigma z}}
-#'   \phi(z) dz.}
-#' * For \eqn{\xi = 0} it is the lognormal CDF.
-#' * For \eqn{\xi < 0} the integrand is log-concave and is integrated by
-#'   Gauss-Legendre quadrature on panels around its mode. The upper
-#'   transform is integrated in the same way, so it does not cancel.
-#' * For \eqn{\xi > 0} the transform is the series
-#'   \eqn{\sum_k \xi^k m_k(t) / k!} of positive terms in the partial moments
-#'   \eqn{m_k(t) = e^{k \mu + k^2 \sigma^2 / 2} \Phi(z_t - k \sigma)}.
-#'   The total diverges, so the upper transform is `Inf`.
+#' @param object A `pcens` object.
 #'
-#' The series needs about \eqn{\xi t} terms per point. `.pcens_tilt_fits()`
-#' is `FALSE` beyond \eqn{\xi t} of 200, unless \eqn{\xi w} is above 2, and
-#' beyond 20000 terms.
-#'
-#' @inheritParams tilt_transform
-#'
-#' @param meanlog,sdlog Mean and standard deviation of the log of the delay.
-#'
-#' @return
-#' * `.lnorm_meanlog_sdlog()`: a list with `meanlog` and `sdlog`, defaulting
-#'   as in [stats::plnorm()].
-#' * `.lnorm_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
-#'   of the transform over the lower and the upper part of the support.
-#'
-#' @keywords internal
-#' @name tilt_transform_lognormal
+#' @noRd
 .lnorm_meanlog_sdlog <- function(object) {
   mu <- object$args$meanlog
   sigma <- object$args$sdlog
@@ -263,7 +254,8 @@
   stats::pnorm(outer(z, shift, "-"), log.p = TRUE)
 }
 
-#' @rdname tilt_transform_lognormal
+# Log lower and upper transform at each t, a matrix with columns `lower` and
+# `upper`
 .lnorm_tilt_pair <- function(t, meanlog, sdlog, xi) {
   if (xi == 0) {
     z <- (log(pmax(t, 0)) - meanlog) / sdlog
@@ -281,13 +273,11 @@
   .lnorm_tilt_quadrature(t, meanlog, sdlog, xi)
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_lower.pcens_plnorm <- function(object) {
   0
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_available.pcens_plnorm <- function(object, xi) {
   p <- .lnorm_meanlog_sdlog(object)
@@ -297,7 +287,6 @@
   xi >= 0 || log(-xi) + 2 * log(p$sdlog) + p$meanlog < 690
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_fits.pcens_plnorm <- function(object, xi, t, pwindow = 0) {
   if (xi <= 0) {
@@ -308,25 +297,23 @@
     .lnorm_series_terms(xi, t) <= .lnorm_max_terms
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_transform.pcens_plnorm <- function(object, t, xi, upper = FALSE) {
   p <- .lnorm_meanlog_sdlog(object)
   .lnorm_tilt_pair(t, p$meanlog, p$sdlog, xi)[, if (upper) 2L else 1L]
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_pair.pcens_plnorm <- function(object, t, xi) {
   p <- .lnorm_meanlog_sdlog(object)
   .lnorm_tilt_pair(t, p$meanlog, p$sdlog, xi)
 }
 
-#' @rdname tilt_transform
 #' @exportS3Method
 .pcens_tilt_moments.pcens_plnorm <- function(object, t) {
-  # G_1 = t m_0 - m_1 and G_2 = t G_1 - (t m_1 - m_2) from the partial
-  # moments m_k, as differences of positive integrals
+  # G_1 = t m_0 - m_1, G_2 = t G_1 - (t m_1 - m_2) and
+  # G_3 = t G_2 - (t (t m_1 - m_2) - (t m_2 - m_3)) from the partial moments
+  # m_k, as differences of positive integrals as in `.gamma_moments()`
   p <- .lnorm_meanlog_sdlog(object)
   positive <- t > 0
   tp <- pmax(t, 0)
@@ -339,9 +326,15 @@
     stats::pnorm(z - 2 * p$sdlog, log.p = TRUE)
   log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
   log_h <- .log_diff_exp(log_t + log_m1, log_m2)
+  log_m3 <- 3 * p$meanlog + 4.5 * p$sdlog^2 +
+    stats::pnorm(z - 3 * p$sdlog, log.p = TRUE)
   log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
+  log_a <- .log_diff_exp(log_t + log_m2, log_m3)
+  log_b <- .log_diff_exp(log_t + log_h, log_a)
+  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
   cbind(
     G1 = ifelse(positive, log_g1, -Inf),
-    G2 = ifelse(positive, log_g2, -Inf)
+    G2 = ifelse(positive, log_g2, -Inf),
+    G3 = ifelse(positive, log_g3, -Inf)
   )
 }

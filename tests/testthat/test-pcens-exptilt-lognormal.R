@@ -126,7 +126,7 @@ test_that("the lognormal moments match numerical integrals", {
     t <- exp(case$meanlog + case$sdlog * c(-3, -1, 0, 1, 2.5))
     moments <- .pcens_tilt_moments(obj, t)
     f <- function(u) dlnorm(u, case$meanlog, case$sdlog)
-    for (k in 1:2) {
+    for (k in 1:3) {
       expected <- vapply(t, function(tt) {
         stats::integrate(
           function(u) (tt - u)^k * f(u), 0, tt,
@@ -140,6 +140,7 @@ test_that("the lognormal moments match numerical integrals", {
   moments <- .pcens_tilt_moments(obj, c(-1, 0))
   expect_identical(moments[, 1], c(-Inf, -Inf))
   expect_identical(moments[, 2], c(-Inf, -Inf))
+  expect_identical(moments[, 3], c(-Inf, -Inf))
 })
 
 test_that("the lognormal series agrees with quadrature for a small tilt", {
@@ -245,15 +246,15 @@ test_that("the lognormal CDF has no jump where the small tilt form ends", {
     for (pwindow in c(0.5, 2, 7)) {
       q <- c(1e-3, 0.3 * pwindow, pwindow, 3, 6, 12, 25)
       for (sign in c(-1, 1)) {
-        below <- exptilt_object(family, sign * 0.9999e-4 / pwindow)
-        above <- exptilt_object(family, sign * 1.0001e-4 / pwindow)
+        below <- exptilt_object(family, sign * 0.999999e-2 / pwindow)
+        above <- exptilt_object(family, sign * 1.000001e-2 / pwindow)
         expect_lt(
           max_rel_diff(
             .pcens_cdf_exptilt(below, q, pwindow),
             .pcens_cdf_exptilt(above, q, pwindow)
           ),
           1e-7,
-          label = exptilt_label(family, pwindow, sign * 1e-4 / pwindow)
+          label = exptilt_label(family, pwindow, sign * 1e-2 / pwindow)
         )
       }
     }
@@ -617,12 +618,14 @@ test_that("the lognormal CDF is accurate for a large sdlog", {
       for (rho in c(5, 200, -2)) {
         obj <- exptilt_object(delay, rho)
         expected <- exptilt_reference(d, 1, rho, exptilt_cdf(delay))
+        # The small delay form applies up to |r| d of 1e-2 and has a relative
+        # truncation error of up to about (r d)^3 / 24, so 4e-8 at the limit
         keep <- expected > 1e-100
         expect_lt(
           max_rel_diff(
             .pcens_cdf_exptilt(obj, d, 1)[keep], expected[keep]
           ),
-          1e-8,
+          1e-7,
           label = sprintf(
             "sdlog %g, meanlog %g, r %g", sdlog, meanlog, rho
           )

@@ -43,8 +43,8 @@ test_that("check_for_analytical includes the lognormal with a tilted
   expect_identical(check_for_analytical(1L, 2L), 1L)
   expect_identical(check_for_exptilt(1L, 2L), 1L)
   expect_identical(check_for_exptilt(1L, 1L), 0L)
-  expect_identical(check_for_exptilt_vectorized(1L, 2L, 1), 1L)
-  expect_identical(check_for_exptilt_vectorized(1L, 2L, 1.5), 0L)
+  expect_identical(check_for_analytical_vectorized(1L, 2L, 1), 1L)
+  expect_identical(check_for_analytical_vectorized(1L, 2L, 1.5), 0L)
   # The uniform primary solution is unchanged
   expect_identical(check_for_analytical(1L, 1L), 1L)
   expect_identical(check_for_uniform_terms(1L, 1L), 1L)
@@ -147,7 +147,7 @@ test_that("Stan lognormal moments match the R moments", {
     params <- lnorm_params(case)
     expected <- .pcens_tilt_moments(obj, ts)
     actual <- t(vapply(
-      ts, primarycensored_tilt_moments, numeric(2), 1L, params
+      ts, primarycensored_tilt_moments, numeric(3), 1L, params
     ))
     keep <- is.finite(expected[, 1]) & expected[, 1] > -700
     expect_equal(
@@ -156,8 +156,10 @@ test_that("Stan lognormal moments match the R moments", {
     )
   }
   params <- c(1.6, 0.5)
-  expect_identical(primarycensored_tilt_moments(0, 1L, params), c(-Inf, -Inf))
-  expect_identical(primarycensored_tilt_moments(-2, 1L, params), c(-Inf, -Inf))
+  expect_identical(primarycensored_tilt_moments(0, 1L, params), rep(-Inf, 3))
+  expect_identical(
+    primarycensored_tilt_moments(-2, 1L, params), rep(-Inf, 3)
+  )
 })
 
 test_that("the lognormal tilted CDF matches a reference integral", {
@@ -212,10 +214,11 @@ test_that("the lognormal tilted CDF is continuous across the small tilt
   for (case in lnorm_stan_cases) {
     for (pwindow in c(0.5, 2, 7)) {
       for (sign in c(-1, 1)) {
+        limit <- sign * 1e-2 / pwindow
         expect_lt(
           max_rel_diff(
-            exp(lnorm_stan_lcdf(d, case, pwindow, sign * 0.9999e-4 / pwindow)),
-            exp(lnorm_stan_lcdf(d, case, pwindow, sign * 1.0001e-4 / pwindow))
+            exp(lnorm_stan_lcdf(d, case, pwindow, 0.999999 * limit)),
+            exp(lnorm_stan_lcdf(d, case, pwindow, 1.000001 * limit))
           ),
           1e-7,
           label = sprintf(
@@ -412,8 +415,8 @@ test_that("the vectorised lognormal tilted CDF matches the per delay CDF far
   for (rho in c(5e-5, -5e-5)) {
     for (range in list(c(1L, 40L), c(1990L, 2010L), c(19980L, 20000L))) {
       expect_identical(
-        primarycensored_exptilt_lcdf_vectorized(
-          range[1], range[2], 1L, params, pwindow, rho
+        primarycensored_analytical_lcdf_vectorized(
+          range[1], range[2], 1L, params, pwindow, 2L, rho
         )[range[1]:range[2]],
         lnorm_per_delay_lcdf(range[1]:range[2], params, pwindow, rho),
         info = sprintf("start %g, end %g, r %g", range[1], range[2], rho)
@@ -424,8 +427,8 @@ test_that("the vectorised lognormal tilted CDF matches the per delay CDF far
   params <- c(1.6, 0.5)
   for (rho in c(3e-5, -3e-5)) {
     expect_identical(
-      primarycensored_exptilt_lcdf_vectorized(
-        1L, 5000L, 1L, params, 2, rho
+      primarycensored_analytical_lcdf_vectorized(
+        1L, 5000L, 1L, params, 2, 2L, rho
       )[c(1:30, 2990:3010, 4990:5000)],
       lnorm_per_delay_lcdf(
         c(1:30, 2990:3010, 4990:5000), params, 2, rho
@@ -468,8 +471,8 @@ test_that("the vectorised lognormal tilted CDF matches the per delay CDF", {
       # delays, the direct form and both signs of the tilt
       for (rho in c(-0.3, -2e-5, -1e-9, 0, 1e-9, 2e-5, 1e-5, 0.4)) {
         for (start in c(1L, 5L)) {
-          vectorised <- primarycensored_exptilt_lcdf_vectorized(
-            start, n, 1L, params, pwindow, rho
+          vectorised <- primarycensored_analytical_lcdf_vectorized(
+            start, n, 1L, params, pwindow, 2L, rho
           )
           expect_length(vectorised, n)
           expect_identical(
@@ -490,7 +493,9 @@ test_that("primarycensored_lcdf_vectorized uses the lognormal shared terms", {
   params <- c(1.6, 0.5)
   expect_identical(
     primarycensored_lcdf_vectorized(1L, 20L, 1L, params, 3, 2L, 0.25),
-    primarycensored_exptilt_lcdf_vectorized(1L, 20L, 1L, params, 3, 0.25)
+    primarycensored_analytical_lcdf_vectorized(
+      1L, 20L, 1L, params, 3, 2L, 0.25
+    )
   )
   expect_identical(
     primarycensored_lcdf_vectorized(1L, 10L, 1L, params, 1.5, 2L, 0.2),
@@ -691,8 +696,10 @@ test_that("the lognormal tilted CDF is accurate for a large sdlog", {
         )
         keep <- expected > 1e-100
         actual <- exp(lnorm_stan_lcdf(d, case, 1, rho))
+        # The small delay form applies up to |r| d of 1e-2 and has a relative
+        # truncation error of up to about (r d)^3 / 24, so 4e-8 at the limit
         expect_lt(
-          max_rel_diff(actual[keep], expected[keep]), 1e-8,
+          max_rel_diff(actual[keep], expected[keep]), 1e-7,
           label = sprintf(
             "sdlog %g, meanlog %g, r %g", sdlog, meanlog, rho
           )
