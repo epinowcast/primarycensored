@@ -1,36 +1,55 @@
-# Truncated exponential-moment transforms of delay distributions
-#
-# Internal generics for the delay part of the analytical solutions with an
-# exponentially tilted primary event window, built from
-# T_f(xi; tau) = int_{-Inf}^{tau} exp(xi u) f(u) du, with lower limit 0 for
-# delays on the non-negative reals.
-# A delay is added with methods for `.pcens_tilt_lower()`,
-# `.pcens_tilt_available()`, `.pcens_tilt_transform()` and
-# `.pcens_tilt_moments()`, which dispatch on the delay class of a `pcens`
-# object. The Stan equivalents are `check_for_tilt_transform()`,
-# `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
-#   * `.pcens_tilt_transform()`: log T_f at each `t` (up to `t`, or over
-#     `(t, Inf)` with `upper = TRUE`) for a tilt `xi`, a single number or a
-#     vector of the length of `t`. A window with tilt rho needs xi = -rho.
-#   * `.pcens_tilt_available()`: whether the transform is closed form and the
-#     tilted delay exists for `xi`, otherwise the numerical method is used.
-#   * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
-#   * `.pcens_tilt_moments()`: a matrix of the log of the first, second and
-#     third moments of the delay about `t`, see ?pcens_cdf_exptilt. The
-#     small delay form of ?pcens_cdf_tlogis uses them too.
+#' Tilt transforms of delay distributions
+#'
+#' Internal generics for the delay part of the analytical solutions with an
+#' exponentially tilted primary event window, see [pcens_cdf_exptilt].
+#' They are built from the tilt transform
+#' \eqn{T_f(\xi; \tau) = \int e^{\xi u} f(u) du} up to \eqn{\tau}, from 0
+#' for delays on the non-negative reals.
+#' A delay is added with a method for each generic, dispatched on the delay
+#' class of a `pcens` object.
+#' The Stan equivalents are `check_for_tilt_transform()`,
+#' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
+#'
+#' @param object A `pcens` object.
+#'
+#' @param t Numeric vector of points.
+#'
+#' @param xi The tilt, a single number or, for `.pcens_tilt_transform()`, a
+#'   vector of the length of `t`. A window with tilt \eqn{\rho} needs
+#'   `xi = -rho`.
+#'
+#' @param upper Logical. If `TRUE`, the transform over `(t, Inf)` rather than
+#'   up to `t`.
+#'
+#' @return
+#' * `.pcens_tilt_transform()`: the log of the transform at each `t`.
+#' * `.pcens_tilt_available()`: whether the transform is closed form and the
+#'   tilted delay exists for `xi`. If not, the numerical method is used.
+#' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
+#' * `.pcens_tilt_moments()`: a matrix with columns `G1`, `G2` and `G3`, the
+#'   log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to `t`, `-Inf` below
+#'   the support.
+#'
+#' @name pcens_tilt
+#' @keywords internal
+NULL
 
+#' @rdname pcens_tilt
 .pcens_tilt_transform <- function(object, t, xi, upper = FALSE) {
   UseMethod(".pcens_tilt_transform")
 }
 
+#' @rdname pcens_tilt
 .pcens_tilt_available <- function(object, xi) {
   UseMethod(".pcens_tilt_available")
 }
 
+#' @rdname pcens_tilt
 .pcens_tilt_lower <- function(object) {
   UseMethod(".pcens_tilt_lower")
 }
 
+#' @rdname pcens_tilt
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
 }
@@ -45,11 +64,11 @@
 #' The rate is 1 if neither `rate` nor `scale` is given, as in
 #' [stats::pgamma()].
 #'
-#' @param object A `pcens` object.
+#' @inheritParams pcens_tilt
 #'
 #' @return A list with `shape` and `rate`.
 #'
-#' @noRd
+#' @keywords internal
 .gamma_shape_rate <- function(object) {
   dist_args <- object$args
   shape <- dist_args$shape
@@ -61,51 +80,6 @@
     rate <- if (is.null(dist_args$scale)) 1 else 1 / dist_args$scale
   }
   list(shape = shape, rate = rate)
-}
-
-#' Log-scale arithmetic helpers
-#'
-#' Vectorised. `.log_diff_exp()` gives `-Inf` rather than `NaN` for a zero or
-#' negative difference.
-#'
-#' @param a,b,x Numeric vectors on the log scale.
-#'
-#' @return `log(1 - exp(x))`, `log(exp(a) - exp(b))` and
-#'   `log(exp(a) + exp(b))` for `.log1m_exp()`, `.log_diff_exp()` and
-#'   `.log_sum_exp()`.
-#'
-#' @noRd
-.log1m_exp <- function(x) {
-  near_zero <- x > -log(2)
-  if (!any(near_zero)) {
-    return(log1p(-exp(x)))
-  }
-  out <- log1p(-exp(x))
-  out[near_zero] <- log(-expm1(x[near_zero]))
-  out
-}
-
-.log_diff_exp <- function(a, b) {
-  if (length(a) == length(b) && !anyNA(a) && !anyNA(b) && all(a > b)) {
-    return(a + .log1m_exp(b - a))
-  }
-  n <- max(length(a), length(b))
-  a <- rep_len(a, n)
-  b <- rep_len(b, n)
-  out <- rep(-Inf, n)
-  ok <- !is.na(a) & !is.na(b) & a > b
-  out[ok] <- a[ok] + .log1m_exp(b[ok] - a[ok])
-  out
-}
-
-.log_sum_exp <- function(a, b) {
-  larger <- pmax(a, b)
-  gap <- -abs(a - b)
-  # Both -Inf gives NaN
-  gap[is.na(gap)] <- 0
-  out <- larger + log1p(exp(gap))
-  out[larger == -Inf] <- -Inf
-  out
 }
 
 #' @exportS3Method
@@ -140,9 +114,11 @@
 
 #' Exponential delay rate of a pcens object, 1 if not given
 #'
-#' @param object A `pcens` object.
+#' @inheritParams pcens_tilt
 #'
-#' @noRd
+#' @return The rate.
+#'
+#' @keywords internal
 .exp_rate <- function(object) {
   rate <- object$args$rate
   if (is.null(rate)) 1 else rate
@@ -171,9 +147,11 @@
 #' Normal delay mean and sd of a pcens object, defaulting as in
 #' [stats::pnorm()]
 #'
-#' @param object A `pcens` object.
+#' @inheritParams pcens_tilt
 #'
-#' @noRd
+#' @return A list with `mean` and `sd`.
+#'
+#' @keywords internal
 .norm_mean_sd <- function(object) {
   mu <- object$args$mean
   sigma <- object$args$sd
@@ -196,7 +174,7 @@
 #' @exportS3Method
 .pcens_tilt_transform.pcens_pnorm <- function(object, t, xi, upper = FALSE) {
   # Completing the square gives a normal with mean mean + xi sd^2. The
-  # argument is formed as (t - mean) / sd - xi sd to avoid rounding.
+  # standardised point is formed as below to avoid rounding.
   p <- .norm_mean_sd(object)
   xi * p$mean + 0.5 * xi^2 * p$sd^2 + stats::pnorm(
     (t - p$mean) / p$sd - xi * p$sd,
@@ -209,15 +187,14 @@
 #' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2, 3`,
 #' from gamma CDFs with the shape raised by `k`.
 #'
-#' @param t Numeric vector of finite points.
+#' @inheritParams pcens_tilt
 #'
 #' @param shape,rate Gamma delay parameters.
 #'
-#' @return A matrix with columns `G1`, `G2` and `G3`, `-Inf` for `t <= 0`.
+#' @return As for `.pcens_tilt_moments()`.
 #'
-#' @noRd
+#' @keywords internal
 .gamma_moments <- function(t, shape, rate) {
-  positive <- t > 0
   tp <- pmax(t, 0)
   log_t <- log(tp)
   log_m0 <- pgamma(tp, shape, rate, log.p = TRUE)
@@ -233,11 +210,7 @@
   log_a <- .log_diff_exp(log_t + log_m2, log_m3)
   log_b <- .log_diff_exp(log_t + log_h, log_a)
   log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
-  cbind(
-    G1 = ifelse(positive, log_g1, -Inf),
-    G2 = ifelse(positive, log_g2, -Inf),
-    G3 = ifelse(positive, log_g3, -Inf)
-  )
+  cbind(G1 = log_g1, G2 = log_g2, G3 = log_g3)
 }
 
 #' @exportS3Method

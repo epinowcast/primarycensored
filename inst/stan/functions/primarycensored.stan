@@ -109,8 +109,11 @@ vector primarycensored_truncation_bounds(
   * @ingroup primary_censored_single
   *
   * The numerical path of primarycensored_cdf(), without truncation, using
-  * `ode_rk45_tol`. For a truncated logistic primary (primary_id 3) the
-  * integral is solved in parts around the location.
+  * `ode_rk45`. The integration variable ranges over the primary event time,
+  * from d - pwindow to d. For delays on the non-negative reals the integrand
+  * is 0 below 0, so the integral starts at 0 to keep the solver from stepping
+  * over the kink there. For a truncated logistic primary (primary_id 3) the
+  * integral is solved in parts around the location, with `ode_rk45_tol`.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -125,8 +128,6 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
                                  array[] real params, data real pwindow,
                                  data int primary_id,
                                  array[] real primary_params) {
-  // Start at 0 for positive-support delays, as the solver steps over the
-  // kink at 0 with a relative error of order 1e-3 for small d
   real lower_bound = dist_has_positive_support(dist_id)
                      ? fmax(d - pwindow, 0) : d - pwindow;
   int n_params = num_elements(params);
@@ -137,25 +138,24 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
   array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
 
   vector[1] y = rep_vector(0.0, 1);
-  real start = lower_bound;
-  // Solve in parts around a narrow truncated logistic density so that the
-  // solver does not step over it
-  int n_parts = primary_id == 3 ? 12 : 1;
-  vector[12] ends = rep_vector(d, 12);
-  if (primary_id == 3) {
-    ends[1:11] = tlogis_spike_times(
-      d, pwindow, primary_params[1], primary_params[2]
-    );
+  if (primary_id != 3) {
+    return ode_rk45(
+      primarycensored_ode, y, lower_bound, {d}, theta, {d, pwindow}, ids
+    )[1, 1];
   }
-  for (i in 1:n_parts) {
-    if (i < n_parts && (ends[i] <= start || ends[i] >= d)) continue;
-    // The ode_rk45 defaults, tighter for the truncated logistic primary
+  // Solve in parts around a narrow truncated logistic density, with tighter
+  // tolerances, so that the solver does not step over it
+  vector[12] stops = append_row(
+    tlogis_spike_times(d, pwindow, primary_params[1], primary_params[2]), d
+  );
+  real start = lower_bound;
+  for (i in 1:12) {
+    if (i < 12 && (stops[i] <= start || stops[i] >= d)) continue;
     y = ode_rk45_tol(
-      primarycensored_ode, y, start, {ends[i]},
-      primary_id == 3 ? 1e-9 : 1e-6, primary_id == 3 ? 1e-10 : 1e-6, 1000000,
+      primarycensored_ode, y, start, {stops[i]}, 1e-9, 1e-10, 1000000,
       theta, {d, pwindow}, ids
     )[1];
-    start = ends[i];
+    start = stops[i];
   }
   return y[1];
 }
@@ -198,7 +198,7 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
     );
   } else {
     // Use numerical integration for other cases. For positive-support
-    // delays the integrand is 0 for t <= 0, so the CDF is 0 for d <= 0.
+    // delays the integral is 0 for d <= 0.
     if (dist_has_positive_support(dist_id) && d <= 0) {
       return 0;
     }
