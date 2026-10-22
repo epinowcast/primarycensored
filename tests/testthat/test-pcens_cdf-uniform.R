@@ -1,5 +1,4 @@
-# The analytical uniform primary CDFs for the gamma, lognormal, Weibull and
-# generalised gamma delays share `.pcens_cdf_uniform()`.
+# The analytical uniform primary CDFs share `.pcens_cdf_uniform()`.
 # These tests check them against numerical integration at a tight tolerance.
 # The agreement with Stan is in test-stan-primarycensored_analytical_cdf.R.
 

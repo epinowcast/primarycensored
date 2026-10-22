@@ -286,22 +286,23 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'
 #' For a delay with mean \eqn{E} and a uniform primary event window of width
 #' \eqn{w}, the CDF at \eqn{d} is \eqn{(G(d) - G(q)) / w} with
-#' \eqn{q = \max(d - w, 0)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
-#' \eqn{F} is the delay CDF and \eqn{\tilde F} is the CDF of the partial
-#' expectation distribution.
+#' \eqn{q = \max(d - w, L)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
+#' \eqn{L} is the lower end of the delay support, \eqn{F} is the delay CDF
+#' and \eqn{E \tilde F(t)} is the partial expectation
+#' \eqn{\int_L^t x f(x) dx}.
 #'
-#' Delays at or below zero give 0, delays of `Inf` give 1 and missing delays
-#' are an error.
+#' Delays at or below \eqn{L} give 0, delays of `Inf` give 1 and missing
+#' delays are an error.
 #' Zero-width windows give the delay CDF.
 #' `q`, `pwindow` and the elements of `params` are recycled against each
 #' other.
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @param terms_fn Function of delays greater than or equal to zero and
+#' @param terms_fn Function of delays greater than or equal to `lower` and
 #'  `params` returning \eqn{G}.
 #'
-#' @param upper_fn Function of delays greater than or equal to zero and
+#' @param upper_fn Function of delays greater than or equal to `lower` and
 #'  `params` returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and
 #'  \eqn{\tilde S} are the upper tails of \eqn{F} and \eqn{\tilde F}.
 #'
@@ -310,11 +311,14 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #' @param params Named list of delay parameters, including the delay mean
 #'  \eqn{E} as `mean`.
 #'
+#' @param lower Lower end of the delay support, \eqn{L}: 0, or `-Inf` for
+#'  a delay on the reals.
+#'
 #' @return Numeric vector of CDF values in \[0, 1\].
 #'
 #' @keywords internal
 .pcens_cdf_uniform <- function(q, pwindow, terms_fn, upper_fn, delay_cdf,
-                               params) {
+                               params, lower = 0) {
   .check_pwindow(q, pwindow)
   if (length(q) == 0L) {
     return(numeric(0))
@@ -334,11 +338,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   if (!scalar_params) {
     params <- lapply(params, rep_len, n)
   }
-  active <- q > 0 & q < Inf
+  active <- q > lower & q < Inf
   exact <- active & pwindow == 0
   if (!any(exact) && all(active)) {
     result <- .uniform_window_cdf(
-      q, pwindow, terms_fn, upper_fn, delay_cdf, params, share
+      q, pwindow, terms_fn, upper_fn, delay_cdf, params, share, lower
     )
     return(pmin.int(1, pmax.int(0, result)))
   }
@@ -352,7 +356,7 @@ pcens_cdf.pcens_pdiscretehazard <- function(
   if (any(active)) {
     result[active] <- .uniform_window_cdf(
       q[active], pwindow[active], terms_fn, upper_fn, delay_cdf,
-      .index_params(params, active), share
+      .index_params(params, active), share, lower
     )
   }
   pmin.int(1, pmax.int(0, result))
@@ -396,11 +400,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 # Delays more than this many windows wide use the mean of the delay CDF
 .narrow_window_ratio <- 1e6
 
-#' Uniform primary CDF for positive finite delays and windows
+#' Uniform primary CDF for finite delays and positive windows
 #'
 #' @inheritParams .pcens_cdf_uniform
 #'
-#' @param d Positive finite delays.
+#' @param d Finite delays above `lower`.
 #'
 #' @param w Primary event windows greater than zero, one per delay.
 #'
@@ -412,7 +416,7 @@ pcens_cdf.pcens_pdiscretehazard <- function(
 #'
 #' @keywords internal
 .uniform_window_cdf <- function(d, w, terms_fn, upper_fn, delay_cdf, params,
-                                share) {
+                                share, lower) {
   # Both forms lose about 1e-16 * d / w for narrow windows (1e-10 at the
   # cutoff), so the mean of the delay CDF over the window is used instead
   narrow <- d > .narrow_window_ratio * w
@@ -426,11 +430,11 @@ pcens_cdf.pcens_pdiscretehazard <- function(
     )
     result[!narrow] <- .uniform_window_cdf(
       d[!narrow], w[!narrow], terms_fn, upper_fn, delay_cdf,
-      .index_params(params, !narrow), share
+      .index_params(params, !narrow), share, lower
     )
     return(result)
   }
-  lo <- pmax.int(d - w, 0)
+  lo <- pmax.int(d - w, lower)
   # In the far upper tail G(d) - G(lo) cancels, unlike 1 - (H(d) - H(lo)) / w
   # with G(t) = t - mean - H(t). This only pays off past the delay mean.
   up <- lo > params$mean & d > .upper_tail_ratio * w
@@ -833,4 +837,293 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
       mean = scale * exp(lgamma(k_shift) - lgamma(k))
     )
   )
+}
+
+#' Method for Exponential delay with uniform primary
+#'
+#' Analytical solution for the exponential distribution, which is the gamma
+#' solution with `shape = 1` without the incomplete gamma function.
+#' Delay arguments other than `rate`, such as `lower.tail`, use the numerical
+#' [pcens_cdf.default()] method.
+#' See `vignette("analytic-solutions")` for the derivation.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pexp,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   rate = 0.5
+#' )
+#' pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
+pcens_cdf.pcens_pexp_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, "rate", use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  rate <- if (is.null(delay_args$rate)) 1 else delay_args$rate
+
+  terms_fn <- function(t, p) .expon_shortfall(p$rate * t) * p$mean
+  upper_fn <- function(t, p) -exp(-p$rate * t) * p$mean
+  delay_cdf <- function(t, p) stats::pexp(t, p$rate)
+
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(rate = rate, mean = 1 / rate)
+  )
+}
+
+#' Method for Normal delay with uniform primary
+#'
+#' Analytical solution for the normal distribution, which has support on
+#' the reals.
+#' The primary event window \eqn{[d - w_P, d]} is not clipped at zero.
+#' Below \eqn{z = -10} an asymptotic series avoids cancellation.
+#' Delay arguments other than `mean` and `sd`, such as `lower.tail`, use the
+#' numerical [pcens_cdf.default()] method.
+#' See `vignette("analytic-solutions")` for the derivation.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pnorm,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   mean = 5,
+#'   sd = 2
+#' )
+#' pcens_cdf(pcens_obj, q = c(-1, 2, 5, 8), pwindow = 1)
+pcens_cdf.pcens_pnorm_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("mean", "sd"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  mu <- if (is.null(delay_args$mean)) 0 else delay_args$mean
+  sigma <- if (is.null(delay_args$sd)) 1 else delay_args$sd
+
+  # Centre the delay, as the narrow window and upper tail forms are chosen
+  # by the size of the delay. With mean 0, H(t) = t - G(t) = -sigma g(-z).
+  terms_fn <- function(t, p) p$sigma * .norm_shortfall(t / p$sigma)
+  upper_fn <- function(t, p) -p$sigma * .norm_shortfall(-t / p$sigma)
+  delay_cdf <- function(t, p) stats::pnorm(t, 0, p$sigma)
+
+  .pcens_cdf_uniform(
+    q - mu, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(sigma = sigma, mean = 0), lower = -Inf
+  )
+}
+
+#' Method for Chi-square delay with uniform primary
+#'
+#' The chi-square distribution with `df` degrees of freedom is the gamma
+#' distribution with `shape = df / 2` and `scale = 2`, so this uses
+#' [pcens_cdf.pcens_pgamma_dunif()].
+#' A non-central chi-square (`ncp` not zero) has no such form and uses the
+#' numerical [pcens_cdf.default()] method.
+#' So do delay arguments other than `df` and `ncp`, such as `lower.tail`.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pchisq,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   df = 4
+#' )
+#' pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
+pcens_cdf.pcens_pchisq_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("df", "ncp"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  if (is.null(delay_args$df)) {
+    stop("df parameter is required for Chi-square distribution", call. = FALSE)
+  }
+
+  object$pdist <- pgamma
+  object$args <- list(shape = delay_args$df / 2, scale = 2)
+  pcens_cdf.pcens_pgamma_dunif(object, q, pwindow)
+}
+
+#' Method for Beta delay with uniform primary
+#'
+#' Analytical solution for the beta distribution, which has support on
+#' \eqn{[0, 1]}.
+#' A non-central beta (`ncp` not zero) uses the numerical
+#' [pcens_cdf.default()] method.
+#' So do delay arguments other than `shape1`, `shape2` and `ncp`, such as
+#' `lower.tail`.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examples
+#' pcens_obj <- new_pcens(
+#'   pdist = pbeta,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   shape1 = 2,
+#'   shape2 = 3
+#' )
+#' pcens_cdf(pcens_obj, q = c(0.2, 0.6, 1.5), pwindow = 0.5)
+pcens_cdf.pcens_pbeta_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(
+    object, c("shape1", "shape2", "ncp"), use_numeric
+  )
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  a <- delay_args$shape1
+  b <- delay_args$shape2
+  if (is.null(a) || is.null(b)) {
+    stop(
+      "shape1 and shape2 parameters are required for Beta distribution",
+      call. = FALSE
+    )
+  }
+
+  # The partial expectation distribution is a beta with shape1 + 1.
+  # The terms need no clamping, as they give G(t) = t - mean above 1.
+  terms_fn <- function(t, p) {
+    t * stats::pbeta(t, p$a, p$b) - p$mean * stats::pbeta(t, p$a + 1, p$b)
+  }
+  upper_fn <- function(t, p) {
+    t * stats::pbeta(t, p$a, p$b, lower.tail = FALSE) -
+      p$mean * stats::pbeta(t, p$a + 1, p$b, lower.tail = FALSE)
+  }
+  delay_cdf <- function(t, p) stats::pbeta(t, p$a, p$b)
+
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(a = a, b = b, mean = a / (a + b))
+  )
+}
+
+#' Delay distribution arguments an analytical solution handles
+#'
+#' Arguments the solution does not use, such as `lower.tail`, would be
+#' ignored, and a non-zero `ncp` changes the distribution, so the numerical
+#' [pcens_cdf.default()] method is used instead.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @param allowed Character vector of the argument names the solution uses.
+#'
+#' @return The named list of delay arguments, or `NULL` if `use_numeric` is
+#'  `TRUE`, any argument is unnamed or not in `allowed`, or `ncp` is not
+#'  zero.
+#'
+#' @keywords internal
+.delay_args <- function(object, allowed, use_numeric = FALSE) {
+  if (isTRUE(use_numeric)) {
+    return(NULL)
+  }
+  delay_args <- object$args
+  if (length(delay_args) == 0L) {
+    return(delay_args)
+  }
+  if (
+    is.null(names(delay_args)) || !all(names(delay_args) %in% allowed) ||
+      !isTRUE(all(delay_args[["ncp"]] == 0))
+  ) {
+    return(NULL)
+  }
+  delay_args
+}
+
+#' Evaluate x - 1 + exp(-x) for x >= 0
+#'
+#' A series is used for `x < 0.1` where the direct form cancels.
+#'
+#' @param x Non-negative numeric vector.
+#'
+#' @return Vector of `x - 1 + exp(-x)`.
+#'
+#' @keywords internal
+.expon_shortfall <- function(x) {
+  out <- x + expm1(-x)
+  small <- which(x < 0.1)
+  if (length(small) > 0L) {
+    # x^2 / 2 * sum_k 2 (-x)^k / (k + 2)!
+    xs <- x[small]
+    term <- 1
+    series <- 1
+    for (k in 1:10) {
+      term <- term * -xs / (k + 2)
+      series <- series + term
+    }
+    out[small] <- xs^2 / 2 * series
+  }
+  out
+}
+
+#' Expected shortfall of a standard normal
+#'
+#' Evaluates \eqn{g(z) = z \Phi(z) + \phi(z)}.
+#' Below `z = -10` the asymptotic series
+#' \eqn{\phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with 20
+#' terms, as the direct form cancels.
+#'
+#' @param z Numeric vector of standardised values.
+#'
+#' @return Vector of `g(z)`.
+#'
+#' @keywords internal
+.norm_shortfall <- function(z) {
+  out <- stats::dnorm(z) + z * stats::pnorm(z)
+  far <- which(z < -10)
+  if (length(far) > 0L) {
+    zf <- z[far]
+    y <- 1 / zf^2
+    term <- 1
+    series <- 1
+    for (k in 1:20) {
+      term <- term * -(2 * k + 1) * y
+      series <- series + term
+    }
+    out[far] <- stats::dnorm(zf) * y * series
+  }
+  out
 }
