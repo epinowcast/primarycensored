@@ -50,7 +50,7 @@ test_that("Weibull and generalised gamma use the exponentially tilted
     expect_identical(check_for_analytical_vectorized(dist_id, 2L, 1.5), 0L)
   }
   expect_identical(
-    check_for_analytical_params(5L, c(1.3, 4, 2.5), 2L, 7), 1L
+    check_for_analytical_params(5L, c(1.3, 4, 2.5), 2L, 7, 2), 1L
   )
 })
 
@@ -365,6 +365,21 @@ test_that("tilted log CDFs have gradients matching finite differences", {
         model, case, point$d, point$pwindow, point$rho
       )
     }
+  }
+})
+
+test_that("gradients match finite differences at an integer k", {
+  model <- stacy_gradient_model()
+  # The terms of the series meet integer shapes k + n / shape at n = 3, 6, ...
+  case <- list(label = "gengamma 1.5 4 1", dist_id = 5L, params = c(1.5, 4, 1))
+  points <- list(
+    list(d = 2.5, pwindow = 2, rho = -0.2),
+    list(d = 6, pwindow = 3, rho = 0.3),
+    list(d = 14, pwindow = 3, rho = -0.15),
+    list(d = 4, pwindow = 2, rho = 1e-6)
+  )
+  for (point in points) {
+    expect_stacy_gradient(model, case, point$d, point$pwindow, point$rho)
   }
 })
 

@@ -101,7 +101,7 @@
     n_active <- length(active)
     s <- k + n / shape
     log_terms <- matrix(
-      stats::pgamma(
+      pgamma(
         rep(x[active], times = length(n)), rep(s, each = n_active),
         log.p = TRUE
       ) + rep(n * log_z - lgamma(n + 1) + lgamma(s) - log_k, each = n_active),
@@ -180,7 +180,7 @@
   }
   positive <- which(!is.na(t) & t > 0)
   if (length(positive) > 0L && xi == 0) {
-    out[positive] <- stats::pgamma(
+    out[positive] <- pgamma(
       (t[positive] / scale)^shape, k,
       lower.tail = !upper, log.p = TRUE
     )
@@ -212,7 +212,7 @@
   log_t <- log(tp)
   log_m <- function(j) {
     j * log(scale) + lgamma(k + j / shape) - lgamma(k) +
-      stats::pgamma(x, k + j / shape, log.p = TRUE)
+      pgamma(x, k + j / shape, log.p = TRUE)
   }
   log_g1 <- .log_diff_exp(log_t + log_m(0), log_m(1))
   log_h <- .log_diff_exp(log_t + log_m(1), log_m(2))
@@ -233,7 +233,17 @@
 
 .stacy_tilt_transform <- function(object, t, xi, upper = FALSE) {
   p <- .stacy_params(object)
-  .stacy_log_transform(t, xi, p$shape, p$scale, p$k, upper)
+  if (length(xi) == 1L) {
+    return(.stacy_log_transform(t, xi, p$shape, p$scale, p$k, upper))
+  }
+  out <- log_loss <- rep(NaN, length(t))
+  for (x in unique(xi)) {
+    at <- which(xi == x)
+    part <- .stacy_log_transform(t[at], x, p$shape, p$scale, p$k, upper)
+    out[at] <- part
+    log_loss[at] <- attr(part, "log_loss")
+  }
+  structure(out, log_loss = log_loss)
 }
 
 .stacy_tilt_moments <- function(object, t) {

@@ -19,6 +19,14 @@ test_that("the series transform matches quadrature of the density", {
         tolerance = 1e-8, info = paste(family$label, xi)
       )
     }
+    # A vector tilt gives the transform at each point and tilt
+    expect_identical(
+      c(.pcens_tilt_transform(obj, ts[2:3], c(-0.25, 0.05))),
+      c(
+        .pcens_tilt_transform(obj, ts[2], -0.25),
+        .pcens_tilt_transform(obj, ts[3], 0.05)
+      )
+    )
   }
 })
 

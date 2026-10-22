@@ -3,6 +3,8 @@
 ## New features
 
 - Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
+  The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
+  The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   See #367.
 - Added exponentially tilted primary event solutions for Weibull and generalised gamma delays, in R and Stan.
   See #368.
@@ -12,8 +14,10 @@
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
-- `pcens_cdf()` and the Stan numerical path no longer return 0 or an error for delays that are small relative to the primary window.
-  See #367.
+- The Stan log CDFs of Gamma and generalised gamma delays no longer return `-Inf` or `NaN` in the lower tail, and their shape gradients are accurate in both tails, including for integer and large shapes.
+  This affects `dist_lcdf()`, `gengamma_lcdf()` and the analytical solutions with a uniform primary, and removes `NaN` and `+Inf` log densities from truncated fits.
+  A Gamma rate that is not positive and finite is now rejected, as is a negative `y` in `gengamma_lcdf()`.
+  See #363, #381 and #395.
 
 ## Performance
 
@@ -22,10 +26,6 @@
   The default, `check = TRUE`, is unchanged.
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
-
-## Breaking changes
-
-- The Stan function `primarycensored_analytical_lcdf_vectorized()` takes `primary_id` and `primary_params` as its last two arguments.
 
 # primarycensored 1.6.0
 
