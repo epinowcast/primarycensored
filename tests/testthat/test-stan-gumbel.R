@@ -30,11 +30,13 @@ gumbel_case_lower <- function(case) {
 }
 
 # The delay object to call the R implementation with
+# nolint start: object_usage_linter.
 gumbel_case_object <- function(case, mu, beta) {
   gumbel_object(
     list(pdist = case$pdist, args = case$args), mu, beta
   )
 }
+# nolint end
 
 test_that("Stan tgumbel functions match the R functions", {
   settings <- list(
