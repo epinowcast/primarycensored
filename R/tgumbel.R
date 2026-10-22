@@ -49,7 +49,13 @@
 #' @name tgumbel
 NULL
 
-# Checks mu, beta and the bounds, called for its error
+#' Check the parameters and bounds of the truncated Gumbel distribution
+#'
+#' @inheritParams tgumbel
+#'
+#' @return `NULL` invisibly. Called for its error.
+#'
+#' @keywords internal
 .check_tgumbel <- function(min, max, mu, beta) {
   finite <- function(x) is.numeric(x) && !anyNA(x) && all(is.finite(x))
   if (!finite(mu) || !finite(beta) || any(beta <= 0)) {
@@ -68,7 +74,15 @@ NULL
   invisible(NULL)
 }
 
-# log(1 - exp(-exp(x))), which is x below -37 where exp(x) would underflow
+#' Log of `1 - exp(-exp(x))`
+#'
+#' Returns `x` below -37, where `exp(x)` would be lost to rounding.
+#'
+#' @param x Numeric vector.
+#'
+#' @return Numeric vector of `log(1 - exp(-exp(x)))`.
+#'
+#' @keywords internal
 .log1m_exp_neg_exp <- function(x) {
   out <- x
   large <- which(x >= -37)
@@ -76,12 +90,24 @@ NULL
   out
 }
 
-# Log of s(min) - s(max), with s(x) = exp(-(x - mu) / beta)
+#' Log differences of the truncated Gumbel window
+#'
+#' With \eqn{s(x) = \exp\{-(x - \mu) / \beta\}},
+#' `.tgumbel_log_delta_window()` gives the log of \eqn{s(min) - s(max)} and
+#' `.tgumbel_log_deltas()` the logs of \eqn{s(min) - s(x)} and
+#' \eqn{s(x) - s(max)}.
+#'
+#' @inheritParams tgumbel
+#'
+#' @return A numeric vector for `.tgumbel_log_delta_window()`, and a list
+#'   with `lower` and `upper` for `.tgumbel_log_deltas()`.
+#'
+#' @keywords internal
 .tgumbel_log_delta_window <- function(min, max, mu, beta) {
   -(max - mu) / beta + .log_diff_exp((max - min) / beta, 0)
 }
 
-# Logs of s(min) - s(x) and s(x) - s(max)
+#' @rdname dot-tgumbel_log_delta_window
 .tgumbel_log_deltas <- function(x, min, max, mu, beta) {
   list(
     lower = -(x - mu) / beta + .log_diff_exp((x - min) / beta, 0),

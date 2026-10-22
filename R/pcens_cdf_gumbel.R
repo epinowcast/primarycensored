@@ -63,7 +63,15 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  .pcens_cdf_gumbel(object, q, pwindow, use_numeric)
+  primary <- .gumbel_primary_args(object)
+  if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  .gumbel_cdf(
+    object, q, pwindow, primary$mu, primary$beta,
+    series = !isTRUE(use_numeric) &&
+      .gumbel_available(object, primary$mu, primary$beta)
+  )
 }
 
 # The series is not used above s0 = exp(mu / beta) of 15, as the terms reach
@@ -77,6 +85,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 # Largest rounding estimate for which the series is tried
 .gumbel_screen_tol <- 1e-7
 
+# Relative tolerance of each piece of the numerical integral
 .gumbel_num_tol <- 1e-10
 
 # Largest u = s(z) - s(w) integrated, beyond which exp(-u) underflows
@@ -85,7 +94,14 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 # Scales above the peak at which the density is cut, exp(-46) of its peak
 .gumbel_z_cut <- 46
 
-# Smallest N, at least 2, with s0^n / n! below 1e-18 max(s0, 1) after N
+#' Number of terms of the truncated Gumbel series
+#'
+#' @param log_s0 Log of \eqn{s_0 = e^{\mu / \beta}}, that is `mu / beta`.
+#'
+#' @return The smallest integer `N`, at least 2, for which
+#'   \eqn{s_0^n / n!} is below `1e-18 * max(s0, 1)` after `N` terms.
+#'
+#' @keywords internal
 .gumbel_n_terms <- function(log_s0) {
   n <- seq_len(200L)
   log_bound <- n * log_s0 - lgamma(n + 1) - max(log_s0, 0)
@@ -93,7 +109,14 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   max(2L, if (length(below) > 0L) below[[1L]] else length(n))
 }
 
-# Location mu and scale beta of a pcens object, checked
+#' Location and scale of a truncated Gumbel primary
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @return List with `mu` and `beta`, after checking that they are valid
+#'   single numbers.
+#'
+#' @keywords internal
 .gumbel_primary_args <- function(object) {
   primary <- object$primary_args[c("mu", "beta")]
   if (is.null(primary$mu) || is.null(primary$beta)) {
@@ -114,10 +137,19 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   primary
 }
 
-# TRUE if the series can be used, which depends on the parameters only. The
-# rounding error is about the machine precision times the size of the log
-# transform at the largest tilt times the terms exp(s0), so the series is
-# skipped where that is above .gumbel_screen_tol
+#' Whether the truncated Gumbel series can be used
+#'
+#' The choice depends on the parameters only.
+#' The rounding error is about the machine precision times the size of the
+#' log transform at the largest tilt times the terms \eqn{e^{s_0}}, so the
+#' series is skipped where that is above `.gumbel_screen_tol`.
+#'
+#' @inheritParams pcens_cdf
+#' @inheritParams tgumbel
+#'
+#' @return `TRUE` if the series can be used.
+#'
+#' @keywords internal
 .gumbel_available <- function(object, mu, beta) {
   log_s0 <- mu / beta
   if (log_s0 > log(.gumbel_max_s0)) {
@@ -130,21 +162,19 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
     log(.gumbel_screen_tol)
 }
 
-# Shared implementation of the pcens_cdf_gumbel methods
-.pcens_cdf_gumbel <- function(object, q, pwindow, use_numeric = FALSE) {
-  primary <- .gumbel_primary_args(object)
-  if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0) {
-    return(pcens_cdf.default(object, q, pwindow, use_numeric))
-  }
-  .gumbel_cdf(
-    object, q, pwindow, primary$mu, primary$beta,
-    series = !isTRUE(use_numeric) &&
-      .gumbel_available(object, primary$mu, primary$beta)
-  )
-}
-
-# CDF for a finite positive window, from the series where it is used and
-# accurate enough and from the numerical method otherwise
+#' Truncated Gumbel primary censored CDF for a finite positive window
+#'
+#' Uses the series where `series` is `TRUE` and its estimated error is below
+#' `.gumbel_tol`, and the numerical method otherwise.
+#'
+#' @inheritParams pcens_cdf
+#' @inheritParams tgumbel
+#'
+#' @param series Logical; whether to try the series.
+#'
+#' @return Vector of CDFs.
+#'
+#' @keywords internal
 .gumbel_cdf <- function(object, q, pwindow, mu, beta, series = FALSE) {
   result <- rep(NA_real_, length(q))
   result[!is.na(q) & q == Inf] <- 1
@@ -158,7 +188,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   if (series) {
     fit <- .gumbel_lcdf(object, q, pwindow, mu, beta)
     result[finite] <- pmin(1, exp(fit$log_cdf))
-    numeric_needed <- !(fit$error <= .gumbel_tol)
+    numeric_needed <- is.na(fit$error) | fit$error > .gumbel_tol
   }
   if (any(numeric_needed)) {
     result[finite[numeric_needed]] <- .gumbel_numeric(
@@ -168,9 +198,18 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   result
 }
 
-# Numerical CDF at finite q. The integral is taken in u = s(z) - s(w),
-# s(z) = exp((mu - z) / beta), for mu at or above w, and in z otherwise, so a
-# narrow spike of the density is resolved.
+#' Numerical truncated Gumbel primary censored CDF
+#'
+#' The integral is taken in \eqn{u = s(z) - s(w)}, with
+#' \eqn{s(z) = \exp\{(\mu - z) / \beta\}}, for \eqn{\mu} at or above the
+#' window width \eqn{w}, and in \eqn{z} otherwise, so a narrow spike of the
+#' density is resolved.
+#'
+#' @inheritParams .gumbel_cdf
+#'
+#' @return Vector of CDFs at finite `q`.
+#'
+#' @keywords internal
 .gumbel_numeric <- function(object, q, pwindow, mu, beta) {
   log_sw <- (mu - pwindow) / beta
   cdf <- function(x) do.call(object$pdist, c(list(q = x), object$args))
@@ -235,18 +274,25 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   )
 }
 
-# Log CDF from the series and its estimated relative error
+#' Truncated Gumbel log CDF from the series
+#'
+#' @inheritParams .gumbel_cdf
+#'
+#' @return List with the log CDFs `log_cdf` and their estimated relative
+#'   errors `error`.
+#'
+#' @keywords internal
 .gumbel_lcdf <- function(object, q, pwindow, mu, beta) {
   n_terms <- .gumbel_n_terms(mu / beta)
   pos <- .exptilt_layout(q, pwindow, .pcens_tilt_lower(object))
   # Log transforms with a row per endpoint and a column per tilt n / beta,
   # n = 0, ..., N
   n_end <- length(pos$endpoints)
-  t <- rep(pos$endpoints, n_terms + 1L)
+  ends <- rep(pos$endpoints, n_terms + 1L)
   xi <- rep(seq.int(0L, n_terms) / beta, each = n_end)
-  lower_terms <- matrix(.pcens_tilt_transform(object, t, xi), n_end)
+  lower_terms <- matrix(.pcens_tilt_transform(object, ends, xi), n_end)
   upper_terms <- matrix(
-    .pcens_tilt_transform(object, t, xi, upper = TRUE), n_end
+    .pcens_tilt_transform(object, ends, xi, upper = TRUE), n_end
   )
   at <- function(terms, index) terms[index, , drop = FALSE]
   log_delta <- matrix(
@@ -270,9 +316,22 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   )
 }
 
-# Combines the log of Delta_n(q) (a column per tilt, n = 0, ..., N), the log
-# delay CDF at q - pwindow and the scale of the log transforms into a log CDF
-# and its estimated error
+#' Sum the truncated Gumbel series
+#'
+#' @inheritParams .gumbel_cdf
+#'
+#' @param log_delta Matrix of the log of \eqn{\Delta_n(q)}, with a row per
+#'   `q` and a column per tilt, \eqn{n = 0, \dots, N}.
+#'
+#' @param log_f_y Log delay CDF at `q - pwindow`.
+#'
+#' @param scale_t Matrix, shaped as `log_delta`, of the size of the log
+#'   transforms, for the rounding estimate.
+#'
+#' @return List with the log CDFs `log_cdf` and their estimated relative
+#'   errors `error`.
+#'
+#' @keywords internal
 .gumbel_combine <- function(log_delta, log_f_y, scale_t, q, pwindow, mu,
                             beta) {
   n_terms <- ncol(log_delta) - 1L
@@ -305,9 +364,30 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   list(log_cdf = log_cdf, error = error)
 }
 
-# Estimated relative error of the bracket: the machine precision times the
-# sum of the absolute terms and the size of the logs added, plus the bound
-# s0^(N + 1) / (N + 1)! on the truncation times the delay mass
+#' Estimated relative error of the truncated Gumbel series
+#'
+#' The machine precision times the sum of the absolute terms and the size of
+#' the logs added, plus the bound \eqn{s_0^{N + 1} / (N + 1)!} on the
+#' truncation times the delay mass.
+#'
+#' @inheritParams .gumbel_combine
+#' @inheritParams .gumbel_n_terms
+#'
+#' @param log_pos,log_neg Logs of the sums of the positive and negative terms.
+#'
+#' @param log_bracket Log of the bracket, `log_pos` minus `log_neg`.
+#'
+#' @param log_mass Log of the delay mass in the window.
+#'
+#' @param log_c Log of \eqn{c(q) = \exp\{-(q - \mu) / \beta\}}.
+#'
+#' @param n_terms Number of terms, \eqn{N}.
+#'
+#' @param n The term indices, `seq_len(n_terms)`.
+#'
+#' @return Vector of estimated relative errors.
+#'
+#' @keywords internal
 .gumbel_error_bound <- function(log_pos, log_neg, log_bracket, log_mass,
                                 log_c, log_s0, n_terms, scale_t, n) {
   magnitude <- 1 + .row_max(
@@ -322,10 +402,18 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
   error
 }
 
+#' Row maxima and row log-sum-exp of a matrix
+#'
+#' @param x Numeric matrix.
+#'
+#' @return Vector with one value per row.
+#'
+#' @keywords internal
 .row_max <- function(x) {
   x[cbind(seq_len(nrow(x)), max.col(x, ties.method = "first"))]
 }
 
+#' @rdname dot-row_max
 .log_sum_exp_rows <- function(x) {
   top <- .row_max(x)
   shifted <- x - ifelse(is.finite(top), top, 0)
