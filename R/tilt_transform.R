@@ -182,6 +182,31 @@ NULL
   )
 }
 
+#' Log moments about a point from log partial moments
+#'
+#' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2, 3`
+#' from the partial moments \eqn{m_k(t) = \int_0^t u^k f(u) du}, with
+#' \eqn{G_1 = t m_0 - m_1}, \eqn{G_2 = t G_1 - (t m_1 - m_2)} and
+#' \eqn{G_3 = t G_2 - (t (t m_1 - m_2) - (t m_2 - m_3))}, each a difference
+#' of positive integrals.
+#'
+#' @param log_t Log of the points.
+#'
+#' @param log_m0,log_m1,log_m2,log_m3 Log partial moments at each point.
+#'
+#' @return As for `.pcens_tilt_moments()`.
+#'
+#' @keywords internal
+.moments_from_partial <- function(log_t, log_m0, log_m1, log_m2, log_m3) {
+  log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
+  log_h <- .log_diff_exp(log_t + log_m1, log_m2)
+  log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
+  log_a <- .log_diff_exp(log_t + log_m2, log_m3)
+  log_b <- .log_diff_exp(log_t + log_h, log_a)
+  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
+  cbind(G1 = log_g1, G2 = log_g2, G3 = log_g3)
+}
+
 #' Log moments of a gamma delay about a point
 #'
 #' The log of \eqn{G_k(t) = \int_0^t (t - u)^k f(u) du} for `k = 1, 2, 3`,
@@ -204,13 +229,7 @@ NULL
     pgamma(tp, shape + 2, rate, log.p = TRUE)
   log_m3 <- log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate) +
     pgamma(tp, shape + 3, rate, log.p = TRUE)
-  log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
-  log_h <- .log_diff_exp(log_t + log_m1, log_m2)
-  log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
-  log_a <- .log_diff_exp(log_t + log_m2, log_m3)
-  log_b <- .log_diff_exp(log_t + log_h, log_a)
-  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
-  cbind(G1 = log_g1, G2 = log_g2, G3 = log_g3)
+  .moments_from_partial(log_t, log_m0, log_m1, log_m2, log_m3)
 }
 
 #' @exportS3Method

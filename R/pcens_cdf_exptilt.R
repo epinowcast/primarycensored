@@ -45,7 +45,8 @@
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in
 #' \eqn{\rho} truncated after the second order replace it.
 #' * For \eqn{|\rho| w} below \eqn{10^{-2}}, or \eqn{10^{-3}} for delays on
-#'   the reals, the uniform window limit with its corrections,
+#'   the reals, and \eqn{|\rho| (|q| + w) < 0.1}, the uniform window limit
+#'   with its corrections,
 #'   \eqn{\{G_1(q) - G_1(q - w)\} / w +
 #'   \rho \{G_2(q) - w G_1(q) - G_2(q - w) - w G_1(q - w)\} / (2 w) +
 #'   \rho^2 \{G_3(q) - G_3(q - w) - 3 w [G_2(q) + G_2(q - w)] / 2 +
@@ -232,7 +233,7 @@ pcens_cdf.pcens_pgengamma_dexpgrowth <- function(
   small_window <- rep(FALSE, length(q))
   small_delay <- small_window
   if (abs(rho) * pwindow < if (positive) 1e-2 else 1e-3) {
-    small_window <- active
+    small_window <- active & abs(rho) * (abs(q) + pwindow) < 0.1
   } else if (positive) {
     small_delay <- active & q < pwindow & abs(rho) * q < 5e-3
   }
