@@ -257,34 +257,15 @@ vector gumbel_numeric_z_limits(data real d, int dist_id, data real pwindow,
 }
 
 /**
-  * Upper limit of the numerical integral in z that is data
-  * @ingroup truncated_gumbel_solutions
-  *
-  * The window end, cut at d for delays on the non-negative reals. It is
-  * passed to the solver in place of the limit to keep it out of the
-  * sensitivities, which are singular at d for a delay CDF with an infinite
-  * slope at 0.
-  *
-  * @param d Delay
-  * @param dist_id Distribution identifier
-  * @param pwindow Primary event window
-  *
-  * @return The upper limit of z that is data
-  */
-real gumbel_numeric_z_data_limit(data real d, int dist_id,
-                                 data real pwindow) {
-  if (dist_has_positive_support(dist_id)) {
-    return fmin(pwindow, d);
-  }
-  return pwindow;
-}
-
-/**
   * Log CDF of the delay for the numerical integral, with finite partials
   * @ingroup truncated_gumbel_solutions
   *
-  * The same as dist_lcdf(), with forms of the lognormal, exponential, gamma
-  * and normal whose partials are finite where the CDF is very small.
+  * The same as dist_lcdf(), with forms of the lognormal, exponential,
+  * chi-square, inverse gamma, normal, Weibull and beta whose partials are
+  * finite where the CDF is very small. The gamma family uses the gamma tail
+  * functions of primarycensored_ode.stan, and is `-inf` below exp(-700), as
+  * the other guards are, so that the integral in
+  * gumbel_numeric_spike_lcdf() starts where the delay CDF is above 0.
   *
   * @param x Delay
   * @param params Array of distribution parameters
@@ -305,31 +286,24 @@ real gumbel_delay_lcdf(real x, array[] real params, int dist_id) {
     );
   } else if (dist_id == 4) {
     return log1m_exp(-params[1] * x);
-  } else if (dist_id == 2) {
-    if (gamma_lcdf_underflows(x * params[2], params[1])) {
-      return negative_infinity();
-    }
-    return gamma_lcdf(x | params[1], params[2]);
   } else if (dist_id == 18) {
     return primarycensored_log_std_normal_cdf((x - params[1]) / params[2]);
   } else if (dist_id == 3) {
     if (params[1] * (log(x) - log(params[2])) < -700) {
       return negative_infinity();
     }
-  } else if (dist_id == 13) {
-    if (gamma_lcdf_underflows(x / 2, params[1] / 2)) {
-      return negative_infinity();
-    }
-    return gamma_lcdf(x | params[1] / 2, 0.5);
+  } else if (dist_id == 2 || dist_id == 13) {
+    real log_f = dist_id == 2
+      ? gamma_lcdf_logx(log(x) + gamma_log_rate(params[2]), params[1])
+      : gamma_lcdf_logx(log(x) - log2(), params[1] / 2);
+    return log_f < -700 ? negative_infinity() : log_f;
   } else if (dist_id == 16 || dist_id == 19 || dist_id == 22) {
     // Inverse gamma, with the shape and scale of each family
     real shape = dist_id == 16 ? params[1] : params[1] / 2;
     real scale = dist_id == 16 ? params[2]
                  : (dist_id == 19 ? 0.5 : params[1] * square(params[2]) / 2);
-    if (gamma_lccdf_underflows(scale / x, shape)) {
-      return negative_infinity();
-    }
-    return inv_gamma_lcdf(x | shape, scale);
+    real log_f = gamma_log_pq_logx(log(scale) - log(x), shape)[2];
+    return log_f < -700 ? negative_infinity() : log_f;
   } else if (dist_id == 9) {
     if (x >= 1) {
       return 0;
@@ -546,8 +520,8 @@ real gumbel_numeric_spike_lcdf(data real d, int dist_id, array[] real params,
         | params, dist_id
       );
     }
+    // The lengths of the pieces before the last are passed as literals
     if (last) {
-      len = top - a;
       log_total = gumbel_log_sum_exp(
         log_total,
         gumbel_numeric_piece_lcdf(
@@ -721,11 +695,15 @@ real gumbel_numeric_z_lcdf(data real d, int dist_id, array[] real params,
     );
   }
   if (z_high > z_peak) {
-    // An upper limit at the window end or d is data
-    if (z_high >= gumbel_numeric_z_data_limit(d, dist_id, pwindow)) {
+    // An upper limit at the window end or d is passed as data, to keep it
+    // out of the sensitivities, which are singular at d for a delay CDF
+    // with an infinite slope at 0. Local variables would be parameters.
+    if (z_high >= (dist_has_positive_support(dist_id) ? fmin(pwindow, d)
+                                                       : pwindow)) {
       integral += gumbel_numeric_z_half(
         d, dist_id, params, pwindow, mu, beta, z_peak,
-        gumbel_numeric_z_data_limit(d, dist_id, pwindow), log_shift
+        dist_has_positive_support(dist_id) ? fmin(pwindow, d) : pwindow,
+        log_shift
       );
     } else {
       integral += gumbel_numeric_z_half(
@@ -741,13 +719,14 @@ real gumbel_numeric_z_lcdf(data real d, int dist_id, array[] real params,
 
 /**
   * Log of the numerical primary event censored CDF for a truncated Gumbel
-  * primary, not capped at 0
+  * primary
   * @ingroup truncated_gumbel_solutions
   *
   * Integrates the delay CDF against the window density with an ODE solver in
   * a variable in which the integrand is smooth, on the log scale so a CDF
   * below 1e-300 is not lost. The solver tolerances are 1e-10 relative, as
   * tighter ones do not converge with the sensitivities of a delay CDF.
+  * The result is capped at 0 and is never NaN.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -756,18 +735,22 @@ real gumbel_numeric_z_lcdf(data real d, int dist_id, array[] real params,
   * @param mu Location of the truncated Gumbel
   * @param beta Scale of the truncated Gumbel
   *
-  * @return Log of the CDF, above 0 by at most the solver error, `-inf` if it
-  *   is 0
+  * @return Log of the CDF, `-inf` if it is 0
   */
-real gumbel_numeric_log_cdf(data real d, int dist_id, array[] real params,
-                            data real pwindow, real mu, real beta) {
+real primarycensored_gumbel_numeric_lcdf(data real d, int dist_id,
+                                         array[] real params,
+                                         data real pwindow, real mu,
+                                         real beta) {
   if (dist_has_positive_support(dist_id) && d <= 0) {
     return negative_infinity();
   }
-  if (mu >= pwindow) {
-    return gumbel_numeric_spike_lcdf(d | dist_id, params, pwindow, mu, beta);
+  real log_cdf = mu >= pwindow
+    ? gumbel_numeric_spike_lcdf(d | dist_id, params, pwindow, mu, beta)
+    : gumbel_numeric_z_lcdf(d | dist_id, params, pwindow, mu, beta);
+  if (is_nan(log_cdf)) {
+    return negative_infinity();
   }
-  return gumbel_numeric_z_lcdf(d | dist_id, params, pwindow, mu, beta);
+  return fmin(log_cdf, 0);
 }
 
 /**
@@ -775,8 +758,8 @@ real gumbel_numeric_log_cdf(data real d, int dist_id, array[] real params,
   * integration
   * @ingroup truncated_gumbel_solutions
   *
-  * Used by primarycensored_cdf() for the truncated Gumbel, whose density can
-  * be a spike that integration over the window would miss.
+  * Used by primarycensored_numeric_cdf() for the truncated Gumbel, whose
+  * density can be a spike that integration over the window would miss.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -791,38 +774,9 @@ real primarycensored_gumbel_numeric_cdf(data real d, int dist_id,
                                         array[] real params,
                                         data real pwindow, real mu,
                                         real beta) {
-  real log_cdf = gumbel_numeric_log_cdf(d | dist_id, params, pwindow, mu, beta);
-  if (is_nan(log_cdf)) {
-    return 0;
-  }
-  return exp(fmin(log_cdf, 0));
-}
-
-/**
-  * Log of the numerical primary event censored CDF for a truncated Gumbel
-  * primary
-  * @ingroup truncated_gumbel_solutions
-  *
-  * Never NaN and never above 0.
-  *
-  * @param d Delay
-  * @param dist_id Distribution identifier
-  * @param params Array of distribution parameters
-  * @param pwindow Primary event window
-  * @param mu Location of the truncated Gumbel
-  * @param beta Scale of the truncated Gumbel
-  *
-  * @return Log of primarycensored_gumbel_numeric_cdf()
-  */
-real primarycensored_gumbel_numeric_lcdf(data real d, int dist_id,
-                                         array[] real params,
-                                         data real pwindow, real mu,
-                                         real beta) {
-  real log_cdf = gumbel_numeric_log_cdf(d | dist_id, params, pwindow, mu, beta);
-  if (is_nan(log_cdf)) {
-    return negative_infinity();
-  }
-  return fmin(log_cdf, 0);
+  return exp(primarycensored_gumbel_numeric_lcdf(
+    d | dist_id, params, pwindow, mu, beta
+  ));
 }
 
 /**

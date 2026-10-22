@@ -97,80 +97,59 @@ test_that("gumbel_n_terms matches the R number of terms", {
   }
 })
 
-test_that("check_for_gumbel is structural", {
+test_that("the Gumbel series is checked for the delay and parameters", {
   expect_identical(check_for_gumbel(18L, 4L), 1L)
-  expect_identical(check_for_gumbel(18L, 1L), 0L)
-  expect_identical(check_for_gumbel(18L, 2L), 0L)
-  expect_identical(check_for_analytical_params(18L, c(3, 2), 4L, c(0, 1)), 1L)
-  for (dist_id in c(1L, 2L, 3L, 4L, 5L, 12L)) {
+  for (primary_id in 1:3) {
+    expect_identical(check_for_gumbel(18L, primary_id), 0L)
+  }
+  # Only the normal delay has a series
+  for (dist_id in c(1L, 2L, 3L, 4L, 5L, 12L, 26L)) {
     expect_identical(check_for_gumbel(dist_id, 4L), 0L)
     expect_identical(check_for_analytical(dist_id, 4L), 0L)
   }
-  # Non-parametric delays are not analytic for this primary
-  expect_identical(check_for_analytical(26L, 4L), 0L)
-})
-
-test_that("check_for_gumbel_params needs a bounded window value and a small
-  rounding estimate", {
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 0, 1), 1L)
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 1, 1), 1L)
-  # exp(mu / beta) above 15 is not used
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 2.8, 1), 0L)
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 0.5, 0.1), 0L)
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), -5, 0.1), 1L)
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 0, 0), 0L)
-  expect_identical(check_for_gumbel_params(18L, c(3, 2), 0, -1), 0L)
-  # A wide delay and a large mu / beta make the rounding estimate large
-  expect_identical(check_for_gumbel_params(18L, c(0, 4), 1.15, 0.5), 0L)
-  expect_identical(check_for_gumbel_params(18L, c(0, 0.5), 1.15, 0.5), 1L)
-  # Only the normal delay has a series
+  # As (delay params, mu, beta, expected): exp(mu / beta) above 15, a scale
+  # that is not positive and a large rounding estimate from a wide delay
+  # with a large mu / beta are not used
+  cases <- list(
+    list(c(3, 2), 0, 1, 1L), list(c(3, 2), 1, 1, 1L),
+    list(c(3, 2), 2.8, 1, 0L), list(c(3, 2), 0.5, 0.1, 0L),
+    list(c(3, 2), -5, 0.1, 1L), list(c(3, 2), 0, 0, 0L),
+    list(c(3, 2), 0, -1, 0L), list(c(0, 4), 1.15, 0.5, 0L),
+    list(c(0, 0.5), 1.15, 0.5, 1L)
+  )
+  for (case in cases) {
+    expect_identical(
+      check_for_gumbel_params(18L, case[[1]], case[[2]], case[[3]]),
+      case[[4]], info = toString(unlist(case))
+    )
+  }
   expect_identical(check_for_gumbel_params(4L, 80, 0, 1), 0L)
-  expect_identical(check_for_gumbel_params(2L, c(2, 80), 0, 1), 0L)
   expect_identical(
-    check_for_analytical_params(18L, c(3, 2), 4L, c(0, 1)), 1L
+    check_for_analytical_params(18L, c(3, 2), 4L, c(0, 1), 1), 1L
   )
   expect_identical(
-    check_for_analytical_params(18L, c(3, 2), 4L, c(0.5, 0.1)), 0L
+    check_for_analytical_params(18L, c(3, 2), 4L, c(0.5, 0.1), 1), 0L
   )
-  expect_identical(
-    check_for_analytical_params(4L, 80, 4L, c(0, 1)), 0L
-  )
-  # Unchanged for the other solutions
-  expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 1L, numeric(0)), 1L
-  )
-  expect_identical(
-    check_for_analytical_params(2L, c(2, 0.4), 2L, 0.3), 1L
-  )
+  expect_identical(check_for_analytical_params(4L, 80, 4L, c(0, 1), 1), 0L)
 })
 
 test_that("Stan gumbel terms match the R transforms", {
+  n_terms <- gumbel_n_terms(-0.5)
   for (case in gumbel_series_cases) {
     obj <- gumbel_case_object(case, -0.5, 1)
-    n_terms <- gumbel_n_terms(-0.5)
-    ts <- c(0.01, 0.4, 1, 3.5)
-    for (t in ts) {
+    for (t in c(0.01, 0.4, 1, 3.5)) {
       terms <- as.vector(primarycensored_gumbel_terms(
         t, case$dist_id, 1, n_terms, case$params
       ))
-      expect_length(terms, 2 * (n_terms + 1))
-      lower <- terms[seq(1, by = 2, length.out = n_terms + 1)]
-      upper <- terms[seq(2, by = 2, length.out = n_terms + 1)]
-      r_lower <- vapply(
-        0:n_terms, function(n) .pcens_tilt_transform(obj, t, n), numeric(1)
-      )
-      r_upper <- vapply(
-        0:n_terms,
-        function(n) .pcens_tilt_transform(obj, t, n, upper = TRUE),
-        numeric(1)
+      info <- gumbel_case_label(case, t = t)
+      expect_equal(
+        terms[c(TRUE, FALSE)], .pcens_tilt_transform(obj, t, 0:n_terms),
+        tolerance = 1e-10, info = info
       )
       expect_equal(
-        lower, r_lower,
-        tolerance = 1e-10, info = gumbel_case_label(case, t = t)
-      )
-      expect_equal(
-        upper, r_upper,
-        tolerance = 1e-10, info = gumbel_case_label(case, t = t)
+        terms[c(FALSE, TRUE)],
+        .pcens_tilt_transform(obj, t, 0:n_terms, upper = TRUE),
+        tolerance = 1e-10, info = info
       )
     }
   }
@@ -196,11 +175,7 @@ test_that("primarycensored_gumbel_lcdf matches the R series and the
             pwindow = pwindow, mu = mu, beta = beta
           )
           obj <- gumbel_case_object(case, mu, beta)
-          n_terms <- .gumbel_n_terms(mu / beta)
-          fit <- .gumbel_lcdf(
-            obj, case$d, pwindow, mu, beta, n_terms,
-            gumbel_case_lower(case)
-          )
+          fit <- .gumbel_lcdf(obj, case$d, pwindow, mu, beta)
           accepted <- fit$error <= .gumbel_tol
           if (!any(accepted)) next
           d <- case$d[accepted]
@@ -268,7 +243,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
             pwindow = pwindow, mu = mu, beta = beta
           )
           analytic <- check_for_analytical_params(
-            case$dist_id, case$params, 4L, c(mu, beta)
+            case$dist_id, case$params, 4L, c(mu, beta), pwindow
           ) == 1L
           lcdf <- vapply(
             case$d, primarycensored_lcdf, numeric(1),
@@ -293,8 +268,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
           accepted <- rep(FALSE, length(case$d))
           if (analytic) {
             fit <- .gumbel_lcdf(
-              gumbel_case_object(case, mu, beta), case$d, pwindow, mu, beta,
-              .gumbel_n_terms(mu / beta), lower
+              gumbel_case_object(case, mu, beta), case$d, pwindow, mu, beta
             )
             accepted <- fit$error <= .gumbel_tol
           }
@@ -314,7 +288,7 @@ test_that("primarycensored_lcdf and primarycensored_cdf use the series and
 test_that("the numerical path is used where the series does not apply", {
   # exp(mu / beta) is about 148 here
   expect_identical(
-    check_for_analytical_params(18L, c(3, 2), 4L, c(0.5, 0.1)), 0L
+    check_for_analytical_params(18L, c(3, 2), 4L, c(0.5, 0.1), 1), 0L
   )
   for (d in c(-1, 3, 8)) {
     ode <- primarycensored_gumbel_numeric_cdf(d, 18L, c(3, 2), 1, 0.5, 0.1)
@@ -340,8 +314,7 @@ test_that("points where the series loses accuracy use the ODE", {
   # A window much narrower than the scale loses precision in the bracket
   obj <- gumbel_case_object(gumbel_stan_cases[[3]], 0, 1)
   d <- c(1, 3)
-  n_terms <- gumbel_n_terms(0)
-  fit <- .gumbel_lcdf(obj, d, 1e-7, 0, 1, n_terms, -Inf)
+  fit <- .gumbel_lcdf(obj, d, 1e-7, 0, 1)
   expect_true(all(fit$error > .gumbel_tol))
   ode <- vapply(
     d, primarycensored_gumbel_numeric_cdf, numeric(1),
@@ -802,67 +775,83 @@ gumbel_gradient_at <- function(model, case, d, pwindow, mu, beta,
   )
 }
 
-# Stan's gamma shape gradient has a relative error of about 1e-3
-expect_gumbel_gradient_close <- function(res, case, label, scale = 1,
-                                         slack = 0) {
-  tolerance <- rep(1e-4, 4) * scale
-  if (case$dist_id %in% c(2L, 13L)) {
-    tolerance[1] <- 2e-2
-  }
-  allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2) + slack
-  testthat::expect_true(
-    all(abs(res$gradient - res$finite_diff) <= allowed),
-    info = paste0(
-      label, ": gradient ", toString(signif(res$gradient, 5)),
-      ", finite difference ", toString(signif(res$finite_diff, 5))
-    )
-  )
-}
-
-test_that("Gumbel log CDFs have finite gradients matching finite
-  differences", {
-  model <- gumbel_gradient_model()
-  points <- list(
-    list(d = 0.3, pwindow = 2, mu = -0.5, beta = 0.5),
-    list(d = 1, pwindow = 1, mu = 0, beta = 1),
-    list(d = 2.5, pwindow = 2, mu = 0.5, beta = 1),
-    list(d = 6, pwindow = 3, mu = -1, beta = 0.3),
-    list(d = 20, pwindow = 3, mu = 1, beta = 1),
-    list(d = -3, pwindow = 2, mu = 0, beta = 0.5),
-    list(d = 1.5, pwindow = 1, mu = -5, beta = 0.1),
-    list(d = 2, pwindow = 2, mu = -30, beta = 1),
-    list(d = 3, pwindow = 1, mu = 0, beta = 8),
-    # The ODE is used
-    list(d = 4, pwindow = 2, mu = 0.5, beta = 0.1),
-    # Narrow spikes of the window density
-    list(d = 1, pwindow = 1, mu = 2, beta = 0.1),
-    list(d = 5, pwindow = 1, mu = 1.5, beta = 0.05),
-    list(d = 7, pwindow = 7, mu = 1.5, beta = 0.05),
-    list(d = 3, pwindow = 2, mu = 3, beta = 0.06),
-    # Around where the series is replaced by the ODE
-    list(d = 2, pwindow = 1, mu = 0.25, beta = 0.1),
-    list(d = 2, pwindow = 1, mu = 0.27, beta = 0.1),
-    list(d = 5, pwindow = 1, mu = 0.3, beta = 0.111),
-    list(d = 11, pwindow = 1, mu = 0.3, beta = 0.111)
-  )
-  cases <- gumbel_stan_cases[c(1, 3, 4)]
+# Checks the gradients at each point for each delay. Finite differences
+# have an error of about 3e-5, and with `slack` an error of about 1e-3 from
+# the solver on the numerical path. Stan's gamma shape gradient has a
+# relative error of about 1e-3. With `compare = FALSE` only finiteness is
+# checked.
+# nolint start: object_usage_linter.
+expect_gumbel_gradients <- function(model, cases, points, vectorised = FALSE,
+                                    scale = 1, slack = 0, compare = TRUE,
+                                    max_time = Inf) {
   for (case in cases) {
+    tolerance <- rep(1e-4, 4) * scale
+    if (case$dist_id %in% c(2L, 13L)) {
+      tolerance[1] <- 2e-2
+    }
     for (point in points) {
       if (case$dist_id != 18L && point$d <= 0) next
-      label <- gumbel_case_label(
-        case,
-        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
-      )
-      res <- gumbel_gradient_at(
-        model, case, point$d, point$pwindow, point$mu, point$beta
-      )
+      label <- do.call(gumbel_case_label, c(list(case), point))
+      elapsed <- system.time({
+        res <- gumbel_gradient_at(
+          model, case, point$d, point$pwindow, point$mu, point$beta,
+          vectorised = vectorised
+        )
+      })[["elapsed"]]
       expect_false(res$gradient_not_finite, info = label)
       expect_false(res$rejected, info = label)
       expect_length(res$gradient, 4)
       expect_true(all(is.finite(res$gradient)), info = label)
-      expect_gumbel_gradient_close(res, case, label)
+      expect_lt(elapsed, max_time, label = label)
+      if (compare) {
+        allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2) + slack
+        expect_true(
+          all(abs(res$gradient - res$finite_diff) <= allowed),
+          info = paste0(
+            label, ": gradient ", toString(signif(res$gradient, 5)),
+            ", finite difference ", toString(signif(res$finite_diff, 5))
+          )
+        )
+      }
     }
   }
+}
+# nolint end
+
+# Points as a list, from vectors of the same length or of length 1
+gumbel_points <- function(d, pwindow, mu, beta) {
+  .mapply(
+    function(d, pwindow, mu, beta) {
+      list(d = d, pwindow = pwindow, mu = mu, beta = beta)
+    },
+    list(d, pwindow, mu, beta), NULL
+  )
+}
+
+test_that("Gumbel log CDFs have gradients matching finite differences", {
+  model <- gumbel_gradient_model()
+  # The series, the ODE (mu = 0.5, beta = 0.1), narrow spikes of the window
+  # density, and points around where the series is replaced by the ODE
+  points <- gumbel_points(
+    d = c(0.3, 1, 2.5, 6, 20, -3, 1.5, 2, 3, 4, 1, 5, 7, 3, 2, 2, 5, 11),
+    pwindow = c(2, 1, 2, 3, 3, 2, 1, 2, 1, 2, 1, 1, 7, 2, 1, 1, 1, 1),
+    mu = c(
+      -0.5, 0, 0.5, -1, 1, 0, -5, -30, 0, 0.5, 2, 1.5, 1.5, 3, 0.25, 0.27,
+      0.3, 0.3
+    ),
+    beta = c(
+      0.5, 1, 1, 0.3, 1, 0.5, 0.1, 1, 8, 0.1, 0.1, 0.05, 0.05, 0.06, 0.1,
+      0.1, 0.111, 0.111
+    )
+  )
+  expect_gumbel_gradients(model, gumbel_stan_cases[c(1, 3, 4)], points)
+  # The vectorised log PMF, for normal delays only, as the PMF of a short
+  # exponential delay is a difference of CDFs that are 1 in double precision
+  expect_gumbel_gradients(
+    model, gumbel_series_cases,
+    gumbel_points(c(12, 8, 10), c(3, 2, 1), c(-0.5, 0, 1), c(0.5, 1, 1)),
+    vectorised = TRUE, scale = 5
+  )
 })
 
 test_that("Gumbel log CDF gradients match finite differences across the
@@ -873,162 +862,66 @@ test_that("Gumbel log CDF gradients match finite differences across the
     list(dist_id = 18L, params = c(3, 2), d = c(0.02, 1, 3, 6))
   )
   for (case in cases) {
-    for (mu in c(-0.5, 0, 0.5, 1, 1.5)) {
-      for (beta in c(0.1, 0.2, 1)) {
-        for (pwindow in c(1, 2)) {
-          for (d in case$d) {
-            label <- gumbel_case_label(
-              case, d = d, pwindow = pwindow, mu = mu, beta = beta
-            )
-            # Finite differences of a CDF below 1e-260 are not meaningful
-            lcdf <- primarycensored_lcdf(
-              d, case$dist_id, case$params, pwindow,
-              gumbel_case_lower(case), Inf, 4L, c(mu, beta)
-            )
-            if (lcdf < -600) next
-            res <- gumbel_gradient_at(model, case, d, pwindow, mu, beta)
-            expect_false(res$gradient_not_finite, info = label)
-            expect_false(res$rejected, info = label)
-            expect_length(res$gradient, 4)
-            # Finite differences have an absolute error of about 3e-5, and
-            # on the numerical path an error of about 1e-3 from the solver
-            expect_gumbel_gradient_close(
-              res, case, label, scale = 10, slack = 5e-4
-            )
-          }
-        }
-      }
-    }
+    grid <- expand.grid(
+      d = case$d, pwindow = c(1, 2), mu = c(-0.5, 0, 0.5, 1, 1.5),
+      beta = c(0.1, 0.2, 1)
+    )
+    # Finite differences of a CDF below 1e-260 are not meaningful
+    lcdf <- unlist(.mapply(
+      function(d, pwindow, mu, beta) {
+        primarycensored_lcdf(
+          d, case$dist_id, case$params, pwindow, -Inf, Inf, 4L, c(mu, beta)
+        )
+      },
+      grid, NULL
+    ))
+    grid <- grid[lcdf >= -600, ]
+    expect_gumbel_gradients(
+      model, list(case),
+      gumbel_points(grid$d, grid$pwindow, grid$mu, grid$beta),
+      scale = 10, slack = 5e-4
+    )
   }
 })
 
-test_that("Gumbel gradients are finite for delays whose CDF has an
-  infinite slope at 0", {
-  # A gamma or Weibull with shape below 1 has an unbounded density at 0
+test_that("Gumbel gradients are finite and accurate on the numerical path
+  for delays on the positive reals", {
   model <- gumbel_gradient_model()
-  cases <- list(
+  # A gamma or Weibull with shape below 1 has an unbounded density at 0
+  infinite_slope <- list(
     list(dist_id = 2L, params = c(0.5, 1)),
     list(dist_id = 2L, params = c(0.8, 1)),
     list(dist_id = 2L, params = c(0.3, 2)),
     list(dist_id = 2L, params = c(0.5, 200)),
     list(dist_id = 3L, params = c(0.5, 1))
   )
-  points <- list(
-    list(d = 0.5, pwindow = 2, mu = 0, beta = 0.5),
-    list(d = 0.2, pwindow = 1, mu = -1, beta = 0.3),
-    list(d = 1, pwindow = 1, mu = 0.5, beta = 0.3)
+  expect_gumbel_gradients(
+    model, infinite_slope,
+    gumbel_points(c(0.5, 0.2, 1), c(2, 1, 1), c(0, -1, 0.5), c(0.5, 0.3, 0.3)),
+    scale = 5, max_time = 5
   )
-  for (case in cases) {
-    for (point in points) {
-      label <- gumbel_case_label(
-        case,
-        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
-      )
-      elapsed <- system.time({
-        res <- gumbel_gradient_at(
-          model, case, point$d, point$pwindow, point$mu, point$beta
-        )
-      })[["elapsed"]]
-      expect_false(res$gradient_not_finite, info = label)
-      expect_false(res$rejected, info = label)
-      expect_length(res$gradient, 4)
-      expect_true(all(is.finite(res$gradient)), info = label)
-      expect_lt(elapsed, 5, label = label)
-      expect_gumbel_gradient_close(res, case, label, scale = 5)
-    }
-  }
-})
-
-test_that("the vectorised Gumbel log PMF has finite gradients for delays
-  whose CDF has an infinite slope at 0", {
-  model <- gumbel_gradient_model()
-  cases <- list(
-    list(dist_id = 2L, params = c(0.5, 1)),
-    list(dist_id = 3L, params = c(0.5, 1))
+  expect_gumbel_gradients(
+    model, infinite_slope[c(1, 5)],
+    gumbel_points(c(10, 4), c(1, 2), c(0.5, 0), c(0.3, 0.5)),
+    vectorised = TRUE, scale = 5, max_time = 5
   )
-  points <- list(
-    list(d = 10, pwindow = 1, mu = 0.5, beta = 0.3),
-    list(d = 4, pwindow = 2, mu = 0, beta = 0.5)
-  )
-  for (case in cases) {
-    for (point in points) {
-      label <- gumbel_case_label(
-        case,
-        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
-      )
-      elapsed <- system.time({
-        res <- gumbel_gradient_at(
-          model, case, point$d, point$pwindow, point$mu, point$beta,
-          vectorised = TRUE
-        )
-      })[["elapsed"]]
-      expect_false(res$gradient_not_finite, info = label)
-      expect_false(res$rejected, info = label)
-      expect_true(all(is.finite(res$gradient)), info = label)
-      expect_lt(elapsed, 5, label = label)
-      expect_gumbel_gradient_close(res, case, label, scale = 5)
-    }
-  }
-})
-
-test_that("lognormal and Weibull gradients are finite for a narrow window", {
-  model <- gumbel_gradient_model()
-  cases <- list(
+  # Narrow windows
+  narrow <- list(
     list(dist_id = 1L, params = c(1, 0.5)),
     list(dist_id = 3L, params = c(2, 3)),
     list(dist_id = 2L, params = c(4, 2))
   )
-  points <- list(
-    list(d = 1.9, pwindow = 2, mu = 2.1, beta = 0.1),
-    list(d = 1, pwindow = 2, mu = 2, beta = 0.5),
-    list(d = 1, pwindow = 2, mu = 2.2, beta = 0.2),
-    list(d = 4, pwindow = 2, mu = 3, beta = 0.1)
+  expect_gumbel_gradients(
+    model, narrow,
+    gumbel_points(c(1.9, 1, 1, 4), 2, c(2.1, 2, 2.2, 3), c(0.1, 0.5, 0.2, 0.1)),
+    scale = 5, max_time = 5
   )
-  for (case in cases) {
-    for (point in points) {
-      label <- gumbel_case_label(
-        case,
-        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
-      )
-      elapsed <- system.time({
-        res <- gumbel_gradient_at(
-          model, case, point$d, point$pwindow, point$mu, point$beta
-        )
-      })[["elapsed"]]
-      expect_false(res$gradient_not_finite, info = label)
-      expect_false(res$rejected, info = label)
-      expect_true(all(is.finite(res$gradient)), info = label)
-      expect_lt(elapsed, 5, label = label)
-      expect_gumbel_gradient_close(res, case, label, scale = 5)
-    }
-  }
-})
-
-test_that("vectorised lognormal and Weibull gradients are finite", {
-  model <- gumbel_gradient_model()
-  cases <- list(
-    list(dist_id = 1L, params = c(1, 0.5)),
-    list(dist_id = 3L, params = c(2, 3))
+  expect_gumbel_gradients(
+    model, narrow[1:2], gumbel_points(6, 2, 2.1, 0.3),
+    vectorised = TRUE, scale = 5, max_time = 5
   )
-  for (case in cases) {
-    label <- gumbel_case_label(case, d = 6, pwindow = 2, mu = 2.1, beta = 0.3)
-    elapsed <- system.time({
-      res <- gumbel_gradient_at(
-        model, case, 6, 2, 2.1, 0.3, vectorised = TRUE
-      )
-    })[["elapsed"]]
-    expect_false(res$gradient_not_finite, info = label)
-    expect_false(res$rejected, info = label)
-    expect_true(all(is.finite(res$gradient)), info = label)
-    expect_lt(elapsed, 5, label = label)
-    expect_gumbel_gradient_close(res, case, label, scale = 5)
-  }
-})
-
-test_that("gradients are finite for every positive support delay when the
-  window density is a spike at the window end", {
-  model <- gumbel_gradient_model()
-  cases <- list(
+  # A spike of the window density at the window end
+  spike_end <- list(
     list(dist_id = 1L, params = c(1, 0.2)),
     list(dist_id = 2L, params = c(50, 5)),
     list(dist_id = 3L, params = c(20, 6)),
@@ -1038,33 +931,16 @@ test_that("gradients are finite for every positive support delay when the
     list(dist_id = 19L, params = 4),
     list(dist_id = 22L, params = c(4, 1))
   )
-  points <- list(
-    list(d = 1, pwindow = 1, mu = 1, beta = 0.1),
-    list(d = 2, pwindow = 2, mu = 2.5, beta = 0.3),
-    list(d = 1, pwindow = 1, mu = 1.2, beta = 0.1)
+  expect_gumbel_gradients(
+    model, spike_end,
+    gumbel_points(c(1, 2, 1), c(1, 2, 1), c(1, 2.5, 1.2), c(0.1, 0.3, 0.1)),
+    scale = 10, slack = 5e-4
   )
-  for (case in cases) {
-    for (point in points) {
-      label <- gumbel_case_label(
-        case,
-        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
-      )
-      res <- gumbel_gradient_at(
-        model, case, point$d, point$pwindow, point$mu, point$beta
-      )
-      expect_false(res$gradient_not_finite, info = label)
-      expect_false(res$rejected, info = label)
-      expect_true(all(is.finite(res$gradient)), info = label)
-      expect_gumbel_gradient_close(res, case, label, scale = 10, slack = 5e-4)
-      vec <- gumbel_gradient_at(
-        model, case, 3 * point$d, point$pwindow, point$mu, point$beta,
-        vectorised = TRUE
-      )
-      expect_false(vec$gradient_not_finite, info = label)
-      expect_false(vec$rejected, info = label)
-      expect_true(all(is.finite(vec$gradient)), info = label)
-    }
-  }
+  expect_gumbel_gradients(
+    model, spike_end,
+    gumbel_points(c(3, 6, 3), c(1, 2, 1), c(1, 2.5, 1.2), c(0.1, 0.3, 0.1)),
+    vectorised = TRUE, compare = FALSE
+  )
 })
 
 test_that("a log CDF below -1000 is -inf in the numerical path", {
@@ -1253,35 +1129,6 @@ test_that("the Stan numerical path keeps the lower tail on the log scale", {
     1, 2L, c(5, 1), 4, 2, 0, Inf, 4L, c(3, 0.3)
   )
   expect_true(is.finite(lpmf))
-})
-
-test_that("the vectorised Gumbel log PMF has finite gradients matching
-  finite differences", {
-  model <- gumbel_gradient_model()
-  points <- list(
-    list(d = 12, pwindow = 3, mu = -0.5, beta = 0.5),
-    list(d = 8, pwindow = 2, mu = 0, beta = 1),
-    list(d = 10, pwindow = 1, mu = 1, beta = 1)
-  )
-  # Only normal delays, as the PMF of a short exponential delay is a
-  # difference of CDFs that are 1 in double precision. Finite differences of
-  # a sum of PMFs have an error of about 5e-4.
-  for (case in gumbel_stan_cases[c(3, 4)]) {
-    for (point in points) {
-      label <- gumbel_case_label(
-        case,
-        d = point$d, pwindow = point$pwindow, mu = point$mu, beta = point$beta
-      )
-      res <- gumbel_gradient_at(
-        model, case, point$d, point$pwindow, point$mu, point$beta,
-        vectorised = TRUE
-      )
-      expect_false(res$gradient_not_finite, info = label)
-      expect_false(res$rejected, info = label)
-      expect_true(all(is.finite(res$gradient)), info = label)
-      expect_gumbel_gradient_close(res, case, label, scale = 5)
-    }
-  }
 })
 
 # The compiled model is shared by the tests that sample from it

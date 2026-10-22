@@ -85,13 +85,11 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 # Scales above the peak at which the density is cut, exp(-46) of its peak
 .gumbel_z_cut <- 46
 
-.gumbel_log_trunc <- log(1e-18)
-
 # Smallest N, at least 2, with s0^n / n! below 1e-18 max(s0, 1) after N
 .gumbel_n_terms <- function(log_s0) {
   n <- seq_len(200L)
   log_bound <- n * log_s0 - lgamma(n + 1) - max(log_s0, 0)
-  below <- which(log_bound < .gumbel_log_trunc)
+  below <- which(log_bound < log(1e-18))
   max(2L, if (length(below) > 0L) below[[1L]] else length(n))
 }
 
@@ -135,43 +133,45 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
 # Shared implementation of the pcens_cdf_gumbel methods
 .pcens_cdf_gumbel <- function(object, q, pwindow, use_numeric = FALSE) {
   primary <- .gumbel_primary_args(object)
-  mu <- primary$mu
-  scale <- primary$beta
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
   }
-  if (isTRUE(use_numeric) || !.gumbel_available(object, mu, scale)) {
-    return(.gumbel_numeric(object, q, pwindow, mu, scale))
-  }
-  n_terms <- .gumbel_n_terms(mu / scale)
+  .gumbel_cdf(
+    object, q, pwindow, primary$mu, primary$beta,
+    series = !isTRUE(use_numeric) &&
+      .gumbel_available(object, primary$mu, primary$beta)
+  )
+}
 
+# CDF for a finite positive window, from the series where it is used and
+# accurate enough and from the numerical method otherwise
+.gumbel_cdf <- function(object, q, pwindow, mu, beta, series = FALSE) {
   result <- rep(NA_real_, length(q))
   result[!is.na(q) & q == Inf] <- 1
   result[!is.na(q) & q == -Inf] <- 0
   finite <- which(is.finite(q))
-  if (length(finite) > 0L) {
-    result[finite] <- .gumbel_cdf_finite(
-      object, q[finite], pwindow, mu, scale, n_terms
+  if (length(finite) == 0L) {
+    return(result)
+  }
+  q <- q[finite]
+  numeric_needed <- rep(TRUE, length(q))
+  if (series) {
+    fit <- .gumbel_lcdf(object, q, pwindow, mu, beta)
+    result[finite] <- pmin(1, exp(fit$log_cdf))
+    numeric_needed <- !(fit$error <= .gumbel_tol)
+  }
+  if (any(numeric_needed)) {
+    result[finite[numeric_needed]] <- .gumbel_numeric(
+      object, q[numeric_needed], pwindow, mu, beta
     )
   }
   result
 }
 
-# Numerical CDF for a finite positive window. The integral is taken in
-# u = s(z) - s(w), s(z) = exp((mu - z) / beta), for mu at or above w, and in z
-# otherwise, so a narrow spike of the density is resolved.
+# Numerical CDF at finite q. The integral is taken in u = s(z) - s(w),
+# s(z) = exp((mu - z) / beta), for mu at or above w, and in z otherwise, so a
+# narrow spike of the density is resolved.
 .gumbel_numeric <- function(object, q, pwindow, mu, beta) {
-  result <- rep(NA_real_, length(q))
-  result[!is.na(q) & q == Inf] <- 1
-  result[!is.na(q) & q == -Inf] <- 0
-  finite <- which(is.finite(q))
-  result[finite] <- .gumbel_numeric_finite(
-    object, q[finite], pwindow, mu, beta
-  )
-  result
-}
-
-.gumbel_numeric_finite <- function(object, q, pwindow, mu, beta) {
   log_sw <- (mu - pwindow) / beta
   cdf <- function(x) do.call(object$pdist, c(list(q = x), object$args))
   integrate_pieces <- function(integrand, breaks) {
@@ -207,7 +207,7 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
           x <- (d - pwindow) + beta * log1p(exp(log(u) - log_sw))
           cdf(pmin(x, d)) * exp(-u)
         }
-        kink <- if (!is.na(d) && d > 0 && d < pwindow) {
+        kink <- if (d > 0 && d < pwindow) {
           log_sw + .log_diff_exp((pwindow - d) / beta, 0)
         } else {
           Inf
@@ -228,80 +228,45 @@ pcens_cdf.pcens_pnorm_dtgumbel <- function(
       integrand <- function(z) {
         cdf(d - z) * dtgumbel(z, 0, pwindow, mu, beta)
       }
-      breaks <- c(breaks_z, if (!is.na(d) && d > z_low && d < z_high) d)
+      breaks <- c(breaks_z, if (d > z_low && d < z_high) d)
       min(1, max(0, integrate_pieces(integrand, breaks)))
     },
     numeric(1)
   )
 }
 
-# CDF at finite points, from the series where it is accurate enough
-.gumbel_cdf_finite <- function(object, q, pwindow, mu, beta, n_terms) {
-  lower <- .pcens_tilt_lower(object)
-  positive <- is.finite(lower)
-  log_cdf <- rep(-Inf, length(q))
-  active <- which(!positive | q > lower)
-  numeric_needed <- logical(length(q))
-  if (length(active) > 0L) {
-    fit <- .gumbel_lcdf(
-      object, q[active], pwindow, mu, beta, n_terms, lower
-    )
-    log_cdf[active] <- fit$log_cdf
-    numeric_needed[active] <- fit$error > .gumbel_tol | is.na(fit$error)
-  }
-  result <- pmin(1, exp(log_cdf))
-  if (any(numeric_needed)) {
-    result[numeric_needed] <- .gumbel_numeric(
-      object, q[numeric_needed], pwindow, mu, beta
-    )
-  }
-  result
-}
-
 # Log CDF from the series and its estimated relative error
-.gumbel_lcdf <- function(object, q, pwindow, mu, beta, n_terms, lower) {
-  endpoints <- .exptilt_endpoints(q, pwindow, lower)
-  index_q <- .exptilt_index(q, endpoints, lower)
-  index_y <- .exptilt_index(q - pwindow, endpoints, lower)
-  # Log transforms at each endpoint for the tilts n / beta, n = 0, ..., N
-  tilts <- seq.int(0L, n_terms) / beta
-  lower_terms <- vapply(
-    tilts, function(xi) .pcens_tilt_transform(object, endpoints, xi),
-    numeric(length(endpoints))
+.gumbel_lcdf <- function(object, q, pwindow, mu, beta) {
+  n_terms <- .gumbel_n_terms(mu / beta)
+  pos <- .exptilt_layout(q, pwindow, .pcens_tilt_lower(object))
+  # Log transforms with a row per endpoint and a column per tilt n / beta,
+  # n = 0, ..., N
+  n_end <- length(pos$endpoints)
+  t <- rep(pos$endpoints, n_terms + 1L)
+  xi <- rep(seq.int(0L, n_terms) / beta, each = n_end)
+  lower_terms <- matrix(.pcens_tilt_transform(object, t, xi), n_end)
+  upper_terms <- matrix(
+    .pcens_tilt_transform(object, t, xi, upper = TRUE), n_end
   )
-  upper_terms <- vapply(
-    tilts, function(xi) {
-      .pcens_tilt_transform(object, endpoints, xi, upper = TRUE)
-    },
-    numeric(length(endpoints))
-  )
-  if (length(endpoints) == 1L) {
-    lower_terms <- matrix(lower_terms, nrow = 1L)
-    upper_terms <- matrix(upper_terms, nrow = 1L)
-  }
+  at <- function(terms, index) terms[index, , drop = FALSE]
   log_delta <- matrix(
     .exptilt_tail_diff(
-      c(lower_terms[index_q, , drop = FALSE]),
-      c(lower_terms[index_y, , drop = FALSE]),
-      c(upper_terms[index_q, , drop = FALSE]),
-      c(upper_terms[index_y, , drop = FALSE])
+      c(at(lower_terms, pos$q)), c(at(lower_terms, pos$y)),
+      c(at(upper_terms, pos$q)), c(at(upper_terms, pos$y))
     ),
     nrow = length(q)
   )
-  log_f_y <- lower_terms[index_y, 1L]
   finite_abs <- function(x) {
     x <- abs(x)
     x[!is.finite(x)] <- 0
     x
   }
   scale_t <- pmax(
-    finite_abs(lower_terms[index_q, , drop = FALSE]),
-    finite_abs(upper_terms[index_q, , drop = FALSE]),
-    finite_abs(lower_terms[index_y, , drop = FALSE]),
-    finite_abs(upper_terms[index_y, , drop = FALSE])
+    finite_abs(at(lower_terms, pos$q)), finite_abs(at(upper_terms, pos$q)),
+    finite_abs(at(lower_terms, pos$y)), finite_abs(at(upper_terms, pos$y))
   )
   .gumbel_combine(
-    log_delta, log_f_y, scale_t, q, pwindow, mu, beta
+    log_delta, lower_terms[pos$y, 1L], scale_t, q, pwindow, mu, beta
   )
 }
 

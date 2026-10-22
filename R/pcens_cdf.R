@@ -115,7 +115,7 @@ pcens_cdf.default <- function(
   if (identical(object$dprimary, dtgumbel) && length(pwindow) == 1L &&
     is.finite(pwindow) && pwindow > 0) {
     primary <- .gumbel_primary_args(object)
-    return(.gumbel_numeric(object, q, pwindow, primary$mu, primary$beta))
+    return(.gumbel_cdf(object, q, pwindow, primary$mu, primary$beta))
   }
   result <- vapply(
     q,

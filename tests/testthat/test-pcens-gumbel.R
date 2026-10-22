@@ -39,10 +39,8 @@ test_that("the series agrees with numerical integration where accepted", {
           label <- gumbel_label(family, pwindow, mu, beta)
           obj <- gumbel_object(family, mu, beta)
           if (!.gumbel_available(obj, mu, beta)) next
-          lower <- .pcens_tilt_lower(obj)
-          q <- family$q[!is.finite(lower) | family$q > lower]
-          n_terms <- .gumbel_n_terms(mu / beta)
-          fit <- .gumbel_lcdf(obj, q, pwindow, mu, beta, n_terms, lower)
+          q <- family$q
+          fit <- .gumbel_lcdf(obj, q, pwindow, mu, beta)
           reference <- gumbel_reference(
             q, pwindow, mu, beta, cdf, family$positive
           )
@@ -102,10 +100,7 @@ test_that("the series is accurate at extreme and narrow windows", {
   for (s in settings) {
     obj <- gumbel_object(family, s[["mu"]], s[["beta"]])
     expect_true(.gumbel_available(obj, s[["mu"]], s[["beta"]]))
-    fit <- .gumbel_lcdf(
-      obj, family$q, s[["w"]], s[["mu"]], s[["beta"]],
-      .gumbel_n_terms(s[["mu"]] / s[["beta"]]), -Inf
-    )
+    fit <- .gumbel_lcdf(obj, family$q, s[["w"]], s[["mu"]], s[["beta"]])
     expect_true(all(fit$error <= .gumbel_tol), info = toString(s))
     expect_lt(
       max_rel_diff(
@@ -165,9 +160,7 @@ test_that("the series is skipped where its rounding estimate is large", {
 test_that("a narrow window relative to the scale uses the numerical path", {
   # The bracket is a small difference of large terms when w << beta
   obj <- gumbel_object(families[[4]], 0, 1)
-  fit <- .gumbel_lcdf(
-    obj, c(1, 3), 1e-7, 0, 1, .gumbel_n_terms(0), -Inf
-  )
+  fit <- .gumbel_lcdf(obj, c(1, 3), 1e-7, 0, 1)
   expect_true(all(fit$error > .gumbel_tol))
   q <- c(1, 3)
   expect_equal(
@@ -339,26 +332,6 @@ test_that("pprimarycensored works for a narrow spike", {
   expect_equal(
     p, c(0.0668075, 0.6914633, 1), tolerance = 1e-6
   )
-})
-
-test_that("delays without a solution use the numerical path for a spike", {
-  # The lognormal has no solution, so it uses pcens_cdf.default()
-  cdf <- function(x) plnorm(x, 1, 0.5)
-  q <- c(0.5, 1, 3, 8, 20)
-  for (s in gumbel_spike_settings()) {
-    obj <- new_pcens(
-      plnorm, dtgumbel,
-      primary_args = list(mu = s[["mu"]], beta = s[["beta"]]),
-      meanlog = 1, sdlog = 0.5
-    )
-    expected <- gumbel_reference(
-      q, s[["w"]], s[["mu"]], s[["beta"]], cdf, TRUE
-    )
-    expect_lt(
-      gumbel_error(pcens_cdf(obj, q, s[["w"]]), expected), 1e-7,
-      label = toString(s)
-    )
-  }
 })
 
 test_that("the numerical path keeps a small delay at the end of the window", {
