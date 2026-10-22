@@ -21,6 +21,11 @@
   `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
   See #379.
 
+## Documentation
+
+- The "Analytic solutions" vignette now derives each analytic solution from truncated exponential-moment transforms of the delay, and lists the solution, numerical fallback and safeguards used for each pair of window and delay.
+  See #375.
+
 ## Breaking changes
 
 - The Stan function `primarycensored_analytical_lcdf_vectorized()` takes `primary_id` and `primary_params` as its last two arguments.
