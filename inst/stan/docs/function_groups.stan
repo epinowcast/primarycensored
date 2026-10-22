@@ -5,6 +5,12 @@
  */
 
 /**
+ * @defgroup truncated_gumbel_distributions Truncated Gumbel Distribution Functions
+ * @brief Functions for truncated Gumbel primary event distribution calculations
+ * @ingroup ode
+ */
+
+/**
  * @defgroup primary_censored_distributions Primary Censored Distributions Functions
  * @brief Functions for computing primary censored distributions
  */
@@ -41,6 +47,12 @@
 /**
  * @defgroup exponential_tilt_solutions Exponentially Tilted Primary Event Solutions
  * @brief Analytical solutions for exponentially tilted primary event windows, built from tilt transforms of the delay distribution
+ * @ingroup primary_event_analytical_distributions
+ */
+
+/**
+ * @defgroup truncated_gumbel_solutions Truncated Gumbel Primary Event Solutions
+ * @brief Analytical solutions for truncated Gumbel primary event windows, built from tilt transforms of the delay distribution
  * @ingroup primary_event_analytical_distributions
  */
 

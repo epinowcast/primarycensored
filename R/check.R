@@ -73,6 +73,14 @@ check_dprimary <- function(
     return(invisible(NULL))
   }
 
+  # Normalised by construction, and a narrow spike for a large mu / beta
+  # that the integration below misses, so only its parameters are checked
+  if (identical(dprimary, dtgumbel)) {
+    .check_tgumbel(
+      0, pwindow, dprimary_args$mu, dprimary_args$beta
+    )
+    return(invisible(NULL))
+  }
   integrand <- function(x) {
     do.call(dprimary, c(list(x = x, min = 0, max = pwindow), dprimary_args))
   }

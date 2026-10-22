@@ -29,8 +29,11 @@ test_that("Distribution IDs match Stan model definitions", {
   delay_dists <- pcd_distributions
   expect_identical(delay_dists$stan_id, seq_len(nrow(delay_dists)))
 
+  # Primary identifiers need not be consecutive
   prim_dists <- pcd_primary_distributions
-  expect_identical(prim_dists$stan_id, seq_len(nrow(prim_dists)))
+  expect_false(anyDuplicated(prim_dists$stan_id) > 0)
+  expect_identical(prim_dists$stan_id, sort(prim_dists$stan_id))
+  expect_identical(prim_dists$stan_id[1:2], 1:2)
 })
 
 test_that("pcd_stan_dist_id returns 26L for discretestep distribution", {

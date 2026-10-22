@@ -6,6 +6,10 @@
   The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
   The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   See #367.
+- Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
+  Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
+  Stan models that include the function files one by one need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+  See #371.
 
 ## Bug fixes
 
