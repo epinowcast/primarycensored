@@ -57,13 +57,14 @@ int check_for_analytical(int dist_id, int primary_id) {
   * @param params Array of delay distribution parameters
   * @param primary_id Distribution identifier for the primary distribution
   * @param primary_params Array of primary distribution parameters
+  * @param pwindow Primary event window
   *
   * @return 1 if the analytical solution applies, 0 if the numerical path is
   * needed
   */
 int check_for_analytical_params(int dist_id, array[] real params,
-                                int primary_id,
-                                array[] real primary_params) {
+                                int primary_id, array[] real primary_params,
+                                data real pwindow) {
   if (check_for_exptilt(dist_id, primary_id)) {
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
   }
@@ -94,7 +95,7 @@ int check_for_analytical_delay(int dist_id, array[] real params,
                                int primary_id, array[] real primary_params,
                                data real d, data real pwindow) {
   if (!check_for_analytical_params(dist_id, params, primary_id,
-                                   primary_params)) {
+                                   primary_params, pwindow)) {
     return 0;
   }
   if (check_for_exptilt(dist_id, primary_id)) {
@@ -143,6 +144,11 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
+  * Both terms come from one `gamma_lcdf_logx_pair()` evaluation. The
+  * subtraction in `primarycensored_uniform_lcdf_from_terms()` amplifies their
+  * rounding error by about d / pwindow. Rejects a rate that is not positive
+  * and finite.
+  *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
   *
@@ -156,15 +162,13 @@ vector primarycensored_gamma_uniform_terms(real t,
   }
   real shape = params[1];
   real rate = params[2];
+  real log_rate = gamma_log_rate(rate);
   // log E where E = k * theta = shape / rate is the mean of the delay
-  real log_E = log(shape) - log(rate);
-  // F_T(t; k) and the recursion to F_T(t; k+1):
-  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1), with y = rate * t
-  real log_F_T_k = gamma_lcdf(t | shape, rate);
-  real gamma_kp1_pdf_log = shape * log(rate * t) - rate * t
-                           - lgamma(shape + 1);
-  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_kp1_pdf_log);
-  return [log(t) + log_F_T_k, log_E + log_F_T_kp1]';
+  real log_E = log(shape) - log_rate;
+  // Both CDFs share one series or fraction evaluation at log(rate * t)
+  real log_t = log(t);
+  vector[2] log_F_T = gamma_lcdf_logx_pair(log_t + log_rate, shape);
+  return [log_t + log_F_T[1], log_E + log_F_T[2]]';
 }
 
 /**
@@ -256,6 +260,12 @@ vector primarycensored_weibull_uniform_terms(real t,
   * replaced by k + 1/shape, so this generalises the Gamma (shape = 1) and
   * Weibull (k = 1) solutions.
   *
+  * The subtraction in `primarycensored_uniform_lcdf_from_terms()` loses
+  * precision for large `k * shape`, with errors above 1e-6 possible once it
+  * exceeds about 12000.
+  * The two terms use separate `gamma_lcdf_logx()` calls, since the shapes
+  * k and k + 1 / shape do not differ by one.
+  *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters
   * [shape, scale, k]
@@ -273,9 +283,11 @@ vector primarycensored_gengamma_uniform_terms(real t,
   real k = params[3];
   real k_shift = k + inv(shape);
   real log_E = log(scale) + lgamma(k_shift) - lgamma(k);
+  real log_t = log(t);
+  real log_x = shape * (log_t - log(scale));
   return [
-    log(t) + gengamma_lcdf(t | shape, scale, k),
-    log_E + gengamma_lcdf(t | shape, scale, k_shift)
+    log_t + gamma_lcdf_logx(log_x, k),
+    log_E + gamma_lcdf_logx(log_x, k_shift)
   ]';
 }
 
@@ -576,21 +588,19 @@ vector primarycensored_analytical_lcdf_vectorized(
     // Endpoints below 0 share the entry for 0 for non-negative delays
     int first = positive ? max(start - pw, 0) : start - pw;
     int n_endpoints = n - first + 1;
-    // Each delay uses the form of primarycensored_exptilt_lcdf(), with each
-    // endpoint computed once. form[d] is 1 for the small window form, 2 for
-    // the small delay form and 3 for the direct form.
-    array[n] int form = rep_array(3, n);
+    // Each delay uses the form of primarycensored_exptilt_form(), with each
+    // endpoint computed once
+    array[n] int form;
     array[n_endpoints] int needs_moments = rep_array(0, n_endpoints);
     array[n_endpoints] int needs_terms = rep_array(0, n_endpoints);
     for (d in start:n) {
       int d_index = d - first + 1;
       int q_index = (positive ? max(d - pw, 0) : d - pw) - first + 1;
-      if (exptilt_is_small_window(dist_id, rho, d, pwindow)) {
-        form[d] = 1;
+      form[d] = primarycensored_exptilt_form(d, dist_id, rho, pwindow);
+      if (form[d] == 1) {
         needs_moments[d_index] = 1;
         needs_moments[q_index] = 1;
-      } else if (exptilt_is_small_delay(dist_id, rho, d, pwindow)) {
-        form[d] = 2;
+      } else if (form[d] == 2) {
         needs_moments[d_index] = 1;
       } else {
         needs_terms[d_index] = 1;
@@ -691,138 +701,6 @@ real primarycensored_log_std_normal_cdf(real z) {
       1 - 13 * inv_z2)))
   )));
   return std_normal_lpdf(z) - log(-z) + log(series);
-}
-
-/**
-  * Log of the regularised lower incomplete gamma function from its series
-  * @ingroup tilt_transforms
-  *
-  * Unlike gamma_lcdf() the shape derivative is exact. The series
-  * P(shape, x) = x^shape exp(-x) / Gamma(shape + 1) *
-  *   sum_k x^k / ((shape + 1) ... (shape + k))
-  * is for x < shape + 1.
-  *
-  * @param x Point, positive, below shape + 1
-  * @param shape Shape, positive
-  *
-  * @return log P(shape, x)
-  */
-real primarycensored_log_gamma_p_series(real x, real shape) {
-  real term = 1;
-  real total = 1;
-  real max_terms = 10 * sqrt(shape) + 150;
-  int k = 0;
-  while (term >= 1e-17 * total) {
-    k += 1;
-    if (k > max_terms) {
-      reject("The gamma lower series did not converge for x = ", x,
-             " and shape = ", shape);
-    }
-    term *= x / (shape + k);
-    total += term;
-  }
-  return shape * log(x) - x - lgamma(shape + 1) + log(total);
-}
-
-/**
-  * Log of the regularised upper incomplete gamma function from its
-  * continued fraction
-  * @ingroup tilt_transforms
-  *
-  * The Legendre continued fraction, evaluated by the modified Lentz method,
-  * for x >= shape + 1. The derivatives are exact, unlike gamma_lccdf().
-  *
-  * @param x Point, positive, at least shape + 1
-  * @param shape Shape, positive
-  *
-  * @return log Q(shape, x)
-  */
-real primarycensored_log_gamma_q_fraction(real x, real shape) {
-  real b = x + 1 - shape;
-  real d = 1 / b;
-  real c = 1e300;
-  real h = d;
-  real max_terms = 10 * sqrt(shape) + 150;
-  real del = 0;
-  int i = 0;
-  while (abs(del - 1) > 1e-15) {
-    i += 1;
-    if (i > max_terms) {
-      reject("The gamma upper fraction did not converge for x = ", x,
-             " and shape = ", shape);
-    }
-    real an = -i * (i - shape);
-    b += 2;
-    d = an * d + b;
-    if (abs(d) < 1e-300) d = 1e-300;
-    c = b + an / c;
-    if (abs(c) < 1e-300) c = 1e-300;
-    d = 1 / d;
-    del = d * c;
-    h *= del;
-  }
-  return shape * log(x) - x - lgamma(shape) + log(h);
-}
-
-/**
-  * Log of the regularised lower and upper incomplete gamma functions
-  * @ingroup tilt_transforms
-  *
-  * The tail that is not close to 1 is evaluated directly and the other is
-  * log1m_exp() of it, including for an upper tail below the smallest double.
-  *
-  * @param x Point, positive
-  * @param shape Shape, positive
-  *
-  * @return Vector [log P(shape, x), log Q(shape, x)]
-  */
-vector primarycensored_log_gamma_pq(real x, real shape) {
-  if (x < shape + 1) {
-    real log_lower = primarycensored_log_gamma_p_series(x, shape);
-    return [log_lower, log1m_exp(log_lower)]';
-  }
-  real log_upper = primarycensored_log_gamma_q_fraction(x, shape);
-  return [log1m_exp(log_upper), log_upper]';
-}
-
-/**
-  * Test whether the gamma lower tail underflows at these arguments
-  * @ingroup tilt_transforms
-  *
-  * Terms below 1e-300 of a probability are dropped as `-inf`, using the
-  * bound P(shape, x) <= x^shape exp(-x) /
-  *   (Gamma(shape + 1) (1 - x / (shape + 1))) for x < shape + 1.
-  *
-  * @param x Point, positive
-  * @param shape Shape
-  *
-  * @return 1 if the regularised lower incomplete gamma function may underflow,
-  *   0 otherwise
-  */
-int gamma_lcdf_underflows(real x, real shape) {
-  if (x >= shape + 1) return 0;
-  return shape * log(x) - lgamma(shape + 1) - x - log1m(x / (shape + 1))
-         < -700;
-}
-
-/**
-  * Test whether the gamma upper tail underflows at these arguments
-  * @ingroup tilt_transforms
-  *
-  * As for gamma_lcdf_underflows(), using the bound
-  * Q(shape, x) <= x^(shape - 1) exp(-x) / Gamma(shape) x / (x - shape + 1)
-  * for x beyond shape + 1.
-  *
-  * @param x Point, positive
-  * @param shape Shape
-  *
-  * @return 1 if the regularised upper incomplete gamma function may underflow,
-  *   0 otherwise
-  */
-int gamma_lccdf_underflows(real x, real shape) {
-  if (x <= shape + 1) return 0;
-  return (shape - 1) * log(x) - x - lgamma(shape) + log(x / (x - shape + 1))
-         < -700;
 }
 
 /**
@@ -1161,7 +1039,6 @@ vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
   return rep_vector(0, 4);
 }
 
-
 /**
   * Log of the tilt transform over the lower and the upper part of the support
   * @ingroup tilt_transforms
@@ -1172,8 +1049,7 @@ vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
   * is 1.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
-  * (rate / (rate - xi))^shape, with both tails from
-  * primarycensored_log_gamma_pq().
+  * (rate / (rate - xi))^shape, with both tails from gamma_log_pq_logx().
   *
   * The lognormal (1) has no closed form, see
   * primarycensored_lognormal_tilt_pair(). Its upper transform is `inf` for
@@ -1194,18 +1070,9 @@ vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
   if (dist_id == 2) {
     real shape = params[1];
     real rate = params[2];
-    real tilted_rate = rate - xi;
     real log_total = -shape * log1m(xi / rate);
     if (t <= 0) return [negative_infinity(), log_total]';
-    real x = t * tilted_rate;
-    if (gamma_lcdf_underflows(x, shape)) {
-      return [negative_infinity(), log_total]';
-    }
-    if (gamma_lccdf_underflows(x, shape)) {
-      return [log_total, negative_infinity()]';
-    }
-    vector[2] log_tails = primarycensored_log_gamma_pq(x, shape);
-    return [log_total + log_tails[1], log_total + log_tails[2]]';
+    return log_total + gamma_log_pq_logx(log(t) + log(rate - xi), shape);
   } else if (dist_id == 4) {
     real rate = params[1];
     real tilted_rate = rate - xi;
@@ -1254,6 +1121,30 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
   );
 }
 
+/**
+  * Log moments about a point from log partial moments
+  * @ingroup tilt_transforms
+  *
+  * The log of G_k(t) = int_0^t (t - u)^k f(u) du for k = 1, 2, 3 from the
+  * partial moments m_k(t) = int_0^t u^k f(u) du, with G_1 = t m_0 - m_1,
+  * G_2 = t G_1 - (t m_1 - m_2) and
+  * G_3 = t G_2 - (t (t m_1 - m_2) - (t m_2 - m_3)), each a difference of
+  * positive integrals.
+  *
+  * @param log_t Log of the point
+  * @param log_m Vector [log m_0, log m_1, log m_2, log m_3]
+  *
+  * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
+  */
+vector primarycensored_moments_from_partial(real log_t, vector log_m) {
+  real log_g1 = primarycensored_log_diff_exp(log_t + log_m[1], log_m[2]);
+  real log_h = primarycensored_log_diff_exp(log_t + log_m[2], log_m[3]);
+  real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
+  real log_a = primarycensored_log_diff_exp(log_t + log_m[3], log_m[4]);
+  real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
+  real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
+  return [log_g1, log_g2, log_g3]';
+}
 
 /**
   * Log moments of a gamma delay about a point
@@ -1269,39 +1160,19 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
   * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
   */
 vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
-  if (gamma_lcdf_underflows(t * rate, shape)
-      || gamma_lcdf_underflows(t * rate, shape + 1)
-      || gamma_lcdf_underflows(t * rate, shape + 2)
-      || gamma_lcdf_underflows(t * rate, shape + 3)) {
-    return rep_vector(negative_infinity(), 3);
-  }
-  // The CDFs are 1, so these are moments of the whole distribution
-  if (gamma_lccdf_underflows(t * rate, shape + 3)) {
-    real m1 = shape / rate;
-    real m2 = shape * (shape + 1) / square(rate);
-    real m3 = shape * (shape + 1) * (shape + 2) / pow(rate, 3);
-    return [
-      log(t - m1),
-      log(square(t) - 2 * t * m1 + m2),
-      log(pow(t, 3) - 3 * square(t) * m1 + 3 * t * m2 - m3)
-    ]';
-  }
   real log_t = log(t);
-  real x = t * rate;
-  real log_m0 = primarycensored_log_gamma_pq(x, shape)[1];
-  real log_m1 = log(shape) - log(rate)
-                + primarycensored_log_gamma_pq(x, shape + 1)[1];
-  real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate)
-                + primarycensored_log_gamma_pq(x, shape + 2)[1];
+  real log_x = log_t + log(rate);
+  // log_mk is the log of int_0^t u^k f(u) du
+  vector[2] log_p01 = gamma_lcdf_logx_pair(log_x, shape);
+  vector[2] log_p23 = gamma_lcdf_logx_pair(log_x, shape + 2);
+  real log_m0 = log_p01[1];
+  real log_m1 = log(shape) - log(rate) + log_p01[2];
+  real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate) + log_p23[1];
   real log_m3 = log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate)
-                + primarycensored_log_gamma_pq(x, shape + 3)[1];
-  real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
-  real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
-  real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
-  real log_a = primarycensored_log_diff_exp(log_t + log_m2, log_m3);
-  real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
-  real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
-  return [log_g1, log_g2, log_g3]';
+                + log_p23[2];
+  return primarycensored_moments_from_partial(
+    log_t, [log_m0, log_m1, log_m2, log_m3]'
+  );
 }
 
 /**
@@ -1316,8 +1187,8 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   * z = (t - mu) / sigma has G_1 = sigma (phi(z) + z Phi(z)),
   * G_2 = sigma^2 ((z^2 + 1) Phi(z) + z phi(z)) and
   * G_3 = sigma^3 (z (z^2 + 3) Phi(z) + (z^2 + 2) phi(z)). The lognormal
-  * uses its partial moments m_k as the gamma does, see
-  * primarycensored_lognormal_tilt_series().
+  * uses its partial moments
+  * m_k(t) = exp(k mu + k^2 sigma^2 / 2) Phi(z - k sigma).
   *
   * @param t Point
   * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
@@ -1369,20 +1240,12 @@ vector primarycensored_tilt_moments(real t, int dist_id,
     real sigma = params[2];
     real log_t = log(t);
     real z = (log_t - mu) / sigma;
-    real log_m0 = primarycensored_log_std_normal_cdf(z);
-    real log_m1 = mu + 0.5 * square(sigma)
-                  + primarycensored_log_std_normal_cdf(z - sigma);
-    real log_m2 = 2 * mu + 2 * square(sigma)
-                  + primarycensored_log_std_normal_cdf(z - 2 * sigma);
-    real log_m3 = 3 * mu + 4.5 * square(sigma)
-                  + primarycensored_log_std_normal_cdf(z - 3 * sigma);
-    real log_g1 = primarycensored_log_diff_exp(log_t + log_m0, log_m1);
-    real log_h = primarycensored_log_diff_exp(log_t + log_m1, log_m2);
-    real log_g2 = primarycensored_log_diff_exp(log_t + log_g1, log_h);
-    real log_a = primarycensored_log_diff_exp(log_t + log_m2, log_m3);
-    real log_b = primarycensored_log_diff_exp(log_t + log_h, log_a);
-    real log_g3 = primarycensored_log_diff_exp(log_t + log_g2, log_b);
-    return [log_g1, log_g2, log_g3]';
+    vector[4] log_m;
+    for (k in 0:3) {
+      log_m[k + 1] = k * mu + 0.5 * square(k * sigma)
+                     + primarycensored_log_std_normal_cdf(z - k * sigma);
+    }
+    return primarycensored_moments_from_partial(log_t, log_m);
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -1398,12 +1261,8 @@ vector primarycensored_tilt_moments(real t, int dist_id,
  * Every term depends on d or q alone, so the terms are computed once per
  * endpoint in primarycensored_analytical_lcdf_vectorized().
  *
- * The direct form cancels as rho goes to zero, see ?pcens_cdf_exptilt. For
- * |rho| * pwindow below 1e-2 (1e-3 for delays on the reals) and
- * |rho| * (|d| + pwindow) below 0.1 the small window form replaces it, see
- * exptilt_is_small_window(). For delays on the non-negative reals with
- * d < pwindow and |rho| * d below 1e-2 the small delay form replaces it, see
- * exptilt_is_small_delay().
+ * The direct form cancels as rho goes to zero, so small tilt forms replace
+ * it, see primarycensored_exptilt_form().
  */
 
 /**
@@ -1422,47 +1281,6 @@ vector primarycensored_tilt_moments(real t, int dist_id,
 int check_for_exptilt(int dist_id, int primary_id) {
   return primary_id == 2
          && (dist_id == 1 || dist_id == 2 || dist_id == 4 || dist_id == 18);
-}
-
-/**
-  * Check if the small window form replaces the direct form at a delay
-  * @ingroup exponential_tilt_solutions
-  *
-  * The form needs |rho| * pwindow below 1e-2, or 1e-3 for delays on the
-  * reals. It subtracts terms of the size of |d| + pwindow, so it also needs
-  * |rho| (|d| + pwindow) below 0.1.
-  *
-  * @param dist_id Distribution identifier, see check_for_exptilt()
-  * @param rho Tilt
-  * @param d Delay
-  * @param pwindow Primary event window
-  *
-  * @return 1 if the small window form is used at d, 0 otherwise
-  */
-int exptilt_is_small_window(int dist_id, real rho, data real d,
-                            data real pwindow) {
-  real limit = dist_has_positive_support(dist_id) ? 1e-2 : 1e-3;
-  return abs(rho) * pwindow < limit && abs(rho) * (abs(d) + pwindow) < 0.1;
-}
-
-/**
-  * Check if the small delay form replaces the direct form at a delay
-  * @ingroup exponential_tilt_solutions
-  *
-  * For delays on the non-negative reals with d < pwindow and |rho| * d below
-  * 1e-2.
-  *
-  * @param dist_id Distribution identifier, see check_for_exptilt()
-  * @param rho Tilt
-  * @param d Delay
-  * @param pwindow Primary event window
-  *
-  * @return 1 if the small delay form is used at d, 0 otherwise
-  */
-int exptilt_is_small_delay(int dist_id, real rho, data real d,
-                           data real pwindow) {
-  return dist_has_positive_support(dist_id) && d < pwindow
-         && abs(rho) * d < 1e-2;
 }
 
 /**
@@ -1485,6 +1303,38 @@ vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
     log_tilt_transform_pair(t, dist_id, 0, params),
     log_tilt_transform_pair_shared(t, dist_id, -rho, params, context)
   );
+}
+
+/**
+  * Choose the form of the exponentially tilted log CDF at a delay
+  * @ingroup exponential_tilt_solutions
+  *
+  * The small window form is used for |rho| * pwindow below 1e-2, or 1e-3 for
+  * delays on the reals, and |rho| * (|d| + pwindow) below 0.1, as it
+  * subtracts terms of the size of |d| + pwindow. Otherwise, for delays on
+  * the non-negative reals with d < pwindow and |rho| * d below 5e-3, the
+  * small delay form is used. Both
+  * truncate at third order in the tilt, with a relative error below
+  * (|rho| pwindow)^3 / 160 and (|rho| d)^3 / 24, so below 1e-8 at these
+  * limits. The direct form is used elsewhere.
+  *
+  * @param d Delay
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param rho Tilt
+  * @param pwindow Primary event window
+  *
+  * @return 1 for the small window form, 2 for the small delay form and 0 for
+  * the direct form
+  */
+int primarycensored_exptilt_form(data real d, int dist_id, real rho,
+                                 data real pwindow) {
+  int positive = dist_has_positive_support(dist_id);
+  if (abs(rho) * pwindow < (positive ? 1e-2 : 1e-3)
+      && abs(rho) * (abs(d) + pwindow) < 0.1) {
+    return 1;
+  }
+  if (positive && d < pwindow && abs(rho) * d < 5e-3) return 2;
+  return 0;
 }
 
 /**
@@ -1560,7 +1410,7 @@ real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
   * @ingroup exponential_tilt_solutions
   *
   * The uniform window limit with its corrections to second order in the tilt,
-  * for the small window form. With G_k(t) = int (t - u)^k f(u) du,
+  * for the small window form of primarycensored_exptilt_form(). With G_k(t) = int (t - u)^k f(u) du,
   *   F_rho(d) = (G_1(d) - G_1(q)) / w
   *     + rho (G_2(d) - w G_1(d) - G_2(q) - w G_1(q)) / (2 w)
   *     + rho^2 ((G_3(d) - G_3(q)) / 6 - w (G_2(d) + G_2(q)) / 4
@@ -1597,7 +1447,8 @@ real primarycensored_exptilt_small_window_lcdf_from_terms(
   * Compute the small delay log CDF from the moments at d
   * @ingroup exponential_tilt_solutions
   *
-  * For the small delay form the terms at d - pwindow are zero and
+  * For the small delay form of primarycensored_exptilt_form() the terms at
+  * d - pwindow are zero and
   * F_rho(d) = rho (G_1(d) + rho G_2(d) / 2 + rho^2 G_3(d) / 6) /
   *   (exp(rho w) - 1).
   *
@@ -1649,13 +1500,14 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   }
   if (pwindow == 0) return dist_lcdf(d | params, dist_id);
   real q = d - pwindow;
-  if (exptilt_is_small_window(dist_id, rho, d, pwindow)) {
+  int form = primarycensored_exptilt_form(d, dist_id, rho, pwindow);
+  if (form == 1) {
     return primarycensored_exptilt_small_window_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params),
       primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
     );
   }
-  if (exptilt_is_small_delay(dist_id, rho, d, pwindow)) {
+  if (form == 2) {
     return primarycensored_exptilt_small_delay_lcdf_from_terms(
       primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
     );

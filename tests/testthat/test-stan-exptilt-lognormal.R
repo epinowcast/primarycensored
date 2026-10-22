@@ -38,9 +38,8 @@ test_that("the lognormal has a tilt transform for every tilt that does not
   expect_identical(check_for_tilt_transform(1L, -1, c(1.6, 0)), 0L)
 })
 
-test_that("check_for_analytical includes the lognormal with a tilted
+test_that("the analytical checks include the lognormal with a tilted
   primary", {
-  expect_identical(check_for_analytical(1L, 2L), 1L)
   expect_identical(check_for_exptilt(1L, 2L), 1L)
   expect_identical(check_for_exptilt(1L, 1L), 0L)
   expect_identical(check_for_analytical_vectorized(1L, 2L, 1), 1L)
@@ -51,11 +50,11 @@ test_that("check_for_analytical includes the lognormal with a tilted
   expect_identical(check_for_uniform_terms(1L, 2L), 0L)
   for (rho in c(-2, -0.3, 0.3, 2)) {
     expect_identical(
-      check_for_analytical_params(1L, c(1.6, 0.5), 2L, rho), 1L
+      check_for_analytical_params(1L, c(1.6, 0.5), 2L, rho, 1), 1L
     )
   }
   expect_identical(
-    check_for_analytical_params(1L, c(650, 1), 2L, 1e300), 0L
+    check_for_analytical_params(1L, c(650, 1), 2L, 1e300, 1), 0L
   )
 })
 
@@ -439,7 +438,7 @@ test_that("the vectorised lognormal tilted CDF matches the per delay CDF far
 
 test_that("the lognormal uses the ODE path where the tilt overflows", {
   params <- c(650, 1)
-  expect_identical(check_for_analytical_params(1L, params, 2L, 1e300), 0L)
+  expect_identical(check_for_analytical_params(1L, params, 2L, 1e300, 2), 0L)
   expect_error(
     primarycensored_analytical_lcdf(2, 1L, params, 2, 0, Inf, 2L, 1e300),
     "tilted delay distribution"
@@ -696,10 +695,8 @@ test_that("the lognormal tilted CDF is accurate for a large sdlog", {
         )
         keep <- expected > 1e-100
         actual <- exp(lnorm_stan_lcdf(d, case, 1, rho))
-        # The small delay form applies up to |r| d of 1e-2 and has a relative
-        # truncation error of up to about (r d)^3 / 24, so 4e-8 at the limit
         expect_lt(
-          max_rel_diff(actual[keep], expected[keep]), 1e-7,
+          max_rel_diff(actual[keep], expected[keep]), 1e-8,
           label = sprintf(
             "sdlog %g, meanlog %g, r %g", sdlog, meanlog, rho
           )

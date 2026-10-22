@@ -179,7 +179,8 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
     );
   } else {
-    // Use numerical integration for other cases
+    // Use numerical integration for other cases. For positive-support
+    // delays the integral is 0 for d <= 0.
     if (dist_has_positive_support(dist_id) && d <= 0) {
       return 0;
     }
@@ -441,8 +442,8 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
   * check_for_analytical_vectorized() is 1 and check_for_analytical_delay() is
-  * 1 at the largest delay, and otherwise calls primarycensored_lcdf() at each delay. No truncation
-  * is applied.
+  * 1 at the largest delay, and otherwise calls primarycensored_lcdf() at each
+  * delay. No truncation is applied.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result

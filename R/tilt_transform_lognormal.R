@@ -17,9 +17,11 @@
 #' Lognormal delay meanlog and sdlog of a pcens object, defaulting as in
 #' [stats::plnorm()]
 #'
-#' @param object A `pcens` object.
+#' @inheritParams pcens_tilt
 #'
-#' @noRd
+#' @return A list with `meanlog` and `sdlog`.
+#'
+#' @keywords internal
 .lnorm_meanlog_sdlog <- function(object) {
   mu <- object$args$meanlog
   sigma <- object$args$sdlog
@@ -311,30 +313,18 @@
 
 #' @exportS3Method
 .pcens_tilt_moments.pcens_plnorm <- function(object, t) {
-  # G_1 = t m_0 - m_1, G_2 = t G_1 - (t m_1 - m_2) and
-  # G_3 = t G_2 - (t (t m_1 - m_2) - (t m_2 - m_3)) from the partial moments
-  # m_k, as differences of positive integrals as in `.gamma_moments()`
+  # The partial moments are m_k = exp(k meanlog + k^2 sdlog^2 / 2)
+  # Phi(z - k sdlog)
   p <- .lnorm_meanlog_sdlog(object)
-  positive <- t > 0
-  tp <- pmax(t, 0)
-  log_t <- log(tp)
+  log_t <- log(pmax(t, 0))
   z <- (log_t - p$meanlog) / p$sdlog
-  log_m0 <- stats::pnorm(z, log.p = TRUE)
-  log_m1 <- p$meanlog + 0.5 * p$sdlog^2 +
-    stats::pnorm(z - p$sdlog, log.p = TRUE)
-  log_m2 <- 2 * p$meanlog + 2 * p$sdlog^2 +
-    stats::pnorm(z - 2 * p$sdlog, log.p = TRUE)
-  log_g1 <- .log_diff_exp(log_t + log_m0, log_m1)
-  log_h <- .log_diff_exp(log_t + log_m1, log_m2)
-  log_m3 <- 3 * p$meanlog + 4.5 * p$sdlog^2 +
-    stats::pnorm(z - 3 * p$sdlog, log.p = TRUE)
-  log_g2 <- .log_diff_exp(log_t + log_g1, log_h)
-  log_a <- .log_diff_exp(log_t + log_m2, log_m3)
-  log_b <- .log_diff_exp(log_t + log_h, log_a)
-  log_g3 <- .log_diff_exp(log_t + log_g2, log_b)
-  cbind(
-    G1 = ifelse(positive, log_g1, -Inf),
-    G2 = ifelse(positive, log_g2, -Inf),
-    G3 = ifelse(positive, log_g3, -Inf)
+  log_m <- lapply(0:3, function(k) {
+    k * p$meanlog + k^2 * p$sdlog^2 / 2 +
+      stats::pnorm(z - k * p$sdlog, log.p = TRUE)
+  })
+  out <- .moments_from_partial(
+    log_t, log_m[[1]], log_m[[2]], log_m[[3]], log_m[[4]]
   )
+  out[t <= 0, ] <- -Inf
+  out
 }

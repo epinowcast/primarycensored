@@ -412,9 +412,6 @@ test_that("the lognormal CDF handles boundary values of q", {
     tolerance = 1e-12
   )
   expect_identical(.pcens_cdf_exptilt(obj, c(-3, -1e-12, 0), 2), c(0, 0, 0))
-  # Endpoints shared between q and q - pwindow
-  endpoints <- .exptilt_endpoints(1:10, 3, lower = 0)
-  expect_identical(endpoints, c(0, 1:10))
 })
 
 test_that("the lognormal CDF is a CDF for either sign of the tilt", {
@@ -618,14 +615,12 @@ test_that("the lognormal CDF is accurate for a large sdlog", {
       for (rho in c(5, 200, -2)) {
         obj <- exptilt_object(delay, rho)
         expected <- exptilt_reference(d, 1, rho, exptilt_cdf(delay))
-        # The small delay form applies up to |r| d of 1e-2 and has a relative
-        # truncation error of up to about (r d)^3 / 24, so 4e-8 at the limit
         keep <- expected > 1e-100
         expect_lt(
           max_rel_diff(
             .pcens_cdf_exptilt(obj, d, 1)[keep], expected[keep]
           ),
-          1e-7,
+          1e-8,
           label = sprintf(
             "sdlog %g, meanlog %g, r %g", sdlog, meanlog, rho
           )

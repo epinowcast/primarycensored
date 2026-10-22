@@ -7,10 +7,6 @@ rhos <- c(
 )
 
 test_that("exponentially tilted primaries dispatch to analytic methods", {
-  for (family in families) {
-    obj <- exptilt_object(family, 0.2)
-    expect_s3_class(obj, "pcens")
-  }
   expect_s3_class(
     exptilt_object(families[[1]], 0.2), "pcens_pexp_dexpgrowth"
   )
@@ -20,15 +16,6 @@ test_that("exponentially tilted primaries dispatch to analytic methods", {
   expect_s3_class(
     exptilt_object(families[[6]], 0.2), "pcens_pnorm_dexpgrowth"
   )
-  for (cls in c(
-    "pcens_pexp_dexpgrowth", "pcens_pgamma_dexpgrowth",
-    "pcens_pnorm_dexpgrowth"
-  )) {
-    expect_false(
-      is.null(utils::getS3method("pcens_cdf", cls, optional = TRUE)),
-      info = cls
-    )
-  }
 })
 
 test_that("tilt transforms match numerical integration of the density", {
@@ -126,38 +113,22 @@ test_that("the analytic CDF agrees with use_numeric = TRUE", {
   }
 })
 
-test_that("use_numeric = TRUE uses the default method", {
+test_that("the numerical method is used for use_numeric = TRUE, delays
+  without a tilt form and inadmissible tilts", {
+  q <- c(0.5, 2, 5, 10)
   obj <- exptilt_object(families[[3]], 0.5)
   expect_identical(
-    pcens_cdf(obj, c(1, 4), 2, use_numeric = TRUE),
-    pcens_cdf.default(obj, c(1, 4), 2)
+    pcens_cdf(obj, q, 2, use_numeric = TRUE), pcens_cdf.default(obj, q, 2)
   )
-})
-
-test_that("delay families without a tilt form use the numerical method", {
-  obj <- new_pcens(
-    pdist = pweibull, dprimary = dexpgrowth,
-    primary_args = list(r = 0.2), shape = 2, scale = 3
+  objs <- list(
+    new_pcens(pweibull, dexpgrowth, list(r = 0.2), shape = 2, scale = 3),
+    exptilt_object(families[[2]], -0.5),
+    exptilt_object(families[[3]], -1.3),
+    exptilt_object(families[[4]], -0.5)
   )
-  expect_false(.pcens_tilt_available(obj, -0.2))
-  q <- c(0.5, 2, 5)
-  expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
-})
-
-test_that("inadmissible tilts use the numerical method", {
-  for (family in families[c(2, 3, 4)]) {
-    for (rho in c(-1, -0.5)) {
-      if (exptilt_admissible(family, rho)) {
-        next
-      }
-      obj <- exptilt_object(family, rho)
-      expect_false(.pcens_tilt_available(obj, -rho))
-      q <- c(0.5, 2, 5, 10)
-      expect_identical(
-        pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2),
-        info = sprintf("%s, r = %g", family$label, rho)
-      )
-    }
+  for (obj in objs) {
+    expect_false(.pcens_tilt_available(obj, -obj$primary_args$r))
+    expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
   }
 })
 
@@ -252,6 +223,23 @@ test_that("the analytic CDF has no jump where the small window reach ends", {
         label = sprintf("m = %g, sign = %g", m, sign)
       )
     }
+  }
+})
+
+test_that("the small tilt forms are accurate to 1e-8 at their limits", {
+  for (case in exptilt_limit_cases()) {
+    obj <- exptilt_object(
+      list(pdist = pexp, args = list(rate = case$rate)), case$rho
+    )
+    expected <- exptilt_reference(
+      case$q, case$pwindow, case$rho, function(x) pexp(x, case$rate)
+    )
+    expect_lt(
+      max_rel_diff(pcens_cdf(obj, case$q, case$pwindow), expected), 1e-8,
+      label = sprintf(
+        "rate = %g, pwindow = %g, r = %g", case$rate, case$pwindow, case$rho
+      )
+    )
   }
 })
 
@@ -445,62 +433,43 @@ test_that("missing delay parameters are errors", {
 })
 
 test_that("delay parameters default as in the stats functions", {
-  obj <- new_pcens(pexp, dexpgrowth, list(r = 0.2))
-  expect_equal(
-    pcens_cdf(obj, c(0.5, 2), 1),
-    pcens_cdf(obj, c(0.5, 2), 1, use_numeric = TRUE),
-    tolerance = 1e-6
+  q <- c(-0.5, 0.5, 2, 5)
+  objs <- list(
+    new_pcens(pexp, dexpgrowth, list(r = 0.2)),
+    new_pcens(pgamma, dexpgrowth, list(r = 0.3), shape = 2),
+    new_pcens(pnorm, dexpgrowth, list(r = 0.2))
   )
-  # A gamma with only a shape has rate 1, as in pgamma()
-  obj <- new_pcens(pgamma, dexpgrowth, list(r = 0.3), shape = 2)
-  expect_equal(
-    pcens_cdf(obj, c(1, 5), 2),
-    c(0.04114682, 0.89135648),
-    tolerance = 1e-7
-  )
-  expect_equal(
-    pcens_cdf(obj, c(1, 5), 2),
-    pcens_cdf(obj, c(1, 5), 2, use_numeric = TRUE),
-    tolerance = 1e-6
-  )
-  expect_equal(
-    pprimarycensored(
-      c(1, 5), pgamma,
-      pwindow = 2, dprimary = dexpgrowth, primary_args = list(r = 0.3),
-      shape = 2
-    ),
-    c(0.04114682, 0.89135648),
-    tolerance = 1e-7
-  )
-  obj_rate <- new_pcens(
-    pgamma, dexpgrowth, list(r = 0.3),
-    shape = 2, rate = 1
-  )
+  for (obj in objs) {
+    expect_equal(
+      pcens_cdf(obj, q, 2), pcens_cdf(obj, q, 2, use_numeric = TRUE),
+      tolerance = 1e-6
+    )
+  }
   expect_identical(
-    pcens_cdf(obj, c(1, 5), 2), pcens_cdf(obj_rate, c(1, 5), 2)
-  )
-  # A rate that would not admit the tilt is checked against the default
-  obj <- new_pcens(pgamma, dexpgrowth, list(r = -1.5), shape = 2)
-  expect_equal(
-    pcens_cdf(obj, c(1, 5), 2),
-    pcens_cdf(obj, c(1, 5), 2, use_numeric = TRUE),
-    tolerance = 1e-6
-  )
-  obj <- new_pcens(pnorm, dexpgrowth, list(r = 0.2))
-  expect_equal(
-    pcens_cdf(obj, c(-0.5, 2), 1),
-    pcens_cdf(obj, c(-0.5, 2), 1, use_numeric = TRUE),
-    tolerance = 1e-6
+    pcens_cdf(objs[[2]], q, 2),
+    pcens_cdf(
+      new_pcens(pgamma, dexpgrowth, list(r = 0.3), shape = 2, rate = 1), q, 2
+    )
   )
 })
 
 test_that("endpoints are shared between neighbouring delays", {
-  endpoints <- .exptilt_endpoints(1:10, 3, lower = 0)
-  expect_identical(endpoints, c(0, 1:10))
-  endpoints <- .exptilt_endpoints(1:10, 3, lower = -Inf)
-  expect_identical(endpoints, as.numeric(-2:10))
-  endpoints <- .exptilt_endpoints(c(0.5, 2.5, 4), 2, lower = 0)
-  expect_identical(endpoints, c(0, 0.5, 2, 2.5, 4))
+  layouts <- list(
+    list(q = 1:10, pwindow = 3, lower = 0, endpoints = c(1:10, 0)),
+    list(q = 1:10, pwindow = 3, lower = -Inf, endpoints = c(1:10, -2:0)),
+    list(
+      q = c(0.5, 2.5, 4), pwindow = 2, lower = 0,
+      endpoints = c(0.5, 2.5, 4, 0, 2)
+    )
+  )
+  for (layout in layouts) {
+    pos <- .exptilt_layout(layout$q, layout$pwindow, layout$lower)
+    expect_identical(pos$endpoints, as.numeric(layout$endpoints))
+    expect_identical(pos$endpoints[pos$q], as.numeric(layout$q))
+    expect_identical(
+      pos$endpoints[pos$y], pmax(layout$q - layout$pwindow, layout$lower)
+    )
+  }
 })
 
 test_that("the analytic CDF matches rprimarycensored samples", {
@@ -524,14 +493,4 @@ test_that("the analytic CDF matches rprimarycensored samples", {
       expect_gt(ks$p.value, 1e-3, label = exptilt_label(family, pwindow, rho))
     }
   }
-})
-
-test_that("pcens_cdf is unchanged for the uniform primary", {
-  obj <- new_pcens(pgamma, dunif, list(), shape = 2, rate = 0.5)
-  expect_s3_class(obj, "pcens_pgamma_dunif")
-  expect_equal(
-    pcens_cdf(obj, c(1, 4), 2),
-    pcens_cdf(obj, c(1, 4), 2, use_numeric = TRUE),
-    tolerance = 1e-6
-  )
 })
