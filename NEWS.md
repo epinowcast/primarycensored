@@ -12,9 +12,6 @@
 
 ## Bug fixes
 
-- The small window form of the exponentially tilted solutions is used only while `abs(r) * (abs(q) + pwindow)` is below 0.1, in R and in Stan.
-  Beyond that it cancelled and gave CDFs that were wrong without a warning.
-  See #367 and #369.
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.

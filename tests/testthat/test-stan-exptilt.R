@@ -519,7 +519,7 @@ test_that("the tilted CDF is accurate far from the origin", {
     )
     for (case in delays) {
       for (rho in c(3e-5, -3e-5, 1e-6)) {
-        if (case$dist_id != 18L && exptilt_case_rate(case) + rho <= 0) {
+        if (!exptilt_case_ok(case, rho)) {
           next
         }
         expected <- exptilt_reference(d, pwindow, rho, exptilt_case_cdf(case))
@@ -541,21 +541,22 @@ test_that("the tilted CDF is continuous where the small window reach ends", {
   for (m in c(1e3, 1e5, 1e6)) {
     d <- m * c(0.5, 1, 2)
     reach <- 0.1 / (2 * m + pwindow)
-    for (sign in c(-1, 1)) {
-      expect_lt(
-        max_rel_diff(
-          exp(vapply(
+    for (case in list(list(2L, c(4, 4 / m)), list(18L, c(m, m / 4)))) {
+      for (sign in c(-1, 1)) {
+        lcdf <- function(rho) {
+          vapply(
             d, primarycensored_exptilt_lcdf, numeric(1),
-            18L, c(m, m / 4), pwindow, sign * 0.999 * reach
-          )),
-          exp(vapply(
-            d, primarycensored_exptilt_lcdf, numeric(1),
-            18L, c(m, m / 4), pwindow, sign * 1.001 * reach
-          ))
-        ),
-        1e-6,
-        label = sprintf("m = %g, sign = %g", m, sign)
-      )
+            case[[1]], case[[2]], pwindow, rho
+          )
+        }
+        expect_lt(
+          max_rel_diff(
+            exp(lcdf(sign * 0.999 * reach)), exp(lcdf(sign * 1.001 * reach))
+          ),
+          1e-6,
+          label = sprintf("dist %d, m = %g, sign = %g", case[[1]], m, sign)
+        )
+      }
     }
   }
 })

@@ -1313,10 +1313,9 @@ vector primarycensored_exptilt_terms(real t, int dist_id, real rho,
   * delays on the reals, and |rho| * (|d| + pwindow) below 0.1, as it
   * subtracts terms of the size of |d| + pwindow. Otherwise, for delays on
   * the non-negative reals with d < pwindow and |rho| * d below 5e-3, the
-  * small delay form is used. Both
-  * truncate at third order in the tilt, with a relative error below
-  * (|rho| pwindow)^3 / 160 and (|rho| d)^3 / 24, so below 1e-8 at these
-  * limits. The direct form is used elsewhere.
+  * small delay form is used. Both truncate at third order in the tilt, with
+  * a relative error below (|rho| pwindow)^3 / 160 and (|rho| d)^3 / 24, so
+  * below 1e-8 at these limits. The direct form is used elsewhere.
   *
   * @param d Delay
   * @param dist_id Distribution identifier for the delay distribution
