@@ -3,8 +3,6 @@ functions {
   #include primarycensored.stan
   #include primarycensored_ode.stan
   #include primarycensored_analytical_cdf.stan
-  #include tilt_transform.stan
-  #include primarycensored_exptilt.stan
   #include primarycensored_tlogis.stan
   #include expgrowth.stan
   #include tlogis.stan

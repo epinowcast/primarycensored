@@ -3,8 +3,8 @@
  *
  * The primary event censored CDF is F(a) + Phi / D_L with a = d - w and
  * D_L the mass of the window, where Phi is a sum of series of the transforms
- * of tilt_transform.stan at the tilts +/- n / s. The series are summed with
- * binomial taper weights, with the number of terms chosen by
+ * of log_tilt_transform_pair() at the tilts +/- n / s. The series are
+ * summed with binomial taper weights, with the number of terms chosen by
  * tlogis_series_terms() to bound the truncation error. Each transform
  * depends on one endpoint, a, u or d, so the terms of
  * primarycensored_tlogis_terms() are computed once per endpoint and shared

@@ -28,7 +28,8 @@ test_that("check_for_tlogis is structural and for primary_id 3", {
     expect_identical(check_for_tlogis(dist_id, 3L), 1L)
     expect_identical(check_for_tlogis(dist_id, 2L), 0L)
     expect_identical(check_for_tlogis(dist_id, 1L), 0L)
-    expect_identical(check_for_analytical(dist_id, 3L), 1L)
+    # As for the tilted primary, check_for_analytical_params() decides
+    expect_identical(check_for_analytical(dist_id, 3L), 0L)
   }
   for (dist_id in c(1L, 3L, 5L, 9L)) {
     expect_identical(check_for_tlogis(dist_id, 3L), 0L)
@@ -39,8 +40,6 @@ test_that("check_for_tlogis is structural and for primary_id 3", {
     expect_identical(check_for_analytical(dist_id, 3L), 1L)
   }
   expect_identical(check_for_analytical(2L, 1L), 1L)
-  expect_identical(check_for_analytical(4L, 2L), 1L)
-  expect_identical(check_for_analytical(2L, 2L), 1L)
 })
 
 test_that("the series rule matches R", {

@@ -16,7 +16,8 @@
 #' \deqn{F_L(q) = F(q - w) + \frac{1}{D_L}
 #'   \int_{q - w}^{q} \{L(q - u) - L(0)\} f(u) du.}
 #' Expanding \eqn{L} as a geometric series writes the integral as sums of the
-#' transforms \eqn{T_f(\xi; \tau)} of [tilt_transform] at the tilts
+#' transforms
+#' \eqn{T_f(\xi; \tau) = \int_{-\infty}^{\tau} e^{\xi u} f(u) du} at the tilts
 #' \eqn{\xi = \pm n / s}. The positive tilts are for the part of the window
 #' above the location and the negative tilts for the part below it, so the
 #' window is split at the location when it is inside it. Each transform
@@ -43,8 +44,9 @@
 #' In the far tails the error grows with the cancellation in the integral,
 #' to about 1e-7 for a scale much larger than the window.
 #'
-#' A new delay distribution is supported by the methods of [tilt_transform]
-#' and a `pcens_cdf` method for its class that calls `.pcens_cdf_tlogis()`.
+#' A new delay distribution is supported by methods for the internal tilt
+#' generics in `R/tilt_transform.R` and a `pcens_cdf` method for its class
+#' that calls `.pcens_cdf_tlogis()`.
 #'
 #' @inherit pcens_cdf return
 #'
@@ -293,7 +295,7 @@ pcens_cdf.pcens_pnorm_dtlogis <- function(
 #' Primary event censored CDF for a truncated logistic primary
 #'
 #' Shared implementation of the [pcens_cdf_tlogis] methods. It dispatches
-#' on the delay class of `object` through the generics of [tilt_transform].
+#' on the delay class of `object` through the internal tilt generics.
 #'
 #' @inheritParams pcens_cdf
 #'
