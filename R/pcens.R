@@ -209,11 +209,11 @@ update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
     if (length(new_args) > 0L) {
       .check_named_list(new_args, "Delay parameters passed to update()")
     }
-    unknown <- setdiff(nms, names(object$args))
+    unknown <- nms[!nms %in% names(object$args)]
     if (length(unknown) > 0L) {
       # Drop the first formal, the point at which pdist is evaluated
       pdist_args <- names(formals(object$pdist))[-1]
-      unknown <- setdiff(unknown, pdist_args)
+      unknown <- unknown[!unknown %in% pdist_args]
       if (length(unknown) > 0L && !is.null(pdist_args) &&
         !"..." %in% pdist_args) {
         stop(
