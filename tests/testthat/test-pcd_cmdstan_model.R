@@ -627,3 +627,79 @@ test_that(
     expect_lt(true_r, ci_r[2])
   }
 )
+
+test_that(
+  "pcd_cmdstan_model recovers true values for a gamma delay with a truncated
+   logistic primary",
+  {
+    set.seed(654)
+    n <- 2000
+    true_shape <- 2
+    true_rate <- 0.5
+    true_location <- 4
+    true_scale <- 0.6
+
+    simulated_delays <- rprimarycensored(
+      n = n,
+      rdist = rgamma,
+      shape = true_shape,
+      rate = true_rate,
+      pwindow = 2,
+      D = 10,
+      rprimary = rtlogis,
+      rprimary_args = list(location = true_location, scale = true_scale)
+    )
+
+    simulated_data <- data.frame(
+      delay = simulated_delays,
+      delay_upper = simulated_delays + 1,
+      pwindow = 2,
+      relative_obs_time = 10
+    )
+
+    delay_counts <- simulated_data |>
+      dplyr::summarise(
+        n = dplyr::n(),
+        .by = c(pwindow, relative_obs_time, delay, delay_upper)
+      )
+
+    # A location after the window has an analytical solution for a gamma
+    # delay, with the vectorised shared terms. The delay and the primary are
+    # confounded, so the primary has informative priors.
+    stan_data <- pcd_as_stan_data(
+      delay_counts,
+      dist_id = pcd_stan_dist_id("gamma", "delay"),
+      primary_id = pcd_stan_dist_id("tlogis", "primary"),
+      param_bounds = list(lower = c(0, 0), upper = c(Inf, Inf)),
+      primary_param_bounds = list(lower = c(2.5, 0.1), upper = c(Inf, Inf)),
+      priors = list(location = c(2, 1), scale = c(0.5, 0.5)),
+      primary_priors = list(location = c(4, 0.6), scale = c(0.3, 0.1))
+    )
+
+    model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
+    fit <- suppressMessages(suppressWarnings(model$sample(
+      data = stan_data,
+      seed = 654,
+      chains = 2,
+      parallel_chains = 2,
+      refresh = 0,
+      show_messages = FALSE,
+      iter_warmup = 500,
+      iter_sampling = 500
+    )))
+
+    posterior <- fit$draws(
+      c("params[1]", "params[2]", "primary_params[1]", "primary_params[2]"),
+      format = "df"
+    )
+
+    expect_equal(mean(posterior$`params[1]`), true_shape, tolerance = 0.15)
+    expect_equal(mean(posterior$`params[2]`), true_rate, tolerance = 0.15)
+    ci_shape <- quantile(posterior$`params[1]`, c(0.05, 0.95))
+    ci_rate <- quantile(posterior$`params[2]`, c(0.05, 0.95))
+    expect_gt(true_shape, ci_shape[1])
+    expect_lt(true_shape, ci_shape[2])
+    expect_gt(true_rate, ci_rate[1])
+    expect_lt(true_rate, ci_rate[2])
+  }
+)

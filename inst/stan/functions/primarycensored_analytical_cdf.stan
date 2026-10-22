@@ -24,10 +24,10 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   *
   * The non-parametric step (26) and discrete-hazard (27, 28) delays are
   * analytic for every primary `primary_lcdf` currently supports, the uniform
-  * (1) and exponential growth (2). That list is repeated by hand below, so
-  * adding a primary to `primary_lcdf` does not extend the analytic path on
-  * its own: without a matching update here the new primary silently falls
-  * back to numerical integration.
+  * (1), exponential growth (2) and truncated logistic (3). That list is
+  * repeated by hand below, so adding a primary to `primary_lcdf` does not
+  * extend the analytic path on its own: without a matching update here the
+  * new primary silently falls back to numerical integration.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -39,7 +39,7 @@ int check_for_analytical(int dist_id, int primary_id) {
   if (check_for_uniform_terms(dist_id, primary_id)) return 1;
   // Keep this primary list in sync with `primary_lcdf`; see the note above.
   if (dist_id == 26 || dist_id == 27 || dist_id == 28) {
-    return primary_id == 1 || primary_id == 2;
+    return primary_id == 1 || primary_id == 2 || primary_id == 3;
   }
   return 0; // No analytical solution for other combinations
 }
@@ -50,8 +50,11 @@ int check_for_analytical(int dist_id, int primary_id) {
   *
   * This is check_for_analytical() and, for the exponentially tilted
   * solutions, which check_for_analytical() does not include, that the tilted
-  * delay exists, see check_for_tilt_transform(). It chooses the path in
-  * primarycensored_cdf() and primarycensored_lcdf().
+  * delay exists, see check_for_tilt_transform(). The truncated logistic
+  * solutions, also not in check_for_analytical(), need a truncation rule for
+  * each series and the largest tilt of the delay, see
+  * check_for_tlogis_params(). It chooses the path in primarycensored_cdf()
+  * and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param params Array of delay distribution parameters
@@ -67,6 +70,9 @@ int check_for_analytical_params(int dist_id, array[] real params,
                                 data real pwindow) {
   if (check_for_exptilt(dist_id, primary_id)) {
     return check_for_tilt_transform(dist_id, -primary_params[1], params);
+  }
+  if (check_for_tlogis(dist_id, primary_id)) {
+    return check_for_tlogis_params(dist_id, params, primary_params, pwindow);
   }
   return check_for_analytical(dist_id, primary_id);
 }
@@ -389,6 +395,11 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
     }
     return primarycensored_exptilt_lcdf(
       d | dist_id, params, pwindow, primary_params[1]
+    );
+  }
+  if (check_for_tlogis(dist_id, primary_id)) {
+    return primarycensored_tlogis_lcdf(
+      d | dist_id, params, pwindow, primary_params[1], primary_params[2]
     );
   }
   if (dist_id == 2 && primary_id == 1) {

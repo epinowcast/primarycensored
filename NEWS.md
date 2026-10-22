@@ -6,6 +6,9 @@
   The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
   The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   See #367.
+- Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3), with analytical solutions for exponential, gamma and normal delays in R and Stan.
+  The numerical path is used where the analytical solutions do not apply.
+  See #370.
 
 ## Bug fixes
 

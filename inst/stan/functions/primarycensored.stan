@@ -112,7 +112,8 @@ vector primarycensored_truncation_bounds(
   * `ode_rk45`. The integration variable ranges over the primary event time,
   * from d - pwindow to d. For delays on the non-negative reals the integrand
   * is 0 below 0, so the integral starts at 0 to keep the solver from stepping
-  * over the kink there.
+  * over the kink there. For a truncated logistic primary (primary_id 3) the
+  * integral is solved in parts around the location, with `ode_rk45_tol`.
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -136,10 +137,27 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
   );
   array[4] int ids = {dist_id, primary_id, n_params, n_primary_params};
 
-  vector[1] y0 = rep_vector(0.0, 1);
-  return ode_rk45(
-    primarycensored_ode, y0, lower_bound, {d}, theta, {d, pwindow}, ids
-  )[1, 1];
+  vector[1] y = rep_vector(0.0, 1);
+  if (primary_id != 3) {
+    return ode_rk45(
+      primarycensored_ode, y, lower_bound, {d}, theta, {d, pwindow}, ids
+    )[1, 1];
+  }
+  // Solve in parts around a narrow truncated logistic density, with tighter
+  // tolerances, so that the solver does not step over it
+  vector[12] stops = append_row(
+    tlogis_spike_times(d, pwindow, primary_params[1], primary_params[2]), d
+  );
+  real start = lower_bound;
+  for (i in 1:12) {
+    if (i < 12 && (stops[i] <= start || stops[i] >= d)) continue;
+    y = ode_rk45_tol(
+      primarycensored_ode, y, start, {stops[i]}, 1e-9, 1e-10, 1000000,
+      theta, {d, pwindow}, ids
+    )[1];
+    start = stops[i];
+  }
+  return y[1];
 }
 
 /**
@@ -442,6 +460,8 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
   * check_for_analytical_vectorized() and check_for_analytical_params() are 1,
+  * primarycensored_tlogis_lcdf_vectorized() when
+  * check_for_tlogis_vectorized() and check_for_analytical_params() are 1,
   * and otherwise calls primarycensored_lcdf() at each delay. No truncation
   * is applied.
   *
@@ -465,6 +485,14 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                      primary_params, pwindow)) {
     return primarycensored_analytical_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_id, primary_params
+    );
+  }
+  if (check_for_tlogis_vectorized(dist_id, primary_id, pwindow)
+      && check_for_analytical_params(dist_id, params, primary_id,
+                                     primary_params, pwindow)) {
+    return primarycensored_tlogis_lcdf_vectorized(
+      start, n, dist_id, params, pwindow, primary_params[1],
+      primary_params[2]
     );
   }
   vector[n] log_cdfs;
@@ -506,7 +534,8 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
   *
   * The log CDFs at the integer delays come from
   * primarycensored_lcdf_vectorized(), which uses the analytical solution
-  * where check_for_analytical_vectorized() allows it.
+  * where check_for_analytical_vectorized() or check_for_tlogis_vectorized()
+  * allows it.
   *
   * @code
   * // Example: Weibull delay distribution with uniform primary distribution
