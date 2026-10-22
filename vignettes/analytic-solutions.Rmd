@@ -163,7 +163,7 @@ In the collected form the numerator loses precision through cancellation.
 Equation \@ref(eq:exptilt) keeps $F_{\mathrm{IP}}(q - w_P)$ out of the numerator, and the package evaluates it on the log scale.
 Writing $e^{\rho q} = e^{\rho w_P} e^{\rho (q - w_P)}$ makes each term a function of $q$ or of $q - w_P$ alone.
 For an integer `pwindow` of at least 1, $q - w_P$ is an integer delay too.
-`primarycensored_exptilt_lcdf_vectorized()` in Stan therefore computes the terms once per integer delay $t$ and uses them for the CDF at $t$ and at $t + w_P$.
+`primarycensored_analytical_lcdf_vectorized()` in Stan therefore computes the terms once per integer delay $t$ and uses them for the CDF at $t$ and at $t + w_P$.
 
 ## Uniform window as the limit $\rho \to 0$
 
@@ -335,7 +335,7 @@ For windows whose admissibility depends on `pwindow`, such as the truncated logi
 | Window | Stan functions | Parameter check |
 |:---|:---|:---|
 | Uniform | `primarycensored_<dist>_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` | `check_for_uniform_terms()` and `check_uniform_terms_params()` |
-| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_exptilt_lcdf_vectorized()`, with `log_tilt_transform_pair()` | `check_for_tilt_transform()`, with `check_for_tilt_transform_at()` for the lognormal and `check_for_tilt_transform_point()` for the log-logistic |
+| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_analytical_lcdf_vectorized()`, with `log_tilt_transform_pair()` | `check_for_tilt_transform()`, with `check_for_tilt_transform_at()` for the lognormal and `check_for_tilt_transform_point()` for the log-logistic |
 | Truncated logistic | `primarycensored_tlogis_lcdf()` and `primarycensored_tlogis_lcdf_vectorized()` | `check_for_tlogis_params()` |
 | Truncated Gumbel | `primarycensored_gumbel_lcdf()` and `primarycensored_gumbel_lcdf_vectorized()` | `check_for_gumbel_params()` |
 
@@ -357,13 +357,16 @@ The numerical method is used in the following cases.
 ## Small tilt
 
 The numerator of equation \@ref(eq:exptilt) loses precision through cancellation as $\rho \to 0$.
-For small $|\rho| w_P$ the package replaces equation \@ref(eq:exptilt) with its Taylor expansion in $\rho$ about the uniform solution, written in the $K_n$ of equation \@ref(eq:kn).
+For a gamma delay the loss grows with the shape.
+For $|\rho| w_P < 10^{-2}$, or $10^{-3}$ for delays on the reals, the package replaces equation \@ref(eq:exptilt) with its Taylor expansion in $\rho$ about the uniform solution, written in the $K_n$ of equation \@ref(eq:kn).
 To first order this is $F_0(q; w_P) + \rho \{K_2(q) - w_P K_1(q) - K_2(q - w_P) - w_P K_1(q - w_P)\} / (2 w_P)$.
+The package also keeps the second order term, $\rho^2 [2 \{K_3(q) - K_3(q - w_P)\} - 3 w_P \{K_2(q) + K_2(q - w_P)\} + w_P^2 \{K_1(q) - K_1(q - w_P)\}] / (12 w_P)$, so the error is $O\big((\rho w_P)^4\big)$.
 
 ## Small delay
 
 For a delay on the non-negative reals with $q < w_P$ the exponential tilt CDF is $\{e^{\rho q} J_\rho(q) - F_{\mathrm{IP}}(q)\} / (e^{\rho w_P} - 1)$.
-For small $|\rho| q$ the package replaces the numerator with its Taylor expansion in $\rho$, whose leading terms are $\rho K_1(q) + \rho^2 K_2(q) / 2$.
+For $|\rho| q < 10^{-2}$ the package replaces the numerator with its Taylor expansion in $\rho$, $\rho K_1(q) + \rho^2 K_2(q) / 2 + \rho^3 K_3(q) / 6$.
+The truncation error of both small tilt forms is below $3 \times 10^{-8}$ at these limits.
 The logistic window uses $\{L'(0) K_1(q) + L''(0) K_2(q) / 2\} / D_L$ for $q < w_P$ and $q < 10^{-4} s$.
 
 ## Tail choice

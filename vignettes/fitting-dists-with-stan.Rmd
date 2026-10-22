@@ -225,8 +225,6 @@ writeLines(
     // These functions are required for the primarycensored_lpdf function
     #include primarycensored_ode.stan
     #include primarycensored_analytical_cdf.stan
-    #include tilt_transform.stan
-    #include primarycensored_exptilt.stan
     #include expgrowth.stan
   }
   data {
