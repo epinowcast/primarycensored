@@ -205,7 +205,7 @@ new_pcens <- function(
 update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   new_args <- list(...)
   nms <- names(new_args)
-  if (isTRUE(check)) {
+  if (!isFALSE(check)) {
     if (length(new_args) > 0L) {
       .check_named_list(new_args, "Delay parameters passed to update()")
     }
