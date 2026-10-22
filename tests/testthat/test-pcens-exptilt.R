@@ -113,38 +113,22 @@ test_that("the analytic CDF agrees with use_numeric = TRUE", {
   }
 })
 
-test_that("use_numeric = TRUE uses the default method", {
+test_that("the numerical method is used for use_numeric = TRUE, delays
+  without a tilt form and inadmissible tilts", {
+  q <- c(0.5, 2, 5, 10)
   obj <- exptilt_object(families[[3]], 0.5)
   expect_identical(
-    pcens_cdf(obj, c(1, 4), 2, use_numeric = TRUE),
-    pcens_cdf.default(obj, c(1, 4), 2)
+    pcens_cdf(obj, q, 2, use_numeric = TRUE), pcens_cdf.default(obj, q, 2)
   )
-})
-
-test_that("delay families without a tilt form use the numerical method", {
-  obj <- new_pcens(
-    pdist = pweibull, dprimary = dexpgrowth,
-    primary_args = list(r = 0.2), shape = 2, scale = 3
+  objs <- list(
+    new_pcens(pweibull, dexpgrowth, list(r = 0.2), shape = 2, scale = 3),
+    exptilt_object(families[[2]], -0.5),
+    exptilt_object(families[[3]], -1.3),
+    exptilt_object(families[[4]], -0.5)
   )
-  expect_false(.pcens_tilt_available(obj, -0.2))
-  q <- c(0.5, 2, 5)
-  expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
-})
-
-test_that("inadmissible tilts use the numerical method", {
-  for (family in families[c(2, 3, 4)]) {
-    for (rho in c(-1, -0.5)) {
-      if (exptilt_admissible(family, rho)) {
-        next
-      }
-      obj <- exptilt_object(family, rho)
-      expect_false(.pcens_tilt_available(obj, -rho))
-      q <- c(0.5, 2, 5, 10)
-      expect_identical(
-        pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2),
-        info = sprintf("%s, r = %g", family$label, rho)
-      )
-    }
+  for (obj in objs) {
+    expect_false(.pcens_tilt_available(obj, -obj$primary_args$r))
+    expect_identical(pcens_cdf(obj, q, 2), pcens_cdf.default(obj, q, 2))
   }
 })
 

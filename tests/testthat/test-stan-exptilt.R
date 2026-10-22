@@ -876,12 +876,13 @@ exptilt_gamma_case <- function(params) list(dist_id = 2L, params = params)
 
 exptilt_normal_case <- function(params) list(dist_id = 18L, params = params)
 
-# A point with relative tolerances for the delay parameters and the tilt
+# A point with relative tolerances for the delay parameters and the tilt,
+# applied to gradients of at least `floor` in size
 exptilt_ref_point <- function(case, d, pwindow, rho, vectorised = FALSE,
-                              tol = rep(1e-5, 3)) {
+                              tol = rep(1e-5, 3), floor = 1e-2) {
   list(
     case = case, d = d, pwindow = pwindow, rho = rho,
-    vectorised = vectorised, tol = tol
+    vectorised = vectorised, tol = tol, floor = floor
   )
 }
 
@@ -930,6 +931,18 @@ exptilt_reference_points <- function() {
         exptilt_gamma_case(c(3, 1)), 12, 2, rho, TRUE, c(1e-4, 1e-4, 1e-5)
       )
     }),
+    # The shape gradient at large shapes in both tails, down to 1e-7
+    Map(
+      function(shape, d, rho) {
+        exptilt_ref_point(
+          exptilt_gamma_case(c(shape, shape / 3)), d, 1, rho,
+          tol = c(1e-5, Inf, Inf), floor = 1e-9
+        )
+      },
+      shape = rep(c(80, 150, 250), each = 3),
+      d = c(4.6, 4.9, 1.2, 4.6, 4.9, 1.2, 4.7, 4.9, 1.8),
+      rho = c(0.3, -0.3, 0.3, 0.3, -0.3, -0.3, 0.3, -0.3, 0.3)
+    ),
     # Normal delays far below the mean, across the small window limit
     lapply(c(1, 3, 1e-3), function(pwindow) {
       exptilt_ref_point(exptilt_normal_case(c(8, 3)), -96.5, pwindow, -3)
@@ -970,7 +983,10 @@ expect_reference_gradient <- function(model, point) {
   expect_false(res$gradient_not_finite, info = label)
   expect_true(all(is.finite(res$gradient)), info = label)
   expect_true(
-    all(abs(res$gradient - expected) <= point$tol * pmax(abs(expected), 1e-2)),
+    all(
+      abs(res$gradient - expected) <=
+        point$tol * pmax(abs(expected), point$floor)
+    ),
     info = paste0(
       label, ": gradient ", toString(signif(res$gradient, 6)),
       ", reference ", toString(signif(expected, 6))
@@ -1044,51 +1060,6 @@ test_that("the normal log CDF has an exact gradient in the deep lower tail", {
     expect_equal(
       res$gradient, expected,
       tolerance = 1e-5, info = as.character(zz)
-    )
-  }
-})
-
-test_that("the tilted gamma log CDF has a finite, accurate gradient in the
-  shape at large shapes in both tails", {
-  model <- exptilt_gradient_model()
-  # The reference is the gradient of the integral, by central differences in
-  # the log shape with two Richardson extrapolations.
-  points <- list(
-    list(shape = 80, rate = 26.667, d = 4.6, rho = 0.3),
-    list(shape = 80, rate = 26.667, d = 4.9, rho = -0.3),
-    list(shape = 80, rate = 26.667, d = 1.2, rho = 0.3),
-    list(shape = 150, rate = 50, d = 4.6, rho = 0.3),
-    list(shape = 150, rate = 50, d = 4.9, rho = -0.3),
-    list(shape = 150, rate = 50, d = 1.2, rho = -0.3),
-    list(shape = 250, rate = 83.333, d = 4.7, rho = 0.3),
-    list(shape = 250, rate = 83.333, d = 4.9, rho = -0.3),
-    list(shape = 250, rate = 83.333, d = 1.8, rho = 0.3)
-  )
-  lcdf <- function(shape, point) {
-    log(exptilt_reference(
-      point$d, 1, point$rho, function(x) stats::pgamma(x, shape, point$rate)
-    ))
-  }
-  for (point in points) {
-    case <- list(dist_id = 2L, params = c(point$shape, point$rate))
-    label <- exptilt_case_label(case, d = point$d, pwindow = 1, r = point$rho)
-    res <- exptilt_gradient_at(model, case, point$d, 1, point$rho)
-    expect_false(res$gradient_not_finite, info = label)
-    expect_false(res$rejected, info = label)
-    expect_true(all(is.finite(res$gradient)), info = label)
-    central <- function(h) {
-      (lcdf(point$shape * (1 + h), point) -
-        lcdf(point$shape * (1 - h), point)) / (2 * point$shape * h)
-    }
-    r <- c(central(1e-2), central(5e-3), central(2.5e-3))
-    e <- (4 * r[2:3] - r[1:2]) / 3
-    reference <- (16 * e[2] - e[1]) / 15
-    expect_lte(
-      abs(res$gradient[1] - reference), 1e-5 * max(abs(reference), 1e-3),
-      label = paste0(
-        label, ": gradient ", signif(res$gradient[1], 7),
-        ", reference ", signif(reference, 7)
-      )
     )
   }
 })
