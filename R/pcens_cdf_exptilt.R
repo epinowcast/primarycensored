@@ -1,8 +1,9 @@
 #' Methods for delays with an exponentially tilted primary
 #'
-#' Analytical primary event censored CDFs for exponential, gamma and normal
-#' delay distributions with an exponentially tilted primary event window, the
-#' [dexpgrowth()] primary distribution with `r` equal to the tilt \eqn{\rho}.
+#' Analytical primary event censored CDFs for exponential, gamma, normal and
+#' lognormal delay distributions with an exponentially tilted primary event
+#' window, the [dexpgrowth()] primary distribution with `r` equal to the tilt
+#' \eqn{\rho}.
 #' They honour `use_numeric`, and use the numerical method of
 #' [pcens_cdf.default()] when no closed form applies.
 #'
@@ -25,6 +26,11 @@
 #' Otherwise the numerical method is used.
 #' The numerical method is less accurate in the lower tail of a gamma with
 #' shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
+#' The lognormal transform has no closed form.
+#' It is evaluated by quadrature for \eqn{\rho > 0} and by a series of
+#' partial moments for \eqn{\rho < 0}.
+#' The numerical method is used where the series needs too many terms or is
+#' slower than numerical integration.
 #'
 #' The direct form cancels as \eqn{\rho \to 0}.
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in
@@ -110,19 +116,28 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
 }
 
-#' Primary event censored CDF for an exponentially tilted primary
-#'
-#' Shared implementation of the [pcens_cdf_exptilt] methods.
+#' @rdname pcens_cdf_exptilt
+#' @export
+pcens_cdf.pcens_plnorm_dexpgrowth <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  .pcens_cdf_exptilt(
+    object, q, pwindow, use_numeric,
+    min_q = .lnorm_exptilt_min_q, min_xw = .lnorm_exptilt_min_xw
+  )
+}
+
+#' Tilt of the exponentially tilted primary of a pcens object
 #'
 #' @inheritParams pcens_cdf
 #'
-#' @return Vector of CDFs.
+#' @return The tilt `r`, a single finite number.
 #'
 #' @keywords internal
-.pcens_cdf_exptilt <- function(object, q, pwindow, use_numeric = FALSE) {
-  if (isTRUE(use_numeric)) {
-    return(pcens_cdf.default(object, q, pwindow, use_numeric))
-  }
+.exptilt_rho <- function(object) {
   rho <- object$primary_args$r
   if (is.null(rho)) {
     stop(
@@ -138,6 +153,38 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
       call. = FALSE
     )
   }
+  rho
+}
+
+#' Primary event censored CDF for an exponentially tilted primary
+#'
+#' Shared implementation of the [pcens_cdf_exptilt] methods.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @param min_q Number of quantiles below which the numerical method is
+#'   used, for delays whose transform has a fixed cost. The default 0 always
+#'   uses the closed forms.
+#'
+#' @param min_xw Largest \eqn{|\rho| w} at which `min_q` applies. The
+#'   numerical method loses accuracy for a larger tilt times the window, so
+#'   the closed forms are used there for any number of quantiles.
+#'
+#' @return Vector of CDFs.
+#'
+#' @keywords internal
+.pcens_cdf_exptilt <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE,
+  min_q = 0L,
+  min_xw = Inf
+) {
+  if (isTRUE(use_numeric)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  rho <- .exptilt_rho(object)
   if (length(pwindow) != 1L || !is.finite(pwindow) || pwindow <= 0 ||
     !.pcens_tilt_available(object, -rho)) {
     return(pcens_cdf.default(object, q, pwindow, use_numeric))
@@ -148,7 +195,19 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   result[!is.na(q) & q == -Inf] <- 0
   finite <- which(is.finite(q))
   if (length(finite) > 0L) {
-    result[finite] <- .exptilt_cdf_finite(object, q[finite], pwindow, rho)
+    # Use the numerical method for the q where the transform does not fit
+    fits <- rep(FALSE, length(finite))
+    if (length(finite) >= min_q || abs(rho) * pwindow > min_xw) {
+      fits <- .pcens_tilt_fits(object, -rho, q[finite], pwindow)
+    }
+    result[finite[fits]] <- .exptilt_cdf_finite(
+      object, q[finite[fits]], pwindow, rho
+    )
+    if (!all(fits)) {
+      result[finite[!fits]] <- pcens_cdf.default(
+        object, q[finite[!fits]], pwindow, use_numeric
+      )
+    }
   }
   result
 }
@@ -166,6 +225,9 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #'
 #' @keywords internal
 .exptilt_cdf_finite <- function(object, q, pwindow, rho) {
+  if (length(q) == 0L) {
+    return(numeric(0))
+  }
   lower <- .pcens_tilt_lower(object)
   positive <- is.finite(lower)
   log_cdf <- rep(-Inf, length(q))
@@ -248,10 +310,8 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
   pos <- .exptilt_layout(q, pwindow, lower)
   endpoints <- pos$endpoints
   endpoint_terms <- cbind(
-    .pcens_tilt_transform(object, endpoints, 0),
-    .pcens_tilt_transform(object, endpoints, 0, upper = TRUE),
-    .pcens_tilt_transform(object, endpoints, -rho),
-    .pcens_tilt_transform(object, endpoints, -rho, upper = TRUE)
+    .pcens_tilt_pair(object, endpoints, 0),
+    .pcens_tilt_pair(object, endpoints, -rho)
   )
   at_q <- endpoint_terms[pos$q, , drop = FALSE]
   at_y <- endpoint_terms[pos$y, , drop = FALSE]
@@ -282,8 +342,9 @@ pcens_cdf.pcens_pnorm_dexpgrowth <- function(
 #' @keywords internal
 .exptilt_tail_diff <- function(lower_q, lower_y, upper_q, upper_y) {
   use_upper <- lower_y - lower_q > upper_q - upper_y
-  # NaN from terms that underflow on both sides is a zero difference
-  use_upper[is.na(use_upper)] <- FALSE
+  # NaN from terms that underflow on both sides is a zero difference, and
+  # an infinite upper term has no upper tail to use
+  use_upper[is.na(use_upper) | is.infinite(upper_q)] <- FALSE
   out <- .log_diff_exp(lower_q, lower_y)
   if (any(use_upper)) {
     out[use_upper] <- .log_diff_exp(upper_y[use_upper], upper_q[use_upper])

@@ -5,6 +5,7 @@
 \alias{pcens_cdf.pcens_pexp_dexpgrowth}
 \alias{pcens_cdf.pcens_pgamma_dexpgrowth}
 \alias{pcens_cdf.pcens_pnorm_dexpgrowth}
+\alias{pcens_cdf.pcens_plnorm_dexpgrowth}
 \title{Methods for delays with an exponentially tilted primary}
 \usage{
 \method{pcens_cdf}{pcens_pexp_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
@@ -12,6 +13,8 @@
 \method{pcens_cdf}{pcens_pgamma_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 
 \method{pcens_cdf}{pcens_pnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
+
+\method{pcens_cdf}{pcens_plnorm_dexpgrowth}(object, q, pwindow, use_numeric = FALSE)
 }
 \arguments{
 \item{object}{A \code{primarycensored} object as created by
@@ -31,9 +34,10 @@ breaks down.}
 Vector of computed primary event censored CDFs
 }
 \description{
-Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-\code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt \eqn{\rho}.
+Analytical primary event censored CDFs for exponential, gamma, normal and
+lognormal delay distributions with an exponentially tilted primary event
+window, the \code{\link[=dexpgrowth]{dexpgrowth()}} primary distribution with \code{r} equal to the tilt
+\eqn{\rho}.
 They honour \code{use_numeric}, and use the numerical method of
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} when no closed form applies.
 }
@@ -54,6 +58,11 @@ The exponential and gamma forms need \eqn{\lambda + \rho > 0} for rate
 Otherwise the numerical method is used.
 The numerical method is less accurate in the lower tail of a gamma with
 shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
+The lognormal transform has no closed form.
+It is evaluated by quadrature for \eqn{\rho > 0} and by a series of
+partial moments for \eqn{\rho < 0}.
+The numerical method is used where the series needs too many terms or is
+slower than numerical integration.
 
 The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in

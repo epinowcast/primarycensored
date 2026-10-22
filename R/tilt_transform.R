@@ -7,6 +7,7 @@
 #' for delays on the non-negative reals.
 #' A delay is added with a method for each generic, dispatched on the delay
 #' class of a `pcens` object.
+#' `.pcens_tilt_fits()` and `.pcens_tilt_pair()` have defaults.
 #' The Stan equivalents are `check_for_tilt_transform()`,
 #' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
 #'
@@ -21,10 +22,18 @@
 #' @param upper Logical. If `TRUE`, the transform over `(t, Inf)` rather than
 #'   up to `t`.
 #'
+#' @param pwindow The primary event window.
+#'
 #' @return
 #' * `.pcens_tilt_transform()`: the log of the transform at each `t`.
 #' * `.pcens_tilt_available()`: whether the transform is closed form and the
 #'   tilted delay exists for `xi`. If not, the numerical method is used.
+#' * `.pcens_tilt_fits()`: `TRUE` at each `t` where the transform is used
+#'   for a window `pwindow`, otherwise the numerical method. Only called where
+#'   `.pcens_tilt_available()` is `TRUE`. The default is `TRUE`.
+#' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
+#'   transform up to and beyond each `t`. The default calls
+#'   `.pcens_tilt_transform()` twice.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix with columns `G1`, `G2` and `G3`, the
 #'   log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to `t`, `-Inf` below
@@ -52,6 +61,29 @@ NULL
 #' @rdname pcens_tilt
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
+}
+
+#' @rdname pcens_tilt
+.pcens_tilt_fits <- function(object, xi, t, pwindow = 0) {
+  UseMethod(".pcens_tilt_fits")
+}
+
+#' @rdname pcens_tilt
+.pcens_tilt_pair <- function(object, t, xi) {
+  UseMethod(".pcens_tilt_pair")
+}
+
+#' @exportS3Method
+.pcens_tilt_fits.default <- function(object, xi, t, pwindow = 0) {
+  rep(TRUE, length(t))
+}
+
+#' @exportS3Method
+.pcens_tilt_pair.default <- function(object, t, xi) {
+  cbind(
+    lower = .pcens_tilt_transform(object, t, xi),
+    upper = .pcens_tilt_transform(object, t, xi, upper = TRUE)
+  )
 }
 
 #' @exportS3Method

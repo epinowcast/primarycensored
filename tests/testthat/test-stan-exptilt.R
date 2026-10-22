@@ -233,10 +233,10 @@ test_that("the checks follow the delay, the primary and the tilt", {
     admissible(2L, c(2, 0.4), c(-0.3, 0.39, 0.4, 0)), c(1L, 1L, 0L, 1L)
   )
   expect_identical(admissible(18L, c(3, 2), c(-50, 50)), c(1L, 1L))
-  for (dist_id in c(1L, 3L, 5L, 12L, 26L, 27L)) {
+  for (dist_id in c(3L, 5L, 12L, 26L, 27L)) {
     expect_identical(check_for_tilt_transform(dist_id, 0, c(1, 1)), 0L)
   }
-  for (dist_id in c(2L, 4L, 18L)) {
+  for (dist_id in c(1L, 2L, 4L, 18L)) {
     expect_identical(check_for_exptilt(dist_id, 2L), 1L)
     expect_identical(check_for_exptilt(dist_id, 1L), 0L)
     for (pwindow in c(1, 7)) {
@@ -250,7 +250,7 @@ test_that("the checks follow the delay, the primary and the tilt", {
       )
     }
   }
-  for (dist_id in c(1L, 3L, 5L, 9L)) {
+  for (dist_id in c(3L, 5L, 9L)) {
     expect_identical(check_for_exptilt(dist_id, 2L), 0L)
   }
   expect_identical(check_for_analytical_vectorized(3L, 2L, 1), 0L)
