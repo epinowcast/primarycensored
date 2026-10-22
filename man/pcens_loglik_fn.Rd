@@ -65,8 +65,10 @@ custom primary distribution whose CDF is not in the registry.}
 \code{sdlog = 0.5} for a log-normal delay. They are merged with, and can be
 overridden by, the parameters given to the returned function.}
 
-\item{check}{Logical; if \code{TRUE} (the default), validate \code{dprimary} and
-\code{pdist}. Set to \code{FALSE} to skip the checks.}
+\item{check}{Logical; if \code{TRUE} (the default), validate \code{dprimary} when
+the function is built and \code{pdist} on the first call that gives no
+missing values, so invalid starting values give \code{NaN} rather than an
+error. Set to \code{FALSE} to skip the checks.}
 }
 \value{
 A function of the delay distribution parameters that returns a
@@ -120,9 +122,8 @@ ll_mixed <- pcens_loglik_fn(
 ll_mixed(shape = 2, rate = 1)
 }
 \seealso{
-\code{\link[=fitdistdoublecens]{fitdistdoublecens()}} which uses the same machinery,
-\code{\link[=dprimarycensored]{dprimarycensored()}} for a single evaluation, and \code{\link[=new_pcens]{new_pcens()}} and
-\link[=update.pcens]{update()} for the underlying objects.
+\code{\link[=dprimarycensored]{dprimarycensored()}} for a single evaluation, and \code{\link[=new_pcens]{new_pcens()}}
+and \link[=update.pcens]{update()} for the underlying objects.
 
 Modelling wrappers for external fitting packages:
 \code{\link[=fitdistdoublecens]{fitdistdoublecens()}},

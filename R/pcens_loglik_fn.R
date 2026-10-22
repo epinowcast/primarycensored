@@ -24,8 +24,10 @@
 #'   `sdlog = 0.5` for a log-normal delay. They are merged with, and can be
 #'   overridden by, the parameters given to the returned function.
 #'
-#' @param check Logical; if `TRUE` (the default), validate `dprimary` and
-#'   `pdist`. Set to `FALSE` to skip the checks.
+#' @param check Logical; if `TRUE` (the default), validate `dprimary` when
+#'   the function is built and `pdist` on the first call that gives no
+#'   missing values, so invalid starting values give `NaN` rather than an
+#'   error. Set to `FALSE` to skip the checks.
 #'
 #' @details
 #' The returned function takes the delay distribution parameters as named
@@ -39,9 +41,8 @@
 #'   in the order of `x`. Sum them for the total log-likelihood.
 #'
 #' @family modelhelpers
-#' @seealso [fitdistdoublecens()] which uses the same machinery,
-#'   [dprimarycensored()] for a single evaluation, and [new_pcens()] and
-#'   [update()][update.pcens()] for the underlying objects.
+#' @seealso [dprimarycensored()] for a single evaluation, and [new_pcens()]
+#'   and [update()][update.pcens()] for the underlying objects.
 #'
 #' @export
 #' @examples
@@ -92,9 +93,9 @@ pcens_loglik_fn <- function(
   L <- rep_len(L, n)
   D <- rep_len(D, n)
 
-  primary_args <- .resolve_primary_args(
-    primary_args, NULL, "pcens_loglik_fn"
-  )
+  if (is.null(primary_args)) {
+    primary_args <- list()
+  }
   base <- .build_pcens(
     pdist, dprimary, primary_args, pprimary, list(),
     pwindow = NULL, D = NULL, check = FALSE
@@ -113,8 +114,8 @@ pcens_loglik_fn <- function(
   .message_if_clipped(x + swindow, D)
   max_D <- if (n > 0L) max(D) else Inf
 
-  # Check `pdist` on the first call without missing values, so invalid
-  # starting values give `NaN` and not an error
+  # `pdist` is checked once per set of parameter names, on the first call
+  # without missing values
   state <- new.env(parent = emptyenv())
   state$names <- NA_character_
   state$pdist_pending <- isTRUE(check)
@@ -172,9 +173,6 @@ pcens_loglik_fn <- function(
       stop(nm, " must be non-negative.", call. = FALSE)
     }
   }
-  if (n == 0L) {
-    return(invisible(NULL))
-  }
   .check_truncation_bounds_df(
     data.frame(L = rep_len(L, n), D = rep_len(D, n)), "L", "D"
   )
@@ -187,8 +185,9 @@ pcens_loglik_fn <- function(
 #' its unique delays with a map back to its rows.
 #' The CDF points of groups that share a `pwindow` are pooled, so each point
 #' is evaluated once per `pwindow`.
+#' Each group keeps the positions of its points in the pool.
 #'
-#' @param x Numeric vector of delays.
+#' @inheritParams .check_row_inputs
 #'
 #' @param pwindow,swindow,L,D Per-observation settings, each of length
 #'   `length(x)`.
@@ -198,119 +197,42 @@ pcens_loglik_fn <- function(
 #'
 #' @noRd
 .pcens_row_groups <- function(x, pwindow, swindow, L, D) {
-  n <- length(x)
-  if (n == 0L) {
-    return(list(groups = list(), sets = list()))
-  }
   settings <- list(pwindow = pwindow, swindow = swindow, L = L, D = D)
   groups <- lapply(.param_groups(settings, names(settings)), function(g) {
-    idx <- g$idx
-    xs <- if (is.null(idx)) x else x[idx]
-    ux <- unique(xs)
-    map <- NULL
-    if (length(ux) < length(xs)) {
-      map <- match(xs, ux)
+    xs <- if (is.null(g$idx)) x else x[g$idx]
+    g$x <- unique(xs)
+    if (length(g$x) < length(xs)) {
+      g$map <- match(xs, g$x)
     }
-    c(g, list(x = ux, map = map))
+    g$exact <- g$swindow == 0
+    if (!g$exact) {
+      g$upper <- pmin(g$x + g$swindow, g$D)
+    }
+    g
   })
-  .pcens_share_points(groups)
-}
-
-#' Pool the CDF points of groups that share a primary event window
-#'
-#' @param groups Groups as made by `.pcens_row_groups()`.
-#'
-#' @return As `.pcens_row_groups()`, with the pooled points and the position
-#'   of each group's points in them.
-#'
-#' @noRd
-.pcens_share_points <- function(groups) {
   pwindows <- vapply(groups, function(g) g$pwindow, numeric(1))
   unique_pw <- unique(pwindows)
-  set_id <- match(pwindows, unique_pw)
-  ends <- lapply(groups, function(g) {
-    .pcens_group_ends(g$x, g$swindow, g$L, g$D)
-  })
-  sets <- lapply(seq_along(unique_pw), function(k) {
-    members <- which(set_id == k)
-    needed <- unique(unlist(
-      lapply(ends[members], function(e) e$needed),
-      use.names = FALSE
-    ))
-    needed <- sort(as.numeric(needed))
-    list(
-      pwindow = unique_pw[[k]],
-      points = needed,
-      at_minf = which(needed == -Inf),
-      at_inf = which(needed == Inf)
-    )
+  sets <- lapply(unique_pw, function(pw) {
+    pts <- unlist(lapply(groups[pwindows == pw], function(g) {
+      bounds <- c(g$L, g$D)
+      c(g$x[!g$exact], g$upper, bounds[is.finite(bounds)])
+    }))
+    list(pwindow = pw, points = sort(unique(pts)))
   })
   for (i in seq_along(groups)) {
-    groups[[i]] <- c(
-      groups[[i]],
-      list(set = set_id[[i]]),
-      .pcens_group_positions(
-        ends[[i]], groups[[i]], sets[[set_id[[i]]]]$points
-      )
-    )
+    g <- groups[[i]]
+    g$set <- match(g$pwindow, unique_pw)
+    pts <- sets[[g$set]]$points
+    # An infinite bound is only among the points if a delay reaches it
+    g$pos_L <- match(g$L, pts)
+    g$pos_D <- match(g$D, pts)
+    if (!g$exact) {
+      g$lower <- match(g$x, pts)
+      g$upper <- match(g$upper, pts)
+    }
+    groups[[i]] <- g
   }
   list(groups = groups, sets = sets)
-}
-
-#' Points at which the CDF is needed for one group of observations
-#'
-#' These are the delays, the upper ends of their secondary intervals clipped
-#' at `D`, and any finite truncation points.
-#'
-#' @param x Unique delays of a group.
-#'
-#' @param swindow,L,D Settings of the group, each a single value.
-#'
-#' @return A list with `exact` (zero-width secondary window), `upper` and
-#'   `needed`, the points, which may repeat.
-#'
-#' @noRd
-.pcens_group_ends <- function(x, swindow, L, D) {
-  exact <- swindow == 0
-  upper <- NULL
-  if (!exact) {
-    upper <- x + swindow
-    if (is.finite(D)) {
-      upper <- pmin(upper, D)
-    }
-  }
-  bounds <- c(L, D)
-  list(
-    exact = exact,
-    upper = upper,
-    needed = c(if (!exact) c(x, upper), bounds[is.finite(bounds)])
-  )
-}
-
-#' Positions of a group's CDF points in a pooled set of points
-#'
-#' @param ends Output of `.pcens_group_ends()` for the group.
-#'
-#' @param group The group.
-#'
-#' @param points Sorted unique points of the group's set.
-#'
-#' @return A list with `exact`, `lower` and `upper`, the positions of the ends
-#'   of each secondary interval, and `pos_L` and `pos_D`, the positions of
-#'   `L` and `D` (`NA` if infinite).
-#'
-#' @noRd
-.pcens_group_positions <- function(ends, group, points) {
-  position <- function(bound) {
-    if (is.finite(bound)) match(bound, points) else NA_integer_
-  }
-  list(
-    exact = ends$exact,
-    lower = if (ends$exact) NULL else match(group$x, points),
-    upper = if (ends$exact) NULL else match(ends$upper, points),
-    pos_L = position(group$L),
-    pos_D = position(group$D)
-  )
 }
 
 #' Evaluate the primary event censored PMF for grouped observations
@@ -327,22 +249,19 @@ pcens_loglik_fn <- function(
 #' @noRd
 .pcens_pmf_groups <- function(object, grouped, n) {
   cdfs <- lapply(grouped$sets, function(set) {
-    cdf <- numeric(0)
-    if (length(set$points) > 0L) {
-      cdf <- pcens_cdf(object, set$points, set$pwindow)
-      # Some analytical methods return NaN at Inf
-      cdf[set$at_minf] <- 0
-      cdf[set$at_inf] <- 1
+    if (length(set$points) == 0L) {
+      return(numeric(0))
     }
+    cdf <- pcens_cdf(object, set$points, set$pwindow)
+    # Some analytical methods return NaN at Inf
+    cdf[set$points == -Inf] <- 0
+    cdf[set$points == Inf] <- 1
     cdf
   })
-  groups <- grouped$groups
-  if (length(groups) == 1L && is.null(groups[[1L]]$idx)) {
-    return(.pcens_pmf_group(object, groups[[1L]], cdfs[[1L]]))
-  }
   result <- numeric(n)
-  for (g in groups) {
-    result[g$idx] <- .pcens_pmf_group(object, g, cdfs[[g$set]])
+  for (g in grouped$groups) {
+    rows <- if (is.null(g$idx)) seq_len(n) else g$idx
+    result[rows] <- .pcens_pmf_group(object, g, cdfs[[g$set]])
   }
   result
 }

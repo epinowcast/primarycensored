@@ -1,6 +1,6 @@
 # primarycensored (development version)
 
-## Features
+## New features
 
 - New experimental function `pcens_loglik_fn()` returns a function of the delay distribution parameters that gives the log-likelihood of each observation, for use in an external optimiser or sampler.
   `fitdistdoublecens()` uses the same code, with unchanged estimates.

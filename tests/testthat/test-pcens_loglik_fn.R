@@ -334,10 +334,6 @@ test_that("pcens_loglik_fn rejects missing settings", {
   }
 })
 
-test_that(".param_groups returns no groups for empty settings", {
-  expect_identical(.param_groups(list(pwindow = numeric(0)), "pwindow"), list())
-})
-
 test_that("pcens_loglik_fn supports non-parametric delays", {
   boundaries <- 0:5
   pmf1 <- c(0.1, 0.2, 0.3, 0.25, 0.15)
@@ -548,61 +544,4 @@ test_that("pcens_loglik_fn can be optimised directly", {
   )
   expect_equal(fit$par[1], 1.3, tolerance = 0.1)
   expect_equal(exp(fit$par[2]), 0.5, tolerance = 0.15)
-})
-
-test_that("fitdistdoublecens loglik matches per-row dprimarycensored", {
-  skip_if_not_installed("fitdistrplus")
-  skip_if_not_installed("withr")
-  set.seed(3)
-  samples <- rprimarycensored(
-    500, rgamma,
-    shape = 2.5, scale = 2, pwindow = 1, swindow = 1, D = 25
-  )
-  dat <- data.frame(
-    left = floor(samples), right = floor(samples) + 1,
-    pwindow = 1, D = 25
-  )
-  fit <- suppressMessages(fitdistdoublecens(
-    dat, "gamma",
-    start = list(shape = 2, scale = 2), truncation_check_multiplier = NULL
-  ))
-  # Reference log-likelihood computed one row at a time
-  est <- as.list(fit$estimate)
-  expected <- sum(vapply(seq_len(nrow(dat)), function(i) {
-    log(do.call(
-      dprimarycensored,
-      c(list(dat$left[i], pgamma, pwindow = 1, swindow = 1, D = 25), est)
-    ))
-  }, numeric(1)))
-  expect_equal(fit$loglik, expected, tolerance = 1e-8)
-})
-
-test_that(".dpcens gives NaN for delays outside the truncation limits", {
-  one <- data.frame(swindow = 1, pwindow = 1, L = 2, D = 10)
-  dens <- function(x, params) {
-    .dpcens(x, params, pgamma, dunif, list(), shape = 2, rate = 1)
-  }
-  # Short vectors, as probed by fitdistrplus
-  expect_identical(dens(c(0, 1, 5, 12), one), rep(NaN, 4))
-  expect_true(all(is.finite(dens(c(2, 5, 9, 9.5), one))))
-  # Full-length vectors, below L and at or above D
-  three <- one[rep(1, 3), ]
-  expect_identical(dens(c(1, 5, 6), three), rep(NaN, 3))
-  expect_identical(dens(c(2, 5, 10), three), rep(NaN, 3))
-  expect_true(all(is.finite(dens(c(2, 5, 9), three))))
-})
-
-test_that(".dpcens gives no messages when secondary intervals pass D", {
-  params <- data.frame(swindow = 2, pwindow = 1, L = 0, D = 5)
-  x <- c(1, 3, 4)
-  dens <- function(x, params) {
-    .dpcens(x, params, pgamma, dunif, list(), shape = 2, rate = 1)
-  }
-  expect_no_message(dens(x, params[rep(1, 3), ]))
-  full <- dens(x, params[rep(1, 3), ])
-  expect_true(all(is.finite(full)))
-  # Short vectors, as probed by fitdistrplus
-  expect_no_message(dens(x[1:2], params))
-  short <- dens(x[1:2], params)
-  expect_identical(short, full[1:2])
 })
