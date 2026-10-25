@@ -138,7 +138,7 @@ real gumbel_finite_abs(real x) {
   *
   * @return Vector of length 2 (n_terms + 1) holding, for each tilt
   *   xi = n / beta, n = 0, ..., n_terms, the pair [log T_f(xi; t),
-  *   log(T_f(xi; Inf) - T_f(xi; t))] of log_tilt_transform_pair(). Only
+  *   log(T_f(xi; Inf) - T_f(xi; t))] from log_tilt_transform_pair(). Only
   *   defined where check_for_gumbel_params() is 1.
   */
 vector primarycensored_gumbel_terms(real t, int dist_id, real beta,
@@ -148,7 +148,7 @@ vector primarycensored_gumbel_terms(real t, int dist_id, real beta,
   for (n in 0:n_terms) {
     terms[(2 * n + 1):(2 * n + 2)] = log_tilt_transform_pair(
       t, dist_id, n * inv_beta, params
-    );
+    )[1:2];
   }
   return terms;
 }
