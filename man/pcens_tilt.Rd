@@ -46,7 +46,8 @@ for a window \code{pwindow}, otherwise the numerical method. Only called where
 \code{.pcens_tilt_available()} is \code{TRUE}. The default is \code{TRUE}.
 \item \code{.pcens_tilt_pair()}: a matrix with columns \code{lower} and \code{upper}, the log
 transform up to and beyond each \code{t}. The default calls
-\code{.pcens_tilt_transform()} twice.
+\code{.pcens_tilt_transform()} twice and keeps the \code{log_loss} attribute of
+the lower transform.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
 \item \code{.pcens_tilt_moments()}: a matrix with columns \code{G1}, \code{G2} and \code{G3}, the
 log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \code{t}, \code{-Inf} below

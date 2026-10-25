@@ -266,7 +266,7 @@ test_that("the checks follow the delay, the primary and the tilt", {
     list(4L, 0.3, 2L, -0.25, 1L),
     list(18L, c(3, 2), 2L, -10, 1L),
     list(2L, c(2, 0.4), 1L, numeric(0), 1L),
-    list(1L, c(2, 1), 2L, 0.3, 0L),
+    list(9L, c(2, 1), 2L, 0.3, 0L),
     list(26L, c(0, 1, 2, 0.5, 0.5), 2L, 0.3, 1L)
   )
   for (check in checks) {
@@ -348,10 +348,10 @@ test_that("Stan tilt transforms are 0 or the total below the support", {
     )
   }
   expect_error(
-    tilt_lower(1, 1L, 0, c(1, 1)), "Invalid distribution identifier"
+    tilt_lower(1, 9L, 0, c(1, 1)), "Invalid distribution identifier"
   )
   expect_error(
-    primarycensored_tilt_moments(1, 1L, c(1, 1)),
+    primarycensored_tilt_moments(1, 9L, c(1, 1)),
     "Invalid distribution identifier"
   )
 })
