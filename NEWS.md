@@ -6,6 +6,8 @@
   The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
   The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   See #367.
+- Added exponentially tilted primary event solutions for Weibull and generalised gamma delays, in R and Stan.
+  See #368.
 - Added the lognormal delay with an exponentially tilted primary event window, in `pcens_cdf()` and in Stan.
   The numerical path is used where the series for `r < 0` is slower, and in R for fewer than 10 finite quantiles where `abs(r) * pwindow` is at most 1.
   See #369.

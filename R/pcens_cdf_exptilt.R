@@ -1,9 +1,9 @@
 #' Methods for delays with an exponentially tilted primary
 #'
-#' Analytical primary event censored CDFs for exponential, gamma, normal and
-#' lognormal delay distributions with an exponentially tilted primary event
-#' window, the [dexpgrowth()] primary distribution with `r` equal to the tilt
-#' \eqn{\rho}.
+#' Analytical primary event censored CDFs for exponential, gamma, normal,
+#' lognormal, Weibull and generalised gamma delay distributions with an
+#' exponentially tilted primary event window, the [dexpgrowth()] primary
+#' distribution with `r` equal to the tilt \eqn{\rho}.
 #' They honour `use_numeric`, and use the numerical method of
 #' [pcens_cdf.default()] when no closed form applies.
 #'
@@ -31,6 +31,20 @@
 #' partial moments for \eqn{\rho < 0}.
 #' The numerical method is used where the series needs too many terms or is
 #' slower than numerical integration.
+#'
+#' The Weibull and the generalised gamma with power \eqn{a}, scale
+#' \eqn{\theta} and \eqn{k} (\eqn{k = 1} for the Weibull) have the transform
+#' \eqn{J(x) = \sum_n (-\rho \theta)^n / n!\,
+#' \Gamma(k + n / a) / \Gamma(k)\, P(k + n / a, (x / \theta)^a)},
+#' for the regularised incomplete gamma function \eqn{P}.
+#' It exists for every tilt, and needs \eqn{Q > 0} for
+#' `flexsurv::pgengamma()`.
+#' For \eqn{\rho > 0} its terms alternate in sign and cancel.
+#' The numerical method is used at a `q` where the terms of the series cancel
+#' by more than 1e5, where \eqn{\rho q \ge 400}, and in the upper tail,
+#' where the series has no tail form and the terms of the difference between
+#' the endpoints exceed the smaller of the CDF and its survival function by
+#' more than 1e5.
 #'
 #' The direct form cancels as \eqn{\rho \to 0}.
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in
@@ -81,6 +95,13 @@
 #'   primary_args = list(r = 0.1), mean = 3, sd = 2
 #' )
 #' pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
+#'
+#' # Weibull delay
+#' pweibull_obj <- new_pcens(
+#'   pdist = pweibull, dprimary = dexpgrowth,
+#'   primary_args = list(r = 0.2), shape = 1.5, scale = 5
+#' )
+#' pcens_cdf(pweibull_obj, q = c(1, 4, 8), pwindow = 2)
 NULL
 
 #' @rdname pcens_cdf_exptilt
@@ -129,6 +150,44 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
     min_q = .lnorm_exptilt_min_q, min_xw = .lnorm_exptilt_min_xw
   )
 }
+
+#' @rdname pcens_cdf_exptilt
+#' @export
+pcens_cdf.pcens_pweibull_dexpgrowth <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
+}
+
+#' @rdname pcens_cdf_exptilt
+#' @export
+# nolint start: object_length_linter.
+pcens_cdf.pcens_pgengamma.orig_dexpgrowth <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
+}
+# nolint end
+
+#' @rdname pcens_cdf_exptilt
+#' @export
+pcens_cdf.pcens_pgengamma_dexpgrowth <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  .pcens_cdf_exptilt(object, q, pwindow, use_numeric)
+}
+
+# Largest ratio of the terms of a series or of the direct form to its result
+.exptilt_max_loss <- 1e5
 
 #' Tilt of the exponentially tilted primary of a pcens object
 #'
@@ -256,7 +315,13 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
       object, q[direct], pwindow, rho, lower
     )
   }
-  pmin(1, exp(log_cdf))
+  result <- pmin(1, exp(log_cdf))
+  # NaN is where the closed form is not reliable
+  numerical <- which(is.na(result))
+  if (length(numerical) > 0L) {
+    result[numerical] <- pcens_cdf.default(object, q[numerical], pwindow)
+  }
+  result
 }
 
 #' Endpoints and the positions of `q` and `q - pwindow` among them
@@ -298,6 +363,10 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 #' Direct form of the exponentially tilted log CDF
 #'
 #' The expression of [pcens_cdf_exptilt] on the log scale.
+#' The result is `NaN` where the transform at either endpoint is, and where
+#' the transform has no upper tail and the terms of the numerator exceed the
+#' smaller of the CDF and its survival function by more than
+#' `.exptilt_max_loss`.
 #'
 #' @inheritParams .exptilt_layout
 #'
@@ -309,9 +378,10 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
 .exptilt_lcdf_direct <- function(object, q, pwindow, rho, lower) {
   pos <- .exptilt_layout(q, pwindow, lower)
   endpoints <- pos$endpoints
+  j_pair <- .pcens_tilt_pair(object, endpoints, -rho)
   endpoint_terms <- cbind(
     .pcens_tilt_pair(object, endpoints, 0),
-    .pcens_tilt_pair(object, endpoints, -rho)
+    j_pair
   )
   at_q <- endpoint_terms[pos$q, , drop = FALSE]
   at_y <- endpoint_terms[pos$y, , drop = FALSE]
@@ -326,7 +396,21 @@ pcens_cdf.pcens_plnorm_dexpgrowth <- function(
   } else {
     .log_diff_exp(log_diff_f, rho * q + log_diff_j)
   }
-  .log_sum_exp(at_y[, 1], log_num - .exptilt_log_den(rho, pwindow))
+  log_den <- .exptilt_log_den(rho, pwindow)
+  out <- .log_sum_exp(at_y[, 1], log_num - log_den)
+  j_loss <- attr(j_pair, "log_loss")
+  if (is.null(j_loss)) {
+    j_loss <- rep(0, length(endpoints))
+  }
+  log_size <- rho * q + at_q[, 3] + pmax(j_loss[pos$q], j_loss[pos$y])
+  no_tail <- is.na(at_q[, 4]) | is.na(at_y[, 4])
+  # The delay survival function is a lower bound on that of the CDF
+  log_survival <- pmax(at_q[, 2], .log1m_exp(pmin(out, 0)))
+  unreliable <- is.na(at_q[, 3]) | is.na(at_y[, 3]) |
+    (no_tail & is.finite(out) &
+      log_size - log_den - pmin(out, log_survival) > log(.exptilt_max_loss))
+  out[which(unreliable)] <- NaN
+  out
 }
 
 #' Log of a difference between two points from either tail

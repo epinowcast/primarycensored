@@ -33,7 +33,8 @@
 #'   `.pcens_tilt_available()` is `TRUE`. The default is `TRUE`.
 #' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
 #'   transform up to and beyond each `t`. The default calls
-#'   `.pcens_tilt_transform()` twice.
+#'   `.pcens_tilt_transform()` twice and keeps the `log_loss` attribute of
+#'   the lower transform.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix with columns `G1`, `G2` and `G3`, the
 #'   log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to `t`, `-Inf` below
@@ -80,9 +81,10 @@ NULL
 
 #' @exportS3Method
 .pcens_tilt_pair.default <- function(object, t, xi) {
-  cbind(
-    lower = .pcens_tilt_transform(object, t, xi),
-    upper = .pcens_tilt_transform(object, t, xi, upper = TRUE)
+  lower <- .pcens_tilt_transform(object, t, xi)
+  structure(
+    cbind(lower = lower, upper = .pcens_tilt_transform(object, t, xi, TRUE)),
+    log_loss = attr(lower, "log_loss")
   )
 }
 
