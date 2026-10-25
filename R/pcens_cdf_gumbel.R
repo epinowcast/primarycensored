@@ -45,6 +45,8 @@
 #'
 #' @inherit pcens_cdf return
 #'
+#' @family pcens
+#'
 #' @name pcens_cdf_gumbel
 #'
 #' @examples
