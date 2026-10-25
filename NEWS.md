@@ -2,9 +2,11 @@
 
 ## New features
 
-- Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square, inverse gamma, inverse chi-square, scaled inverse chi-square and Pareto delays.
+- Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
-  The inverse gamma family needs a finite mean and otherwise uses the numerical path.
+  See #377.
+- Stan has uniform primary analytical solutions for inverse gamma, inverse chi-square and scaled inverse chi-square delays.
+  They need a finite mean and otherwise use the numerical path.
   See #377.
 
 ## Bug fixes
