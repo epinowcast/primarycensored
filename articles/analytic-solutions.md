@@ -117,8 +117,8 @@ and, for \\n \geq 1\\,
 |:---|:---|:---|:---|:---|:---|
 | Uniform | `dunif` | 1 | \\1 / w_P\\ | none, uses \\M\\ | [(4.2)](#eq:uniform) |
 | Exponential tilt | [`dexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md), `r` \\= \rho\\ | 2 | \\\rho e^{\rho z} / (e^{\rho w_P} - 1)\\ | \\0\\ and \\-\rho\\ | [(4.1)](#eq:exptilt) |
-| Truncated logistic | `dtlogis()`, `location` \\= m\\, `scale` \\= s\\ | 3 | \\L'(z) / D_L\\ | \\n / s\\ for \\n \geq 0\\, \\-n / s\\ for \\n \geq 1\\ | [(4.3)](#eq:logistic-left) to [(4.5)](#eq:logistic-split) |
-| Truncated Gumbel | `dtgumbel()`, `mu` \\= \mu_G\\, `beta` \\= \beta\\ | 4 | \\G'(z) / D_G\\ | \\n / \beta\\ for \\n \geq 0\\ | [(4.6)](#eq:gumbel) |
+| Truncated logistic | [`dtlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md), `location` \\= m\\, `scale` \\= s\\ | 3 | \\L'(z) / D_L\\ | \\n / s\\ for \\n \geq 0\\, \\-n / s\\ for \\n \geq 1\\ | [(4.3)](#eq:logistic-left) to [(4.5)](#eq:logistic-split) |
+| Truncated Gumbel | [`dtgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md), `mu` \\= \mu_G\\, `beta` \\= \beta\\ | 4 | \\G'(z) / D_G\\ | \\n / \beta\\ for \\n \geq 0\\ | [(4.6)](#eq:gumbel) |
 
 ### 4.1 Exponentially tilted window
 
@@ -270,7 +270,7 @@ below.
 
 | Family (Stan id) | \\M(\tau)\\ or \\K_1(t)\\ | Needs | Available in |
 |:---|:---|:---|:---|
-| Log-logistic, shape \\k\\, scale \\\lambda\\ (31) | \\M(\tau) = \tau F\_{\mathrm{IP}}(\tau) r\_{1 / k}(A\_\tau)\\ | \\k \geq 0.01\\ | R and Stan |
+| Log-logistic, shape \\k\\, scale \\\lambda\\ (29) | \\M(\tau) = \tau F\_{\mathrm{IP}}(\tau) r\_{1 / k}(A\_\tau)\\ | \\k \geq 0.01\\ | R and Stan |
 | Beta, shapes \\\alpha_1\\, \\\alpha_2\\ (9) | \\M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I\_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)\\ | non-centrality 0 | R and Stan |
 | Chi-square, \\\nu\\ degrees of freedom (13) | the gamma with \\\alpha = \nu / 2\\ and \\\lambda = 1 / 2\\ | non-centrality 0 | R and Stan |
 | Inverse gamma, shape \\\alpha\\, scale \\\theta\\ (16) | \\M(\tau) = \frac{\theta}{\alpha - 1} \\1 - P(\alpha - 1, \theta / \tau)\\\\ | \\\alpha \> 1\\ | Stan |
@@ -353,8 +353,10 @@ these checks.
 
 For the Gumbel window, with any delay, and for the log-logistic delay
 with the uniform window the numerical method is specific to the pair. In
-R these are `.gumbel_numeric()` and `.loglogistic_numeric_cdf()`. In
-Stan they are `primarycensored_gumbel_numeric_lcdf()` and
+R these are
+[`.gumbel_numeric()`](https://primarycensored.epinowcast.org/reference/dot-gumbel_numeric.md)
+and `.loglogistic_numeric_cdf()`. In Stan they are
+`primarycensored_gumbel_numeric_lcdf()` and
 `loglogistic_numeric_lcdf()`. The numerical method is used in the
 following cases.
 
@@ -484,9 +486,9 @@ In Stan it needs an entry in `log_tilt_transform_pair()`,
 `primarycensored_tilt_moments()`, `check_for_tilt_transform()` and
 `check_for_exptilt()`. A delay whose transform holds only at some `q`
 also needs the per-point checks that the lognormal uses,
-`.pcens_tilt_fits()` in R and `check_for_tilt_transform_at()` in Stan. A
-pair of window and delay then needs its `pcens_cdf` method in R and its
-dispatch in Stan.
+[`.pcens_tilt_fits()`](https://primarycensored.epinowcast.org/reference/pcens_tilt.md)
+in R and `check_for_tilt_transform_at()` in Stan. A pair of window and
+delay then needs its `pcens_cdf` method in R and its dispatch in Stan.
 
 ## 10 Learning more
 

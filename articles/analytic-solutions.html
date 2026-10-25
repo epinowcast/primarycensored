@@ -299,7 +299,7 @@ K_1(t) = t\,T_f(0; t) - M(t).
 <tr class="odd">
 <td align="left">Truncated logistic</td>
 <td align="left">
-<code>dtlogis()</code>, <code>location</code> <span class="math inline">\(= m\)</span>, <code>scale</code> <span class="math inline">\(= s\)</span>
+<code><a href="../reference/tlogis.html">dtlogis()</a></code>, <code>location</code> <span class="math inline">\(= m\)</span>, <code>scale</code> <span class="math inline">\(= s\)</span>
 </td>
 <td align="left">3</td>
 <td align="left"><span class="math inline">\(L'(z) / D_L\)</span></td>
@@ -313,7 +313,7 @@ K_1(t) = t\,T_f(0; t) - M(t).
 <tr class="even">
 <td align="left">Truncated Gumbel</td>
 <td align="left">
-<code>dtgumbel()</code>, <code>mu</code> <span class="math inline">\(= \mu_G\)</span>, <code>beta</code> <span class="math inline">\(= \beta\)</span>
+<code><a href="../reference/tgumbel.html">dtgumbel()</a></code>, <code>mu</code> <span class="math inline">\(= \mu_G\)</span>, <code>beta</code> <span class="math inline">\(= \beta\)</span>
 </td>
 <td align="left">4</td>
 <td align="left"><span class="math inline">\(G'(z) / D_G\)</span></td>
@@ -516,7 +516,7 @@ Here <span class="math inline">\(I_x(\cdot, \cdot)\)</span> is the regularised i
 </tr></thead>
 <tbody>
 <tr class="odd">
-<td align="left">Log-logistic, shape <span class="math inline">\(k\)</span>, scale <span class="math inline">\(\lambda\)</span> (31)</td>
+<td align="left">Log-logistic, shape <span class="math inline">\(k\)</span>, scale <span class="math inline">\(\lambda\)</span> (29)</td>
 <td align="left"><span class="math inline">\(M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(A_\tau)\)</span></td>
 <td align="left"><span class="math inline">\(k \geq 0.01\)</span></td>
 <td align="left">R and Stan</td>
@@ -733,7 +733,7 @@ It takes <code>pwindow</code>, as the admissibility of some windows, such as the
 </tbody>
 </table>
 <p>For the Gumbel window, with any delay, and for the log-logistic delay with the uniform window the numerical method is specific to the pair.
-In R these are <code>.gumbel_numeric()</code> and <code>.loglogistic_numeric_cdf()</code>.
+In R these are <code><a href="../reference/dot-gumbel_numeric.html">.gumbel_numeric()</a></code> and <code>.loglogistic_numeric_cdf()</code>.
 In Stan they are <code>primarycensored_gumbel_numeric_lcdf()</code> and <code>loglogistic_numeric_lcdf()</code>.
 The numerical method is used in the following cases.</p>
 <table class="table">
@@ -883,7 +883,7 @@ The result is unchanged.</li>
 <p>A new delay needs its transform.
 In R it needs methods for <code><a href="../reference/pcens_tilt.html">.pcens_tilt_transform()</a></code>, <code><a href="../reference/pcens_tilt.html">.pcens_tilt_available()</a></code>, <code><a href="../reference/pcens_tilt.html">.pcens_tilt_lower()</a></code> and <code><a href="../reference/pcens_tilt.html">.pcens_tilt_moments()</a></code>.
 In Stan it needs an entry in <code>log_tilt_transform_pair()</code>, <code>primarycensored_tilt_moments()</code>, <code>check_for_tilt_transform()</code> and <code>check_for_exptilt()</code>.
-A delay whose transform holds only at some <code>q</code> also needs the per-point checks that the lognormal uses, <code>.pcens_tilt_fits()</code> in R and <code>check_for_tilt_transform_at()</code> in Stan.
+A delay whose transform holds only at some <code>q</code> also needs the per-point checks that the lognormal uses, <code><a href="../reference/pcens_tilt.html">.pcens_tilt_fits()</a></code> in R and <code>check_for_tilt_transform_at()</code> in Stan.
 A pair of window and delay then needs its <code>pcens_cdf</code> method in R and its dispatch in Stan.</p>
 </div>
 <div class="section level2" number="10">

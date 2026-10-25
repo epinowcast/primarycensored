@@ -6,9 +6,9 @@ exponentially tilted primary event window, see
 They are built from the tilt transform \\T_f(\xi; \tau) = \int e^{\xi u}
 f(u) du\\ up to \\\tau\\, from 0 for delays on the non-negative reals. A
 delay is added with a method for each generic, dispatched on the delay
-class of a `pcens` object. The Stan equivalents are
-`check_for_tilt_transform()`, `log_tilt_transform_pair()` and
-`primarycensored_tilt_moments()`.
+class of a `pcens` object. `.pcens_tilt_fits()` and `.pcens_tilt_pair()`
+have defaults. The Stan equivalents are `check_for_tilt_transform()`,
+`log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
 
 ## Usage
 
@@ -20,6 +20,10 @@ class of a `pcens` object. The Stan equivalents are
 .pcens_tilt_lower(object)
 
 .pcens_tilt_moments(object, t)
+
+.pcens_tilt_fits(object, xi, t, pwindow = 0)
+
+.pcens_tilt_pair(object, t, xi)
 ```
 
 ## Arguments
@@ -42,6 +46,10 @@ class of a `pcens` object. The Stan equivalents are
   Logical. If `TRUE`, the transform over `(t, Inf)` rather than up to
   `t`.
 
+- pwindow:
+
+  The primary event window.
+
 ## Value
 
 - `.pcens_tilt_transform()`: the log of the transform at each `t`.
@@ -49,6 +57,15 @@ class of a `pcens` object. The Stan equivalents are
 - `.pcens_tilt_available()`: whether the transform is closed form and
   the tilted delay exists for `xi`. If not, the numerical method is
   used.
+
+- `.pcens_tilt_fits()`: `TRUE` at each `t` where the transform is used
+  for a window `pwindow`, otherwise the numerical method. Only called
+  where `.pcens_tilt_available()` is `TRUE`. The default is `TRUE`.
+
+- `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the
+  log transform up to and beyond each `t`. The default calls
+  `.pcens_tilt_transform()` twice and keeps the `log_loss` attribute of
+  the lower transform.
 
 - `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 

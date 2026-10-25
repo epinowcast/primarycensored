@@ -69,7 +69,14 @@
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.pcens_cdf_exptilt</span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">.pcens_cdf_exptilt</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  <span class="va">q</span>,</span>
+<span>  <span class="va">pwindow</span>,</span>
+<span>  use_numeric <span class="op">=</span> <span class="cn">FALSE</span>,</span>
+<span>  min_q <span class="op">=</span> <span class="fl">0L</span>,</span>
+<span>  min_xw <span class="op">=</span> <span class="cn">Inf</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -95,6 +102,18 @@ observed primary event, in which case the delay CDF is used directly.</p></dd>
 even for distributions with analytical solutions. This is primarily
 useful for testing purposes or for settings where the analytical solution
 breaks down.</p></dd>
+
+
+<dt id="arg-min-q">min_q<a class="anchor" aria-label="anchor" href="#arg-min-q"></a></dt>
+<dd><p>Number of quantiles below which the numerical method is
+used, for delays whose transform has a fixed cost. The default 0 always
+uses the closed forms.</p></dd>
+
+
+<dt id="arg-min-xw">min_xw<a class="anchor" aria-label="anchor" href="#arg-min-xw"></a></dt>
+<dd><p>Largest \(|\rho| w\) at which <code>min_q</code> applies. The
+numerical method loses accuracy for a larger tilt times the window, so
+the closed forms are used there for any number of quantiles.</p></dd>
 
 </dl></div>
     <div class="section level2">

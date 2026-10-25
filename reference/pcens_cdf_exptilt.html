@@ -5,13 +5,15 @@
       fontURL: "https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/output/chtml/fonts/woff-v2"
     }
   };
-</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Methods for delays with an exponentially tilted primary — pcens_cdf_exptilt"><meta name="description" content="Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-dexpgrowth() primary distribution with r equal to the tilt \(\rho\).
+</script><script src="../lightswitch.js"></script><script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no"><link href="../deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet"><script src="../deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet"><link href="../deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet"><script src="../deps/headroom-0.11.0/headroom.min.js"></script><script src="../deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="../deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="../deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="../deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="../deps/search-1.0.0/fuse.min.js"></script><script src="../deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="../pkgdown.js"></script><meta property="og:title" content="Methods for delays with an exponentially tilted primary — pcens_cdf_exptilt"><meta name="description" content="Analytical primary event censored CDFs for exponential, gamma, normal,
+lognormal, Weibull and generalised gamma delay distributions with an
+exponentially tilted primary event window, the dexpgrowth() primary
+distribution with r equal to the tilt \(\rho\).
 They honour use_numeric, and use the numerical method of
-pcens_cdf.default() when no closed form applies."><meta property="og:description" content="Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-dexpgrowth() primary distribution with r equal to the tilt \(\rho\).
+pcens_cdf.default() when no closed form applies."><meta property="og:description" content="Analytical primary event censored CDFs for exponential, gamma, normal,
+lognormal, Weibull and generalised gamma delay distributions with an
+exponentially tilted primary event window, the dexpgrowth() primary
+distribution with r equal to the tilt \(\rho\).
 They honour use_numeric, and use the numerical method of
 pcens_cdf.default() when no closed form applies."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -72,9 +74,10 @@ pcens_cdf.default() when no closed form applies."><meta property="og:image" cont
     </div>
 
     <div class="ref-description section level2">
-    <p>Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window, the
-<code><a href="expgrowth.html">dexpgrowth()</a></code> primary distribution with <code>r</code> equal to the tilt \(\rho\).
+    <p>Analytical primary event censored CDFs for exponential, gamma, normal,
+lognormal, Weibull and generalised gamma delay distributions with an
+exponentially tilted primary event window, the <code><a href="expgrowth.html">dexpgrowth()</a></code> primary
+distribution with <code>r</code> equal to the tilt \(\rho\).
 They honour <code>use_numeric</code>, and use the numerical method of
 <code><a href="pcens_cdf.default.html">pcens_cdf.default()</a></code> when no closed form applies.</p>
     </div>
@@ -88,6 +91,18 @@ They honour <code>use_numeric</code>, and use the numerical method of
 <span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'pcens_pnorm_dexpgrowth'</span></span>
+<span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'pcens_plnorm_dexpgrowth'</span></span>
+<span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'pcens_pweibull_dexpgrowth'</span></span>
+<span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'pcens_pgengamma.orig_dexpgrowth'</span></span>
+<span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'pcens_pgengamma_dexpgrowth'</span></span>
 <span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">q</span>, <span class="va">pwindow</span>, use_numeric <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -136,7 +151,25 @@ or the upper tail terms, whichever loses less precision.</p>
 \(\lambda\), so that the tilted delay distribution exists.
 Otherwise the numerical method is used.
 The numerical method is less accurate in the lower tail of a gamma with
-shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.</p>
+shape below 1, with a relative error of about 1e-5 in R and 1e-4 in Stan.
+The lognormal transform has no closed form.
+It is evaluated by quadrature for \(\rho &gt; 0\) and by a series of
+partial moments for \(\rho &lt; 0\).
+The numerical method is used where the series needs too many terms or is
+slower than numerical integration.</p>
+<p>The Weibull and the generalised gamma with power \(a\), scale
+\(\theta\) and \(k\) (\(k = 1\) for the Weibull) have the transform
+\(J(x) = \sum_n (-\rho \theta)^n / n!\,
+\Gamma(k + n / a) / \Gamma(k)\, P(k + n / a, (x / \theta)^a)\),
+for the regularised incomplete gamma function \(P\).
+It exists for every tilt, and needs \(Q &gt; 0\) for
+<code><a href="http://chjackson.github.io/flexsurv-dev/reference/GenGamma.html" class="external-link">flexsurv::pgengamma()</a></code>.
+For \(\rho &gt; 0\) its terms alternate in sign and cancel.
+The numerical method is used at a <code>q</code> where the terms of the series cancel
+by more than 1e5, where \(\rho q \ge 400\), and in the upper tail,
+where the series has no tail form and the terms of the difference between
+the endpoints exceed the smaller of the CDF and its survival function by
+more than 1e5.</p>
 <p>The direct form cancels as \(\rho \to 0\).
 With \(G_k(t) = \int (t - u)^k f(u) du\) up to \(t\), two series in
 \(\rho\) truncated after the second order replace it.</p><ul><li><p>For \(|\rho| w\) below \(10^{-2}\), or \(10^{-3}\) for delays on
@@ -169,6 +202,8 @@ package tests.</p>
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
+<code><a href="pcens_cdf_gumbel.html">pcens_cdf_gumbel</a></code>,
+<code><a href="pcens_cdf_tlogis.html">pcens_cdf_tlogis</a></code>,
 <code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
 <code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,
@@ -201,6 +236,14 @@ package tests.</p>
 <span class="r-in"><span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">pnorm_obj</span>, q <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="op">-</span><span class="fl">1</span>, <span class="fl">3</span>, <span class="fl">8</span><span class="op">)</span>, pwindow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.007780575 0.309880218 0.971725556</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Weibull delay</span></span></span>
+<span class="r-in"><span><span class="va">pweibull_obj</span> <span class="op">&lt;-</span> <span class="fu"><a href="new_pcens.html">new_pcens</a></span><span class="op">(</span></span></span>
+<span class="r-in"><span>  pdist <span class="op">=</span> <span class="va">pweibull</span>, dprimary <span class="op">=</span> <span class="va">dexpgrowth</span>,</span></span>
+<span class="r-in"><span>  primary_args <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>r <span class="op">=</span> <span class="fl">0.2</span><span class="op">)</span>, shape <span class="op">=</span> <span class="fl">1.5</span>, scale <span class="op">=</span> <span class="fl">5</span></span></span>
+<span class="r-in"><span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="pcens_cdf.html">pcens_cdf</a></span><span class="op">(</span><span class="va">pweibull_obj</span>, q <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span>, pwindow <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] 0.01500387 0.36056251 0.80146095</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

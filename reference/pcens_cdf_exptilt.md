@@ -1,8 +1,8 @@
 # Methods for delays with an exponentially tilted primary
 
-Analytical primary event censored CDFs for exponential, gamma and normal
-delay distributions with an exponentially tilted primary event window,
-the
+Analytical primary event censored CDFs for exponential, gamma, normal,
+lognormal, Weibull and generalised gamma delay distributions with an
+exponentially tilted primary event window, the
 [`dexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md)
 primary distribution with `r` equal to the tilt \\\rho\\. They honour
 `use_numeric`, and use the numerical method of
@@ -19,6 +19,18 @@ pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 
 # S3 method for class 'pcens_pnorm_dexpgrowth'
+pcens_cdf(object, q, pwindow, use_numeric = FALSE)
+
+# S3 method for class 'pcens_plnorm_dexpgrowth'
+pcens_cdf(object, q, pwindow, use_numeric = FALSE)
+
+# S3 method for class 'pcens_pweibull_dexpgrowth'
+pcens_cdf(object, q, pwindow, use_numeric = FALSE)
+
+# S3 method for class 'pcens_pgengamma.orig_dexpgrowth'
+pcens_cdf(object, q, pwindow, use_numeric = FALSE)
+
+# S3 method for class 'pcens_pgengamma_dexpgrowth'
 pcens_cdf(object, q, pwindow, use_numeric = FALSE)
 ```
 
@@ -63,7 +75,23 @@ The exponential and gamma forms need \\\lambda + \rho \> 0\\ for rate
 \\\lambda\\, so that the tilted delay distribution exists. Otherwise the
 numerical method is used. The numerical method is less accurate in the
 lower tail of a gamma with shape below 1, with a relative error of about
-1e-5 in R and 1e-4 in Stan.
+1e-5 in R and 1e-4 in Stan. The lognormal transform has no closed form.
+It is evaluated by quadrature for \\\rho \> 0\\ and by a series of
+partial moments for \\\rho \< 0\\. The numerical method is used where
+the series needs too many terms or is slower than numerical integration.
+
+The Weibull and the generalised gamma with power \\a\\, scale \\\theta\\
+and \\k\\ (\\k = 1\\ for the Weibull) have the transform \\J(x) = \sum_n
+(-\rho \theta)^n / n!\\ \Gamma(k + n / a) / \Gamma(k)\\ P(k + n / a, (x
+/ \theta)^a)\\, for the regularised incomplete gamma function \\P\\. It
+exists for every tilt, and needs \\Q \> 0\\ for
+[`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md).
+For \\\rho \> 0\\ its terms alternate in sign and cancel. The numerical
+method is used at a `q` where the terms of the series cancel by more
+than 1e5, where \\\rho q \ge 400\\, and in the upper tail, where the
+series has no tail form and the terms of the difference between the
+endpoints exceed the smaller of the CDF and its survival function by
+more than 1e5.
 
 The direct form cancels as \\\rho \to 0\\. With \\G_k(t) = \int (t -
 u)^k f(u) du\\ up to \\t\\, two series in \\\rho\\ truncated after the
@@ -100,6 +128,8 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
+[`pcens_cdf_gumbel`](https://primarycensored.epinowcast.org/reference/pcens_cdf_gumbel.md),
+[`pcens_cdf_tlogis`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md),
 [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
 [`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),
@@ -132,4 +162,12 @@ pnorm_obj <- new_pcens(
 )
 pcens_cdf(pnorm_obj, q = c(-1, 3, 8), pwindow = 2)
 #> [1] 0.007780575 0.309880218 0.971725556
+
+# Weibull delay
+pweibull_obj <- new_pcens(
+  pdist = pweibull, dprimary = dexpgrowth,
+  primary_args = list(r = 0.2), shape = 1.5, scale = 5
+)
+pcens_cdf(pweibull_obj, q = c(1, 4, 8), pwindow = 2)
+#> [1] 0.01500387 0.36056251 0.80146095
 ```

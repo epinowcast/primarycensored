@@ -2,7 +2,10 @@
 
 The expression of
 [pcens_cdf_exptilt](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-on the log scale.
+on the log scale. The result is `NaN` where the transform at either
+endpoint is, and where the transform has no upper tail and the terms of
+the numerator exceed the smaller of the CDF and its survival function by
+more than `.exptilt_max_loss`.
 
 ## Usage
 

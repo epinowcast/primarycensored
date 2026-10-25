@@ -16,6 +16,51 @@
   `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id`
   and `primary_params` as its last two arguments. See
   [\#367](https://github.com/epinowcast/primarycensored/issues/367).
+- Added exponentially tilted primary event solutions for Weibull and
+  generalised gamma delays, in R and Stan. See
+  [\#368](https://github.com/epinowcast/primarycensored/issues/368).
+- Added the lognormal delay with an exponentially tilted primary event
+  window, in
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  and in Stan. The numerical path is used where the series for `r < 0`
+  is slower, and in R for fewer than 10 finite quantiles where
+  `abs(r) * pwindow` is at most 1. See
+  [\#369](https://github.com/epinowcast/primarycensored/issues/369).
+- Added the log-logistic delay, Stan `dist_id` 29 with parameters
+  `[scale, shape]` and `"loglogistic"` in `pcd_distributions`. There is
+  an analytical solution for the uniform primary in R and Stan, with the
+  numerical path used where it is ill conditioned, see
+  [`?pcens_cdf_loglogistic`](https://primarycensored.epinowcast.org/reference/pcens_cdf_loglogistic.md).
+  [`pcd_stan_function_deps()`](https://primarycensored.epinowcast.org/reference/pcd_stan_function_deps.md)
+  now also finds Stan functions that are only passed by name, such as an
+  ODE system. See
+  [\#372](https://github.com/epinowcast/primarycensored/issues/372),
+  [\#104](https://github.com/epinowcast/primarycensored/issues/104) and
+  [\#321](https://github.com/epinowcast/primarycensored/issues/321).
+- Added a truncated logistic primary event distribution
+  ([`dtlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md),
+  [`ptlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md),
+  [`rtlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md),
+  Stan `primary_id` 3), with analytical solutions for exponential, gamma
+  and normal delays in R and Stan. The numerical path is used where the
+  analytical solutions do not apply.
+  [`pcd_stan_functions()`](https://primarycensored.epinowcast.org/reference/pcd_stan_functions.md)
+  and
+  [`pcd_load_stan_functions()`](https://primarycensored.epinowcast.org/reference/pcd_load_stan_functions.md)
+  now also find Stan functions that return arrays. See
+  [\#370](https://github.com/epinowcast/primarycensored/issues/370).
+- Added a truncated Gumbel primary event distribution
+  ([`dtgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md),
+  [`ptgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md)
+  and
+  [`rtgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md),
+  Stan primary distribution 4). Normal delays have a series solution in
+  R and Stan, and other delays use a numerical path that resolves a
+  narrow window density, see
+  [`?pcens_cdf_gumbel`](https://primarycensored.epinowcast.org/reference/pcens_cdf_gumbel.md).
+  Stan models that include the function files one by one need
+  `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+  See [\#371](https://github.com/epinowcast/primarycensored/issues/371).
 
 ### Bug fixes
 
