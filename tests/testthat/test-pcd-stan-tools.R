@@ -265,3 +265,7 @@ test_that("functions loaded with their dependencies pass the Stan syntax
     )
   }
 })
+
+test_that("pcd_stan_functions finds functions that return arrays", {
+  expect_true("tlogis_plan" %in% pcd_stan_functions())
+})

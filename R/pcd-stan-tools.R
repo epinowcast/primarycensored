@@ -182,7 +182,7 @@ pcd_stan_function_deps <- function(
     content,
     names_only = FALSE,
     functions = NULL) {
-  def_pattern <- "^(real|vector|matrix|void|int|array\\s*<\\s*(real|vector|matrix|int)\\s*>|tuple\\s*<\\s*.*\\s*>)\\s+" # nolint
+  def_pattern <- "^(real|vector|matrix|void|int|array\\s*<\\s*(real|vector|matrix|int)\\s*>|array\\s*\\[[[:space:],]*\\]\\s*(real|vector|matrix|int)|tuple\\s*<\\s*.*\\s*>)\\s+" # nolint
   func_pattern <- paste0(
     def_pattern,
     "(\\w+)\\s*\\("
