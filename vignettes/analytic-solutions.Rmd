@@ -270,7 +270,7 @@ Here $I_x(\cdot, \cdot)$ is the regularised incomplete beta function, $A_\tau = 
 
 | Family (Stan id) | $M(\tau)$ or $K_1(t)$ | Needs | Available in |
 |:---|:---|:---|:---|
-| Log-logistic, shape $k$, scale $\lambda$ (31) | $M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(A_\tau)$ | $k \geq 0.01$ | R and Stan |
+| Log-logistic, shape $k$, scale $\lambda$ (29) | $M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(A_\tau)$ | $k \geq 0.01$ | R and Stan |
 | Beta, shapes $\alpha_1$, $\alpha_2$ (9) | $M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)$ | non-centrality 0 | R and Stan |
 | Chi-square, $\nu$ degrees of freedom (13) | the gamma with $\alpha = \nu / 2$ and $\lambda = 1 / 2$ | non-centrality 0 | R and Stan |
 | Inverse gamma, shape $\alpha$, scale $\theta$ (16) | $M(\tau) = \frac{\theta}{\alpha - 1} \{1 - P(\alpha - 1, \theta / \tau)\}$ | $\alpha > 1$ | Stan |

@@ -21,5 +21,9 @@ Vector of log CDFs.
 }
 \description{
 The expression of \link{pcens_cdf_exptilt} on the log scale.
+The result is \code{NaN} where the transform at either endpoint is, and where
+the transform has no upper tail and the terms of the numerator exceed the
+smaller of the CDF and its survival function by more than
+\code{.exptilt_max_loss}.
 }
 \keyword{internal}

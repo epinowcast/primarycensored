@@ -222,6 +222,7 @@ int dist_has_positive_support(data int dist_id) {
   if (dist_id == 19) return 1;  // Inverse Chi-square
   if (dist_id == 21) return 1;  // Pareto
   if (dist_id == 22) return 1;  // Scaled inverse Chi-square
+  if (dist_id == 29) return 1;  // Log-logistic
   return 0;
 }
 
@@ -272,7 +273,9 @@ int lognormal_lcdf_underflows(real y, real mu, real sigma) {
   *   27/28: Non-parametric discrete hazard (params = [boundaries (K+1),
   *       hazards (K)], length 2*K + 1; hazards[K] must equal 1). 27 and
   *       28 share this likelihood and only differ in the prior on the
-  *       hazards (random walk for 27, IID random effect for 28).
+  *       hazards (random walk for 27, IID random effect for 28),
+  *   29: Log-logistic (params = [scale, shape], the order of the Stan
+  *       built-in `loglogistic_cdf`),
   *
   * @return Log CDF of the delay distribution
   *
@@ -317,6 +320,9 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 23) return student_t_lcdf(delay | params[1], params[2], params[3]);
   else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
   else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 29) {
+    return primarycensored_loglogistic_lcdf(delay | params[1], params[2]);
+  }
   else if (dist_id == 26) {
     // Non-parametric step: params = [boundaries (K+1), pmf (K)].
     int K = (size(params) - 1) %/% 2;
@@ -348,9 +354,11 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   * call sites.
   *
   * @param p Primary event time in [0, pwindow]
-  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth)
+  * @param primary_id Primary distribution identifier (1=uniform, 2=expgrowth,
+  *   3=truncated logistic, 4=truncated Gumbel)
   * @param primary_params Distribution parameters (empty for uniform;
-  *   [r] for expgrowth)
+  *   [r] for expgrowth; [location, scale] for the truncated logistic;
+  *   [mu, beta] for the truncated Gumbel)
   * @param pwindow Primary event window width
   *
   * @return log(F_primary(p))
@@ -365,6 +373,10 @@ real primary_lcdf(real p, int primary_id, array[] real primary_params,
     return uniform_lcdf(p | 0, pwindow);
   } else if (primary_id == 2) {
     return expgrowth_lcdf(p | 0, pwindow, primary_params[1]);
+  } else if (primary_id == 3) {
+    return tlogis_lcdf(p | 0, pwindow, primary_params[1], primary_params[2]);
+  } else if (primary_id == 4) {
+    return tgumbel_lcdf(p | 0, pwindow, primary_params[1], primary_params[2]);
   }
   reject("primary_lcdf: unsupported primary_id ", primary_id);
 }
@@ -395,6 +407,12 @@ real primary_lpdf(real x, int primary_id, array[] real params, real xmin, real x
   // Implement switch for different primary distributions
   if (primary_id == 1) return uniform_lpdf(x | xmin, xmax);
   if (primary_id == 2) return expgrowth_lpdf(x | xmin, xmax, params[1]);
+  if (primary_id == 3) {
+    return tlogis_lpdf(x | xmin, xmax, params[1], params[2]);
+  }
+  if (primary_id == 4) {
+    return tgumbel_lpdf(x | xmin, xmax, params[1], params[2]);
+  }
   // Add more primary distributions as needed
   reject("Invalid primary distribution identifier");
 }

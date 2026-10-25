@@ -6,6 +6,23 @@
   The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
   The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   See #367.
+- Added exponentially tilted primary event solutions for Weibull and generalised gamma delays, in R and Stan.
+  See #368.
+- Added the lognormal delay with an exponentially tilted primary event window, in `pcens_cdf()` and in Stan.
+  The numerical path is used where the series for `r < 0` is slower, and in R for fewer than 10 finite quantiles where `abs(r) * pwindow` is at most 1.
+  See #369.
+- Added the log-logistic delay, Stan `dist_id` 29 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
+  There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
+  `pcd_stan_function_deps()` now also finds Stan functions that are only passed by name, such as an ODE system.
+  See #372, #104 and #321.
+- Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3), with analytical solutions for exponential, gamma and normal delays in R and Stan.
+  The numerical path is used where the analytical solutions do not apply.
+  `pcd_stan_functions()` and `pcd_load_stan_functions()` now also find Stan functions that return arrays.
+  See #370.
+- Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
+  Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
+  Stan models that include the function files one by one need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+  See #371.
 
 ## Bug fixes
 
