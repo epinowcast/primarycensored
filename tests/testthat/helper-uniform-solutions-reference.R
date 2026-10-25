@@ -35,23 +35,3 @@ expect_rel_equal <- function(actual, expected, tolerance = 1e-9,
     info = paste(info, "far tail above the floor")
   )
 }
-
-# Log quadrature relative to F_T(d), so it holds where the CDF underflows
-reference_uniform_lcdf <- function(lp, d, pwindow, lower = 0) {
-  vapply(d, function(di) {
-    q_lower <- max(di - pwindow, lower)
-    lp_d <- lp(di)
-    breaks <- sort(unique(c(q_lower, di - (di - q_lower) * 2^-(0:40), di)))
-    breaks <- breaks[breaks >= q_lower & breaks <= di]
-    total <- 0
-    for (i in seq_len(length(breaks) - 1L)) {
-      total <- total + stats::integrate(
-        function(t) exp(vapply(t, lp, numeric(1)) - lp_d),
-        breaks[i], breaks[i + 1L],
-        rel.tol = 1e-13, abs.tol = 0, subdivisions = 500L,
-        stop.on.error = FALSE
-      )$value
-    }
-    lp_d + log(total) - log(pwindow)
-  }, numeric(1))
-}

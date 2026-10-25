@@ -414,21 +414,6 @@ The beta distribution has support on $[0, 1]$ and mean $a / (a + b)$.
 The partial expectation is $\int_0^t z f_T(z)~ dz = \frac{a}{a + b} F_T(t; a + 1, b)$ for $t \leq 1$, and the full mean for $t \geq 1$ where $F_T = 1$.
 So the terms $t F_T(t; a, b)$ and $\frac{a}{a + b} F_T(t; a + 1, b)$ replace $F_T$ with 1 above $t = 1$.
 
-## Inverse gamma family
-
-The inverse gamma distribution with shape $\alpha$ and scale $\beta$ has mean $\beta / (\alpha - 1)$ for $\alpha > 1$.
-Its partial expectation is an inverse gamma distribution function with shape $\alpha - 1$
-
-$$
-\int_0^t z f_T(z; \alpha, \beta)~ dz = \frac{\beta}{\alpha - 1} F_T(t; \alpha - 1, \beta).
-$$
-
-The solution is then equation \@ref(eq:antiderivunifprim) with $G(t) = t F_T(t; \alpha, \beta) - \frac{\beta}{\alpha - 1} F_T(t; \alpha - 1, \beta)$.
-For $\alpha \leq 1$ the mean is infinite and this form does not apply, so the numerical path is used.
-The inverse chi-square distribution with $\nu$ degrees of freedom is the inverse gamma with shape $\nu / 2$ and scale $1 / 2$.
-The scaled inverse chi-square distribution with scale $s$ is the inverse gamma with shape $\nu / 2$ and scale $\nu s^2 / 2$.
-Both need $\nu > 2$ and otherwise use the numerical path.
-
 ## Pareto distribution
 
 The Pareto distribution with minimum $y_{\min}$ and shape $\alpha$ has $F_T(t) = 1 - (y_{\min} / t)^\alpha$ for $t \geq y_{\min}$ and 0 below.

@@ -4,8 +4,7 @@
   *
   * These are the delays whose censored CDF with a uniform primary is
   * primarycensored_uniform_lcdf_from_terms() applied to
-  * primarycensored_uniform_terms() at d and q. Some only hold for part of
-  * the parameter space, see check_uniform_terms_params().
+  * primarycensored_uniform_terms() at d and q.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -16,28 +15,8 @@
 int check_for_uniform_terms(int dist_id, int primary_id) {
   if (primary_id != 1) return 0;
   return dist_id == 1 || dist_id == 2 || dist_id == 3 || dist_id == 4 ||
-    dist_id == 5 || dist_id == 9 || dist_id == 13 || dist_id == 16 ||
-    dist_id == 18 || dist_id == 19 || dist_id == 21 || dist_id == 22;
-}
-
-/**
-  * Check the uniform primary terms are valid for the delay parameters
-  * @ingroup analytical_solution_helpers
-  *
-  * The Inverse gamma terms need a finite mean, `alpha > 1`, and the Inverse
-  * chi-square (19) and Scaled inverse chi-square (22) need `nu > 2`.
-  * Otherwise the numerical path is used.
-  *
-  * @param dist_id Distribution identifier for the delay distribution
-  * @param params Array of distribution parameters
-  *
-  * @return 1 if the uniform primary terms are valid for the parameters, 0
-  * otherwise
-  */
-int check_uniform_terms_params(int dist_id, array[] real params) {
-  if (dist_id == 16) return params[1] > 1;
-  if (dist_id == 19 || dist_id == 22) return params[1] > 2;
-  return 1;
+    dist_id == 5 || dist_id == 9 || dist_id == 13 || dist_id == 18 ||
+    dist_id == 21;
 }
 
 /**
@@ -348,84 +327,6 @@ vector primarycensored_beta_uniform_terms(real t, array[] real params) {
 }
 
 /**
-  * Compute the log CDF of an Inverse gamma delay
-  * @ingroup delay_log_cdfs
-  *
-  * The CDF is Q(alpha, x) with x = beta / y. It is evaluated on the log scale
-  * from the series for P(alpha, x) when x <= alpha + 1 and the continued
-  * fraction for Q(alpha, x) (modified Lentz) above. Unlike `inv_gamma_lcdf`
-  * it does not underflow in the lower tail. At an integer `alpha` the
-  * fraction terminates, so extra iterations keep the shape gradient exact.
-  *
-  * @param y Positive value at which the log CDF is evaluated
-  * @param alpha Shape parameter
-  * @param beta Scale parameter
-  *
-  * @return Log CDF at y
-  */
-real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
-  real x = beta / y;
-  if (x > alpha + 1) {
-    int near_int = abs(alpha - round(alpha)) < 1e-9;
-    real b = x + 1 - alpha;
-    real c = 1e300;
-    real d = inv(b);
-    real h = d;
-    for (i in 1:2000) {
-      real an = -i * (i - alpha);
-      b += 2;
-      d = an * d + b;
-      d = inv(abs(d) < 1e-300 ? 1e-300 : d);
-      c = b + an / c;
-      c = abs(c) < 1e-300 ? 1e-300 : c;
-      h *= d * c;
-      if (abs(d * c - 1) < 1e-15 && (i > alpha + 50 || !near_int)) break;
-    }
-    return (alpha - 1) * log(x) - x - lgamma(alpha) + log(x) + log(h);
-  }
-  real term = 1;
-  real series = 1;
-  for (n in 1:2000) {
-    term *= x / (alpha + n);
-    series += term;
-    if (term < 1e-17 * series) break;
-  }
-  return log1m_exp(alpha * log(x) - x - lgamma(alpha + 1) + log(series));
-}
-
-/**
-  * Compute the uniform primary terms at t for an Inverse gamma delay
-  * @ingroup analytical_solution_helpers
-  *
-  * The mean is E = beta / (alpha - 1) and the partial expectation
-  * distribution is the Inverse gamma with shape `alpha - 1`, so `alpha > 1`
-  * is required.
-  *
-  * @param t Time (d or q)
-  * @param params Array of Inverse gamma distribution parameters
-  * [alpha, beta]
-  *
-  * @return Vector [log(t * F_T(t)), log(E * tilde F_T(t))], both `-inf` for
-  * t <= 0
-  */
-vector primarycensored_invgamma_uniform_terms(real t, array[] real params) {
-  real alpha = params[1];
-  real beta = params[2];
-  if (alpha <= 1) {
-    reject("Inverse gamma uniform primary terms need shape > 1, shape is ",
-           alpha);
-  }
-  if (t <= 0) {
-    return rep_vector(negative_infinity(), 2);
-  }
-  real log_E = log(beta) - log(alpha - 1);
-  return [
-    log(t) + primarycensored_inv_gamma_lcdf(t | alpha, beta),
-    log_E + primarycensored_inv_gamma_lcdf(t | alpha - 1, beta)
-  ]';
-}
-
-/**
   * Compute the uniform primary terms at t for a Pareto delay
   * @ingroup analytical_solution_helpers
   *
@@ -477,9 +378,7 @@ vector primarycensored_pareto_uniform_terms(real t, array[] real params) {
   * @param t Time (d or q)
   * @param dist_id Distribution identifier (1: Lognormal, 2: Gamma,
   *   3: Weibull, 4: Exponential, 5: Generalised gamma, 9: Beta,
-  *   13: Chi-square, 16: Inverse gamma, 18: Normal, 19: Inverse chi-square,
-  *   21: Pareto, 22: Scaled inverse chi-square), see
-  *   check_for_uniform_terms()
+  *   13: Chi-square, 18: Normal, 21: Pareto), see check_for_uniform_terms()
   * @param params Array of distribution parameters
   *
   * @return Vector of the two terms at t, see
@@ -499,21 +398,9 @@ vector primarycensored_uniform_terms(real t, data int dist_id,
     return primarycensored_exponential_uniform_terms(t, params);
   } else if (dist_id == 18) {
     return primarycensored_normal_uniform_terms(t, params);
-  } else if (dist_id == 16) {
-    return primarycensored_invgamma_uniform_terms(t, params);
   } else if (dist_id == 13) {
     // Gamma with shape nu / 2 and rate 1 / 2
     return primarycensored_gamma_uniform_terms(t, {params[1] / 2, 0.5});
-  } else if (dist_id == 19) {
-    // Inverse gamma with shape nu / 2 and scale 1 / 2
-    return primarycensored_invgamma_uniform_terms(
-      t, {params[1] / 2, 0.5}
-    );
-  } else if (dist_id == 22) {
-    // Inverse gamma with shape nu / 2 and scale nu * s^2 / 2
-    return primarycensored_invgamma_uniform_terms(
-      t, {params[1] / 2, params[1] * square(params[2]) / 2}
-    );
   } else if (dist_id == 21) {
     return primarycensored_pareto_uniform_terms(t, params);
   } else if (dist_id == 9) {
@@ -752,8 +639,7 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * the terms are computed once per delay and used for both, halving the CDF
   * evaluations. The values are the same as from
   * primarycensored_analytical_lcdf() at each delay without truncation.
-  * Only for cases where check_for_analytical_vectorized() and
-  * check_uniform_terms_params() are 1.
+  * Only for cases where check_for_analytical_vectorized() is 1.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
