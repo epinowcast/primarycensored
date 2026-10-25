@@ -27,11 +27,7 @@ test_that("pcd_stan_dist_id gives informative errors", {
 test_that("Distribution IDs match Stan model definitions", {
   # This ensures consistency with the Stan code's dist_id numbering
   delay_dists <- pcd_distributions
-  # Identifiers are unique and increasing. Some are reserved for delays
-  # added in other releases.
-  expect_false(anyDuplicated(delay_dists$stan_id) > 0L)
-  expect_false(is.unsorted(delay_dists$stan_id, strictly = TRUE))
-  expect_identical(delay_dists$stan_id[1:28], 1:28)
+  expect_identical(delay_dists$stan_id, seq_len(nrow(delay_dists)))
 
   prim_dists <- pcd_primary_distributions
   expect_identical(prim_dists$stan_id, seq_len(nrow(prim_dists)))
@@ -49,7 +45,7 @@ test_that("pcd_stan_dist_id returns 27L and 28L for the two hazard variants", {
   expect_identical(pcd_stan_dist_id("hazard random effect"), 28L)
 })
 
-test_that("pcd_stan_dist_id returns 31L for the log-logistic distribution", {
-  expect_identical(pcd_stan_dist_id("loglogistic"), 31L)
-  expect_identical(pcd_stan_dist_id("log-logistic"), 31L)
+test_that("pcd_stan_dist_id returns 29L for the log-logistic distribution", {
+  expect_identical(pcd_stan_dist_id("loglogistic"), 29L)
+  expect_identical(pcd_stan_dist_id("log-logistic"), 29L)
 })

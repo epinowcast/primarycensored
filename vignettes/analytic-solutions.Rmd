@@ -26,7 +26,7 @@ In this vignette, we'll derive the analytic solutions for the primary censored d
 2. Analyse the uniform primary event time case ($r=0$)
 3. Explore general partial expectation and its role in solving equation \@ref(eq:unifprim)
 4. Provide specific analytic solutions for distributions where the partial expectation can be reduced to an analytic expression
-5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma and normal delays
+5. Derive transform based solutions for the exponentially tilted primary event time with exponential, gamma, normal, Weibull and generalised gamma delays, and with the lognormal delay by quadrature or series
 
 
 # Analytic solutions for exponentially tilted primary event times
@@ -394,12 +394,61 @@ For $\xi = -r$ the closed form transforms are as follows.
 Differences between the two endpoints are taken from the lower or the upper tail transforms, whichever has the smaller ratio of the subtracted term to the first.
 All terms are evaluated on the log scale.
 
+## Incomplete gamma series transforms
+
+The Weibull and the generalised gamma are in the Stacy family, with CDF $F_T(x) = P(k, (x / \theta)^a)$ for the `shape` $a$, `scale` $\theta$ and $k$ of `flexsurv::pgengamma.orig()`, where $k = 1$ is the Weibull.
+Expanding $e^{\xi u}$ and integrating term by term gives
+
+$$
+T_f(\xi; \tau) = \sum_{n = 0}^{\infty} \frac{(\xi \theta)^n}{n!} \frac{\Gamma(k + n / a)}{\Gamma(k)} P\left(k + n / a, (\tau / \theta)^a\right).
+$$
+
+For $\xi < 0$ the terms alternate in sign and cancel.
+The sum of their absolute values is $T_f(|\xi|; \tau)$, and the series is used where this is less than $10^5$ times the sum.
+The series has no upper tail form, so differences between endpoints come from the lower transform and lose about $10^{-16}$ times the size of the terms over $e^{r w_P} - 1$.
+In R the numerical path is used where that size is more than $10^5$ times the smaller of the CDF and its survival function, which is in the upper tail.
+In Stan the ODE is used where the size is more than $10^5$, as the ODE has a larger absolute error below that.
+In the vectorised Stan PMF the ODE values are shifted by their difference from the series value at the delay before the switch, so the PMF across the switch is a difference of ODE values.
+The numerical path is also used where the terms cancel too much, and where $|\xi| \tau \geq 400$.
+
+## Lognormal delay by quadrature or series
+
+The lognormal has no closed form transform.
+With $u = e^{\mu + \sigma z}$ and $z_\tau = (\log \tau - \mu) / \sigma$,
+
+$$
+T_f(\xi; \tau) = \int_{-\infty}^{z_\tau} e^{\xi e^{\mu + \sigma z}} \phi(z) ~dz,
+$$
+
+where $\phi$ is the standard normal density.
+The method depends on the sign of $\xi = -r$.
+
+- For $r > 0$, $\xi < 0$, the log of the integrand $\ell(z) = -r e^{\mu + \sigma z} - z^2 / 2$ is concave with one mode, $z_0 = -W_0(r \sigma^2 e^\mu) / \sigma$, where $W_0$ is the principal branch of the Lambert W function.
+  The integrand is below $e^{-40}$ of its peak beyond limits set from the curvature and the decay of the tilt.
+  The total is integrated by two 32 point Gauss-Legendre panels that meet at the mode, once for all the points of a call.
+  For a point left of the mode the lower transform is one panel that ends at the point.
+  For a point right of the mode the upper transform is one panel that starts at the point.
+  The other transform is the difference from the total, which is at least the mass on the other side of the mode, so it does not cancel.
+  Each panel is split into `ceiling(sigma / 1.8)` equal panels for a larger $\sigma$, which keeps the CDF accurate to about $10^{-9}$ to $\sigma = 15$.
+- For $r < 0$, $\xi > 0$, the transform is the series $\sum_{k \geq 0} \xi^k m_k(\tau) / k!$ in the partial moments $m_k(\tau) = \int_0^\tau u^k f_T(u)~du = e^{k\mu + k^2\sigma^2/2}\,\Phi(z_\tau - k\sigma)$.
+  All terms are positive, so the sum does not cancel.
+  Past $k = \xi \tau$ the terms fall by at least a factor $\xi \tau / (k + 1)$, so about $\xi \tau + 9 \sqrt{\xi \tau} + 30$ terms are needed.
+  The total diverges, so there is no upper transform.
+
+The moments $G_1$, $G_2$ and $G_3$ of the small tilt forms come from $m_0$ to $m_3$.
+
 ## Admissibility
 
 The exponential and gamma forms need $\lambda - \xi = \lambda + r > 0$ for the tilted delay distribution to exist.
 Where $\lambda + r \leq 0$ the methods use the numerical path, `pcens_cdf.default()` in R and the ODE in Stan.
 In Stan `check_for_analytical_params()` makes the choice from the parameters.
-The normal form has no restriction.
+The normal form and the series for the Weibull and the generalised gamma have no restriction.
+The lognormal needs that $r \sigma^2 e^\mu$ is finite.
+For $r < 0$ the series needs about $\xi d + 9 \sqrt{\xi d} + 30$ terms at a delay $d$, so the numerical path is used past $|r| d$ of 200 in R and 60 in Stan, where it is faster.
+In Stan `check_for_analytical_delay()` makes this choice at each delay.
+The exception is a window that is wide in tilt terms, $|r| w_P > 2$, where the numerical path is less accurate in the lower tail.
+The series is kept there up to 20000 terms, which is $|r| d$ up to about 18700.
+For fewer than 10 quantiles in R the numerical method is used only where $|r| w_P \leq 1$, where its error is about $10^{-6}$.
 
 ## Tilts close to zero
 
@@ -454,7 +503,7 @@ The R and Stan functions use the same rule.
 The numerical path integrates the delay CDF, or the survival where the delay CDF at the mean primary event time is above a half, with a relative tolerance of $10^{-13}$.
 The switch between paths makes the CDF discontinuous by about $10^{-8}$ of the smaller tail.
 
-The Stan parameters are `[scale, shape]`, the order of the Stan `loglogistic_cdf()`, and `dist_id` is 31.
+The Stan parameters are `[scale, shape]`, the order of the Stan `loglogistic_cdf()`, and `dist_id` is 29.
 The R methods read `shape` and `scale`, or `rate`, as `flexsurv::pllogis()` and `actuar::pllogis()` do.
 
 # Learning more

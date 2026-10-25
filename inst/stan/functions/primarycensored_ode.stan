@@ -222,7 +222,7 @@ int dist_has_positive_support(data int dist_id) {
   if (dist_id == 19) return 1;  // Inverse Chi-square
   if (dist_id == 21) return 1;  // Pareto
   if (dist_id == 22) return 1;  // Scaled inverse Chi-square
-  if (dist_id == 31) return 1;  // Log-logistic
+  if (dist_id == 29) return 1;  // Log-logistic
   return 0;
 }
 
@@ -274,7 +274,7 @@ int lognormal_lcdf_underflows(real y, real mu, real sigma) {
   *       hazards (K)], length 2*K + 1; hazards[K] must equal 1). 27 and
   *       28 share this likelihood and only differ in the prior on the
   *       hazards (random walk for 27, IID random effect for 28),
-  *   31: Log-logistic (params = [scale, shape], the order of the Stan
+  *   29: Log-logistic (params = [scale, shape], the order of the Stan
   *       built-in `loglogistic_cdf`),
   *
   * @return Log CDF of the delay distribution
@@ -320,7 +320,7 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
   else if (dist_id == 23) return student_t_lcdf(delay | params[1], params[2], params[3]);
   else if (dist_id == 24) return uniform_lcdf(delay | params[1], params[2]);
   else if (dist_id == 25) return von_mises_lcdf(delay | params[1], params[2]);
-  else if (dist_id == 31) {
+  else if (dist_id == 29) {
     return primarycensored_loglogistic_lcdf(delay | params[1], params[2]);
   }
   else if (dist_id == 26) {

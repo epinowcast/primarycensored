@@ -1,46 +1,46 @@
 skip_on_cran()
 
-# Log-logistic delay (dist_id 31, params = [scale, shape]) with a uniform
+# Log-logistic delay (dist_id 29, params = [scale, shape]) with a uniform
 # primary (primary_id 1).
 
 test_that("the log-logistic delay is registered in Stan", {
-  expect_identical(dist_has_positive_support(31L), 1L)
+  expect_identical(dist_has_positive_support(29L), 1L)
   x <- c(1e-6, 0.3, 1, 4, 30, 1e3)
   for (case in ll_cases) {
     expect_equal(
-      vapply(x, dist_lcdf, numeric(1), case$params, 31L),
+      vapply(x, dist_lcdf, numeric(1), case$params, 29L),
       stats::plogis(
         case$params[2] * (log(x) - log(case$params[1])),
         log.p = TRUE
       ),
       tolerance = 1e-13
     )
-    expect_identical(dist_lcdf(0, case$params, 31L), -Inf)
-    expect_identical(dist_lcdf(-2, case$params, 31L), -Inf)
+    expect_identical(dist_lcdf(0, case$params, 29L), -Inf)
+    expect_identical(dist_lcdf(-2, case$params, 29L), -Inf)
   }
   # No underflow to a zero CDF far below the scale
   expect_equal(
-    dist_lcdf(1e-200, c(2, 4.5), 31L),
+    dist_lcdf(1e-200, c(2, 4.5), 29L),
     4.5 * (log(1e-200) - log(2)),
     tolerance = 1e-12
   )
 })
 
 test_that("dispatch checks include the log-logistic delay", {
-  expect_identical(check_for_uniform_terms(31L, 1L), 1L)
-  expect_identical(check_for_uniform_terms(31L, 2L), 0L)
-  expect_identical(check_for_analytical(31L, 1L), 1L)
-  expect_identical(check_for_analytical_vectorized(31L, 1L, 3), 1L)
-  expect_identical(check_for_analytical_vectorized(31L, 1L, 2.5), 0L)
+  expect_identical(check_for_uniform_terms(29L, 1L), 1L)
+  expect_identical(check_for_uniform_terms(29L, 2L), 0L)
+  expect_identical(check_for_analytical(29L, 1L), 1L)
+  expect_identical(check_for_analytical_vectorized(29L, 1L, 3), 1L)
+  expect_identical(check_for_analytical_vectorized(29L, 1L, 2.5), 0L)
   expect_identical(
-    check_for_analytical_params(31L, c(3, 0.5), 1L, numeric(0), 2), 1L
+    check_for_analytical_params(29L, c(3, 0.5), 1L, numeric(0), 2), 1L
   )
   # A tiny shape has no solution at all
   expect_identical(
-    check_for_analytical_params(31L, c(3, 0.005), 1L, numeric(0), 2), 0L
+    check_for_analytical_params(29L, c(3, 0.005), 1L, numeric(0), 2), 0L
   )
   expect_identical(
-    check_for_analytical_params(31L, c(3, 0.01), 1L, numeric(0), 2), 1L
+    check_for_analytical_params(29L, c(3, 0.01), 1L, numeric(0), 2), 1L
   )
 })
 
@@ -69,8 +69,8 @@ test_that("the Stan partial moment ratio matches the R series", {
 test_that("a shape below 0.01 uses the ODE path", {
   tiny <- c(3, 0.005)
   expect_identical(
-    primarycensored_lcdf(2, 31L, tiny, 2, 0, Inf, 1L, numeric(0)),
-    log(primarycensored_numeric_cdf(2, 31L, tiny, 2, 1L, numeric(0)))
+    primarycensored_lcdf(2, 29L, tiny, 2, 0, Inf, 1L, numeric(0)),
+    log(primarycensored_numeric_cdf(2, 29L, tiny, 2, 1L, numeric(0)))
   )
 })
 
@@ -78,22 +78,22 @@ test_that("the vectorised and single uniform paths use the same rule", {
   # Below the minimum shape both use the numerical path
   params <- c(2, 0.009)
   expect_identical(
-    check_for_analytical_params(31L, params, 1L, numeric(0), 1), 0L
+    check_for_analytical_params(29L, params, 1L, numeric(0), 1), 0L
   )
-  vec <- primarycensored_lcdf_vectorized(1L, 3L, 31L, params, 1, 1L, numeric(0))
+  vec <- primarycensored_lcdf_vectorized(1L, 3L, 29L, params, 1, 1L, numeric(0))
   single <- vapply(
     1:3, primarycensored_lcdf, numeric(1),
-    31L, params, 1, 0, Inf, 1L, numeric(0)
+    29L, params, 1, 0, Inf, 1L, numeric(0)
   )
   expect_identical(vec, single)
   lpmf <- primarycensored_sone_lpmf_vectorized(
-    2L, 0, Inf, 31L, params, 1, 1L, numeric(0)
+    2L, 0, Inf, 29L, params, 1, 1L, numeric(0)
   )
   expect_equal(
     lpmf,
     vapply(0:2, function(d) {
       primarycensored_lpmf(
-        d, 31L, params, 1, d + 1, 0, Inf, 1L, numeric(0)
+        d, 29L, params, 1, d + 1, 0, Inf, 1L, numeric(0)
       )
     }, numeric(1)),
     tolerance = 1e-12
@@ -117,17 +117,17 @@ test_that("primary terms and CDFs match a reference integral", {
       info <- ll_case_label(case, pwindow = pwindow)
       lcdf <- vapply(
         d, primarycensored_lcdf, numeric(1),
-        31L, case$params, pwindow, 0, Inf, 1L, numeric(0)
+        29L, case$params, pwindow, 0, Inf, 1L, numeric(0)
       )
       expect_lt(max_rel_diff(exp(lcdf), expected), 1e-8, label = info)
       direct <- vapply(
         d, primarycensored_analytical_lcdf, numeric(1),
-        31L, case$params, pwindow, 0, Inf, 1L, numeric(0)
+        29L, case$params, pwindow, 0, Inf, 1L, numeric(0)
       )
       expect_identical(direct, lcdf)
       ode <- vapply(
         d, primarycensored_numeric_cdf, numeric(1),
-        31L, case$params, pwindow, 1L, numeric(0)
+        29L, case$params, pwindow, 1L, numeric(0)
       )
       expect_lt(max(abs(exp(lcdf) - ode)), 1e-4, label = info)
     }
@@ -136,18 +136,18 @@ test_that("primary terms and CDFs match a reference integral", {
 
 test_that("the uniform terms are the endpoint terms of the analytic CDF", {
   params <- c(5, 2)
-  terms_d <- primarycensored_uniform_terms(6, 31L, params)
-  terms_q <- primarycensored_uniform_terms(4, 31L, params)
+  terms_d <- primarycensored_uniform_terms(6, 29L, params)
+  terms_q <- primarycensored_uniform_terms(4, 29L, params)
   expect_equal(
     primarycensored_uniform_lcdf_from_terms(terms_d, terms_q, 2),
-    primarycensored_lcdf(6, 31L, params, 2, 0, Inf, 1L, numeric(0)),
+    primarycensored_lcdf(6, 29L, params, 2, 0, Inf, 1L, numeric(0)),
     tolerance = 1e-14
   )
   expect_identical(
-    primarycensored_uniform_terms(0, 31L, params), c(-Inf, -Inf)
+    primarycensored_uniform_terms(0, 29L, params), c(-Inf, -Inf)
   )
   expect_identical(
-    primarycensored_uniform_terms(-1, 31L, params), c(-Inf, -Inf)
+    primarycensored_uniform_terms(-1, 29L, params), c(-Inf, -Inf)
   )
 })
 
@@ -158,7 +158,7 @@ test_that("the uniform CDF matches the R implementation", {
     expect_equal(
       exp(vapply(
         d, primarycensored_lcdf, numeric(1),
-        31L, case$params, 3, 0, Inf, 1L, numeric(0)
+        29L, case$params, 3, 0, Inf, 1L, numeric(0)
       )),
       pcens_cdf(obj, d, 3),
       tolerance = 1e-9
@@ -169,11 +169,11 @@ test_that("the uniform CDF matches the R implementation", {
 test_that("primarycensored_lcdf_vectorized shares terms", {
   params <- c(5, 2)
   vec <- primarycensored_lcdf_vectorized(
-    1L, 20L, 31L, params, 3, 1L, numeric(0)
+    1L, 20L, 29L, params, 3, 1L, numeric(0)
   )
   single <- vapply(
     1:20, primarycensored_lcdf, numeric(1),
-    31L, params, 3, 0, Inf, 1L, numeric(0)
+    29L, params, 3, 0, Inf, 1L, numeric(0)
   )
   expect_equal(vec, single, tolerance = 1e-9)
 })
@@ -182,11 +182,11 @@ test_that("the vectorised PMF matches the per delay PMF with truncation", {
   params <- c(5, 2)
   for (bounds in list(c(0, Inf), c(0, 25), c(2, 25))) {
     vec <- primarycensored_sone_lpmf_vectorized(
-      15L, bounds[1], bounds[2], 31L, params, 3, 1L, numeric(0)
+      15L, bounds[1], bounds[2], 29L, params, 3, 1L, numeric(0)
     )
     single <- vapply(1:15, function(d) {
       primarycensored_lpmf(
-        d - 1L, 31L, params, 3, d, bounds[1], bounds[2], 1L, numeric(0)
+        d - 1L, 29L, params, 3, d, bounds[1], bounds[2], 1L, numeric(0)
       )
     }, numeric(1))
     expect_equal(vec[1:15], single, tolerance = 1e-8)
@@ -224,7 +224,7 @@ test_that("the vectorised log-logistic log PMF has finite gradients
   }
 })
 
-test_that("pcd_cmdstan_model rejects the reserved distribution identifiers", {
+test_that("pcd_cmdstan_model fits the log-logistic delay", {
   skip_if_not_installed("cmdstanr")
   skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
   counts <- data.frame(
@@ -239,18 +239,6 @@ test_that("pcd_cmdstan_model rejects the reserved distribution identifiers", {
     primary_priors = list(location = numeric(0), scale = numeric(0))
   )
   model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
-  for (reserved in c(29L, 30L)) {
-    stan_data$dist_id <- reserved
-    # The rejection in transformed data stops every chain
-    expect_message(
-      suppressWarnings(model$sample(
-        data = stan_data, seed = 1, chains = 1, iter_warmup = 1,
-        iter_sampling = 1, refresh = 0
-      )),
-      "is reserved and is not a distribution"
-    )
-  }
-  stan_data$dist_id <- 31L
   fit <- suppressMessages(suppressWarnings(model$sample(
     data = stan_data, seed = 1, chains = 1, iter_warmup = 50,
     iter_sampling = 50, refresh = 0, show_messages = FALSE
@@ -262,7 +250,7 @@ test_that("the Stan uniform CDF is accurate where the difference cancels", {
   for (case in uniform_conditioning_cases) {
     ref <- loglogistic_censored_reference(case[4], case[1], case[2], case[3])
     actual <- exp(primarycensored_lcdf(
-      case[4], 31L, c(case[2], case[1]), case[3], 0, Inf, 1L, numeric(0)
+      case[4], 29L, c(case[2], case[1]), case[3], 0, Inf, 1L, numeric(0)
     ))
     # The survival is resolved to 1e-16 in absolute terms
     expect_lt(
@@ -281,7 +269,7 @@ test_that("the Stan uniform PMF is positive and accurate at large q", {
     )
     expected <- -diff(ref["survival", ])
     actual <- exp(primarycensored_lpmf(
-      as.integer(case[4]), 31L, params, case[3], case[4] + 1, 0, Inf, 1L,
+      as.integer(case[4]), 29L, params, case[3], case[4] + 1, 0, Inf, 1L,
       numeric(0)
     ))
     expect_gt(actual, 0)
@@ -297,11 +285,11 @@ test_that("the vectorised uniform CDF uses the numerical CDF where the
   params <- c(5, 0.5)
   n <- 1e5L
   vec <- primarycensored_lcdf_vectorized(
-    n - 2L, n, 31L, params, 1, 1L, numeric(0)
+    n - 2L, n, 29L, params, 1, 1L, numeric(0)
   )
   single <- vapply(
     (n - 2L):n, primarycensored_lcdf, numeric(1),
-    31L, params, 1, 0, Inf, 1L, numeric(0)
+    29L, params, 1, 0, Inf, 1L, numeric(0)
   )
   expect_identical(vec[(n - 2L):n], single)
   expect_true(all(diff(single) > 0))
@@ -310,8 +298,8 @@ test_that("the vectorised uniform CDF uses the numerical CDF where the
 test_that("the uniform conditioning check flags the ill conditioned terms", {
   params <- c(5, 2)
   ill <- function(d) {
-    terms_d <- primarycensored_uniform_terms(d, 31L, params)
-    terms_q <- primarycensored_uniform_terms(max(d - 1, 0), 31L, params)
+    terms_d <- primarycensored_uniform_terms(d, 29L, params)
+    terms_q <- primarycensored_uniform_terms(max(d - 1, 0), 29L, params)
     loglogistic_window_ill_conditioned(
       terms_d[1], terms_q[1], d,
       1, primarycensored_uniform_lcdf_from_terms(terms_d, terms_q, 1)
@@ -322,8 +310,8 @@ test_that("the uniform conditioning check flags the ill conditioned terms", {
   # The PMF is small next to the tail in a heavy tail, so the rule also
   # follows the density of the CDF
   params <- c(5, 0.5)
-  terms_d <- primarycensored_uniform_terms(1e4, 31L, params)
-  terms_q <- primarycensored_uniform_terms(1e4 - 1, 31L, params)
+  terms_d <- primarycensored_uniform_terms(1e4, 29L, params)
+  terms_q <- primarycensored_uniform_terms(1e4 - 1, 29L, params)
   expect_identical(
     loglogistic_window_ill_conditioned(
       terms_d[1], terms_q[1], 1e4, 1,
@@ -375,7 +363,7 @@ test_that("Stan log-logistic CDFs match rprimarycensored samples", {
     samples <- loglogistic_samples(n, case, pwindow)
     qs <- unname(stats::quantile(samples, c(0.05, 0.25, 0.5, 0.75, 0.95)))
     stan_cdf <- exp(vapply(
-      qs, primarycensored_lcdf, numeric(1), 31L, case$params, pwindow, 0,
+      qs, primarycensored_lcdf, numeric(1), 29L, case$params, pwindow, 0,
       Inf, 1L, numeric(0)
     ))
     expect_lt(

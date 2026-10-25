@@ -29,8 +29,7 @@ pcd_distributions <- data.frame(
     "nonparametric", "hazard random walk", "hazard random effect",
     "log-logistic"
   ),
-  # 29 (inverse Gaussian) and 30 (Gompertz) are reserved
-  stan_id = c(1:25, 26L, 27L, 28L, 31L),
+  stan_id = c(1:25, 26L, 27L, 28L, 29L),
   stringsAsFactors = FALSE
 )
 
