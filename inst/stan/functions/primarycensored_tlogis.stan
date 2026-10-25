@@ -286,17 +286,19 @@ matrix primarycensored_tlogis_terms(real t, int dist_id, array[] real params,
                                     real scale, int n_pos, int n_neg,
                                     int use_pos, int use_neg) {
   matrix[2, 1 + n_pos + n_neg] terms = rep_matrix(0, 2, 1 + n_pos + n_neg);
-  terms[, 1] = log_tilt_transform_pair(t, dist_id, 0, params);
+  terms[, 1] = log_tilt_transform_pair(t, dist_id, 0, params)[1:2];
   if (use_pos) {
     for (n in 1:n_pos) {
-      terms[, 1 + n] = log_tilt_transform_pair(t, dist_id, n / scale, params);
+      terms[, 1 + n] = log_tilt_transform_pair(
+        t, dist_id, n / scale, params
+      )[1:2];
     }
   }
   if (use_neg) {
     for (n in 1:n_neg) {
       terms[, 1 + n_pos + n] = log_tilt_transform_pair(
         t, dist_id, -n / scale, params
-      );
+      )[1:2];
     }
   }
   return terms;

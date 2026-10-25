@@ -190,8 +190,8 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
   }
 
   // Check if an analytical solution exists and applies for these parameters
-  if (check_for_analytical_params(dist_id, params, primary_id,
-                                  primary_params, pwindow)) {
+  if (check_for_analytical_delay(dist_id, params, primary_id,
+                                 primary_params, d, pwindow)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
@@ -276,8 +276,8 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
   // Check if an analytical solution exists. The internal lower bound is 0 for
   // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
   // and -inf for distributions with support on the reals.
-  if (check_for_analytical_params(dist_id, params, primary_id,
-                                  primary_params, pwindow)) {
+  if (check_for_analytical_delay(dist_id, params, primary_id,
+                                 primary_params, d, pwindow)) {
     result = primarycensored_analytical_lcdf(
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
@@ -459,11 +459,11 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * @ingroup primary_censored_vectorized
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
-  * check_for_analytical_vectorized() and check_for_analytical_params() are 1,
-  * primarycensored_tlogis_lcdf_vectorized() when
-  * check_for_tlogis_vectorized() and check_for_analytical_params() are 1,
-  * and otherwise calls primarycensored_lcdf() at each delay. No truncation
-  * is applied.
+  * check_for_analytical_vectorized() is 1 and check_for_analytical_delay() is
+  * 1 at the largest delay, primarycensored_tlogis_lcdf_vectorized() when
+  * check_for_tlogis_vectorized() and check_for_analytical_params() are 1, and
+  * otherwise calls primarycensored_lcdf() at each delay. No truncation is
+  * applied.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
@@ -481,8 +481,8 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
   if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)
-      && check_for_analytical_params(dist_id, params, primary_id,
-                                     primary_params, pwindow)) {
+      && check_for_analytical_delay(dist_id, params, primary_id,
+                                    primary_params, n, pwindow)) {
     return primarycensored_analytical_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_id, primary_params
     );
