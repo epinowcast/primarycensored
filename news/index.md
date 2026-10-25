@@ -91,14 +91,6 @@
   parameter names are the same throughout a fit. See
   [\#379](https://github.com/epinowcast/primarycensored/issues/379).
 
-### Documentation
-
-- The “Analytic solutions” vignette now derives each analytic solution
-  from truncated exponential-moment transforms of the delay, and lists
-  the solution, numerical fallback and safeguards used for each pair of
-  window and delay. See
-  [\#375](https://github.com/epinowcast/primarycensored/issues/375).
-
 ## primarycensored 1.6.0
 
 CRAN release: 2026-09-25
