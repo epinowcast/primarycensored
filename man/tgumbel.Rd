@@ -75,6 +75,7 @@ samples <- rtgumbel(100, min = 0, max = 2, mu = 0.5, beta = 0.3)
 }
 \seealso{
 Primary event distributions
-\code{\link{expgrowth}}
+\code{\link{expgrowth}},
+\code{\link{tlogis}}
 }
 \concept{primaryeventdistributions}

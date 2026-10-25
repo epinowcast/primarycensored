@@ -92,6 +92,7 @@ samples <- rtlogis(100, location = 0.5, scale = 0.2)
 }
 \seealso{
 Primary event distributions
-\code{\link{expgrowth}}
+\code{\link{expgrowth}},
+\code{\link{tgumbel}}
 }
 \concept{primaryeventdistributions}
