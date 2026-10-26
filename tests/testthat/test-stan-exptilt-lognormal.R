@@ -541,6 +541,58 @@ test_that("the vectorised lognormal PMF matches the per delay PMF with
   }
 })
 
+test_that("the tilted CDF pair shares its setup without changing the
+  values", {
+  for (case in lnorm_stan_cases[1:4]) {
+    params <- lnorm_params(case)
+    for (pwindow in c(0, 1, 3, 7)) {
+      for (rho in c(-0.4, 1e-6, 2e-3, 0.2, 1.5)) {
+        for (d in c(0, 0.5, 1, 4, 12, 30)) {
+          expect_identical(
+            primarycensored_exptilt_lcdf_pair(
+              d, d + 1, 1L, params, pwindow, rho
+            ),
+            c(
+              primarycensored_exptilt_lcdf(d, 1L, params, pwindow, rho),
+              primarycensored_exptilt_lcdf(d + 1, 1L, params, pwindow, rho)
+            ),
+            info = sprintf(
+              "meanlog %g, sdlog %g, d %g, pwindow %g, r %g",
+              case$meanlog, case$sdlog, d, pwindow, rho
+            )
+          )
+        }
+      }
+    }
+  }
+})
+
+test_that("the lognormal log PMF is the difference of the log CDFs", {
+  for (case in lnorm_stan_cases[1:4]) {
+    params <- lnorm_params(case)
+    for (pwindow in c(1, 7)) {
+      for (rho in c(-0.4, 1e-6, 0.2)) {
+        for (d in c(0, 3, 12)) {
+          upper <- primarycensored_lcdf(d + 1, 1L, params, pwindow, 0, Inf,
+                                        2L, rho)
+          lower <- primarycensored_lcdf(d, 1L, params, pwindow, 0, Inf,
+                                        2L, rho)
+          expect_equal(
+            primarycensored_lpmf(d, 1L, params, pwindow, d + 1, 0, Inf, 2L,
+                                 rho),
+            upper + log1p(-exp(lower - upper)),
+            tolerance = 1e-12,
+            info = sprintf(
+              "meanlog %g, sdlog %g, d %g, pwindow %g, r %g",
+              case$meanlog, case$sdlog, d, pwindow, rho
+            )
+          )
+        }
+      }
+    }
+  }
+})
+
 test_that("the vectorised lognormal PMF matches differences of the
   reference CDF", {
   for (case in lnorm_stan_cases[1:3]) {
@@ -557,8 +609,9 @@ test_that("the vectorised lognormal PMF matches differences of the
 })
 
 # Gradients are only observable from a compiled model, so this builds a
-# minimal one whose target is the log CDF or the vectorised log PMF of the
-# lognormal, and runs `stan_gradient_at()` from helper-stan-gradient.R.
+# minimal one whose target is the log CDF, the vectorised log PMF or the
+# log PMF of the lognormal, and runs `stan_gradient_at()` from
+# helper-stan-gradient.R.
 lnorm_gradient_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if(
@@ -571,6 +624,7 @@ lnorm_gradient_model <- function() {
     functions, "\n",
     "data {\n",
     "  int vectorised;\n",
+    "  int scalar_pmf;\n",
     "  real d;\n",
     "  real pwindow;\n",
     "}\n",
@@ -585,6 +639,11 @@ lnorm_gradient_model <- function() {
     "    target += sum(primarycensored_sone_lpmf_vectorized(\n",
     "      to_int(d), 0, positive_infinity(), 1, params, pwindow, 2, {rho}\n",
     "    ));\n",
+    "  } else if (scalar_pmf) {\n",
+    "    target += primarycensored_lpmf(\n",
+    "      to_int(d) | 1, params, pwindow, d + 1, 0, positive_infinity(), 2,\n",
+    "      {rho}\n",
+    "    );\n",
     "  } else {\n",
     "    target += primarycensored_lcdf(\n",
     "      d | 1, params, pwindow, 0, positive_infinity(), 2, {rho}\n",
@@ -598,11 +657,12 @@ lnorm_gradient_model <- function() {
 }
 
 lnorm_gradient_at <- function(model, case, d, pwindow, rho,
-                              vectorised = FALSE) {
+                              vectorised = FALSE, scalar_pmf = FALSE) {
   stan_gradient_at( # nolint: object_usage_linter.
     model,
     data = list(
-      vectorised = as.integer(vectorised), d = d, pwindow = pwindow
+      vectorised = as.integer(vectorised),
+      scalar_pmf = as.integer(scalar_pmf), d = d, pwindow = pwindow
     ),
     init = list(meanlog = case$meanlog, sdlog = case$sdlog, rho = rho)
   )
@@ -673,6 +733,34 @@ test_that("the vectorised lognormal tilted log PMF has finite gradients
       res <- lnorm_gradient_at(
         model, case, point$d, point$pwindow, point$rho,
         vectorised = TRUE
+      )
+      expect_false(res$gradient_not_finite, info = label)
+      expect_false(res$rejected, info = label)
+      expect_true(all(is.finite(res$gradient)), info = label)
+      expect_lnorm_gradient_close(res, label)
+    }
+  }
+})
+
+test_that("the lognormal tilted log PMF has finite gradients matching
+  finite differences", {
+  model <- lnorm_gradient_model()
+  # Direct, small window and small delay forms
+  points <- list(
+    list(d = 12, pwindow = 7, rho = 0.2),
+    list(d = 6, pwindow = 3, rho = -0.15),
+    list(d = 6, pwindow = 2, rho = 1e-6),
+    list(d = 0, pwindow = 2, rho = 1e-3)
+  )
+  for (case in lnorm_stan_cases[c(1, 2, 4)]) {
+    for (point in points) {
+      label <- sprintf(
+        "meanlog %g, sdlog %g, d %g, pwindow %g, r %g",
+        case$meanlog, case$sdlog, point$d, point$pwindow, point$rho
+      )
+      res <- lnorm_gradient_at(
+        model, case, point$d, point$pwindow, point$rho,
+        scalar_pmf = TRUE
       )
       expect_false(res$gradient_not_finite, info = label)
       expect_false(res$rejected, info = label)
