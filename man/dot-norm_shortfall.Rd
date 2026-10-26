@@ -2,7 +2,7 @@
 % Please edit documentation in R/pcens_cdf.R
 \name{.norm_shortfall}
 \alias{.norm_shortfall}
-\title{Expected shortfall of a standard normal}
+\title{Evaluate \code{z * pnorm(z) + dnorm(z)}, stably for very negative \code{z}}
 \usage{
 .norm_shortfall(z)
 }
@@ -10,12 +10,9 @@
 \item{z}{Numeric vector of standardised values.}
 }
 \value{
-Vector of \code{g(z)}.
+Vector of \code{z * pnorm(z) + dnorm(z)}.
 }
 \description{
-Evaluates \eqn{g(z) = z \Phi(z) + \phi(z)}.
-Below \code{z = -10} the asymptotic series
-\eqn{\phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with 20
-terms, as the direct form cancels.
+Evaluate \code{z * pnorm(z) + dnorm(z)}, stably for very negative \code{z}
 }
 \keyword{internal}

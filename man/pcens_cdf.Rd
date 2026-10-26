@@ -35,6 +35,10 @@ When \code{pwindow = 0} the primary event time is known exactly and the
 primary event censored CDF is the delay CDF. This case is handled before
 dispatch, so every method returns \code{pdist(q)} without integrating over the
 primary event window.
+
+The analytical methods for the exponential, normal, chi-square, beta and
+Pareto delays use the numerical method when \code{pdist} has arguments they do not
+use, such as \code{lower.tail}, or a non-zero \code{ncp}.
 }
 \seealso{
 Low level primary event censored distribution objects and methods
@@ -50,6 +54,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},

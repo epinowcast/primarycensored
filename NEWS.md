@@ -4,6 +4,7 @@
 
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
+  It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
   See #377.
 
 ## Bug fixes

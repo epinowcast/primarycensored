@@ -26,11 +26,6 @@ analytical_lcdf <- function(d, dist_id, params, pwindow) {
 }
 # nolint end
 
-# Delay CDFs with no R method, so pcens_cdf() integrates them numerically
-ppareto <- function(q, y_min, alpha) {
-  ifelse(q <= y_min, 0, 1 - (y_min / q)^alpha)
-}
-
 # The R delay CDF and its arguments for Stan delay parameters
 r_delay <- function(dist_id, params) {
   p <- as.list(params)
@@ -39,8 +34,18 @@ r_delay <- function(dist_id, params) {
     `9` = list(pdist = pbeta, args = list(shape1 = p[[1]], shape2 = p[[2]])),
     `13` = list(pdist = pchisq, args = list(df = p[[1]])),
     `18` = list(pdist = pnorm, args = list(mean = p[[1]], sd = p[[2]])),
-    `21` = list(pdist = ppareto, args = list(y_min = p[[1]], alpha = p[[2]]))
+    `21` = list(
+      pdist = extraDistr::ppareto, args = list(a = p[[2]], b = p[[1]])
+    )
   )
+}
+
+# Drops the Pareto cases when extraDistr, which has its R CDF, is missing
+r_method_cases <- function(cases) {
+  if (requireNamespace("extraDistr", quietly = TRUE)) {
+    return(cases)
+  }
+  Filter(function(case) case$dist_id != 21L, cases)
 }
 
 delays_positive <- c(0.001, 0.01, 0.1, 0.5, 1, 2, 5, 10, 30, 100)
@@ -216,33 +221,26 @@ test_that("primarycensored_lcdf and primarycensored_cdf dispatch to the
 
 test_that("the Stan analytical solution matches the R solution for each new
   delay", {
-  # Delays with no R method use the numerical path, whose default
-  # stats::integrate tolerance limits the agreement to a mean relative 1e-6
-  # for windows up to 2
   delays <- c(0.2, 1, 3, 10, 40)
-  cases <- list(
+  cases <- r_method_cases(list(
     list(dist_id = 4L, params = 0.4, delays = delays),
     list(dist_id = 18L, params = c(2, 1.5), delays = c(-8, -2, 0, 1, 4, 12)),
     list(dist_id = 13L, params = 4, delays = delays),
     list(dist_id = 9L, params = c(2, 3), delays = c(0.1, 0.5, 0.9, 1.5, 3)),
     list(dist_id = 21L, params = c(0.5, 1.1), delays = c(0.6, 1, 3, 10, 40)),
-    list(dist_id = 21L, params = c(0.5, 2.5), delays = c(0.6, 1, 3, 10, 40))
-  )
+    list(dist_id = 21L, params = c(0.5, 2.5), delays = c(0.6, 1, 3, 10, 40)),
+    list(dist_id = 21L, params = c(0.5, 0.8), delays = c(0.6, 1, 3, 10, 40))
+  ))
   for (case in cases) {
-    numeric <- case$dist_id == 21L
     r <- r_delay(case$dist_id, case$params)
     obj <- do.call(new_pcens, c(list(r$pdist, dunif, list()), r$args))
-    for (pwindow in c(0.5, 1, 2, if (!numeric) 5)) {
+    for (pwindow in c(0.5, 1, 2, 5)) {
       r_result <- pcens_cdf(obj, case$delays, pwindow)
       stan_result <- exp(
         analytical_lcdf(case$delays, case$dist_id, case$params, pwindow)
       )
       info <- sprintf("dist %d pwindow %g", case$dist_id, pwindow)
-      if (numeric) {
-        expect_equal(stan_result, r_result, tolerance = 1e-6, info = info)
-      } else {
-        expect_rel_equal(stan_result, r_result, tolerance = 1e-8, info = info)
-      }
+      expect_rel_equal(stan_result, r_result, tolerance = 1e-8, info = info)
     }
   }
 })
@@ -468,13 +466,13 @@ test_that("primarycensored_sone_lpmf_vectorized matches primarycensored_lpmf
 
 test_that("primarycensored_sone_pmf_vectorized matches R dprimarycensored for
   the new delays", {
-  cases <- list(
+  cases <- r_method_cases(list(
     list(dist_id = 4L, params = 0.3),
     list(dist_id = 18L, params = c(6, 2)),
     list(dist_id = 13L, params = 6),
     list(dist_id = 9L, params = c(2, 3)),
     list(dist_id = 21L, params = c(0.5, 1.5))
-  )
+  ))
   for (case in cases) {
     r <- r_delay(case$dist_id, case$params)
     # The Beta has no mass above 1 + pwindow, where the CDF difference is

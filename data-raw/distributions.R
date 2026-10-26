@@ -11,7 +11,7 @@ pcd_distributions <- data.frame(
     "plnorm", "pgamma", "pweibull", "pexp", NA, "pnbinom",
     "ppois", NA, "pbeta", "pbinom", NA, "pcauchy", "pchisq",
     NA, "pgumbel", NA, "plogis",
-    "pnorm", NA, NA, NA,
+    "pnorm", NA, NA, "ppareto",
     NA, "pt", "punif", NA,
     "pdiscretestep", "pdiscretehazard", "pdiscretehazard"
   ),

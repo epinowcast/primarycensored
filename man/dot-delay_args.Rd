@@ -18,13 +18,10 @@ useful for testing purposes or for settings where the analytical solution
 breaks down.}
 }
 \value{
-The named list of delay arguments, or \code{NULL} if \code{use_numeric} is
-\code{TRUE}, any argument is unnamed or not in \code{allowed}, or \code{ncp} is not
-zero.
+The delay arguments, or \code{NULL} if the numerical method should be
+used.
 }
 \description{
-Arguments the solution does not use, such as \code{lower.tail}, would be
-ignored, and a non-zero \code{ncp} changes the distribution, so the numerical
-\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method is used instead.
+Delay distribution arguments an analytical solution handles
 }
 \keyword{internal}

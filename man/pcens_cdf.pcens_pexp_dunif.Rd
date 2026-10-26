@@ -26,8 +26,6 @@ Vector of computed primary event censored CDFs
 \description{
 Analytical solution for the exponential distribution, which is the gamma
 solution with \code{shape = 1} without the incomplete gamma function.
-Delay arguments other than \code{rate}, such as \code{lower.tail}, use the numerical
-\code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
 See \code{vignette("analytic-solutions")} for the derivation.
 }
 \examples{
@@ -53,6 +51,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},
