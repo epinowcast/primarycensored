@@ -8,11 +8,29 @@
 .stacy_block <- 32L
 .stacy_max_terms <- 400L
 
+#' Stacy parameters of the generalised gamma of `flexsurv::pgengamma()`
+#'
+#' @param args Delay arguments with `mu`, `sigma` and `Q`, where `mu` and
+#'   `sigma` default to 0 and 1 as in flexsurv.
+#'
+#' @return A list with `shape`, `scale` and `k` of
+#'   `flexsurv::pgengamma.orig()`, or `NULL` unless `Q` is a single positive
+#'   finite number.
+#'
+#' @noRd
+.gengamma_stacy_params <- function(args) {
+  mu <- if (is.null(args$mu)) 0 else args$mu
+  sigma <- if (is.null(args$sigma)) 1 else args$sigma
+  Q <- args$Q
+  if (is.numeric(Q) && length(Q) == 1L && is.finite(Q) && Q > 0) {
+    list(shape = Q / sigma, scale = exp(mu) * Q^(2 * sigma / Q), k = Q^-2)
+  }
+}
+
 #' Stacy family parameters of a pcens object
 #'
 #' Covers the Weibull and the generalised gamma of `flexsurv::pgengamma.orig()`
-#' and, for `Q > 0`, of `flexsurv::pgengamma()`, as in
-#' [pcens_cdf.pcens_pgengamma_dunif()].
+#' and, for `Q > 0`, of `flexsurv::pgengamma()`.
 #'
 #' @param object A `pcens` object.
 #'
@@ -28,21 +46,15 @@
   } else if (inherits(object, "pcens_pgengamma.orig")) {
     list(shape = delay_args$shape, scale = scale, k = delay_args$k)
   } else {
-    mu <- if (is.null(delay_args$mu)) 0 else delay_args$mu
-    sigma <- if (is.null(delay_args$sigma)) 1 else delay_args$sigma
-    Q <- delay_args$Q
-    if (is.numeric(Q) && length(Q) == 1L && is.finite(Q) && Q > 0) {
-      list(
-        shape = Q / sigma, scale = exp(mu) * Q^(2 * sigma / Q), k = Q^-2
-      )
-    }
+    .gengamma_stacy_params(delay_args)
   }
+  # NaN parameters would silently send every point to the numerical method
   valid <- vapply(
     p,
     function(x) is.numeric(x) && length(x) == 1L && is.finite(x) && x > 0,
     logical(1)
   )
-  if (length(p) > 0L && all(valid)) p
+  if (!is.null(p) && all(valid)) p
 }
 
 #' Log of the row sums of the exponentials of a matrix
@@ -72,7 +84,7 @@
 #'
 #' @param t Numeric vector of positive points.
 #'
-#' @param xi Tilt, not zero.
+#' @param xi Tilt, finite and not zero.
 #'
 #' @param shape,scale,k Parameters of the Stacy family.
 #'
@@ -167,6 +179,8 @@
 #'
 #' @inheritParams .stacy_series
 #'
+#' @param xi Finite tilt, as `r` is checked by `.pcens_cdf_exptilt()`.
+#'
 #' @param upper If `TRUE` return the transform over `(t, Inf)`.
 #'
 #' @return Numeric vector of log transforms with the attribute `log_loss`.
@@ -221,6 +235,8 @@
   moments
 }
 
+# One implementation per tilt generic, registered below for all three
+# classes. `xi` is unused but part of the generic.
 .stacy_tilt_lower <- function(object) 0
 
 .stacy_tilt_available <- function(object, xi) !is.null(.stacy_params(object))
