@@ -12,6 +12,24 @@
 
 ### Performance
 
+- The analytical
+  [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+  methods for gamma, lognormal, Weibull and generalised gamma delays
+  with a uniform primary are faster. They cost less per call and, for 64
+  or more points on a lattice such as the one used by
+  [`dprimarycensored()`](https://primarycensored.epinowcast.org/reference/dprimarycensored.md)
+  and
+  [`fitdistdoublecens()`](https://primarycensored.epinowcast.org/reference/fitdistdoublecens.md),
+  evaluate the delay terms once per distinct point. They also return 1
+  for `q = Inf`, where they returned `NaN`, and are accurate far in the
+  upper tail and for windows much narrower than the delay. They error
+  for missing `q` or invalid `pwindow`, recycle `q`, `pwindow` and
+  vector delay parameters element-wise with a warning for uneven
+  lengths, and give the delay CDF for zero-width windows. Vector delay
+  parameters were previously misaligned when some `q` were not positive.
+  See [\#366](https://github.com/epinowcast/primarycensored/issues/366),
+  [\#378](https://github.com/epinowcast/primarycensored/issues/378) and
+  [\#380](https://github.com/epinowcast/primarycensored/issues/380).
 - [`update()`](https://rdrr.io/r/stats/update.html) for `pcens` objects
   has a new `check` argument. `check = FALSE` skips validating the
   parameter names, and

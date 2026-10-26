@@ -26,6 +26,7 @@
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-canonical_name.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-check_named_list.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-check_primary_names.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-check_pwindow.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-check_truncation_bounds.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-check_truncation_bounds_df.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-delay_cdf.html</loc></url>
@@ -36,16 +37,19 @@
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-fit_pcens_state.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-format_class.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-hazard_fit_penalty.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-index_params.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-is_exact_window.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-is_valid_simplex.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-lookup_ddist.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-lookup_pprimary.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-make_hazard_transform.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-narrow_window_cdf.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-new_pcens.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-normalise_cdf.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-param_groups.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-pcens_cdf_at.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-pcens_cdf_gengamma_unif.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-pcens_cdf_uniform.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-pcens_density.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-ppcens.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-recycle_params.html</loc></url>
@@ -56,6 +60,8 @@
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-resolve_primary_args.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-same_primary.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-sort_eps_names.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-uniform_endpoint_diff.html</loc></url>
+<url><loc>https://primarycensored.epinowcast.org/reference/dot-uniform_window_cdf.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dot-validate_discretestep_args.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/dprimarycensored.html</loc></url>
 <url><loc>https://primarycensored.epinowcast.org/reference/expgrowth.html</loc></url>
