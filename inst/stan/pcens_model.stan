@@ -5,14 +5,14 @@ functions {
   #include primarycensored_analytical_cdf.stan
   #include expgrowth.stan
 
-  real partial_sum(array[] int dummy, int start, int end,
+  real partial_sum(array[] int rows, int start, int end,
                    array[] int d, array[] int d_upper, array[] int n,
                    array[] int pwindow, data array[] real L,
                    data array[] real D,
                    int dist_id, array[] real params,
                    int primary_id, array[] real primary_params) {
     real partial_target = 0;
-    for (i in start:end) {
+    for (i in rows) {
       partial_target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, params,
         pwindow[i], d_upper[i], L[i], D[i],
@@ -75,7 +75,6 @@ data {
 }
 
 transformed data {
-  array[N] int indexes = linspaced_int_array(N, 1, N);
   // Sizes for the non-parametric parameter branches. Exactly one is K_np;
   // both are 0 when nonparametric = 0. Stan forbids `simplex[0]`, so we
   // pad to size 1 when the simplex branch is inactive and ignore it.
@@ -99,6 +98,93 @@ transformed data {
     if (d_upper[i] > D[i]) {
       reject("d_upper[", i, "] = ", d_upper[i],
              " is above the upper truncation D[", i, "] = ", D[i]);
+    }
+  }
+
+  // Rows with swindow = 1 and d >= 0 that share pwindow, L and D take their
+  // log PMFs from one primarycensored_sone_lpmf_vectorized() call, which
+  // computes each CDF (and F(D)) once rather than once per row. Groups are
+  // found within runs of equal D after sorting on D. A group is only used
+  // when its rows cover at least half of the delays 0:max_delay, so sparse
+  // groups do not compute many unused CDFs; their rows, and all other rows,
+  // stay on the per-row primarycensored_lpmf() path.
+  array[N] int row_group = rep_array(0, N);
+  array[N] int group_first; // first row of each group
+  array[N] int group_max_d;
+  array[N] int group_size;
+  int n_groups = 0;
+  {
+    array[N] int by_D = sort_indices_asc(D);
+    int run_start = 1;
+    for (k in 1:N) {
+      int i = by_D[k];
+      if (k > 1 && D[i] != D[by_D[k - 1]]) {
+        run_start = n_groups + 1;
+      }
+      if (d_upper[i] - d[i] == 1 && d[i] >= 0) {
+        int g = 0;
+        for (h in run_start:n_groups) {
+          if (pwindow[group_first[h]] == pwindow[i]
+              && L[group_first[h]] == L[i]) {
+            g = h;
+            break;
+          }
+        }
+        if (g == 0) {
+          n_groups += 1;
+          g = n_groups;
+          group_first[g] = i;
+          group_max_d[g] = d[i];
+          group_size[g] = 0;
+        }
+        row_group[i] = g;
+        group_max_d[g] = max(group_max_d[g], d[i]);
+        group_size[g] += 1;
+      }
+    }
+  }
+  array[n_groups] int use_group;
+  for (g in 1:n_groups) {
+    use_group[g] = group_max_d[g] + 1 <= 2 * group_size[g];
+  }
+  int n_vec_groups = sum(use_group);
+  int n_scalar = 0;
+  for (i in 1:N) {
+    n_scalar += row_group[i] == 0 || !use_group[row_group[i]];
+  }
+  // Per vectorised group: its first row (for pwindow, L and D), max delay
+  // and the span of its rows in vec_rows.
+  array[n_vec_groups] int vec_first;
+  array[n_vec_groups] int vec_max_d;
+  array[n_vec_groups] int vec_start;
+  array[n_vec_groups] int vec_end;
+  array[N - n_scalar] int vec_rows;
+  array[n_scalar] int scalar_rows;
+  {
+    array[n_groups] int vec_id = rep_array(0, n_groups);
+    int pos = 1;
+    int v = 0;
+    for (g in 1:n_groups) {
+      if (use_group[g]) {
+        v += 1;
+        vec_id[g] = v;
+        vec_first[v] = group_first[g];
+        vec_max_d[v] = group_max_d[g];
+        vec_start[v] = pos;
+        pos += group_size[g];
+        vec_end[v] = vec_start[v] - 1;
+      }
+    }
+    int s = 0;
+    for (i in 1:N) {
+      if (row_group[i] > 0 && use_group[row_group[i]]) {
+        v = vec_id[row_group[i]];
+        vec_end[v] += 1;
+        vec_rows[vec_end[v]] = i;
+      } else {
+        s += 1;
+        scalar_rows[s] = i;
+      }
     }
   }
 }
@@ -177,12 +263,23 @@ model {
   }
 
   // Likelihood
+  for (v in 1:n_vec_groups) {
+    int first = vec_first[v];
+    vector[vec_max_d[v] + 1] group_lpmf = primarycensored_sone_lpmf_vectorized(
+      vec_max_d[v], L[first], D[first], dist_id, lpmf_params, pwindow[first],
+      primary_id, to_array_1d(primary_params)
+    );
+    for (j in vec_start[v]:vec_end[v]) {
+      int i = vec_rows[j];
+      target += n[i] * group_lpmf[d[i] + 1];
+    }
+  }
   if (use_reduce_sum) {
-    target += reduce_sum(partial_sum, indexes, 1, d,
+    target += reduce_sum(partial_sum, scalar_rows, 1, d,
                          d_upper, n, pwindow, L, D, dist_id, lpmf_params,
                          primary_id, to_array_1d(primary_params));
   } else {
-    for (i in 1:N) {
+    for (i in scalar_rows) {
       target += n[i] * primarycensored_lpmf(
         d[i] | dist_id, lpmf_params,
         pwindow[i], d_upper[i], L[i], D[i],

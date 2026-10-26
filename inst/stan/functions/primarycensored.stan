@@ -305,16 +305,34 @@ real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
   if (d < L) {
     return negative_infinity();
   }
-  real log_cdf_upper = primarycensored_lcdf(
-    d_upper | dist_id, params, pwindow,
-    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-    positive_infinity(), primary_id, primary_params
-  );
-  real log_cdf_lower = primarycensored_lcdf(
-    d | dist_id, params, pwindow,
-    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-    positive_infinity(), primary_id, primary_params
-  );
+  real log_cdf_upper;
+  real log_cdf_lower;
+  if (d >= 0 && d_upper - d == pwindow &&
+      check_for_uniform_terms(dist_id, primary_id)) {
+    // The window for d_upper starts at d, so the two analytical CDFs need
+    // the uniform primary terms at three distinct points rather than four.
+    vector[2] terms_d = primarycensored_uniform_terms(d, dist_id, params);
+    log_cdf_upper = primarycensored_uniform_lcdf_from_terms(
+      primarycensored_uniform_terms(d_upper, dist_id, params), terms_d,
+      pwindow
+    );
+    log_cdf_lower = primarycensored_uniform_lcdf_from_terms(
+      terms_d,
+      primarycensored_uniform_terms(max({d - pwindow, 0}), dist_id, params),
+      pwindow
+    );
+  } else {
+    log_cdf_upper = primarycensored_lcdf(
+      d_upper | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+    log_cdf_lower = primarycensored_lcdf(
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+  }
 
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L))).
   // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
