@@ -670,9 +670,9 @@ array[] int primarycensored_sone_groups(data array[] int d,
                                         data array[] real D) {
   int N = size(d);
   array[N] int group = rep_array(0, N);
-  array[N] int group_first; // first row of each group
-  array[N] int group_max_d;
-  array[N] int group_size;
+  array[N] int group_first = rep_array(0, N); // first row of each group
+  array[N] int group_max_d = rep_array(0, N);
+  array[N] int group_size = rep_array(0, N);
   int n_groups = 0;
   array[N] int by_D = sort_indices_asc(D);
   int run_start = 1;
@@ -695,7 +695,6 @@ array[] int primarycensored_sone_groups(data array[] int d,
         g = n_groups;
         group_first[g] = i;
         group_max_d[g] = d[i];
-        group_size[g] = 0;
       }
       group[i] = g;
       group_max_d[g] = max(group_max_d[g], d[i]);
