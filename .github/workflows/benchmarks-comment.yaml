@@ -3,7 +3,7 @@ name: Benchmarks (Comment)
 # NOTE: Workflow disabled - see issue for details on fixes needed
 # To re-enable, remove the `if: false` from the job below
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref }}
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 on:
