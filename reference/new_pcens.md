@@ -117,9 +117,6 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
-[`pcens_cdf_exptilt`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md),
-[`pcens_cdf_gumbel`](https://primarycensored.epinowcast.org/reference/pcens_cdf_gumbel.md),
-[`pcens_cdf_tlogis`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md),
 [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
 [`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),
@@ -145,13 +142,13 @@ new_pcens(
 #>     }
 #>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)
 #> }
-#> <bytecode: 0x556e93092e68>
+#> <bytecode: 0x55d89d2678d8>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary
 #> function (x, min = 0, max = 1, log = FALSE) 
 #> .Call(C_dunif, x, min, max, log)
-#> <bytecode: 0x556e8b3efc08>
+#> <bytecode: 0x55d896890290>
 #> <environment: namespace:stats>
 #> 
 #> $primary_args
@@ -173,7 +170,7 @@ new_pcens(
 #> $pprimary
 #> function (q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE) 
 #> .Call(C_punif, q, min, max, lower.tail, log.p)
-#> <bytecode: 0x556e930d64a0>
+#> <bytecode: 0x55d89d2a3be0>
 #> <environment: namespace:stats>
 #> 
 #> $args

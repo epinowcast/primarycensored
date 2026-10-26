@@ -357,8 +357,7 @@ is also working as expected.
 In addition to these main functions, the package also includes:
 
 - **Primary event distributions:** The package includes commonly used
-  primary event distributions such as exponential growth and a truncated
-  Gumbel for exposure that changes unevenly within the window.
+  primary event distributions such as exponential growth.
 
 - **Built-in estimation tools:** The package provides functionality to
   estimate delay distributions from censored and truncated data using
@@ -367,12 +366,9 @@ In addition to these main functions, the package also includes:
 
 - **Analytical solutions:** For common combinations of primary event and
   delay distributions (e.g., uniform primary events with gamma,
-  lognormal, or Weibull delays, exponentially tilted primary events with
-  exponential, gamma, or normal delays, and truncated Gumbel primary
-  events with normal delays), the package includes analytical solutions
-  that provide significant computational speedups compared to numerical
-  integration. Log-logistic delays also have an analytical solution for
-  uniform primary events.
+  lognormal, or Weibull delays), the package includes analytical
+  solutions that provide significant computational speedups compared to
+  numerical integration.
 
 - **Stan versions of all functions and R functions to interface with
   Stan:** All R functions have a corresponding Stan function. These Stan

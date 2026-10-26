@@ -61,7 +61,7 @@ in topological order (dependencies before the functions that use them)."><meta p
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Get dependencies for a Stan function</h1>
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/feat-371-gumbel-primary/R/pcd-stan-tools.R" class="external-link"><code>R/pcd-stan-tools.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/R/pcd-stan-tools.R" class="external-link"><code>R/pcd-stan-tools.R</code></a></small>
       <div class="d-none name"><code>pcd_stan_function_deps.Rd</code></div>
     </div>
 
@@ -112,143 +112,37 @@ them. The requested function itself is included as the last element.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># See what primarycensored_lpmf depends on</span></span></span>
 <span class="r-in"><span><span class="fu">pcd_stan_function_deps</span><span class="op">(</span><span class="st">"primarycensored_lpmf"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [1] "primarycensored_log_normalizer"                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [2] "primarycensored_apply_truncation"                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [3] "dist_has_positive_support"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [4] "primarycensored_truncation_bounds"                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [5] "gumbel_log_sum_exp"                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [6] "primarycensored_log_std_normal_cdf"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [7] "gamma_log_lead_logx"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [8] "gamma_log_pq_logx"                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   [9] "gamma_lcdf_logx"                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [10] "gamma_log_rate"                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [11] "lognormal_lcdf_underflows"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [12] "pstep_lcdf"                                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [13] "hazards_to_pmf"                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [14] "phazard_lcdf"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [15] "primarycensored_loglogistic_lcdf"                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [16] "gengamma_lcdf"                                       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [17] "dist_lcdf"                                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [18] "gumbel_delay_lcdf"                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [19] "gumbel_numeric_delay"                                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [20] "tgumbel_log_delta_window"                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [21] "tgumbel_log1m_exp_neg_exp"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [22] "tgumbel_log_norm"                                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [23] "tgumbel_lpdf"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [24] "gumbel_numeric_point"                                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [25] "primarycensored_gumbel_ode"                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [26] "gumbel_numeric_piece_lcdf"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [27] "gumbel_numeric_spike_lcdf"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [28] "gumbel_numeric_z_limits"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [29] "gumbel_z_log_integrand"                              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [30] "gumbel_numeric_z_half"                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [31] "gumbel_numeric_z_lcdf"                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [32] "primarycensored_gumbel_numeric_lcdf"                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [33] "primarycensored_gumbel_numeric_cdf"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [34] "expgrowth_lpdf"                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [35] "primarycensored_log_diff_exp"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [36] "tlogis_log_mass"                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [37] "tlogis_lpdf"                                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [38] "primary_lpdf"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [39] "primarycensored_ode"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [40] "tlogis_spike_times"                                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [41] "primarycensored_numeric_cdf"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [42] "check_for_uniform_terms"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [43] "check_for_analytical"                                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [44] "check_for_tilt_transform"                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [45] "check_for_exptilt"                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [46] "check_for_gumbel"                                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [47] "gumbel_n_terms"                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [48] "check_for_gumbel_params"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [49] "check_for_tlogis"                                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [50] "tlogis_log_bound"                                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [51] "tlogis_series_terms"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [52] "tlogis_plan"                                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [53] "tlogis_is_valid"                                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [54] "tlogis_n_pos"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [55] "tlogis_n_neg"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [56] "tlogis_plan_applies"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [57] "check_for_tlogis_params"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [58] "check_for_analytical_params"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [59] "check_for_tilt_transform_at"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [60] "check_for_analytical_delay"                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [61] "expgrowth_cdf"                                       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [62] "expgrowth_lcdf"                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [63] "tgumbel_lcdf"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [64] "tlogis_lcdf"                                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [65] "primary_lcdf"                                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [66] "primary_lcdf_vec"                                    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [67] "discretestep_lcdf"                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [68] "discretehazard_lcdf"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [69] "primarycensored_uniform_lcdf_from_terms"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [70] "gamma_lcdf_logx_pair"                                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [71] "primarycensored_gamma_uniform_terms"                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [72] "primarycensored_gamma_uniform_lcdf"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [73] "primarycensored_lognormal_uniform_terms"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [74] "primarycensored_lognormal_uniform_lcdf"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [75] "log_weibull_g"                                       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [76] "primarycensored_weibull_uniform_terms"               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [77] "primarycensored_weibull_uniform_lcdf"                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [78] "primarycensored_gengamma_uniform_terms"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [79] "primarycensored_gengamma_uniform_lcdf"               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [80] "loglogistic_log_error_scale"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [81] "loglogistic_window_ill_conditioned"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [82] "primarycensored_loglogistic_lccdf"                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [83] "loglogistic_numeric_ode"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [84] "loglogistic_numeric_lcdf"                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [85] "loglogistic_ratio_small"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [86] "loglogistic_partial_at_one"                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [87] "loglogistic_tau_integral"                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [88] "loglogistic_tail_term"                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [89] "loglogistic_ratio_large"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [90] "loglogistic_moment_ratio"                            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [91] "primarycensored_loglogistic_uniform_terms"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [92] "primarycensored_loglogistic_uniform_lcdf"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [93] "primarycensored_gauss_legendre_nodes"                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [94] "primarycensored_gauss_legendre_log_weights"          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [95] "primarycensored_lognormal_tilt_one_panel"            </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [96] "primarycensored_lognormal_tilt_panel"                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [97] "primarycensored_lognormal_tilt_bump"                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [98] "log_tilt_transform_context"                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>  [99] "primarycensored_moments_from_partial"                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [100] "primarycensored_gamma_tilt_moments"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [101] "primarycensored_stacy_tilt_moments"                  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [102] "primarycensored_tilt_moments"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [103] "primarycensored_stacy_series"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [104] "primarycensored_lognormal_tilt_quadrature"           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [105] "primarycensored_lognormal_tilt_series"               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [106] "primarycensored_lognormal_tilt_pair"                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [107] "log_tilt_transform_pair_shared"                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [108] "log_tilt_transform_pair"                             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [109] "primarycensored_exptilt_terms"                       </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [110] "primarycensored_exptilt_form"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [111] "primarycensored_tail_diff"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [112] "primarycensored_exptilt_lcdf_from_terms"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [113] "primarycensored_exptilt_small_window_lcdf_from_terms"</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [114] "primarycensored_exptilt_small_delay_lcdf_from_terms" </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [115] "primarycensored_exptilt_lcdf"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [116] "gumbel_series_accepted"                              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [117] "primarycensored_gumbel_terms"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [118] "gumbel_finite_abs"                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [119] "primarycensored_gumbel_lcdf_from_terms"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [120] "primarycensored_gumbel_lcdf"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [121] "tlogis_weights"                                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [122] "primarycensored_tlogis_terms"                        </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [123] "tlogis_terms_diff"                                   </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [124] "tlogis_weighted_sum"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [125] "tlogis_part_before_window"                           </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [126] "tlogis_part_above_location"                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [127] "tlogis_part_below_location"                          </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [128] "primarycensored_tlogis_lcdf_from_terms"              </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [129] "tlogis_is_small_delay"                               </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [130] "primarycensored_tlogis_small_delay_lcdf"             </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [131] "primarycensored_tlogis_lcdf"                         </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [132] "primarycensored_analytical_lcdf_raw"                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [133] "primarycensored_analytical_lcdf"                     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [134] "primarycensored_analytical_cdf"                      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [135] "primarycensored_cdf"                                 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [136] "primarycensored_lcdf"                                </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [137] "primarycensored_lpmf"                                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [1] "primarycensored_log_normalizer"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [2] "primarycensored_apply_truncation"       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [3] "dist_has_positive_support"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [4] "primarycensored_truncation_bounds"      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [5] "check_for_uniform_terms"                </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [6] "check_for_analytical"                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [7] "expgrowth_cdf"                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [8] "expgrowth_lcdf"                         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  [9] "primary_lcdf"                           </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [10] "primary_lcdf_vec"                       </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [11] "discretestep_lcdf"                      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [12] "hazards_to_pmf"                         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [13] "discretehazard_lcdf"                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [14] "primarycensored_uniform_lcdf_from_terms"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [15] "primarycensored_gamma_uniform_terms"    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [16] "primarycensored_gamma_uniform_lcdf"     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [17] "lognormal_lcdf_underflows"              </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [18] "primarycensored_lognormal_uniform_terms"</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [19] "primarycensored_lognormal_uniform_lcdf" </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [20] "log_weibull_g"                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [21] "primarycensored_weibull_uniform_terms"  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [22] "primarycensored_weibull_uniform_lcdf"   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [23] "gengamma_lcdf"                          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [24] "primarycensored_gengamma_uniform_terms" </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [25] "primarycensored_gengamma_uniform_lcdf"  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [26] "primarycensored_analytical_lcdf_raw"    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [27] "primarycensored_analytical_lcdf"        </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [28] "primarycensored_analytical_cdf"         </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [29] "primarycensored_cdf"                    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [30] "primarycensored_lcdf"                   </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [31] "primarycensored_lpmf"                   </span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># A function with no dependencies</span></span></span>
 <span class="r-in"><span><span class="fu">pcd_stan_function_deps</span><span class="op">(</span><span class="st">"expgrowth_pdf"</span><span class="op">)</span></span></span>

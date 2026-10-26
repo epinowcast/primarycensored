@@ -8,9 +8,8 @@ onset in a secondary case, is a common example: pre-symptomatic
 transmission means the secondary case can develop symptoms before the
 primary case, giving a negative observed serial interval. Distributions
 on the non-negative reals (lognormal, gamma, Weibull) cannot represent
-this and the package’s analytical solutions assume non-negative support,
-except for the normal with an exponentially tilted primary event
-distribution.
+this and the package’s current analytical solutions all assume
+non-negative support.
 
 In this vignette we estimate the parameters of a logistic-distributed
 serial interval from doubly-censored, right-truncated samples that

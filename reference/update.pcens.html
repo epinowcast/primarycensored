@@ -73,7 +73,7 @@ evaluated for many parameter sets, for example posterior draws."><meta property=
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Update the parameters of a pcens object</h1>
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/feat-371-gumbel-primary/R/pcens.R" class="external-link"><code>R/pcens.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/R/pcens.R" class="external-link"><code>R/pcens.R</code></a></small>
       <div class="d-none name"><code>update.pcens.Rd</code></div>
     </div>
 
@@ -116,10 +116,10 @@ the primary event distribution arguments unchanged.</p></dd>
 
 
 <dt id="arg-check">check<a class="anchor" aria-label="anchor" href="#arg-check"></a></dt>
-<dd><p>Logical. If <code>FALSE</code>, skip validation of <code>...</code> and
-<code>primary_args</code>. Use this when repeatedly updating one object with names
-that have already been checked. As <code>check</code> comes after <code>...</code>, a delay
-parameter called <code>check</code> cannot be set. Defaults to <code>TRUE</code>.</p></dd>
+<dd><p>Logical. If <code>TRUE</code>, the default, validate <code>...</code> and
+<code>primary_args</code>. Set to <code>FALSE</code> when repeatedly updating one object with
+names that have already been checked. As <code>check</code> comes after <code>...</code>, a
+delay parameter called <code>check</code> cannot be set.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -137,11 +137,11 @@ parameters. Parameters cannot be removed; use <code><a href="new_pcens.html">new
 of <code>object$pdist</code> other than its first, unless <code>pdist</code> takes <code>...</code>.
 Otherwise an error is raised. Names in <code>primary_args</code> are not checked
 against <code>dprimary</code>.</p>
-<p>With <code>check = FALSE</code> none of these checks are run.
-Unnamed and misspelt parameters are not detected.
-A fully unnamed <code>...</code> is ignored.
-Misspelt names are added to the object and only fail, or are ignored,
-when the object is evaluated.</p>
+<p>With <code>check = FALSE</code> none of these checks are run, so only use it with
+names that have already been checked.
+A fully unnamed <code>...</code> is then ignored.
+Misspelt or partly unnamed parameters are added to the object, and when
+it is evaluated they may give an error, be ignored or change the result.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
@@ -156,9 +156,6 @@ when the object is evaluated.</p>
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
-<code><a href="pcens_cdf_exptilt.html">pcens_cdf_exptilt</a></code>,
-<code><a href="pcens_cdf_gumbel.html">pcens_cdf_gumbel</a></code>,
-<code><a href="pcens_cdf_tlogis.html">pcens_cdf_tlogis</a></code>,
 <code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
 <code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,

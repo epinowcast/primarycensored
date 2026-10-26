@@ -41,10 +41,10 @@ update(object, ..., primary_args = NULL, check = TRUE)
 
 - check:
 
-  Logical. If `FALSE`, skip validation of `...` and `primary_args`. Use
-  this when repeatedly updating one object with names that have already
-  been checked. As `check` comes after `...`, a delay parameter called
-  `check` cannot be set. Defaults to `TRUE`.
+  Logical. If `TRUE`, the default, validate `...` and `primary_args`.
+  Set to `FALSE` when repeatedly updating one object with names that
+  have already been checked. As `check` comes after `...`, a delay
+  parameter called `check` cannot be set.
 
 ## Value
 
@@ -66,10 +66,11 @@ of `object$pdist` other than its first, unless `pdist` takes `...`.
 Otherwise an error is raised. Names in `primary_args` are not checked
 against `dprimary`.
 
-With `check = FALSE` none of these checks are run. Unnamed and misspelt
-parameters are not detected. A fully unnamed `...` is ignored. Misspelt
-names are added to the object and only fail, or are ignored, when the
-object is evaluated.
+With `check = FALSE` none of these checks are run, so only use it with
+names that have already been checked. A fully unnamed `...` is then
+ignored. Misspelt or partly unnamed parameters are added to the object,
+and when it is evaluated they may give an error, be ignored or change
+the result.
 
 ## See also
 
@@ -84,9 +85,6 @@ Low level primary event censored distribution objects and methods
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
-[`pcens_cdf_exptilt`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md),
-[`pcens_cdf_gumbel`](https://primarycensored.epinowcast.org/reference/pcens_cdf_gumbel.md),
-[`pcens_cdf_tlogis`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md),
 [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
 [`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),

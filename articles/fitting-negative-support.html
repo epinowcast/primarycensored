@@ -95,7 +95,7 @@
       <img src="../logo.png" class="logo" alt=""><h1>Fitting delay distributions with negative support</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/feat-371-gumbel-primary/vignettes/fitting-negative-support.Rmd" class="external-link"><code>vignettes/fitting-negative-support.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/vignettes/fitting-negative-support.Rmd" class="external-link"><code>vignettes/fitting-negative-support.Rmd</code></a></small>
       <div class="d-none name"><code>fitting-negative-support.Rmd</code></div>
     </div>
 
@@ -107,7 +107,7 @@
 </h2>
 <p>Some delays of epidemiological interest can be negative.
 The serial interval, the time between symptom onset in a primary case and symptom onset in a secondary case, is a common example: pre-symptomatic transmission means the secondary case can develop symptoms before the primary case, giving a negative observed serial interval.
-Distributions on the non-negative reals (lognormal, gamma, Weibull) cannot represent this and the package’s analytical solutions assume non-negative support, except for the normal with an exponentially tilted primary event distribution.</p>
+Distributions on the non-negative reals (lognormal, gamma, Weibull) cannot represent this and the package’s current analytical solutions all assume non-negative support.</p>
 <p>In this vignette we estimate the parameters of a logistic-distributed serial interval from doubly-censored, right-truncated samples that include negative observations.
 We use [<code><a href="../reference/fitdistdoublecens.html">fitdistdoublecens()</a></code>] for a quick MLE fit and [<code><a href="../reference/pcd_cmdstan_model.html">pcd_cmdstan_model()</a></code>] for the Bayesian fit.
 The logistic is symmetric with slightly heavier tails than the normal, has support on the whole real line, and ships in base R as <code>dlogis</code>/<code>plogis</code>/<code>qlogis</code>/<code>rlogis</code>.

@@ -189,7 +189,7 @@ pprimarycensored(
   dprimary = dexpgrowth,
   primary_args = list(r = 0.2), meanlog = 0, sdlog = 1
 )
-#> [1] 0.0002497584 0.0440815583 0.2290795695
+#> [1] 0.0002496934 0.0440815583 0.2290795695
 
 # Example: Left-truncated distribution (e.g., for generation intervals)
 pprimarycensored(
