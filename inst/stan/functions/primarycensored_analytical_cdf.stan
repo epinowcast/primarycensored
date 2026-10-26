@@ -354,24 +354,39 @@ vector primarycensored_beta_uniform_terms(real t, array[] real params) {
   * The CDF is Q(alpha, x) with x = beta / y. It is evaluated on the log scale
   * from the series for P(alpha, x) when x <= alpha + 1 and the continued
   * fraction for Q(alpha, x) (modified Lentz) above. Unlike `inv_gamma_lcdf`
-  * it does not underflow in the lower tail. At an integer `alpha` the
-  * fraction terminates, so extra iterations keep the shape gradient exact.
+  * it does not underflow in the lower tail.
   *
   * @param y Positive value at which the log CDF is evaluated
   * @param alpha Shape parameter
   * @param beta Scale parameter
   *
-  * @return Log CDF at y
+  * @return Log CDF at y. Rejects if the series or continued fraction does
+  * not converge.
   */
 real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
   real x = beta / y;
+  // Both need about 9 sqrt(alpha) terms at worst, near x = alpha + 1
+  real max_terms = 20 * sqrt(alpha) + 200;
   if (x > alpha + 1) {
+    // Within 1e-9 of an integer the fraction terminates, or nearly so, at
+    // i = round(alpha). Its value has then converged but its shape gradient
+    // has not, so the loop runs 50 terms past alpha before it stops.
     int near_int = abs(alpha - round(alpha)) < 1e-9;
+    if (near_int) max_terms += alpha + 50;
     real b = x + 1 - alpha;
+    // Modified Lentz starts c at infinity and floors |c| and |d| at 1e-300
+    // to avoid dividing by zero
     real c = 1e300;
     real d = inv(b);
     real h = d;
-    for (i in 1:2000) {
+    int converged = 0;
+    int i = 0;
+    while (!converged) {
+      i += 1;
+      if (i > max_terms) {
+        reject("primarycensored_inv_gamma_lcdf: continued fraction did not ",
+               "converge for x = ", x, " and alpha = ", alpha);
+      }
       real an = -i * (i - alpha);
       b += 2;
       d = an * d + b;
@@ -379,16 +394,23 @@ real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
       c = b + an / c;
       c = abs(c) < 1e-300 ? 1e-300 : c;
       h *= d * c;
-      if (abs(d * c - 1) < 1e-15 && (i > alpha + 50 || !near_int)) break;
+      // An update within 1e-15 of 1 leaves h unchanged in double precision
+      converged = abs(d * c - 1) < 1e-15 && (!near_int || i > alpha + 50);
     }
     return (alpha - 1) * log(x) - x - lgamma(alpha) + log(x) + log(h);
   }
   real term = 1;
   real series = 1;
-  for (n in 1:2000) {
+  int n = 0;
+  // A term below 1e-17 of the sum leaves it unchanged in double precision
+  while (term >= 1e-17 * series) {
+    n += 1;
+    if (n > max_terms) {
+      reject("primarycensored_inv_gamma_lcdf: series did not converge for ",
+             "x = ", x, " and alpha = ", alpha);
+    }
     term *= x / (alpha + n);
     series += term;
-    if (term < 1e-17 * series) break;
   }
   return log1m_exp(alpha * log(x) - x - lgamma(alpha + 1) + log(series));
 }
@@ -399,7 +421,8 @@ real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
   *
   * The mean is E = beta / (alpha - 1) and the partial expectation
   * distribution is the Inverse gamma with shape `alpha - 1`, so `alpha > 1`
-  * is required.
+  * is required. This is not checked here, so callers must first apply
+  * check_uniform_terms_params().
   *
   * @param t Time (d or q)
   * @param params Array of Inverse gamma distribution parameters
@@ -411,10 +434,6 @@ real primarycensored_inv_gamma_lcdf(real y, real alpha, real beta) {
 vector primarycensored_invgamma_uniform_terms(real t, array[] real params) {
   real alpha = params[1];
   real beta = params[2];
-  if (alpha <= 1) {
-    reject("Inverse gamma uniform primary terms need shape > 1, shape is ",
-           alpha);
-  }
   if (t <= 0) {
     return rep_vector(negative_infinity(), 2);
   }

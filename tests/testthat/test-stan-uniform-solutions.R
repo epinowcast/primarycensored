@@ -444,32 +444,61 @@ test_that("the Pareto solution holds for shapes at and below 1 with no mean", {
   }
 })
 
-test_that("inverse gamma delays without a finite mean use the numerical
-  path", {
+test_that("inverse gamma family delays without a finite mean use the
+  numerical path", {
   pwindow <- 2
-  for (params in list(c(0.6, 1), c(1, 2), c(1, 0.5))) {
-    expect_error(
-      primarycensored_uniform_terms(3, 16L, params),
-      "shape > 1"
-    )
-    for (d in c(0.5, 2, 6, 20)) {
-      lcdf <- primarycensored_lcdf(
-        d, 16L, params, pwindow, 0, Inf, 1L, numeric(0)
+  cases <- list(
+    list(dist_id = 16L, params = c(0.6, 1)),
+    list(dist_id = 16L, params = c(1, 2)),
+    list(dist_id = 16L, params = c(1, 0.5)),
+    list(dist_id = 19L, params = 1.5),
+    list(dist_id = 22L, params = c(2, 1)),
+    list(dist_id = 22L, params = c(1.5, 1))
+  )
+  for (case in cases) {
+    info <- paste("dist", case$dist_id, "params", toString(case$params))
+    delays <- c(0.5, 2, 6, 20)
+    reference <- stan_reference(case$dist_id, case$params, delays, pwindow, 0)
+    lcdf <- vapply(delays, function(d) {
+      primarycensored_lcdf(
+        d, case$dist_id, case$params, pwindow, 0, Inf, 1L, numeric(0)
       )
-      # The ODE solver's absolute tolerance is 1e-6
-      expect_lt(
-        abs(exp(lcdf) - stan_reference(16L, params, d, pwindow, 0)), 1e-5
+    }, numeric(1))
+    cdf <- vapply(delays, function(d) {
+      primarycensored_cdf(
+        d, case$dist_id, case$params, pwindow, 0, Inf, 1L, numeric(0)
+      )
+    }, numeric(1))
+    # The ODE solver's absolute tolerance is 1e-6
+    expect_lt(max(abs(exp(lcdf) - reference)), 1e-5, label = info)
+    expect_lt(max(abs(cdf - reference)), 1e-5, label = info)
+    n <- 8L
+    expect_identical(
+      primarycensored_lcdf_vectorized(
+        1L, n, case$dist_id, case$params, pwindow, 1L, numeric(0)
+      ),
+      vapply(seq_len(n), function(d) {
+        primarycensored_lcdf(
+          d, case$dist_id, case$params, pwindow, 0, Inf, 1L, numeric(0)
+        )
+      }, numeric(1)),
+      info = info
+    )
+  }
+})
+
+test_that("the inverse gamma log CDF converges at large shapes", {
+  # An integer shape runs 50 terms past alpha in the continued fraction
+  for (alpha in c(3000, 1e4 + 0.5, 1e5)) {
+    for (x in alpha * c(0.9, 1, 1.1)) {
+      info <- paste("alpha", alpha, "x", x)
+      expect_equal(
+        primarycensored_inv_gamma_lcdf(1 / x, alpha, 1),
+        pgamma(x, alpha, lower.tail = FALSE, log.p = TRUE),
+        tolerance = 1e-8, info = info
       )
     }
   }
-  # The same holds for the inverse chi-square with nu <= 2
-  expect_lt(
-    abs(
-      exp(primarycensored_lcdf(3, 19L, 1.5, pwindow, 0, Inf, 1L, numeric(0))) -
-        stan_reference(19L, 1.5, 3, pwindow, 0)
-    ),
-    1e-5
-  )
 })
 
 test_that("the inverse gamma solution stays finite and exact just above shape 1
@@ -720,10 +749,9 @@ uniform_gradient_at <- function(model, dist_id, params, d, pwindow) {
 test_that("the new analytical solutions have finite gradients that match
   finite differences", {
   model <- uniform_gradient_model()
-  # Shape gradients of the beta are less precise, so those cases use 1e-3,
-  # the inverse gamma family 1e-5 and the other delays 1e-4. Gradients of
-  # about 4e-4 leave finite difference noise at 1e-5, so the far upper tail
-  # of the inverse gamma family uses 1e-3 and the Pareto 5e-4.
+  # Shape gradients of the beta are less precise, and small gradients in
+  # the far upper tail leave relative finite difference noise, so those
+  # cases use a looser tolerance.
   cases <- list(
     list(id = 4L, params = 0.5, tol = 1e-4, delays = c(0.01, 0.3, 1, 3, 40)),
     list(id = 4L, params = 0.001, tol = 1e-4, delays = c(0.05, 5, 40)),
