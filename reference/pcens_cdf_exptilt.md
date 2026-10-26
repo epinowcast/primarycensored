@@ -86,12 +86,8 @@ and \\k\\ (\\k = 1\\ for the Weibull) have the transform \\J(x) = \sum_n
 / \theta)^a)\\, for the regularised incomplete gamma function \\P\\. It
 exists for every tilt, and needs \\Q \> 0\\ for
 [`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md).
-For \\\rho \> 0\\ its terms alternate in sign and cancel. The numerical
-method is used at a `q` where the terms of the series cancel by more
-than 1e5, where \\\rho q \ge 400\\, and in the upper tail, where the
-series has no tail form and the terms of the difference between the
-endpoints exceed the smaller of the CDF and its survival function by
-more than 1e5.
+For \\\rho \> 0\\ its terms alternate in sign and cancel. Where they
+cancel badly, or \\\rho q \ge 400\\, the numerical method is used.
 
 The direct form cancels as \\\rho \to 0\\. With \\G_k(t) = \int (t -
 u)^k f(u) du\\ up to \\t\\, two series in \\\rho\\ truncated after the

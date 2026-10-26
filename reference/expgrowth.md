@@ -97,6 +97,12 @@ approximates a uniform distribution on \[min, max\], and we use a
 simpler method to generate samples directly from this uniform
 distribution.
 
+## See also
+
+Primary event distributions
+[`tgumbel`](https://primarycensored.epinowcast.org/reference/tgumbel.md),
+[`tlogis`](https://primarycensored.epinowcast.org/reference/tlogis.md)
+
 ## Examples
 
 ``` r

@@ -12,7 +12,6 @@ They are built from the tilt transform
 for delays on the non-negative reals.
 A delay is added with a method for each generic, dispatched on the delay
 class of a pcens object.
-.pcens_tilt_fits() and .pcens_tilt_pair() have defaults.
 The Stan equivalents are check_for_tilt_transform(),
 log_tilt_transform_pair() and primarycensored_tilt_moments()."><meta property="og:description" content="Internal generics for the delay part of the analytical solutions with an
 exponentially tilted primary event window, see pcens_cdf_exptilt.
@@ -21,7 +20,6 @@ They are built from the tilt transform
 for delays on the non-negative reals.
 A delay is added with a method for each generic, dispatched on the delay
 class of a pcens object.
-.pcens_tilt_fits() and .pcens_tilt_pair() have defaults.
 The Stan equivalents are check_for_tilt_transform(),
 log_tilt_transform_pair() and primarycensored_tilt_moments()."><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -77,7 +75,7 @@ log_tilt_transform_pair() and primarycensored_tilt_moments()."><meta property="o
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Tilt transforms of delay distributions</h1>
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/feat-371-gumbel-primary/R/tilt_transform.R" class="external-link"><code>R/tilt_transform.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/R/tilt_transform.R" class="external-link"><code>R/tilt_transform.R</code></a></small>
       <div class="d-none name"><code>pcens_tilt.Rd</code></div>
     </div>
 
@@ -89,7 +87,6 @@ They are built from the tilt transform
 for delays on the non-negative reals.
 A delay is added with a method for each generic, dispatched on the delay
 class of a <code>pcens</code> object.
-<code>.pcens_tilt_fits()</code> and <code>.pcens_tilt_pair()</code> have defaults.
 The Stan equivalents are <code>check_for_tilt_transform()</code>,
 <code>log_tilt_transform_pair()</code> and <code>primarycensored_tilt_moments()</code>.</p>
     </div>
@@ -104,7 +101,7 @@ The Stan equivalents are <code>check_for_tilt_transform()</code>,
 <span></span>
 <span><span class="fu">.pcens_tilt_moments</span><span class="op">(</span><span class="va">object</span>, <span class="va">t</span><span class="op">)</span></span>
 <span></span>
-<span><span class="fu">.pcens_tilt_fits</span><span class="op">(</span><span class="va">object</span>, <span class="va">xi</span>, <span class="va">t</span>, pwindow <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
+<span><span class="fu">.pcens_tilt_fits</span><span class="op">(</span><span class="va">object</span>, <span class="va">t</span>, <span class="va">xi</span>, pwindow <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">.pcens_tilt_pair</span><span class="op">(</span><span class="va">object</span>, <span class="va">t</span>, <span class="va">xi</span><span class="op">)</span></span></code></pre></div>
     </div>
@@ -142,13 +139,11 @@ up to <code>t</code>.</p></dd>
 <ul><li><p><code>.pcens_tilt_transform()</code>: the log of the transform at each <code>t</code>.</p></li>
 <li><p><code>.pcens_tilt_available()</code>: whether the transform is closed form and the
 tilted delay exists for <code>xi</code>. If not, the numerical method is used.</p></li>
-<li><p><code>.pcens_tilt_fits()</code>: <code>TRUE</code> at each <code>t</code> where the transform is used
-for a window <code>pwindow</code>, otherwise the numerical method. Only called where
-<code>.pcens_tilt_available()</code> is <code>TRUE</code>. The default is <code>TRUE</code>.</p></li>
+<li><p><code>.pcens_tilt_fits()</code>: a logical vector, one value per <code>t</code>, <code>FALSE</code>
+where the numerical method is used for a window <code>pwindow</code>. Only called
+where <code>.pcens_tilt_available()</code> is <code>TRUE</code>.</p></li>
 <li><p><code>.pcens_tilt_pair()</code>: a matrix with columns <code>lower</code> and <code>upper</code>, the log
-transform up to and beyond each <code>t</code>. The default calls
-<code>.pcens_tilt_transform()</code> twice and keeps the <code>log_loss</code> attribute of
-the lower transform.</p></li>
+transform up to and beyond each <code>t</code>.</p></li>
 <li><p><code>.pcens_tilt_lower()</code>: the lower end of the support, 0 or <code>-Inf</code>.</p></li>
 <li><p><code>.pcens_tilt_moments()</code>: a matrix with columns <code>G1</code>, <code>G2</code> and <code>G3</code>, the
 log of \(G_k(t) = \int (t - u)^k f(u) du\) up to <code>t</code>, <code>-Inf</code> below

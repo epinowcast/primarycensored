@@ -13,7 +13,7 @@ pcd_primary_distributions
 
 ## Format
 
-A data.frame with 2 rows and 4 columns:
+A data.frame with 4 rows and 5 columns:
 
 - name:
 
@@ -22,6 +22,10 @@ A data.frame with 2 rows and 4 columns:
 - dprimary:
 
   R density function name
+
+- pprimary:
+
+  R distribution function name
 
 - aliases:
 

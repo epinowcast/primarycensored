@@ -63,7 +63,7 @@ user-specified Stan files."><meta property="og:image" content="https://primaryce
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Create a CmdStanModel with primarycensored Stan functions</h1>
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/R/pcd_cmdstan_model.R" class="external-link"><code>R/pcd_cmdstan_model.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/R/pcd_cmdstan_model.R" class="external-link"><code>R/pcd_cmdstan_model.R</code></a></small>
       <div class="d-none name"><code>pcd_cmdstan_model.Rd</code></div>
     </div>
 
@@ -123,7 +123,11 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_ode.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_analytical_cdf.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_tlogis.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include primarycensored_gumbel.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   #include expgrowth.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include tlogis.stan</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   #include tgumbel.stan</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   real partial_sum(array[] int dummy, int start, int end,</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                    array[] int d, array[] int d_upper, array[] int n,</span>
@@ -154,15 +158,15 @@ within chain parallelism).</p></li>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real L;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   // upper truncation; +Inf for no upper truncation</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   array[N] real D;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // Distribution identifier. 1..25 = parametric families. The</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // non-parametric step CDF has the same likelihood for all three of</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // the entries below; they only differ in the prior on the PMF /</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   // hazards:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // Distribution identifier. 1..25 and 29 = parametric families, 29 being the</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // log-logistic with parameters [scale, shape]. The non-parametric step CDF</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // has the same likelihood for all three of the entries below; they only</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   // differ in the prior on the PMF / hazards:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   //   26 = step CDF, Dirichlet prior on the PMF;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   //   27 = step CDF, Gaussian random walk on the logit hazards;</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   //   28 = step CDF, IID logit random effects on the hazards.</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=28&gt; dist_id;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=2&gt; primary_id; // primary distribution identifier</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=29&gt; dist_id;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=1, upper=4&gt; primary_id; // primary distribution identifier</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_params; // number of distribution parameters</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0&gt; n_primary_params; // number of primary distribution parameters</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   int&lt;lower=0, upper=1&gt; compute_log_lik; // whether to compute log likelihood</span>

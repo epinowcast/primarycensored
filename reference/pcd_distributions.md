@@ -14,7 +14,7 @@ pcd_distributions
 
 ## Format
 
-A data.frame with 28 rows and 4 columns:
+A data.frame with 29 rows and 4 columns:
 
 - name:
 
@@ -22,8 +22,8 @@ A data.frame with 28 rows and 4 columns:
 
 - pdist:
 
-  R distribution function name (e.g. plnorm), NA if there is no base R
-  implementation
+  R distribution function name (e.g. plnorm, or pllogis from flexsurv
+  and actuar), NA if there is no R implementation
 
 - aliases:
 

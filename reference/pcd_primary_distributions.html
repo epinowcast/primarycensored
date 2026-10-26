@@ -63,7 +63,7 @@ supported in the stan code but any user functions can be used in the R code."><m
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Supported primary event distributions</h1>
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/R/data.R" class="external-link"><code>R/data.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/R/data.R" class="external-link"><code>R/data.R</code></a></small>
       <div class="d-none name"><code>pcd_primary_distributions.Rd</code></div>
     </div>
 
@@ -80,11 +80,14 @@ supported in the stan code but any user functions can be used in the R code.</p>
 
     <div class="section level2">
     <h2 id="format">Format<a class="anchor" aria-label="anchor" href="#format"></a></h2>
-    <p>A data.frame with 2 rows and 4 columns:</p><dl><dt>name</dt>
+    <p>A data.frame with 4 rows and 5 columns:</p><dl><dt>name</dt>
 <dd><p>Distribution name</p></dd>
 
 <dt>dprimary</dt>
 <dd><p>R density function name</p></dd>
+
+<dt>pprimary</dt>
+<dd><p>R distribution function name</p></dd>
 
 <dt>aliases</dt>
 <dd><p>Alternative names/identifiers</p></dd>
