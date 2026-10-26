@@ -40,6 +40,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_pnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},

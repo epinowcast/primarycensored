@@ -34,6 +34,6 @@ a delay on the reals.}
 Numeric vector of CDF values, not clamped to [0, 1].
 }
 \description{
-Uniform primary CDF for positive finite delays and windows
+Uniform primary CDF for finite delays and positive windows
 }
 \keyword{internal}

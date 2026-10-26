@@ -27,9 +27,6 @@ Vector of computed primary event censored CDFs
 Analytical solution for the normal distribution, which has support on
 the reals.
 The primary event window \eqn{[d - w_P, d]} is not clipped at zero.
-Below \eqn{z = -10} an asymptotic series avoids cancellation.
-Delay arguments other than \code{mean} and \code{sd}, such as \code{lower.tail}, use the
-numerical \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
 See \code{vignette("analytic-solutions")} for the derivation.
 }
 \examples{
@@ -56,6 +53,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},

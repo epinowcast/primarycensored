@@ -28,8 +28,6 @@ Analytical solution for the beta distribution, which has support on
 \eqn{[0, 1]}.
 A non-central beta (\code{ncp} not zero) uses the numerical
 \code{\link[=pcens_cdf.default]{pcens_cdf.default()}} method.
-So do delay arguments other than \code{shape1}, \code{shape2} and \code{ncp}, such as
-\code{lower.tail}.
 }
 \examples{
 pcens_obj <- new_pcens(
@@ -55,6 +53,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},

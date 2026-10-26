@@ -22,6 +22,10 @@
 #' dispatch, so every method returns `pdist(q)` without integrating over the
 #' primary event window.
 #'
+#' The analytical methods for the exponential, normal, chi-square, beta and
+#' Pareto delays use the numerical method when `pdist` has arguments they do not
+#' use, such as `lower.tail`, or a non-zero `ncp`.
+#'
 #' @return Vector of computed primary event censored CDFs
 #'
 #' @family pcens
@@ -843,8 +847,6 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 #'
 #' Analytical solution for the exponential distribution, which is the gamma
 #' solution with `shape = 1` without the incomplete gamma function.
-#' Delay arguments other than `rate`, such as `lower.tail`, use the numerical
-#' [pcens_cdf.default()] method.
 #' See `vignette("analytic-solutions")` for the derivation.
 #'
 #' @inheritParams pcens_cdf
@@ -889,9 +891,6 @@ pcens_cdf.pcens_pexp_dunif <- function(
 #' Analytical solution for the normal distribution, which has support on
 #' the reals.
 #' The primary event window \eqn{[d - w_P, d]} is not clipped at zero.
-#' Below \eqn{z = -10} an asymptotic series avoids cancellation.
-#' Delay arguments other than `mean` and `sd`, such as `lower.tail`, use the
-#' numerical [pcens_cdf.default()] method.
 #' See `vignette("analytic-solutions")` for the derivation.
 #'
 #' @inheritParams pcens_cdf
@@ -942,7 +941,6 @@ pcens_cdf.pcens_pnorm_dunif <- function(
 #' [pcens_cdf.pcens_pgamma_dunif()].
 #' A non-central chi-square (`ncp` not zero) has no such form and uses the
 #' numerical [pcens_cdf.default()] method.
-#' So do delay arguments other than `df` and `ncp`, such as `lower.tail`.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -984,8 +982,6 @@ pcens_cdf.pcens_pchisq_dunif <- function(
 #' \eqn{[0, 1]}.
 #' A non-central beta (`ncp` not zero) uses the numerical
 #' [pcens_cdf.default()] method.
-#' So do delay arguments other than `shape1`, `shape2` and `ncp`, such as
-#' `lower.tail`.
 #'
 #' @inheritParams pcens_cdf
 #'
@@ -1041,19 +1037,92 @@ pcens_cdf.pcens_pbeta_dunif <- function(
   )
 }
 
-#' Delay distribution arguments an analytical solution handles
+#' Method for Pareto delay with uniform primary
 #'
-#' Arguments the solution does not use, such as `lower.tail`, would be
-#' ignored, and a non-zero `ncp` changes the distribution, so the numerical
-#' [pcens_cdf.default()] method is used instead.
+#' Analytical solution for the type I Pareto distribution of
+#' `extraDistr::ppareto()`, with shape `a` and scale (minimum) `b`.
+#' The `extraDistr` package is needed to create the `pcens` object.
+#' The solution holds for every shape, including shapes at or below 1 where
+#' the mean is infinite.
+#' See `vignette("analytic-solutions")` for the derivation.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examplesIf requireNamespace("extraDistr", quietly = TRUE)
+#' pcens_obj <- new_pcens(
+#'   pdist = extraDistr::ppareto,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   a = 2.5,
+#'   b = 0.5
+#' )
+#' pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
+pcens_cdf.pcens_ppareto_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("a", "b"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  # extraDistr::ppareto() defaults
+  a <- if (is.null(delay_args$a)) 1 else delay_args$a
+  b <- if (is.null(delay_args$b)) 1 else delay_args$b
+
+  log_ratio <- function(t, p) log(pmax(t, p$b) / p$b)
+  # G(t) = b * (expm1(L) + expm1(-e L) / e) with L = log(t / b) and
+  # e = a - 1, which is 0 at and below b
+  terms_fn <- function(t, p) {
+    l <- log_ratio(t, p)
+    e <- rep_len(p$a - 1, length(t))
+    u <- -e * l
+    g <- expm1(l) - l * ifelse(u == 0, 1, expm1(u) / u)
+    # The terms cancel for small L, so use the series
+    # sum_{n >= 2} L^n / n! * (1 + (-1)^n e^(n - 1))
+    small <- which(l * pmax(1, abs(e)) < 0.1)
+    if (length(small) > 0L) {
+      l_small <- l[small]
+      e_small <- e[small]
+      l_term <- l_small
+      e_term <- 1
+      series <- 0
+      for (n in 2:14) {
+        l_term <- l_term * l_small / n
+        e_term <- e_term * e_small
+        series <- series + l_term * (1 + (-1)^n * e_term)
+      }
+      g[small] <- series
+    }
+    p$b * g
+  }
+  # Used only above the mean, so a > 1 and t > b
+  upper_fn <- function(t, p) {
+    e <- p$a - 1
+    -p$b * exp(-e * log_ratio(t, p)) / e
+  }
+  delay_cdf <- function(t, p) -expm1(-p$a * log_ratio(t, p))
+
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(a = a, b = b, mean = ifelse(a > 1, a * b / (a - 1), Inf))
+  )
+}
+
+#' Delay distribution arguments an analytical solution handles
 #'
 #' @inheritParams pcens_cdf
 #'
 #' @param allowed Character vector of the argument names the solution uses.
 #'
-#' @return The named list of delay arguments, or `NULL` if `use_numeric` is
-#'  `TRUE`, any argument is unnamed or not in `allowed`, or `ncp` is not
-#'  zero.
+#' @return The delay arguments, or `NULL` if the numerical method should be
+#'  used.
 #'
 #' @keywords internal
 .delay_args <- function(object, allowed, use_numeric = FALSE) {
@@ -1099,22 +1168,19 @@ pcens_cdf.pcens_pbeta_dunif <- function(
   out
 }
 
-#' Expected shortfall of a standard normal
-#'
-#' Evaluates \eqn{g(z) = z \Phi(z) + \phi(z)}.
-#' Below `z = -10` the asymptotic series
-#' \eqn{\phi(z) / z^2 \sum_n (-1)^n (2n + 1)!! / z^{2n}} is used with 20
-#' terms, as the direct form cancels.
+#' Evaluate `z * pnorm(z) + dnorm(z)`, stably for very negative `z`
 #'
 #' @param z Numeric vector of standardised values.
 #'
-#' @return Vector of `g(z)`.
+#' @return Vector of `z * pnorm(z) + dnorm(z)`.
 #'
 #' @keywords internal
 .norm_shortfall <- function(z) {
   out <- stats::dnorm(z) + z * stats::pnorm(z)
   far <- which(z < -10)
   if (length(far) > 0L) {
+    # The direct form cancels, so use the asymptotic series
+    # dnorm(z) / z^2 * sum_n (-1)^n (2n + 1)!! / z^(2n)
     zf <- z[far]
     y <- 1 / zf^2
     term <- 1

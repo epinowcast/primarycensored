@@ -4,6 +4,7 @@
 
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
+  It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
   See #377.
 - Stan has uniform primary analytical solutions for inverse gamma, inverse chi-square and scaled inverse chi-square delays.
   They need a finite mean and otherwise use the numerical path.
@@ -28,9 +29,7 @@
   Vector delay parameters were previously misaligned when some `q` were not positive.
   See #366, #378 and #380.
 - `update()` for `pcens` objects has a new `check` argument.
-  With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names.
-  The default, `check = TRUE`, is unchanged.
-  `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
+  `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
 
 # primarycensored 1.6.0

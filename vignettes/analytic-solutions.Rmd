@@ -440,6 +440,7 @@ $$
 
 which is $(t - y_{\min}) - y_{\min} \log(t / y_{\min})$ for $\alpha = 1$.
 Unlike the forms that use the mean, this holds for every $\alpha > 0$ because only the integral of $F_T$ over the window enters.
+Base R has no Pareto distribution, so in R `pcens_cdf()` uses this solution for `extraDistr::ppareto()`, which needs the extraDistr package.
 
 # Learning more
 
