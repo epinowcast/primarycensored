@@ -311,15 +311,15 @@ test_that("the lognormal CDF is accurate far from the origin", {
 
 test_that("the lognormal series needs to fit the terms it is given", {
   obj <- lnorm_object(cases[[2]], 0.1)
-  expect_true(all(.pcens_tilt_fits(obj, 0.5, c(1, 300), 1)))
-  expect_true(all(.pcens_tilt_fits(obj, -0.5, c(1, 1e8), 1)))
+  expect_true(all(.pcens_tilt_fits(obj, c(1, 300), 0.5, 1)))
+  expect_true(all(.pcens_tilt_fits(obj, c(1, 1e8), -0.5, 1)))
   expect_identical(
-    .pcens_tilt_fits(obj, 1, c(1.8e4, 1.9e4, 1e6), 3), c(TRUE, FALSE, FALSE)
+    .pcens_tilt_fits(obj, c(1.8e4, 1.9e4, 1e6), 1, 3), c(TRUE, FALSE, FALSE)
   )
-  expect_identical(.pcens_tilt_fits(obj, 1, c(-3, 0), 1), c(TRUE, TRUE))
+  expect_identical(.pcens_tilt_fits(obj, c(-3, 0), 1, 1), c(TRUE, TRUE))
   # Delays without such a limit always fit
   expect_true(all(.pcens_tilt_fits(
-    exptilt_object(exptilt_families()[[3]], 0.2), 0.5, 1e9, 1
+    exptilt_object(exptilt_families()[[3]], 0.2), 1e9, 0.5, 1
   )))
 })
 
@@ -328,19 +328,19 @@ test_that("the lognormal series is kept only up to the point where the
   expect_identical(.lnorm_series_max_xt, 200)
   obj <- lnorm_object(cases[[2]], 0.1)
   expect_identical(
-    .pcens_tilt_fits(obj, 1, c(1, 100, 190, 210, 500, 1e4), 1),
+    .pcens_tilt_fits(obj, c(1, 100, 190, 210, 500, 1e4), 1, 1),
     c(TRUE, TRUE, TRUE, FALSE, FALSE, FALSE)
   )
   # Without a window the numerical method is used past the cut-off
   expect_identical(
-    .pcens_tilt_fits(obj, 1, c(190, 210)), c(TRUE, FALSE)
+    .pcens_tilt_fits(obj, c(190, 210), 1), c(TRUE, FALSE)
   )
   expect_identical(
-    .pcens_tilt_fits(obj, 1, c(210, 500, 1e4, 2e4), 2.5),
+    .pcens_tilt_fits(obj, c(210, 500, 1e4, 2e4), 1, 2.5),
     c(TRUE, TRUE, TRUE, FALSE)
   )
   expect_identical(
-    .pcens_tilt_fits(obj, 1, c(210, 500, 1e4), 2), c(FALSE, FALSE, FALSE)
+    .pcens_tilt_fits(obj, c(210, 500, 1e4), 1, 2), c(FALSE, FALSE, FALSE)
   )
 })
 
@@ -573,10 +573,14 @@ test_that("a few quantiles use the transform where the numerical method is
   obj <- exptilt_object(delay, -50)
   q <- c(0.05, 0.5, 3)
   expect_identical(pcens_cdf(obj, q, 1), .pcens_cdf_exptilt(obj, q, 1))
-  # A small tilt times the window uses the numerical method
+  # A tilt times the window at or below 1 uses the numerical method, and
+  # just above 1 the transform
   obj <- exptilt_object(delay, 0.5)
   expect_identical(pcens_cdf(obj, q, 1), pcens_cdf.default(obj, q, 1))
-  expect_identical(.lnorm_exptilt_min_xw, 1)
+  obj <- exptilt_object(delay, 1)
+  expect_identical(pcens_cdf(obj, q, 1), pcens_cdf.default(obj, q, 1))
+  obj <- exptilt_object(delay, 1.01)
+  expect_identical(pcens_cdf(obj, q, 1), .pcens_cdf_exptilt(obj, q, 1))
 })
 
 test_that("the lognormal transform is accurate for a large sdlog", {

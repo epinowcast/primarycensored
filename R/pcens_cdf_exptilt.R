@@ -254,10 +254,12 @@ pcens_cdf.pcens_pgengamma_dexpgrowth <- function(
   result[!is.na(q) & q == -Inf] <- 0
   finite <- which(is.finite(q))
   if (length(finite) > 0L) {
-    # Use the numerical method for the q where the transform does not fit
+    # Use the numerical method for the q where the transform does not fit.
+    # With fewer than `min_q` quantiles and a small |rho| w, `fits` stays
+    # FALSE and every point uses the numerical method.
     fits <- rep(FALSE, length(finite))
     if (length(finite) >= min_q || abs(rho) * pwindow > min_xw) {
-      fits <- .pcens_tilt_fits(object, -rho, q[finite], pwindow)
+      fits <- .pcens_tilt_fits(object, q[finite], -rho, pwindow)
     }
     result[finite[fits]] <- .exptilt_cdf_finite(
       object, q[finite[fits]], pwindow, rho

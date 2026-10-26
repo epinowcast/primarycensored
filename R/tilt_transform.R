@@ -7,7 +7,6 @@
 #' for delays on the non-negative reals.
 #' A delay is added with a method for each generic, dispatched on the delay
 #' class of a `pcens` object.
-#' `.pcens_tilt_fits()` and `.pcens_tilt_pair()` have defaults.
 #' The Stan equivalents are `check_for_tilt_transform()`,
 #' `log_tilt_transform_pair()` and `primarycensored_tilt_moments()`.
 #'
@@ -28,13 +27,11 @@
 #' * `.pcens_tilt_transform()`: the log of the transform at each `t`.
 #' * `.pcens_tilt_available()`: whether the transform is closed form and the
 #'   tilted delay exists for `xi`. If not, the numerical method is used.
-#' * `.pcens_tilt_fits()`: `TRUE` at each `t` where the transform is used
-#'   for a window `pwindow`, otherwise the numerical method. Only called where
-#'   `.pcens_tilt_available()` is `TRUE`. The default is `TRUE`.
+#' * `.pcens_tilt_fits()`: a logical vector, one value per `t`, `FALSE`
+#'   where the numerical method is used for a window `pwindow`. Only called
+#'   where `.pcens_tilt_available()` is `TRUE`.
 #' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
-#'   transform up to and beyond each `t`. The default calls
-#'   `.pcens_tilt_transform()` twice and keeps the `log_loss` attribute of
-#'   the lower transform.
+#'   transform up to and beyond each `t`.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix with columns `G1`, `G2` and `G3`, the
 #'   log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to `t`, `-Inf` below
@@ -65,7 +62,7 @@ NULL
 }
 
 #' @rdname pcens_tilt
-.pcens_tilt_fits <- function(object, xi, t, pwindow = 0) {
+.pcens_tilt_fits <- function(object, t, xi, pwindow = 0) {
   UseMethod(".pcens_tilt_fits")
 }
 
@@ -75,7 +72,7 @@ NULL
 }
 
 #' @exportS3Method
-.pcens_tilt_fits.default <- function(object, xi, t, pwindow = 0) {
+.pcens_tilt_fits.default <- function(object, t, xi, pwindow = 0) {
   rep(TRUE, length(t))
 }
 
