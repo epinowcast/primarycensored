@@ -14,28 +14,12 @@
 #' order of Stan's `loglogistic_cdf()`.
 #'
 #' With \eqn{G_1(t) = \int_0^t F(u) du} the CDF is
-#' \eqn{\{G_1(q) - G_1(q - w)\} / w}, where
-#' \eqn{G_1(t) = t F(t) (1 - r_{1/k}(A))}, \eqn{A = (t / \lambda)^k} and
-#' \deqn{r_a(A) = \frac{1 + A}{A^{a + 1}} \int_0^A \frac{y^a}{(1 + y)^2} dy.}
-#' The ratio is at most \eqn{1 / (a + 1)}.
-#' Base R has no Gauss hypergeometric function, and the incomplete beta form
-#' holds only for \eqn{a < 1}.
-#' `.loglogistic_ratio()` therefore uses three series that do not cancel,
-#' for \eqn{A \le 1}, \eqn{1 < A \le 3} and \eqn{A > 3}.
-#' Each unique endpoint is evaluated once.
-#'
-#' **Fallback to the numerical method.** The solution is used for a shape of
-#' at least 0.01. Within this limit a bound on the rounding error of the
-#' difference of \eqn{G_1} is compared with the smaller of the CDF and the
-#' survival. The numerical method is used where it exceeds 1e-8 of that tail,
-#' or 1e-6 of the density of the CDF.
-#' The bound is not taken below 1e-15 in the upper tail.
-#' The same rule is used in Stan.
-#' The numerical method integrates the delay CDF, or the survival where the
-#' delay CDF at the mean primary event time is above a half, with a relative
-#' tolerance of 1e-13.
-#' The switch between methods makes the CDF discontinuous by about 1e-8 of
-#' the smaller tail.
+#' \eqn{\{G_1(q) - G_1(q - w)\} / w}, evaluated with series for a shape of
+#' at least 0.01.
+#' The numerical method is used where this difference loses precision, so
+#' the CDF can step by about 1e-8 of the smaller tail at the switch.
+#' See `vignette("analytic-solutions")` for the derivation and the switching
+#' rule.
 #'
 #' @inherit pcens_cdf return
 #'
@@ -43,16 +27,10 @@
 #'
 #' @concept pcens
 #'
-#' @examples
+#' @examplesIf requireNamespace("flexsurv", quietly = TRUE)
 #' # Log-logistic delay with a uniform primary
-#' pllogis <- add_name_attribute(
-#'   function(q, shape, scale) {
-#'     plogis(shape * (log(pmax(q, 0)) - log(scale)))
-#'   },
-#'   "pllogis"
-#' )
 #' obj <- new_pcens(
-#'   pdist = pllogis, dprimary = dunif,
+#'   pdist = flexsurv::pllogis, dprimary = dunif,
 #'   primary_args = list(), shape = 2, scale = 5
 #' )
 #' pcens_cdf(obj, q = c(1, 4, 8), pwindow = 2)
@@ -72,6 +50,21 @@ NULL
 
 # A above which the tail series of the partial moments is used
 .loglogistic_tail_start <- 3
+
+# Relative size of the last series term, and the most terms summed, as in
+# the Stan functions. The tail series converges geometrically from A = 3, so
+# needs fewer terms.
+.loglogistic_series_tol <- 1e-16
+.loglogistic_max_terms <- 5000L
+.loglogistic_tail_max_terms <- 200L
+
+# Floors on the error limit, in the upper tail and relative to the smaller
+# tail, near the resolution of a CDF close to 1
+.loglogistic_upper_floor <- 1e-15
+.loglogistic_tail_floor <- 1e-13
+
+# Relative tolerance of the numerical method
+.loglogistic_numeric_tol <- 1e-13
 
 #' Shape and scale of a log-logistic pcens object
 #'
@@ -94,13 +87,6 @@ NULL
   list(shape = shape, scale = scale)
 }
 
-#' Log of one plus an exponential without overflow
-#'
-#' @noRd
-.log1p_exp <- function(x) {
-  pmax(x, 0) + log1p(exp(-abs(x)))
-}
-
 #' Partial moment ratio for A up to 1, see `.loglogistic_ratio()`
 #'
 #' @noRd
@@ -118,7 +104,8 @@ NULL
     m <- m + 1
     term <- weight / (a_mat + m + 1)
     total <- total + term
-    if (all(term <= 1e-16 * total) || m >= 10000) {
+    if (all(term <= .loglogistic_series_tol * total) ||
+      m >= .loglogistic_max_terms) {
       break
     }
   }
@@ -160,7 +147,8 @@ NULL
     j <- j + 1
     term <- current / (j + 1)
     total <- total + term
-    if (all(term <= 1e-16 * total) || j >= 10000) {
+    if (all(term <= .loglogistic_series_tol * total) ||
+      j >= .loglogistic_max_terms) {
       break
     }
   }
@@ -210,7 +198,8 @@ NULL
     m <- m + 1L
     decay_m <- decay_m * decay
     start_m <- start_m / .loglogistic_tail_start
-    if (all(abs(term) <= 1e-17 * abs(total)) || m >= 200L) {
+    if (all(abs(term) <= .loglogistic_series_tol * abs(total)) ||
+      m >= .loglogistic_tail_max_terms) {
       break
     }
   }
@@ -219,7 +208,8 @@ NULL
 
 #' Partial moment ratio r_a(A) of the log-logistic
 #'
-#' Rows are `log_A` and columns are `a`, see [pcens_cdf_loglogistic].
+#' Rows are `log_A` and columns are `a`. The three series are described in
+#' `vignette("analytic-solutions")`.
 #'
 #' @noRd
 .loglogistic_ratio <- function(a, log_A) {
@@ -257,7 +247,8 @@ NULL
   log_t <- log(t[positive])
   log_ratio <- shape * (log_t - log(scale))
   r <- .loglogistic_ratio(1 / shape, log_ratio)[, 1L]
-  out[positive] <- log_t - .log1p_exp(-log_ratio) + log1p(-r)
+  out[positive] <- log_t + stats::plogis(log_ratio, log.p = TRUE) +
+    log1p(-r)
   out
 }
 
@@ -292,19 +283,39 @@ NULL
     breaks <- c(0, pwindow, if (d < pwindow) d, d - offsets)
     breaks <- sort(unique(breaks[is.finite(breaks)]))
     breaks <- breaks[breaks >= 0 & breaks <= pwindow]
+    # integrate() often reports roundoff at this tolerance while its value is
+    # still accurate, so its message is not used. Its summed error estimate
+    # is checked against the limit used for the analytical solution instead.
     integral <- function(upper) {
-      sum(vapply(
+      pieces <- vapply(
         seq_len(length(breaks) - 1L),
         function(i) {
-          stats::integrate(
+          fit <- stats::integrate(
             function(x) delay(d - x, upper) * primary(x),
             lower = breaks[i], upper = breaks[i + 1L],
-            rel.tol = 1e-13, abs.tol = 0, subdivisions = 1000L,
-            stop.on.error = FALSE
-          )$value
+            rel.tol = .loglogistic_numeric_tol, abs.tol = 0,
+            subdivisions = 1000L, stop.on.error = FALSE
+          )
+          c(fit$value, fit$abs.error)
         },
-        numeric(1)
-      ))
+        numeric(2)
+      )
+      value <- sum(pieces[1L, ])
+      # A survival is resolved only to 1e-15 once taken from 1, and a CDF
+      # below the smallest normal double has no relative precision
+      min_limit <- if (upper) {
+        .loglogistic_upper_floor
+      } else {
+        .Machine$double.xmin
+      }
+      limit <- max(.loglogistic_precision * value, min_limit)
+      if (!isTRUE(sum(pieces[2L, ]) <= limit)) {
+        warning(
+          "Numerical integration of the log-logistic CDF may be inaccurate ",
+          "at q = ", d, call. = FALSE
+        )
+      }
+      value
     }
     # Survival where the delay CDF at the mean primary time is above a half
     if (d - pwindow / 2 > p$scale) 1 - integral(TRUE) else integral(FALSE)
@@ -347,7 +358,10 @@ pcens_cdf.pcens_pllogis_dunif <- function(
 .loglogistic_lcdf <- function(t, shape, scale) {
   out <- rep(-Inf, length(t))
   positive <- t > 0
-  out[positive] <- -.log1p_exp(-shape * (log(t[positive]) - log(scale)))
+  out[positive] <- stats::plogis(
+    shape * (log(t[positive]) - log(scale)),
+    log.p = TRUE
+  )
   out
 }
 
@@ -369,9 +383,10 @@ pcens_cdf.pcens_pllogis_dunif <- function(
 #' The error of the difference of G_1 is bounded by
 #' 4e-16 (1 + |log tF|) tF / w at each endpoint.
 #' The bound is too large if it exceeds `.loglogistic_precision` times the
-#' smaller of the CDF and the survival, not taken below 1e-15 in the upper
+#' smaller of the CDF and the survival, not taken below
+#' `.loglogistic_upper_floor` in the upper
 #' tail, or `.loglogistic_pmf_precision` times the density of the CDF, not
-#' taken below 1e-13 times the smaller tail.
+#' taken below `.loglogistic_tail_floor` times the smaller tail.
 #'
 #' @param cdf The uniform CDF at `q`.
 #'
@@ -393,12 +408,12 @@ pcens_cdf.pcens_pllogis_dunif <- function(
   log_tail <- pmin(log_cdf, .log1m_exp(log_cdf))
   log_limit <- log(.loglogistic_precision) + log_tail
   upper <- log_cdf > -log(2)
-  log_limit[upper] <- pmax(log_limit[upper], log(1e-15))
+  log_limit[upper] <- pmax(log_limit[upper], log(.loglogistic_upper_floor))
   log_limit <- pmin(
     log_limit,
     pmax(
       log(.loglogistic_pmf_precision) + log_density,
-      log(1e-13) + log_tail
+      log(.loglogistic_tail_floor) + log_tail
     )
   )
   ill <- log_error > log_limit

@@ -7,13 +7,14 @@
   The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   See #367.
 - Added exponentially tilted primary event solutions for Weibull and generalised gamma delays, in R and Stan.
+  These delays now use a closed form instead of the numerical method, so results can differ at the 1e-5 level.
+  The exponential, gamma and normal methods now use the numerical method where their closed form returns `NaN`.
   See #368.
 - Added the lognormal delay with an exponentially tilted primary event window, in `pcens_cdf()` and in Stan.
   The numerical path is used where the series for `r < 0` is slower, and in R for fewer than 10 finite quantiles where `abs(r) * pwindow` is at most 1.
   See #369.
 - Added the log-logistic delay, Stan `dist_id` 29 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
   There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
-  `pcd_stan_function_deps()` now also finds Stan functions that are only passed by name, such as an ODE system.
   See #372, #104 and #321.
 - Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3), with analytical solutions for exponential, gamma and normal delays in R and Stan.
   The numerical path is used where the analytical solutions do not apply.
@@ -26,6 +27,8 @@
 
 ## Bug fixes
 
+- `pcd_stan_function_deps()` now also finds Stan functions that are only passed to another function by name, such as an ODE system, so `pcd_load_stan_functions()` with `dependencies = TRUE` returns code that compiles.
+  See #407.
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
@@ -36,10 +39,14 @@
 
 ## Performance
 
+- The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster.
+  They cost less per call and, for 64 or more points on a lattice such as the one used by `dprimarycensored()` and `fitdistdoublecens()`, evaluate the delay terms once per distinct point.
+  They also return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay.
+  They error for missing `q` or invalid `pwindow`, recycle `q`, `pwindow` and vector delay parameters element-wise with a warning for uneven lengths, and give the delay CDF for zero-width windows.
+  Vector delay parameters were previously misaligned when some `q` were not positive.
+  See #366, #378 and #380.
 - `update()` for `pcens` objects has a new `check` argument.
-  With `check = FALSE` the delay and primary event arguments are merged into the object without validating their names.
-  The default, `check = TRUE`, is unchanged.
-  `fitdistdoublecens()` now uses `check = FALSE` for its likelihood evaluations, as the parameter names are the same throughout a fit.
+  `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
 
 ## Documentation
