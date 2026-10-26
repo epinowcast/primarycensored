@@ -73,11 +73,8 @@ for the regularised incomplete gamma function \eqn{P}.
 It exists for every tilt, and needs \eqn{Q > 0} for
 \code{flexsurv::pgengamma()}.
 For \eqn{\rho > 0} its terms alternate in sign and cancel.
-The numerical method is used at a \code{q} where the terms of the series cancel
-by more than 1e5, where \eqn{\rho q \ge 400}, and in the upper tail,
-where the series has no tail form and the terms of the difference between
-the endpoints exceed the smaller of the CDF and its survival function by
-more than 1e5.
+Where they cancel badly, or \eqn{\rho q \ge 400}, the numerical method is
+used.
 
 The direct form cancels as \eqn{\rho \to 0}.
 With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in

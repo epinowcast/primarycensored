@@ -35,11 +35,8 @@
 #' It exists for every tilt, and needs \eqn{Q > 0} for
 #' `flexsurv::pgengamma()`.
 #' For \eqn{\rho > 0} its terms alternate in sign and cancel.
-#' The numerical method is used at a `q` where the terms of the series cancel
-#' by more than 1e5, where \eqn{\rho q \ge 400}, and in the upper tail,
-#' where the series has no tail form and the terms of the difference between
-#' the endpoints exceed the smaller of the CDF and its survival function by
-#' more than 1e5.
+#' Where they cancel badly, or \eqn{\rho q \ge 400}, the numerical method is
+#' used.
 #'
 #' The direct form cancels as \eqn{\rho \to 0}.
 #' With \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \eqn{t}, two series in
@@ -256,7 +253,7 @@ pcens_cdf.pcens_pgengamma_dexpgrowth <- function(
   }
   result <- pmin(1, exp(log_cdf))
   # NaN is where the closed form is not reliable
-  numerical <- which(is.na(result))
+  numerical <- which(is.nan(result))
   if (length(numerical) > 0L) {
     result[numerical] <- pcens_cdf.default(object, q[numerical], pwindow)
   }

@@ -615,9 +615,13 @@ vector primarycensored_analytical_lcdf_vectorized(
               d - 1 | dist_id, params, pwindow, primary_id, primary_params
             );
           }
-          log_cdfs[d] = log(shift + primarycensored_numeric_cdf(
+          real ode_cdf = primarycensored_numeric_cdf(
             d | dist_id, params, pwindow, primary_id, primary_params
-          ));
+          );
+          // The ODE CDF increases, so only solver error makes this negative
+          log_cdfs[d] = log(
+            shift + ode_cdf > 0 ? shift + ode_cdf : ode_cdf
+          );
           is_ode = 1;
         } else {
           is_ode = 0;
