@@ -338,12 +338,14 @@ It takes `pwindow`, as the admissibility of some windows, such as the truncated 
 For the Gumbel window, with any delay, and for the log-logistic delay with the uniform window the numerical method is specific to the pair.
 In R these are `.gumbel_numeric()` and `.loglogistic_numeric_cdf()`.
 In Stan they are `primarycensored_gumbel_numeric_lcdf()` and `loglogistic_numeric_lcdf()`.
+A zero-width window gives the delay CDF directly, for every pair.
+The uniform window methods for the gamma, lognormal, Weibull and generalised gamma delays recycle a vector `pwindow` against `q`.
 The numerical method is used in the following cases.
 
 | Condition | R | Stan |
 |:---|:---|:---|
 | The transform is not available at the parameters | numerical method for every `q` | numerical method |
-| `pwindow` is not a single positive finite number | numerical method for every `q` | not applicable |
+| `pwindow` is not a single positive finite number, for the tilted, logistic and Gumbel windows and the log-logistic delay | numerical method for every `q` | not applicable |
 | A series or error check fails at one `q` | numerical method for that `q` | numerical method for that `q` |
 | Lognormal delay, exponential tilt, fewer than 10 `q` and $|\rho| w_P \leq 1$ | numerical method for every `q` | not applicable |
 | `use_numeric = TRUE` | numerical method for every `q` | not applicable |
