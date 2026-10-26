@@ -7,6 +7,7 @@
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
   See #377.
 - Stan has uniform primary analytical solutions for inverse gamma, inverse chi-square and scaled inverse chi-square delays.
+  `pcens_cdf()` has them for `extraDistr::pinvgamma()` and `extraDistr::pinvchisq()`, which need the suggested extraDistr package.
   They need a finite mean and otherwise use the numerical path.
   See #377.
 

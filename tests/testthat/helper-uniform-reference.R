@@ -105,6 +105,23 @@ unif_cases <- function() {
         list(a = 5, b = 2)
       )
     )
+    cases[[length(cases) + 1L]] <- list(
+      name = "inverse gamma", pdist = extraDistr::pinvgamma,
+      rdist = extraDistr::rinvgamma,
+      grid = list(
+        list(alpha = 3, beta = 2), list(alpha = 1.5, beta = 1),
+        list(alpha = 2, beta = 3), list(alpha = 10, beta = 20),
+        list(alpha = 1.1, beta = 0.5)
+      )
+    )
+    cases[[length(cases) + 1L]] <- list(
+      name = "inverse chi-square", pdist = extraDistr::pinvchisq,
+      rdist = extraDistr::rinvchisq,
+      grid = list(
+        list(nu = 5), list(nu = 3), list(nu = 4, tau = 2),
+        list(nu = 10, tau = 2), list(nu = 2.5, tau = 0.3)
+      )
+    )
   }
   cases
 }

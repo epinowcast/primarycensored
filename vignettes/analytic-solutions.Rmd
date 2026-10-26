@@ -428,6 +428,7 @@ For $\alpha \leq 1$ the mean is infinite and this form does not apply, so the nu
 The inverse chi-square distribution with $\nu$ degrees of freedom is the inverse gamma with shape $\nu / 2$ and scale $1 / 2$.
 The scaled inverse chi-square distribution with scale $s$ is the inverse gamma with shape $\nu / 2$ and scale $\nu s^2 / 2$.
 Both need $\nu > 2$ and otherwise use the numerical path.
+Base R has none of these distributions, so in R `pcens_cdf()` uses this solution for `extraDistr::pinvgamma()` and `extraDistr::pinvchisq()`, which need the extraDistr package.
 
 ## Pareto distribution
 

@@ -10,9 +10,9 @@ pcd_distributions <- data.frame(
   pdist = c(
     "plnorm", "pgamma", "pweibull", "pexp", NA, "pnbinom",
     "ppois", NA, "pbeta", "pbinom", NA, "pcauchy", "pchisq",
-    NA, "pgumbel", NA, "plogis",
-    "pnorm", NA, NA, "ppareto",
-    NA, "pt", "punif", NA,
+    NA, "pgumbel", "pinvgamma", "plogis",
+    "pnorm", "pinvchisq", NA, "ppareto",
+    "pinvchisq", "pt", "punif", NA,
     "pdiscretestep", "pdiscretehazard", "pdiscretehazard"
   ),
   aliases = c(
