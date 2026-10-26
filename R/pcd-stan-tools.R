@@ -20,10 +20,10 @@ pcd_stan_path <- function() {
   deps <- character(0)
   for (fname in all_func_names) {
     # Match function_name followed by ( with optional whitespace, or a
-    # function passed by name (e.g. to ode_rk45_tol())
+    # function passed as an argument by name (e.g. to ode_rk45_tol())
     # Use word boundary to avoid partial matches
     pattern <- paste0(
-      "\\b", fname, "\\s*\\(|[(,]\\s*", fname, "\\s*,"
+      "\\b", fname, "\\s*\\(|[(,]\\s*", fname, "\\s*[,)]"
     )
     if (grepl(pattern, func_content)) {
       deps <- c(deps, fname)

@@ -154,6 +154,42 @@ test_that("the uniform CDF keeps the series where it is well conditioned", {
   expect_true(ill(1e6))
 })
 
+test_that("the switch to the numerical method changes the CDF by < 1e-8", {
+  pwindow <- 2
+  for (family in families) {
+    p <- family$args
+    ill <- function(q) {
+      .loglogistic_uniform_ill(
+        q, pwindow, p, .loglogistic_uniform_cdf(q, pwindow, p)
+      )
+    }
+    # Bisect for the switch, which lies between these on the log scale
+    lo <- 2 * pwindow
+    hi <- 1e12
+    expect_false(ill(lo))
+    expect_true(ill(hi))
+    for (i in 1:100) {
+      mid <- sqrt(lo * hi)
+      if (ill(mid)) hi <- mid else lo <- mid
+    }
+    cdf <- pcens_cdf(uniform_object(family), c(lo, hi), pwindow)
+    expect_lt(
+      abs(diff(cdf)), 1e-8 * min(cdf[1], 1 - cdf[1]),
+      label = family$label
+    )
+  }
+})
+
+test_that("the numerical method warns when integrate() misses its target", {
+  obj <- uniform_object(families[[3]])
+  expect_silent(.loglogistic_numeric_cdf(obj, c(1, 4, 50), 2))
+  local_mocked_bindings(.loglogistic_precision = 0)
+  expect_warning(
+    .loglogistic_numeric_cdf(obj, 1, 2),
+    "may be inaccurate at q = 1"
+  )
+})
+
 test_that("a shape below 0.01 uses the numerical method", {
   tiny <- list(pdist = pllogis_test, args = list(shape = 0.005, scale = 2))
   expect_identical(

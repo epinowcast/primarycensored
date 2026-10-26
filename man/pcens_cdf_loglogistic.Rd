@@ -37,41 +37,21 @@ or \code{rate} for the latter. The Stan functions use \verb{[scale, shape]}, the
 order of Stan's \code{loglogistic_cdf()}.
 
 With \eqn{G_1(t) = \int_0^t F(u) du} the CDF is
-\eqn{\{G_1(q) - G_1(q - w)\} / w}, where
-\eqn{G_1(t) = t F(t) (1 - r_{1/k}(A))}, \eqn{A = (t / \lambda)^k} and
-\deqn{r_a(A) = \frac{1 + A}{A^{a + 1}} \int_0^A \frac{y^a}{(1 + y)^2} dy.}
-The ratio is at most \eqn{1 / (a + 1)}.
-Base R has no Gauss hypergeometric function, and the incomplete beta form
-holds only for \eqn{a < 1}.
-\code{.loglogistic_ratio()} therefore uses three series that do not cancel,
-for \eqn{A \le 1}, \eqn{1 < A \le 3} and \eqn{A > 3}.
-Each unique endpoint is evaluated once.
-
-\strong{Fallback to the numerical method.} The solution is used for a shape of
-at least 0.01. Within this limit a bound on the rounding error of the
-difference of \eqn{G_1} is compared with the smaller of the CDF and the
-survival. The numerical method is used where it exceeds 1e-8 of that tail,
-or 1e-6 of the density of the CDF.
-The bound is not taken below 1e-15 in the upper tail.
-The same rule is used in Stan.
-The numerical method integrates the delay CDF, or the survival where the
-delay CDF at the mean primary event time is above a half, with a relative
-tolerance of 1e-13.
-The switch between methods makes the CDF discontinuous by about 1e-8 of
-the smaller tail.
+\eqn{\{G_1(q) - G_1(q - w)\} / w}, evaluated with series for a shape of
+at least 0.01.
+The numerical method is used where this difference loses precision, so
+the CDF can step by about 1e-8 of the smaller tail at the switch.
+See \code{vignette("analytic-solutions")} for the derivation and the switching
+rule.
 }
 \examples{
+\dontshow{if (requireNamespace("flexsurv", quietly = TRUE)) withAutoprint(\{ # examplesIf}
 # Log-logistic delay with a uniform primary
-pllogis <- add_name_attribute(
-  function(q, shape, scale) {
-    plogis(shape * (log(pmax(q, 0)) - log(scale)))
-  },
-  "pllogis"
-)
 obj <- new_pcens(
-  pdist = pllogis, dprimary = dunif,
+  pdist = flexsurv::pllogis, dprimary = dunif,
   primary_args = list(), shape = 2, scale = 5
 )
 pcens_cdf(obj, q = c(1, 4, 8), pwindow = 2)
+\dontshow{\}) # examplesIf}
 }
 \concept{pcens}
