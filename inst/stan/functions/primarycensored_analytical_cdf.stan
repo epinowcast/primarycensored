@@ -1634,6 +1634,58 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
 }
 
 /**
+  * Compute the exponentially tilted log CDF with shared tilt quantities
+  * @ingroup exponential_tilt_solutions
+  *
+  * As primarycensored_exptilt_lcdf(), with the output of
+  * log_tilt_transform_context() passed in so that calls at several delays
+  * can share it. The context is only used by the direct form.
+  *
+  * @param d Delay
+  * @param dist_id Distribution identifier, see primarycensored_exptilt_lcdf()
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param rho Tilt, the exponential growth rate of the primary
+  * @param context Output of log_tilt_transform_context() for -rho
+  *
+  * @return Log of the primary event censored CDF at d
+  */
+real primarycensored_exptilt_lcdf_shared(data real d, int dist_id,
+                                         array[] real params,
+                                         data real pwindow, real rho,
+                                         vector context) {
+  int positive = dist_has_positive_support(dist_id);
+  if (positive && d <= 0) {
+    return negative_infinity();
+  }
+  if (pwindow == 0) return dist_lcdf(d | params, dist_id);
+  real q = d - pwindow;
+  int form = primarycensored_exptilt_form(d, dist_id, rho, pwindow);
+  if (form == 1) {
+    return primarycensored_exptilt_small_window_lcdf_from_terms(
+      primarycensored_tilt_moments(d, dist_id, params),
+      primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
+    );
+  }
+  if (form == 2) {
+    return primarycensored_exptilt_small_delay_lcdf_from_terms(
+      primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
+    );
+  }
+  real log_cdf = primarycensored_exptilt_lcdf_from_terms(
+    primarycensored_exptilt_terms(d, dist_id, rho, params, context),
+    primarycensored_exptilt_terms(q, dist_id, rho, params, context),
+    d, rho, pwindow
+  );
+  if (is_nan(log_cdf)) {
+    return log(
+      primarycensored_numeric_cdf(d | dist_id, params, pwindow, 2, {rho})
+    );
+  }
+  return log_cdf;
+}
+
+/**
   * Compute the primary event censored log CDF for an exponentially tilted
   * primary
   * @ingroup exponential_tilt_solutions
@@ -1655,34 +1707,46 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
 real primarycensored_exptilt_lcdf(data real d, int dist_id,
                                   array[] real params, data real pwindow,
                                   real rho) {
-  int positive = dist_has_positive_support(dist_id);
-  if (positive && d <= 0) {
-    return negative_infinity();
+  vector[4] context = rep_vector(0, 4);
+  if (primarycensored_exptilt_form(d, dist_id, rho, pwindow) == 0) {
+    context = log_tilt_transform_context(dist_id, -rho, params);
   }
-  if (pwindow == 0) return dist_lcdf(d | params, dist_id);
-  real q = d - pwindow;
-  int form = primarycensored_exptilt_form(d, dist_id, rho, pwindow);
-  if (form == 1) {
-    return primarycensored_exptilt_small_window_lcdf_from_terms(
-      primarycensored_tilt_moments(d, dist_id, params),
-      primarycensored_tilt_moments(q, dist_id, params), rho, pwindow
-    );
-  }
-  if (form == 2) {
-    return primarycensored_exptilt_small_delay_lcdf_from_terms(
-      primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
-    );
-  }
-  vector[4] context = log_tilt_transform_context(dist_id, -rho, params);
-  real log_cdf = primarycensored_exptilt_lcdf_from_terms(
-    primarycensored_exptilt_terms(d, dist_id, rho, params, context),
-    primarycensored_exptilt_terms(q, dist_id, rho, params, context),
-    d, rho, pwindow
+  return primarycensored_exptilt_lcdf_shared(
+    d, dist_id, params, pwindow, rho, context
   );
-  if (is_nan(log_cdf)) {
-    return log(
-      primarycensored_numeric_cdf(d | dist_id, params, pwindow, 2, {rho})
-    );
+}
+
+/**
+  * Compute the exponentially tilted log CDF at the two ends of an interval
+  * @ingroup exponential_tilt_solutions
+  *
+  * As primarycensored_exptilt_lcdf() at d and d_upper, with
+  * log_tilt_transform_context() computed once for both. Used by
+  * primarycensored_lpmf().
+  *
+  * @param d Lower end of the interval
+  * @param d_upper Upper end of the interval
+  * @param dist_id Distribution identifier, see primarycensored_exptilt_lcdf()
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param rho Tilt, the exponential growth rate of the primary
+  *
+  * @return Vector of the log CDF at d and at d_upper
+  */
+vector primarycensored_exptilt_lcdf_pair(data real d, data real d_upper,
+                                         int dist_id, array[] real params,
+                                         data real pwindow, real rho) {
+  vector[4] context = rep_vector(0, 4);
+  if (primarycensored_exptilt_form(d, dist_id, rho, pwindow) == 0
+      || primarycensored_exptilt_form(d_upper, dist_id, rho, pwindow) == 0) {
+    context = log_tilt_transform_context(dist_id, -rho, params);
   }
-  return log_cdf;
+  return [
+    primarycensored_exptilt_lcdf_shared(
+      d, dist_id, params, pwindow, rho, context
+    ),
+    primarycensored_exptilt_lcdf_shared(
+      d_upper, dist_id, params, pwindow, rho, context
+    )
+  ]';
 }

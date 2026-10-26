@@ -339,16 +339,31 @@ real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
   if (d < L) {
     return negative_infinity();
   }
-  real log_cdf_upper = primarycensored_lcdf(
-    d_upper | dist_id, params, pwindow,
-    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-    positive_infinity(), primary_id, primary_params
-  );
-  real log_cdf_lower = primarycensored_lcdf(
-    d | dist_id, params, pwindow,
-    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-    positive_infinity(), primary_id, primary_params
-  );
+  real log_cdf_upper;
+  real log_cdf_lower;
+  if (check_for_exptilt(dist_id, primary_id)
+      && check_for_analytical_delay(dist_id, params, primary_id,
+                                    primary_params, d_upper, pwindow)
+      && check_for_analytical_delay(dist_id, params, primary_id,
+                                    primary_params, d, pwindow)) {
+    // Share the tilt quantities of the two analytical evaluations
+    vector[2] log_cdfs = primarycensored_exptilt_lcdf_pair(
+      d, d_upper, dist_id, params, pwindow, primary_params[1]
+    );
+    log_cdf_lower = log_cdfs[1];
+    log_cdf_upper = log_cdfs[2];
+  } else {
+    log_cdf_upper = primarycensored_lcdf(
+      d_upper | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+    log_cdf_lower = primarycensored_lcdf(
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+  }
 
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L))).
   // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
