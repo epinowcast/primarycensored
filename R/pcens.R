@@ -156,10 +156,10 @@ new_pcens <- function(
 #'   as `...` is merged into `object$args`. Defaults to `NULL`, which leaves
 #'   the primary event distribution arguments unchanged.
 #'
-#' @param check Logical. If `FALSE`, skip validation of `...` and
-#'   `primary_args`. Use this when repeatedly updating one object with names
-#'   that have already been checked. As `check` comes after `...`, a delay
-#'   parameter called `check` cannot be set. Defaults to `TRUE`.
+#' @param check Logical. If `TRUE`, the default, validate `...` and
+#'   `primary_args`. Set to `FALSE` when repeatedly updating one object with
+#'   names that have already been checked. As `check` comes after `...`, a
+#'   delay parameter called `check` cannot be set.
 #'
 #' @details
 #' Parameters are merged rather than replaced as a whole, so
@@ -171,11 +171,11 @@ new_pcens <- function(
 #' Otherwise an error is raised. Names in `primary_args` are not checked
 #' against `dprimary`.
 #'
-#' With `check = FALSE` none of these checks are run.
-#' Unnamed and misspelt parameters are not detected.
-#' A fully unnamed `...` is ignored.
-#' Misspelt names are added to the object and only fail, or are ignored,
-#' when the object is evaluated.
+#' With `check = FALSE` none of these checks are run, so only use it with
+#' names that have already been checked.
+#' A fully unnamed `...` is then ignored.
+#' Misspelt or partly unnamed parameters are added to the object, and when
+#' it is evaluated they may give an error, be ignored or change the result.
 #'
 #' @return A `pcens` object with the same class as `object` and updated
 #'   `args`, `primary_args` and `dprimary_args` fields. See [new_pcens()] for
@@ -206,7 +206,28 @@ update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
   new_args <- list(...)
   nms <- names(new_args)
   if (!isFALSE(check)) {
-    .check_update_args(object, new_args, primary_args)
+    if (length(new_args) > 0L) {
+      .check_named_list(new_args, "Delay parameters passed to update()")
+    }
+    unknown <- nms[!nms %in% names(object$args)]
+    if (length(unknown) > 0L) {
+      # Drop the first formal, the point at which pdist is evaluated
+      pdist_args <- names(formals(object$pdist))[-1]
+      unknown <- unknown[!unknown %in% pdist_args]
+      if (length(unknown) > 0L && !is.null(pdist_args) &&
+        !"..." %in% pdist_args) {
+        stop(
+          "Unknown delay parameter(s) for pdist: ", toString(unknown), ".",
+          call. = FALSE
+        )
+      }
+    }
+    if (!is.null(primary_args) && !is.list(primary_args)) {
+      stop("primary_args must be a list.", call. = FALSE)
+    }
+    if (length(primary_args) > 0L) {
+      .check_named_list(primary_args, "primary_args")
+    }
   }
   if (length(new_args) > 0L) {
     object$args[nms] <- new_args
@@ -216,44 +237,6 @@ update.pcens <- function(object, ..., primary_args = NULL, check = TRUE) {
     object$dprimary_args <- object$primary_args
   }
   object
-}
-
-#' Validate the arguments passed to `update.pcens()`
-#'
-#' @inheritParams update.pcens
-#'
-#' @param new_args Named list of delay parameters, from `...`.
-#'
-#' @return `NULL` invisibly. Called for its errors.
-#'
-#' @keywords internal
-.check_update_args <- function(object, new_args, primary_args) {
-  if (length(new_args) > 0L) {
-    .check_named_list(new_args, "Delay parameters passed to update()")
-    unknown <- names(new_args)[!names(new_args) %in% names(object$args)]
-    if (length(unknown) > 0L) {
-      # Drop the first formal, the point at which pdist is evaluated
-      pdist_args <- names(formals(object$pdist))[-1]
-      if (!is.null(pdist_args) && !"..." %in% pdist_args) {
-        unknown <- unknown[!unknown %in% pdist_args]
-        if (length(unknown) > 0L) {
-          stop(
-            "Unknown delay parameter(s) for pdist: ", toString(unknown), ".",
-            call. = FALSE
-          )
-        }
-      }
-    }
-  }
-  if (!is.null(primary_args)) {
-    if (!is.list(primary_args)) {
-      stop("primary_args must be a list.", call. = FALSE)
-    }
-    if (length(primary_args) > 0L) {
-      .check_named_list(primary_args, "primary_args")
-    }
-  }
-  invisible(NULL)
 }
 
 #' Check that every element of a list is named
