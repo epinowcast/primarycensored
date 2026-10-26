@@ -18,7 +18,7 @@
 
 .pcens_tilt_moments(object, t)
 
-.pcens_tilt_fits(object, xi, t, pwindow = 0)
+.pcens_tilt_fits(object, t, xi, pwindow = 0)
 
 .pcens_tilt_pair(object, t, xi)
 }
@@ -41,13 +41,11 @@ up to \code{t}.}
 \item \code{.pcens_tilt_transform()}: the log of the transform at each \code{t}.
 \item \code{.pcens_tilt_available()}: whether the transform is closed form and the
 tilted delay exists for \code{xi}. If not, the numerical method is used.
-\item \code{.pcens_tilt_fits()}: \code{TRUE} at each \code{t} where the transform is used
-for a window \code{pwindow}, otherwise the numerical method. Only called where
-\code{.pcens_tilt_available()} is \code{TRUE}. The default is \code{TRUE}.
+\item \code{.pcens_tilt_fits()}: a logical vector, one value per \code{t}, \code{FALSE}
+where the numerical method is used for a window \code{pwindow}. Only called
+where \code{.pcens_tilt_available()} is \code{TRUE}.
 \item \code{.pcens_tilt_pair()}: a matrix with columns \code{lower} and \code{upper}, the log
-transform up to and beyond each \code{t}. The default calls
-\code{.pcens_tilt_transform()} twice and keeps the \code{log_loss} attribute of
-the lower transform.
+transform up to and beyond each \code{t}.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
 \item \code{.pcens_tilt_moments()}: a matrix with columns \code{G1}, \code{G2} and \code{G3}, the
 log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \code{t}, \code{-Inf} below
@@ -62,7 +60,6 @@ They are built from the tilt transform
 for delays on the non-negative reals.
 A delay is added with a method for each generic, dispatched on the delay
 class of a \code{pcens} object.
-\code{.pcens_tilt_fits()} and \code{.pcens_tilt_pair()} have defaults.
 The Stan equivalents are \code{check_for_tilt_transform()},
 \code{log_tilt_transform_pair()} and \code{primarycensored_tilt_moments()}.
 }

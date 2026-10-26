@@ -31,43 +31,27 @@
   )
 }
 
-# Gauss-Legendre rule shared by all panels, with as many nodes as Stan
-.lnorm_rule_size <- 32L
-.lnorm_cache <- new.env(parent = emptyenv())
-
-# Gauss-Legendre nodes `x`, weights `w` and `log_w` on [-1, 1], cached
-.lnorm_rule <- function(n = .lnorm_rule_size) {
-  key <- as.character(n)
-  if (!is.null(.lnorm_cache[[key]])) {
-    return(.lnorm_cache[[key]])
-  }
-  # Eigenvalues of the Jacobi matrix, polished by Newton
-  i <- seq_len(n - 1L)
-  jacobi <- matrix(0, n, n)
-  off <- i / sqrt(4 * i^2 - 1)
-  jacobi[cbind(i, i + 1L)] <- off
-  jacobi[cbind(i + 1L, i)] <- off
-  x <- sort(eigen(jacobi, symmetric = TRUE, only.values = TRUE)$values)
-  legendre <- function(x) {
-    p_prev <- rep(1, n)
-    p <- x
-    for (j in 2:n) {
-      p_next <- ((2 * j - 1) * x * p - (j - 1) * p_prev) / j
-      p_prev <- p
-      p <- p_next
-    }
-    list(p = p, dp = n * (x * p - p_prev) / (x^2 - 1))
-  }
-  for (iter in seq_len(3)) {
-    lg <- legendre(x)
-    x <- x - lg$p / lg$dp
-  }
-  lg <- legendre(x)
-  w <- 2 / ((1 - x^2) * lg$dp^2)
-  rule <- list(x = x, w = w, log_w = log(w))
-  .lnorm_cache[[key]] <- rule
-  rule
-}
+# 32 point Gauss-Legendre rule on [-1, 1] shared by all panels, nodes `x`
+# and log weights `log_w`, the same as in Stan
+.lnorm_rule <- local({
+  x <- c(
+    0.048307665687738324, 0.14447196158279649, 0.23928736225213706,
+    0.33186860228212767, 0.42135127613063533, 0.50689990893222936,
+    0.5877157572407623, 0.66304426693021523, 0.73218211874028971,
+    0.79448379596794239, 0.84936761373256997, 0.89632115576605209,
+    0.93490607593773967, 0.96476225558750639, 0.98561151154526838,
+    0.99726386184948157
+  )
+  log_w <- c(
+    -2.3377969318791947, -2.3471775191742132, -2.3661171972104831,
+    -2.3949868407368724, -2.4343797887852916, -2.4851635920714812,
+    -2.5485636934665021, -2.626297960160425, -2.7207977655059796,
+    -2.8355865687925124, -2.9759677006607701, -3.1503787891021764,
+    -3.3733722294882642, -3.6733185431605069, -4.1181622816923937,
+    -4.9591900848988502
+  )
+  list(x = c(-rev(x), x), log_w = c(rev(log_w), log_w))
+})
 
 # Principal branch of the Lambert W function for x >= 0, by Halley's method
 .lambert_w0 <- function(x) {
@@ -140,7 +124,7 @@
 # one panel ending at t. The other is the difference from the total, which
 # does not cancel as it holds the mass on the far side of the mode.
 .lnorm_tilt_quadrature <- function(t, meanlog, sdlog, xi,
-                                   rule = .lnorm_rule()) {
+                                   rule = .lnorm_rule) {
   rho <- -xi
   bump <- .lnorm_bump(meanlog, sdlog, rho, rule)
   n <- length(t)
@@ -290,7 +274,7 @@
 }
 
 #' @exportS3Method
-.pcens_tilt_fits.pcens_plnorm <- function(object, xi, t, pwindow = 0) {
+.pcens_tilt_fits.pcens_plnorm <- function(object, t, xi, pwindow = 0) {
   if (xi <= 0) {
     return(rep(TRUE, length(t)))
   }

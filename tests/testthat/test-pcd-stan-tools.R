@@ -244,6 +244,12 @@ test_that("pcd_stan_function_deps includes functions passed as arguments", {
     "loglogistic_numeric_ode" %in%
       pcd_stan_function_deps("loglogistic_numeric_lcdf")
   )
+  # A function passed as the last argument, and an unrelated name
+  deps <- .pcd_stan_function_deps(
+    "real g(real x) { return solve(x, f_last) + f_lastly; }",
+    c("f_last", "f_lastl", "f_lastly_not")
+  )
+  expect_identical(deps, "f_last")
 })
 
 test_that("functions loaded with their dependencies pass the Stan syntax
