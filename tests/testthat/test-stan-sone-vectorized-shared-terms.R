@@ -64,6 +64,28 @@ test_that(
   }
 )
 
+test_that("primarycensored_uniform_lcdf_pair matches primarycensored_lcdf
+  at d and d + pwindow", {
+  for (dist in vectorized_dists) {
+    for (params in dist$params) {
+      for (pwindow in c(0.5, 1, 3)) {
+        for (d in c(0, 0.5, 1, 4, 12)) {
+          expect_identical(
+            primarycensored_uniform_lcdf_pair(
+              d, dist$dist_id, params, pwindow
+            ),
+            per_delay_lcdf(c(d, d + pwindow), dist$dist_id, params, pwindow),
+            info = paste(
+              "dist", dist$dist_id, "params", toString(params),
+              "pwindow", pwindow, "d", d
+            )
+          )
+        }
+      }
+    }
+  }
+})
+
 test_that("primarycensored_analytical_lcdf_vectorized matches
   primarycensored_lcdf at each delay", {
   n <- 41L
@@ -306,11 +328,7 @@ test_that("primarycensored_lpmf with d_upper - d = pwindow matches the
   testthat::skip_if(
     is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
   )
-  functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
-  )
-  code <- paste0(
-    functions, "\n",
+  model <- compile_stan_functions_model("lpmfsharedterms", paste0(
     "data {\n",
     "  int N;\n",
     "  array[N] int d;\n",
@@ -345,11 +363,6 @@ test_that("primarycensored_lpmf with d_upper - d = pwindow matches the
     "    }\n",
     "  }\n",
     "}\n"
-  )
-  path <- file.path(tempdir(), "pcd_lpmf_shared_terms.stan")
-  writeLines(code, path)
-  model <- suppressMessages(suppressWarnings(
-    cmdstanr::cmdstan_model(path, compile_model_methods = TRUE)
   ))
   rows <- expand.grid(d = 0:12, pwindow = c(1, 2, 3), trunc = 1:3)
   rows$L <- c(0, 2, -Inf)[rows$trunc]

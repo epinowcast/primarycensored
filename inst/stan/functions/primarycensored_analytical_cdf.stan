@@ -79,6 +79,38 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
 }
 
 /**
+  * Compute the uniform primary censored log CDFs at d and d + pwindow
+  * @ingroup analytical_solution_helpers
+  *
+  * The window for d + pwindow starts at d, so the two CDFs need the terms
+  * from primarycensored_uniform_terms() at three points rather than four.
+  * Each value is the same as from primarycensored_analytical_lcdf() without
+  * truncation. Only for cases where check_for_uniform_terms() is 1.
+  *
+  * @param d Delay, at least 0
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window, greater than 0
+  *
+  * @return Vector [log F(d), log F(d + pwindow)]
+  */
+vector primarycensored_uniform_lcdf_pair(data real d, data int dist_id,
+                                         array[] real params,
+                                         data real pwindow) {
+  vector[2] terms_d = primarycensored_uniform_terms(d, dist_id, params);
+  real q = max({d - pwindow, 0});
+  return [
+    primarycensored_uniform_lcdf_from_terms(
+      terms_d, primarycensored_uniform_terms(q, dist_id, params), pwindow
+    ),
+    primarycensored_uniform_lcdf_from_terms(
+      primarycensored_uniform_terms(d + pwindow, dist_id, params), terms_d,
+      pwindow
+    )
+  ]';
+}
+
+/**
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *

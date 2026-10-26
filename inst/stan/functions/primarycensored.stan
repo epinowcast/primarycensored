@@ -307,20 +307,14 @@ real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
   }
   real log_cdf_upper;
   real log_cdf_lower;
+  // d_upper > d is checked above, so here pwindow = d_upper - d > 0.
   if (d >= 0 && d_upper - d == pwindow &&
       check_for_uniform_terms(dist_id, primary_id)) {
-    // The window for d_upper starts at d, so the two analytical CDFs need
-    // the uniform primary terms at three distinct points rather than four.
-    vector[2] terms_d = primarycensored_uniform_terms(d, dist_id, params);
-    log_cdf_upper = primarycensored_uniform_lcdf_from_terms(
-      primarycensored_uniform_terms(d_upper, dist_id, params), terms_d,
-      pwindow
+    vector[2] log_cdfs = primarycensored_uniform_lcdf_pair(
+      d, dist_id, params, pwindow
     );
-    log_cdf_lower = primarycensored_uniform_lcdf_from_terms(
-      terms_d,
-      primarycensored_uniform_terms(max({d - pwindow, 0}), dist_id, params),
-      pwindow
-    );
+    log_cdf_lower = log_cdfs[1];
+    log_cdf_upper = log_cdfs[2];
   } else {
     log_cdf_upper = primarycensored_lcdf(
       d_upper | dist_id, params, pwindow,
@@ -646,4 +640,81 @@ vector primarycensored_sone_pmf_vectorized(
       max_delay, L, D, dist_id, params, pwindow, primary_id, primary_params
     )
   );
+}
+
+/**
+  * Group delays that can share one call to the vectorised PMF
+  * @ingroup primary_censored_vectorized
+  *
+  * Rows with a secondary window of 1 (d_upper = d + 1) and d >= 0 that share
+  * pwindow, L and D can take their log PMF from one
+  * primarycensored_sone_lpmf_vectorized() call, which computes each CDF and
+  * F(D) once rather than once per row. A group is only kept when its rows
+  * number at least half of the delays 0:max(d) that the call computes, so
+  * sparse groups do not compute many unused CDFs. Rows are matched on L and
+  * pwindow within runs of equal D after sorting on D.
+  *
+  * @param d Delays
+  * @param d_upper Upper bounds of the delay intervals
+  * @param pwindow Primary event windows
+  * @param L Lower truncation points
+  * @param D Upper truncation points
+  *
+  * @return Array with the group of each row, numbered from 1, or 0 for rows
+  * that are not in a kept group.
+  */
+array[] int primarycensored_sone_groups(data array[] int d,
+                                        data array[] int d_upper,
+                                        data array[] int pwindow,
+                                        data array[] real L,
+                                        data array[] real D) {
+  int N = size(d);
+  array[N] int group = rep_array(0, N);
+  array[N] int group_first; // first row of each group
+  array[N] int group_max_d;
+  array[N] int group_size;
+  int n_groups = 0;
+  array[N] int by_D = sort_indices_asc(D);
+  int run_start = 1;
+  for (k in 1:N) {
+    int i = by_D[k];
+    if (k > 1 && D[i] != D[by_D[k - 1]]) {
+      run_start = n_groups + 1;
+    }
+    if (d_upper[i] - d[i] == 1 && d[i] >= 0) {
+      int g = 0;
+      for (h in run_start:n_groups) {
+        if (pwindow[group_first[h]] == pwindow[i]
+            && L[group_first[h]] == L[i]) {
+          g = h;
+          break;
+        }
+      }
+      if (g == 0) {
+        n_groups += 1;
+        g = n_groups;
+        group_first[g] = i;
+        group_max_d[g] = d[i];
+        group_size[g] = 0;
+      }
+      group[i] = g;
+      group_max_d[g] = max(group_max_d[g], d[i]);
+      group_size[g] += 1;
+    }
+  }
+  // Renumber the kept groups and drop the sparse ones
+  array[n_groups] int kept = rep_array(0, n_groups);
+  int n_kept = 0;
+  for (g in 1:n_groups) {
+    if (group_max_d[g] + 1 <= 2 * group_size[g]) {
+      n_kept += 1;
+      kept[g] = n_kept;
+    }
+  }
+  for (i in 1:N) {
+    if (group[i] > 0) {
+      group[i] = kept[group[i]];
+    }
+  }
+  return group;
 }
