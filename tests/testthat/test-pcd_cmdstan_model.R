@@ -14,6 +14,11 @@ test_that("pcd_cmdstan_model throws error when cmdstanr is not installed", {
 skip_if_not_installed("cmdstanr")
 skip_if_not_installed("dplyr")
 
+# Each fit writes to its own temporary output_dir. cmdstanr names its CSV
+# files from the current minute and runif(), so tests that share a seed can
+# reuse a file name, and the finaliser of an earlier fit can then delete the
+# files of a later one.
+
 test_that("pcd_cmdstan_model creates a valid CmdStanModel object", {
   model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   expect_s3_class(model, "CmdStanModel")
@@ -72,6 +77,7 @@ test_that("pcd_cmdstan_model recovers true values for simple lognormal data", {
   model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   fit <- suppressMessages(suppressWarnings(model$sample(
     data = stan_data,
+    output_dir = withr::local_tempdir(),
     seed = 123,
     chains = 4,
     parallel_chains = 4,
@@ -147,6 +153,7 @@ test_that(
     model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
     fit <- suppressMessages(suppressWarnings(model$sample(
       data = stan_data,
+      output_dir = withr::local_tempdir(),
       seed = 456,
       chains = 2,
       parallel_chains = 2,
@@ -229,6 +236,7 @@ test_that(
     ))
     fit <- suppressMessages(suppressWarnings(model_parallel$sample(
       data = stan_data,
+      output_dir = withr::local_tempdir(),
       seed = 789,
       chains = 2,
       parallel_chains = 1,
@@ -307,6 +315,7 @@ test_that(
     model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
     fit <- suppressMessages(suppressWarnings(model$sample(
       data = stan_data,
+      output_dir = withr::local_tempdir(),
       seed = 456,
       chains = 2,
       parallel_chains = 2,
@@ -381,6 +390,7 @@ test_that("pcd_cmdstan_model recovers true values with no bound on D", {
   model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   fit <- suppressMessages(suppressWarnings(model$sample(
     data = stan_data,
+    output_dir = withr::local_tempdir(),
     seed = 123,
     chains = 2,
     parallel_chains = 2,
@@ -456,6 +466,7 @@ test_that(
       expect_identical(stan_data$dist_id, spec$dist_id)
       fit <- suppressMessages(suppressWarnings(model$sample(
         data = stan_data, seed = spec$seed, chains = 1,
+        output_dir = withr::local_tempdir(),
         iter_warmup = 200, iter_sampling = 200,
         refresh = 0, show_messages = FALSE
       )))
@@ -518,6 +529,7 @@ test_that(
     model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
     fit <- suppressMessages(suppressWarnings(model$sample(
       data = stan_data,
+      output_dir = withr::local_tempdir(),
       seed = 789,
       chains = 2,
       parallel_chains = 2,
