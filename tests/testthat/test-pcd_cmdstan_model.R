@@ -14,11 +14,6 @@ test_that("pcd_cmdstan_model throws error when cmdstanr is not installed", {
 skip_if_not_installed("cmdstanr")
 skip_if_not_installed("dplyr")
 
-# Each fit writes to its own temporary output_dir. cmdstanr names its CSV
-# files from the current minute and runif(), so tests that share a seed can
-# reuse a file name, and the finaliser of an earlier fit can then delete the
-# files of a later one.
-
 test_that("pcd_cmdstan_model creates a valid CmdStanModel object", {
   model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   expect_s3_class(model, "CmdStanModel")
@@ -77,6 +72,7 @@ test_that("pcd_cmdstan_model recovers true values for simple lognormal data", {
   model <- suppressMessages(suppressWarnings(pcd_cmdstan_model()))
   fit <- suppressMessages(suppressWarnings(model$sample(
     data = stan_data,
+    # Own output_dir per fit: same-seed fits can otherwise reuse CSV names.
     output_dir = withr::local_tempdir(),
     seed = 123,
     chains = 4,
