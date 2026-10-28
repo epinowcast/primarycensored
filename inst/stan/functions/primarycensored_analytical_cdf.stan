@@ -157,10 +157,10 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
-  * Both terms come from one `gamma_lcdf_logx_pair()` evaluation. The
-  * subtraction in `primarycensored_uniform_lcdf_from_terms()` amplifies their
-  * rounding error by about d / pwindow. Rejects a rate that is not positive
-  * and finite.
+  * F_T(t; k) comes from F_T(t; k + 1) and the recursion
+  * P(k, y) = P(k + 1, y) + y^k e^{-y} / Gamma(k + 1), with y = rate * t,
+  * which adds terms so stays accurate in the lower tail. Rejects a rate that
+  * is not positive and finite.
   *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
@@ -178,10 +178,14 @@ vector primarycensored_gamma_uniform_terms(real t,
   real log_rate = gamma_log_rate(rate);
   // log E where E = k * theta = shape / rate is the mean of the delay
   real log_E = log(shape) - log_rate;
-  // Both CDFs share one series or fraction evaluation at log(rate * t)
   real log_t = log(t);
-  vector[2] log_F_T = gamma_lcdf_logx_pair(log_t + log_rate, shape);
-  return [log_t + log_F_T[1], log_E + log_F_T[2]]';
+  real log_y = log_t + log_rate;
+  real log_F_T_kp1 = gamma_lcdf_logx(log_y, shape + 1);
+  real log_lead = shape * log_y - exp(log_y) - lgamma(shape + 1);
+  return [
+    log_t + log_sum_exp(log_F_T_kp1, log_lead),
+    log_E + log_F_T_kp1
+  ]';
 }
 
 /**
@@ -273,12 +277,6 @@ vector primarycensored_weibull_uniform_terms(real t,
   * replaced by k + 1/shape, so this generalises the Gamma (shape = 1) and
   * Weibull (k = 1) solutions.
   *
-  * The subtraction in `primarycensored_uniform_lcdf_from_terms()` loses
-  * precision for large `k * shape`, with errors above 1e-6 possible once it
-  * exceeds about 12000.
-  * The two terms use separate `gamma_lcdf_logx()` calls, since the shapes
-  * k and k + 1 / shape do not differ by one.
-  *
   * @param t Time (d or q)
   * @param params Array of generalised gamma distribution parameters
   * [shape, scale, k]
@@ -296,11 +294,9 @@ vector primarycensored_gengamma_uniform_terms(real t,
   real k = params[3];
   real k_shift = k + inv(shape);
   real log_E = log(scale) + lgamma(k_shift) - lgamma(k);
-  real log_t = log(t);
-  real log_x = shape * (log_t - log(scale));
   return [
-    log_t + gamma_lcdf_logx(log_x, k),
-    log_E + gamma_lcdf_logx(log_x, k_shift)
+    log(t) + gengamma_lcdf(t | shape, scale, k),
+    log_E + gengamma_lcdf(t | shape, scale, k_shift)
   ]';
 }
 
@@ -1553,7 +1549,7 @@ vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
   * a series. Only defined where check_for_tilt_transform() is 1.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
-  * (rate / (rate - xi))^shape, with both tails from gamma_log_pq_logx().
+  * (rate / (rate - xi))^shape, with both tails from gamma_lcdf_lccdf_logx().
   *
   * The lognormal (1) has no closed form, see
   * primarycensored_lognormal_tilt_pair(). Its upper transform is `inf` for
@@ -1581,7 +1577,7 @@ vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
     real log_total = -shape * log1m(xi / rate);
     if (t <= 0) return [negative_infinity(), log_total, 0]';
     return append_row(
-      log_total + gamma_log_pq_logx(log(t) + log(rate - xi), shape), 0
+      log_total + gamma_lcdf_lccdf_logx(log(t) + log(rate - xi), shape), 0
     );
   } else if (dist_id == 4) {
     real rate = params[1];
@@ -1608,7 +1604,7 @@ vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
     if (xi == 0) {
       if (t <= 0) return [negative_infinity(), 0, 0]';
       return append_row(
-        gamma_log_pq_logx(shape * (log(t) - log(scale)), k), 0
+        gamma_lcdf_lccdf_logx(shape * (log(t) - log(scale)), k), 0
       );
     }
     if (t <= 0) return [negative_infinity(), not_a_number(), 0]';
@@ -1686,13 +1682,20 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   real log_t = log(t);
   real log_x = log_t + log(rate);
   // log_mk is the log of int_0^t u^k f(u) du
-  vector[2] log_p01 = gamma_lcdf_logx_pair(log_x, shape);
-  vector[2] log_p23 = gamma_lcdf_logx_pair(log_x, shape + 2);
-  real log_m0 = log_p01[1];
-  real log_m1 = log(shape) - log(rate) + log_p01[2];
-  real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate) + log_p23[1];
+  real x = exp(log_x);
+  real log_p1 = gamma_lcdf_logx(log_x, shape + 1);
+  real log_p3 = gamma_lcdf_logx(log_x, shape + 3);
+  // P(a, x) = P(a + 1, x) + x^a exp(-x) / Gamma(a + 1) adds terms, so stays
+  // accurate in the lower tail
+  real log_p0 = log_sum_exp(log_p1, shape * log_x - x - lgamma(shape + 1));
+  real log_p2 = log_sum_exp(
+    log_p3, (shape + 2) * log_x - x - lgamma(shape + 3)
+  );
+  real log_m0 = log_p0;
+  real log_m1 = log(shape) - log(rate) + log_p1;
+  real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate) + log_p2;
   real log_m3 = log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate)
-                + log_p23[2];
+                + log_p3;
   return primarycensored_moments_from_partial(
     log_t, [log_m0, log_m1, log_m2, log_m3]'
   );
