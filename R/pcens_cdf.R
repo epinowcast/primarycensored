@@ -740,7 +740,8 @@ pcens_cdf.pcens_pweibull_dunif <- function(
 #' expectation distribution is \eqn{\tilde F_T(t) = P(k + 1/a, (t / \theta)^a)},
 #' so the solution generalises the gamma (`shape = 1`) and Weibull (`k = 1`)
 #' cases.
-#' See `vignette("analytic-solutions")` for the derivation.
+#' See `vignette("analytic-solutions")` for the partial moment and
+#' `vignette("why-it-works")` for the uniform primary solution.
 #'
 #' @inheritParams pcens_cdf
 #'

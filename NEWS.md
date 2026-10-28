@@ -49,6 +49,11 @@
   `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
 
+## Documentation
+
+- The "Analytic solutions" vignette now covers every primary event window and delay with an analytic solution, and says when the numerical method is used instead.
+  See #375.
+
 # primarycensored 1.6.0
 
 This release makes `dprimarycensored()`, `pprimarycensored()`, `new_pcens()` and `fitdistdoublecens()` substantially faster.
