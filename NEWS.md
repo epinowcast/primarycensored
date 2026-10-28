@@ -36,6 +36,9 @@
 - `update()` for `pcens` objects has a new `check` argument.
   `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
+- `pcd_cmdstan_model()` fits are faster for delays with a secondary window of 1, with or without `use_reduce_sum`, and give unchanged results.
+  The Stan `primarycensored_lpmf()` is also faster for a uniform primary when `d_upper - d` equals `pwindow`.
+  See #378.
 
 # primarycensored 1.6.0
 

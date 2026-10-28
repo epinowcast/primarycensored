@@ -64,6 +64,28 @@ test_that(
   }
 )
 
+test_that("primarycensored_uniform_lcdf_pair matches primarycensored_lcdf
+  at d and d + pwindow", {
+  for (dist in vectorized_dists) {
+    for (params in dist$params) {
+      for (pwindow in c(0.5, 1, 3)) {
+        for (d in c(0, 0.5, 1, 4, 12)) {
+          expect_identical(
+            primarycensored_uniform_lcdf_pair(
+              d, dist$dist_id, params, pwindow
+            ),
+            per_delay_lcdf(c(d, d + pwindow), dist$dist_id, params, pwindow),
+            info = paste(
+              "dist", dist$dist_id, "params", toString(params),
+              "pwindow", pwindow, "d", d
+            )
+          )
+        }
+      }
+    }
+  }
+})
+
 test_that("primarycensored_analytical_lcdf_vectorized matches
   primarycensored_lcdf at each delay", {
   n <- 41L
@@ -294,5 +316,82 @@ test_that("primarycensored_sone_pmf_vectorized gradients match finite
         )
       }
     }
+  }
+})
+
+# When d_upper - d equals pwindow, primarycensored_lpmf() computes the uniform
+# primary terms at d once for both CDFs. The reference is the difference of
+# two primarycensored_lcdf() calls, which computes them twice.
+test_that("primarycensored_lpmf with d_upper - d = pwindow matches the
+  difference of primarycensored_lcdf in value and gradient", {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  model <- compile_stan_functions_model("lpmfsharedterms", paste0(
+    "data {\n",
+    "  int N;\n",
+    "  array[N] int d;\n",
+    "  array[N] real d_upper;\n",
+    "  array[N] real pwindow;\n",
+    "  array[N] real L;\n",
+    "  array[N] real D;\n",
+    "  int dist_id;\n",
+    "  int n_params;\n",
+    "  int use_lpmf;\n",
+    "}\n",
+    "parameters {\n",
+    "  array[n_params] real<lower=0> params;\n",
+    "}\n",
+    "model {\n",
+    "  array[0] real pp;\n",
+    "  for (i in 1:N) {\n",
+    "    if (use_lpmf) {\n",
+    "      target += primarycensored_lpmf(\n",
+    "        d[i] | dist_id, params, pwindow[i], d_upper[i], L[i], D[i],\n",
+    "        1, pp\n",
+    "      );\n",
+    "    } else {\n",
+    "      target += log_diff_exp(\n",
+    "        primarycensored_lcdf(\n",
+    "          d_upper[i] | dist_id, params, pwindow[i], L[i], D[i], 1, pp\n",
+    "        ),\n",
+    "        primarycensored_lcdf(\n",
+    "          d[i] | dist_id, params, pwindow[i], L[i], D[i], 1, pp\n",
+    "        )\n",
+    "      );\n",
+    "    }\n",
+    "  }\n",
+    "}\n"
+  ))
+  rows <- expand.grid(d = 0:12, pwindow = c(1, 2, 3), trunc = 1:3)
+  rows$L <- c(0, 2, -Inf)[rows$trunc]
+  rows$D <- c(Inf, 20, 18)[rows$trunc]
+  rows <- rows[rows$d >= rows$L, ]
+  cases <- list(
+    list(dist_id = 1L, params = c(1.5, 0.5)),
+    list(dist_id = 2L, params = c(2, 0.5)),
+    list(dist_id = 3L, params = c(1.5, 5)),
+    list(dist_id = 5L, params = c(1.5, 3, 2))
+  )
+  for (case in cases) {
+    stan_data <- list(
+      N = nrow(rows), d = rows$d, d_upper = rows$d + rows$pwindow,
+      pwindow = rows$pwindow, L = rows$L,
+      D = rows$D, dist_id = case$dist_id, n_params = length(case$params)
+    )
+    init <- list(params = case$params)
+    shared <- stan_log_prob_and_grad( # nolint: object_usage_linter.
+      model, c(stan_data, use_lpmf = 1L), init
+    )
+    reference <- stan_log_prob_and_grad( # nolint: object_usage_linter.
+      model, c(stan_data, use_lpmf = 0L), init
+    )
+    info <- paste("dist", case$dist_id)
+    expect_equal(
+      shared$log_prob, reference$log_prob,
+      tolerance = 1e-10, info = info
+    )
+    expect_equal(shared$grad, reference$grad, tolerance = 1e-8, info = info)
   }
 })
