@@ -694,7 +694,7 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   * is 1.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
-  * (rate / (rate - xi))^shape, with both tails from gamma_log_pq_logx().
+  * (rate / (rate - xi))^shape, with both tails from gamma_lcdf_lccdf_logx().
   *
   * @param t Point
   * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
@@ -711,7 +711,7 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     real rate = params[2];
     real log_total = -shape * log1m(xi / rate);
     if (t <= 0) return [negative_infinity(), log_total]';
-    return log_total + gamma_log_pq_logx(log(t) + log(rate - xi), shape);
+    return log_total + gamma_lcdf_lccdf_logx(log(t) + log(rate - xi), shape);
   } else if (dist_id == 4) {
     real rate = params[1];
     real tilted_rate = rate - xi;
@@ -776,13 +776,20 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   real log_t = log(t);
   real log_x = log_t + log(rate);
   // log_mk is the log of int_0^t u^k f(u) du
-  vector[2] log_p01 = gamma_lcdf_logx_pair(log_x, shape);
-  vector[2] log_p23 = gamma_lcdf_logx_pair(log_x, shape + 2);
-  real log_m0 = log_p01[1];
-  real log_m1 = log(shape) - log(rate) + log_p01[2];
-  real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate) + log_p23[1];
+  real x = exp(log_x);
+  real log_p1 = gamma_lcdf_logx(log_x, shape + 1);
+  real log_p3 = gamma_lcdf_logx(log_x, shape + 3);
+  // P(a, x) = P(a + 1, x) + x^a exp(-x) / Gamma(a + 1) adds terms, so stays
+  // accurate in the lower tail
+  real log_p0 = log_sum_exp(log_p1, shape * log_x - x - lgamma(shape + 1));
+  real log_p2 = log_sum_exp(
+    log_p3, (shape + 2) * log_x - x - lgamma(shape + 3)
+  );
+  real log_m0 = log_p0;
+  real log_m1 = log(shape) - log(rate) + log_p1;
+  real log_m2 = log(shape) + log(shape + 1) - 2 * log(rate) + log_p2;
   real log_m3 = log(shape) + log(shape + 1) + log(shape + 2) - 3 * log(rate)
-                + log_p23[2];
+                + log_p3;
   return primarycensored_moments_from_partial(
     log_t, [log_m0, log_m1, log_m2, log_m3]'
   );

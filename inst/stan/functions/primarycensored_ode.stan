@@ -36,6 +36,58 @@ real gamma_lcdf_logx(real log_x, real a) {
 }
 
 /**
+  * Compute the log CDF and log CCDF of a unit rate Gamma distribution from
+  * the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * Below x = a + 1 the CCDF is `log1m_exp()` of `gamma_lcdf_logx()`. Above,
+  * Q(a, x) comes from its continued fraction (modified Lentz) and the CDF
+  * from `log1m_exp()` of it. The shape gradient of `gamma_lccdf()` is not
+  * used as it can be wrong by 40% or `NaN` for shapes above about 100.
+  *
+  * @param log_x Log of the argument, log(x)
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return Vector [log P(a, exp(log_x)), log Q(a, exp(log_x))]
+  */
+vector gamma_lcdf_lccdf_logx(real log_x, real a) {
+  if (!(a > 0) || is_inf(a)) {
+    reject("gamma_lcdf_lccdf_logx: shape must be positive finite, found ", a);
+  }
+  real x = exp(log_x);
+  if (!(x >= a + 1)) {
+    real log_p = gamma_lcdf_logx(log_x, a);
+    return [log_p, log1m_exp(log_p)]';
+  }
+  if (is_inf(x)) return [0, negative_infinity()]';
+  real b = x + 1 - a;
+  real c = 1e300;
+  real d = 1 / b;
+  real h = d;
+  real delta = 1;
+  // err bounds |delta - 1|. Flooring |i - a| at 1 keeps it above 0 at an
+  // integer shape, where the fraction ends but its shape gradient does not.
+  real err = 1;
+  int i = 0;
+  while (err >= 1e-15) {
+    i += 1;
+    real an = -i * (i - a);
+    real d_prev = d;
+    b += 2;
+    d = an * d + b;
+    if (abs(d) < 1e-300) d = 1e-300;
+    c = b + an / c;
+    if (abs(c) < 1e-300) c = 1e-300;
+    d = 1 / d;
+    err *= i * fmax(abs(i - a), 1) * abs(d * d_prev / delta);
+    delta = d * c;
+    h *= delta;
+  }
+  real log_q = a * log_x - x - lgamma(a) + log(h);
+  return [log1m_exp(log_q), log_q]';
+}
+
+/**
   * Compute the log of a Gamma rate
   * @ingroup delay_log_cdfs
   *
