@@ -789,17 +789,8 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
   pwindow,
   use_numeric = FALSE
 ) {
-  # flexsurv defaults for mu and sigma
-  mu <- object$args$mu
-  sigma <- object$args$sigma
-  Q <- object$args$Q
-  if (is.null(mu)) {
-    mu <- 0
-  }
-  if (is.null(sigma)) {
-    sigma <- 1
-  }
-  if (isTRUE(use_numeric) || is.null(Q) || Q <= 0) {
+  p <- .gengamma_stacy_params(object$args)
+  if (isTRUE(use_numeric) || is.null(p)) {
     return(
       pcens_cdf.default(object, q, pwindow, use_numeric)
     )
@@ -807,7 +798,7 @@ pcens_cdf.pcens_pgengamma_dunif <- function(
 
   return(.pcens_cdf_gengamma_unif(
     q, pwindow,
-    shape = Q / sigma, scale = exp(mu) * Q^(2 * sigma / Q), k = Q^-2
+    shape = p$shape, scale = p$scale, k = p$k
   ))
 }
 
