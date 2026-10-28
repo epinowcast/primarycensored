@@ -13,9 +13,14 @@
 - Added the lognormal delay with an exponentially tilted primary event window, in `pcens_cdf()` and in Stan.
   The numerical path is used where the series for `r < 0` is slower, and in R for fewer than 10 finite quantiles where `abs(r) * pwindow` is at most 1.
   See #369.
+- Added the log-logistic delay, Stan `dist_id` 29 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
+  There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
+  See #372, #104 and #321.
 
 ## Bug fixes
 
+- `pcd_stan_function_deps()` now also finds Stan functions that are only passed to another function by name, such as an ODE system, so `pcd_load_stan_functions()` with `dependencies = TRUE` returns code that compiles.
+  See #407.
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.

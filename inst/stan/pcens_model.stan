@@ -34,14 +34,14 @@ data {
   array[N] real L;
   // upper truncation; +Inf for no upper truncation
   array[N] real D;
-  // Distribution identifier. 1..25 = parametric families. The
-  // non-parametric step CDF has the same likelihood for all three of
-  // the entries below; they only differ in the prior on the PMF /
-  // hazards:
+  // Distribution identifier. 1..25 and 29 = parametric families, 29 being the
+  // log-logistic with parameters [scale, shape]. The non-parametric step CDF
+  // has the same likelihood for all three of the entries below; they only
+  // differ in the prior on the PMF / hazards:
   //   26 = step CDF, Dirichlet prior on the PMF;
   //   27 = step CDF, Gaussian random walk on the logit hazards;
   //   28 = step CDF, IID logit random effects on the hazards.
-  int<lower=1, upper=28> dist_id;
+  int<lower=1, upper=29> dist_id;
   int<lower=1, upper=2> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters
