@@ -124,8 +124,10 @@ new_pcens <- function(
   pprimary <- .resolve_pprimary(dprimary, pprimary, dprim_name)
 
   if (isTRUE(check)) {
-    do.call(check_pdist, c(list(pdist, D = D), args))
-    check_dprimary(dprimary, pwindow, primary_args)
+    do.call(check_pdist, c(list(pdist, D = max(D)), args))
+    for (pw in unique(pwindow)) {
+      check_dprimary(dprimary, pw, primary_args)
+    }
   }
 
   .new_pcens(

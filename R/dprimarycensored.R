@@ -40,8 +40,11 @@
 #'
 #' The function creates a `pcens` object with [new_pcens()] and computes
 #' the PMF with [pcens_pmf()]. This evaluates the CDF once for all unique
-#' points (including both \eqn{d} and \eqn{d + \text{swindow}}) and
-#' reuses these values to calculate the PMF for each input value.
+#' points (including \eqn{d}, \eqn{d + \text{swindow}}, `L` and `D`) for
+#' each value of `pwindow`, and reuses these values to calculate the PMF for
+#' each input value. `pwindow`, `swindow`, `L` and `D` may be vectors,
+#' recycled against `x` as in base R distribution functions. The delay and
+#' primary event distribution parameters must be single values.
 #'
 #' When the secondary censoring interval extends past the upper truncation
 #' point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
@@ -84,8 +87,8 @@
 #' delay density is integrated against the primary event density. The delay
 #' density is found from the name of `pdist` (for example `dgamma()` for
 #' `pgamma()`) and an error is raised if it cannot be found. Densities are
-#' normalised for truncation in the same way as probabilities. `swindow` may
-#' be a vector, so densities and probabilities can be mixed in one call.
+#' normalised for truncation in the same way as probabilities. As `swindow`
+#' may be a vector, densities and probabilities can be mixed in one call.
 #'
 #' @family primarycensored
 #'
@@ -111,6 +114,12 @@
 #'   1:3, pweibull,
 #'   pwindow = 1, swindow = 0, shape = 1.5, scale = 2.0
 #' )
+#'
+#' # Example: a primary window and truncation point per observation
+#' dprimarycensored(
+#'   c(1, 2, 3), pweibull,
+#'   pwindow = c(1, 2, 1), D = c(10, 10, Inf), shape = 1.5, scale = 2.0
+#' )
 dprimarycensored <- function(
     x,
     pdist,
@@ -125,7 +134,7 @@ dprimarycensored <- function(
     log = FALSE,
     ...,
     check = TRUE) {
-  .check_truncation_bounds(L, D)
+  .check_truncation_bounds(L, D, vector = TRUE)
 
   primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "dprimarycensored"

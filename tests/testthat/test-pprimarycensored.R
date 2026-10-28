@@ -280,3 +280,25 @@ test_that("pprimarycensored returns 1 at q = Inf with an analytical CDF", {
     c(pprimarycensored(1, pgamma, shape = 2, scale = 3), 1)
   )
 })
+
+test_that("pprimarycensored with vector settings matches per-row calls", {
+  set.seed(6)
+  n <- 200
+  q <- sample(0:30, n, replace = TRUE) / 2
+  pwindow <- sample(c(0, 1, 2), n, replace = TRUE)
+  L <- sample(c(-Inf, 0, 1.5), n, replace = TRUE)
+  D <- sample(c(Inf, 10, 12.5), n, replace = TRUE)
+  cdf <- function(q, ...) {
+    pprimarycensored(q, plnorm, ..., meanlog = 1, sdlog = 0.5)
+  }
+  reference <- vapply(seq_len(n), function(i) {
+    cdf(q[i], pwindow[i], L[i], D[i])
+  }, numeric(1))
+  expect_equal(cdf(q, pwindow, L, D), reference, tolerance = 1e-10)
+  expect_equal(
+    cdf(2, pwindow = c(1, 2), D = c(10, Inf)),
+    c(cdf(2, 1, D = 10), cdf(2, 2)),
+    tolerance = 1e-10
+  )
+  expect_identical(cdf(numeric(0), pwindow = 1), numeric(0))
+})

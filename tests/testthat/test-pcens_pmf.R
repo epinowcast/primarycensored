@@ -66,3 +66,11 @@ test_that("pcens_pmf dispatches to the default method", {
   class(obj) <- c("pcens_test", class(obj))
   expect_identical(pcens_pmf(obj, 0:2, pwindow = 1), c(-1, -1, -1))
 })
+
+test_that(".row_groups groups rows by their combined values", {
+  expect_identical(
+    .row_groups(c(2, 1, 2, 1, 2), c(1, 1, 1, 1, 3)),
+    list(c(1L, 3L), c(2L, 4L), 5L)
+  )
+  expect_identical(.row_groups(numeric(0)), list())
+})

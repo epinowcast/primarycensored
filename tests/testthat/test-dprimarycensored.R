@@ -374,3 +374,104 @@ test_that("dprimarycensored at the d=1 step boundary returns pmf[1]", {
   )
   expect_equal(pm, pmf_vals[1], tolerance = 1e-10)
 })
+
+# Per-row reference: one scalar call for every observation
+per_row <- function(f, x, ...) {
+  settings <- lapply(list(...), rep_len, length(x))
+  vapply(seq_along(x), function(i) {
+    suppressMessages(do.call(f, c(list(x[i]), lapply(settings, `[[`, i))))
+  }, numeric(1))
+}
+
+test_that("dprimarycensored with vector settings matches per-row calls", {
+  set.seed(5)
+  n <- 200
+  x <- sample(0:12, n, replace = TRUE)
+  pwindow <- sample(c(0, 1, 2), n, replace = TRUE)
+  swindow <- sample(c(0, 0.5, 1, 2, Inf), n, replace = TRUE)
+  L <- sample(c(-Inf, 0, -0.5), n, replace = TRUE)
+  D <- sample(c(Inf, 25, 22.5, 40), n, replace = TRUE)
+  cases <- list(
+    function(x, ...) {
+      dprimarycensored(x, pgamma, ..., shape = 2.5, scale = 1.5)
+    },
+    function(x, ...) {
+      dprimarycensored(x, plnorm, ..., meanlog = 1.2, sdlog = 0.6)
+    },
+    function(x, ...) {
+      dprimarycensored(
+        x, pweibull, ...,
+        dprimary = dexpgrowth, primary_args = list(r = 0.2),
+        shape = 1.8, scale = 4
+      )
+    }
+  )
+  for (f in cases) {
+    expect_equal(
+      suppressMessages(f(x, pwindow, swindow, L, D)),
+      per_row(f, x, pwindow, swindow, L, D),
+      tolerance = 1e-10
+    )
+  }
+  # A single x is recycled against vector settings
+  expect_equal(
+    cases[[1]](3, pwindow = c(1, 2), swindow = c(0, 1), D = c(10, Inf)),
+    per_row(cases[[1]], c(3, 3), c(1, 2), c(0, 1), -Inf, c(10, Inf)),
+    tolerance = 1e-10
+  )
+  # Only densities and no truncation, so no CDF points
+  expect_equal(
+    cases[[2]](1:4, pwindow = c(1, 2), swindow = 0),
+    per_row(cases[[2]], 1:4, c(1, 2), 0),
+    tolerance = 1e-10
+  )
+})
+
+test_that("dprimarycensored evaluates each CDF point once per pwindow", {
+  calls <- new.env(parent = emptyenv())
+  calls$q <- list()
+  local_mocked_bindings(
+    pcens_cdf = function(object, q, pwindow, ...) {
+      calls$q[[length(calls$q) + 1L]] <- q
+      pgamma(q, shape = 2, scale = 1)
+    }
+  )
+  set.seed(4)
+  n <- 600
+  suppressMessages(dprimarycensored(
+    sample(0:20, n, replace = TRUE), pgamma,
+    pwindow = sample.int(2, n, replace = TRUE),
+    swindow = sample(c(0.5, 1, 2), n, replace = TRUE),
+    L = sample(c(-Inf, 0), n, replace = TRUE),
+    D = sample(c(Inf, 25, 40), n, replace = TRUE),
+    shape = 2, scale = 1
+  ))
+  expect_length(calls$q, 2)
+  for (q in calls$q) {
+    expect_identical(anyDuplicated(q), 0L)
+  }
+})
+
+test_that("dprimarycensored reports the row of invalid vector settings", {
+  dens <- function(x, ...) dprimarycensored(x, pgamma, ..., shape = 2, rate = 1)
+  expect_error(
+    dens(c(1, 5, 3), D = c(10, 4, 10)),
+    "Maximum x is 5 and D is 4 (row 2)",
+    fixed = TRUE
+  )
+  expect_error(
+    dens(c(1, 5, 3), L = c(0, 0, 4)),
+    "Minimum x is 3 and L is 4 (row 3)",
+    fixed = TRUE
+  )
+  expect_error(
+    dens(c(1, 2, 3), L = c(0, 0, 4), D = c(5, 6, 4)),
+    "First invalid row: 3 (L = 4, D = 4)",
+    fixed = TRUE
+  )
+  expect_message(
+    dens(c(1, 3.5, 3), D = c(10, 4, 10)),
+    "It is 4.5 and D is 4 (row 2)",
+    fixed = TRUE
+  )
+})
