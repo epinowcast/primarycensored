@@ -131,8 +131,12 @@ pcens_pmf.default <- function(
     }
   }
 
-  # Normalise by F(D) - F(L), which is 1 without truncation
-  result <- pmax(0, result / (cdf[[4]] - cdf[[3]]))
+  # Normalise by F(D) - F(L), skipped when it is 1 without truncation
+  normaliser <- cdf[[4]] - cdf[[3]]
+  if (any(normaliser != 1)) {
+    result <- result / normaliser
+  }
+  result <- pmax(0, result)
 
   if (log) {
     return(log(result))

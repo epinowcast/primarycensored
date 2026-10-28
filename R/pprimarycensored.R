@@ -202,7 +202,11 @@ pprimarycensored <- function(
     }
     cdf <- .pcens_cdf_pooled(object, list(q, L, D), pwindow, use_numeric)
   }
-  result <- (cdf[[1]] - cdf[[2]]) / (cdf[[3]] - cdf[[2]])
+  result <- cdf[[1]]
+  # Skip the division when not truncated
+  if (!all(cdf[[2]] == 0 & cdf[[3]] == 1)) {
+    result <- (result - cdf[[2]]) / (cdf[[3]] - cdf[[2]])
+  }
 
   # Clamp values outside truncation range
   result <- ifelse(q <= L, 0, result)
