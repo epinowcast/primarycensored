@@ -1,3 +1,4 @@
+Antiderivative
 CMD
 CmdStan
 CmdStanModel
@@ -22,7 +23,6 @@ WardBrian
 adamkucharski
 allcontributors
 antiderivative
-antiderivatives
 antiderivunifprim
 athowes
 autodiff
@@ -30,7 +30,6 @@ avehtari
 barbora
 cdf
 cdot
-cdots
 cens
 censdata
 cmdstan
