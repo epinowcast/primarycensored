@@ -21,10 +21,17 @@
 #' @param upper Logical. If `TRUE`, the transform over `(t, Inf)` rather than
 #'   up to `t`.
 #'
+#' @param pwindow The primary event window.
+#'
 #' @return
 #' * `.pcens_tilt_transform()`: the log of the transform at each `t`.
 #' * `.pcens_tilt_available()`: whether the transform is closed form and the
 #'   tilted delay exists for `xi`. If not, the numerical method is used.
+#' * `.pcens_tilt_fits()`: a logical vector, one value per `t`, `FALSE`
+#'   where the numerical method is used for a window `pwindow`. Only called
+#'   where `.pcens_tilt_available()` is `TRUE`.
+#' * `.pcens_tilt_pair()`: a matrix with columns `lower` and `upper`, the log
+#'   transform up to and beyond each `t`.
 #' * `.pcens_tilt_lower()`: the lower end of the support, 0 or `-Inf`.
 #' * `.pcens_tilt_moments()`: a matrix with columns `G1`, `G2` and `G3`, the
 #'   log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to `t`, `-Inf` below
@@ -52,6 +59,30 @@ NULL
 #' @rdname pcens_tilt
 .pcens_tilt_moments <- function(object, t) {
   UseMethod(".pcens_tilt_moments")
+}
+
+#' @rdname pcens_tilt
+.pcens_tilt_fits <- function(object, t, xi, pwindow = 0) {
+  UseMethod(".pcens_tilt_fits")
+}
+
+#' @rdname pcens_tilt
+.pcens_tilt_pair <- function(object, t, xi) {
+  UseMethod(".pcens_tilt_pair")
+}
+
+#' @exportS3Method
+.pcens_tilt_fits.default <- function(object, t, xi, pwindow = 0) {
+  rep(TRUE, length(t))
+}
+
+#' @exportS3Method
+.pcens_tilt_pair.default <- function(object, t, xi) {
+  lower <- .pcens_tilt_transform(object, t, xi)
+  structure(
+    cbind(lower = lower, upper = .pcens_tilt_transform(object, t, xi, TRUE)),
+    log_loss = attr(lower, "log_loss")
+  )
 }
 
 #' @exportS3Method

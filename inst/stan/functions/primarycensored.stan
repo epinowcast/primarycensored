@@ -172,8 +172,8 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
   }
 
   // Check if an analytical solution exists and applies for these parameters
-  if (check_for_analytical_params(dist_id, params, primary_id,
-                                  primary_params, pwindow)) {
+  if (check_for_analytical_delay(dist_id, params, primary_id,
+                                 primary_params, d, pwindow)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
@@ -258,8 +258,8 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
   // Check if an analytical solution exists. The internal lower bound is 0 for
   // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
   // and -inf for distributions with support on the reals.
-  if (check_for_analytical_params(dist_id, params, primary_id,
-                                  primary_params, pwindow)) {
+  if (check_for_analytical_delay(dist_id, params, primary_id,
+                                 primary_params, d, pwindow)) {
     result = primarycensored_analytical_lcdf(
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
@@ -339,16 +339,31 @@ real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
   if (d < L) {
     return negative_infinity();
   }
-  real log_cdf_upper = primarycensored_lcdf(
-    d_upper | dist_id, params, pwindow,
-    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-    positive_infinity(), primary_id, primary_params
-  );
-  real log_cdf_lower = primarycensored_lcdf(
-    d | dist_id, params, pwindow,
-    dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-    positive_infinity(), primary_id, primary_params
-  );
+  real log_cdf_upper;
+  real log_cdf_lower;
+  if (check_for_exptilt(dist_id, primary_id)
+      && check_for_analytical_delay(dist_id, params, primary_id,
+                                    primary_params, d_upper, pwindow)
+      && check_for_analytical_delay(dist_id, params, primary_id,
+                                    primary_params, d, pwindow)) {
+    // Share the tilt quantities of the two analytical evaluations
+    vector[2] log_cdfs = primarycensored_exptilt_lcdf_pair(
+      d, d_upper, dist_id, params, pwindow, primary_params[1]
+    );
+    log_cdf_lower = log_cdfs[1];
+    log_cdf_upper = log_cdfs[2];
+  } else {
+    log_cdf_upper = primarycensored_lcdf(
+      d_upper | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+    log_cdf_lower = primarycensored_lcdf(
+      d | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+  }
 
   // Apply truncation normalization: log((F(d_upper) - F(d)) / (F(D) - F(L))).
   // Skip when F(L) = 0 makes it a no-op (positive support, L <= 0).
@@ -441,9 +456,9 @@ real primarycensored_pmf(data int d, data int dist_id, array[] real params,
   * @ingroup primary_censored_vectorized
   *
   * Uses primarycensored_analytical_lcdf_vectorized() when
-  * check_for_analytical_vectorized() and check_for_analytical_params() are 1,
-  * and otherwise calls primarycensored_lcdf() at each delay. No truncation
-  * is applied.
+  * check_for_analytical_vectorized() is 1 and check_for_analytical_delay() is
+  * 1 at the largest delay, and otherwise calls primarycensored_lcdf() at each
+  * delay. No truncation is applied.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
@@ -461,8 +476,8 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
   if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)
-      && check_for_analytical_params(dist_id, params, primary_id,
-                                     primary_params, pwindow)) {
+      && check_for_analytical_delay(dist_id, params, primary_id,
+                                    primary_params, n, pwindow)) {
     return primarycensored_analytical_lcdf_vectorized(
       start, n, dist_id, params, pwindow, primary_id, primary_params
     );

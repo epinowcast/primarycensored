@@ -10,6 +10,9 @@
   These delays now use a closed form instead of the numerical method, so results can differ at the 1e-5 level.
   The exponential, gamma and normal methods now use the numerical method where their closed form returns `NaN`.
   See #368.
+- Added the lognormal delay with an exponentially tilted primary event window, in `pcens_cdf()` and in Stan.
+  The numerical path is used where the series for `r < 0` is slower, and in R for fewer than 10 finite quantiles where `abs(r) * pwindow` is at most 1.
+  See #369.
 
 ## Bug fixes
 
