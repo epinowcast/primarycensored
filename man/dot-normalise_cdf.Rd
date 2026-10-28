@@ -2,29 +2,37 @@
 % Please edit documentation in R/pprimarycensored.R
 \name{.normalise_cdf}
 \alias{.normalise_cdf}
-\title{Normalise a primary event censored CDF}
+\title{Primary event censored CDF normalised over the truncation limits}
 \usage{
-.normalise_cdf(result, q, L, D, pcens_obj, pwindow)
+.normalise_cdf(object, q, pwindow, L, D, use_numeric = FALSE)
 }
 \arguments{
-\item{result}{Numeric vector of CDF values to normalise.}
+\item{object}{A \code{pcens} object as created by \code{\link[=new_pcens]{new_pcens()}}.}
 
-\item{q}{Numeric vector of quantiles at which CDF was evaluated.}
+\item{q}{Vector of quantiles}
 
-\item{L}{Numeric lower truncation point (may be negative or \code{-Inf})}
+\item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
+observed primary event, in which case the delay CDF is used directly.}
 
-\item{D}{Numeric upper truncation point}
+\item{L}{Minimum delay (lower truncation point). Defaults to \code{-Inf},
+meaning no left truncation. For any finite value of L the distribution
+is left-truncated at L.}
 
-\item{pcens_obj}{A primarycensored object as created by \code{\link[=new_pcens]{new_pcens()}}.}
+\item{D}{Maximum delay (upper truncation point). If finite, the distribution
+is truncated at D. If set to Inf, no upper truncation is applied. Defaults
+to Inf.}
 
-\item{pwindow}{Secondary event window}
+\item{use_numeric}{Logical, if TRUE forces use of numeric integration
+even for distributions with analytical solutions. This is primarily
+useful for testing purposes or for settings where the analytical solution
+breaks down.}
 }
 \value{
 Normalised CDF values as a numeric vector
 }
 \description{
-Internal function to normalise a primary event censored CDF when truncation
-is applied. The CDF is normalised using (F(q) - F(L)) / (F(D) - F(L)) and
-values outside [L, D] are clamped to 0 or 1.
+Computes (F(q) - F(L)) / (F(D) - F(L)), pooling the CDF points with
+\code{\link[=.pcens_cdf_pooled]{.pcens_cdf_pooled()}} when settings vary or a long \code{q} repeats, and clamps
+values outside [L, D] to 0 or 1.
 }
 \keyword{internal}

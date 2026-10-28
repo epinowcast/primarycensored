@@ -413,10 +413,8 @@ fitdistdoublecens <- function(
 #' @param pcens_cache Optional environment shared across calls with the same
 #'   `params`, `pdist` and `dprimary`, as made by [.build_pcens_closures()].
 #'   The `pcens` object is built on the first call and kept in it, and later
-#'   calls only [update()][update.pcens()] the parameters.
-#'   The grouping of `params` also depends on the delays, so it is built on
-#'   the first call and rebuilt whenever they change.
-#'   `NULL` (the default) builds both on every call.
+#'   calls only [update()][update.pcens()] the parameters. `NULL` (the
+#'   default) builds it on every call.
 #' @keywords internal
 .dpcens <- function(
     x,
@@ -428,7 +426,9 @@ fitdistdoublecens <- function(
     check = TRUE,
     pcens_cache = NULL,
     ...) {
-  tryCatch(
+  # Wrap in `suppressMessages` so the per-call upper-clip notice from
+  # pcens_pmf() is not emitted on every fitdistrplus iteration.
+  suppressMessages(tryCatch(
     {
       # Validate once for the whole vector. `pdist` and `dprimary` are the
       # same for every observation.
@@ -444,51 +444,22 @@ fitdistdoublecens <- function(
       )
       if (length(x) != nrow(params)) {
         # fitdistrplus checks the density on short test vectors
-        rows <- .recycle_params(params, length(x))
-        groups <- .dpcens_groups(x, rows)
-      } else {
-        # The grouping depends on the delays as well as the settings, so
-        # rebuild it if they change
-        if (is.null(state$dgroups) || !identical(state$dx, x)) {
-          state$dgroups <- .dpcens_groups(x, params)
-          state$dx <- x
-        }
-        groups <- state$dgroups
+        params <- .recycle_params(params, length(x))
       }
-      .pcens_pmf_groups(state$obj, groups, length(x))
+      pcens_pmf(
+        state$obj, x, params$pwindow,
+        swindow = params$swindow, L = params$L, D = params$D
+      )
     },
     error = function(e) {
       rep(NaN, length(x))
     }
-  )
-}
-
-#' Group the rows of a fitdistrplus density evaluation
-#'
-#' Errors, and so gives `NaN` in `.dpcens()`, for delays outside their
-#' truncation limits as `pcens_pmf()` does.
-#'
-#' @inheritParams .dpcens
-#'
-#' @param params A data frame with columns 'swindow', 'pwindow', 'L', and 'D'
-#'   with one row per element of `x`.
-#'
-#' @return Groups of observations as made by `.pcens_row_groups()`.
-#'
-#' @noRd
-.dpcens_groups <- function(x, params) {
-  .check_row_inputs(x, params$pwindow, params$swindow, params$L, params$D)
-  .pcens_row_groups(x, params$pwindow, params$swindow, params$L, params$D)
+  ))
 }
 
 #' Define a fitdistrplus compatible wrapper around pprimarycensored
 #' @inheritParams pprimarycensored
 #' @inheritParams .dpcens
-#' @param pcens_cache Optional environment shared across calls with the same
-#'   `params`, `pdist` and `dprimary`, as made by [.build_pcens_closures()].
-#'   The `pcens` object and the grouping of `params` are built on the first
-#'   call and kept in it.
-#'   `NULL` (the default) builds them on every call.
 #' @keywords internal
 .ppcens <- function(q, params, pdist, dprimary, primary_args, pprimary = NULL,
                     check = TRUE, pcens_cache = NULL, ...) {
@@ -506,33 +477,11 @@ fitdistdoublecens <- function(
       state <- .fit_pcens_state(
         pcens_cache, pdist, dprimary, primary_args, pprimary, list(...)
       )
-      obj <- state$obj
-      cdf <- function(q_i, pw, L_i, D_i) {
-        .check_truncation_bounds(L_i, D_i)
-        # Evaluate the CDF first, as .normalise_cdf() may not use it
-        result <- pcens_cdf(obj, q_i, pw)
-        .normalise_cdf(result, q_i, L_i, D_i, obj, pw)
-      }
-
       if (length(q) != nrow(params)) {
-        # fitdistrplus checks the CDF on short test vectors, so return one
-        # value per element of `q`
-        rows <- .recycle_params(params, length(q))
-        return(mapply(
-          cdf, q, rows$pwindow, rows$L, rows$D,
-          SIMPLIFY = TRUE
-        ))
+        # fitdistrplus checks the CDF on short test vectors
+        params <- .recycle_params(params, length(q))
       }
-      if (is.null(state$pgroups)) {
-        state$pgroups <- .param_groups(params, c("pwindow", "L", "D"))
-      }
-      result <- numeric(length(q))
-      for (g in state$pgroups) {
-        i <- if (is.null(g$idx)) seq_along(q) else g$idx
-        result[i] <- cdf(q[i], g$pwindow, g$L, g$D)
-      }
-      names(result) <- names(q)
-      result
+      .normalise_cdf(state$obj, q, params$pwindow, params$L, params$D)
     },
     error = function(e) {
       rep(NaN, length(q))
@@ -577,45 +526,6 @@ fitdistdoublecens <- function(
     pwindow = NULL, D = NULL, check = FALSE
   )
   state
-}
-
-#' Group observations that share censoring and truncation settings
-#'
-#' @param params A data frame, or list, of per-observation settings.
-#'
-#' @param cols Names of the columns to group by.
-#'
-#' @return A list with one element per unique combination of `cols`, in order
-#'   of first appearance. Each element is a list of the values of `cols` and
-#'   `idx`, the rows with those values, which is `NULL` when all rows are in
-#'   one group.
-#'
-#' @keywords internal
-.param_groups <- function(params, cols) {
-  n <- length(params[[cols[[1L]]]])
-  if (n == 0L) {
-    return(list())
-  }
-  # Integer code per combination of settings
-  id <- rep.int(1L, n)
-  for (col in cols) {
-    code <- match(params[[col]], unique(params[[col]]))
-    k <- max(code)
-    if (k > 1L) {
-      key <- as.numeric(id - 1L) * k + code
-      id <- match(key, unique(key))
-    }
-  }
-  rows <- list(NULL)
-  if (max(id) > 1L) {
-    rows <- unname(split(seq_len(n), id))
-  }
-  lapply(rows, function(idx) {
-    first <- if (is.null(idx)) 1L else idx[[1L]]
-    group <- lapply(params[cols], `[[`, first)
-    group$idx <- idx
-    group
-  })
 }
 
 #' Recycle observation settings to a given length

@@ -107,6 +107,15 @@
 #' See `methods(pcens_cdf)` for which combinations have analytical
 #' solutions implemented.
 #'
+#' ## Vector settings
+#'
+#' `pwindow`, `L` and `D` may be vectors, recycled against `q` as in base R
+#' distribution functions.
+#' The CDF depends only on `pwindow`, so it is evaluated once per unique
+#' point for each value of `pwindow`.
+#' The delay and primary event distribution parameters must be single
+#' values.
+#'
 #' @family primarycensored
 #' @seealso [new_pcens()] and [pcens_cdf()]
 #'
@@ -139,7 +148,7 @@ pprimarycensored <- function(
     dprimary_args = NULL,
     ...,
     check = TRUE) {
-  .check_truncation_bounds(L, D)
+  .check_truncation_bounds(L, D, vector = TRUE)
 
   primary_args <- .resolve_primary_args(
     primary_args, dprimary_args, "pprimarycensored"
@@ -149,50 +158,58 @@ pprimarycensored <- function(
     pwindow = pwindow, D = D, check = check
   )
 
-  # Compute the CDF using the S3 method
-  result <- pcens_cdf(pcens_obj, q, pwindow)
-
-  .normalise_cdf(result, q, L, D, pcens_obj, pwindow)
+  .normalise_cdf(pcens_obj, q, pwindow, L, D)
 }
 
-#' Normalise a primary event censored CDF
+#' Primary event censored CDF normalised over the truncation limits
 #'
-#' Internal function to normalise a primary event censored CDF when truncation
-#' is applied. The CDF is normalised using (F(q) - F(L)) / (F(D) - F(L)) and
-#' values outside \[L, D\] are clamped to 0 or 1.
+#' Computes (F(q) - F(L)) / (F(D) - F(L)), pooling the CDF points with
+#' [.pcens_cdf_pooled()] when settings vary or a long `q` repeats, and clamps
+#' values outside \[L, D\] to 0 or 1.
 #'
-#' @param result Numeric vector of CDF values to normalise.
+#' @inheritParams pprimarycensored
 #'
-#' @param q Numeric vector of quantiles at which CDF was evaluated.
+#' @param object A `pcens` object as created by [new_pcens()].
 #'
-#' @param L Numeric lower truncation point (may be negative or `-Inf`)
-#'
-#' @param D Numeric upper truncation point
-#'
-#' @param pcens_obj A primarycensored object as created by [new_pcens()].
-#'
-#' @param pwindow Secondary event window
+#' @inheritParams pcens_cdf
 #'
 #' @return Normalised CDF values as a numeric vector
 #'
 #' @keywords internal
-.normalise_cdf <- function(result, q, L, D, pcens_obj, pwindow) {
-  # Get CDF at the truncation points, reusing `result` where possible
-  cdf_D <- .pcens_cdf_at(pcens_obj, D, pwindow, q, result, 1)
-  cdf_L <- .pcens_cdf_at(pcens_obj, L, pwindow, q, result, 0)
-
-  # Normalise: (F(q) - F(L)) / (F(D) - F(L)) # nolint
-  # Skip the division when cdf_L = 0 and normaliser = 1 leave result unchanged.
-  normaliser <- cdf_D - cdf_L
-  if (!(cdf_L == 0 && normaliser == 1)) {
-    result <- (result - cdf_L) / normaliser
+.normalise_cdf <- function(object, q, pwindow, L, D,
+                           use_numeric = FALSE) {
+  if (length(q) == 0) {
+    return(numeric(0))
   }
+  if (all(lengths(list(pwindow, L, D)) == 1L) &&
+        (length(q) < 64L || !anyDuplicated(q))) {
+    # Pooling only pays for long inputs with repeated points
+    bounds <- c(L, D)
+    cdf_bounds <- c(0, 1)
+    finite <- is.finite(bounds)
+    if (any(finite)) {
+      cdf_bounds[finite] <- pcens_cdf(
+        object, bounds[finite], pwindow, use_numeric
+      )
+    }
+    cdf <- list(
+      pcens_cdf(object, q, pwindow, use_numeric), cdf_bounds[1], cdf_bounds[2]
+    )
+  } else {
+    n <- max(lengths(list(q, pwindow, L, D)))
+    if (length(q) < n) {
+      q <- rep_len(q, n)
+    }
+    cdf <- .pcens_cdf_pooled(
+      object, list(q, .shared_value(L), .shared_value(D)), pwindow,
+      use_numeric
+    )
+  }
+  result <- (cdf[[1]] - cdf[[2]]) / (cdf[[3]] - cdf[[2]])
 
   # Clamp values outside truncation range
   result <- ifelse(q <= L, 0, result)
-  result <- ifelse(q >= D, 1, result)
-
-  return(result)
+  ifelse(q >= D, 1, result)
 }
 
 #' @rdname pprimarycensored

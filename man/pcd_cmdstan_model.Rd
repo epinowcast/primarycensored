@@ -43,7 +43,6 @@ if (!is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))) {
 \seealso{
 Modelling wrappers for external fitting packages
 \code{\link{fitdistdoublecens}()},
-\code{\link{pcd_as_stan_data}()},
-\code{\link{pcens_loglik_fn}()}
+\code{\link{pcd_as_stan_data}()}
 }
 \concept{modelhelpers}

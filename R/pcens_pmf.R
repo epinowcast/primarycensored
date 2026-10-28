@@ -64,47 +64,77 @@ pcens_pmf.default <- function(
       call. = FALSE
     )
   }
-  .check_truncation_bounds(L, D)
+  .check_truncation_bounds(L, D, vector = TRUE)
   if (length(x) == 0) {
     return(numeric(0))
   }
+  n <- max(lengths(list(x, pwindow, swindow, L, D)))
+  if (length(x) < n) {
+    x <- rep_len(x, n)
+  }
 
-  .check_x_bounds(x, L, D)
+  if (any(x < L)) {
+    below <- which(x < L)
+    i <- below[which.min(x[below])]
+    stop(
+      "Some values of x are below L. Minimum x is ", x[i],
+      " and L is ", rep_len(L, n)[i],
+      if (length(L) > 1) c(" (row ", i, ")"),
+      ". Resolve this by filtering x to only include values >= L.",
+      call. = FALSE
+    )
+  }
+
+  if (any(is.finite(D) & x >= D)) {
+    above <- which(is.finite(D) & x >= D)
+    i <- above[which.max(x[above])]
+    stop(
+      "Upper truncation point is greater than D. Maximum x is ", x[i],
+      " and D is ", rep_len(D, n)[i],
+      if (length(D) > 1) c(" (row ", i, ")"),
+      ". Under truncation at D no event with latent value >= D is ",
+      "observable; resolve this by filtering x to values strictly less than D.",
+      call. = FALSE
+    )
+  }
 
   # Clip the upper end of each secondary interval at D
   upper <- x + swindow
-  if (is.finite(D)) {
-    .message_if_clipped(upper, D)
+  if (any(upper > D)) {
+    clipped <- which(upper > D)
+    i <- clipped[which.max(upper[clipped])]
+    message(
+      "Upper truncation point is greater than D. It is ", upper[i],
+      " and D is ", rep_len(D, n)[i],
+      if (length(D) > 1) c(" (row ", i, ")"),
+      "; clipping the upper end of secondary intervals at D."
+    )
     upper <- pmin(upper, D)
   }
 
-  # Rows with a zero-width secondary window contribute a density
-  exact <- rep_len(swindow == 0, length(x))
-  result <- numeric(length(x))
-
-  # Compute CDFs for all unique points
-  unique_points <- unique(c(x[!exact], upper[!exact]))
-  # Skip the sort when the points are already in order (e.g. x = 0:n)
-  if (anyNA(unique_points) || is.unsorted(unique_points)) {
-    unique_points <- sort(unique_points)
-  }
-  cdfs <- numeric(0)
-  if (length(unique_points) > 0) {
-    cdfs <- pcens_cdf(object, unique_points, pwindow)
-    # Some analytical methods return NaN at Inf
-    cdfs[unique_points == -Inf] <- 0
-    cdfs[unique_points == Inf] <- 1
-
-    result[!exact] <- cdfs[match(upper[!exact], unique_points)] -
-      cdfs[match(x[!exact], unique_points)]
-  }
+  # Rows with a zero-width secondary window contribute a density, so their
+  # interval ends are set to -Inf, which needs no CDF evaluation
+  exact <- swindow == 0
+  lower <- x
   if (any(exact)) {
-    result[exact] <- .pcens_density(object, x[exact], pwindow)
+    exact <- rep_len(exact, n)
+    lower[exact] <- -Inf
+    upper[exact] <- -Inf
+  }
+  cdf <- .pcens_cdf_pooled(
+    object, list(lower, upper, .shared_value(L), .shared_value(D)), pwindow
+  )
+  result <- cdf[[2]] - cdf[[1]]
+  if (any(exact)) {
+    pwindow <- rep_len(pwindow, n)
+    for (rows in .row_groups(pwindow[exact])) {
+      rows <- which(exact)[rows]
+      result[rows] <- .pcens_density(object, x[rows], pwindow[rows[1]])
+    }
   }
 
-  cdf_D <- .pcens_cdf_at(object, D, pwindow, unique_points, cdfs, 1)
-  cdf_L <- .pcens_cdf_at(object, L, pwindow, unique_points, cdfs, 0)
-  result <- .pcens_normalise(result, cdf_D, cdf_L)
+  # Normalise by F(D) - F(L), which is 1 without truncation
+  result <- pmax(0, result / (cdf[[4]] - cdf[[3]]))
 
   if (log) {
     return(log(result))
@@ -113,113 +143,101 @@ pcens_pmf.default <- function(
   }
 }
 
-#' Check that delays lie within the truncation limits
+#' Primary event censored CDF at pooled points
 #'
-#' @param x Numeric vector of delays.
-#'
-#' @param L,D Lower and upper truncation points, each of length 1 or
-#'   `length(x)`.
-#'
-#' @return `NULL` invisibly. Called for its errors.
-#'
-#' @noRd
-.check_x_bounds <- function(x, L, D) {
-  below <- which(x < L)
-  if (length(below) > 0L) {
-    i <- below[which.min(x[below])]
-    stop(
-      "Some values of x are below L. Minimum x is ", x[[i]], " and L is ",
-      rep_len(L, length(x))[[i]], ". Resolve this by filtering x to only ",
-      "include values >= L.",
-      call. = FALSE
-    )
-  }
-  above <- which(is.finite(D) & x >= D)
-  if (length(above) > 0L) {
-    i <- above[which.max(x[above])]
-    stop(
-      "Upper truncation point is greater than D. Maximum x is ", x[[i]],
-      " and D is ", rep_len(D, length(x))[[i]], ". Under truncation at D no ",
-      "event with latent value >= D is observable; resolve this by ",
-      "filtering x to values strictly less than D.",
-      call. = FALSE
-    )
-  }
-  invisible(NULL)
-}
-
-#' Message when secondary intervals extend past the upper truncation point
-#'
-#' @param upper Upper ends of the secondary intervals.
-#'
-#' @param D Upper truncation point, of length 1 or `length(upper)`.
-#'
-#' @return `NULL` invisibly. Called for its message.
-#'
-#' @noRd
-.message_if_clipped <- function(upper, D) {
-  over <- which(upper > D)
-  if (length(over) > 0L) {
-    i <- over[which.max(upper[over])]
-    message(
-      "Upper truncation point is greater than D. It is ", upper[[i]],
-      " and D is ", rep_len(D, length(upper))[[i]],
-      "; clipping the upper end of secondary intervals at D."
-    )
-  }
-  invisible(NULL)
-}
-
-#' Normalise a PMF over the truncation limits
-#'
-#' Divides by F(D) - F(L) and sets negative values to zero, keeping missing
-#' values.
-#'
-#' @param pmf Numeric vector of probabilities.
-#'
-#' @param cdf_D,cdf_L CDF at `D` and `L`, each a single value.
-#'
-#' @return Numeric vector of normalised probabilities.
-#'
-#' @noRd
-.pcens_normalise <- function(pmf, cdf_D, cdf_L) {
-  normaliser <- cdf_D - cdf_L
-  if (!isTRUE(normaliser == 1)) {
-    pmf <- pmf / normaliser
-  }
-  pmf[which(pmf < 0)] <- 0
-  pmf
-}
-
-#' Primary event censored CDF at a truncation point
-#'
-#' Returns the primary event censored CDF, before truncation, at a single
-#' truncation point, reusing an already computed value where possible.
+#' Evaluates [pcens_cdf()] once at the unique finite points of each set of
+#' rows sharing a `pwindow`, as the CDF depends on no other setting.
 #'
 #' @param object A `pcens` object.
 #'
-#' @param bound Numeric truncation point (`L` or `D`).
+#' @param points List of numeric vectors of points, recycled with `pwindow`.
 #'
 #' @param pwindow Primary event window.
 #'
-#' @param points Numeric vector of points at which `cdfs` was computed.
+#' @inheritParams pcens_cdf
 #'
-#' @param cdfs Numeric vector of CDF values at `points`.
-#'
-#' @param inf_value CDF value to return when `bound` is infinite.
-#'
-#' @return A single numeric CDF value.
+#' @return A list like `points` of CDF values, which are 0 at `-Inf` and 1
+#'   at `Inf`.
 #'
 #' @keywords internal
-.pcens_cdf_at <- function(object, bound, pwindow, points, cdfs, inf_value) {
-  if (is.infinite(bound)) {
-    return(inf_value)
+.pcens_cdf_pooled <- function(object, points, pwindow,
+                              use_numeric = FALSE) {
+  pwindow <- .shared_value(pwindow)
+  if (length(pwindow) > 1L) {
+    n <- max(lengths(c(points, list(pwindow))))
+    pwindow <- rep_len(pwindow, n)
+    # Single points, such as L and D, are kept as they are in every batch
+    vary <- lengths(points) > 1L
+    points[vary] <- lapply(points[vary], rep_len, n)
+    cdf <- rep(list(numeric(n)), length(points))
+    for (rows in .row_groups(pwindow)) {
+      batch <- points
+      batch[vary] <- lapply(points[vary], `[`, rows)
+      batch <- .pcens_cdf_pooled(
+        object, batch, pwindow[[rows[[1L]]]], use_numeric
+      )
+      for (k in seq_along(cdf)) {
+        cdf[[k]][rows] <- batch[[k]]
+      }
+    }
+    return(cdf)
   }
-  idx <- match(bound, points)
-  if (!is.na(idx)) {
-    return(cdfs[[idx]])
+  all_points <- unlist(points, use.names = FALSE)
+  pts <- unique(all_points)
+  # Infinite points are not evaluated, as some analytical methods give NaN
+  finite <- !is.infinite(pts)
+  cdf <- as.numeric(pts == Inf)
+  if (any(finite)) {
+    cdf[finite] <- pcens_cdf(object, pts[finite], pwindow, use_numeric)
   }
-  pcens_cdf(object, bound, pwindow)
+  if (length(pts) < length(all_points)) {
+    cdf <- cdf[match(all_points, pts)]
+  }
+  # Split back into the elements of `points`
+  done <- 0
+  for (k in seq_along(points)) {
+    len <- length(points[[k]])
+    points[[k]] <- cdf[done + seq_len(len)]
+    done <- done + len
+  }
+  points
+}
+
+#' Reduce a setting shared by all rows to a single value
+#'
+#' Lets constant vectors, as in [fitdistdoublecens()], take the faster path
+#' for a single value.
+#'
+#' @param setting A setting, of length 1 or one per row.
+#'
+#' @return `setting`, or its first value when all values are equal.
+#'
+#' @keywords internal
+.shared_value <- function(setting) {
+  if (length(setting) > 1L && isTRUE(all(setting == setting[[1L]]))) {
+    return(setting[[1L]])
+  }
+  setting
+}
+
+#' Group rows that share values
+#'
+#' @param ... Vectors of the same length, one element per row.
+#'
+#' @return A list of integer row indices, one element per unique combination
+#'   of values, in order of first appearance.
+#'
+#' @keywords internal
+.row_groups <- function(...) {
+  keys <- list(...)
+  id <- match(keys[[1L]], unique(keys[[1L]]))
+  for (key in keys[-1L]) {
+    values <- unique(key)
+    # Renumber the combinations so far, so ids stay at most the row count
+    id <- (id - 1L) * length(values) + match(key, values)
+    id <- match(id, unique(id))
+  }
+  unname(split(seq_along(id), id))
 }
 
 #' Primary event censored density

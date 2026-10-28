@@ -124,8 +124,11 @@ where \eqn{F_{\text{cens}}} is the primary event censored CDF.
 
 The function creates a \code{pcens} object with \code{\link[=new_pcens]{new_pcens()}} and computes
 the PMF with \code{\link[=pcens_pmf]{pcens_pmf()}}. This evaluates the CDF once for all unique
-points (including both \eqn{d} and \eqn{d + \text{swindow}}) and
-reuses these values to calculate the PMF for each input value.
+points (including \eqn{d}, \eqn{d + \text{swindow}}, \code{L} and \code{D}) for
+each value of \code{pwindow}, and reuses these values to calculate the PMF for
+each input value. \code{pwindow}, \code{swindow}, \code{L} and \code{D} may be vectors,
+recycled against \code{x} as in base R distribution functions. The delay and
+primary event distribution parameters must be single values.
 
 When the secondary censoring interval extends past the upper truncation
 point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies
@@ -167,8 +170,8 @@ it is the delay density. With a uniform primary event distribution it is
 delay density is integrated against the primary event density. The delay
 density is found from the name of \code{pdist} (for example \code{dgamma()} for
 \code{pgamma()}) and an error is raised if it cannot be found. Densities are
-normalised for truncation in the same way as probabilities. \code{swindow} may
-be a vector, so densities and probabilities can be mixed in one call.
+normalised for truncation in the same way as probabilities. As \code{swindow}
+may be a vector, densities and probabilities can be mixed in one call.
 }
 }
 \examples{
@@ -190,6 +193,12 @@ dprimarycensored(1:3, pweibull, pwindow = 0, shape = 1.5, scale = 2.0)
 dprimarycensored(
   1:3, pweibull,
   pwindow = 1, swindow = 0, shape = 1.5, scale = 2.0
+)
+
+# Example: a primary window and truncation point per observation
+dprimarycensored(
+  c(1, 2, 3), pweibull,
+  pwindow = c(1, 2, 1), D = c(10, 10, Inf), shape = 1.5, scale = 2.0
 )
 }
 \seealso{

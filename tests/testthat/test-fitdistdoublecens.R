@@ -1096,10 +1096,6 @@ test_that(
   }
 )
 
-test_that(".param_groups returns no groups for empty settings", {
-  expect_identical(.param_groups(list(pwindow = numeric(0)), "pwindow"), list())
-})
-
 test_that("fitdistdoublecens loglik matches per-row dprimarycensored", {
   skip_if_not_installed("fitdistrplus")
   skip_if_not_installed("withr")
