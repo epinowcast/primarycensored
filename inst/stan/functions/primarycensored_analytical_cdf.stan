@@ -112,6 +112,11 @@ real primarycensored_uniform_lcdf_from_terms(vector terms_d, vector terms_q,
   * Compute the uniform primary terms at t for a Gamma delay
   * @ingroup analytical_solution_helpers
   *
+  * F_T(t; k) comes from F_T(t; k + 1) and the recursion
+  * P(k, y) = P(k + 1, y) + y^k e^{-y} / Gamma(k + 1), with y = rate * t,
+  * which adds terms so stays accurate in the lower tail. Rejects a rate that
+  * is not positive and finite.
+  *
   * @param t Time (d or q)
   * @param params Array of Gamma distribution parameters [shape, rate]
   *
@@ -125,15 +130,17 @@ vector primarycensored_gamma_uniform_terms(real t,
   }
   real shape = params[1];
   real rate = params[2];
+  real log_rate = gamma_log_rate(rate);
   // log E where E = k * theta = shape / rate is the mean of the delay
-  real log_E = log(shape) - log(rate);
-  // F_T(t; k) and the recursion to F_T(t; k+1):
-  // P(k+1, y) = P(k, y) - y^k e^{-y} / Gamma(k+1), with y = rate * t
-  real log_F_T_k = gamma_lcdf(t | shape, rate);
-  real gamma_kp1_pdf_log = shape * log(rate * t) - rate * t
-                           - lgamma(shape + 1);
-  real log_F_T_kp1 = log_diff_exp(log_F_T_k, gamma_kp1_pdf_log);
-  return [log(t) + log_F_T_k, log_E + log_F_T_kp1]';
+  real log_E = log(shape) - log_rate;
+  real log_t = log(t);
+  real log_y = log_t + log_rate;
+  real log_F_T_kp1 = gamma_lcdf_logx(log_y, shape + 1);
+  real log_lead = shape * log_y - exp(log_y) - lgamma(shape + 1);
+  return [
+    log_t + log_sum_exp(log_F_T_kp1, log_lead),
+    log_E + log_F_T_kp1
+  ]';
 }
 
 /**
