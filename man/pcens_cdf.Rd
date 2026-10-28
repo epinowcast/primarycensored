@@ -35,17 +35,29 @@ When \code{pwindow = 0} the primary event time is known exactly and the
 primary event censored CDF is the delay CDF. This case is handled before
 dispatch, so every method returns \code{pdist(q)} without integrating over the
 primary event window.
+
+The analytical methods for the exponential, normal, chi-square, beta,
+Pareto, inverse gamma and inverse chi-square delays use the numerical
+method when \code{pdist} has arguments they do not use, such as \code{lower.tail},
+or a non-zero \code{ncp}.
 }
 \seealso{
 Low level primary event censored distribution objects and methods
 \code{\link{new_pcens}()},
 \code{\link{pcens_cdf.default}()},
+\code{\link{pcens_cdf.pcens_pbeta_dunif}()},
+\code{\link{pcens_cdf.pcens_pchisq_dunif}()},
 \code{\link{pcens_cdf.pcens_pdiscretehazard}()},
 \code{\link{pcens_cdf.pcens_pdiscretestep}()},
+\code{\link{pcens_cdf.pcens_pexp_dunif}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_pgengamma.orig_dunif}()},
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
+\code{\link{pcens_cdf.pcens_pinvchisq_dunif}()},
+\code{\link{pcens_cdf.pcens_pinvgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_pnorm_dunif}()},
+\code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},
