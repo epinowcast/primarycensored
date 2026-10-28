@@ -302,7 +302,7 @@ real gumbel_delay_lcdf(real x, array[] real params, int dist_id) {
     real shape = dist_id == 16 ? params[1] : params[1] / 2;
     real scale = dist_id == 16 ? params[2]
                  : (dist_id == 19 ? 0.5 : params[1] * square(params[2]) / 2);
-    real log_f = gamma_log_pq_logx(log(scale) - log(x), shape)[2];
+    real log_f = gamma_lcdf_lccdf_logx(log(scale) - log(x), shape)[2];
     return log_f < -700 ? negative_infinity() : log_f;
   } else if (dist_id == 9) {
     if (x >= 1) {
