@@ -4,8 +4,10 @@ functions {
   #include primarycensored_ode.stan
   #include primarycensored_analytical_cdf.stan
   #include primarycensored_tlogis.stan
+  #include primarycensored_gumbel.stan
   #include expgrowth.stan
   #include tlogis.stan
+  #include tgumbel.stan
 
   real partial_sum(array[] int dummy, int start, int end,
                    array[] int d, array[] int d_upper, array[] int n,
@@ -44,7 +46,7 @@ data {
   //   27 = step CDF, Gaussian random walk on the logit hazards;
   //   28 = step CDF, IID logit random effects on the hazards.
   int<lower=1, upper=29> dist_id;
-  int<lower=1, upper=3> primary_id; // primary distribution identifier
+  int<lower=1, upper=4> primary_id; // primary distribution identifier
   int<lower=0> n_params; // number of distribution parameters
   int<lower=0> n_primary_params; // number of primary distribution parameters
   int<lower=0, upper=1> compute_log_lik; // whether to compute log likelihood

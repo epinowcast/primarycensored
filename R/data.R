@@ -22,7 +22,7 @@
 #' distributions in primarycensored. Distributions beyond these are not
 #' supported in the stan code but any user functions can be used in the R code.
 #'
-#' @format A data.frame with 3 rows and 5 columns:
+#' @format A data.frame with 4 rows and 5 columns:
 #' \describe{
 #'   \item{name}{Distribution name}
 #'   \item{dprimary}{R density function name}

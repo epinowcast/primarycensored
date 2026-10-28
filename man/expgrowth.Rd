@@ -93,6 +93,7 @@ samples <- rexpgrowth(100, r = 0.2)
 }
 \seealso{
 Primary event distributions
+\code{\link{tgumbel}},
 \code{\link{tlogis}}
 }
 \concept{primaryeventdistributions}

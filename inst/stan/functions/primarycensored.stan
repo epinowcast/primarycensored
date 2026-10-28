@@ -114,6 +114,8 @@ vector primarycensored_truncation_bounds(
   * is 0 below 0, so the integral starts at 0 to keep the solver from stepping
   * over the kink there. For a truncated logistic primary (primary_id 3) the
   * integral is solved in parts around the location, with `ode_rk45_tol`.
+  * The truncated Gumbel window (primary_id 4) can be a narrow spike that
+  * this integral steps over, so it uses primarycensored_gumbel_numeric_cdf().
   *
   * @param d Delay
   * @param dist_id Distribution identifier
@@ -128,6 +130,11 @@ real primarycensored_numeric_cdf(data real d, data int dist_id,
                                  array[] real params, data real pwindow,
                                  data int primary_id,
                                  array[] real primary_params) {
+  if (primary_id == 4) {
+    return primarycensored_gumbel_numeric_cdf(
+      d | dist_id, params, pwindow, primary_params[1], primary_params[2]
+    );
+  }
   real lower_bound = dist_has_positive_support(dist_id)
                      ? fmax(d - pwindow, 0) : d - pwindow;
   int n_params = num_elements(params);
@@ -285,11 +292,19 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
     );
   } else {
     // Use numerical integration
-    result = log(primarycensored_cdf(
-      d | dist_id, params, pwindow,
-      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
-      positive_infinity(), primary_id, primary_params
-    ));
+    if (primary_id == 4) {
+      // The truncated Gumbel integral is on the log scale, so a CDF below
+      // 1e-300 is not lost
+      result = primarycensored_gumbel_numeric_lcdf(
+        d | dist_id, params, pwindow, primary_params[1], primary_params[2]
+      );
+    } else {
+      result = log(primarycensored_cdf(
+        d | dist_id, params, pwindow,
+        dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+        positive_infinity(), primary_id, primary_params
+      ));
+    }
   }
 
   // Handle truncation normalization. Skip when F(L) = 0 makes it a no-op

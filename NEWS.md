@@ -20,6 +20,10 @@
   The numerical path is used where the analytical solutions do not apply.
   `pcd_stan_functions()` and `pcd_load_stan_functions()` now also find Stan functions that return arrays.
   See #370.
+- Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
+  Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
+  Stan models that include the function files one by one need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+  See #371.
 
 ## Bug fixes
 
