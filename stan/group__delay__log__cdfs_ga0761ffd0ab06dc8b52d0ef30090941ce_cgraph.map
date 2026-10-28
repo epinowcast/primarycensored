@@ -1,16 +1,21 @@
 <map id="dist_lcdf" name="dist_lcdf">
-<area shape="rect" id="Node000001" title=" " alt="" coords="5,104,76,130"/>
+<area shape="rect" id="Node000001" title=" " alt="" coords="5,156,76,182"/>
 <area shape="rect" id="Node000002" href="$group__delay__log__cdfs.html#gac677200fa47a95f644537be481450960" title=" " alt="" coords="125,5,297,31"/>
-<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="51,102,81,71,122,40,133,35,135,39,125,44,84,75,55,106"/>
-<area shape="rect" id="Node000003" href="$group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="154,55,268,80"/>
-<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="75,103,123,89,145,82,147,88,124,94,77,109"/>
-<area shape="rect" id="Node000004" href="$group__delay__log__cdfs.html#ga73fe2c7117cb1128e5a863ab21317683" title=" " alt="" coords="124,104,298,130"/>
-<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="76,114,108,114,108,120,76,120"/>
-<area shape="rect" id="Node000005" href="$nonparametric_8stan.html#a03e3aad866bd81f69bc72da66bc5a184" title=" " alt="" coords="164,153,258,179"/>
-<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="77,125,124,140,149,147,148,152,123,145,75,130"/>
-<area shape="rect" id="Node000007" href="$nonparametric_8stan.html#a2b6a89a9f545005b8ab818cfa32dd086" title=" " alt="" coords="362,203,443,228"/>
-<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="54,128,83,160,103,176,125,189,181,207,241,217,298,219,347,218,347,223,298,225,240,222,180,213,123,194,100,181,79,164,50,132"/>
-<area shape="rect" id="Node000006" href="$nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9" title=" " alt="" coords="346,153,459,179"/>
-<area shape="poly" id="edge5_Node000005_Node000006" title=" " alt="" coords="258,164,330,164,330,169,258,169"/>
-<area shape="poly" id="edge6_Node000005_Node000007" title=" " alt="" coords="259,176,348,199,347,204,258,181"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="45,154,74,103,95,74,122,48,142,35,145,40,125,52,99,77,78,106,50,157"/>
+<area shape="rect" id="Node000003" href="$group__delay__log__cdfs.html#gab7c377752c0162278bf6de74a13ea644" title=" " alt="" coords="346,107,468,132"/>
+<area shape="poly" id="edge2_Node000001_Node000003" title=" " alt="" coords="49,154,79,121,99,104,123,92,153,83,184,78,246,78,305,86,355,99,354,104,304,92,246,83,184,83,154,88,125,97,102,109,82,125,53,157"/>
+<area shape="rect" id="Node000004" href="$group__delay__log__cdfs.html#gaf8192f7d9cb79b67e62f2a433c945437" title=" " alt="" coords="152,107,270,132"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="75,155,123,141,145,134,147,140,124,146,77,161"/>
+<area shape="rect" id="Node000005" href="$group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="154,156,268,182"/>
+<area shape="poly" id="edge4_Node000001_Node000005" title=" " alt="" coords="76,166,139,166,139,172,76,172"/>
+<area shape="rect" id="Node000006" href="$group__delay__log__cdfs.html#ga73fe2c7117cb1128e5a863ab21317683" title=" " alt="" coords="124,205,298,231"/>
+<area shape="poly" id="edge6_Node000001_Node000006" title=" " alt="" coords="77,177,124,192,147,198,145,203,123,197,75,182"/>
+<area shape="rect" id="Node000007" href="$nonparametric_8stan.html#a03e3aad866bd81f69bc72da66bc5a184" title=" " alt="" coords="164,255,258,280"/>
+<area shape="poly" id="edge7_Node000001_Node000007" title=" " alt="" coords="55,180,84,211,125,241,150,252,148,257,122,246,81,215,51,184"/>
+<area shape="rect" id="Node000009" href="$nonparametric_8stan.html#a2b6a89a9f545005b8ab818cfa32dd086" title=" " alt="" coords="366,304,448,330"/>
+<area shape="poly" id="edge10_Node000001_Node000009" title=" " alt="" coords="49,181,75,236,97,267,125,291,152,304,181,314,241,325,300,326,351,323,351,328,300,332,241,330,180,319,150,309,122,295,93,270,70,239,44,183"/>
+<area shape="poly" id="edge5_Node000005_Node000003" title=" " alt="" coords="264,153,338,134,339,139,266,158"/>
+<area shape="rect" id="Node000008" href="$nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9" title=" " alt="" coords="350,255,464,280"/>
+<area shape="poly" id="edge8_Node000007_Node000008" title=" " alt="" coords="259,265,335,265,335,270,259,270"/>
+<area shape="poly" id="edge9_Node000007_Node000009" title=" " alt="" coords="259,277,352,300,351,306,258,282"/>
 </map>

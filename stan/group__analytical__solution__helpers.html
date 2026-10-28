@@ -250,7 +250,7 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>1 if the vectorised analytical solution applies, 0 otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00459">459</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00466">466</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
@@ -385,7 +385,7 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Log of g(t; λ, k) = γ(1 + 1/k, (t/λ)^k) </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00153">153</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00160">160</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -452,6 +452,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 <p>Compute the uniform primary terms at t for a Gamma delay</p>
+<p>F_T(t; k) comes from F_T(t; k + 1) and the recursion P(k, y) = P(k + 1, y) + y^k e^{-y} / Gamma(k + 1), with y = rate * t, which adds terms so stays accurate in the lower tail. Rejects a rate that is not positive and finite.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">t</td><td>Time (d or q) </td></tr>
@@ -461,7 +462,19 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector [log(t * F_T(t; k)), log(E * F_T(t; k + 1))], both <code>-inf</code> for t &lt;= 0 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00091">91</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00096">96</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="group__analytical__solution__helpers_ga8385a71cb687fe480144a513d9ae992d_cgraph.png" border="0" usemap="#agroup__analytical__solution__helpers_ga8385a71cb687fe480144a513d9ae992d_cgraph" alt=""/></div>
+<map name="agroup__analytical__solution__helpers_ga8385a71cb687fe480144a513d9ae992d_cgraph" id="agroup__analytical__solution__helpers_ga8385a71cb687fe480144a513d9ae992d_cgraph">
+<area shape="rect" title=" " alt="" coords="5,23,172,64"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gab7c377752c0162278bf6de74a13ea644" title=" " alt="" coords="220,5,342,31"/>
+<area shape="poly" title=" " alt="" coords="172,30,204,26,204,31,172,35"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gaf8192f7d9cb79b67e62f2a433c945437" title=" " alt="" coords="222,55,340,80"/>
+<area shape="poly" title=" " alt="" coords="172,51,207,56,206,61,172,57"/>
+</map>
+</div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -536,7 +549,7 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector [log(t * F_T(t)), log(E * tilde F_T(t))], both <code>-inf</code> for t &lt;= 0 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00205">205</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00212">212</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -611,7 +624,7 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector [log(t * F_T(t)), log(E * tilde F_T(t))] </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00123">123</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00130">130</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -779,23 +792,27 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector of the two terms at t, see <a class="el" href="#gaccd010f51a29cc10b7f603b8fe9fd6ee">primarycensored_uniform_lcdf_from_terms()</a> </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00233">233</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00240">240</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="group__analytical__solution__helpers_gac9d640b5a0f8a90df6442a87ccb7270c_cgraph.png" border="0" usemap="#agroup__analytical__solution__helpers_gac9d640b5a0f8a90df6442a87ccb7270c_cgraph" alt=""/></div>
 <map name="agroup__analytical__solution__helpers_gac9d640b5a0f8a90df6442a87ccb7270c_cgraph" id="agroup__analytical__solution__helpers_gac9d640b5a0f8a90df6442a87ccb7270c_cgraph">
-<area shape="rect" title=" " alt="" coords="5,104,172,145"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga8385a71cb687fe480144a513d9ae992d" title=" " alt="" coords="230,5,396,46"/>
-<area shape="poly" title=" " alt="" coords="127,101,219,57,236,49,238,54,221,61,130,106"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga5af8ccbc8febfee0c0b354f7689361db" title=" " alt="" coords="220,71,407,111"/>
-<area shape="poly" title=" " alt="" coords="172,109,203,105,204,110,172,115"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga5310126254a7c012537676bfe2bbe6c5" title=" " alt="" coords="224,136,403,177"/>
-<area shape="poly" title=" " alt="" coords="172,134,209,139,208,144,172,139"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga520238790007ce2d3c5dc5e658144bbe" title=" " alt="" coords="232,201,395,242"/>
-<area shape="poly" title=" " alt="" coords="130,143,221,186,238,193,236,198,219,191,128,148"/>
-<area shape="rect" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4" title=" " alt="" coords="455,209,554,234"/>
-<area shape="poly" title=" " alt="" coords="395,219,440,219,440,224,395,224"/>
+<area shape="rect" title=" " alt="" coords="5,120,172,161"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga8385a71cb687fe480144a513d9ae992d" title=" " alt="" coords="230,22,396,62"/>
+<area shape="poly" title=" " alt="" coords="127,117,219,73,236,66,238,71,221,78,130,122"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga5af8ccbc8febfee0c0b354f7689361db" title=" " alt="" coords="220,87,407,128"/>
+<area shape="poly" title=" " alt="" coords="172,126,203,121,204,126,172,131"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga5310126254a7c012537676bfe2bbe6c5" title=" " alt="" coords="224,152,403,193"/>
+<area shape="poly" title=" " alt="" coords="172,150,209,155,208,161,172,155"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga520238790007ce2d3c5dc5e658144bbe" title=" " alt="" coords="232,218,395,258"/>
+<area shape="poly" title=" " alt="" coords="130,159,221,202,238,209,236,214,219,207,128,164"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gab7c377752c0162278bf6de74a13ea644" title=" " alt="" coords="455,5,577,31"/>
+<area shape="poly" title=" " alt="" coords="396,30,439,25,440,30,397,35"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gaf8192f7d9cb79b67e62f2a433c945437" title=" " alt="" coords="458,55,575,80"/>
+<area shape="poly" title=" " alt="" coords="397,50,442,56,442,61,396,55"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga2cc78a10c9ffbc81af20655c206acfc4" title=" " alt="" coords="466,225,566,251"/>
+<area shape="poly" title=" " alt="" coords="396,236,451,236,451,241,396,241"/>
 </map>
 </div>
 <div class="dynheader">
@@ -846,7 +863,7 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Vector [log(t * F_T(t)), log(scale * g(t; lambda, k))], both <code>-inf</code> for t &lt;= 0 </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00175">175</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__analytical__cdf_8stan_source.html#l00182">182</a> of file <a class="el" href="primarycensored__analytical__cdf_8stan_source.html">primarycensored_analytical_cdf.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">

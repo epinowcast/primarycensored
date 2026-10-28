@@ -114,6 +114,10 @@ Collaboration diagram for Log CDFs for the ode function:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:gab7c377752c0162278bf6de74a13ea644" id="r_gab7c377752c0162278bf6de74a13ea644"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gab7c377752c0162278bf6de74a13ea644">gamma_lcdf_logx</a> (real log_x, real a)</td></tr>
+<tr class="separator:gab7c377752c0162278bf6de74a13ea644"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf8192f7d9cb79b67e62f2a433c945437" id="r_gaf8192f7d9cb79b67e62f2a433c945437"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gaf8192f7d9cb79b67e62f2a433c945437">gamma_log_rate</a> (real rate)</td></tr>
+<tr class="separator:gaf8192f7d9cb79b67e62f2a433c945437"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gade2c3354d41076d674ee0d0f601020a3" id="r_gade2c3354d41076d674ee0d0f601020a3"><td class="memItemLeft" align="right" valign="top">real&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gade2c3354d41076d674ee0d0f601020a3">gengamma_lcdf</a> (real y, real shape, real scale, real k)</td></tr>
 <tr class="separator:gade2c3354d41076d674ee0d0f601020a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gac677200fa47a95f644537be481450960" id="r_gac677200fa47a95f644537be481450960"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="#gac677200fa47a95f644537be481450960">dist_has_positive_support</a> (data int dist_id)</td></tr>
@@ -150,7 +154,7 @@ Functions</h2></td></tr>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>1 if the delay distribution has non-negative support, 0 otherwise. </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00033">33</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00091">91</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -235,28 +239,33 @@ Here is the caller graph for this function:</div>
 <div class="line">array[2] real params = {0.0, 1.0}; <span class="comment">// mean and standard deviation on log scale</span></div>
 <div class="line"><span class="keywordtype">int</span> dist_id = 1; <span class="comment">// Lognormal</span></div>
 <div class="line">real log_cdf = <a class="code hl_function" href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a>(delay, params, dist_id);</div>
-<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00107">primarycensored_ode.stan:107</a></div></div>
+<div class="ttc" id="agroup__delay__log__cdfs_html_ga0761ffd0ab06dc8b52d0ef30090941ce"><div class="ttname"><a href="#ga0761ffd0ab06dc8b52d0ef30090941ce">dist_lcdf</a></div><div class="ttdeci">real dist_lcdf(real delay, array[] real params, int dist_id)</div><div class="ttdef"><b>Definition</b> <a href="primarycensored__ode_8stan_source.html#l00165">primarycensored_ode.stan:165</a></div></div>
 </div><!-- fragment --> 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00107">107</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00165">165</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
 <div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="group__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph.png" border="0" usemap="#agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph" alt=""/></div>
 <map name="agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph" id="agroup__delay__log__cdfs_ga0761ffd0ab06dc8b52d0ef30090941ce_cgraph">
-<area shape="rect" title=" " alt="" coords="5,104,76,130"/>
+<area shape="rect" title=" " alt="" coords="5,156,76,182"/>
 <area shape="rect" href="group__delay__log__cdfs.html#gac677200fa47a95f644537be481450960" title=" " alt="" coords="125,5,297,31"/>
-<area shape="poly" title=" " alt="" coords="51,102,81,71,122,40,133,35,135,39,125,44,84,75,55,106"/>
-<area shape="rect" href="group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="154,55,268,80"/>
-<area shape="poly" title=" " alt="" coords="75,103,123,89,145,82,147,88,124,94,77,109"/>
-<area shape="rect" href="group__delay__log__cdfs.html#ga73fe2c7117cb1128e5a863ab21317683" title=" " alt="" coords="124,104,298,130"/>
-<area shape="poly" title=" " alt="" coords="76,114,108,114,108,120,76,120"/>
-<area shape="rect" href="nonparametric_8stan.html#a03e3aad866bd81f69bc72da66bc5a184" title=" " alt="" coords="164,153,258,179"/>
-<area shape="poly" title=" " alt="" coords="77,125,124,140,149,147,148,152,123,145,75,130"/>
-<area shape="rect" href="nonparametric_8stan.html#a2b6a89a9f545005b8ab818cfa32dd086" title=" " alt="" coords="362,203,443,228"/>
-<area shape="poly" title=" " alt="" coords="54,128,83,160,103,176,125,189,181,207,241,217,298,219,347,218,347,223,298,225,240,222,180,213,123,194,100,181,79,164,50,132"/>
-<area shape="rect" href="nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9" title=" " alt="" coords="346,153,459,179"/>
-<area shape="poly" title=" " alt="" coords="258,164,330,164,330,169,258,169"/>
-<area shape="poly" title=" " alt="" coords="259,176,348,199,347,204,258,181"/>
+<area shape="poly" title=" " alt="" coords="45,154,74,103,95,74,122,48,142,35,145,40,125,52,99,77,78,106,50,157"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gab7c377752c0162278bf6de74a13ea644" title=" " alt="" coords="346,107,468,132"/>
+<area shape="poly" title=" " alt="" coords="49,154,79,121,99,104,123,92,153,83,184,78,246,78,305,86,355,99,354,104,304,92,246,83,184,83,154,88,125,97,102,109,82,125,53,157"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gaf8192f7d9cb79b67e62f2a433c945437" title=" " alt="" coords="152,107,270,132"/>
+<area shape="poly" title=" " alt="" coords="75,155,123,141,145,134,147,140,124,146,77,161"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="154,156,268,182"/>
+<area shape="poly" title=" " alt="" coords="76,166,139,166,139,172,76,172"/>
+<area shape="rect" href="group__delay__log__cdfs.html#ga73fe2c7117cb1128e5a863ab21317683" title=" " alt="" coords="124,205,298,231"/>
+<area shape="poly" title=" " alt="" coords="77,177,124,192,147,198,145,203,123,197,75,182"/>
+<area shape="rect" href="nonparametric_8stan.html#a03e3aad866bd81f69bc72da66bc5a184" title=" " alt="" coords="164,255,258,280"/>
+<area shape="poly" title=" " alt="" coords="55,180,84,211,125,241,150,252,148,257,122,246,81,215,51,184"/>
+<area shape="rect" href="nonparametric_8stan.html#a2b6a89a9f545005b8ab818cfa32dd086" title=" " alt="" coords="366,304,448,330"/>
+<area shape="poly" title=" " alt="" coords="49,181,75,236,97,267,125,291,152,304,181,314,241,325,300,326,351,323,351,328,300,332,241,330,180,319,150,309,122,295,93,270,70,239,44,183"/>
+<area shape="poly" title=" " alt="" coords="264,153,338,134,339,139,266,158"/>
+<area shape="rect" href="nonparametric_8stan.html#a7628f4b4425594d8d59df014ea39ffd9" title=" " alt="" coords="350,255,464,280"/>
+<area shape="poly" title=" " alt="" coords="259,265,335,265,335,270,259,270"/>
+<area shape="poly" title=" " alt="" coords="259,277,352,300,351,306,258,282"/>
 </map>
 </div>
 <div class="dynheader">
@@ -297,6 +306,167 @@ Here is the caller graph for this function:</div>
 
 </div>
 </div>
+<a id="gab7c377752c0162278bf6de74a13ea644" name="gab7c377752c0162278bf6de74a13ea644"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gab7c377752c0162278bf6de74a13ea644">&#9670;&#160;</a></span>gamma_lcdf_logx()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real gamma_lcdf_logx </td>
+          <td>(</td>
+          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>log_x</em></span>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>a</em></span>&#160;)</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Compute the log CDF of a unit rate Gamma distribution from the log of x</p>
+<p>Returns log P(a, x) for x = exp(log_x). Below x = (a + 1) / 2 it sums the lower series P(a, x) = x^a exp(-x) / Gamma(a + 1) * (1 + x / (a + 1) + ...) in log space, where <code>gamma_lcdf()</code> underflows and its shape gradient is wrong. The series uses elementary operations, so autodiff is exact. Elsewhere it calls <code>gamma_lcdf()</code>.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">log_x</td><td>Log of the argument, log(x) </td></tr>
+    <tr><td class="paramname">a</td><td>Shape parameter of the Gamma distribution (a &gt; 0)</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>log P(a, exp(log_x)). Rejects a shape that is not positive and finite. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00018">18</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="group__delay__log__cdfs_gab7c377752c0162278bf6de74a13ea644_icgraph.png" border="0" usemap="#agroup__delay__log__cdfs_gab7c377752c0162278bf6de74a13ea644_icgraph" alt=""/></div>
+<map name="agroup__delay__log__cdfs_gab7c377752c0162278bf6de74a13ea644_icgraph" id="agroup__delay__log__cdfs_gab7c377752c0162278bf6de74a13ea644_icgraph">
+<area shape="rect" title=" " alt="" coords="1671,181,1793,207"/>
+<area shape="rect" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="1391,153,1462,179"/>
+<area shape="poly" title=" " alt="" coords="1655,190,1462,172,1462,166,1656,184"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gade2c3354d41076d674ee0d0f601020a3" title=" " alt="" coords="1510,130,1623,156"/>
+<area shape="poly" title=" " alt="" coords="1672,178,1610,159,1611,154,1674,173"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga8385a71cb687fe480144a513d9ae992d" title=" " alt="" coords="1177,224,1343,265"/>
+<area shape="poly" title=" " alt="" coords="1656,205,1344,238,1343,233,1655,199"/>
+<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="1188,153,1332,179"/>
+<area shape="poly" title=" " alt="" coords="1376,168,1333,168,1333,163,1376,163"/>
+<area shape="rect" href="group__primary__censored__single.html#ga1c048ace7a520e3d45670e4e4c14f585" title=" " alt="" coords="975,153,1116,179"/>
+<area shape="poly" title=" " alt="" coords="1172,168,1117,168,1117,163,1172,163"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9e88f6f30a8f32d8e4771826bf72e463" title=" " alt="" coords="754,204,898,229"/>
+<area shape="poly" title=" " alt="" coords="973,185,885,206,884,200,971,180"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga35f0d2b3f2330f648be4242118669cd9" title=" " alt="" coords="527,355,671,395"/>
+<area shape="poly" title=" " alt="" coords="799,242,739,294,716,318,691,339,658,357,655,352,688,334,713,314,736,291,796,238"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga11d79d0886e7c1828c78e68aa74e67dc" title=" " alt="" coords="283,329,434,370"/>
+<area shape="poly" title=" " alt="" coords="795,240,747,269,690,295,624,315,556,330,435,347,434,341,555,324,623,310,688,290,744,264,792,236"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9dd889406826dfe58ea658440784c9a7" title=" " alt="" coords="525,254,673,280"/>
+<area shape="poly" title=" " alt="" coords="751,236,660,256,659,251,750,231"/>
+<area shape="rect" href="primarycensored_8stan.html#ae87aca017577bc03680c5f0bca4637e6" title=" " alt="" coords="509,139,689,179"/>
+<area shape="poly" title=" " alt="" coords="738,206,651,183,653,178,740,201"/>
+<area shape="poly" title=" " alt="" coords="511,369,434,360,435,355,512,363"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga7bf306228dadd0b06abc4a583439cdc9" title=" " alt="" coords="31,329,182,370"/>
+<area shape="poly" title=" " alt="" coords="267,352,183,352,183,347,267,347"/>
+<area shape="rect" href="group__primary__censored__single.html#ga2a1155a9ec8b2007be790fafd45bf0c9" title=" " alt="" coords="286,254,431,280"/>
+<area shape="poly" title=" " alt="" coords="509,270,432,270,432,264,509,264"/>
+<area shape="poly" title=" " alt="" coords="705,158,975,162,975,167,705,163"/>
+<area shape="poly" title=" " alt="" coords="705,174,797,200,796,206,704,179"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="256,120,461,145"/>
+<area shape="poly" title=" " alt="" coords="493,150,461,147,462,141,494,145"/>
+<area shape="poly" title=" " alt="" coords="401,150,452,171,510,189,573,200,638,208,754,214,753,219,638,213,573,206,508,194,451,176,399,155"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="5,66,208,92"/>
+<area shape="poly" title=" " alt="" coords="279,119,170,95,171,90,280,113"/>
+<area shape="poly" title=" " alt="" coords="167,59,307,28,399,14,499,5,604,4,712,13,817,36,867,53,916,74,934,89,942,106,950,123,964,138,986,150,984,155,961,143,945,126,937,108,929,92,913,79,865,58,815,41,711,18,604,9,499,10,399,19,308,33,168,64"/>
+<area shape="poly" title=" " alt="" coords="1495,157,1463,163,1462,157,1494,152"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560" title=" " alt="" coords="963,88,1129,129"/>
+<area shape="poly" title=" " alt="" coords="1208,218,1175,193,1152,167,1142,155,1127,143,1108,132,1111,127,1131,138,1146,151,1156,163,1179,189,1212,213"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#gac9d640b5a0f8a90df6442a87ccb7270c" title=" " alt="" coords="963,253,1129,294"/>
+<area shape="poly" title=" " alt="" coords="1162,261,1130,265,1129,260,1161,255"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga9a23e4c237b331bc4de24caf05aa160c" title=" " alt="" coords="737,88,915,129"/>
+<area shape="poly" title=" " alt="" coords="947,111,915,111,915,106,947,106"/>
+<area shape="poly" title=" " alt="" coords="722,116,461,130,461,125,722,111"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga89c93a594bc5bb75016001ea712f30bb" title=" " alt="" coords="737,304,915,345"/>
+<area shape="poly" title=" " alt="" coords="948,299,916,307,914,301,947,294"/>
+<area shape="poly" title=" " alt="" coords="723,350,673,362,671,356,721,345"/>
+</map>
+</div>
+
+</div>
+</div>
+<a id="gaf8192f7d9cb79b67e62f2a433c945437" name="gaf8192f7d9cb79b67e62f2a433c945437"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#gaf8192f7d9cb79b67e62f2a433c945437">&#9670;&#160;</a></span>gamma_log_rate()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real gamma_log_rate </td>
+          <td>(</td>
+          <td class="paramtype">real</td>          <td class="paramname"><span class="paramname"><em>rate</em></span></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Compute the log of a Gamma rate</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rate</td><td>Rate parameter of the Gamma distribution</td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>log(rate). Rejects a rate that is not positive and finite. </dd></dl>
+
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00046">46</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<div class="dynheader">
+Here is the caller graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="group__delay__log__cdfs_gaf8192f7d9cb79b67e62f2a433c945437_icgraph.png" border="0" usemap="#agroup__delay__log__cdfs_gaf8192f7d9cb79b67e62f2a433c945437_icgraph" alt=""/></div>
+<map name="agroup__delay__log__cdfs_gaf8192f7d9cb79b67e62f2a433c945437_icgraph" id="agroup__delay__log__cdfs_gaf8192f7d9cb79b67e62f2a433c945437_icgraph">
+<area shape="rect" title=" " alt="" coords="1510,182,1627,208"/>
+<area shape="rect" href="group__delay__log__cdfs.html#ga0761ffd0ab06dc8b52d0ef30090941ce" title=" " alt="" coords="1391,156,1462,181"/>
+<area shape="poly" title=" " alt="" coords="1494,184,1462,178,1463,172,1495,179"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#ga8385a71cb687fe480144a513d9ae992d" title=" " alt="" coords="1177,203,1343,243"/>
+<area shape="poly" title=" " alt="" coords="1495,204,1344,218,1344,213,1494,199"/>
+<area shape="rect" href="group__ode.html#ga36bcf9457dc8dca5bb617405733b2d0f" title=" " alt="" coords="1188,153,1332,179"/>
+<area shape="poly" title=" " alt="" coords="1376,170,1333,170,1333,164,1376,165"/>
+<area shape="rect" href="group__primary__censored__single.html#ga1c048ace7a520e3d45670e4e4c14f585" title=" " alt="" coords="975,153,1116,179"/>
+<area shape="poly" title=" " alt="" coords="1172,168,1117,168,1117,163,1172,163"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9e88f6f30a8f32d8e4771826bf72e463" title=" " alt="" coords="754,204,898,229"/>
+<area shape="poly" title=" " alt="" coords="973,185,885,206,884,200,971,180"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga35f0d2b3f2330f648be4242118669cd9" title=" " alt="" coords="527,355,671,395"/>
+<area shape="poly" title=" " alt="" coords="799,242,739,294,716,318,691,339,658,357,655,352,688,334,713,314,736,291,796,238"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga11d79d0886e7c1828c78e68aa74e67dc" title=" " alt="" coords="283,329,434,370"/>
+<area shape="poly" title=" " alt="" coords="795,240,747,269,690,295,624,315,556,330,435,347,434,341,555,324,623,310,688,290,744,264,792,236"/>
+<area shape="rect" href="group__primary__censored__single.html#ga9dd889406826dfe58ea658440784c9a7" title=" " alt="" coords="525,254,673,280"/>
+<area shape="poly" title=" " alt="" coords="751,236,660,256,659,251,750,231"/>
+<area shape="rect" href="primarycensored_8stan.html#ae87aca017577bc03680c5f0bca4637e6" title=" " alt="" coords="509,139,689,179"/>
+<area shape="poly" title=" " alt="" coords="738,206,651,183,653,178,740,201"/>
+<area shape="poly" title=" " alt="" coords="511,369,434,360,435,355,512,363"/>
+<area shape="rect" href="group__primary__censored__vectorized.html#ga7bf306228dadd0b06abc4a583439cdc9" title=" " alt="" coords="31,329,182,370"/>
+<area shape="poly" title=" " alt="" coords="267,352,183,352,183,347,267,347"/>
+<area shape="rect" href="group__primary__censored__single.html#ga2a1155a9ec8b2007be790fafd45bf0c9" title=" " alt="" coords="286,254,431,280"/>
+<area shape="poly" title=" " alt="" coords="509,270,432,270,432,264,509,264"/>
+<area shape="poly" title=" " alt="" coords="705,158,975,162,975,167,705,163"/>
+<area shape="poly" title=" " alt="" coords="705,174,797,200,796,206,704,179"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gab34e087915f10297d0afc22245f7fee1" title=" " alt="" coords="256,120,461,145"/>
+<area shape="poly" title=" " alt="" coords="493,150,461,147,462,141,494,145"/>
+<area shape="poly" title=" " alt="" coords="401,150,452,171,510,189,573,200,638,208,754,214,753,219,638,213,573,206,508,194,451,176,399,155"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gaedf79a16588b8a36e0304a01e7c060a7" title=" " alt="" coords="5,66,208,92"/>
+<area shape="poly" title=" " alt="" coords="279,119,170,95,171,90,280,113"/>
+<area shape="poly" title=" " alt="" coords="167,59,307,28,399,14,499,5,604,4,712,13,817,36,867,53,916,74,934,89,942,106,950,123,964,138,986,150,984,155,961,143,945,126,937,108,929,92,913,79,865,58,815,41,711,18,604,9,499,10,399,19,308,33,168,64"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#gacaf23c49145360658543b617ef155560" title=" " alt="" coords="963,88,1129,129"/>
+<area shape="poly" title=" " alt="" coords="1182,197,1175,193,1160,180,1151,167,1142,155,1127,143,1108,132,1111,127,1131,138,1146,151,1155,164,1164,177,1179,189,1185,193"/>
+<area shape="rect" href="group__analytical__solution__helpers.html#gac9d640b5a0f8a90df6442a87ccb7270c" title=" " alt="" coords="963,253,1129,294"/>
+<area shape="poly" title=" " alt="" coords="1162,249,1130,257,1129,252,1161,244"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga9a23e4c237b331bc4de24caf05aa160c" title=" " alt="" coords="737,88,915,129"/>
+<area shape="poly" title=" " alt="" coords="947,111,915,111,915,106,947,106"/>
+<area shape="poly" title=" " alt="" coords="722,116,461,130,461,125,722,111"/>
+<area shape="rect" href="group__primary__event__analytical__distributions.html#ga89c93a594bc5bb75016001ea712f30bb" title=" " alt="" coords="737,304,915,345"/>
+<area shape="poly" title=" " alt="" coords="948,299,916,307,914,301,947,294"/>
+<area shape="poly" title=" " alt="" coords="723,350,673,362,671,356,721,345"/>
+</map>
+</div>
+
+</div>
+</div>
 <a id="gade2c3354d41076d674ee0d0f601020a3" name="gade2c3354d41076d674ee0d0f601020a3"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#gade2c3354d41076d674ee0d0f601020a3">&#9670;&#160;</a></span>gengamma_lcdf()</h2>
 
@@ -329,7 +499,7 @@ Here is the caller graph for this function:</div>
 <p>Uses the Stacy parameterisation of <code>flexsurv::pgengamma.orig()</code> in R. The CDF is the regularised lower incomplete gamma function P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1) distributions are special cases.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">y</td><td>Value at which to evaluate the log CDF (y &gt; 0) </td></tr>
+    <tr><td class="paramname">y</td><td>Value at which to evaluate the log CDF (y &gt;= 0) </td></tr>
     <tr><td class="paramname">shape</td><td>Shape (power) parameter </td></tr>
     <tr><td class="paramname">scale</td><td>Scale parameter </td></tr>
     <tr><td class="paramname">k</td><td>Shape parameter of the underlying Gamma distribution</td></tr>
@@ -338,7 +508,17 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>Log CDF of the generalised gamma distribution </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00017">17</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00069">69</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<div class="dynheader">
+Here is the call graph for this function:</div>
+<div class="dyncontent">
+<div class="center"><img src="group__delay__log__cdfs_gade2c3354d41076d674ee0d0f601020a3_cgraph.png" border="0" usemap="#agroup__delay__log__cdfs_gade2c3354d41076d674ee0d0f601020a3_cgraph" alt=""/></div>
+<map name="agroup__delay__log__cdfs_gade2c3354d41076d674ee0d0f601020a3_cgraph" id="agroup__delay__log__cdfs_gade2c3354d41076d674ee0d0f601020a3_cgraph">
+<area shape="rect" title=" " alt="" coords="5,5,119,31"/>
+<area shape="rect" href="group__delay__log__cdfs.html#gab7c377752c0162278bf6de74a13ea644" title=" " alt="" coords="167,5,289,31"/>
+<area shape="poly" title=" " alt="" coords="119,16,151,16,151,21,119,21"/>
+</map>
+</div>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
@@ -415,7 +595,7 @@ Here is the caller graph for this function:</div>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>1 if <code>lognormal_lcdf</code> would underflow or <code>y</code> is non-positive, 0 otherwise </dd></dl>
 
-<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00069">69</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
+<p class="definition">Definition at line <a class="el" href="primarycensored__ode_8stan_source.html#l00127">127</a> of file <a class="el" href="primarycensored__ode_8stan_source.html">primarycensored_ode.stan</a>.</p>
 <div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
