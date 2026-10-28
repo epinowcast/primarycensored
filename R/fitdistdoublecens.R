@@ -543,3 +543,20 @@ fitdistdoublecens <- function(
 .recycle_params <- function(params, n) {
   params[rep_len(seq_len(nrow(params)), n), , drop = FALSE]
 }
+
+#' Reduce a setting shared by all rows to a single value
+#'
+#' Lets constant columns take the faster path for a single value in
+#' [pcens_pmf()] and [pprimarycensored()].
+#'
+#' @param setting A setting, of length 1 or one per row.
+#'
+#' @return `setting`, or its first value when all values are equal.
+#'
+#' @keywords internal
+.shared_value <- function(setting) {
+  if (length(setting) > 1L && all(setting == setting[[1L]])) {
+    return(setting[[1L]])
+  }
+  setting
+}

@@ -203,23 +203,6 @@ pcens_pmf.default <- function(
   points
 }
 
-#' Reduce a setting shared by all rows to a single value
-#'
-#' Lets the constant columns of [fitdistdoublecens()] data take the faster
-#' path for a single value.
-#'
-#' @param setting A setting, of length 1 or one per row.
-#'
-#' @return `setting`, or its first value when all values are equal.
-#'
-#' @keywords internal
-.shared_value <- function(setting) {
-  if (length(setting) > 1L && isTRUE(all(setting == setting[[1L]]))) {
-    return(setting[[1L]])
-  }
-  setting
-}
-
 #' Group rows that share values
 #'
 #' @param ... Vectors of the same length, one element per row.
