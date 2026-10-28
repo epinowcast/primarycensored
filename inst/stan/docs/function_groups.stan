@@ -33,6 +33,18 @@
  */
 
 /**
+ * @defgroup tilt_transforms Tilt Transforms of Delay Distributions
+ * @brief Truncated exponential-moment transforms of delay distributions, the building blocks of analytical solutions for non-uniform primary event windows
+ * @ingroup primary_event_analytical_distributions
+ */
+
+/**
+ * @defgroup exponential_tilt_solutions Exponentially Tilted Primary Event Solutions
+ * @brief Analytical solutions for exponentially tilted primary event windows, built from tilt transforms of the delay distribution
+ * @ingroup primary_event_analytical_distributions
+ */
+
+/**
  * @defgroup ode ODE System Functions
  * @brief Main ODE system functions
  */
