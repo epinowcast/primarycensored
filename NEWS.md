@@ -16,6 +16,10 @@
 - Added the log-logistic delay, Stan `dist_id` 29 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
   There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
   See #372, #104 and #321.
+- Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3), with analytical solutions for exponential, gamma and normal delays in R and Stan.
+  The numerical path is used where the analytical solutions do not apply.
+  `pcd_stan_functions()` and `pcd_load_stan_functions()` now also find Stan functions that return arrays.
+  See #370.
 
 ## Bug fixes
 

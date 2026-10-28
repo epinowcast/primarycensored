@@ -110,6 +110,7 @@ pcens_cdf.default <- function(
   pwindow,
   use_numeric = FALSE
 ) {
+  spike <- .primary_spike_breaks(object, pwindow)
   result <- vapply(
     q,
     function(d) {
@@ -122,8 +123,10 @@ pcens_cdf.default <- function(
           )
       }
       # The integrand leaves zero at p = d for non-negative delays, so the
-      # integral is split there
-      breaks <- c(0, if (!is.na(d) && d > 0 && d < pwindow) d, pwindow)
+      # integral is split there, and around a narrow primary density
+      breaks <- sort(unique(c(
+        0, if (!is.na(d) && d > 0 && d < pwindow) d, spike, pwindow
+      )))
       return(sum(vapply(
         seq_len(length(breaks) - 1L),
         function(i) {
@@ -142,6 +145,29 @@ pcens_cdf.default <- function(
   result <- pmin(1, pmax(0, result))
 
   return(result)
+}
+
+#' Break points for a narrow primary event density
+#'
+#' For the truncated logistic primary ([dtlogis()]) the mass is within a few
+#' scales of the location, or of the nearest edge of the window. Other
+#' primaries have no break points.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @return Numeric vector of break points inside `(0, pwindow)`.
+#'
+#' @noRd
+.primary_spike_breaks <- function(object, pwindow) {
+  is_tlogis <- identical(object$dprimary, dtlogis) ||
+    endsWith(class(object)[1L], "_dtlogis")
+  if (!is_tlogis) {
+    return(numeric(0))
+  }
+  primary <- .tlogis_primary_args(object)
+  centre <- min(max(primary$location, 0), pwindow)
+  breaks <- centre + primary$scale * .tlogis_break_multiples
+  breaks[breaks > 0 & breaks < pwindow]
 }
 
 #' Method for step CDF delay with general primary event distribution
