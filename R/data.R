@@ -9,7 +9,8 @@
 #' \describe{
 #'   \item{name}{Distribution name}
 #'   \item{pdist}{R distribution function name (e.g. plnorm), NA if there is no
-#'   base R implementation}
+#'   registered R implementation. `ppareto`, `pinvgamma` and `pinvchisq` are
+#'   from the extraDistr package.}
 #'   \item{aliases}{Alternative names/identifiers}
 #'   \item{stan_id}{Stan distribution ID used in the stan code}
 #' }

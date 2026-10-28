@@ -3,6 +3,26 @@
   */
 
 /**
+  * Compute the log of the difference between two CDF values
+  * @ingroup truncation_helpers
+  *
+  * Far in the upper tail both log CDFs round to about 0 and `log_diff_exp`
+  * can be NaN. The interval has no mass to double precision, so this
+  * returns `-inf`.
+  *
+  * @param log_cdf_upper Log CDF at the upper end of the interval
+  * @param log_cdf_lower Log CDF at the lower end of the interval
+  *
+  * @return log(F(upper) - F(lower)), or `-inf` if F(upper) <= F(lower)
+  */
+real primarycensored_log_cdf_diff(real log_cdf_upper, real log_cdf_lower) {
+  if (log_cdf_upper <= log_cdf_lower) {
+    return negative_infinity();
+  }
+  return log_diff_exp(log_cdf_upper, log_cdf_lower);
+}
+
+/**
   * Compute the log normalizer for truncation: log(F(D) - F(L))
   * @ingroup truncation_helpers
   *
@@ -134,7 +154,8 @@ real primarycensored_cdf(data real d, data int dist_id, array[] real params,
   }
 
   // Check if an analytical solution exists
-  if (check_for_analytical(dist_id, primary_id)) {
+  if (check_for_analytical(dist_id, primary_id) &&
+      check_uniform_terms_params(dist_id, params)) {
     // Use analytical solution
     result = primarycensored_analytical_cdf(
       d | dist_id, params, pwindow, L, D, primary_id, primary_params
@@ -225,7 +246,8 @@ real primarycensored_lcdf(data real d, data int dist_id, array[] real params,
   // Check if an analytical solution exists. The internal lower bound is 0 for
   // positive-support delays (lets the d <= L early-exit return -inf for d <= 0)
   // and -inf for distributions with support on the reals.
-  if (check_for_analytical(dist_id, primary_id)) {
+  if (check_for_analytical(dist_id, primary_id) &&
+      check_uniform_terms_params(dist_id, params)) {
     result = primarycensored_analytical_lcdf(
       d | dist_id, params, pwindow,
       dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
@@ -353,9 +375,10 @@ real primarycensored_lpmf(data int d, data int dist_id, array[] real params,
     }
 
     real log_normalizer = primarycensored_log_normalizer(log_cdf_D, log_cdf_L, L);
-    return log_diff_exp(log_cdf_upper, log_cdf_lower) - log_normalizer;
+    return primarycensored_log_cdf_diff(log_cdf_upper, log_cdf_lower)
+           - log_normalizer;
   } else {
-    return log_diff_exp(log_cdf_upper, log_cdf_lower);
+    return primarycensored_log_cdf_diff(log_cdf_upper, log_cdf_lower);
   }
 }
 
@@ -425,7 +448,8 @@ vector primarycensored_lcdf_vectorized(data int start, data int n,
                                        data int dist_id, array[] real params,
                                        data real pwindow, data int primary_id,
                                        array[] real primary_params) {
-  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow)) {
+  if (check_for_analytical_vectorized(dist_id, primary_id, pwindow) &&
+      check_uniform_terms_params(dist_id, params)) {
     return primarycensored_analytical_lcdf_vectorized(
       start, n, dist_id, params, pwindow
     );
@@ -556,7 +580,8 @@ vector primarycensored_sone_lpmf_vectorized(
       log_pmfs[d] = negative_infinity();
     } else if (d - 1 < L) {
       // L falls within interval [d-1, d), so compute mass in [L, d)
-      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_L) - log_normalizer;
+      log_pmfs[d] = primarycensored_log_cdf_diff(log_cdfs[d], log_cdf_L)
+                    - log_normalizer;
     } else if (d == 1 && dist_has_positive_support(dist_id)) {
       // First interval [0, 1) with L <= 0 and positive-support delay:
       // F(0) = 0, so PMF = F(1) / normalizer
@@ -569,10 +594,12 @@ vector primarycensored_sone_lpmf_vectorized(
         negative_infinity(), positive_infinity(),
         primary_id, primary_params
       );
-      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdf_0) - log_normalizer;
+      log_pmfs[d] = primarycensored_log_cdf_diff(log_cdfs[d], log_cdf_0)
+                    - log_normalizer;
     } else {
       // Standard case: PMF = (F(d) - F(d-1)) / normalizer
-      log_pmfs[d] = log_diff_exp(log_cdfs[d], log_cdfs[d-1]) - log_normalizer;
+      log_pmfs[d] = primarycensored_log_cdf_diff(log_cdfs[d], log_cdfs[d-1])
+                    - log_normalizer;
     }
   }
 

@@ -2,19 +2,19 @@
 % Please edit documentation in R/pcens_cdf.R
 \name{.uniform_window_cdf}
 \alias{.uniform_window_cdf}
-\title{Uniform primary CDF for positive finite delays and windows}
+\title{Uniform primary CDF for finite delays and positive windows}
 \usage{
-.uniform_window_cdf(d, w, terms_fn, upper_fn, delay_cdf, params, share)
+.uniform_window_cdf(d, w, terms_fn, upper_fn, delay_cdf, params, share, lower)
 }
 \arguments{
-\item{d}{Positive finite delays.}
+\item{d}{Finite delays above \code{lower}.}
 
 \item{w}{Primary event windows greater than zero, one per delay.}
 
-\item{terms_fn}{Function of delays greater than or equal to zero and
+\item{terms_fn}{Function of delays greater than or equal to \code{lower} and
 \code{params} returning \eqn{G}.}
 
-\item{upper_fn}{Function of delays greater than or equal to zero and
+\item{upper_fn}{Function of delays greater than or equal to \code{lower} and
 \code{params} returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and
 \eqn{\tilde S} are the upper tails of \eqn{F} and \eqn{\tilde F}.}
 
@@ -26,11 +26,14 @@
 \item{share}{Whether terms may be shared between window ends, as in
 \code{\link[=.uniform_endpoint_diff]{.uniform_endpoint_diff()}}. Only valid for a scalar window and scalar
 \code{params}.}
+
+\item{lower}{Lower end of the delay support, \eqn{L}: 0, or \code{-Inf} for
+a delay on the reals.}
 }
 \value{
 Numeric vector of CDF values, not clamped to [0, 1].
 }
 \description{
-Uniform primary CDF for positive finite delays and windows
+Uniform primary CDF for finite delays and positive windows
 }
 \keyword{internal}
