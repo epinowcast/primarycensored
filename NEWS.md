@@ -20,6 +20,10 @@
   The Stan log PMF is `-Inf` rather than NaN for an interval far in the upper tail.
   A beta delay no longer errors in the Stan numerical path for delays above 1.
   See #377.
+- The Stan log CDFs of Gamma and generalised gamma delays no longer return `-Inf` in the lower tail, and their shape gradients there are now correct.
+  This affects `dist_lcdf()`, `gengamma_lcdf()` and the analytical solutions with a uniform primary.
+  A Gamma rate that is not positive and finite is now rejected, as is a negative `y` in `gengamma_lcdf()`.
+  See #363 and #395.
 
 ## Performance
 
