@@ -110,16 +110,20 @@ to change its parameters.
 Low level primary event censored distribution objects and methods
 [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md),
 [`pcens_cdf.default()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.default.md),
+[`pcens_cdf.pcens_pbeta_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pbeta_dunif.md),
+[`pcens_cdf.pcens_pchisq_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pchisq_dunif.md),
 [`pcens_cdf.pcens_pdiscretehazard()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretehazard.md),
 [`pcens_cdf.pcens_pdiscretestep()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretestep.md),
+[`pcens_cdf.pcens_pexp_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pexp_dunif.md),
 [`pcens_cdf.pcens_pgamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgamma_dunif.md),
 [`pcens_cdf.pcens_pgengamma.orig_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md),
 [`pcens_cdf.pcens_pgengamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md),
+[`pcens_cdf.pcens_pinvchisq_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pinvchisq_dunif.md),
+[`pcens_cdf.pcens_pinvgamma_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pinvgamma_dunif.md),
 [`pcens_cdf.pcens_plnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md),
+[`pcens_cdf.pcens_pnorm_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pnorm_dunif.md),
+[`pcens_cdf.pcens_ppareto_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_ppareto_dunif.md),
 [`pcens_cdf.pcens_pweibull_dunif()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md),
-[`pcens_cdf_exptilt`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md),
-[`pcens_cdf_gumbel`](https://primarycensored.epinowcast.org/reference/pcens_cdf_gumbel.md),
-[`pcens_cdf_tlogis`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md),
 [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md),
 [`pcens_pmf.default()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md),
 [`pcens_quantile()`](https://primarycensored.epinowcast.org/reference/pcens_quantile.md),
@@ -145,13 +149,13 @@ new_pcens(
 #>     }
 #>     .Call(C_pgamma, q, shape, scale, lower.tail, log.p)
 #> }
-#> <bytecode: 0x5627c7807308>
+#> <bytecode: 0x557e38f77d60>
 #> <environment: namespace:stats>
 #> 
 #> $dprimary
 #> function (x, min = 0, max = 1, log = FALSE) 
 #> .Call(C_dunif, x, min, max, log)
-#> <bytecode: 0x5627c0fb61e8>
+#> <bytecode: 0x557e302e9500>
 #> <environment: namespace:stats>
 #> 
 #> $primary_args
@@ -173,7 +177,7 @@ new_pcens(
 #> $pprimary
 #> function (q, min = 0, max = 1, lower.tail = TRUE, log.p = FALSE) 
 #> .Call(C_punif, q, min, max, lower.tail, log.p)
-#> <bytecode: 0x5627c7852e48>
+#> <bytecode: 0x557e38fdfa78>
 #> <environment: namespace:stats>
 #> 
 #> $args

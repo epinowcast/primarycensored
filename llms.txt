@@ -242,14 +242,6 @@ distributions
   [`pexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md)
   [`rexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md)
   : Exponential growth distribution functions
-- [`dtgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md)
-  [`ptgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md)
-  [`rtgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md)
-  : Truncated Gumbel distribution functions
-- [`dtlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md)
-  [`ptlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md)
-  [`rtlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md)
-  : Truncated logistic distribution functions
 
 ## Non-parametric delay distributions
 
@@ -289,10 +281,16 @@ handling censored distributions.
   : Compute primary event censored CDF
 - [`pcens_cdf(`*`<default>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.default.md)
   : Default method for computing primary event censored CDF
+- [`pcens_cdf(`*`<pcens_pbeta_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pbeta_dunif.md)
+  : Method for Beta delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pchisq_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pchisq_dunif.md)
+  : Method for Chi-square delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pdiscretehazard>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretehazard.md)
   : Method for hazard CDF delay with general primary event distribution
 - [`pcens_cdf(`*`<pcens_pdiscretestep>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretestep.md)
   : Method for step CDF delay with general primary event distribution
+- [`pcens_cdf(`*`<pcens_pexp_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pexp_dunif.md)
+  : Method for Exponential delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pgamma_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgamma_dunif.md)
   : Method for Gamma delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pgengamma.orig_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma.orig_dunif.md)
@@ -300,26 +298,18 @@ handling censored distributions.
 - [`pcens_cdf(`*`<pcens_pgengamma_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pgengamma_dunif.md)
   : Method for generalised gamma (Prentice parameterisation) delay with
   uniform primary
+- [`pcens_cdf(`*`<pcens_pinvchisq_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pinvchisq_dunif.md)
+  : Method for inverse chi-square delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pinvgamma_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pinvgamma_dunif.md)
+  : Method for inverse gamma delay with uniform primary
 - [`pcens_cdf(`*`<pcens_plnorm_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_plnorm_dunif.md)
   : Method for Log-Normal delay with uniform primary
+- [`pcens_cdf(`*`<pcens_pnorm_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pnorm_dunif.md)
+  : Method for Normal delay with uniform primary
+- [`pcens_cdf(`*`<pcens_ppareto_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_ppareto_dunif.md)
+  : Method for Pareto delay with uniform primary
 - [`pcens_cdf(`*`<pcens_pweibull_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pweibull_dunif.md)
   : Method for Weibull delay with uniform primary
-- [`pcens_cdf(`*`<pcens_pexp_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  [`pcens_cdf(`*`<pcens_pgamma_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  [`pcens_cdf(`*`<pcens_pnorm_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  [`pcens_cdf(`*`<pcens_plnorm_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  [`pcens_cdf(`*`<pcens_pweibull_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  [`pcens_cdf(`*`<pcens_pgengamma.orig_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  [`pcens_cdf(`*`<pcens_pgengamma_dexpgrowth>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md)
-  : Methods for delays with an exponentially tilted primary
-- [`pcens_cdf(`*`<pcens_pnorm_dtgumbel>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_gumbel.md)
-  : Method for a normal delay with a truncated Gumbel primary
-- [`pcens_cdf(`*`<pcens_pllogis_dunif>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_loglogistic.md)
-  : Methods for log-logistic delays
-- [`pcens_cdf(`*`<pcens_pexp_dtlogis>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md)
-  [`pcens_cdf(`*`<pcens_pgamma_dtlogis>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md)
-  [`pcens_cdf(`*`<pcens_pnorm_dtlogis>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_cdf_tlogis.md)
-  : Methods for delays with a truncated logistic primary
 - [`pcens_pmf()`](https://primarycensored.epinowcast.org/reference/pcens_pmf.md)
   : Compute primary event censored PMF
 - [`pcens_pmf(`*`<default>`*`)`](https://primarycensored.epinowcast.org/reference/pcens_pmf.default.md)

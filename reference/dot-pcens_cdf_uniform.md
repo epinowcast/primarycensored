@@ -2,13 +2,22 @@
 
 For a delay with mean \\E\\ and a uniform primary event window of width
 \\w\\, the CDF at \\d\\ is \\(G(d) - G(q)) / w\\ with \\q = \max(d - w,
-0)\\ and \\G(t) = t F(t) - E \tilde F(t)\\. \\F\\ is the delay CDF and
-\\\tilde F\\ is the CDF of the partial expectation distribution.
+L)\\ and \\G(t) = t F(t) - E \tilde F(t)\\. \\L\\ is the lower end of
+the delay support, \\F\\ is the delay CDF and \\E \tilde F(t)\\ is the
+partial expectation \\\int_L^t x f(x) dx\\.
 
 ## Usage
 
 ``` r
-.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, delay_cdf, params)
+.pcens_cdf_uniform(
+  q,
+  pwindow,
+  terms_fn,
+  upper_fn,
+  delay_cdf,
+  params,
+  lower = 0
+)
 ```
 
 ## Arguments
@@ -24,12 +33,12 @@ For a delay with mean \\E\\ and a uniform primary event window of width
 
 - terms_fn:
 
-  Function of delays greater than or equal to zero and `params`
+  Function of delays greater than or equal to `lower` and `params`
   returning \\G\\.
 
 - upper_fn:
 
-  Function of delays greater than or equal to zero and `params`
+  Function of delays greater than or equal to `lower` and `params`
   returning \\H(t) = t S(t) - E \tilde S(t)\\, where \\S\\ and \\\tilde
   S\\ are the upper tails of \\F\\ and \\\tilde F\\.
 
@@ -42,12 +51,17 @@ For a delay with mean \\E\\ and a uniform primary event window of width
   Named list of delay parameters, including the delay mean \\E\\ as
   `mean`.
 
+- lower:
+
+  Lower end of the delay support, \\L\\: 0, or `-Inf` for a delay on the
+  reals.
+
 ## Value
 
 Numeric vector of CDF values in \[0, 1\].
 
 ## Details
 
-Delays at or below zero give 0, delays of `Inf` give 1 and missing
+Delays at or below \\L\\ give 0, delays of `Inf` give 1 and missing
 delays are an error. Zero-width windows give the delay CDF. `q`,
 `pwindow` and the elements of `params` are recycled against each other.

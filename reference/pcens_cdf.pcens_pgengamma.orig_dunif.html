@@ -15,8 +15,7 @@ The mean is \(E[T] = \theta \Gamma(k + 1/a) / \Gamma(k)\) and the partial
 expectation distribution is \(\tilde F_T(t) = P(k + 1/a, (t / \theta)^a)\),
 so the solution generalises the gamma (shape = 1) and Weibull (k = 1)
 cases.
-See vignette("analytic-solutions") for the partial moment and
-vignette("why-it-works") for the uniform primary solution.'><meta property="og:description" content='Analytical solution for the generalised gamma distribution in the Stacy
+See vignette("analytic-solutions") for the derivation.'><meta property="og:description" content='Analytical solution for the generalised gamma distribution in the Stacy
 parameterisation used by flexsurv::pgengamma.orig(), with parameters
 shape, scale and k.
 The delay CDF is \(F_T(t) = P(k, (t / \theta)^a)\) with \(P\) the
@@ -26,8 +25,7 @@ The mean is \(E[T] = \theta \Gamma(k + 1/a) / \Gamma(k)\) and the partial
 expectation distribution is \(\tilde F_T(t) = P(k + 1/a, (t / \theta)^a)\),
 so the solution generalises the gamma (shape = 1) and Weibull (k = 1)
 cases.
-See vignette("analytic-solutions") for the partial moment and
-vignette("why-it-works") for the uniform primary solution.'><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"></head><body>
+See vignette("analytic-solutions") for the derivation.'><meta property="og:image" content="https://primarycensored.epinowcast.org/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -81,7 +79,7 @@ vignette("why-it-works") for the uniform primary solution.'><meta property="og:i
 <div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
       <img src="../logo.png" class="logo" alt=""><h1>Method for generalised gamma delay with uniform primary</h1>
-      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/R/pcens_cdf.R" class="external-link"><code>R/pcens_cdf.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/epinowcast/primarycensored/blob/main/R/pcens_cdf.R" class="external-link"><code>R/pcens_cdf.R</code></a></small>
       <div class="d-none name"><code>pcens_cdf.pcens_pgengamma.orig_dunif.Rd</code></div>
     </div>
 
@@ -96,8 +94,7 @@ The mean is \(E[T] = \theta \Gamma(k + 1/a) / \Gamma(k)\) and the partial
 expectation distribution is \(\tilde F_T(t) = P(k + 1/a, (t / \theta)^a)\),
 so the solution generalises the gamma (<code>shape = 1</code>) and Weibull (<code>k = 1</code>)
 cases.
-See <code><a href="../articles/analytic-solutions.html">vignette("analytic-solutions")</a></code> for the partial moment and
-<code><a href="../articles/why-it-works.html">vignette("why-it-works")</a></code> for the uniform primary solution.</p>
+See <code><a href="../articles/analytic-solutions.html">vignette("analytic-solutions")</a></code> for the derivation.</p>
     </div>
 
     <div class="section level2">
@@ -141,15 +138,19 @@ breaks down.</p></dd>
 <code><a href="new_pcens.html">new_pcens()</a></code>,
 <code><a href="pcens_cdf.html">pcens_cdf()</a></code>,
 <code><a href="pcens_cdf.default.html">pcens_cdf.default()</a></code>,
+<code><a href="pcens_cdf.pcens_pbeta_dunif.html">pcens_cdf.pcens_pbeta_dunif()</a></code>,
+<code><a href="pcens_cdf.pcens_pchisq_dunif.html">pcens_cdf.pcens_pchisq_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pdiscretehazard.html">pcens_cdf.pcens_pdiscretehazard()</a></code>,
 <code><a href="pcens_cdf.pcens_pdiscretestep.html">pcens_cdf.pcens_pdiscretestep()</a></code>,
+<code><a href="pcens_cdf.pcens_pexp_dunif.html">pcens_cdf.pcens_pexp_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pgamma_dunif.html">pcens_cdf.pcens_pgamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pgengamma_dunif.html">pcens_cdf.pcens_pgengamma_dunif()</a></code>,
+<code><a href="pcens_cdf.pcens_pinvchisq_dunif.html">pcens_cdf.pcens_pinvchisq_dunif()</a></code>,
+<code><a href="pcens_cdf.pcens_pinvgamma_dunif.html">pcens_cdf.pcens_pinvgamma_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_plnorm_dunif.html">pcens_cdf.pcens_plnorm_dunif()</a></code>,
+<code><a href="pcens_cdf.pcens_pnorm_dunif.html">pcens_cdf.pcens_pnorm_dunif()</a></code>,
+<code><a href="pcens_cdf.pcens_ppareto_dunif.html">pcens_cdf.pcens_ppareto_dunif()</a></code>,
 <code><a href="pcens_cdf.pcens_pweibull_dunif.html">pcens_cdf.pcens_pweibull_dunif()</a></code>,
-<code><a href="pcens_cdf_exptilt.html">pcens_cdf_exptilt</a></code>,
-<code><a href="pcens_cdf_gumbel.html">pcens_cdf_gumbel</a></code>,
-<code><a href="pcens_cdf_tlogis.html">pcens_cdf_tlogis</a></code>,
 <code><a href="pcens_pmf.html">pcens_pmf()</a></code>,
 <code><a href="pcens_pmf.default.html">pcens_pmf.default()</a></code>,
 <code><a href="pcens_quantile.html">pcens_quantile()</a></code>,

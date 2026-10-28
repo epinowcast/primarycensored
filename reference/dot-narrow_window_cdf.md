@@ -12,7 +12,7 @@ Uses a 5 point Gauss-Legendre rule over \[d - w, d\].
 
 - d:
 
-  Positive finite delays.
+  Finite delays above `lower`.
 
 - w:
 

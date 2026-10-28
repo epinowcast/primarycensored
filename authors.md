@@ -20,7 +20,7 @@
 ## Citation
 
 Source:
-[`inst/CITATION`](https://github.com/epinowcast/primarycensored/blob/docs-375-transform-vignette/inst/CITATION)
+[`inst/CITATION`](https://github.com/epinowcast/primarycensored/blob/main/inst/CITATION)
 
 Abbott S, Brand S, Azam J, Pearson C, Funk S, Charniga K (2026).
 *primarycensored: Primary Event Censored Distributions*.

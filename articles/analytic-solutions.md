@@ -2,479 +2,499 @@
 
 ## 1 Introduction
 
-For a non-uniform primary event window each analytic solution for a
-continuous delay in the package writes the primary event censored
-distribution function as a weighted sum of truncated exponential-moment
-transforms of the delay density, as set out in the transform
-paper^(\[[1](#ref-placeholder)\]). The uniform window is the limit of
-this sum as the tilt goes to zero, and needs only the delay CDF and its
-partial moment. Where no tractable form applies the package integrates
-numerically. In R it uses
-[`pcens_cdf.default()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.default.md)
-and in Stan an ODE solver, or for some pairs a numerical method specific
-to the pair.
+### 1.1 What are we going to do in this vignette
 
-This vignette gives the definitions, derives the result for each window
-from an expansion of its CDF, and gives the transform for each delay
-family. It then lists which pairs of window and delay the package solves
-analytically.
-[`vignette("why-it-works")`](https://primarycensored.epinowcast.org/articles/why-it-works.md)
-derives the uniform window case directly from the censored delay model.
-The double interval censored model is in Brand et
-al.^(\[[2](#ref-BrandInPrepPrimaryCensored)\]).
+In this vignette, we’ll derive the analytic solutions for the primary
+censored delay distributions for a range of commonly used distributions.
 
-## 2 Notation
+1.  Examine the case of exponentially tilted primary event times
+2.  Analyse the uniform primary event time case (\\r=0\\)
+3.  Explore general partial expectation and its role in solving equation
+    [(3.1)](#eq:unifprim)
+4.  Provide specific analytic solutions for distributions where the
+    partial expectation can be reduced to an analytic expression
 
-| Symbol | Meaning | In the package |
-|:---|:---|:---|
-| \\F\_{\mathrm{IP}}\\, \\f\_{\mathrm{IP}}\\ | CDF and density of the delay | `pdist` and its arguments |
-| \\w\\, \\w_P\\ | width of the primary event window | `pwindow` |
-| \\z \in \[0, w\]\\ | primary event time, measured from the window start |  |
-| \\q\\ | evaluation time, measured from the window start | `q` of [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md) |
-| \\f\_{\mathrm{win}}(z; w)\\ | density of the primary event time in the window | `dprimary` and `primary_args` |
-| \\H_w(z)\\ | CDF of the primary event time in the window | `pprimary` |
-| \\F\_{\mathrm{cens}}(q; w)\\ | primary event censored CDF | [`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md) |
-| \\\rho\\ | exponential tilt of the window | `r` of [`dexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md) |
+## 2 Analytic solutions for exponentially tilted primary event times
 
-The general results write the width as \\w\\ and the window sections
-write it as \\w_P\\. The window sections add the window parameters to
-\\f\_{\mathrm{win}}\\, for example \\f\_{\mathrm{win}}(z; w_P, \rho)\\.
-The subscript IP stands for incubation period. \\F\_{\mathrm{IP}}\\ may
-be any delay. A delay on the non-negative reals has
-\\F\_{\mathrm{IP}}(x) = f\_{\mathrm{IP}}(x) = 0\\ for \\x \< 0\\. The
-normal delay has support on the reals. For the normal delay the
-integrals over the delay \\u\\ in equations [(3.3)](#eq:kernel),
-[(3.4)](#eq:transform), [(3.7)](#eq:partial-moment) and [(3.8)](#eq:kn)
-have lower limit \\-\infty\\ instead of 0. \\F\_{\mathrm{IP}}(q - w)\\
-is then not zero for \\q \< w\\.
+In epidemiological analysis, it is common for primary events to occur at
+exponentially increasing or decreasing rates, for example, incidence of
+new infections in an epidemic. In this case, the distribution of the
+primary event time within its censoring window is biased by the
+exponential growth or decay^(\[[1](#ref-Park2024)\]) (i.e. for
+exponential growth, the event time will more likely to be closer to the
+end of the censoring window and vice versa for decay). If we assume a
+reference uniform distribution within a primary censoring window \\\[k,
+k + w_P)\\ then the distribution of the primary event time within the
+censoring window is the [exponential
+tilted](https://en.wikipedia.org/wiki/Exponential_tilting) uniform
+distribution:
 
-## 3 The transform reduction
+\\ f_P(t) \propto \exp(r t) \mathbb{1}\_{\[k, k + w_P\]}(t). \\
 
-The primary event censored CDF is
+In this case, the distribution function for \\C_P\\, that is the length
+of time left in the primary censor window *after* the primary event
+time, is given by:
 
-\\ F\_{\mathrm{cens}}(q; w) = \int_0^w F\_{\mathrm{IP}}(q - z)
-f\_{\mathrm{win}}(z; w)\\dz. \tag{3.1} \\
+\\ F\_{C_P}(p; r) = { 1 - \exp(-r p) \over 1 - \exp(-r w_P)}, \qquad p
+\in \[0, w_P\]. \tag{2.1} \\ Note that taking the limit \\\lim_r
+\rightarrow 0\\ in equation [(2.1)](#eq:fcp) gives the uniform
+distribution function \\F\_{C_P}(p, 0) = p / w_P\\.
 
-Let
+In the following, it is convenient to use a (linear) difference operator
+defined as:
 
-\\ H_w(z) = \int_0^z f\_{\mathrm{win}}(s; w)\\ds, \tag{3.2} \\
+\\ \Delta\_{w}f(t) = f(t + w) - f(t). \\
 
-with \\H_w(z) = 0\\ for \\z \leq 0\\ and \\H_w(z) = 1\\ for \\z \geq
-w\\. Exchanging the order of integration in equation [(3.1)](#eq:cens)
-gives
+## 3 Uniform primary event time (\\r=0\\)
 
-\\ F\_{\mathrm{cens}}(q; w) = \int_0^q H_w(q - u)
-f\_{\mathrm{IP}}(u)\\du. \tag{3.3} \\
+Applying a uniform primary event time distribution to equation 3.1 from
+[“Why it
+works”](https://primarycensored.epinowcast.org/articles/why-it-works.md)
+gives:
 
-The truncated exponential-moment transform of the delay density is
+\\ Q\_{S\_+}(t) = Q_T(t + w_P) + { 1 \over w_P} \int_0^{w_P} f_T(t+p) p~
+dp. \\
 
-\\ T_f(\xi; \tau) = \int_0^\tau e^{\xi u} f\_{\mathrm{IP}}(u)\\du,
-\tag{3.4} \\
+This is analytically solvable whenever the upper distribution function
+of \\T\\ is known and the mean of \\T\\ is analytically solvable from
+its integral definition.
 
-with \\T_f(\xi; \tau) = 0\\ for \\\tau \leq 0\\ when the delay is
-non-negative. The delay CDF is \\F\_{\mathrm{IP}}(\tau) = T_f(0;
-\tau)\\. Suppose the reversed kernel \\H_w(q - u)\\ has the expansion
+In each case considered below it is easier to change the integration
+variable:
 
-\\ H_w(q - u) = \sum_k a_k(q, w) e^{\xi_k u} \tag{3.5} \\
+\\ \begin{aligned} Q\_{S\_+}(t) &= Q_T(t + w_P) + { 1 \over w_P}
+\int_t^{t+w_P} f_T(z) (z-t)~ dz \\ &= Q_T(t + w_P) + { 1 \over w_P}
+\Big\[ \int_t^{t+w_P} f_T(z) z~ dz - t \Delta\_{w_P}F_T(t) \Big\].
+\end{aligned} \tag{3.1} \\
 
-for every \\u\\ in the support of the delay up to \\q\\. Substituting it
-into equation [(3.3)](#eq:kernel) gives
+### 3.1 General partial expectation
 
-\\ F\_{\mathrm{cens}}(q; w) = \sum_k a_k(q, w) T_f(\xi_k; q). \tag{3.6}
+Note that for any distribution with an analytically available
+distribution function \\F_T\\ equation [(3.1)](#eq:unifprim) can be
+solved so long as the *partial expectation*
+
+\\ \int_t^{t+w_P} f_T(z) z~ dz \tag{3.2} \\
+
+can be reduced to an analytic expression.
+
+The insight here is that this will be possible for any distribution
+where the average of the distribution can be calculated analytically,
+which includes commonly used non-negative distributions such as the
+Gamma, Log-Normal and Weibull distributions.
+
+### 3.2 General discrete censored delay distribution
+
+First, we note that equation 3.3 from [“Why it
+works”](https://primarycensored.epinowcast.org/articles/why-it-works.md)
+can be written using the difference operator: \\f_n = -\Delta_1
+Q\_{S\_+}(n-1)\\. We can insert this expression into equation
+[(3.1)](#eq:unifprim) to give the discrete censored delay distribution
+for uniformly distributed primary event times:
+
+\\ \begin{aligned} f_n &= \Delta_1\Big\[(n-1) \Delta_1F_T(n-1)\Big\] -
+\Delta_1Q_T(n) - \Delta_1\Big\[ \int\_{n-1}^n f_T(z) z ~dz \Big\] \\ &=
+(n+1)F_T(n+1) + (n-1)F_T(n-1) - 2nF_T(n) - \Delta_1\Big\[ \int\_{n-1}^n
+f_T(z) z ~dz \Big\]. \end{aligned} \tag{3.3} \\
+
+We now consider some specific delay distributions.
+
+### 3.3 Gamma distributed delay times
+
+The Gamma distribution has the density function:
+
+\\ f_T(z;k, \theta) = {1 \over \Gamma(k) \theta^k} z^{k-1}
+\exp(-z/\theta). \\ Where \\\Gamma\\ is the Gamma function.
+
+The Gamma distribution has the distribution function:
+
+\\ \begin{aligned} F_T(z;k, \theta) &= {\gamma(k, z/\theta) \over
+\Gamma(k)}, \qquad z\geq 0,\\ F_T(z;k, \theta) &= 0, \qquad z \< 0.
+\end{aligned} \\ Where \\\gamma\\ is the lower incomplete gamma
+function.
+
+#### 3.3.1 Gamma partial expectation
+
+We know that the full expectation of the Gamma distribution is
+\\\mathbb{E}\[T\] = k\theta\\, which can be calculated as a standard
+integral. Doing the same integral for the partial expectation gives:
+
+\\ \begin{aligned} \int_t^{t+w_P} f_T(z) z~ dz &= {1 \over \Gamma(k)
+\theta^k} \int_t^{t+w_P} \mathbb{1}(z \geq 0) z z^{k-1}
+\exp(-z/\theta)~dz \\ &= {\Gamma(k+1) \theta^{k+1} \over \Gamma(k)
+\theta^k} {1 \over \Gamma(k+1) \theta^{k+1}} \int_t^{t+w_P} \mathbb{1}(z
+\geq 0) z^{k} \exp(-z/\theta)~dz\\ &= k\theta \Delta\_{w_P} F_T(t; k +
+1, \theta). \end{aligned} \tag{3.4} \\
+
+#### 3.3.2 Survival function of \\S\_{+}\\ for Gamma distribution
+
+By substituting equation [(3.4)](#eq:gammapartexp) into equation
+[(3.3)](#eq:disccensunifprim) we can solve for the survival function of
+\\S\_+\\ in terms of analytically available functions:
+
+\\ Q\_{S\_+}(t; k, \theta) = Q_T(t + w_P; k, \theta) + { 1 \over w_P}
+\big\[ k \theta \Delta\_{w_P}F_T(t; k+1, \theta) - t \Delta\_{w_P}F_T(t;
+k, \theta) \big\]. \tag{3.5} \\
+
+#### 3.3.3 CDF form of \\S\_{+}\\ for Gamma distribution
+
+Rearranging equation [(3.5)](#eq:survgammaunifprim) via \\F\_{S\_+} =
+1 - Q\_{S\_+}\\ gives the equivalent CDF-direct form
+
+\\ F\_{S\_+}(d; k, \theta) = \frac{1}{w_P}\Big\[ d\\ F_T(d; k, \theta) -
+q\\ F_T(q; k, \theta) - k\theta\big( F_T(d; k{+}1, \theta) - F_T(q;
+k{+}1, \theta) \big) \Big\], \\
+
+where \\q = \max(d - w_P, 0)\\.
+
+#### 3.3.4 Gamma discrete censored delay distribution
+
+By substituting [(3.5)](#eq:survgammaunifprim) into
+[(3.3)](#eq:disccensunifprim) we get the discrete censored delay
+distribution in terms of analytically available functions: \\
+\begin{aligned} f_n &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k,
+\theta) - 2 n F_T(n; k, \theta) - k \theta \Delta_1^{(2)}F_T(n-1; k+1,
+\theta)\\ &= (n+1) F_T(n+1; k, \theta) + (n-1) F_T(n-1; k, \theta) - 2 n
+F_T(n; k, \theta) \\ &+ k \theta \Big( 2 F_T(n; k+1, \theta) - F_T(n-1;
+k+1, \theta) - F_T(n+1; k+1,\theta) \Big) \qquad n = 0, 1, \dots.
+\end{aligned} \\
+
+Which was also found by Cori *et al*^(\[[2](#ref-cori2013new)\]).
+
+### 3.4 Log-Normal distribution
+
+The Log-Normal distribution has the density function:
+
+\\ \begin{aligned} f_T(z;\mu, \sigma) &= {1 \over z \sigma \sqrt{2\pi}}
+\exp\left( - {(\log(z) - \mu)^2 \over 2 \sigma^2} \right)\\ F_T(z;\mu,
+\sigma) &= 0, \qquad z \< 0. \end{aligned} \\ And distribution function:
+
+\\ F_T(z;\mu, \sigma) = \Phi\left( {\log(z) - \mu \over \sigma} \right).
+\\ Where \\\Phi\\ is the standard normal distribution function.
+
+#### 3.4.1 Log-Normal partial expectation
+
+We know that the full expectation of the Log-Normal distribution is
+\\\mathbb{E}\[T\] = e^{\mu + \frac{1}{2} \sigma^2}\\, which can be
+calculated by integration with the integration substitution \\y = (\ln
+z - \mu) / \sigma\\. This has transformation Jacobian:
+
+\\ \frac{dz}{dy} = \sigma e^{\sigma y + \mu}. \\
+
+Doing the same integral for the partial expectation, and using the same
+integration substitution gives:
+
+\\ \begin{aligned} \int_t^{t+w_P} z~ f_T(z; \mu, \sigma) dz &= {1 \over
+\sigma \sqrt{2\pi}} \int_t^{t+w_P} \mathbb{1}(z \geq 0) \exp\left( -
+{(\log(z) - \mu)^2 \over 2 \sigma^2} \right) dz \\ &= {1 \over
+\sqrt{2\pi}} \int\_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) - \mu)/\sigma}
+e^{\sigma y + \mu} e^{-y^2/2} dy\\ &= {e^{\mu + \frac{1}{2} \sigma^2}
+\over \sqrt{2 \pi} } \int\_{(\ln t - \mu)/\sigma}^{(\ln(t+w_P) -
+\mu)/\sigma} e^{-(y- \sigma)^2/2} dy \\ &= e^{\mu + \frac{1}{2}
+\sigma^2} \Big\[\Phi\Big({\ln(t+w_P) - \mu \over \sigma} - \sigma\Big) -
+\Phi\Big({\ln(t) - \mu \over \sigma} - \sigma\Big) \Big\]\\ &= e^{\mu +
+\frac{1}{2} \sigma^2} \Delta\_{w_P}F_T(t; \mu + \sigma^2, \sigma).
+\end{aligned} \tag{3.6} \\
+
+#### 3.4.2 Survival function of \\S\_{+}\\ for Log-Normal distribution
+
+By substituting equation [(3.6)](#eq:lognormpartexp) into equation
+[(3.3)](#eq:disccensunifprim) we can solve for the survival function of
+\\S\_+\\ in terms of analytically available functions:
+
+\\ Q\_{S+}(t ;\mu, \sigma) = Q_T(t + w_P;\mu, \sigma) + { 1 \over w_P}
+\Big\[ e^{\mu + \frac{1}{2} \sigma^2} \Delta\_{w_P}F_T(t; \mu +
+\sigma^2, \sigma) - t\Delta\_{w_P}F_T(t; \mu, \sigma) \Big\] \\
+
+#### 3.4.3 CDF form of \\S\_{+}\\ for Log-Normal distribution
+
+Applying \\F\_{S\_+} = 1 - Q\_{S\_+}\\ to the preceding survival form
+gives the equivalent CDF-direct form
+
+\\ F\_{S\_+}(d; \mu, \sigma) = \frac{1}{w_P}\Big\[ d\\ F_T(d; \mu,
+\sigma) - q\\ F_T(q; \mu, \sigma) - e^{\mu + \sigma^2/2}\big( F_T(d;
+\mu{+}\sigma^2, \sigma) - F_T(q; \mu{+}\sigma^2, \sigma) \big) \Big\],
 \\
 
-The window fixes the coefficients \\a_k(q, w)\\ and the tilts \\\xi_k\\.
-The delay fixes whether \\T_f\\ is tractable at those tilts.
+where \\q = \max(d - w_P, 0)\\.
 
-The reversed kernel is 1 for \\u \leq q - w\\. This saturated part
-contributes \\F\_{\mathrm{IP}}(q - w)\\. The expansion is then needed
-only on \\\[q - w, q\]\\, and it may differ between parts of that
-interval. Each result below for the exponentially tilted, logistic and
-Gumbel windows has the form \\F\_{\mathrm{IP}}(q - w)\\ plus weighted
-differences \\T_f(\xi_k; \tau^+) - T_f(\xi_k; \tau^-)\\. The endpoints
-\\\tau^\pm\\ are \\q\\ and \\q - w\\, and for the logistic window also a
-split point \\u^\star\\.
+#### 3.4.4 Log-Normal discrete censored delay distribution
 
-The uniform window uses the partial moment
+By substituting [(3.6)](#eq:lognormpartexp) into
+[(3.3)](#eq:disccensunifprim) we get the discrete censored delay
+distribution in terms of analytically available functions:
 
-\\ M(\tau) = \left. \frac{\partial T_f(\xi; \tau)}{\partial \xi}
-\right\|\_{\xi = 0} = \int_0^\tau u f\_{\mathrm{IP}}(u)\\du \tag{3.7} \\
+\\ \begin{aligned} f_n &= (n+1) F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1;
+\mu, \sigma) - 2 n F_T(n; \mu, \sigma) \\ &- e^{\mu + \frac{1}{2}
+\sigma^2} \Delta_1^{(2)}F_T(n-1;\mu + \sigma^2, \sigma) \\ &= (n+1)
+F_T(n+1; \mu, \sigma) + (n-1) F_T(n-1; \mu, \sigma) - 2 n F_T(n; \mu,
+\sigma) \\ &+ e^{\mu + \frac{1}{2} \sigma^2} \Big( 2 F_T(n; \mu +
+\sigma^2, \sigma) - F_T(n+1; \mu + \sigma^2, \sigma) - F_T(n-1; \mu +
+\sigma^2, \sigma) \Big)\qquad n = 0, 1, \dots. \end{aligned} \\
 
-and, for \\n \geq 1\\,
+### 3.5 Weibull distribution
 
-\\ K_n(t) = \int_0^t (t - u)^n f\_{\mathrm{IP}}(u)\\du. \tag{3.8} \\
+The Weibull distribution has the density function:
 
-\\K_1(t)\\ is the integral of \\F\_{\mathrm{IP}}\\ up to \\t\\, and
+\\ f_T(z;\lambda,k) = \begin{cases}
+\frac{k}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}},
+& z\geq0 ,\\ 0, & z\<0, \end{cases} \\ And distribution function:
 
-\\ K_1(t) = t\\T_f(0; t) - M(t). \tag{3.9} \\
+\\ F_T(z;\lambda,k))=\begin{cases}1 - e^{-(z/\lambda)^k}, & z\geq0,\\ 0,
+& z\<0.\end{cases} \\ Where \\\Phi\\ is the standard normal distribution
+function.
 
-## 4 Primary event windows
+#### 3.5.1 Weibull partial expectation
 
-| Window | R primary | Stan primary id | \\f\_{\mathrm{win}}\\ | Tilts \\\xi_k\\ | Result |
-|:---|:---|:---|:---|:---|:---|
-| Uniform | `dunif` | 1 | \\1 / w_P\\ | none, uses \\M\\ | [(4.2)](#eq:uniform) |
-| Exponential tilt | [`dexpgrowth()`](https://primarycensored.epinowcast.org/reference/expgrowth.md), `r` \\= \rho\\ | 2 | \\\rho e^{\rho z} / (e^{\rho w_P} - 1)\\ | \\0\\ and \\-\rho\\ | [(4.1)](#eq:exptilt) |
-| Truncated logistic | [`dtlogis()`](https://primarycensored.epinowcast.org/reference/tlogis.md), `location` \\= m\\, `scale` \\= s\\ | 3 | \\L'(z) / D_L\\ | \\n / s\\ for \\n \geq 0\\, \\-n / s\\ for \\n \geq 1\\ | [(4.3)](#eq:logistic-left) to [(4.5)](#eq:logistic-split) |
-| Truncated Gumbel | [`dtgumbel()`](https://primarycensored.epinowcast.org/reference/tgumbel.md), `mu` \\= \mu_G\\, `beta` \\= \beta\\ | 4 | \\G'(z) / D_G\\ | \\n / \beta\\ for \\n \geq 0\\ | [(4.6)](#eq:gumbel) |
+We know that the full expectation of the Weibull distribution is
+\\\mathbb{E}\[T\] = \lambda \Gamma(1 + 1/k)\\, which can be calculated
+by integration using the integration substitution \\y = (z /
+\lambda)^k\\, which has transformation Jacobian:
 
-### 4.1 Exponentially tilted window
+\\ \frac{dz}{dy} = \frac{\lambda}{k}y^{1/k - 1}. \\
 
-The window density is \\f\_{\mathrm{win}}(z; w_P, \rho) = \rho e^{\rho
-z} / (e^{\rho w_P} - 1)\\ and the window CDF is
+Doing the same integral for the partial expectation, and using the same
+integration substitution gives:
 
-\\ H\_{\rho, w_P}(z) = \frac{e^{\rho z} - 1}{e^{\rho w_P} - 1}, \qquad 0
-\leq z \leq w_P. \\
+\\ \begin{aligned} \int\_{t}^{t+w_P} z~ f_T(z; \lambda,k) dz &=
+\int_t^{t+w_P} \mathbb{1}(z \geq 0)
+\frac{kz}{\lambda}\left(\frac{z}{\lambda}\right)^{k-1}e^{-(z/\lambda)^{k}}
+dz \\ &= k\int_t^{t+w_P} \mathbb{1}(z \geq 0)
+\left(\frac{z}{\lambda}\right)^{k}e^{-(z/\lambda)^{k}} dz \\ &= \lambda
+k \int\_{(t / \lambda)^k}^{((t + w_P) / \lambda)^k} \mathbb{1}(y \geq 0)
+y y^{1/k - 1} e^{-y} dy \\ &= \lambda\int\_{(t / \lambda)^k}^{((t + w_P)
+/ \lambda)^k} \mathbb{1}(y \geq 0) y^{1/k} e^{-y} dy\\ &= \lambda
+\Delta\_{w_P} g(t; \lambda,k) \end{aligned} \tag{3.7} \\
 
-A tilt \\\rho \> 0\\ places more mass late in the window, as for a
-growing primary event
-process^(\[[3](#ref-Park2024),[4](#ref-Zhao2021BETS)\]). A tilt \\\rho
-\< 0\\ places more mass early in the window. Let \\J\_\rho(x) =
-T_f(-\rho; x)\\. The CDF is
+Where
 
-\\ F\_\rho(q; w_P) = F\_{\mathrm{IP}}(q - w_P) + \frac{e^{\rho q}
-\\J\_\rho(q) - J\_\rho(q - w_P)\\ - \\F\_{\mathrm{IP}}(q) -
-F\_{\mathrm{IP}}(q - w_P)\\}{e^{\rho w_P} - 1}. \tag{4.1} \\
+\\ g(t; \lambda, k) = \gamma\left(1 + 1/k, \left({t\vee 0 \over
+\lambda}\right)^k\right) = \frac{1}{k}\gamma\left(1/k, \left({t\vee 0
+\over \lambda}\right)^k\right) -
+\frac{t}{\lambda}\exp\left(-\left({t\vee 0 \over
+\lambda}\right)^k\right) \\ is a reparametrisation of the lower
+incomplete gamma function. Note that the \\\vee\\ operator \\t \vee 0 =
+\text{max}(0, t)\\ comes into the expression due to \\\mathbb{1}(y \geq
+0)\\ term in the integrand.
 
-Collecting the \\F\_{\mathrm{IP}}(q - w_P)\\ terms into one fraction
-gives a shorter form, but its numerator loses precision through
-cancellation. Equation [(4.1)](#eq:exptilt) keeps \\F\_{\mathrm{IP}}(q -
-w_P)\\ out of the numerator, and the package evaluates it on the log
-scale. Writing \\e^{\rho q} = e^{\rho w_P} e^{\rho (q - w_P)}\\ makes
-each term a function of \\q\\ or of \\q - w_P\\ alone. For an integer
-`pwindow` of at least 1, \\q - w_P\\ is an integer delay too.
-`primarycensored_analytical_lcdf_vectorized()` in Stan therefore
-computes the terms once per integer delay \\t\\ and uses them for the
-CDF at \\t\\ and at \\t + w_P\\.
+### 3.6 Survival function of \\S\_{+}\\ for Weibull distribution
 
-### 4.2 Uniform window as the limit \\\rho \to 0\\
+By substituting equation [(3.7)](#eq:weibullpartexp) into equation
+[(3.3)](#eq:disccensunifprim) we can solve for the survival function of
+\\S\_+\\ in terms of analytically available functions:
 
-As \\\rho \to 0\\ the window density tends to \\1 / w_P\\ and equation
-[(4.1)](#eq:exptilt) tends to
+\\ Q\_{S+}(t ;\lambda,k) = Q_T(t + w_P; \lambda,k) + { 1 \over w_P}
+\Big\[ \lambda \Delta\_{w_P} g(t; \lambda,k) - t\Delta\_{w_P}F_T(t;
+\lambda,k)\Big\]. \\
 
-\\ F_0(q; w_P) = F\_{\mathrm{IP}}(q - w_P) + \frac{1}{w_P} \int\_{q -
-w_P}^q (q - u) f\_{\mathrm{IP}}(u)\\du = \frac{K_1(q) - K_1(q -
-w_P)}{w_P}. \tag{4.2} \\
+#### 3.6.1 CDF form of \\S\_{+}\\ for Weibull distribution
 
-By equation [(3.9)](#eq:k1) this needs only \\F\_{\mathrm{IP}}\\ and the
-partial moment \\M\\. It is closed form whenever \\M\\ is. More families
-have a closed form \\M\\ than a closed form tilted transform, for
-example the lognormal. Brand et al. give \\M\\ for the gamma, lognormal
-and Weibull delays^(\[[2](#ref-BrandInPrepPrimaryCensored)\]). For a
-gamma delay with daily windows the resulting probability mass function
-matches that of Cori et al.^(\[[5](#ref-cori2013new)\]).
+Applying \\F\_{S\_+} = 1 - Q\_{S\_+}\\ to the preceding survival form
+gives the equivalent CDF-direct form
 
-### 4.3 Truncated logistic window
+\\ F\_{S\_+}(d; \lambda, k) = \frac{1}{w_P}\Big\[ d\\ F_T(d; \lambda,
+k) - q\\ F_T(q; \lambda, k) - \lambda\big( g(d; \lambda, k) - g(q;
+\lambda, k) \big) \Big\], \\
 
-With midpoint \\m\\ and scale \\s \> 0\\ let
+where \\q = \max(d - w_P, 0)\\ and \\g\\ is as defined in equation
+[(3.7)](#eq:weibullpartexp).
 
-\\ L(z) = \frac{1}{1 + e^{-(z - m) / s}}, \qquad D_L = L(w_P) - L(0),
-\qquad A(q) = e^{-(q - m) / s}, \qquad u^\star = q - m. \\
+#### 3.6.2 Weibull discrete censored delay distribution
 
-The window density is \\f\_{\mathrm{win}}(z; w_P, m, s) = L'(z) / D_L\\
-and the window CDF is \\H\_{L, w_P}(z) = \\L(z) - L(0)\\ / D_L\\. The
-reversed function \\L(q - u) = 1 / \\1 + A(q) e^{u / s}\\\\ is a
-geometric series in \\e^{u / s}\\ for \\u \< u^\star\\ and in \\e^{-u /
-s}\\ for \\u \> u^\star\\. For \\m \< 0\\,
+By substituting [(3.7)](#eq:weibullpartexp) into
+[(3.3)](#eq:disccensunifprim) we get the discrete censored delay
+distribution in terms of analytically available functions:
 
-\\ F_L(q; w_P) = F\_{\mathrm{IP}}(q - w_P) + \frac{1}{D_L} \Big\[
-\sum\_{n = 0}^\infty (-1)^n A(q)^n \\T_f(n / s; q) - T_f(n / s; q -
-w_P)\\ - L(0) \\F\_{\mathrm{IP}}(q) - F\_{\mathrm{IP}}(q - w_P)\\
-\Big\]. \tag{4.3} \\
+\\ \begin{aligned} f_n &= (n+1)F_T(n+1) + (n-1)F_T(n-1) - 2nF_T(n) -
+\Delta_1\Big\[ \int\_{n-1}^n f_T(z) z ~dz \Big\] \\ &= (n+1)F_T(n+1) +
+(n-1)F_T(n-1) - 2nF_T(n) - \lambda \Delta_1^{(2)} g(n-1; \lambda,k) \\
+&= (n+1)F_T(n+1) + (n-1)F_T(n-1) - 2nF_T(n) \\ &+ \lambda \[2 g(n;
+\lambda,k) - g(n+1; \lambda,k) - g(n-1; \lambda,k)\] \qquad n = 0, 1,
+\dots. \end{aligned} \\
 
-For \\m \geq w_P\\,
+Which was also found by Cori *et al*^(\[[2](#ref-cori2013new)\]).
 
-\\ F_L(q; w_P) = F\_{\mathrm{IP}}(q - w_P) + \frac{1}{D_L} \Big\[
-\sum\_{n = 1}^\infty (-1)^{n - 1} A(q)^{-n} \\T_f(-n / s; q) - T_f(-n /
-s; q - w_P)\\ - L(0) \\F\_{\mathrm{IP}}(q) - F\_{\mathrm{IP}}(q - w_P)\\
-\Big\]. \tag{4.4} \\
+### 3.7 Generalised gamma distribution
 
-For \\0 \leq m \< w_P\\ the integral is split at \\u^\star\\,
+The generalised gamma distribution, in the parameterisation of
+Stacy^(\[[3](#ref-stacy1962generalization)\]) as implemented by
+[`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md),
+has the density function:
 
-\\ \begin{aligned} F_L(q; w_P) = F\_{\mathrm{IP}}(q - w_P) +
-\frac{1}{D_L} \Big\[ &\sum\_{n = 0}^\infty (-1)^n A(q)^n \\T_f(n / s;
-u^\star) - T_f(n / s; q - w_P)\\ \\ + &\sum\_{n = 1}^\infty (-1)^{n - 1}
-A(q)^{-n} \\T_f(-n / s; q) - T_f(-n / s; u^\star)\\ - L(0)
-\\F\_{\mathrm{IP}}(q) - F\_{\mathrm{IP}}(q - w_P)\\ \Big\].
-\end{aligned} \tag{4.5} \\
+\\ f_T(z; a, \theta, k) = \begin{cases}
+\frac{a}{\Gamma(k)\theta}\left(\frac{z}{\theta}\right)^{a
+k-1}e^{-(z/\theta)^{a}}, & z\geq0 ,\\ 0, & z\<0, \end{cases} \\ And
+distribution function:
 
-### 4.4 Truncated Gumbel window
+\\ F_T(z; a, \theta, k) =\begin{cases} {\gamma\left(k,
+(z/\theta)^a\right) \over \Gamma(k)}, & z\geq0,\\ 0, & z\<0.\end{cases}
+\\ Where \\\gamma\\ is the lower incomplete gamma function. The Gamma
+distribution is the special case \\a = 1\\ and the Weibull distribution
+is the special case \\k = 1\\.
 
-With location \\\mu_G\\ and scale \\\beta \> 0\\ let
+#### 3.7.1 Generalised gamma partial expectation
 
-\\ G(z) = \exp\left\[-e^{-(z - \mu_G) / \beta}\right\], \qquad D_G =
-G(w_P) - G(0), \qquad c(q) = e^{-(q - \mu_G) / \beta}. \\
+Using the integration substitution \\y = (z / \theta)^a\\ as for the
+Weibull distribution, the full expectation is \\\mathbb{E}\[T\] = \theta
+\Gamma(k + 1/a) / \Gamma(k)\\. Doing the same integral for the partial
+expectation gives:
 
-The window density is \\f\_{\mathrm{win}}(z; w_P, \mu_G, \beta) = G'(z)
-/ D_G\\ and the window CDF is \\H\_{G, w_P}(z) = \\G(z) - G(0)\\ /
-D_G\\. The reversed function \\G(q - u) = \exp\\-c(q) e^{u / \beta}\\\\
-is a power series in \\e^{u / \beta}\\, which gives
+\\ \begin{aligned} \int\_{t}^{t+w_P} z~ f_T(z; a, \theta, k) dz &=
+\frac{\theta}{\Gamma(k)} \int\_{(t / \theta)^a}^{((t + w_P) / \theta)^a}
+\mathbb{1}(y \geq 0) y^{k + 1/a - 1} e^{-y} dy\\ &= \theta
+\frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta\_{w_P} F_T(t; a, \theta, k +
+1/a). \end{aligned} \tag{3.8} \\
 
-\\ F_G(q; w_P) = F\_{\mathrm{IP}}(q - w_P) + \frac{1}{D_G} \Big\[
-\sum\_{n = 0}^\infty \frac{\\-c(q)\\^n}{n!} \\T_f(n / \beta; q) - T_f(n
-/ \beta; q - w_P)\\ - G(0) \\F\_{\mathrm{IP}}(q) - F\_{\mathrm{IP}}(q -
-w_P)\\ \Big\]. \tag{4.6} \\
+That is, the partial expectation distribution is the generalised gamma
+distribution with \\k\\ replaced by \\k + 1/a\\. For \\a = 1\\ this
+recovers equation [(3.4)](#eq:gammapartexp) and for \\k = 1\\ it
+recovers equation [(3.7)](#eq:weibullpartexp).
 
-The series converges for every \\q\\ and needs no split.
+#### 3.7.2 Survival function of \\S\_{+}\\ for generalised gamma distribution
 
-## 5 Delay transforms
+By substituting equation [(3.8)](#eq:gengammapartexp) into equation
+[(3.1)](#eq:unifprim) we can solve for the survival function of \\S\_+\\
+in terms of analytically available functions:
 
-The table gives \\T_f\\ and \\M\\ for each delay family with a transform
-in the package. \\\gamma(\alpha, x)\\ is the lower incomplete gamma
-function and \\P(\alpha, x) = \gamma(\alpha, x) / \Gamma(\alpha)\\.
-\\\Phi\\ and \\\phi\\ are the standard normal CDF and density. A
-transform is analytic if it is a closed form in elementary or standard
-functions such as \\P\\ and \\\Phi\\, semi-analytic if it needs a
-convergent series of special functions, and numerical if it needs
-quadrature. The numerical class is distinct from the numerical method,
-which integrates equation [(3.1)](#eq:cens) directly.
+\\ Q\_{S\_+}(t; a, \theta, k) = Q_T(t + w_P; a, \theta, k) + { 1 \over
+w_P} \Big\[ \theta \frac{\Gamma(k + 1/a)}{\Gamma(k)} \Delta\_{w_P}F_T(t;
+a, \theta, k + 1/a) - t \Delta\_{w_P}F_T(t; a, \theta, k) \Big\].
+\tag{3.9} \\
 
-| Family (R; Stan id) | \\T_f(\xi; \tau)\\ | \\M(\tau)\\ | Class | Transform used when |
-|:---|:---|:---|:---|:---|
-| Exponential, rate \\\lambda\\ (`pexp`; 4) | \\\frac{\lambda}{\lambda - \xi} \\1 - e^{-(\lambda - \xi) \tau}\\\\ | \\P(2, \lambda \tau) / \lambda\\ | analytic | \\\xi \< \lambda\\ |
-| Gamma, shape \\\alpha\\, rate \\\lambda\\ (`pgamma`; 2) | \\\left(\frac{\lambda}{\lambda - \xi}\right)^\alpha P(\alpha, (\lambda - \xi) \tau)\\ | \\\frac{\alpha}{\lambda} P(\alpha + 1, \lambda \tau)\\ | analytic | \\\xi \< \lambda\\ |
-| Normal, mean \\\mu\\, standard deviation \\\sigma\\ (`pnorm`; 18) | \\e^{\xi \mu + \xi^2 \sigma^2 / 2}\\ \Phi\left(\frac{\tau - \mu - \xi \sigma^2}{\sigma}\right)\\ | \\\mu \Phi(z\_\tau) - \sigma \phi(z\_\tau)\\, \\z\_\tau = \frac{\tau - \mu}{\sigma}\\ | analytic | always |
-| Weibull, shape \\k\\, scale \\\lambda\\ (`pweibull`; 3) | \\\sum\_{n \geq 0} \frac{(\xi \lambda)^n}{n!} \gamma\left(1 + \frac{n}{k}, (\tau / \lambda)^k\right)\\ | \\\lambda \gamma\left(1 + \frac{1}{k}, (\tau / \lambda)^k\right)\\ | semi-analytic | the series checks under Numerical safeguards pass |
-| Generalised gamma, \\(a, b, c)\\ (`pgengamma.orig`; 5, and `pgengamma` in R) | \\\sum\_{n \geq 0} \frac{\xi^n}{n!} b^{-n / c} \frac{\gamma(a + n / c, b \tau^c)}{\Gamma(a)}\\ | \\b^{-1 / c} \frac{\gamma(a + 1 / c, b \tau^c)}{\Gamma(a)}\\ | semi-analytic | the series checks under Numerical safeguards pass |
-| Lognormal, \\\mu\\, \\\sigma\\ (`plnorm`; 1) | \\\int\_{-\infty}^{\log \tau} e^{\xi e^x} \frac{1}{\sigma} \phi\left(\frac{x - \mu}{\sigma}\right) dx\\ | \\e^{\mu + \sigma^2 / 2}\\ \Phi\left(\frac{\log \tau - \mu}{\sigma} - \sigma\right)\\ | numerical for \\\xi \< 0\\, semi-analytic for \\\xi \> 0\\ | \\\xi \< 0\\ where the quadrature does not overflow, or \\\xi \> 0\\ where the series below is used |
+#### 3.7.3 CDF form of \\S\_{+}\\ for generalised gamma distribution
 
-The generalised gamma row uses the density \\c b^a u^{a c - 1} e^{-b
-u^c} / \Gamma(a)\\ of the transform paper. The Stacy form of
-[`flexsurv::pgengamma.orig()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.orig.md)^(\[[6](#ref-stacy1962generalization)\])
-has `shape` \\= c\\, `scale` \\= b^{-1 / c}\\ and `k` \\= a\\. The
-Weibull is the case \\a = 1\\. The Prentice form of
-[`flexsurv::pgengamma()`](http://chjackson.github.io/flexsurv-dev/reference/GenGamma.md)
-with \\Q \> 0\\ is mapped in R to the Stacy form with `shape` \\= Q /
-\sigma\\, `scale` \\= e^\mu Q^{2 \sigma / Q}\\ and `k` \\= Q^{-2}\\. For
-\\Q \leq 0\\ the numerical method is used.
+Rearranging equation [(3.9)](#eq:survgengammaunifprim) via \\F\_{S\_+} =
+1 - Q\_{S\_+}\\ gives the equivalent CDF-direct form
 
-The gamma and generalised gamma entries follow by absorbing the extra
-factor into a density of the same family. For the gamma, \\e^{\xi u}
-f\_{\mathrm{IP}}(u; \alpha, \lambda) = \\\lambda / (\lambda -
-\xi)\\^\alpha f\_{\mathrm{IP}}(u; \alpha, \lambda - \xi)\\ for \\\xi \<
-\lambda\\, which gives \\T_f\\. Similarly \\u f\_{\mathrm{IP}}(u;
-\alpha, \lambda) = (\alpha / \lambda) f\_{\mathrm{IP}}(u; \alpha + 1,
-\lambda)\\, which gives \\M\\. For the generalised gamma, \\u^n
-f\_{\mathrm{IP}}(u; a, b, c)\\ is \\b^{-n / c} \Gamma(a + n / c) /
-\Gamma(a)\\ times the density with \\a + n / c\\ in place of \\a\\.
-Expanding \\e^{\xi u}\\ as a power series and integrating term by term
-gives \\T_f\\, and the term \\n = 1\\ gives \\M\\.
+\\ F\_{S\_+}(d; a, \theta, k) = \frac{1}{w_P}\Big\[ d\\ F_T(d; a,
+\theta, k) - q\\ F_T(q; a, \theta, k) - \theta \frac{\Gamma(k +
+1/a)}{\Gamma(k)} \big( F_T(d; a, \theta, k + 1/a) - F_T(q; a, \theta,
+k + 1/a) \big) \Big\], \\
 
-The lognormal transform has no closed form. The package uses
-Gauss-Legendre quadrature for \\\xi \< 0\\. For \\\xi \> 0\\ it uses the
-series \\\sum\_{j \geq 0} \xi^j e^{j \mu + j^2 \sigma^2 / 2}
-\Phi\left(\frac{\log \tau - \mu}{\sigma} - j \sigma\right) / j!\\ of
-positive terms. It is used where \\\xi \tau\\ is small enough for the
-series to converge in a bounded number of terms, or where the window is
-wide relative to \\1 / \xi\\. The cut-off for \\\xi \tau\\ is lower in
-Stan than in R. Elsewhere the numerical method is used for that \\q\\.
+where \\q = \max(d - w_P, 0)\\. This is the form implemented in
+[`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+and in the Stan function `primarycensored_gengamma_uniform_lcdf()`. The
+discrete censored delay distribution follows from equation
+[(3.3)](#eq:disccensunifprim) exactly as for the Gamma distribution,
+with \\k\theta F_T(\cdot; k + 1, \theta)\\ replaced by \\\theta
+\frac{\Gamma(k + 1/a)}{\Gamma(k)} F_T(\cdot; a, \theta, k + 1/a)\\.
 
-Some families have a closed form \\M\\ or \\K_1\\ but no tilted
-transform in the package. They have analytic solutions for the uniform
-window only. Here \\I_x(\cdot, \cdot)\\ is the regularised incomplete
-beta function, \\A\_\tau = (\tau / \lambda)^k\\ and \\r_a\\ is defined
-below.
+### 3.8 Antiderivative form
 
-| Family (Stan id) | \\M(\tau)\\ or \\K_1(t)\\ | Needs | Available in |
-|:---|:---|:---|:---|
-| Log-logistic, shape \\k\\, scale \\\lambda\\ (29) | \\M(\tau) = \tau F\_{\mathrm{IP}}(\tau) r\_{1 / k}(A\_\tau)\\ | \\k \geq 0.01\\ | R and Stan |
-| Beta, shapes \\\alpha_1\\, \\\alpha_2\\ (9) | \\M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I\_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)\\ | non-centrality 0 | R and Stan |
-| Chi-square, \\\nu\\ degrees of freedom (13) | the gamma with \\\alpha = \nu / 2\\ and \\\lambda = 1 / 2\\ | non-centrality 0 | R and Stan |
-| Inverse gamma, shape \\\alpha\\, scale \\\theta\\ (16) | \\M(\tau) = \frac{\theta}{\alpha - 1} \\1 - P(\alpha - 1, \theta / \tau)\\\\ | \\\alpha \> 1\\ | Stan |
-| Inverse chi-square, \\\nu\\ (19) | the inverse gamma with \\\alpha = \nu / 2\\ and \\\theta = 1 / 2\\ | \\\nu \> 2\\ | Stan |
-| Scaled inverse chi-square, \\\nu\\ and scale \\\varsigma\\ (22) | the inverse gamma with \\\alpha = \nu / 2\\ and \\\theta = \nu \varsigma^2 / 2\\ | \\\nu \> 2\\ | Stan |
-| Pareto, shape \\\alpha\\, minimum \\y_m\\ (21) | \\K_1(t) = y_m \left\\e^{\ell} - 1 + \frac{e^{-(\alpha - 1) \ell} - 1}{\alpha - 1}\right\\\\, \\\ell = \log(t / y_m)\\, for \\t \geq y_m\\ |  | Stan |
+Equation [(3.1)](#eq:unifprim) is the integral of the delay CDF over the
+primary event window. For a uniform primary event time \\F\_{S\_+}(d) =
+\frac{1}{w_P} \int_q^d F_T(u)~ du\\, with \\q = \max(d - w_P, 0)\\ for
+delays with non-negative support and \\q = d - w_P\\ for delays with
+support on the reals. So for any antiderivative \\G\\ of \\F_T\\
 
-For the Pareto with \\\alpha = 1\\ the second term takes its limit
-\\-\ell\\. The non-central beta and chi-square use the numerical method.
+\\ F\_{S\_+}(d) = \frac{G(d) - G(q)}{w_P}. \tag{3.10} \\
 
-The log-logistic ratio is
+Integrating by parts gives \\G(t) = t F_T(t) - \int\_{-\infty}^t z
+f_T(z)~ dz\\, which is the form used for the Gamma, Log-Normal, Weibull
+and generalised gamma distributions above. Each of these needs only the
+delay CDF and the lower partial expectation at \\d\\ and at \\q\\. The
+two terms of \\G\\ are each evaluated once per endpoint, so the Stan
+functions `primarycensored_uniform_terms()` and
+`primarycensored_uniform_lcdf_from_terms()` reuse them across
+neighbouring delays. Where \\G\\ has a simple positive closed form it is
+used directly, which avoids differences of terms that can be negative.
+The difference \\G(d) - G(q)\\ loses precision when \\d\\ is much larger
+than \\w_P\\, with a relative error of about \\10^{-16} d / (w_P
+F\_{S\_+}(d))\\.
 
-\\ r_a(A\_\tau) = \frac{1 + A\_\tau}{A\_\tau^{a + 1}} \int_0^{A\_\tau}
-\frac{y^a}{(1 + y)^2}\\dy. \\
+### 3.9 Exponential distribution
 
-For a delay \\U\\ with CDF \\F\_{\mathrm{IP}}\\ it is \\E\[(U / \tau)^{a
-k} \mid U \leq \tau\]\\. The integral is a Gauss hypergeometric
-function, which base R does not have, so the package evaluates \\r_a\\
-by one of three series in \\A\_\tau\\. In Stan the log-logistic
-parameters are ordered `[scale, shape]`.
+The exponential distribution with rate \\\lambda\\ has \\F_T(t) = 1 -
+e^{-\lambda t}\\ for \\t \geq 0\\. An antiderivative that is zero at \\t
+= 0\\ is
 
-The step and hazard delays of
-[`pdiscretestep()`](https://primarycensored.epinowcast.org/reference/pdiscretestep.md)
+\\ G(t) = t - \frac{1}{\lambda} + \frac{e^{-\lambda t}}{\lambda}, \qquad
+t \geq 0, \\
+
+with \\G(t) = 0\\ for \\t \< 0\\. Equation
+[(3.10)](#eq:antiderivunifprim) then gives, for \\d \geq w_P\\,
+
+\\ F\_{S\_+}(d; \lambda) = 1 - \frac{e^{-\lambda (d - w_P)} \left(1 -
+e^{-\lambda w_P}\right)}{\lambda w_P}. \\
+
+This is the Gamma solution with shape 1. It is implemented directly so
+that it does not need the incomplete gamma function.
+
+### 3.10 Normal distribution
+
+The normal distribution has support on the reals, so the primary event
+window \\\[d - w_P, d\]\\ is not clipped at zero. With \\z = (t - \mu) /
+\sigma\\, the partial expectation is \\\int\_{-\infty}^t z' f_T(z')~ dz'
+= \mu \Phi(z) - \sigma \phi(z)\\. This can be negative, so a log scale
+evaluation cannot hold it as a single term. Substituting it into \\G(t)
+= t F_T(t) - \int\_{-\infty}^t z' f_T(z')~ dz'\\ gives the positive
+antiderivative
+
+\\ G(t; \mu, \sigma) = \sigma \left( z \Phi(z) + \phi(z) \right) =
+\mathbb{E}\left\[ (t - T)^+ \right\]. \\
+
+In the lower tail \\z \Phi(z)\\ and \\\phi(z)\\ nearly cancel. For \\z
+\< -10\\ the asymptotic series \\\sigma \phi(z) z^{-2} \sum\_{n \geq 0}
+(-1)^n (2n + 1)!! z^{-2n}\\ is used instead, with 20 terms.
+
+### 3.11 Chi-square and beta distributions
+
+The chi-square distribution with \\\nu\\ degrees of freedom is the Gamma
+distribution with shape \\\nu / 2\\ and scale 2, so it uses the Gamma
+solution.
+
+The beta distribution has support on \\\[0, 1\]\\ and mean \\a / (a +
+b)\\. The partial expectation is \\\int_0^t z f_T(z)~ dz = \frac{a}{a +
+b} F_T(t; a + 1, b)\\ for \\t \leq 1\\, and the full mean for \\t \geq
+1\\ where \\F_T = 1\\. So the terms \\t F_T(t; a, b)\\ and
+\\\frac{a}{a + b} F_T(t; a + 1, b)\\ replace \\F_T\\ with 1 above \\t =
+1\\.
+
+### 3.12 Inverse gamma family
+
+The inverse gamma distribution with shape \\\alpha\\ and scale \\\beta\\
+has mean \\\beta / (\alpha - 1)\\ for \\\alpha \> 1\\. Its partial
+expectation is an inverse gamma distribution function with shape
+\\\alpha - 1\\
+
+\\ \int_0^t z f_T(z; \alpha, \beta)~ dz = \frac{\beta}{\alpha - 1}
+F_T(t; \alpha - 1, \beta). \\
+
+The solution is then equation [(3.10)](#eq:antiderivunifprim) with
+\\G(t) = t F_T(t; \alpha, \beta) - \frac{\beta}{\alpha - 1} F_T(t;
+\alpha - 1, \beta)\\. For \\\alpha \leq 1\\ the mean is infinite and
+this form does not apply, so the numerical path is used. The inverse
+chi-square distribution with \\\nu\\ degrees of freedom is the inverse
+gamma with shape \\\nu / 2\\ and scale \\1 / 2\\. The scaled inverse
+chi-square distribution with scale \\s\\ is the inverse gamma with shape
+\\\nu / 2\\ and scale \\\nu s^2 / 2\\. Both need \\\nu \> 2\\ and
+otherwise use the numerical path. Base R has none of these
+distributions, so in R
+[`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+uses this solution for
+[`extraDistr::pinvgamma()`](https://rdrr.io/pkg/extraDistr/man/InvGamma.html)
 and
-[`pdiscretehazard()`](https://primarycensored.epinowcast.org/reference/pdiscretehazard.md)
-(Stan ids 26, 27 and 28) do not use a transform. Their CDF is piecewise
-constant, so equation [(3.1)](#eq:cens) is a finite sum of differences
-of the window CDF. In R
-[`pcens_cdf.pcens_pdiscretestep()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretestep.md)
-and
-[`pcens_cdf.pcens_pdiscretehazard()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.pcens_pdiscretehazard.md)
-compute this exactly for any window with a `pprimary` function.
+[`extraDistr::pinvchisq()`](https://rdrr.io/pkg/extraDistr/man/InvChiSq.html),
+which need the extraDistr package.
 
-## 6 Coverage by window and delay
+### 3.13 Pareto distribution
 
-The table lists the pairs of window and delay that the package solves.
-Each entry is the class of the quantities the window needs, “exact” for
-a finite sum, or “numerical method”. The uniform window needs \\M\\ or
-\\K_1\\, and the other windows need \\T_f\\. The log-logistic \\M\\ is
-semi-analytic because it is evaluated by series in \\A\_\tau\\. The
-logistic and Gumbel windows add a truncated series over the tilts. The R
-method for a pair is `pcens_cdf.pcens_p<delay>_d<primary>`, for example
-[`pcens_cdf.pcens_pgamma_dexpgrowth()`](https://primarycensored.epinowcast.org/reference/pcens_cdf_exptilt.md).
+The Pareto distribution with minimum \\y\_{\min}\\ and shape \\\alpha\\
+has \\F_T(t) = 1 - (y\_{\min} / t)^\alpha\\ for \\t \geq y\_{\min}\\ and
+0 below. An antiderivative that is zero at \\y\_{\min}\\ is
 
-| Delay | Uniform | Exponential tilt | Truncated logistic | Truncated Gumbel |
-|:---|:---|:---|:---|:---|
-| Exponential | analytic | analytic if \\\lambda \> -\rho\\ | analytic if \\m \geq w_P\\ or \\\lambda\\ exceeds the largest tilt | numerical method |
-| Gamma | analytic | analytic if \\\lambda \> -\rho\\ | analytic if \\m \geq w_P\\ or \\\lambda\\ exceeds the largest tilt | numerical method |
-| Normal | analytic | analytic | analytic | analytic |
-| Weibull | analytic | semi-analytic | numerical method | numerical method |
-| Generalised gamma | analytic | semi-analytic | numerical method | numerical method |
-| Lognormal | analytic | numerical for \\\rho \> 0\\, semi-analytic for \\\rho \< 0\\ | numerical method | numerical method |
-| Log-logistic | semi-analytic | numerical method | numerical method | numerical method |
-| Beta, chi-square | analytic | numerical method | numerical method | numerical method |
-| Inverse gamma, inverse chi-square, scaled inverse chi-square, Pareto | analytic in Stan, numerical method in R | numerical method | numerical method | numerical method |
-| Step and hazard | exact | exact | exact | exact in R, numerical method in Stan |
+\\ G(t) = (t - y\_{\min}) - y\_{\min} \frac{1 - (y\_{\min} /
+t)^{\alpha - 1}}{\alpha - 1}, \qquad t \geq y\_{\min}, \\
 
-The logistic window needs the tilts \\n / s\\ and \\-n / s\\ up to the
-number of series terms. For \\m \geq w_P\\ it needs no positive tilt.
-The Gumbel window needs the tilts \\n / \beta\\ for \\n = 0, \ldots,
-N\\, with \\N\\ at least 2. The normal delay has a transform at every
-tilt, and is the only delay the package pairs with the Gumbel window.
-The series checks under Numerical safeguards still apply to it. The
-Weibull, generalised gamma and lognormal delays have transforms, but no
-method pairs them with the logistic or Gumbel windows.
+which is \\(t - y\_{\min}) - y\_{\min} \log(t / y\_{\min})\\ for
+\\\alpha = 1\\. Unlike the forms that use the mean, this holds for every
+\\\alpha \> 0\\ because only the integral of \\F_T\\ over the window
+enters. Base R has no Pareto distribution, so in R
+[`pcens_cdf()`](https://primarycensored.epinowcast.org/reference/pcens_cdf.md)
+uses this solution for
+[`extraDistr::ppareto()`](https://rdrr.io/pkg/extraDistr/man/Pareto.html),
+which needs the extraDistr package.
 
-In Stan `primarycensored_cdf()` and `primarycensored_lcdf()` choose
-between the analytical and the numerical path with
-`check_for_analytical_params()`. It takes `pwindow`, as the
-admissibility of some windows, such as the truncated logistic, depends
-on it. `primarycensored_analytical_lcdf()` rejects parameters that fail
-these checks.
-
-| Window | Stan functions | Parameter check |
-|:---|:---|:---|
-| Uniform | `primarycensored_<dist>_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` | `check_for_uniform_terms()`, and the log-logistic shape in `check_for_analytical_params()` |
-| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_analytical_lcdf_vectorized()`, with `log_tilt_transform_pair()` | `check_for_tilt_transform()`, with `check_for_tilt_transform_at()` for the lognormal |
-| Truncated logistic | `primarycensored_tlogis_lcdf()` and `primarycensored_tlogis_lcdf_vectorized()` | `check_for_tlogis_params()` |
-| Truncated Gumbel | `primarycensored_gumbel_lcdf()`, and `primarycensored_gumbel_terms()` with `primarycensored_gumbel_lcdf_from_terms()` in `primarycensored_analytical_lcdf_vectorized()` | `check_for_gumbel_params()` |
-
-For the Gumbel window, with any delay, and for the log-logistic delay
-with the uniform window the numerical method is specific to the pair. In
-R these are
-[`.gumbel_numeric()`](https://primarycensored.epinowcast.org/reference/dot-gumbel_numeric.md)
-and `.loglogistic_numeric_cdf()`. In Stan they are
-`primarycensored_gumbel_numeric_lcdf()` and
-`loglogistic_numeric_lcdf()`. A zero-width window gives the delay CDF
-directly, for every pair. The uniform window methods for the gamma,
-lognormal, Weibull and generalised gamma delays recycle a vector
-`pwindow` against `q`. The numerical method is used in the following
-cases.
-
-| Condition | R | Stan |
-|:---|:---|:---|
-| The transform is not available at the parameters | numerical method for every `q` | numerical method |
-| `pwindow` is not a single positive finite number, for the tilted, logistic and Gumbel windows and the log-logistic delay | numerical method for every `q` | not applicable |
-| A series or error check fails at one `q` | numerical method for that `q` | numerical method for that `q` |
-| Lognormal delay, exponential tilt, fewer than 10 `q` and \\\|\rho\| w_P \leq 1\\ | numerical method for every `q` | not applicable |
-| `use_numeric = TRUE` | numerical method for every `q` | not applicable |
-
-## 7 Numerical safeguards
-
-Each safeguard below chooses, at each `q`, between a stable form of the
-analytic solution and the numerical method. The thresholds are constants
-in the R and Stan source, documented with the functions named here.
-
-### 7.1 Small tilt
-
-The numerator of equation [(4.1)](#eq:exptilt) loses precision through
-cancellation as \\\rho \to 0\\. For a gamma delay the loss grows with
-the shape. For small \\\|\rho\| w_P\\ near the origin the package
-replaces equation [(4.1)](#eq:exptilt) with its second order Taylor
-expansion in \\\rho\\ about the uniform solution, written in the \\K_n\\
-of equation [(3.8)](#eq:kn). To first order this is \\F_0(q; w_P) + \rho
-\\K_2(q) - w_P K_1(q) - K_2(q - w_P) - w_P K_1(q - w_P)\\ / (2 w_P)\\.
-The second order term is \\\rho^2 \[2 \\K_3(q) - K_3(q - w_P)\\ - 3 w_P
-\\K_2(q) + K_2(q - w_P)\\ + w_P^2 \\K_1(q) - K_1(q - w_P)\\\] / (12
-w_P)\\. The rounding error of the expansion grows with \\\|q\| + w_P\\,
-so equation [(4.1)](#eq:exptilt) is used away from the origin. In R
-[`.exptilt_cdf_finite()`](https://primarycensored.epinowcast.org/reference/dot-exptilt_cdf_finite.md)
-and in Stan `primarycensored_exptilt_form()` choose the form for each
-delay.
-
-### 7.2 Small delay
-
-For a delay on the non-negative reals with \\q \< w_P\\ the exponential
-tilt CDF is \\\\e^{\rho q} J\_\rho(q) - F\_{\mathrm{IP}}(q)\\ / (e^{\rho
-w_P} - 1)\\. For small \\\|\rho\| q\\ the package replaces the numerator
-with its Taylor expansion in \\\rho\\, \\\rho K_1(q) + \rho^2 K_2(q) /
-2 + \rho^3 K_3(q) / 6\\. For delays on the non-negative reals the
-\\K_n\\ are computed from the partial moments \\\int_0^t u^j
-f\_{\mathrm{IP}}(u)\\du\\, \\j = 0, \ldots, 3\\, by
-[`.moments_from_partial()`](https://primarycensored.epinowcast.org/reference/dot-moments_from_partial.md)
-in R and `primarycensored_moments_from_partial()` in Stan. For small \\q
-\< w_P\\ the logistic window uses \\\\L'(0) K_1(q) + L''(0) K_2(q) / 2\\
-/ D_L\\.
-
-### 7.3 Tail choice
-
-A transform difference is taken from the lower transforms or from the
-upper transforms \\T_f(\xi; \infty) - T_f(\xi; \tau)\\, whichever loses
-less precision. The exponential, gamma and normal have upper transforms
-for every admissible tilt, the lognormal for \\\xi \leq 0\\ and the
-other families only at \\\xi = 0\\.
-
-### 7.4 Series checks
-
-The Weibull, generalised gamma, lognormal, logistic and Gumbel series
-are used only where they converge within a bounded number of terms. The
-Weibull and generalised gamma series for \\\xi \< 0\\ and the Gumbel
-series alternate. They are used only where the sum of their absolute
-terms is not much larger than the result, so that little precision is
-lost. The Gumbel window is also limited to small \\c(0)\\, as the sum of
-the absolute terms grows as \\e^{c(0)}\\. The Weibull and generalised
-gamma series have no upper tail form, so the size of the terms of the
-numerator of equation [(4.1)](#eq:exptilt) is also checked at each
-\\q\\. In R this check bounds the relative error in both tails. In Stan
-it bounds the absolute error of the CDF, so very small upper tail masses
-can lose relative accuracy. The logistic series converge slowly near
-\\u^\star\\, and are summed with a binomial taper of the partial sums
-(Euler summation). Where a check fails that \\q\\ uses the numerical
-method.
-
-### 7.5 Log-logistic partial moment
-
-The uniform solution differences \\K_1(t) = t F\_{\mathrm{IP}}(t) \\1 -
-r\_{1 / k}(A_t)\\\\ at \\q\\ and \\q - w_P\\. Each \\q\\ is screened
-with a bound on the rounding error of this difference, relative to the
-CDF, its survival function and the density of \\F\_{\mathrm{cens}}\\.
-That \\q\\ uses the numerical method where the bound is too large. R and
-Stan use the same rule.
-
-## 8 Departures from the transform paper
-
-The package differs from the transform paper in two ways.
-
-1.  The exponential and gamma transforms are finite for every \\\xi\\,
-    but the package has no stable form for \\\xi \geq \lambda\\.
-2.  The lognormal transform is semi-analytic for \\\xi \> 0\\, where the
-    transform paper evaluates it by quadrature.
-
-## 9 Extending the package
-
-A new delay needs its transform. In R it needs methods for
-[`.pcens_tilt_transform()`](https://primarycensored.epinowcast.org/reference/pcens_tilt.md),
-[`.pcens_tilt_available()`](https://primarycensored.epinowcast.org/reference/pcens_tilt.md),
-[`.pcens_tilt_lower()`](https://primarycensored.epinowcast.org/reference/pcens_tilt.md)
-and
-[`.pcens_tilt_moments()`](https://primarycensored.epinowcast.org/reference/pcens_tilt.md).
-In Stan it needs an entry in `log_tilt_transform_pair()`,
-`primarycensored_tilt_moments()`, `check_for_tilt_transform()` and
-`check_for_exptilt()`. A delay whose transform holds only at some `q`
-also needs the per-point checks that the lognormal uses,
-[`.pcens_tilt_fits()`](https://primarycensored.epinowcast.org/reference/pcens_tilt.md)
-in R and `check_for_tilt_transform_at()` in Stan. A pair of window and
-delay then needs its `pcens_cdf` method in R and its dispatch in Stan.
-
-## 10 Learning more
+## 4 Learning more
 
 - For more mathematical background on the analytic solutions see the
   [`vignette("why-it-works")`](https://primarycensored.epinowcast.org/articles/why-it-works.md).
@@ -486,40 +506,20 @@ delay then needs its `pcens_cdf` method in R and its dispatch in Stan.
 
 1\.
 
-*A transform-based marginalisation approach for non-uniform
-primary-censored epidemiological delays*. (n.d.). \[Unpublished
-manuscript\].
-
-2\.
-
-Brand, S. P. C., Nemcova, B., Pearson, C. A. B., Jamieson, N., Charniga,
-K., Azam, J. M., Howes, A., Ward, T., Meyers, L. A., Funk, S., Overton,
-C. E., Park, S. W., & Abbott, S. (2026). *A scalable marginalisation
-approach for double interval censored epidemiological delays*.
-
-3\.
-
 Park, S. W., Akhmetzhanov, A. R., Charniga, K., Cori, A., Davies, N. G.,
 Dushoff, J., Funk, S., Gostic, K., Grenfell, B., Linton, N. M.,
 Lipsitch, M., Lison, A., Overton, C. E., Ward, T., & Abbott, S. (2024).
 Estimating epidemiological delay distributions for infectious diseases.
 *bioRxiv*. <https://doi.org/10.1101/2024.01.12.24301247>
 
-4\.
-
-Zhao, Q., Ju, N., Bacallado, S., & Shah, R. D. (2021). BETS: The dangers
-of selection bias in early analyses of the coronavirus disease
-(COVID-19) pandemic. *The Annals of Applied Statistics*, *15*(1),
-363–390. <https://doi.org/10.1214/20-AOAS1401>
-
-5\.
+2\.
 
 Cori, A., Ferguson, N. M., Fraser, C., & Cauchemez, S. (2013). A new
 framework and software to estimate time-varying reproduction numbers
 during epidemics. *American Journal of Epidemiology*, *178*(9),
 1505–1512.
 
-6\.
+3\.
 
 Stacy, E. W. (1962). A generalization of the gamma distribution. *Ann.
 Math. Stat.*, *33*(3), 1187–1192.

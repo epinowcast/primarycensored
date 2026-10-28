@@ -297,11 +297,7 @@ writeLines(
     // These functions are required for the primarycensored_lpdf function
     #include primarycensored_ode.stan
     #include primarycensored_analytical_cdf.stan
-    #include primarycensored_tlogis.stan
-    #include primarycensored_gumbel.stan
     #include expgrowth.stan
-    #include tlogis.stan
-    #include tgumbel.stan
   }
   data {
     int<lower=0> N;  // number of observations
@@ -426,19 +422,19 @@ pcd_fit
     ## Warning: NAs introduced by coercion
 
     ##        variable     mean   median   sd  mad       q5      q95 rhat ess_bulk
-    ##  lp__           -3422.73 -3422.44 0.98 0.72 -3424.71 -3421.79 1.00     1253
-    ##  params[1]          1.54     1.54 0.04 0.04     1.47     1.62 1.00     1249
-    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.83 1.00     1229
+    ##  lp__           -3422.70 -3422.42 0.96 0.70 -3424.57 -3421.79 1.00     1407
+    ##  params[1]          1.54     1.54 0.04 0.04     1.47     1.62 1.00     1228
+    ##  params[2]          0.78     0.78 0.03 0.03     0.73     0.83 1.00     1151
     ##  np_pmf[1]          1.00     1.00 0.00 0.00     1.00     1.00   NA       NA
-    ##  lpmf_params[1]     1.54     1.54 0.04 0.04     1.47     1.62 1.00     1249
-    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1229
+    ##  lpmf_params[1]     1.54     1.54 0.04 0.04     1.47     1.62 1.00     1228
+    ##  lpmf_params[2]     0.78     0.78 0.03 0.03     0.73     0.83 1.00     1151
     ##  ess_tail
-    ##      1917
-    ##      1237
-    ##      1384
+    ##      2008
+    ##      1564
+    ##      1300
     ##        NA
-    ##      1237
-    ##      1384
+    ##      1564
+    ##      1300
 
 In this model we have a generic `params` vector that contains the
 parameters for the delay distribution. In this case these are `mu` and

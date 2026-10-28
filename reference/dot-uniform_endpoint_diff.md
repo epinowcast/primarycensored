@@ -21,7 +21,7 @@ as many unmatched distinct lower ends as delays remain.
 
 - d:
 
-  Positive finite delays.
+  Finite delays above `lower`.
 
 - lo:
 

@@ -1,18 +1,18 @@
-# Uniform primary CDF for positive finite delays and windows
+# Uniform primary CDF for finite delays and positive windows
 
-Uniform primary CDF for positive finite delays and windows
+Uniform primary CDF for finite delays and positive windows
 
 ## Usage
 
 ``` r
-.uniform_window_cdf(d, w, terms_fn, upper_fn, delay_cdf, params, share)
+.uniform_window_cdf(d, w, terms_fn, upper_fn, delay_cdf, params, share, lower)
 ```
 
 ## Arguments
 
 - d:
 
-  Positive finite delays.
+  Finite delays above `lower`.
 
 - w:
 
@@ -20,12 +20,12 @@ Uniform primary CDF for positive finite delays and windows
 
 - terms_fn:
 
-  Function of delays greater than or equal to zero and `params`
+  Function of delays greater than or equal to `lower` and `params`
   returning \\G\\.
 
 - upper_fn:
 
-  Function of delays greater than or equal to zero and `params`
+  Function of delays greater than or equal to `lower` and `params`
   returning \\H(t) = t S(t) - E \tilde S(t)\\, where \\S\\ and \\\tilde
   S\\ are the upper tails of \\F\\ and \\\tilde F\\.
 
@@ -43,6 +43,11 @@ Uniform primary CDF for positive finite delays and windows
   Whether terms may be shared between window ends, as in
   [`.uniform_endpoint_diff()`](https://primarycensored.epinowcast.org/reference/dot-uniform_endpoint_diff.md).
   Only valid for a scalar window and scalar `params`.
+
+- lower:
+
+  Lower end of the delay support, \\L\\: 0, or `-Inf` for a delay on the
+  reals.
 
 ## Value
 
