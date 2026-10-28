@@ -1,0 +1,11 @@
+<map id="primarycensored_log_cdf_diff" name="primarycensored_log_cdf_diff">
+<area shape="rect" id="Node000001" title=" " alt="" coords="404,27,544,68"/>
+<area shape="rect" id="Node000002" href="$group__primary__censored__single.html#ga9dd889406826dfe58ea658440784c9a7" title=" " alt="" coords="206,5,354,31"/>
+<area shape="poly" id="edge1_Node000001_Node000002" title=" " alt="" coords="388,37,355,32,356,27,389,32"/>
+<area shape="rect" id="Node000004" href="$group__primary__censored__vectorized.html#ga11d79d0886e7c1828c78e68aa74e67dc" title=" " alt="" coords="205,55,356,96"/>
+<area shape="poly" id="edge3_Node000001_Node000004" title=" " alt="" coords="389,62,357,67,356,62,388,57"/>
+<area shape="rect" id="Node000003" href="$group__primary__censored__single.html#ga2a1155a9ec8b2007be790fafd45bf0c9" title=" " alt="" coords="8,5,154,31"/>
+<area shape="poly" id="edge2_Node000002_Node000003" title=" " alt="" coords="191,21,154,21,154,16,191,16"/>
+<area shape="rect" id="Node000005" href="$group__primary__censored__vectorized.html#ga7bf306228dadd0b06abc4a583439cdc9" title=" " alt="" coords="5,55,157,96"/>
+<area shape="poly" id="edge4_Node000004_Node000005" title=" " alt="" coords="189,78,157,78,157,73,189,73"/>
+</map>
