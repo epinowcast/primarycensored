@@ -446,6 +446,8 @@ fitdistdoublecens <- function(
         # fitdistrplus checks the density on short test vectors
         params <- .recycle_params(params, length(x))
       }
+      # Constant columns take the faster path for a single value
+      params <- lapply(params, .shared_value)
       pcens_pmf(
         state$obj, x, params$pwindow,
         swindow = params$swindow, L = params$L, D = params$D
@@ -481,6 +483,7 @@ fitdistdoublecens <- function(
         # fitdistrplus checks the CDF on short test vectors
         params <- .recycle_params(params, length(q))
       }
+      params <- lapply(params, .shared_value)
       .normalise_cdf(state$obj, q, params$pwindow, params$L, params$D)
     },
     error = function(e) {

@@ -200,10 +200,7 @@ pprimarycensored <- function(
     if (length(q) < n) {
       q <- rep_len(q, n)
     }
-    cdf <- .pcens_cdf_pooled(
-      object, list(q, .shared_value(L), .shared_value(D)), pwindow,
-      use_numeric
-    )
+    cdf <- .pcens_cdf_pooled(object, list(q, L, D), pwindow, use_numeric)
   }
   result <- (cdf[[1]] - cdf[[2]]) / (cdf[[3]] - cdf[[2]])
 

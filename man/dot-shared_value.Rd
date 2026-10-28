@@ -13,7 +13,7 @@
 \code{setting}, or its first value when all values are equal.
 }
 \description{
-Lets constant vectors, as in \code{\link[=fitdistdoublecens]{fitdistdoublecens()}}, take the faster path
-for a single value.
+Lets the constant columns of \code{\link[=fitdistdoublecens]{fitdistdoublecens()}} data take the faster
+path for a single value.
 }
 \keyword{internal}

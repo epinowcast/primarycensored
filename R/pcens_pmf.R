@@ -121,9 +121,7 @@ pcens_pmf.default <- function(
     lower[exact] <- -Inf
     upper[exact] <- -Inf
   }
-  cdf <- .pcens_cdf_pooled(
-    object, list(lower, upper, .shared_value(L), .shared_value(D)), pwindow
-  )
+  cdf <- .pcens_cdf_pooled(object, list(lower, upper, L, D), pwindow)
   result <- cdf[[2]] - cdf[[1]]
   if (any(exact)) {
     pwindow <- rep_len(pwindow, n)
@@ -162,7 +160,6 @@ pcens_pmf.default <- function(
 #' @keywords internal
 .pcens_cdf_pooled <- function(object, points, pwindow,
                               use_numeric = FALSE) {
-  pwindow <- .shared_value(pwindow)
   if (length(pwindow) > 1L) {
     n <- max(lengths(c(points, list(pwindow))))
     pwindow <- rep_len(pwindow, n)
@@ -193,6 +190,9 @@ pcens_pmf.default <- function(
   if (length(pts) < length(all_points)) {
     cdf <- cdf[match(all_points, pts)]
   }
+  if (length(all_points) == length(points)) {
+    return(as.list(cdf))
+  }
   # Split back into the elements of `points`
   done <- 0
   for (k in seq_along(points)) {
@@ -205,8 +205,8 @@ pcens_pmf.default <- function(
 
 #' Reduce a setting shared by all rows to a single value
 #'
-#' Lets constant vectors, as in [fitdistdoublecens()], take the faster path
-#' for a single value.
+#' Lets the constant columns of [fitdistdoublecens()] data take the faster
+#' path for a single value.
 #'
 #' @param setting A setting, of length 1 or one per row.
 #'
