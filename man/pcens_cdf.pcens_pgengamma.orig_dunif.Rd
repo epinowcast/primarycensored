@@ -61,6 +61,8 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_pexp_dunif}()},
 \code{\link{pcens_cdf.pcens_pgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_pgengamma_dunif}()},
+\code{\link{pcens_cdf.pcens_pinvchisq_dunif}()},
+\code{\link{pcens_cdf.pcens_pinvgamma_dunif}()},
 \code{\link{pcens_cdf.pcens_plnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_pnorm_dunif}()},
 \code{\link{pcens_cdf.pcens_ppareto_dunif}()},

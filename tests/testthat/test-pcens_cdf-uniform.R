@@ -620,3 +620,99 @@ test_that("the Pareto method is accurate just above the minimum, for shapes
     }, numeric(1))
   )
 })
+
+test_that("the inverse gamma and inverse chi-square methods dispatch, use
+  the extraDistr defaults and map to the inverse gamma", {
+  skip_if_not_installed("extraDistr")
+  q <- c(0.2, 1, 3, 10)
+  invgamma <- new_pcens(extraDistr::pinvgamma, dunif, list(), alpha = 3)
+  expect_s3_class(invgamma, "pcens_pinvgamma_dunif")
+  expect_identical(
+    pcens_cdf(invgamma, q, 2),
+    pcens_cdf(
+      new_pcens(extraDistr::pinvgamma, dunif, list(), alpha = 3, beta = 1),
+      q, 2
+    )
+  )
+  invchisq <- new_pcens(extraDistr::pinvchisq, dunif, list(), nu = 5)
+  expect_s3_class(invchisq, "pcens_pinvchisq_dunif")
+  expect_identical(
+    pcens_cdf(invchisq, q, 2),
+    pcens_cdf(
+      new_pcens(extraDistr::pinvgamma, dunif, list(), alpha = 2.5, beta = 0.5),
+      q, 2
+    )
+  )
+  scaled <- new_pcens(extraDistr::pinvchisq, dunif, list(), nu = 5, tau = 2)
+  expect_identical(
+    pcens_cdf(scaled, q, 2),
+    pcens_cdf(
+      new_pcens(extraDistr::pinvgamma, dunif, list(), alpha = 2.5, beta = 5),
+      q, 2
+    )
+  )
+  for (name in c("inverse gamma", "invgamma")) {
+    named <- add_name_attribute(extraDistr::pinvgamma, name)
+    expect_s3_class(
+      new_pcens(named, dunif, list(), alpha = 3), "pcens_pinvgamma_dunif"
+    )
+  }
+  for (name in c("invchisq", "scaleinvchisq")) {
+    named <- add_name_attribute(extraDistr::pinvchisq, name)
+    expect_s3_class(
+      new_pcens(named, dunif, list(), nu = 3), "pcens_pinvchisq_dunif"
+    )
+  }
+})
+
+test_that("the inverse gamma and inverse chi-square methods use the
+  numerical path without a finite mean or for arguments they do not handle", {
+  skip_if_not_installed("extraDistr")
+  q <- c(0.5, 2, 6)
+  objs <- list(
+    new_pcens(extraDistr::pinvgamma, dunif, list(), alpha = 1, beta = 2),
+    new_pcens(extraDistr::pinvgamma, dunif, list(), alpha = 0.6),
+    new_pcens(
+      extraDistr::pinvgamma, dunif, list(), alpha = c(3, 0.8, 2), beta = 1
+    ),
+    new_pcens(
+      extraDistr::pinvgamma, dunif, list(), alpha = 3, lower.tail = FALSE
+    ),
+    new_pcens(extraDistr::pinvchisq, dunif, list(), nu = 2),
+    new_pcens(extraDistr::pinvchisq, dunif, list(), nu = 1.5, tau = 1)
+  )
+  for (obj in objs) {
+    expect_identical(
+      pcens_cdf(obj, q, 0.5), pcens_cdf(obj, q, 0.5, use_numeric = TRUE),
+      info = toString(unlist(obj$args))
+    )
+  }
+  expect_error(
+    pcens_cdf(new_pcens(extraDistr::pinvgamma, dunif, list(), beta = 1), 1, 1),
+    "alpha parameter is required for inverse gamma distribution"
+  )
+  expect_error(
+    pcens_cdf(new_pcens(extraDistr::pinvchisq, dunif, list()), 1, 1),
+    "nu parameter is required for inverse chi-square distribution"
+  )
+})
+
+test_that("the inverse gamma method is accurate just above shape 1 and deep
+  in the lower tail", {
+  skip_if_not_installed("extraDistr")
+  for (args in list(list(1.001, 1), list(3, 50), list(30, 5))) {
+    obj <- new_pcens(
+      extraDistr::pinvgamma, dunif, list(), alpha = args[[1]], beta = args[[2]]
+    )
+    cdf <- function(t) extraDistr::pinvgamma(t, args[[1]], args[[2]])
+    for (pwindow in c(0.5, 2)) {
+      d <- c(0.05, 0.3, 1, 10, 100)
+      expect_rel_equal(
+        pcens_cdf(obj, d, pwindow),
+        reference_uniform_cdf(cdf, d, pwindow, kinks = 0),
+        tolerance = 1e-8,
+        info = paste(toString(unlist(args)), "pwindow", pwindow)
+      )
+    }
+  }
+})

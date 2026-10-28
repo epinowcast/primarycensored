@@ -22,9 +22,10 @@
 #' dispatch, so every method returns `pdist(q)` without integrating over the
 #' primary event window.
 #'
-#' The analytical methods for the exponential, normal, chi-square, beta and
-#' Pareto delays use the numerical method when `pdist` has arguments they do not
-#' use, such as `lower.tail`, or a non-zero `ncp`.
+#' The analytical methods for the exponential, normal, chi-square, beta,
+#' Pareto, inverse gamma and inverse chi-square delays use the numerical
+#' method when `pdist` has arguments they do not use, such as `lower.tail`,
+#' or a non-zero `ncp`.
 #'
 #' @return Vector of computed primary event censored CDFs
 #'
@@ -1113,6 +1114,127 @@ pcens_cdf.pcens_ppareto_dunif <- function(
     q, pwindow, terms_fn, upper_fn, delay_cdf,
     list(a = a, b = b, mean = ifelse(a > 1, a * b / (a - 1), Inf))
   )
+}
+
+#' Method for inverse gamma delay with uniform primary
+#'
+#' Analytical solution for the inverse gamma distribution of
+#' `extraDistr::pinvgamma()`, with shape `alpha` and scale `beta`.
+#' The `extraDistr` package is needed to create the `pcens` object.
+#' The solution needs a finite mean, so shapes at or below 1 use the
+#' numerical [pcens_cdf.default()] method.
+#' See `vignette("analytic-solutions")` for the derivation.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examplesIf requireNamespace("extraDistr", quietly = TRUE)
+#' pcens_obj <- new_pcens(
+#'   pdist = extraDistr::pinvgamma,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   alpha = 3,
+#'   beta = 2
+#' )
+#' pcens_cdf(pcens_obj, q = c(1, 4, 8), pwindow = 1)
+pcens_cdf.pcens_pinvgamma_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("alpha", "beta"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  alpha <- delay_args$alpha
+  if (is.null(alpha)) {
+    stop(
+      "alpha parameter is required for inverse gamma distribution",
+      call. = FALSE
+    )
+  }
+  # The solution needs the mean, which is infinite for alpha <= 1
+  if (any(alpha <= 1)) {
+    return(pcens_cdf.default(object, q, pwindow))
+  }
+  # extraDistr::pinvgamma() default
+  scale <- if (is.null(delay_args$beta)) 1 else delay_args$beta
+
+  # F_T(t; alpha, beta) is the upper tail of a gamma at beta / t, and the
+  # partial expectation distribution is an inverse gamma with alpha - 1
+  terms_fn <- function(t, p) {
+    x <- p$beta / t
+    t * pgamma(x, p$alpha, lower.tail = FALSE) -
+      p$mean * pgamma(x, p$alpha - 1, lower.tail = FALSE)
+  }
+  upper_fn <- function(t, p) {
+    x <- p$beta / t
+    t * pgamma(x, p$alpha) - p$mean * pgamma(x, p$alpha - 1)
+  }
+  delay_cdf <- function(t, p) {
+    pgamma(p$beta / t, p$alpha, lower.tail = FALSE)
+  }
+
+  .pcens_cdf_uniform(
+    q, pwindow, terms_fn, upper_fn, delay_cdf,
+    list(alpha = alpha, beta = scale, mean = scale / (alpha - 1))
+  )
+}
+
+#' Method for inverse chi-square delay with uniform primary
+#'
+#' The inverse chi-square distribution of `extraDistr::pinvchisq()` with
+#' `nu` degrees of freedom is the inverse gamma distribution with
+#' `alpha = nu / 2` and `beta = 1 / 2`.
+#' With a scale `tau` it is the scaled inverse chi-square distribution, with
+#' `beta = nu * tau / 2`.
+#' Both use [pcens_cdf.pcens_pinvgamma_dunif()], so `nu` at or below 2 uses
+#' the numerical [pcens_cdf.default()] method.
+#'
+#' @inheritParams pcens_cdf
+#'
+#' @family pcens
+#'
+#' @inherit pcens_cdf return
+#'
+#' @export
+#' @examplesIf requireNamespace("extraDistr", quietly = TRUE)
+#' pcens_obj <- new_pcens(
+#'   pdist = extraDistr::pinvchisq,
+#'   dprimary = dunif,
+#'   primary_args = list(min = 0, max = 1),
+#'   nu = 5
+#' )
+#' pcens_cdf(pcens_obj, q = c(0.5, 1, 4), pwindow = 1)
+pcens_cdf.pcens_pinvchisq_dunif <- function(
+  object,
+  q,
+  pwindow,
+  use_numeric = FALSE
+) {
+  delay_args <- .delay_args(object, c("nu", "tau"), use_numeric)
+  if (is.null(delay_args)) {
+    return(pcens_cdf.default(object, q, pwindow, use_numeric))
+  }
+  nu <- delay_args$nu
+  if (is.null(nu)) {
+    stop(
+      "nu parameter is required for inverse chi-square distribution",
+      call. = FALSE
+    )
+  }
+  if (any(nu <= 2)) {
+    return(pcens_cdf.default(object, q, pwindow))
+  }
+  tau <- if (is.null(delay_args$tau)) 1 / nu else delay_args$tau
+
+  object$args <- list(alpha = nu / 2, beta = nu * tau / 2)
+  pcens_cdf.pcens_pinvgamma_dunif(object, q, pwindow)
 }
 
 #' Delay distribution arguments an analytical solution handles
