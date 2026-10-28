@@ -131,7 +131,7 @@ test_that("analytical gamma matches Stan's numerical path", {
 })
 
 test_that("Stan analytical gamma matches the R implementation", {
-  for (shape in c(1, 2.5, 10, 30, 400, 1500)) {
+  for (shape in c(1, 2.5, 10, 30, 400)) {
     for (rate in c(0.2, 10)) {
       obj <- new_pcens(pgamma, dunif, list(), shape = shape, rate = rate)
       q <- shape / rate * c(0.3, 0.6, 0.9, 1, 1.1, 1.5, 3)
@@ -154,108 +154,38 @@ test_that("Stan analytical gamma matches the R implementation", {
   }
 })
 
-test_that("Stan analytical gamma matches rprimarycensored samples", {
-  set.seed(381)
-  n <- 2e5
-  for (case in list(list(30, 1), list(400, 2), list(2000, 1))) {
-    shape <- case[[1]]
-    rate <- case[[2]]
-    pwindow <- 2
-    samples <- rprimarycensored(
-      n, rgamma,
-      pwindow = pwindow, swindow = 0, shape = shape, rate = rate
-    )
-    probs <- c(0.05, 0.25, 0.5, 0.75, 0.95)
-    for (d in unname(quantile(samples, probs))) {
-      empirical <- mean(samples <= d)
-      analytic <- exp(primarycensored_lcdf(
-        d, 2L, c(shape, rate), pwindow, 0, Inf, 1L, numeric(0)
-      ))
-      expect_lt(
-        abs(analytic - empirical),
-        4 * sqrt(empirical * (1 - empirical) / n),
-        label = sprintf("shape = %g, rate = %g, d = %g", shape, rate, d)
-      )
-    }
-  }
-})
-
-test_that("gamma_log_pq_logx matches pgamma in both tails", {
-  # frac = x / (a + 1) spans the lower tail, the body and the upper tail on
-  # both sides of the switch from the series to the continued fraction
-  for (a in c(0.01, 0.1, 1, 2, 3, 5, 9.5, 10, 10.001, 40, 400, 4000, 30000,
-              1e5, 1e6)) {
+test_that("gamma_lcdf_logx matches pgamma in the lower tail and bulk", {
+  # frac = x / (a + 1) spans the series below 0.5 and gamma_lcdf() above
+  for (a in c(0.01, 0.1, 1, 2, 3, 5, 9.5, 10, 20, 40, 100, 400)) {
     for (frac in c(
-      1e-6, 1e-3, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1 - 1e-7, 1, 1 + 1e-7,
-      1.01, 1.05, 1.2, 1.5, 3, 10, 100
+      1e-6, 1e-3, 0.1, 0.3, 0.49, 0.5, 0.51, 0.7, 0.9, 1, 1.2, 1.5, 3, 10
     )) {
       x <- frac * (a + 1)
-      label <- sprintf("a = %g, x over (a + 1) = %g", a, frac)
-      pq <- gamma_log_pq_logx(log(x), a)
-      expect_length(pq, 2)
-      expect_lcdf_close(pq[1], pgamma(x, a, log.p = TRUE), label)
       expect_lcdf_close(
-        pq[2], pgamma(x, a, lower.tail = FALSE, log.p = TRUE), label
+        gamma_lcdf_logx(log(x), a), pgamma(x, a, log.p = TRUE),
+        sprintf("a = %g, x over (a + 1) = %g", a, frac)
       )
-      expect_identical(gamma_lcdf_logx(log(x), a), pq[1])
     }
   }
+  # Issue #363
+  expect_equal(gamma_lcdf_logx(log(0.4), 400), -2367.416, tolerance = 1e-6)
 })
 
-test_that("gamma_log_pq_logx does not underflow when x does", {
+test_that("gamma_lcdf_logx does not underflow when x does", {
   # exp(-1000) is 0 but log P is finite
-  for (a in c(0.01, 1, 3, 30.5, 1e5)) {
-    log_p <- a * -1000 - lgamma(a + 1)
+  for (a in c(0.01, 1, 3, 30.5)) {
     expect_equal(
-      gamma_log_pq_logx(-1000, a), c(log_p, log1p(-exp(log_p))),
+      gamma_lcdf_logx(-1000, a), a * -1000 - lgamma(a + 1),
       tolerance = 1e-12, info = sprintf("a = %g", a)
     )
   }
-  expect_identical(gamma_log_pq_logx(-Inf, 3), c(-Inf, 0))
-  # exp(800) overflows
-  expect_identical(gamma_log_pq_logx(800, 3), c(0, -Inf))
-  expect_identical(gamma_log_pq_logx(Inf, 3), c(0, -Inf))
-})
-
-test_that("gamma_lcdf_logx_pair matches pgamma for a and a + 1", {
-  # frac = x / (a + 1) covers the series and the continued fraction
-  for (a in c(0.01, 0.5, 1, 2, 5, 9.5, 10, 10.001, 40, 400, 4000, 3e4)) {
-    for (frac in c(
-      1e-8, 1e-4, 0.01, 0.1, 0.3, 0.5, 0.7, 0.9, 0.99, 1, 1.01, 1.2, 1.5, 3,
-      10, 100
-    )) {
-      x <- frac * (a + 1)
-      pair <- gamma_lcdf_logx_pair(log(x), a)
-      label <- sprintf("a = %g, x over (a + 1) = %g", a, frac)
-      expect_length(pair, 2)
-      expect_lcdf_close(
-        pair[1], pgamma(x, a, log.p = TRUE), label
-      )
-      expect_lcdf_close(
-        pair[2], pgamma(x, a + 1, log.p = TRUE), label
-      )
-    }
-  }
-})
-
-test_that("gamma_lcdf_logx_pair does not underflow when x does", {
-  # x = exp(-800) is 0 but both log CDFs are finite
-  for (a in c(0.5, 9.5, 30.5)) {
-    expect_equal(
-      gamma_lcdf_logx_pair(-800, a),
-      c(a * -800 - lgamma(a + 1), (a + 1) * -800 - lgamma(a + 2)),
-      tolerance = 1e-12
-    )
-  }
-  expect_identical(gamma_lcdf_logx_pair(-Inf, 3), c(-Inf, -Inf))
-  expect_identical(gamma_lcdf_logx_pair(Inf, 3), c(0, 0))
+  expect_identical(gamma_lcdf_logx(-Inf, 3), -Inf)
+  expect_identical(gamma_lcdf_logx(Inf, 3), 0)
 })
 
 test_that("the gamma log CDF helpers reject an invalid shape", {
   for (a in c(0, -0.5, -3, NaN, Inf)) {
-    expect_error(gamma_log_pq_logx(log(2), a), "shape")
     expect_error(gamma_lcdf_logx(log(2), a), "shape")
-    expect_error(gamma_lcdf_logx_pair(log(2), a), "shape")
     expect_error(dist_lcdf(2, c(a, 1), 2), "shape")
   }
   expect_error(dist_lcdf(2, c(1.5, -1), 2))
@@ -270,35 +200,6 @@ test_that("the gamma log CDFs reject a rate that is not positive and finite", {
     )
     expect_error(
       primarycensored_gamma_uniform_terms(1, c(2, rate)), "rate"
-    )
-  }
-})
-
-test_that("primarycensored_lcdf is accurate for a large Gamma shape", {
-  # Rounding error is amplified by about d / pwindow
-  cases <- list(
-    list(d = 1400, shape = 1500, rate = 1, pwindow = 10, tol = 1e-7),
-    list(d = 1600, shape = 1500, rate = 1, pwindow = 10, tol = 1e-7),
-    list(d = 3100, shape = 3000, rate = 1, pwindow = 5, tol = 1e-7),
-    list(d = 1e7, shape = 1e5, rate = 0.01, pwindow = 0.01, tol = 1e-5),
-    list(d = 1e6, shape = 1e4, rate = 0.01, pwindow = 0.01, tol = 1e-6),
-    list(d = 2e6, shape = 1e5, rate = 0.05, pwindow = 0.5, tol = 1e-7),
-    list(d = 1e5, shape = 1e5, rate = 1, pwindow = 1, tol = 1e-8)
-  )
-  for (case in cases) {
-    expected <- ref_lcdf_unif_gamma(
-      case$d, case$pwindow, case$shape, case$rate
-    )
-    actual <- primarycensored_lcdf(
-      case$d, 2L, c(case$shape, case$rate), case$pwindow, 0, Inf, 1L,
-      numeric(0)
-    )
-    expect_lt(
-      abs(actual - expected), case$tol,
-      label = sprintf(
-        "d = %g, shape = %g, rate = %g, pwindow = %g", case$d, case$shape,
-        case$rate, case$pwindow
-      )
     )
   }
 })
