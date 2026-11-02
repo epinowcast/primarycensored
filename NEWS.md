@@ -7,6 +7,10 @@
   The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
   Stan models that include the function files one by one need `#include primarycensored_exptilt.stan`.
   See #367.
+- Added exponentially tilted primary event solutions for Weibull and generalised gamma delays, in R and Stan.
+  These delays now use a closed form instead of the numerical method, so results can differ at the 1e-5 level.
+  The exponential, gamma and normal methods now use the numerical method where their closed form returns `NaN`.
+  See #368.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.

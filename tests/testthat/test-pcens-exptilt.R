@@ -121,7 +121,9 @@ test_that("the numerical method is used for use_numeric = TRUE, delays
     pcens_cdf(obj, q, 2, use_numeric = TRUE), pcens_cdf.default(obj, q, 2)
   )
   objs <- list(
-    new_pcens(pweibull, dexpgrowth, list(r = 0.2), shape = 2, scale = 3),
+    new_pcens(
+      pcauchy, dexpgrowth, list(r = 0.2), location = 2, scale = 3
+    ),
     exptilt_object(families[[2]], -0.5),
     exptilt_object(families[[3]], -1.3),
     exptilt_object(families[[4]], -0.5)

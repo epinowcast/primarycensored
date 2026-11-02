@@ -97,12 +97,77 @@ real primarycensored_log_std_normal_cdf(real z) {
 }
 
 /**
+  * Log of the incomplete gamma series for the tilt transform of a Stacy
+  * family delay
+  * @ingroup tilt_transforms
+  *
+  * The Weibull (k = 1) and generalised gamma have CDF P(k, (t / scale)^shape)
+  * and transform
+  *   T_f(xi; t) = sum_n (xi scale)^n / n! Gamma(k + n / shape) / Gamma(k)
+  *                P(k + n / shape, (t / scale)^shape).
+  * The terms for negative xi alternate in sign, and the sum of their absolute
+  * values is the transform at -xi. Positive and negative terms are summed
+  * apart until the remainder, bounded by a geometric series once
+  * n + 1 > |xi| t, is below 1e-17 of that sum.
+  *
+  * @param t Point, positive
+  * @param xi Tilt, not zero
+  * @param shape Power of the Stacy family
+  * @param scale Scale
+  * @param k Shape of the underlying gamma
+  *
+  * @return Vector [log T_f(xi; t), log of the sum of the absolute terms over
+  *   the result], or `nan` for both where the sum of the absolute terms is
+  *   more than 1e5 times the result, |xi| t is 400 or more, or 400 terms do
+  *   not converge
+  */
+vector primarycensored_stacy_series(real t, real xi, real shape, real scale,
+                                    real k) {
+  real log_x = shape * (log(t) - log(scale));
+  int alternating = xi < 0;
+  real log_z = log(abs(xi)) + log(scale);
+  real log_w = log(abs(xi)) + log(t);
+  real w = exp(log_w);
+  vector[2] unreliable = rep_vector(not_a_number(), 2);
+  if (w >= 400) return unreliable;
+  real log_k = lgamma(k);
+  real log_pos = 0;
+  real log_neg = negative_infinity();
+  real log_first = 0;
+  for (n in 0:400) {
+    real s = k + n / shape;
+    real log_term = n * log_z - lgamma(n + 1) + lgamma(s) - log_k
+                    + gamma_lcdf_logx(log_x, s);
+    if (n == 0) {
+      log_first = log_term;
+      log_pos = log_term;
+    } else if (alternating && n % 2 == 1) {
+      log_neg = log_sum_exp(log_neg, log_term);
+    } else {
+      log_pos = log_sum_exp(log_pos, log_term);
+    }
+    real log_abs = log_sum_exp(log_pos, log_neg);
+    // The transform is at most the CDF for negative xi
+    if (alternating && log_abs - log_first > log(1e5)) return unreliable;
+    if (n + 1 > w
+        && log_term + log_w - log(n + 1 - w) < log_abs + log(1e-17)) {
+      if (log_pos <= log_neg) return unreliable;
+      real log_sum = primarycensored_log_diff_exp(log_pos, log_neg);
+      if (log_abs - log_sum > log(1e5)) return unreliable;
+      return [log_sum, log_abs - log_sum]';
+    }
+  }
+  return unreliable;
+}
+
+/**
   * Check if the tilt transform is closed form for a delay and tilt
   * @ingroup tilt_transforms
   *
   * The exponential (4) and gamma (2) forms need the delay with the rate
-  * lowered by xi, which exists if rate - xi > 0. The normal (18) form has no
-  * restriction. Callers use the numerical path when this is 0.
+  * lowered by xi, which exists if rate - xi > 0. The normal (18) form and the
+  * Weibull (3) and generalised gamma (5) series have no restriction. Callers
+  * use the numerical path when this is 0.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param xi Tilt. The exponentially tilted window with tilt rho needs
@@ -115,7 +180,7 @@ real primarycensored_log_std_normal_cdf(real z) {
 int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   if (dist_id == 4) return params[1] - xi > 0;
   if (dist_id == 2) return params[2] - xi > 0;
-  if (dist_id == 18) return 1;
+  if (dist_id == 18 || dist_id == 3 || dist_id == 5) return 1;
   return 0;
 }
 
@@ -125,19 +190,24 @@ int check_for_tilt_transform(int dist_id, real xi, array[] real params) {
   *
   * The lower transform is T_f(xi; t), the delay CDF for xi = 0, and `-inf`
   * for t <= 0 for delays on the non-negative reals. The upper transform is
-  * T_f(xi; Inf) - T_f(xi; t). Only defined where check_for_tilt_transform()
-  * is 1.
+  * T_f(xi; Inf) - T_f(xi; t). The third element is the log of the factor by
+  * which the terms of the lower transform exceed it, 0 unless the transform is
+  * a series. Only defined where check_for_tilt_transform() is 1.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
   * (rate / (rate - xi))^shape, with both tails from gamma_lcdf_lccdf_logx().
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 2 (Gamma), 3 (Weibull), 4
+  *   (Exponential), 5 (Generalised gamma) or 18 (Normal), see
+  *   check_for_tilt_transform()
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
-  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t))]
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), log loss].
+  *   The Weibull and generalised gamma have `nan` for the lower transform
+  *   where the series is not reliable, and for the upper transform if xi is
+  *   not 0.
   */
 vector log_tilt_transform_pair(real t, int dist_id, real xi,
                                array[] real params) {
@@ -145,15 +215,17 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     real shape = params[1];
     real rate = params[2];
     real log_total = -shape * log1m(xi / rate);
-    if (t <= 0) return [negative_infinity(), log_total]';
-    return log_total + gamma_lcdf_lccdf_logx(log(t) + log(rate - xi), shape);
+    if (t <= 0) return [negative_infinity(), log_total, 0]';
+    return append_row(
+      log_total + gamma_lcdf_lccdf_logx(log(t) + log(rate - xi), shape), 0
+    );
   } else if (dist_id == 4) {
     real rate = params[1];
     real tilted_rate = rate - xi;
     real log_total = -log1m(xi / rate);
-    if (t <= 0) return [negative_infinity(), log_total]';
+    if (t <= 0) return [negative_infinity(), log_total, 0]';
     return [
-      log_total + log1m_exp(-tilted_rate * t), log_total - tilted_rate * t
+      log_total + log1m_exp(-tilted_rate * t), log_total - tilted_rate * t, 0
     ]';
   } else if (dist_id == 18) {
     // The upper tail is the lower tail of the reflected normal
@@ -163,8 +235,21 @@ vector log_tilt_transform_pair(real t, int dist_id, real xi,
     real log_total = xi * mu + 0.5 * square(xi * sigma);
     return [
       log_total + primarycensored_log_std_normal_cdf(z),
-      log_total + primarycensored_log_std_normal_cdf(-z)
+      log_total + primarycensored_log_std_normal_cdf(-z), 0
     ]';
+  } else if (dist_id == 3 || dist_id == 5) {
+    real shape = params[1];
+    real scale = params[2];
+    real k = dist_id == 3 ? 1.0 : params[3];
+    if (xi == 0) {
+      if (t <= 0) return [negative_infinity(), 0, 0]';
+      return append_row(
+        gamma_lcdf_lccdf_logx(shape * (log(t) - log(scale)), k), 0
+      );
+    }
+    if (t <= 0) return [negative_infinity(), not_a_number(), 0]';
+    vector[2] series = primarycensored_stacy_series(t, xi, shape, scale, k);
+    return [series[1], not_a_number(), series[2]]';
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -219,6 +304,41 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
 }
 
 /**
+  * Log moments of a Stacy family delay about a point
+  * @ingroup tilt_transforms
+  *
+  * As primarycensored_gamma_tilt_moments(), from the partial moments
+  * int_0^t u^j f(u) du = scale^j Gamma(k + j / shape) / Gamma(k)
+  * P(k + j / shape, (t / scale)^shape).
+  *
+  * @param t Point, positive
+  * @param shape Power of the Stacy family
+  * @param scale Scale
+  * @param k Shape of the underlying gamma
+  *
+  * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
+  */
+vector primarycensored_stacy_tilt_moments(real t, real shape, real scale,
+                                          real k) {
+  real log_x = shape * (log(t) - log(scale));
+  real k1 = k + 1 / shape;
+  real k2 = k + 2 / shape;
+  real k3 = k + 3 / shape;
+  real log_k = lgamma(k);
+  real log_t = log(t);
+  real log_m0 = gamma_lcdf_logx(log_x, k);
+  real log_m1 = log(scale) + lgamma(k1) - log_k
+                + gamma_lcdf_logx(log_x, k1);
+  real log_m2 = 2 * log(scale) + lgamma(k2) - log_k
+                + gamma_lcdf_logx(log_x, k2);
+  real log_m3 = 3 * log(scale) + lgamma(k3) - log_k
+                + gamma_lcdf_logx(log_x, k3);
+  return primarycensored_moments_from_partial(
+    log_t, [log_m0, log_m1, log_m2, log_m3]'
+  );
+}
+
+/**
   * Log moments of a delay about a point
   * @ingroup tilt_transforms
   *
@@ -232,8 +352,9 @@ vector primarycensored_gamma_tilt_moments(real t, real shape, real rate) {
   * G_3 = sigma^3 (z (z^2 + 3) Phi(z) + (z^2 + 2) phi(z)).
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal), see check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 2 (Gamma), 3 (Weibull), 4
+  *   (Exponential), 5 (Generalised gamma) or 18 (Normal), see
+  *   check_for_tilt_transform()
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
   * @return Vector [log G_1(t), log G_2(t), log G_3(t)]
@@ -275,6 +396,11 @@ vector primarycensored_tilt_moments(real t, int dist_id,
     return [
       log(sigma) + log_g1, 2 * log(sigma) + log_g2, 3 * log(sigma) + log_g3
     ]';
+  } else if (dist_id == 3 || dist_id == 5) {
+    if (t <= 0) return rep_vector(negative_infinity(), 3);
+    return primarycensored_stacy_tilt_moments(
+      t, params[1], params[2], dist_id == 3 ? 1.0 : params[3]
+    );
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -308,7 +434,9 @@ vector primarycensored_tilt_moments(real t, int dist_id,
   * primary is exponentially tilted, 0 otherwise
   */
 int check_for_exptilt(int dist_id, int primary_id) {
-  return primary_id == 2 && (dist_id == 2 || dist_id == 4 || dist_id == 18);
+  return primary_id == 2
+         && (dist_id == 2 || dist_id == 3 || dist_id == 4 || dist_id == 5
+             || dist_id == 18);
 }
 
 /**
@@ -351,13 +479,16 @@ int primarycensored_exptilt_form(data real d, int dist_id, real rho,
   *
   * @param lower_d Log lower tail quantity at d
   * @param lower_q Log lower tail quantity at q
-  * @param upper_d Log upper tail quantity at d
-  * @param upper_q Log upper tail quantity at q
+  * @param upper_d Log upper tail quantity at d, `nan` if there is none
+  * @param upper_q Log upper tail quantity at q, `nan` if there is none
   *
   * @return Log of the difference, `-inf` if it is zero to rounding
   */
 real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
                                real upper_q) {
+  if (is_nan(upper_d) || is_nan(upper_q)) {
+    return primarycensored_log_diff_exp(lower_d, lower_q);
+  }
   // NaN from terms that both underflow is a zero difference
   if (is_nan(lower_q - lower_d) || lower_q - lower_d <= upper_d - upper_q) {
     return primarycensored_log_diff_exp(lower_d, lower_q);
@@ -373,18 +504,23 @@ real primarycensored_tail_diff(real lower_d, real lower_q, real upper_d,
   * apply. The difference of each pair of terms is taken with
   * primarycensored_tail_diff().
   *
+  * The result is `nan` if J at d or q is. Where J has no upper tail, it is
+  * also `nan` if the terms of the numerator over the denominator exceed 1e5.
+  *
   * @param terms_d Terms at d, the lower and upper terms of
-  *   log_tilt_transform_pair() for xi = 0 and xi = -rho
+  *   log_tilt_transform_pair() for xi = 0 and xi = -rho, then the log loss
+  *   of the second
   * @param terms_q Terms at q = d - pwindow
   * @param d Delay
   * @param rho Tilt, not zero
   * @param pwindow Primary event window
   *
-  * @return Log of the primary event censored CDF at d
+  * @return Log of the primary event censored CDF at d, or `nan`
   */
 real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
                                              data real d, real rho,
                                              data real pwindow) {
+  if (is_nan(terms_d[3]) || is_nan(terms_q[3])) return not_a_number();
   real log_diff_f = primarycensored_tail_diff(
     terms_d[1], terms_q[1], terms_d[2], terms_q[2]
   );
@@ -404,7 +540,15 @@ real primarycensored_exptilt_lcdf_from_terms(vector terms_d, vector terms_q,
   if (terms_q[1] == negative_infinity() && log_num == negative_infinity()) {
     return negative_infinity();
   }
-  return log_sum_exp(terms_q[1], log_num - log_den);
+  // Rounding can put the log CDF above 0
+  real result = fmin(log_sum_exp(terms_q[1], log_num - log_den), 0);
+  int no_tail = is_nan(terms_d[4]) || is_nan(terms_q[4]);
+  real log_size = rho * d + terms_d[3] + fmax(terms_d[5], terms_q[5]);
+  if (no_tail && result > negative_infinity()
+      && log_size - log_den > log(1e5)) {
+    return not_a_number();
+  }
+  return result;
 }
 
 /**
@@ -486,12 +630,12 @@ real primarycensored_exptilt_small_delay_lcdf_from_terms(
   * @param rho Tilt
   *
   * @return Vector of the lower and upper terms of log_tilt_transform_pair()
-  * for xi = 0 and xi = -rho
+  * for xi = 0, then all three for xi = -rho
   */
 vector primarycensored_exptilt_terms(real t, int dist_id, array[] real params,
                                      real rho) {
   return append_row(
-    log_tilt_transform_pair(t, dist_id, 0, params),
+    log_tilt_transform_pair(t, dist_id, 0, params)[1:2],
     log_tilt_transform_pair(t, dist_id, -rho, params)
   );
 }
@@ -502,12 +646,13 @@ vector primarycensored_exptilt_terms(real t, int dist_id, array[] real params,
   * @ingroup exponential_tilt_solutions
   *
   * Chooses the direct form or the small tilt forms. A zero width window
-  * gives the delay log CDF. Only for check_for_exptilt() is 1 and
-  * check_for_tilt_transform() is 1 for -rho.
+  * gives the delay log CDF. Where the direct form is `nan` it uses the ODE
+  * path of primarycensored_numeric_cdf(). Only for check_for_exptilt() is 1
+  * and check_for_tilt_transform() is 1 for -rho.
   *
   * @param d Delay
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or 18
-  *   (Normal)
+  * @param dist_id Distribution identifier: 2 (Gamma), 3 (Weibull), 4
+  *   (Exponential), 5 (Generalised gamma) or 18 (Normal)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   * @param rho Tilt, the exponential growth rate of the primary
@@ -534,10 +679,16 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
       primarycensored_tilt_moments(d, dist_id, params), rho, pwindow
     );
   }
-  return primarycensored_exptilt_lcdf_from_terms(
+  real log_cdf = primarycensored_exptilt_lcdf_from_terms(
     primarycensored_exptilt_terms(d, dist_id, params, rho),
     primarycensored_exptilt_terms(q, dist_id, params, rho), d, rho, pwindow
   );
+  if (is_nan(log_cdf)) {
+    return log(
+      primarycensored_numeric_cdf(d | dist_id, params, pwindow, 2, {rho})
+    );
+  }
+  return log_cdf;
 }
 
 /**
@@ -548,8 +699,9 @@ real primarycensored_exptilt_lcdf(data real d, int dist_id,
   * delay, so they cover a first run of delays, each computed with
   * primarycensored_exptilt_lcdf(). The direct form covers the rest, with the
   * terms at each endpoint computed once and shared by the delays t and
-  * t + pwindow. The values are the same as from
-  * primarycensored_exptilt_lcdf().
+  * t + pwindow. Where the direct form uses the ODE, its values are shifted by
+  * their difference from the analytical value at the delay before, so that
+  * the PMF across the switch is a difference of ODE values.
   *
   * @param start First delay to compute, at least 1
   * @param n Last delay to compute, and the length of the result
@@ -573,16 +725,34 @@ vector primarycensored_exptilt_lcdf_vectorized(data int start, data int n,
   }
   if (d0 > n) return log_cdfs;
   // terms[t - d0 + pw + 1] holds the terms at endpoint t
-  array[n - d0 + pw + 1] vector[4] terms;
+  array[n - d0 + pw + 1] vector[5] terms;
   for (t in (d0 - pw):n) {
     terms[t - d0 + pw + 1] = primarycensored_exptilt_terms(
       t, dist_id, params, rho
     );
   }
+  // Offset of the ODE CDF from the analytical CDF at the delay before
+  real shift = 0;
+  int is_ode = d0 == start;
   for (d in d0:n) {
     log_cdfs[d] = primarycensored_exptilt_lcdf_from_terms(
       terms[d - d0 + pw + 1], terms[d - d0 + 1], d, rho, pw
     );
+    if (is_nan(log_cdfs[d])) {
+      if (!is_ode) {
+        shift = exp(log_cdfs[d - 1]) - primarycensored_numeric_cdf(
+          d - 1 | dist_id, params, pw, 2, {rho}
+        );
+      }
+      real ode_cdf = primarycensored_numeric_cdf(
+        d | dist_id, params, pw, 2, {rho}
+      );
+      // The ODE CDF increases, so only solver error makes this negative
+      log_cdfs[d] = log(shift + ode_cdf > 0 ? shift + ode_cdf : ode_cdf);
+      is_ode = 1;
+    } else {
+      is_ode = 0;
+    }
   }
   return log_cdfs;
 }
