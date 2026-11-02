@@ -773,11 +773,10 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * Compute the primary event censored log CDF analytically at integer delays
   * @ingroup primary_event_analytical_distributions
   *
-  * The log CDF at d combines the terms at d and at q (see
-  * primarycensored_uniform_lcdf_from_terms()). Both are integer delays, so
-  * the terms are computed once per delay and used for both, halving the CDF
-  * evaluations. The values are the same as from
-  * primarycensored_analytical_lcdf() at each delay without truncation.
+  * Lognormal, gamma and Weibull delays go through
+  * primarycensored_uniform_lcdf_vectorized(), which can be replaced by a
+  * C++ version with a hand-written gradient (see pcd_stan_header() in R).
+  * Other delays use primarycensored_uniform_terms_lcdf_vectorized().
   * Only for cases where check_for_analytical_vectorized() and
   * check_uniform_terms_params() are 1.
   *
@@ -795,6 +794,42 @@ vector primarycensored_analytical_lcdf_vectorized(data int start,
                                                   data int dist_id,
                                                   array[] real params,
                                                   data real pwindow) {
+  if (dist_id == 1 || dist_id == 2 || dist_id == 3) {
+    return primarycensored_uniform_lcdf_vectorized(
+      start, n, dist_id, params, pwindow
+    );
+  }
+  return primarycensored_uniform_terms_lcdf_vectorized(
+    start, n, dist_id, params, pwindow
+  );
+}
+
+/**
+  * Compute the uniform primary censored log CDF at integer delays from terms
+  * @ingroup primary_event_analytical_distributions
+  *
+  * The log CDF at d combines the terms at d and at q (see
+  * primarycensored_uniform_lcdf_from_terms()). Both are integer delays, so
+  * the terms are computed once per delay and used for both, halving the CDF
+  * evaluations. The values are the same as from
+  * primarycensored_analytical_lcdf() at each delay without truncation.
+  * Only for cases where check_for_analytical_vectorized() and
+  * check_uniform_terms_params() are 1.
+  *
+  * @param start First delay to compute
+  * @param n Last delay to compute, and the length of the result
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window, a positive integer
+  *
+  * @return Vector whose element d is the log CDF at d, for d in start:n.
+  * Elements before start are not computed.
+  */
+vector primarycensored_uniform_terms_lcdf_vectorized(data int start,
+                                                     data int n,
+                                                     data int dist_id,
+                                                     array[] real params,
+                                                     data real pwindow) {
   int pw = to_int(pwindow);
   vector[n] log_cdfs;
   int first = dist_has_positive_support(dist_id) ? max(start - pw, 0)
