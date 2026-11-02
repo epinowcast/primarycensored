@@ -162,15 +162,16 @@ samples
 ### Using the faster C++ versions
 
 Some Stan functions also have a C++ version with a hand-written gradient.
-At present this is `primarycensored_uniform_lcdf_vectorized()`, which `primarycensored_sone_pmf_vectorized()` uses for lognormal, gamma and Weibull delays with a uniform primary event.
-Its gradient is about 2 to 4 times faster than the Stan version.
+These are the uniform primary log CDFs for lognormal, gamma and Weibull delays: `primarycensored_uniform_lcdf()` and `primarycensored_uniform_lcdf_vectorized()`.
+`primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()` use them for those delays with a uniform primary event.
+Their gradients are several times faster than the Stan versions.
 
 To use the C++ versions, load the functions with `cpp = TRUE`.
 This declares those functions without a body.
 
 ```{r}
 cat(pcd_load_stan_functions(
-  "primarycensored_uniform_lcdf_vectorized",
+  "primarycensored_uniform_lcdf",
   cpp = TRUE
 ))
 ```
@@ -192,11 +193,11 @@ pcd_load_stan_functions(
 model <- cmdstan_model(pmf_stan_file, user_header = pcd_stan_header())
 ```
 
-`pcd_cmdstan_model(cpp = TRUE)` does this for the model that ships with the package.
+`pcd_cmdstan_model()` does this by default for the model that ships with the package.
 
 If you vendor the Stan functions into your own package, use `pcd_copy_stan_header()` to copy the header alongside them, and include `primarycensored.hpp` before the model code.
 With `cpp = FALSE`, the default, the Stan code compiles on its own and gives the same results.
-If the header is included anyway, the C++ version is used for parameters even where the Stan body is present.
+If you compile the Stan bodies and include the header as well, the C++ versions are still used wherever the parameters are model parameters rather than data.
 
 ## Using Stan functions directly in R
 
