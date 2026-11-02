@@ -1210,8 +1210,8 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   * compute the terms once per delay and share them. This needs the
   * analytical solutions built from primarycensored_uniform_terms(), see
   * check_for_uniform_terms(), or the exponentially tilted solutions, see
-  * check_for_exptilt(). The
-  * non-parametric delays in check_for_analytical() have no such terms.
+  * check_for_exptilt(). The non-parametric delays in check_for_analytical()
+  * have no such terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
