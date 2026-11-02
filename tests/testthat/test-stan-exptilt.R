@@ -254,8 +254,8 @@ test_that("the checks follow the delay, the primary and the tilt", {
     expect_identical(check_for_exptilt(dist_id, 2L), 0L)
   }
   expect_identical(check_for_analytical_vectorized(3L, 2L, 1), 0L)
-  expect_identical(check_for_analytical(4L, 1L), 0L)
-  expect_identical(check_for_analytical(18L, 1L), 0L)
+  expect_identical(check_for_analytical(4L, 2L), 0L)
+  expect_identical(check_for_analytical(18L, 2L), 0L)
   expect_identical(check_for_analytical(2L, 1L), 1L)
   expect_identical(check_for_uniform_terms(2L, 2L), 0L)
   checks <- list(
