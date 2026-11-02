@@ -19,6 +19,7 @@ SamuelBrand
 Stan’
 TimTaylor
 WardBrian
+actuar
 adamkucharski
 allcontributors
 antiderivative
@@ -35,6 +36,7 @@ cens
 censdata
 cmdstan
 cmdstanr
+digamma
 disccensunifprim
 discretise
 discretised
@@ -59,6 +61,7 @@ fcp
 fitdist
 fitdistdoublecens
 fitdistrplus
+flexsurv
 frac
 gammapartexp
 gengammapartexp
@@ -99,6 +102,7 @@ pdiscretehazard
 pdiscretestep
 pdist
 pearsonca
+pllogis
 plnorm
 pmf
 ppcens
