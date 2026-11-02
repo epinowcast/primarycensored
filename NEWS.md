@@ -43,7 +43,6 @@
   See #379.
 - `pcd_cmdstan_model()` fits are faster when rows share `pwindow` and truncation points, with or without `use_reduce_sum`.
   `pcd_as_stan_data()` groups these rows, and the model computes the CDF once per unique delay interval end point in each group.
-  The new `grouped` argument of `pcd_as_stan_data()` turns this off.
   The new Stan function `primarycensored_grouped_lpmf()` gives the summed log PMF of such a group.
   See #378 and #421.
 

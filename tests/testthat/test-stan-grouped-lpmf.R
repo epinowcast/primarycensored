@@ -3,8 +3,8 @@ skip_if_not_installed("cmdstanr")
 skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
 
 # primarycensored_grouped_lpmf() computes the log CDF once per unique point
-# of a group. These tests check it, and the grouped likelihood of
-# pcens_model.stan, against per-row primarycensored_lpmf() calls.
+# of a group. These tests check it, and the likelihood of pcens_model.stan
+# that uses it, against per-row primarycensored_lpmf() calls.
 
 # Delays with repeats, secondary windows of 1, 2 and 3, and counts
 group_rows <- data.frame(
@@ -113,12 +113,14 @@ file.copy(
   model_path,
   overwrite = TRUE
 )
-grouped_model <- suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(
-  model_path,
-  include_paths = pcd_stan_path(), compile_model_methods = TRUE
-)))
+pcens_test_model <- suppressMessages(suppressWarnings(
+  cmdstanr::cmdstan_model(
+    model_path,
+    include_paths = pcd_stan_path(), compile_model_methods = TRUE
+  )
+))
 
-expect_grouped_model_matches <- function(delays, case) {
+expect_matches_per_row <- function(delays, case) {
   info <- paste(
     "dist", case$dist_id, "primary", case$primary_id,
     "reduce_sum", case$use_reduce_sum
@@ -149,24 +151,39 @@ expect_grouped_model_matches <- function(delays, case) {
     np_pmf = as.array(if (is.null(case$np_pmf)) 1 else case$np_pmf),
     np_alpha = numeric(0), np_sigma = numeric(0), np_eps = numeric(0)
   )
+  # The likelihood is the log density less its value with all counts 0
   # nolint start: object_usage_linter.
-  grouped <- stan_log_prob_and_grad(grouped_model, stan_data, init)
-  stan_data$use_grouped <- 0L
-  per_row <- stan_log_prob_and_grad(grouped_model, stan_data, init)
-  # nolint end
-  testthat::expect_true(is.finite(grouped$log_prob), info = info)
-  testthat::expect_equal(
-    grouped$log_prob, per_row$log_prob,
-    tolerance = 1e-10, info = info
+  log_prob <- stan_log_prob(pcens_test_model, stan_data, init)
+  stan_data$interval_n[] <- 0L
+  prior <- stan_log_prob(pcens_test_model, stan_data, init)
+  lpmf_params <- if (is.null(case$np_pmf)) {
+    case$params
+  } else {
+    c(case$dist_options$boundaries, case$np_pmf)
+  }
+  per_row <- mapply(
+    function(d, d_upper, pwindow, L, D) {
+      primarycensored_lpmf(
+        d, case$dist_id, lpmf_params, pwindow, d_upper, L, D,
+        case$primary_id, case$primary_params
+      )
+    },
+    stan_data$d, stan_data$d_upper, stan_data$pwindow, stan_data$L,
+    stan_data$D
   )
+  # nolint end
+  testthat::expect_true(is.finite(log_prob), info = info)
   testthat::expect_equal(
-    grouped$grad, per_row$grad,
-    tolerance = 1e-8, info = info
+    log_prob - prior, sum(stan_data$n * per_row),
+    tolerance = 1e-10, info = info
   )
 }
 
-test_that("pcens_model grouped likelihood matches the per-row likelihood", {
+test_that("pcens_model likelihood matches summed primarycensored_lpmf", {
   delays <- simulate_delays(200)
+  # Analytical cases only: the numerical integration gives slightly
+  # different values with autodiff parameters than in R, and is checked
+  # against primarycensored_lpmf() above
   cases <- list(
     list(
       dist_id = 1L, primary_id = 1L, params = c(1.3, 0.6),
@@ -177,22 +194,22 @@ test_that("pcens_model grouped likelihood matches the per-row likelihood", {
       primary_params = numeric(0), use_reduce_sum = TRUE
     ),
     list(
-      dist_id = 3L, primary_id = 2L, params = c(1.5, 5),
-      primary_params = 0.2, use_reduce_sum = FALSE
+      dist_id = 3L, primary_id = 1L, params = c(1.5, 5),
+      primary_params = numeric(0), use_reduce_sum = FALSE
     )
   )
   for (case in cases) {
-    expect_grouped_model_matches(delays, case)
+    expect_matches_per_row(delays, case)
   }
 })
 
-test_that("pcens_model grouped likelihood matches for a non-parametric
-  delay", {
+test_that("pcens_model likelihood matches summed primarycensored_lpmf for a
+  non-parametric delay", {
   delays <- data.frame(
     delay = c(2, 3, 2, 3), delay_upper = c(3, 4, 3, 5), n = c(5, 3, 2, 1),
     pwindow = 1, relative_obs_time = c(5, 5, 6, 6)
   )
-  expect_grouped_model_matches(delays, list(
+  expect_matches_per_row(delays, list(
     dist_id = 26L, primary_id = 1L, params = numeric(0),
     primary_params = numeric(0), use_reduce_sum = FALSE,
     dist_options = list(K = 6, boundaries = 0:6),

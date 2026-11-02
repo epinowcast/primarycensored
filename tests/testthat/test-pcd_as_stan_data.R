@@ -99,14 +99,12 @@ test_that("pcd_as_stan_data handles optional parameters correctly", {
       priors = list(location = c(1, 1), scale = c(1, 1)),
       primary_priors = list(location = numeric(0), scale = numeric(0)),
       compute_log_lik = TRUE,
-      use_reduce_sum = TRUE,
-      grouped = FALSE
+      use_reduce_sum = TRUE
     )
   )
 
   expect_identical(result$compute_log_lik, 1L)
   expect_identical(result$use_reduce_sum, 1L)
-  expect_identical(result$use_grouped, 0L)
 })
 
 test_that("pcd_as_stan_data handles custom column names correctly", {

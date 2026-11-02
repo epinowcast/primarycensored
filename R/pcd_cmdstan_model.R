@@ -131,13 +131,6 @@ pcd_cmdstan_model <- function(
 #'   are applied (`Dirichlet(1, ..., 1)` for `dist_id = 26`;
 #'   `N(0, 5)` on `alpha` and `N(0, 1)` on `log_sigma` for 27 and 28).
 #'
-#' @param grouped Logical; use the grouped likelihood? (default: TRUE)
-#'   Rows that share `pwindow` and the truncation points form a group, and
-#'   the model computes the CDF once per unique delay interval end point in
-#'   each group rather than twice per row. This gives the same likelihood
-#'   as `FALSE`, which evaluates each row on its own, and is faster when
-#'   rows share these settings.
-#'
 #' @return A list containing the data formatted for use with
 #'   [pcd_cmdstan_model()]
 #'
@@ -178,8 +171,7 @@ pcd_as_stan_data <- function(
     compute_log_lik = FALSE,
     use_reduce_sum = FALSE,
     truncation_check_multiplier = 2,
-    dist_options = NULL,
-    grouped = TRUE) {
+    dist_options = NULL) {
   np <- .build_np_stan_fields(dist_id, dist_options, priors)
   if (np$nonparametric == 1L) {
     param_bounds <- list(lower = numeric(0), upper = numeric(0))
@@ -263,8 +255,7 @@ pcd_as_stan_data <- function(
     np_alpha_mean = np$np_alpha_mean,
     np_alpha_sd = np$np_alpha_sd,
     np_log_sigma_mean = np$np_log_sigma_mean,
-    np_log_sigma_sd = np$np_log_sigma_sd,
-    use_grouped = as.integer(grouped)
+    np_log_sigma_sd = np$np_log_sigma_sd
   )
   stan_data <- c(stan_data, .pcd_stan_groups(
     stan_data$d, stan_data$d_upper, stan_data$n, stan_data$pwindow,

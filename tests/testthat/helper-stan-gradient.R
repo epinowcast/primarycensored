@@ -27,14 +27,13 @@ stan_gradient_at <- function(model, data, init) {
   )
 }
 
-# Returns the log density and its gradient on the unconstrained scale at
-# `init`. `model` must be compiled with `compile_model_methods = TRUE`.
-stan_log_prob_and_grad <- function(model, data, init) {
+# Returns the log density at `init`. `model` must be compiled with
+# `compile_model_methods = TRUE`.
+stan_log_prob <- function(model, data, init) {
   fit <- suppressMessages(suppressWarnings(model$sample(
     data = data, init = list(init), chains = 1, iter_sampling = 1,
     fixed_param = TRUE, refresh = 0, show_messages = FALSE
   )))
   fit$init_model_methods(verbose = FALSE)
-  upars <- fit$unconstrain_variables(init)
-  list(log_prob = fit$log_prob(upars), grad = fit$grad_log_prob(upars))
+  fit$log_prob(fit$unconstrain_variables(init))
 }
