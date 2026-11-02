@@ -41,9 +41,11 @@
 - `update()` for `pcens` objects has a new `check` argument.
   `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
-- `pcd_cmdstan_model()` fits are faster for delays with a secondary window of 1, with or without `use_reduce_sum`, and give unchanged results.
-  The Stan `primarycensored_lpmf()` is also faster for a uniform primary when `d_upper - d` equals `pwindow`.
-  See #378.
+- `pcd_cmdstan_model()` fits are faster when rows share `pwindow` and truncation points, with or without `use_reduce_sum`.
+  `pcd_as_stan_data()` groups these rows, and the model computes the CDF once per unique delay interval end point in each group.
+  The new `grouped` argument of `pcd_as_stan_data()` turns this off.
+  The new Stan function `primarycensored_grouped_lpmf()` gives the summed log PMF of such a group.
+  See #378 and #421.
 
 # primarycensored 1.6.0
 

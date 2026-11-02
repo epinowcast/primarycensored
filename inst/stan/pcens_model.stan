@@ -5,39 +5,46 @@ functions {
   #include primarycensored_analytical_cdf.stan
   #include expgrowth.stan
 
-  // Log likelihood of the work items in `items`. Items 1 to n_vec_groups
-  // are groups of rows that share one primarycensored_sone_lpmf_vectorized()
-  // call; later items are single rows, scalar_rows[item - n_vec_groups].
-  real partial_sum(array[] int items, int start, int end,
+  real partial_sum(array[] int dummy, int start, int end,
                    array[] int d, array[] int d_upper, array[] int n,
                    array[] int pwindow, data array[] real L,
                    data array[] real D,
                    int dist_id, array[] real params,
-                   int primary_id, array[] real primary_params,
-                   array[] int vec_max_d, array[] int vec_start,
-                   array[] int vec_rows, array[] int scalar_rows) {
-    int n_vec_groups = size(vec_max_d);
+                   int primary_id, array[] real primary_params) {
     real partial_target = 0;
-    for (item in items) {
-      if (item <= n_vec_groups) {
-        int first = vec_rows[vec_start[item]];
-        vector[vec_max_d[item] + 1] group_lpmf =
-          primarycensored_sone_lpmf_vectorized(
-            vec_max_d[item], L[first], D[first], dist_id, params,
-            pwindow[first], primary_id, primary_params
-          );
-        for (j in vec_start[item]:(vec_start[item + 1] - 1)) {
-          int i = vec_rows[j];
-          partial_target += n[i] * group_lpmf[d[i] + 1];
-        }
-      } else {
-        int i = scalar_rows[item - n_vec_groups];
-        partial_target += n[i] * primarycensored_lpmf(
-          d[i] | dist_id, params,
-          pwindow[i], d_upper[i], L[i], D[i],
-          primary_id, primary_params
-        );
-      }
+    for (i in start:end) {
+      partial_target += n[i] * primarycensored_lpmf(
+        d[i] | dist_id, params,
+        pwindow[i], d_upper[i], L[i], D[i],
+        primary_id, primary_params
+      );
+    }
+    return partial_target;
+  }
+
+  real partial_sum_grouped(array[] int groups, int start, int end,
+                           data array[] int group_pwindow,
+                           data array[] real group_L,
+                           data array[] real group_D,
+                           data array[] int point_start,
+                           data array[] real points,
+                           data array[] int interval_start,
+                           data array[] int interval_n,
+                           data array[] int interval_lower,
+                           data array[] int interval_upper,
+                           int dist_id, array[] real params,
+                           int primary_id, array[] real primary_params) {
+    real partial_target = 0;
+    for (g in start:end) {
+      int p1 = point_start[g];
+      int p2 = point_start[g + 1] - 1;
+      int i1 = interval_start[g];
+      int i2 = interval_start[g + 1] - 1;
+      partial_target += primarycensored_grouped_lpmf(
+        interval_n[i1:i2] | points[p1:p2], interval_lower[i1:i2],
+        interval_upper[i1:i2], dist_id, params, group_pwindow[g], group_L[g],
+        group_D[g], primary_id, primary_params
+      );
     }
     return partial_target;
   }
@@ -92,9 +99,32 @@ data {
   real<lower=0> np_alpha_sd; // hazard intercept prior sd
   real np_log_sigma_mean; // log_sigma prior mean
   real<lower=0> np_log_sigma_sd; // log_sigma prior sd
+  // Grouped likelihood, built by pcd_as_stan_data(). Rows that share
+  // pwindow, L and D form a group, and rows of a group with the same d and
+  // d_upper form an interval. Group g has the sorted unique interval end
+  // points points[point_start[g]:(point_start[g + 1] - 1)] and the
+  // intervals interval_start[g]:(interval_start[g + 1] - 1). Each interval
+  // has interval_n observations and its ends at positions interval_lower
+  // and interval_upper of its group's points.
+  int<lower=0, upper=1> use_grouped; // whether to use the grouped likelihood
+  int<lower=0> n_groups;
+  array[n_groups] int<lower=0> group_pwindow;
+  array[n_groups] real group_L;
+  array[n_groups] real group_D;
+  int<lower=0> n_points;
+  array[n_groups + 1] int<lower=1> point_start;
+  array[n_points] real points;
+  int<lower=0> n_intervals;
+  array[n_groups + 1] int<lower=1> interval_start;
+  array[n_intervals] int<lower=0> interval_n;
+  array[n_intervals] int<lower=1> interval_lower;
+  array[n_intervals] int<lower=1> interval_upper;
 }
 
 transformed data {
+  array[N] int indexes = linspaced_int_array(N, 1, N);
+  array[n_groups] int group_indexes = linspaced_int_array(n_groups, 1,
+                                                          n_groups);
   // Sizes for the non-parametric parameter branches. Exactly one is K_np;
   // both are 0 when nonparametric = 0. Stan forbids `simplex[0]`, so we
   // pad to size 1 when the simplex branch is inactive and ignore it.
@@ -120,47 +150,6 @@ transformed data {
              " is above the upper truncation D[", i, "] = ", D[i]);
     }
   }
-
-  // Rows that can share one vectorised PMF call per group, see
-  // primarycensored_sone_groups(). vec_rows lists the rows of group v at
-  // vec_start[v]:(vec_start[v + 1] - 1); all other rows are scalar_rows.
-  array[N] int row_group = primarycensored_sone_groups(d, d_upper, pwindow,
-                                                       L, D);
-  int n_vec_groups = max(append_array({0}, row_group));
-  int n_scalar = 0;
-  array[n_vec_groups] int vec_max_d = rep_array(0, n_vec_groups);
-  array[n_vec_groups + 1] int vec_start = rep_array(0, n_vec_groups + 1);
-  for (i in 1:N) {
-    if (row_group[i] == 0) {
-      n_scalar += 1;
-    } else {
-      vec_max_d[row_group[i]] = max(vec_max_d[row_group[i]], d[i]);
-      vec_start[row_group[i] + 1] += 1;
-    }
-  }
-  vec_start = cumulative_sum(vec_start);
-  for (v in 1:(n_vec_groups + 1)) {
-    vec_start[v] += 1;
-  }
-  array[N - n_scalar] int vec_rows;
-  array[n_scalar] int scalar_rows;
-  {
-    array[n_vec_groups] int filled = rep_array(0, n_vec_groups);
-    int s = 0;
-    for (i in 1:N) {
-      int g = row_group[i];
-      if (g == 0) {
-        s += 1;
-        scalar_rows[s] = i;
-      } else {
-        vec_rows[vec_start[g] + filled[g]] = i;
-        filled[g] += 1;
-      }
-    }
-  }
-  array[n_vec_groups + n_scalar] int items = linspaced_int_array(
-    n_vec_groups + n_scalar, 1, n_vec_groups + n_scalar
-  );
 }
 
 parameters {
@@ -237,16 +226,31 @@ model {
   }
 
   // Likelihood
-  if (use_reduce_sum) {
-    target += reduce_sum(partial_sum, items, 1, d,
+  if (use_grouped && use_reduce_sum) {
+    target += reduce_sum(partial_sum_grouped, group_indexes, 1,
+                         group_pwindow, group_L, group_D, point_start,
+                         points, interval_start, interval_n, interval_lower,
+                         interval_upper, dist_id, lpmf_params, primary_id,
+                         to_array_1d(primary_params));
+  } else if (use_grouped) {
+    target += partial_sum_grouped(group_indexes, 1, n_groups,
+                                  group_pwindow, group_L, group_D,
+                                  point_start, points, interval_start,
+                                  interval_n, interval_lower, interval_upper,
+                                  dist_id, lpmf_params, primary_id,
+                                  to_array_1d(primary_params));
+  } else if (use_reduce_sum) {
+    target += reduce_sum(partial_sum, indexes, 1, d,
                          d_upper, n, pwindow, L, D, dist_id, lpmf_params,
-                         primary_id, to_array_1d(primary_params),
-                         vec_max_d, vec_start, vec_rows, scalar_rows);
+                         primary_id, to_array_1d(primary_params));
   } else {
-    target += partial_sum(items, 1, size(items), d,
-                          d_upper, n, pwindow, L, D, dist_id, lpmf_params,
-                          primary_id, to_array_1d(primary_params),
-                          vec_max_d, vec_start, vec_rows, scalar_rows);
+    for (i in 1:N) {
+      target += n[i] * primarycensored_lpmf(
+        d[i] | dist_id, lpmf_params,
+        pwindow[i], d_upper[i], L[i], D[i],
+        primary_id, to_array_1d(primary_params)
+      );
+    }
   }
 }
 

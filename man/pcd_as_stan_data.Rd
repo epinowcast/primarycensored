@@ -21,7 +21,8 @@ pcd_as_stan_data(
   compute_log_lik = FALSE,
   use_reduce_sum = FALSE,
   truncation_check_multiplier = 2,
-  dist_options = NULL
+  dist_options = NULL,
+  grouped = TRUE
 )
 }
 \arguments{
@@ -101,6 +102,13 @@ concentration vector; \code{priors$location} is unused.
 empty when a non-parametric \code{dist_id} is given, sensible defaults
 are applied (\code{Dirichlet(1, ..., 1)} for \code{dist_id = 26};
 \code{N(0, 5)} on \code{alpha} and \code{N(0, 1)} on \code{log_sigma} for 27 and 28).}
+
+\item{grouped}{Logical; use the grouped likelihood? (default: TRUE)
+Rows that share \code{pwindow} and the truncation points form a group, and
+the model computes the CDF once per unique delay interval end point in
+each group rather than twice per row. This gives the same likelihood
+as \code{FALSE}, which evaluates each row on its own, and is faster when
+rows share these settings.}
 }
 \value{
 A list containing the data formatted for use with
