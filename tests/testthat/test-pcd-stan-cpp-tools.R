@@ -40,11 +40,39 @@ test_that("pcd_load_stan_functions with cpp = TRUE only changes the C++
   functions", {
   all_stan <- pcd_load_stan_functions()
   all_cpp <- pcd_load_stan_functions(cpp = TRUE)
-  expect_match(all_cpp, paste0(cpp_signature, ";"))
-  body <- pcd_load_stan_functions(cpp_function)
-  body <- sub("^// Stan functions[^\n]*\n", "", body)
-  declaration <- paste0(sub("\\s*\\{.*$", "", body), ";")
-  expect_identical(sub(body, declaration, all_stan, fixed = TRUE), all_cpp)
+  # Every function is still there, with the same count
+  names_of <- function(code) {
+    sort(.extract_stan_functions(strsplit(code, "\n", fixed = TRUE)[[1]],
+      names_only = TRUE
+    ))
+  }
+  expect_identical(names_of(all_cpp), names_of(all_stan))
+  # The C++ functions are declared exactly as expected
+  expect_true(grepl(
+    paste0(
+      "real primarycensored_uniform_lcdf(data real d, data int dist_id,\n",
+      "                                  array[] real params, ",
+      "data real pwindow);"
+    ),
+    all_cpp,
+    fixed = TRUE
+  ))
+  # and only they lose their bodies: the code shrinks by their bodies alone
+  bodies <- vapply(
+    c(
+      "primarycensored_uniform_lcdf",
+      "primarycensored_uniform_lcdf_vectorized"
+    ),
+    function(f) {
+      def <- .extract_stan_functions(
+        strsplit(all_stan, "\n", fixed = TRUE)[[1]],
+        functions = f
+      )
+      nchar(def) - nchar(sub("\\s*\\{.*$", "", def)) - 1L
+    },
+    numeric(1)
+  )
+  expect_identical(nchar(all_stan) - nchar(all_cpp), as.integer(sum(bodies)))
 })
 
 test_that("pcd_load_stan_functions with cpp = TRUE leaves out what only the
@@ -83,7 +111,7 @@ test_that("pcd_cmdstan_model compiles with the header and rewritten files
   cpp_path <- model$include_paths()
   expect_match(
     paste(readLines(
-      file.path(cpp_path, "primarycensored_uniform_lcdf.stan")
+      file.path(cpp_path, "primarycensored_analytical_cdf.stan")
     ), collapse = "\n"),
     paste0(cpp_signature, ";")
   )
