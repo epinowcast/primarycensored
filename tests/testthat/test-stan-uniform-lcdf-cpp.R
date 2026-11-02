@@ -97,6 +97,7 @@ test_that("C++ uniform lcdf matches the Stan values", {
 # doubles and their difference has few significant digits, so both
 # gradients are rounding error there. Those delays get zero weight.
 test_that("C++ uniform lcdf gradient matches Stan autodiff", {
+  skip_if_no_log_prob()
   models <- cpp_models()
   set.seed(1)
   for (case in cpp_cases) {
@@ -123,6 +124,7 @@ test_that("C++ uniform lcdf gradient matches Stan autodiff", {
 })
 
 test_that("C++ uniform lcdf gradient matches finite differences", {
+  skip_if_no_log_prob()
   models <- cpp_models()
   set.seed(2)
   for (case in cpp_cases) {
@@ -164,6 +166,7 @@ lognormal_uniform_lcdf_ref <- function(d, mu, sigma, pwindow) {
 
 test_that("C++ lognormal uniform lcdf gradient is accurate in the lower
   tail", {
+  skip_if_no_log_prob()
   models <- cpp_models()
   mu <- 3.5
   sigma <- 0.05
@@ -183,6 +186,7 @@ test_that("C++ lognormal uniform lcdf gradient is accurate in the lower
 })
 
 test_that("C++ uniform lcdf rejects a gamma rate that is not finite", {
+  skip_if_no_log_prob()
   models <- cpp_models()
   data <- list(dist_id = 2L, start = 1, n = 10, pwindow = 1, w = rep(1, 10))
   upars <- list(theta = c(log(2), 800))

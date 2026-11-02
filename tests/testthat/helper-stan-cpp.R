@@ -14,7 +14,12 @@ compile_cpp_and_stan <- function(model_code, name) {
     model_dir <- file.path(tempdir(), paste0(name, if (cpp) "cpp" else "stan"))
     dir.create(model_dir, showWarnings = FALSE)
     path <- file.path(model_dir, paste0(name, ".stan"))
-    writeLines(paste0(functions, "\n", model_code), path)
+    code <- paste0(functions, "\n", model_code)
+    # Rewriting an unchanged file would make cmdstanr recompile the model
+    code_lines <- strsplit(code, "\n", fixed = TRUE)[[1]]
+    if (!file.exists(path) || !identical(readLines(path), code_lines)) {
+      writeLines(code, path)
+    }
     model_args <- list(path, dir = model_dir)
     if (cpp) {
       model_args$user_header <- pcd_stan_header()
@@ -24,6 +29,16 @@ compile_cpp_and_stan <- function(model_code, name) {
     ))
   }
   list(stan = build(FALSE), cpp = build(TRUE))
+}
+
+# Skips unless CmdStan's log_prob method can be run directly. It needs
+# CmdStan 2.31 or later, and on Windows the binary needs the TBB library on
+# the path, which cmdstanr only sets up for its own runs.
+skip_if_no_log_prob <- function() {
+  testthat::skip_on_os("windows")
+  testthat::skip_if(
+    cmdstanr::cmdstan_version(error_on_NA = FALSE) < "2.31"
+  )
 }
 
 # Log density and its gradient at parameters `upars` (a named list), from
