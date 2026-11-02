@@ -12,7 +12,10 @@ pcd_stan_path <- function() {
 #' Get the path to the C++ header for the Stan functions
 #'
 #' Some Stan functions have a C++ version with a hand-written gradient,
-#' which is faster than the Stan version. Load the Stan functions with
+#' which is faster than the Stan version. These are the uniform primary log
+#' CDFs for lognormal, gamma and Weibull delays, used by
+#' `primarycensored_lpmf()`, `primarycensored_lcdf()` and
+#' `primarycensored_sone_lpmf_vectorized()`. Load the Stan functions with
 #' `pcd_load_stan_functions(cpp = TRUE)` to declare these functions without
 #' a body, and compile with this header so that the C++ versions are used.
 #' With cmdstanr, pass it as `user_header`. [pcd_cmdstan_model()] does this
@@ -52,6 +55,9 @@ pcd_stan_header <- function() {
 #' @examples
 #' pcd_copy_stan_header(tempdir())
 pcd_copy_stan_header <- function(path) {
+  if (!is.character(path) || length(path) != 1 || is.na(path)) {
+    stop("`path` must be a single string.", call. = FALSE)
+  }
   include_dir <- dirname(pcd_stan_header())
   files <- list.files(include_dir, recursive = TRUE)
   for (sub_dir in unique(file.path(path, dirname(files)))) {
@@ -72,7 +78,10 @@ pcd_copy_stan_header <- function(path) {
 #' @return Character vector of function names.
 #' @noRd
 .pcd_cpp_functions <- function() {
-  "primarycensored_uniform_lcdf_vectorized"
+  c(
+    "primarycensored_uniform_lcdf",
+    "primarycensored_uniform_lcdf_vectorized"
+  )
 }
 
 #' Replace the bodies of functions that have a C++ version with declarations

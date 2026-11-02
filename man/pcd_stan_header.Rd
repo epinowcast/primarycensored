@@ -11,7 +11,10 @@ A character string with the path to the header.
 }
 \description{
 Some Stan functions have a C++ version with a hand-written gradient,
-which is faster than the Stan version. Load the Stan functions with
+which is faster than the Stan version. These are the uniform primary log
+CDFs for lognormal, gamma and Weibull delays, used by
+\code{primarycensored_lpmf()}, \code{primarycensored_lcdf()} and
+\code{primarycensored_sone_lpmf_vectorized()}. Load the Stan functions with
 \code{pcd_load_stan_functions(cpp = TRUE)} to declare these functions without
 a body, and compile with this header so that the C++ versions are used.
 With cmdstanr, pass it as \code{user_header}. \code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this
