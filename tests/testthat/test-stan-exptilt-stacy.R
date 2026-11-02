@@ -24,7 +24,7 @@ stacy_label <- function(case, ...) {
 
 stacy_lcdf <- function(d, case, pwindow, rho) {
   vapply(
-    d, primarycensored_exptilt_lcdf, numeric(1),
+    d, primarycensored_exptilt_lcdf, numeric(1), # nolint: object_usage_linter.
     case$dist_id, case$params, pwindow, rho
   )
 }
@@ -32,7 +32,7 @@ stacy_lcdf <- function(d, case, pwindow, rho) {
 # The ODE path is used where the log CDF is exactly that of the ODE
 stacy_uses_ode <- function(d, case, pwindow, rho) {
   ode <- vapply(
-    d, primarycensored_numeric_cdf, numeric(1),
+    d, primarycensored_numeric_cdf, numeric(1), # nolint: object_usage_linter.
     case$dist_id, case$params, pwindow, 2L, rho
   )
   stacy_lcdf(d, case, pwindow, rho) == log(ode)
