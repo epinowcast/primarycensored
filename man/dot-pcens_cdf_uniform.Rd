@@ -4,7 +4,15 @@
 \alias{.pcens_cdf_uniform}
 \title{Uniform primary event censored CDF from terms at the window ends}
 \usage{
-.pcens_cdf_uniform(q, pwindow, terms_fn, upper_fn, delay_cdf, params)
+.pcens_cdf_uniform(
+  q,
+  pwindow,
+  terms_fn,
+  upper_fn,
+  delay_cdf,
+  params,
+  lower = 0
+)
 }
 \arguments{
 \item{q}{Vector of quantiles}
@@ -12,10 +20,10 @@
 \item{pwindow}{Primary event window. Use \code{pwindow = 0} for an exactly
 observed primary event, in which case the delay CDF is used directly.}
 
-\item{terms_fn}{Function of delays greater than or equal to zero and
+\item{terms_fn}{Function of delays greater than or equal to \code{lower} and
 \code{params} returning \eqn{G}.}
 
-\item{upper_fn}{Function of delays greater than or equal to zero and
+\item{upper_fn}{Function of delays greater than or equal to \code{lower} and
 \code{params} returning \eqn{H(t) = t S(t) - E \tilde S(t)}, where \eqn{S} and
 \eqn{\tilde S} are the upper tails of \eqn{F} and \eqn{\tilde F}.}
 
@@ -23,6 +31,9 @@ observed primary event, in which case the delay CDF is used directly.}
 
 \item{params}{Named list of delay parameters, including the delay mean
 \eqn{E} as \code{mean}.}
+
+\item{lower}{Lower end of the delay support, \eqn{L}: 0, or \code{-Inf} for
+a delay on the reals.}
 }
 \value{
 Numeric vector of CDF values in [0, 1].
@@ -30,13 +41,14 @@ Numeric vector of CDF values in [0, 1].
 \description{
 For a delay with mean \eqn{E} and a uniform primary event window of width
 \eqn{w}, the CDF at \eqn{d} is \eqn{(G(d) - G(q)) / w} with
-\eqn{q = \max(d - w, 0)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
-\eqn{F} is the delay CDF and \eqn{\tilde F} is the CDF of the partial
-expectation distribution.
+\eqn{q = \max(d - w, L)} and \eqn{G(t) = t F(t) - E \tilde F(t)}.
+\eqn{L} is the lower end of the delay support, \eqn{F} is the delay CDF
+and \eqn{E \tilde F(t)} is the partial expectation
+\eqn{\int_L^t x f(x) dx}.
 }
 \details{
-Delays at or below zero give 0, delays of \code{Inf} give 1 and missing delays
-are an error.
+Delays at or below \eqn{L} give 0, delays of \code{Inf} give 1 and missing
+delays are an error.
 Zero-width windows give the delay CDF.
 \code{q}, \code{pwindow} and the elements of \code{params} are recycled against each
 other.

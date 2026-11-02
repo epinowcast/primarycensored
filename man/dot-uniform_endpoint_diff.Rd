@@ -10,7 +10,7 @@
 \item{fn}{Function of delays and \code{params}, such as \code{terms_fn} or
 \code{upper_fn}.}
 
-\item{d}{Positive finite delays.}
+\item{d}{Finite delays above \code{lower}.}
 
 \item{lo}{Lower window ends, one per delay.}
 
