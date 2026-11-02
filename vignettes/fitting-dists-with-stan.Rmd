@@ -226,7 +226,9 @@ writeLines(
     #include primarycensored_ode.stan
     #include primarycensored_analytical_cdf.stan
     #include primarycensored_exptilt.stan
+    #include primarycensored_tlogis.stan
     #include expgrowth.stan
+    #include tlogis.stan
   }
   data {
     int<lower=0> N;  // number of observations
