@@ -295,10 +295,22 @@ test_that("pprimarycensored with vector settings matches per-row calls", {
     cdf(q[i], pwindow[i], L[i], D[i])
   }, numeric(1))
   expect_equal(cdf(q, pwindow, L, D), reference, tolerance = 1e-10)
-  expect_equal(
-    cdf(2, pwindow = c(1, 2), D = c(10, Inf)),
-    c(cdf(2, 1, D = 10), cdf(2, 2)),
-    tolerance = 1e-10
-  )
   expect_identical(cdf(numeric(0), pwindow = 1), numeric(0))
+})
+
+test_that("pprimarycensored settings have length 1 or length(q)", {
+  cdf <- function(q, ...) {
+    pprimarycensored(q, plnorm, ..., meanlog = 1, sdlog = 0.5)
+  }
+  q <- c(1, 2, 3, 4)
+  expect_identical(
+    cdf(q, pwindow = 2, L = 0, D = 10),
+    cdf(q, pwindow = rep(2, 4), L = rep(0, 4), D = 10)
+  )
+  expect_error(cdf(q, pwindow = c(1, 2)), "pwindow must have length 1 or")
+  expect_error(
+    cdf(q, L = c(0, 0, 0)), "L must have length 1 or length(q) (4)",
+    fixed = TRUE
+  )
+  expect_error(cdf(2, D = c(10, Inf)), "D must have length 1 or length")
 })

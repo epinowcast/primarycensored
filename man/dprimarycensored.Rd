@@ -126,9 +126,9 @@ The function creates a \code{pcens} object with \code{\link[=new_pcens]{new_pcen
 the PMF with \code{\link[=pcens_pmf]{pcens_pmf()}}. This evaluates the CDF once for all unique
 points (including \eqn{d}, \eqn{d + \text{swindow}}, \code{L} and \code{D}) for
 each value of \code{pwindow}, and reuses these values to calculate the PMF for
-each input value. \code{pwindow}, \code{swindow}, \code{L} and \code{D} may be vectors,
-recycled against \code{x} as in base R distribution functions. The delay and
-primary event distribution parameters must be single values.
+each input value. \code{pwindow}, \code{swindow}, \code{L} and \code{D} must each have length
+1 or the length of \code{x}. The delay and primary event distribution
+parameters must be single values.
 
 When the secondary censoring interval extends past the upper truncation
 point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies

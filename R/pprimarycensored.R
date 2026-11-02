@@ -109,8 +109,7 @@
 #'
 #' ## Vector settings
 #'
-#' `pwindow`, `L` and `D` may be vectors, recycled against `q` as in base R
-#' distribution functions.
+#' `pwindow`, `L` and `D` must each have length 1 or the length of `q`.
 #' The CDF depends only on `pwindow`, so it is evaluated once per unique
 #' point for each value of `pwindow`.
 #' The delay and primary event distribution parameters must be single
@@ -178,6 +177,9 @@ pprimarycensored <- function(
 #' @keywords internal
 .normalise_cdf <- function(object, q, pwindow, L, D,
                            use_numeric = FALSE) {
+  .check_setting_lengths(
+    length(q), list(pwindow = pwindow, L = L, D = D), "q"
+  )
   if (length(q) == 0) {
     return(numeric(0))
   }
@@ -196,10 +198,6 @@ pprimarycensored <- function(
       pcens_cdf(object, q, pwindow, use_numeric), cdf_bounds[1], cdf_bounds[2]
     )
   } else {
-    n <- max(lengths(list(q, pwindow, L, D)))
-    if (length(q) < n) {
-      q <- rep_len(q, n)
-    }
     cdf <- .pcens_cdf_pooled(object, list(q, L, D), pwindow, use_numeric)
   }
   result <- cdf[[1]]
