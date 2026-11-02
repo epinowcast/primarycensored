@@ -159,6 +159,45 @@ samples <- model$sample(chains = 1, fixed_param = TRUE)
 samples
 ```
 
+### Using the faster C++ versions
+
+Some Stan functions also have a C++ version with a hand-written gradient.
+At present this is `primarycensored_uniform_lcdf_vectorized()`, which `primarycensored_sone_pmf_vectorized()` uses for lognormal, gamma and Weibull delays with a uniform primary event.
+Its gradient is about 2 to 4 times faster than the Stan version.
+
+To use the C++ versions, load the functions with `cpp = TRUE`.
+This declares those functions without a body.
+
+```{r}
+cat(pcd_load_stan_functions(
+  "primarycensored_uniform_lcdf_vectorized",
+  cpp = TRUE
+))
+```
+
+Then compile the model with the header from `pcd_stan_header()`.
+With `cmdstanr` pass it as `user_header`.
+
+```{r, eval = FALSE}
+pmf_stan_file <- file.path(tempdir(), "pmf.stan")
+pcd_load_stan_functions(
+  "primarycensored_sone_pmf_vectorized",
+  dependencies = TRUE,
+  cpp = TRUE,
+  wrap_in_block = TRUE,
+  write_to_file = TRUE,
+  output_file = pmf_stan_file
+)
+# Add your data, parameters and model blocks to pmf_stan_file, then
+model <- cmdstan_model(pmf_stan_file, user_header = pcd_stan_header())
+```
+
+`pcd_cmdstan_model(cpp = TRUE)` does this for the model that ships with the package.
+
+If you vendor the Stan functions into your own package, use `pcd_copy_stan_header()` to copy the header alongside them, and include `primarycensored.hpp` before the model code.
+With `cpp = FALSE`, the default, the Stan code compiles on its own and gives the same results.
+If the header is included anyway, the C++ version is used for parameters even where the Stan body is present.
+
 ## Using Stan functions directly in R
 
 Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensored` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensored` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model. **This can take some time (~30 seconds) to compile all of the functions.**

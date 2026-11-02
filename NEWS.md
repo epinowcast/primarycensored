@@ -27,6 +27,11 @@
 
 ## Performance
 
+- `primarycensored_sone_pmf_vectorized()` can use a C++ version of the uniform primary log CDF for lognormal, gamma and Weibull delays, with a closed-form gradient.
+  Its gradient is about 2 to 4 times faster than the Stan version and gives the same values.
+  Load the Stan functions with `pcd_load_stan_functions(cpp = TRUE)` and compile with the header from the new `pcd_stan_header()`.
+  `pcd_cmdstan_model()` has a matching `cpp` argument, and the new `pcd_copy_stan_header()` copies the header for packages that vendor the Stan functions.
+  See #362.
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster.
   They cost less per call and, for 64 or more points on a lattice such as the one used by `dprimarycensored()` and `fitdistdoublecens()`, evaluate the delay terms once per distinct point.
   They also return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay.
