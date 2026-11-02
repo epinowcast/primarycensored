@@ -426,3 +426,39 @@ test_that("pcd_as_stan_data rejects rows where L >= D", {
     "L must be less than D"
   )
 })
+
+test_that(".pcd_stan_groups groups rows by pwindow, L and D", {
+  groups <- .pcd_stan_groups(
+    d = c(1, 2, 1, 3, 0, 1),
+    d_upper = c(2, 3, 2, 5, 1, 2),
+    n = c(5, 1, 2, 3, 4, 6),
+    pwindow = c(1, 1, 1, 1, 2, 1),
+    L = c(0, 0, 0, 0, 0, 0),
+    D = c(10, 10, 10, 10, 10, Inf)
+  )
+  expect_identical(groups$n_groups, 3L)
+  expect_identical(groups$group_pwindow, c(1, 2, 1))
+  expect_identical(groups$group_L, c(0, 0, 0))
+  expect_identical(groups$group_D, c(10, 10, Inf))
+  # Group 1 has points 1, 2, 3, 5 and intervals [1, 2] (rows 1 and 3),
+  # [2, 3] and [3, 5]
+  expect_identical(groups$n_points, 8L)
+  expect_identical(groups$point_start, c(1L, 5L, 7L, 9L))
+  expect_identical(groups$points, c(1, 2, 3, 5, 0, 1, 1, 2))
+  expect_identical(groups$n_intervals, 5L)
+  expect_identical(groups$interval_start, c(1L, 4L, 5L, 6L))
+  expect_identical(groups$interval_n, c(7L, 1L, 3L, 4L, 6L))
+  expect_identical(groups$interval_lower, c(1L, 2L, 3L, 1L, 1L))
+  expect_identical(groups$interval_upper, c(2L, 3L, 4L, 2L, 2L))
+})
+
+test_that(".pcd_stan_groups gives empty groups for no rows", {
+  groups <- .pcd_stan_groups(
+    numeric(0), numeric(0), numeric(0), numeric(0), numeric(0), numeric(0)
+  )
+  expect_identical(groups$n_groups, 0L)
+  expect_identical(groups$point_start, 1L)
+  expect_identical(groups$interval_start, 1L)
+  expect_length(groups$points, 0)
+  expect_length(groups$interval_n, 0)
+})

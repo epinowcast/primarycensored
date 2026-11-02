@@ -656,3 +656,87 @@ vector primarycensored_sone_pmf_vectorized(
     )
   );
 }
+
+/**
+  * Compute the summed primary event censored log PMF for a group of delays
+  * @ingroup primary_censored_vectorized
+  *
+  * The delays share pwindow, L and D, and each delay interval runs from
+  * points[lower_index[j]] to points[upper_index[j]], so intervals can have any
+  * secondary window. The log CDF is computed once per point, and F(L) and
+  * F(D) once per group, rather than for every interval as in repeated
+  * primarycensored_lpmf() calls. The result is the same as the sum of
+  * n[j] * primarycensored_lpmf() over the intervals.
+  *
+  * @param n Number of observations of each interval
+  * @param points Interval end points, sorted and unique, within [L, D]
+  * @param lower_index Position in points of the lower end of each interval
+  * @param upper_index Position in points of the upper end of each interval
+  * @param dist_id Distribution identifier
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window
+  * @param L Minimum delay (lower truncation point)
+  * @param D Maximum delay (upper truncation point)
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
+  *
+  * @return Sum over intervals of n times the log PMF, normalized over
+  * [L, D] if truncation is applied
+  *
+  * @code
+  * // Example: delays 0 (twice) and 1 with a secondary window of 2
+  * array[2] int n = {2, 1};
+  * array[4] real points = {0.0, 1.0, 2.0, 3.0};
+  * array[2] int lower_index = {1, 2};
+  * array[2] int upper_index = {3, 4};
+  * int dist_id = 3; // Weibull
+  * array[2] real params = {2.0, 1.5}; // shape and scale
+  * array[0] real primary_params = {};
+  * real lp = primarycensored_grouped_lpmf(
+  *   n | points, lower_index, upper_index, dist_id, params, 1.0, 0.0,
+  *   positive_infinity(), 1, primary_params
+  * );
+  * @endcode
+  */
+real primarycensored_grouped_lpmf(data array[] int n,
+                                  data array[] real points,
+                                  data array[] int lower_index,
+                                  data array[] int upper_index,
+                                  data int dist_id,
+                                  array[] real params, data real pwindow,
+                                  data real L, data real D,
+                                  data int primary_id,
+                                  array[] real primary_params) {
+  int n_points = size(points);
+  if (n_points == 0) {
+    return 0;
+  }
+  if (points[1] < L || points[n_points] > D) {
+    reject("Points must be within [L, D]. They span ", points[1], " to ",
+           points[n_points], " and [L, D] is [", L, ", ", D, "].");
+  }
+  vector[n_points] log_cdfs;
+  for (k in 1:n_points) {
+    log_cdfs[k] = primarycensored_lcdf(
+      points[k] | dist_id, params, pwindow,
+      dist_has_positive_support(dist_id) ? 0.0 : negative_infinity(),
+      positive_infinity(), primary_id, primary_params
+    );
+  }
+  real lp = 0;
+  for (j in 1:size(n)) {
+    lp += n[j] * primarycensored_log_cdf_diff(
+      log_cdfs[upper_index[j]], log_cdfs[lower_index[j]]
+    );
+  }
+  // Skip the normalization when F(L) = 0 makes it a no-op, as in
+  // primarycensored_lpmf()
+  if (!is_inf(D) || L > 0 ||
+      (!is_inf(L) && !dist_has_positive_support(dist_id))) {
+    vector[2] bounds = primarycensored_truncation_bounds(
+      L, D, dist_id, params, pwindow, primary_id, primary_params
+    );
+    lp -= sum(n) * primarycensored_log_normalizer(bounds[2], bounds[1], L);
+  }
+  return lp;
+}

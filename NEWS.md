@@ -2,6 +2,11 @@
 
 ## New features
 
+- `dprimarycensored()` and `pprimarycensored()` accept vectors for `pwindow`, `L` and `D`, as `dprimarycensored()` already did for `swindow`.
+  Each must have length 1 or the length of `x` or `q`.
+  The CDF is evaluated once per unique point for each `pwindow`, so data with mixed settings need only one call.
+  `fitdistdoublecens()` uses the same code.
+  See #376 and #390.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
@@ -36,6 +41,10 @@
 - `update()` for `pcens` objects has a new `check` argument.
   `check = FALSE` skips validating the parameter names, and `fitdistdoublecens()` uses it for its likelihood evaluations.
   See #379.
+- `pcd_cmdstan_model()` fits are faster when rows share `pwindow` and truncation points, with or without `use_reduce_sum`.
+  `pcd_as_stan_data()` groups these rows, and the model computes the CDF once per unique delay interval end point in each group.
+  The new Stan function `primarycensored_grouped_lpmf()` gives the summed log PMF of such a group.
+  See #378 and #421.
 
 # primarycensored 1.6.0
 

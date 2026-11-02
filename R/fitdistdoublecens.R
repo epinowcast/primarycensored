@@ -412,9 +412,9 @@ fitdistdoublecens <- function(
 #'
 #' @param pcens_cache Optional environment shared across calls with the same
 #'   `params`, `pdist` and `dprimary`, as made by [.build_pcens_closures()].
-#'   The `pcens` object and the grouping of `params` are built on the first
-#'   call and kept in it, and later calls only [update()][update.pcens()] the
-#'   parameters. `NULL` (the default) builds them on every call.
+#'   The `pcens` object is built on the first call and kept in it, and later
+#'   calls only [update()][update.pcens()] the parameters. `NULL` (the
+#'   default) builds it on every call.
 #' @keywords internal
 .dpcens <- function(
     x,
@@ -442,32 +442,16 @@ fitdistdoublecens <- function(
       state <- .fit_pcens_state(
         pcens_cache, pdist, dprimary, primary_args, pprimary, list(...)
       )
-      dcols <- c("swindow", "pwindow", "L", "D")
       if (length(x) != nrow(params)) {
         # fitdistrplus checks the density on short test vectors
-        groups <- .param_groups(.recycle_params(params, length(x)), dcols)
-      } else {
-        if (is.null(state$dgroups)) {
-          state$dgroups <- .param_groups(params, dcols)
-        }
-        groups <- state$dgroups
+        params <- .recycle_params(params, length(x))
       }
-      if (length(groups) == 1L) {
-        g <- groups[[1L]]
-        pcens_pmf(
-          state$obj, x, g$pwindow,
-          swindow = g$swindow, L = g$L, D = g$D
-        )
-      } else {
-        result <- numeric(length(x))
-        for (g in groups) {
-          result[g$mask] <- pcens_pmf(
-            state$obj, x[g$mask], g$pwindow,
-            swindow = g$swindow, L = g$L, D = g$D
-          )
-        }
-        result
-      }
+      # Constant columns take the faster path for a single value
+      params <- lapply(params, .shared_value)
+      pcens_pmf(
+        state$obj, x, params$pwindow,
+        swindow = params$swindow, L = params$L, D = params$D
+      )
     },
     error = function(e) {
       rep(NaN, length(x))
@@ -495,32 +479,12 @@ fitdistdoublecens <- function(
       state <- .fit_pcens_state(
         pcens_cache, pdist, dprimary, primary_args, pprimary, list(...)
       )
-      obj <- state$obj
-      cdf <- function(q_i, pw, L_i, D_i) {
-        .check_truncation_bounds(L_i, D_i)
-        # Evaluate the CDF first, as .normalise_cdf() may not use it
-        result <- pcens_cdf(obj, q_i, pw)
-        .normalise_cdf(result, q_i, L_i, D_i, obj, pw)
-      }
-
       if (length(q) != nrow(params)) {
-        # fitdistrplus checks the CDF on short test vectors, so return one
-        # value per element of `q`
-        rows <- .recycle_params(params, length(q))
-        return(mapply(
-          cdf, q, rows$pwindow, rows$L, rows$D,
-          SIMPLIFY = TRUE
-        ))
+        # fitdistrplus checks the CDF on short test vectors
+        params <- .recycle_params(params, length(q))
       }
-      if (is.null(state$pgroups)) {
-        state$pgroups <- .param_groups(params, c("pwindow", "L", "D"))
-      }
-      result <- numeric(length(q))
-      for (g in state$pgroups) {
-        result[g$mask] <- cdf(q[g$mask], g$pwindow, g$L, g$D)
-      }
-      names(result) <- names(q)
-      result
+      params <- lapply(params, .shared_value)
+      .normalise_cdf(state$obj, q, params$pwindow, params$L, params$D)
     },
     error = function(e) {
       rep(NaN, length(q))
@@ -567,30 +531,6 @@ fitdistdoublecens <- function(
   state
 }
 
-#' Group observations that share censoring and truncation settings
-#'
-#' @param params A data frame of per-observation settings.
-#'
-#' @param cols Names of the columns to group by.
-#'
-#' @return A list with one element per unique combination of `cols`. Each
-#'   element is a list of the values of `cols` and a logical `mask` selecting
-#'   the rows of `params` with those values.
-#'
-#' @keywords internal
-.param_groups <- function(params, cols) {
-  keys <- unique(params[cols])
-  lapply(seq_len(nrow(keys)), function(i) {
-    group <- lapply(keys[cols], `[[`, i)
-    mask <- rep(TRUE, nrow(params))
-    for (col in cols) {
-      mask <- mask & params[[col]] == group[[col]]
-    }
-    group$mask <- mask
-    group
-  })
-}
-
 #' Recycle observation settings to a given length
 #'
 #' @param params A data frame of per-observation settings.
@@ -602,4 +542,21 @@ fitdistdoublecens <- function(
 #' @keywords internal
 .recycle_params <- function(params, n) {
   params[rep_len(seq_len(nrow(params)), n), , drop = FALSE]
+}
+
+#' Reduce a setting shared by all rows to a single value
+#'
+#' Lets constant columns take the faster path for a single value in
+#' [pcens_pmf()] and [pprimarycensored()].
+#'
+#' @param setting A setting, of length 1 or one per row.
+#'
+#' @return `setting`, or its first value when all values are equal.
+#'
+#' @keywords internal
+.shared_value <- function(setting) {
+  if (length(setting) > 1L && all(setting == setting[[1L]])) {
+    return(setting[[1L]])
+  }
+  setting
 }

@@ -119,9 +119,7 @@ pcens_quantile.default <- function(
     }
 
     objective <- function(q) {
-      cdf_val <- pcens_cdf(object, q, pwindow, use_numeric)
-      cdf_val <- .normalise_cdf(cdf_val, q, L, D, object, pwindow)
-      cdf_val - prob
+      .normalise_cdf(object, q, pwindow, L, D, use_numeric) - prob
     }
 
     stats::uniroot(

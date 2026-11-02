@@ -5,18 +5,28 @@ functions {
   #include primarycensored_analytical_cdf.stan
   #include expgrowth.stan
 
-  real partial_sum(array[] int dummy, int start, int end,
-                   array[] int d, array[] int d_upper, array[] int n,
-                   array[] int pwindow, data array[] real L,
-                   data array[] real D,
+  real partial_sum(array[] int groups, int start, int end,
+                   data array[] int group_pwindow,
+                   data array[] real group_L,
+                   data array[] real group_D,
+                   data array[] int point_start,
+                   data array[] real points,
+                   data array[] int interval_start,
+                   data array[] int interval_n,
+                   data array[] int interval_lower,
+                   data array[] int interval_upper,
                    int dist_id, array[] real params,
                    int primary_id, array[] real primary_params) {
     real partial_target = 0;
-    for (i in start:end) {
-      partial_target += n[i] * primarycensored_lpmf(
-        d[i] | dist_id, params,
-        pwindow[i], d_upper[i], L[i], D[i],
-        primary_id, primary_params
+    for (g in start:end) {
+      int p1 = point_start[g];
+      int p2 = point_start[g + 1] - 1;
+      int i1 = interval_start[g];
+      int i2 = interval_start[g + 1] - 1;
+      partial_target += primarycensored_grouped_lpmf(
+        interval_n[i1:i2] | points[p1:p2], interval_lower[i1:i2],
+        interval_upper[i1:i2], dist_id, params, group_pwindow[g], group_L[g],
+        group_D[g], primary_id, primary_params
       );
     }
     return partial_target;
@@ -72,10 +82,30 @@ data {
   real<lower=0> np_alpha_sd; // hazard intercept prior sd
   real np_log_sigma_mean; // log_sigma prior mean
   real<lower=0> np_log_sigma_sd; // log_sigma prior sd
+  // Groups for the likelihood, built by pcd_as_stan_data(). Rows that share
+  // pwindow, L and D form a group, and rows of a group with the same d and
+  // d_upper form an interval. Group g has the sorted unique interval end
+  // points points[point_start[g]:(point_start[g + 1] - 1)] and the
+  // intervals interval_start[g]:(interval_start[g + 1] - 1). Each interval
+  // has interval_n observations and its ends at positions interval_lower
+  // and interval_upper of its group's points.
+  int<lower=0> n_groups;
+  array[n_groups] int<lower=0> group_pwindow;
+  array[n_groups] real group_L;
+  array[n_groups] real group_D;
+  int<lower=0> n_points;
+  array[n_groups + 1] int<lower=1> point_start;
+  array[n_points] real points;
+  int<lower=0> n_intervals;
+  array[n_groups + 1] int<lower=1> interval_start;
+  array[n_intervals] int<lower=0> interval_n;
+  array[n_intervals] int<lower=1> interval_lower;
+  array[n_intervals] int<lower=1> interval_upper;
 }
 
 transformed data {
-  array[N] int indexes = linspaced_int_array(N, 1, N);
+  array[n_groups] int group_indexes = linspaced_int_array(n_groups, 1,
+                                                          n_groups);
   // Sizes for the non-parametric parameter branches. Exactly one is K_np;
   // both are 0 when nonparametric = 0. Stan forbids `simplex[0]`, so we
   // pad to size 1 when the simplex branch is inactive and ignore it.
@@ -178,17 +208,17 @@ model {
 
   // Likelihood
   if (use_reduce_sum) {
-    target += reduce_sum(partial_sum, indexes, 1, d,
-                         d_upper, n, pwindow, L, D, dist_id, lpmf_params,
-                         primary_id, to_array_1d(primary_params));
+    target += reduce_sum(partial_sum, group_indexes, 1, group_pwindow,
+                         group_L, group_D, point_start, points,
+                         interval_start, interval_n, interval_lower,
+                         interval_upper, dist_id, lpmf_params, primary_id,
+                         to_array_1d(primary_params));
   } else {
-    for (i in 1:N) {
-      target += n[i] * primarycensored_lpmf(
-        d[i] | dist_id, lpmf_params,
-        pwindow[i], d_upper[i], L[i], D[i],
-        primary_id, to_array_1d(primary_params)
-      );
-    }
+    target += partial_sum(group_indexes, 1, n_groups, group_pwindow, group_L,
+                          group_D, point_start, points, interval_start,
+                          interval_n, interval_lower, interval_upper,
+                          dist_id, lpmf_params, primary_id,
+                          to_array_1d(primary_params));
   }
 }
 
