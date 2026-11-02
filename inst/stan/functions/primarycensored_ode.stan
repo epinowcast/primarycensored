@@ -1,4 +1,56 @@
 /**
+  * Compute the log CDF of a unit rate Gamma distribution from the log of x
+  * @ingroup delay_log_cdfs
+  *
+  * Returns log P(a, x) for x = exp(log_x).
+  * Below x = (a + 1) / 2 it sums the lower series
+  * P(a, x) = x^a exp(-x) / Gamma(a + 1) * (1 + x / (a + 1) + ...) in log
+  * space, where `gamma_lcdf()` underflows and its shape gradient is wrong.
+  * The series uses elementary operations, so autodiff is exact.
+  * Elsewhere it calls `gamma_lcdf()`.
+  *
+  * @param log_x Log of the argument, log(x)
+  * @param a Shape parameter of the Gamma distribution (a > 0)
+  *
+  * @return log P(a, exp(log_x)). Rejects a shape that is not positive and
+  * finite.
+  */
+real gamma_lcdf_logx(real log_x, real a) {
+  if (!(a > 0) || is_inf(a)) {
+    reject("gamma_lcdf_logx: shape must be positive finite, found ", a);
+  }
+  real x = exp(log_x);
+  if (!(x < 0.5 * (a + 1))) {
+    return gamma_lcdf(x | a, 1);
+  }
+  // Each term is at most half the one before
+  real term = 1;
+  real total = 1;
+  real n = a;
+  while (term > 1e-16 * total) {
+    n += 1;
+    term *= x / n;
+    total += term;
+  }
+  return a * log_x - x - lgamma(a + 1) + log(total);
+}
+
+/**
+  * Compute the log of a Gamma rate
+  * @ingroup delay_log_cdfs
+  *
+  * @param rate Rate parameter of the Gamma distribution
+  *
+  * @return log(rate). Rejects a rate that is not positive and finite.
+  */
+real gamma_log_rate(real rate) {
+  if (!(rate > 0) || is_inf(rate)) {
+    reject("Gamma rate must be positive finite, found ", rate);
+  }
+  return log(rate);
+}
+
+/**
   * Compute the log CDF of the generalised gamma distribution
   * @ingroup delay_log_cdfs
   *
@@ -7,7 +59,7 @@
   * P(k, (y / scale)^shape), so the Gamma (shape = 1) and Weibull (k = 1)
   * distributions are special cases.
   *
-  * @param y Value at which to evaluate the log CDF (y > 0)
+  * @param y Value at which to evaluate the log CDF (y >= 0)
   * @param shape Shape (power) parameter
   * @param scale Scale parameter
   * @param k Shape parameter of the underlying Gamma distribution
@@ -15,7 +67,13 @@
   * @return Log CDF of the generalised gamma distribution
   */
 real gengamma_lcdf(real y, real shape, real scale, real k) {
-  return gamma_lcdf(pow(y / scale, shape) | k, 1);
+  if (y < 0) {
+    reject("gengamma_lcdf: y must be non-negative, found y = ", y);
+  }
+  if (y == 0) {
+    return negative_infinity();
+  }
+  return gamma_lcdf_logx(shape * (log(y) - log(scale)), k);
 }
 
 /**
@@ -117,11 +175,16 @@ real dist_lcdf(real delay, array[] real params, int dist_id) {
            ? negative_infinity()
            : lognormal_lcdf(delay | params[1], params[2]);
   }
-  else if (dist_id == 2) return gamma_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 2) {
+    return gamma_lcdf_logx(log(delay) + gamma_log_rate(params[2]), params[1]);
+  }
   else if (dist_id == 3) return weibull_lcdf(delay | params[1], params[2]);
   else if (dist_id == 4) return exponential_lcdf(delay | params[1]);
   else if (dist_id == 5) return gengamma_lcdf(delay | params[1], params[2], params[3]);
-  else if (dist_id == 9) return beta_lcdf(delay | params[1], params[2]);
+  else if (dist_id == 9) {
+    // The Beta has support on [0, 1], and beta_lcdf rejects delay > 1
+    return delay >= 1 ? 0 : beta_lcdf(delay | params[1], params[2]);
+  }
   else if (dist_id == 12) return cauchy_lcdf(delay | params[1], params[2]);
   else if (dist_id == 13) return chi_square_lcdf(delay | params[1]);
   else if (dist_id == 15) return gumbel_lcdf(delay | params[1], params[2]);
