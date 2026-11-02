@@ -100,22 +100,32 @@ check_dprimary <- function(
 #'
 #' @param L Lower truncation bound (may be negative or `-Inf`)
 #' @param D Upper truncation bound
+#' @param vector Logical; if `TRUE`, `L` and `D` may be vectors, and the
+#'   first row with `L >= D` is reported.
 #'
 #' @return Invisible NULL if valid, otherwise stops with an error message.
 #'
 #' @keywords internal
-.check_truncation_bounds <- function(L, D) {
-  if (length(L) != 1L || length(D) != 1L || is.na(L) || is.na(D)) {
-    stop("L and D must each be a single non-NA numeric value.", call. = FALSE)
+.check_truncation_bounds <- function(L, D, vector = FALSE) {
+  if (anyNA(L) || anyNA(D) ||
+        (!vector && (length(L) != 1L || length(D) != 1L))) {
+    stop(
+      "L and D must each be a single non-NA numeric value",
+      if (vector) " or a vector of them", ".",
+      call. = FALSE
+    )
   }
   # `D = Inf` is a valid "no upper truncation" sentinel but `L = +Inf` is
   # always pathological (a lower bound above every upper bound) so we reject
   # it explicitly rather than letting the `L >= D` check below catch it with
   # a less informative message.
-  if (is.infinite(L) && L > 0) {
+  if (any(is.infinite(L) & L > 0)) {
     stop("L must be finite or -Inf.", call. = FALSE)
   }
-  if (L >= D) {
+  if (any(L >= D)) {
+    if (length(L) > 1L || length(D) > 1L) {
+      .check_truncation_bounds_df(data.frame(L = L, D = D), "L", "D")
+    }
     stop("L must be less than D.", call. = FALSE)
   }
   invisible(NULL)
@@ -141,6 +151,32 @@ check_dprimary <- function(
       " observation(s) where L >= D. First invalid row: ",
       invalid_rows[1], " (L = ", data[[L_col]][invalid_rows[1]],
       ", D = ", data[[D_col]][invalid_rows[1]], ")",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
+#' Check settings have length one or the length of the input
+#'
+#' Settings are not partially recycled, so each must have length 1 or the
+#' length of the input.
+#'
+#' @param n Length of the input.
+#'
+#' @param settings Named list of settings to check.
+#'
+#' @param input Name of the input, used in the error message.
+#'
+#' @return Invisible NULL if valid, otherwise stops with an error message.
+#'
+#' @keywords internal
+.check_setting_lengths <- function(n, settings, input) {
+  bad <- !lengths(settings) %in% c(1L, n)
+  if (any(bad)) {
+    stop(
+      toString(names(settings)[bad]), " must have length 1 or length(",
+      input, ") (", n, ").",
       call. = FALSE
     )
   }

@@ -4,12 +4,15 @@
 \alias{.check_truncation_bounds}
 \title{Validate truncation bounds L and D}
 \usage{
-.check_truncation_bounds(L, D)
+.check_truncation_bounds(L, D, vector = FALSE)
 }
 \arguments{
 \item{L}{Lower truncation bound (may be negative or \code{-Inf})}
 
 \item{D}{Upper truncation bound}
+
+\item{vector}{Logical; if \code{TRUE}, \code{L} and \code{D} may be vectors, and the
+first row with \code{L >= D} is reported.}
 }
 \value{
 Invisible NULL if valid, otherwise stops with an error message.
