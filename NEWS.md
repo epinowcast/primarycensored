@@ -28,7 +28,7 @@
 ## Performance
 
 - The uniform primary log CDFs for lognormal, gamma and Weibull delays have C++ versions with closed-form gradients.
-  They give the same values as the Stan code and are several times faster.
+  They give the same values as the Stan code.
   `primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()` use them.
   Load the Stan functions with `pcd_load_stan_functions(cpp = TRUE)` and compile with the header from the new `pcd_stan_header()`.
   `pcd_cmdstan_model()` does this by default through its new `cpp` argument, and the new `pcd_copy_stan_header()` copies the header for packages that vendor the Stan functions.
