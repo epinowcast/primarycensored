@@ -97,6 +97,41 @@ int check_for_analytical_params(int dist_id, array[] real params,
 }
 
 /**
+  * Check if the analytical solution is the path to use at a delay
+  * @ingroup analytical_solution_helpers
+  *
+  * This is check_for_analytical_params() and, for the exponentially tilted
+  * solutions, that the tilt transform is the path to use at d, see
+  * check_for_tilt_transform_at(). It chooses the path in
+  * primarycensored_cdf(), primarycensored_lcdf() and
+  * primarycensored_lcdf_vectorized().
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param primary_id Distribution identifier for the primary distribution
+  * @param primary_params Array of primary distribution parameters
+  * @param d Delay, the largest delay if there are several
+  * @param pwindow Primary event window
+  *
+  * @return 1 if the analytical solution is the path to use at d, 0 if the
+  * numerical path is needed
+  */
+int check_for_analytical_delay(int dist_id, array[] real params,
+                               int primary_id, array[] real primary_params,
+                               data real d, data real pwindow) {
+  if (!check_for_analytical_params(dist_id, params, primary_id,
+                                   primary_params, pwindow)) {
+    return 0;
+  }
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform_at(
+      dist_id, -primary_params[1], params, d, pwindow
+    );
+  }
+  return 1;
+}
+
+/**
   * Combine the uniform primary terms at d and q into the censored log CDF
   * @ingroup analytical_solution_helpers
   *
@@ -822,8 +857,8 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * primarycensored_analytical_lcdf() at each delay without truncation.
   * For an exponentially tilted primary see
   * primarycensored_exptilt_lcdf_vectorized().
-  * Only for cases where check_for_analytical_vectorized() and
-  * check_for_analytical_params() are 1.
+  * Only for cases where check_for_analytical_vectorized() is 1 and
+  * check_for_analytical_delay() is 1 at n.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result

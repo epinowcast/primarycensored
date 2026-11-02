@@ -6,6 +6,8 @@
 \alias{.pcens_tilt_available}
 \alias{.pcens_tilt_lower}
 \alias{.pcens_tilt_moments}
+\alias{.pcens_tilt_fits}
+\alias{.pcens_tilt_pair}
 \title{Tilt transforms of delay distributions}
 \usage{
 .pcens_tilt_transform(object, t, xi, upper = FALSE)
@@ -15,6 +17,10 @@
 .pcens_tilt_lower(object)
 
 .pcens_tilt_moments(object, t)
+
+.pcens_tilt_fits(object, t, xi, pwindow = 0)
+
+.pcens_tilt_pair(object, t, xi)
 }
 \arguments{
 \item{object}{A \code{pcens} object.}
@@ -27,12 +33,19 @@ vector of the length of \code{t}. A window with tilt \eqn{\rho} needs
 
 \item{upper}{Logical. If \code{TRUE}, the transform over \verb{(t, Inf)} rather than
 up to \code{t}.}
+
+\item{pwindow}{The primary event window.}
 }
 \value{
 \itemize{
 \item \code{.pcens_tilt_transform()}: the log of the transform at each \code{t}.
 \item \code{.pcens_tilt_available()}: whether the transform is closed form and the
 tilted delay exists for \code{xi}. If not, the numerical method is used.
+\item \code{.pcens_tilt_fits()}: a logical vector, one value per \code{t}, \code{FALSE}
+where the numerical method is used for a window \code{pwindow}. Only called
+where \code{.pcens_tilt_available()} is \code{TRUE}.
+\item \code{.pcens_tilt_pair()}: a matrix with columns \code{lower} and \code{upper}, the log
+transform up to and beyond each \code{t}.
 \item \code{.pcens_tilt_lower()}: the lower end of the support, 0 or \code{-Inf}.
 \item \code{.pcens_tilt_moments()}: a matrix with columns \code{G1}, \code{G2} and \code{G3}, the
 log of \eqn{G_k(t) = \int (t - u)^k f(u) du} up to \code{t}, \code{-Inf} below
