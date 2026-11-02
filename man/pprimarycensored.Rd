@@ -136,6 +136,15 @@ seamlessly falling back to numerical integration when necessary.
 
 See \code{methods(pcens_cdf)} for which combinations have analytical
 solutions implemented.
+\subsection{Vector settings}{
+
+\code{pwindow}, \code{L} and \code{D} may be vectors, recycled against \code{q} as in base R
+distribution functions.
+The CDF depends only on \code{pwindow}, so it is evaluated once per unique
+point for each value of \code{pwindow}.
+The delay and primary event distribution parameters must be single
+values.
+}
 }
 \examples{
 # Example: Lognormal distribution with uniform primary events
