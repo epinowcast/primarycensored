@@ -7,7 +7,7 @@
 .narrow_window_cdf(d, w, delay_cdf, params)
 }
 \arguments{
-\item{d}{Positive finite delays.}
+\item{d}{Finite delays above \code{lower}.}
 
 \item{w}{Primary event windows greater than zero, one per delay.}
 

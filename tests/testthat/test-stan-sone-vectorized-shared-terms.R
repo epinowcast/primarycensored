@@ -38,7 +38,7 @@ test_that("check_for_analytical_vectorized needs uniform terms and an
   for (dist_id in c(1L, 9L, 12L)) {
     expect_identical(check_for_analytical_vectorized(dist_id, 2L, 1), 0L)
   }
-  for (dist_id in c(4L, 18L, 26L, 27L, 28L)) {
+  for (dist_id in c(12L, 15L, 17L, 20L, 23L, 26L, 27L, 28L)) {
     expect_identical(check_for_analytical_vectorized(dist_id, 1L, 1), 0L)
   }
 })
@@ -104,7 +104,7 @@ test_that("primarycensored_lcdf_vectorized matches primarycensored_lcdf
       primary_params = 0.2
     ),
     list(
-      dist_id = 4L, params = 0.3, pwindow = 1, primary_id = 1L,
+      dist_id = 16L, params = c(0.8, 1), pwindow = 1, primary_id = 1L,
       primary_params = numeric(0)
     )
   )
