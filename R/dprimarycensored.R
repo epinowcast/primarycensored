@@ -42,9 +42,9 @@
 #' the PMF with [pcens_pmf()]. This evaluates the CDF once for all unique
 #' points (including \eqn{d}, \eqn{d + \text{swindow}}, `L` and `D`) for
 #' each value of `pwindow`, and reuses these values to calculate the PMF for
-#' each input value. `pwindow`, `swindow`, `L` and `D` may be vectors,
-#' recycled against `x` as in base R distribution functions. The delay and
-#' primary event distribution parameters must be single values.
+#' each input value. `pwindow`, `swindow`, `L` and `D` must each have length
+#' 1 or the length of `x`. The delay and primary event distribution
+#' parameters must be single values.
 #'
 #' When the secondary censoring interval extends past the upper truncation
 #' point (\eqn{d + \text{swindow} > D}) but the lower endpoint satisfies

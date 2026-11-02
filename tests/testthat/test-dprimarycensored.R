@@ -413,18 +413,28 @@ test_that("dprimarycensored with vector settings matches per-row calls", {
       tolerance = 1e-10
     )
   }
-  # A single x is recycled against vector settings
-  expect_equal(
-    cases[[1]](3, pwindow = c(1, 2), swindow = c(0, 1), D = c(10, Inf)),
-    per_row(cases[[1]], c(3, 3), c(1, 2), c(0, 1), -Inf, c(10, Inf)),
-    tolerance = 1e-10
-  )
   # Only densities and no truncation, so no CDF points
   expect_equal(
-    cases[[2]](1:4, pwindow = c(1, 2), swindow = 0),
+    cases[[2]](1:4, pwindow = c(1, 2, 1, 2), swindow = 0),
     per_row(cases[[2]], 1:4, c(1, 2), 0),
     tolerance = 1e-10
   )
+})
+
+test_that("dprimarycensored settings have length 1 or length(x)", {
+  dens <- function(x, ...) dprimarycensored(x, pgamma, ..., shape = 2, rate = 1)
+  x <- c(1, 2, 3, 4)
+  expect_identical(
+    dens(x, pwindow = 2, swindow = 0.5, L = 0, D = 10),
+    dens(x, pwindow = rep(2, 4), swindow = rep(0.5, 4), D = rep(10, 4), L = 0)
+  )
+  expect_error(dens(x, pwindow = c(1, 2)), "pwindow must have length 1 or")
+  expect_error(dens(x, swindow = c(1, 2, 1, 2, 1)), "swindow must have length")
+  expect_error(
+    dens(x, L = c(0, 0)), "L must have length 1 or length(x) (4)",
+    fixed = TRUE
+  )
+  expect_error(dens(3, D = c(10, Inf)), "D must have length 1 or length")
 })
 
 test_that("dprimarycensored evaluates each CDF point once per pwindow", {

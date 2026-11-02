@@ -65,12 +65,12 @@ pcens_pmf.default <- function(
     )
   }
   .check_truncation_bounds(L, D, vector = TRUE)
-  if (length(x) == 0) {
+  n <- length(x)
+  .check_setting_lengths(
+    n, list(pwindow = pwindow, swindow = swindow, L = L, D = D), "x"
+  )
+  if (n == 0) {
     return(numeric(0))
-  }
-  n <- max(lengths(list(x, pwindow, swindow, L, D)))
-  if (length(x) < n) {
-    x <- rep_len(x, n)
   }
 
   if (any(x < L)) {

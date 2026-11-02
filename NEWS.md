@@ -3,7 +3,7 @@
 ## New features
 
 - `dprimarycensored()` and `pprimarycensored()` accept vectors for `pwindow`, `L` and `D`, as `dprimarycensored()` already did for `swindow`.
-  They are recycled against `x` or `q` as in base R distribution functions.
+  Each must have length 1 or the length of `x` or `q`.
   The CDF is evaluated once per unique point for each `pwindow`, so data with mixed settings need only one call.
   `fitdistdoublecens()` uses the same code.
   See #376 and #390.

@@ -157,6 +157,32 @@ check_dprimary <- function(
   invisible(NULL)
 }
 
+#' Check settings have length one or the length of the input
+#'
+#' Settings are not partially recycled, so each must have length 1 or the
+#' length of the input.
+#'
+#' @param n Length of the input.
+#'
+#' @param settings Named list of settings to check.
+#'
+#' @param input Name of the input, used in the error message.
+#'
+#' @return Invisible NULL if valid, otherwise stops with an error message.
+#'
+#' @keywords internal
+.check_setting_lengths <- function(n, settings, input) {
+  bad <- !lengths(settings) %in% c(1L, n)
+  if (any(bad)) {
+    stop(
+      toString(names(settings)[bad]), " must have length 1 or length(",
+      input, ") (", n, ").",
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
+}
+
 #' Check if truncation time is appropriate relative to the maximum delay
 #'
 #' This function checks if the truncation time D is appropriate relative to the
