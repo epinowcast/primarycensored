@@ -9,6 +9,90 @@ pcd_stan_path <- function() {
   system.file("stan", "functions", package = "primarycensored")
 }
 
+#' Get the path to the C++ header for the Stan functions
+#'
+#' Some Stan functions have a C++ version with a hand-written gradient,
+#' which is faster than the Stan version. Load the Stan functions with
+#' `pcd_load_stan_functions(cpp = TRUE)` to declare these functions without
+#' a body, and compile with this header so that the C++ versions are used.
+#' With cmdstanr, pass it as `user_header`. [pcd_cmdstan_model()] does this
+#' by default. Use [pcd_copy_stan_header()] to vendor the header into
+#' another package.
+#'
+#' @return A character string with the path to the header.
+#'
+#' @family stantools
+#'
+#' @export
+#' @examples
+#' pcd_stan_header()
+pcd_stan_header <- function() {
+  system.file(
+    "include", "primarycensored.hpp",
+    package = "primarycensored", mustWork = TRUE
+  )
+}
+
+#' Copy the C++ header for the Stan functions
+#'
+#' Copies the header returned by [pcd_stan_header()], and the files it
+#' includes, into a directory. Use this with
+#' `pcd_load_stan_functions(cpp = TRUE)` to vendor the Stan functions and
+#' their C++ versions into another package together.
+#'
+#' @param path Directory to copy the header into. It is created if it does
+#'   not exist.
+#'
+#' @return The paths of the copied files, invisibly. Include
+#'   `primarycensored.hpp` from `path` before the model code.
+#'
+#' @family stantools
+#'
+#' @export
+#' @examples
+#' pcd_copy_stan_header(tempdir())
+pcd_copy_stan_header <- function(path) {
+  include_dir <- dirname(pcd_stan_header())
+  files <- list.files(include_dir, recursive = TRUE)
+  for (sub_dir in unique(file.path(path, dirname(files)))) {
+    dir.create(sub_dir, showWarnings = FALSE, recursive = TRUE)
+  }
+  copied <- file.copy(
+    file.path(include_dir, files), file.path(path, files),
+    overwrite = TRUE
+  )
+  if (!all(copied)) {
+    stop("Could not copy: ", toString(files[!copied]), call. = FALSE)
+  }
+  invisible(file.path(path, files))
+}
+
+#' Names of the Stan functions that have a C++ version
+#'
+#' @return Character vector of function names.
+#' @noRd
+.pcd_cpp_functions <- function() {
+  "primarycensored_uniform_lcdf_vectorized"
+}
+
+#' Replace the bodies of functions that have a C++ version with declarations
+#'
+#' @param content Character string of Stan code.
+#'
+#' @return `content` with each function in `.pcd_cpp_functions()` declared
+#'   without a body.
+#' @noRd
+.pcd_declare_cpp_functions <- function(content) {
+  stan_lines <- strsplit(content, "\n", fixed = TRUE)[[1]]
+  for (func in .pcd_cpp_functions()) {
+    for (def in .extract_stan_functions(stan_lines, functions = func)) {
+      def_start <- sub("\\s*\\{.*$", "", def)
+      content <- sub(def, paste0(def_start, ";"), content, fixed = TRUE)
+    }
+  }
+  content
+}
+
 #' Find dependencies of a Stan function
 #'
 #' @param func_content Character string containing the function body
@@ -331,6 +415,13 @@ pcd_stan_files <- function(
 #' all dependencies in the correct order (dependencies before the functions
 #' that use them). Default is FALSE.
 #'
+#' @param cpp Logical, whether to declare the functions that have a C++
+#' version without a body, so that the C++ versions are used. These are
+#' faster. The model must then be compiled with the header from
+#' [pcd_stan_header()]. With `dependencies = TRUE`, the Stan functions that
+#' only these functions call are left out. Default is FALSE, which gives
+#' Stan code that compiles on its own.
+#'
 #' @return A character string containing the requested Stan functions
 #'
 #' @family stantools
@@ -342,7 +433,8 @@ pcd_load_stan_functions <- function(
     wrap_in_block = FALSE,
     write_to_file = FALSE,
     output_file = "pcd_functions.stan",
-    dependencies = FALSE) {
+    dependencies = FALSE,
+    cpp = FALSE) {
   stan_files <- list.files(
     stan_path,
     pattern = "\\.stan$",
@@ -353,6 +445,11 @@ pcd_load_stan_functions <- function(
   # Resolve dependencies if requested
   if (dependencies && !is.null(functions)) {
     dep_graph <- .pcd_build_dep_graph(stan_path)
+    if (cpp) {
+      for (func in intersect(.pcd_cpp_functions(), names(dep_graph))) {
+        dep_graph[[func]] <- character(0)
+      }
+    }
 
     # Validate that all requested functions exist
     available_funcs <- names(dep_graph)
@@ -402,6 +499,9 @@ pcd_load_stan_functions <- function(
   }
 
   result <- paste(all_content, collapse = "\n")
+  if (cpp) {
+    result <- .pcd_declare_cpp_functions(result)
+  }
 
   if (write_to_file) {
     writeLines(result, output_file)

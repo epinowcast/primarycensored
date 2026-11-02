@@ -10,7 +10,8 @@ pcd_load_stan_functions(
   wrap_in_block = FALSE,
   write_to_file = FALSE,
   output_file = "pcd_functions.stan",
-  dependencies = FALSE
+  dependencies = FALSE,
+  cpp = FALSE
 )
 }
 \arguments{
@@ -33,6 +34,13 @@ write_to_file is TRUE. Defaults to "pcd_functions.stan".}
 requested functions depend on. When TRUE, recursively finds and includes
 all dependencies in the correct order (dependencies before the functions
 that use them). Default is FALSE.}
+
+\item{cpp}{Logical, whether to declare the functions that have a C++
+version without a body, so that the C++ versions are used. These are
+faster. The model must then be compiled with the header from
+\code{\link[=pcd_stan_header]{pcd_stan_header()}}. With \code{dependencies = TRUE}, the Stan functions that
+only these functions call are left out. Default is FALSE, which gives
+Stan code that compiles on its own.}
 }
 \value{
 A character string containing the requested Stan functions
@@ -42,10 +50,12 @@ Load Stan functions as a string
 }
 \seealso{
 Tools for working with package Stan functions
+\code{\link{pcd_copy_stan_header}()},
 \code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_files}()},
 \code{\link{pcd_stan_function_deps}()},
 \code{\link{pcd_stan_functions}()},
+\code{\link{pcd_stan_header}()},
 \code{\link{pcd_stan_path}()}
 }
 \concept{stantools}
