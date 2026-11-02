@@ -105,8 +105,8 @@ exptilt_stan_model <- function(name, code) {
   suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
 }
 
-# The ODE branch of primarycensored_cdf() for given delays, as the CDF of a
-# fixed parameter run of a model that calls the ODE solver directly
+# The ODE branch of primarycensored_cdf() for given delays, from a fixed
+# parameter run of a model that calls primarycensored_numeric_cdf()
 exptilt_ode_model <- function() {
   exptilt_stan_model("pcd_exptilt_ode", paste(
     "data {",
@@ -121,15 +121,9 @@ exptilt_ode_model <- function() {
     "generated quantities {",
     "  array[n] real cdf;",
     "  for (i in 1:n) {",
-    "    real lower_bound = dist_has_positive_support(dist_id)",
-    "      ? fmax(d[i] - pwindow, 0) : d[i] - pwindow;",
-    "    array[n_params + 1] real theta =",
-    "      append_array(params, primary_params);",
-    "    array[4] int ids = {dist_id, 2, n_params, 1};",
-    "    cdf[i] = ode_rk45(",
-    "      primarycensored_ode, rep_vector(0.0, 1), lower_bound, {d[i]},",
-    "      theta, {d[i], pwindow}, ids",
-    "    )[1, 1];",
+    "    cdf[i] = primarycensored_numeric_cdf(",
+    "      d[i] | dist_id, params, pwindow, 2, primary_params",
+    "    );",
     "  }",
     "}",
     sep = "\n"
@@ -254,8 +248,8 @@ test_that("the checks follow the delay, the primary and the tilt", {
     expect_identical(check_for_exptilt(dist_id, 2L), 0L)
   }
   expect_identical(check_for_analytical_vectorized(9L, 2L, 1), 0L)
-  expect_identical(check_for_analytical(4L, 1L), 0L)
-  expect_identical(check_for_analytical(18L, 1L), 0L)
+  expect_identical(check_for_analytical(4L, 2L), 0L)
+  expect_identical(check_for_analytical(18L, 2L), 0L)
   expect_identical(check_for_analytical(2L, 1L), 1L)
   expect_identical(check_for_uniform_terms(2L, 2L), 0L)
   checks <- list(
