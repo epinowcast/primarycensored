@@ -58,6 +58,7 @@ Low level primary event censored distribution objects and methods
 \code{\link{pcens_cdf.pcens_ppareto_dunif}()},
 \code{\link{pcens_cdf.pcens_pweibull_dunif}()},
 \code{\link{pcens_cdf_exptilt}},
+\code{\link{pcens_cdf_gumbel}},
 \code{\link{pcens_cdf_tlogis}},
 \code{\link{pcens_pmf}()},
 \code{\link{pcens_pmf.default}()},

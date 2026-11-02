@@ -80,7 +80,9 @@ int check_for_analytical(int dist_id, int primary_id) {
   * include, that the tilted delay exists, see check_for_tilt_transform(). The
   * truncated logistic solutions, also not in check_for_analytical(), need a
   * truncation rule for each series and the largest tilt of the delay, see
-  * check_for_tlogis_params(). It chooses the path in primarycensored_cdf()
+  * check_for_tlogis_params(). The truncated Gumbel solutions, also not in
+  * check_for_analytical(), need a usable series, see
+  * check_for_gumbel_params(). It chooses the path in primarycensored_cdf()
   * and primarycensored_lcdf().
   *
   * @param dist_id Distribution identifier for the delay distribution
@@ -100,6 +102,11 @@ int check_for_analytical_params(int dist_id, array[] real params,
   }
   if (check_for_tlogis(dist_id, primary_id)) {
     return check_for_tlogis_params(dist_id, params, primary_params, pwindow);
+  }
+  if (check_for_gumbel(dist_id, primary_id)) {
+    return check_for_gumbel_params(
+      dist_id, params, primary_params[1], primary_params[2]
+    );
   }
   return check_for_analytical(dist_id, primary_id) &&
     check_uniform_terms_params(dist_id, params);
@@ -1106,6 +1113,19 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
       d | dist_id, params, pwindow, primary_params[1], primary_params[2]
     );
   }
+  if (check_for_gumbel(dist_id, primary_id)) {
+    if (!check_for_gumbel_params(
+          dist_id, params, primary_params[1], primary_params[2])) {
+      reject(
+        "The truncated Gumbel solution does not apply for mu ",
+        primary_params[1], " and beta ", primary_params[2],
+        ". Use the numerical path, see check_for_analytical_params()."
+      );
+    }
+    return primarycensored_gumbel_lcdf(
+      d | dist_id, params, pwindow, primary_params[1], primary_params[2]
+    );
+  }
   // Delays on the reals are not clipped at 0
   real q = dist_has_positive_support(dist_id) ? max({d - pwindow, 0.0})
                                               : d - pwindow;
@@ -1220,9 +1240,9 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   * integer delay too, so primarycensored_analytical_lcdf_vectorized() can
   * compute the terms once per delay and share them. This needs the
   * analytical solutions built from primarycensored_uniform_terms(), see
-  * check_for_uniform_terms(), or the exponentially tilted solutions, see
-  * check_for_exptilt(). The non-parametric delays in check_for_analytical()
-  * have no such terms.
+  * check_for_uniform_terms(), or the exponentially tilted or truncated Gumbel
+  * solutions, see check_for_exptilt() and check_for_gumbel(). The
+  * non-parametric delays in check_for_analytical() have no such terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -1233,7 +1253,8 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
 int check_for_analytical_vectorized(int dist_id, int primary_id,
                                     data real pwindow) {
   return (check_for_uniform_terms(dist_id, primary_id)
-          || check_for_exptilt(dist_id, primary_id)) &&
+          || check_for_exptilt(dist_id, primary_id)
+          || check_for_gumbel(dist_id, primary_id)) &&
     pwindow >= 1 && floor(pwindow) == pwindow;
 }
 
@@ -1248,6 +1269,9 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * primarycensored_analytical_lcdf() at each delay without truncation.
   * For an exponentially tilted primary see
   * primarycensored_exptilt_lcdf_vectorized().
+  * For a truncated Gumbel primary the terms are those of
+  * primarycensored_gumbel_lcdf(), with the numerical path at the delays where
+  * the series is not accurate.
   * The log-logistic uses the numerical CDF where the solution is ill
   * conditioned, as primarycensored_loglogistic_uniform_lcdf() does.
   * Only for cases where check_for_analytical_vectorized() is 1 and
@@ -1274,6 +1298,31 @@ vector primarycensored_analytical_lcdf_vectorized(
     return primarycensored_exptilt_lcdf_vectorized(
       start, n, dist_id, params, pw, primary_params[1]
     );
+  }
+  if (check_for_gumbel(dist_id, primary_id)) {
+    real mu = primary_params[1];
+    real beta = primary_params[2];
+    int n_terms = gumbel_n_terms(mu / beta);
+    int first = start - pw;
+    // gumbel_terms[t - first + 1] holds the terms at endpoint t
+    array[n - first + 1] vector[2 * (n_terms + 1)] gumbel_terms;
+    for (t in first:n) {
+      gumbel_terms[t - first + 1] = primarycensored_gumbel_terms(
+        t, dist_id, beta, n_terms, params
+      );
+    }
+    for (d in start:n) {
+      vector[2] fit = primarycensored_gumbel_lcdf_from_terms(
+        gumbel_terms[d - first + 1], gumbel_terms[d - pw - first + 1], d,
+        pwindow, mu, beta, n_terms
+      );
+      log_cdfs[d] = gumbel_series_accepted(fit)
+                    ? fit[1]
+                    : primarycensored_gumbel_numeric_lcdf(
+                        d | dist_id, params, pwindow, mu, beta
+                      );
+    }
+    return log_cdfs;
   }
   int first = dist_has_positive_support(dist_id) ? max(start - pw, 0)
                                                  : start - pw;
