@@ -159,7 +159,7 @@ Collecting the $F_{\mathrm{IP}}(q - w_P)$ terms into one fraction gives a shorte
 Equation \@ref(eq:exptilt) keeps $F_{\mathrm{IP}}(q - w_P)$ out of the numerator, and the package evaluates it on the log scale.
 Writing $e^{\rho q} = e^{\rho w_P} e^{\rho (q - w_P)}$ makes each term a function of $q$ or of $q - w_P$ alone.
 For an integer `pwindow` of at least 1, $q - w_P$ is an integer delay too.
-`primarycensored_analytical_lcdf_vectorized()` in Stan therefore computes the terms once per integer delay $t$ and uses them for the CDF at $t$ and at $t + w_P$.
+`primarycensored_exptilt_lcdf_vectorized()` in Stan therefore computes the terms once per integer delay $t$ and uses them for the CDF at $t$ and at $t + w_P$.
 
 ## Uniform window as the limit $\rho \to 0$
 
@@ -273,10 +273,10 @@ Here $I_x(\cdot, \cdot)$ is the regularised incomplete beta function, $A_\tau = 
 | Log-logistic, shape $k$, scale $\lambda$ (29) | $M(\tau) = \tau F_{\mathrm{IP}}(\tau) r_{1 / k}(A_\tau)$ | $k \geq 0.01$ | R and Stan |
 | Beta, shapes $\alpha_1$, $\alpha_2$ (9) | $M(\tau) = \frac{\alpha_1}{\alpha_1 + \alpha_2} I_{\min(\tau, 1)}(\alpha_1 + 1, \alpha_2)$ | non-centrality 0 | R and Stan |
 | Chi-square, $\nu$ degrees of freedom (13) | the gamma with $\alpha = \nu / 2$ and $\lambda = 1 / 2$ | non-centrality 0 | R and Stan |
-| Inverse gamma, shape $\alpha$, scale $\theta$ (16) | $M(\tau) = \frac{\theta}{\alpha - 1} \{1 - P(\alpha - 1, \theta / \tau)\}$ | $\alpha > 1$ | Stan |
-| Inverse chi-square, $\nu$ (19) | the inverse gamma with $\alpha = \nu / 2$ and $\theta = 1 / 2$ | $\nu > 2$ | Stan |
-| Scaled inverse chi-square, $\nu$ and scale $\varsigma$ (22) | the inverse gamma with $\alpha = \nu / 2$ and $\theta = \nu \varsigma^2 / 2$ | $\nu > 2$ | Stan |
-| Pareto, shape $\alpha$, minimum $y_m$ (21) | $K_1(t) = y_m \left\{e^{\ell} - 1 + \frac{e^{-(\alpha - 1) \ell} - 1}{\alpha - 1}\right\}$, $\ell = \log(t / y_m)$, for $t \geq y_m$ | | Stan |
+| Inverse gamma, shape $\alpha$, scale $\theta$ (16) | $M(\tau) = \frac{\theta}{\alpha - 1} \{1 - P(\alpha - 1, \theta / \tau)\}$ | $\alpha > 1$ | R (extraDistr) and Stan |
+| Inverse chi-square, $\nu$ (19) | the inverse gamma with $\alpha = \nu / 2$ and $\theta = 1 / 2$ | $\nu > 2$ | R (extraDistr) and Stan |
+| Scaled inverse chi-square, $\nu$ and scale $\varsigma$ (22) | the inverse gamma with $\alpha = \nu / 2$ and $\theta = \nu \varsigma^2 / 2$ | $\nu > 2$ | R (extraDistr) and Stan |
+| Pareto, shape $\alpha$, minimum $y_m$ (21) | $K_1(t) = y_m \left\{e^{\ell} - 1 + \frac{e^{-(\alpha - 1) \ell} - 1}{\alpha - 1}\right\}$, $\ell = \log(t / y_m)$, for $t \geq y_m$ | | R (extraDistr) and Stan |
 
 For the Pareto with $\alpha = 1$ the second term takes its limit $-\ell$.
 The non-central beta and chi-square use the numerical method.
@@ -314,7 +314,7 @@ The R method for a pair is `pcens_cdf.pcens_p<delay>_d<primary>`, for example `p
 | Lognormal | analytic | numerical for $\rho > 0$, semi-analytic for $\rho < 0$ | numerical method | numerical method |
 | Log-logistic | semi-analytic | numerical method | numerical method | numerical method |
 | Beta, chi-square | analytic | numerical method | numerical method | numerical method |
-| Inverse gamma, inverse chi-square, scaled inverse chi-square, Pareto | analytic in Stan, numerical method in R | numerical method | numerical method | numerical method |
+| Inverse gamma, inverse chi-square, scaled inverse chi-square, Pareto | analytic, needing extraDistr in R | numerical method | numerical method | numerical method |
 | Step and hazard | exact | exact | exact | exact in R, numerical method in Stan |
 
 The logistic window needs the tilts $n / s$ and $-n / s$ up to the number of series terms.
@@ -330,8 +330,8 @@ It takes `pwindow`, as the admissibility of some windows, such as the truncated 
 
 | Window | Stan functions | Parameter check |
 |:---|:---|:---|
-| Uniform | `primarycensored_<dist>_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` | `check_for_uniform_terms()`, and the log-logistic shape in `check_for_analytical_params()` |
-| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_analytical_lcdf_vectorized()`, with `log_tilt_transform_pair()` | `check_for_tilt_transform()`, with `check_for_tilt_transform_at()` for the lognormal |
+| Uniform | `primarycensored_<dist>_uniform_terms()` and `primarycensored_uniform_lcdf_from_terms()` | `check_for_uniform_terms()` and `check_uniform_terms_params()` |
+| Exponential tilt | `primarycensored_exptilt_lcdf()` and `primarycensored_exptilt_lcdf_vectorized()`, with `log_tilt_transform_pair()` | `check_for_tilt_transform()`, with `check_for_tilt_transform_at()` for the lognormal |
 | Truncated logistic | `primarycensored_tlogis_lcdf()` and `primarycensored_tlogis_lcdf_vectorized()` | `check_for_tlogis_params()` |
 | Truncated Gumbel | `primarycensored_gumbel_lcdf()`, and `primarycensored_gumbel_terms()` with `primarycensored_gumbel_lcdf_from_terms()` in `primarycensored_analytical_lcdf_vectorized()` | `check_for_gumbel_params()` |
 
@@ -407,7 +407,7 @@ The package differs from the transform paper in two ways.
 
 A new delay needs its transform.
 In R it needs methods for `.pcens_tilt_transform()`, `.pcens_tilt_available()`, `.pcens_tilt_lower()` and `.pcens_tilt_moments()`.
-In Stan it needs an entry in `log_tilt_transform_pair()`, `primarycensored_tilt_moments()`, `check_for_tilt_transform()` and `check_for_exptilt()`.
+In Stan it needs an entry in `log_tilt_transform_pair()`, `primarycensored_tilt_moments()`, `check_for_tilt_transform()` and `check_for_exptilt()`, which are in `primarycensored_exptilt.stan`.
 A delay whose transform holds only at some `q` also needs the per-point checks that the lognormal uses, `.pcens_tilt_fits()` in R and `check_for_tilt_transform_at()` in Stan.
 A pair of window and delay then needs its `pcens_cdf` method in R and its dispatch in Stan.
 

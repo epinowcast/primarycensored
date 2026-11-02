@@ -3,7 +3,7 @@
 \name{.lnorm_meanlog_sdlog}
 \alias{.lnorm_meanlog_sdlog}
 \title{Lognormal delay meanlog and sdlog of a pcens object, defaulting as in
-\code{\link[stats:plnorm]{stats::plnorm()}}}
+\code{\link[stats:Lognormal]{stats::plnorm()}}}
 \usage{
 .lnorm_meanlog_sdlog(object)
 }
@@ -15,6 +15,6 @@ A list with \code{meanlog} and \code{sdlog}.
 }
 \description{
 Lognormal delay meanlog and sdlog of a pcens object, defaulting as in
-\code{\link[stats:plnorm]{stats::plnorm()}}
+\code{\link[stats:Lognormal]{stats::plnorm()}}
 }
 \keyword{internal}

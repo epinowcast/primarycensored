@@ -3,6 +3,7 @@ functions {
   #include primarycensored.stan
   #include primarycensored_ode.stan
   #include primarycensored_analytical_cdf.stan
+  #include primarycensored_exptilt.stan
   #include primarycensored_tlogis.stan
   #include primarycensored_gumbel.stan
   #include expgrowth.stan
