@@ -2,6 +2,11 @@
 
 ## New features
 
+- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`) with exponential, gamma and normal delays, in R and Stan, see `?pcens_cdf_exptilt`.
+  The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
+  The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
+  Stan models that include the function files one by one need `#include primarycensored_exptilt.stan`.
+  See #367.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
