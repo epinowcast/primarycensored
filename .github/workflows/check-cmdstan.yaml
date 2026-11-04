@@ -65,7 +65,11 @@ jobs:
           # soft depreciated syntax and so we check the syntax again below
           # and test the output.
           message <- capture.output(
-            model$check_syntax(pedantic = TRUE),
+            model$check_syntax(
+              pedantic = TRUE,
+              # The functions with a C++ version are declared without a body
+              stanc_options = list("allow-undefined")
+            ),
             type = "message"
           )
           message
