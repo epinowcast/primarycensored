@@ -7,6 +7,8 @@
 #' @param include_paths Character vector of paths to include for Stan
 #'  compilation. Defaults to the result of `pcd_stan_path()`.
 #'
+#' @param ... Additional arguments passed to cmdstanr::cmdstan_model().
+#'
 #' @param cpp Logical, whether to use the faster C++ versions of the Stan
 #'  functions that have one (see [pcd_stan_header()]). When TRUE, and
 #'  `include_paths` contains [pcd_stan_path()], the Stan files are written
@@ -16,8 +18,6 @@
 #'  given in `...`, and the model is compiled there unless `dir` is given in
 #'  `...`. Later calls in the same session reuse the compiled model. Default
 #'  is TRUE.
-#'
-#' @param ... Additional arguments passed to cmdstanr::cmdstan_model().
 #'
 #' @return A CmdStanModel object.
 #'
@@ -41,8 +41,8 @@
 #' }
 pcd_cmdstan_model <- function(
     include_paths = primarycensored::pcd_stan_path(),
-    cpp = TRUE,
-    ...) {
+    ...,
+    cpp = TRUE) {
   if (!requireNamespace("cmdstanr", quietly = TRUE)) {
     stop(
       "Package 'cmdstanr' is required but not installed for this function.",

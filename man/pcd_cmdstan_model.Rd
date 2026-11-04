@@ -6,13 +6,15 @@
 \usage{
 pcd_cmdstan_model(
   include_paths = primarycensored::pcd_stan_path(),
-  cpp = TRUE,
-  ...
+  ...,
+  cpp = TRUE
 )
 }
 \arguments{
 \item{include_paths}{Character vector of paths to include for Stan
 compilation. Defaults to the result of \code{pcd_stan_path()}.}
+
+\item{...}{Additional arguments passed to cmdstanr::cmdstan_model().}
 
 \item{cpp}{Logical, whether to use the faster C++ versions of the Stan
 functions that have one (see \code{\link[=pcd_stan_header]{pcd_stan_header()}}). When TRUE, and
@@ -23,8 +25,6 @@ declared without a body. That directory replaces \code{\link[=pcd_stan_path]{pcd
 given in \code{...}, and the model is compiled there unless \code{dir} is given in
 \code{...}. Later calls in the same session reuse the compiled model. Default
 is TRUE.}
-
-\item{...}{Additional arguments passed to cmdstanr::cmdstan_model().}
 }
 \value{
 A CmdStanModel object.
