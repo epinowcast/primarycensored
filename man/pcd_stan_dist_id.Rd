@@ -33,6 +33,7 @@ Tools for working with package Stan functions
 \code{\link{pcd_stan_files}()},
 \code{\link{pcd_stan_function_deps}()},
 \code{\link{pcd_stan_functions}()},
+\code{\link{pcd_stan_header}()},
 \code{\link{pcd_stan_path}()}
 }
 \concept{stantools}

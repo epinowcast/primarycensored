@@ -1,5 +1,12 @@
 # primarycensored (development version)
 
+## Breaking changes
+
+- `pcd_load_stan_functions()` now declares the functions that have a C++ version without a body, through its new `cpp` argument.
+  Code that uses them must be compiled with the header from `pcd_stan_header()`, which is copied next to `output_file` when writing to a file.
+  Use `cpp = FALSE` for Stan code that compiles on its own.
+  See #362.
+
 ## New features
 
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
@@ -27,6 +34,9 @@
 
 ## Performance
 
+- The uniform primary log CDFs for lognormal, gamma and Weibull delays have C++ versions with closed-form gradients, used by `primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()`.
+  `pcd_cmdstan_model()` uses them by default, and the new `pcd_stan_header()` gives the header to compile other models with.
+  See #362.
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster.
   They cost less per call and, for 64 or more points on a lattice such as the one used by `dprimarycensored()` and `fitdistdoublecens()`, evaluate the delay terms once per distinct point.
   They also return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay.

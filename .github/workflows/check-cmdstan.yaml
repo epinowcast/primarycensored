@@ -56,13 +56,20 @@ jobs:
             write_to_file = TRUE,
             output_file = stan_file
           )
-          model <- cmdstanr::cmdstan_model(stan_file)
+          model <- cmdstanr::cmdstan_model(
+            stan_file,
+            user_header = file.path(tempdir(), "primarycensored.hpp")
+          )
           # If the model is not syntactically correct above will fail
           # however it may be correct enougth to compile but still contain
           # soft depreciated syntax and so we check the syntax again below
           # and test the output.
           message <- capture.output(
-            model$check_syntax(pedantic = TRUE),
+            model$check_syntax(
+              pedantic = TRUE,
+              # The functions with a C++ version are declared without a body
+              stanc_options = list("allow-undefined")
+            ),
             type = "message"
           )
           message
