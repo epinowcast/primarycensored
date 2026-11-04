@@ -166,17 +166,14 @@ These are the uniform primary log CDFs for lognormal, gamma and Weibull delays: 
 `primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()` use them for those delays with a uniform primary event.
 Their gradients are several times faster than the Stan versions.
 
-To use the C++ versions, load the functions with `cpp = TRUE`.
-This declares those functions without a body.
+`pcd_load_stan_functions()` declares these functions without a body by default.
 
 ```{r}
-cat(pcd_load_stan_functions(
-  "primarycensored_uniform_lcdf",
-  cpp = TRUE
-))
+cat(pcd_load_stan_functions("primarycensored_uniform_lcdf"))
 ```
 
-Then compile the model with the header from `pcd_stan_header()`.
+A model that uses them must be compiled with the header from `pcd_stan_header()`.
+When you write the functions to a file, the header is copied next to it.
 With `cmdstanr` pass it as `user_header`.
 
 ```{r, eval = FALSE}
@@ -184,19 +181,22 @@ pmf_stan_file <- file.path(tempdir(), "pmf.stan")
 pcd_load_stan_functions(
   "primarycensored_sone_pmf_vectorized",
   dependencies = TRUE,
-  cpp = TRUE,
   wrap_in_block = TRUE,
   write_to_file = TRUE,
   output_file = pmf_stan_file
 )
 # Add your data, parameters and model blocks to pmf_stan_file, then
-model <- cmdstan_model(pmf_stan_file, user_header = pcd_stan_header())
+model <- cmdstan_model(
+  pmf_stan_file,
+  user_header = file.path(tempdir(), "primarycensored.hpp")
+)
 ```
 
-`pcd_cmdstan_model()` does this by default for the model that ships with the package.
+`pcd_cmdstan_model()` does this for the model that ships with the package.
+If you vendor the Stan functions into your own package, keep the header with them and include `primarycensored.hpp` before the model code.
 
-If you vendor the Stan functions into your own package, use `pcd_copy_stan_header()` to copy the header alongside them, and include `primarycensored.hpp` before the model code.
-With `cpp = FALSE`, the default, the Stan code compiles on its own and gives the same results.
+With `cpp = FALSE` the Stan code compiles on its own and gives the same results.
+Use this when you cannot pass a header, for example with `expose_functions()`.
 If you compile the Stan bodies and include the header as well, the C++ versions are still used wherever the parameters are model parameters rather than data.
 
 ## Using Stan functions directly in R

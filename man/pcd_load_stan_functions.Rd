@@ -11,7 +11,7 @@ pcd_load_stan_functions(
   write_to_file = FALSE,
   output_file = "pcd_functions.stan",
   dependencies = FALSE,
-  cpp = FALSE
+  cpp = TRUE
 )
 }
 \arguments{
@@ -36,11 +36,14 @@ all dependencies in the correct order (dependencies before the functions
 that use them). Default is FALSE.}
 
 \item{cpp}{Logical, whether to declare the functions that have a C++
-version without a body, so that the C++ versions are used. These are
-faster. The model must then be compiled with the header from
-\code{\link[=pcd_stan_header]{pcd_stan_header()}}. With \code{dependencies = TRUE}, the Stan functions that
-only these functions call are left out. Default is FALSE, which gives
-Stan code that compiles on its own.}
+version without a body, so that the faster C++ versions are used.
+Default is TRUE. If the code declares any of them, the model must be
+compiled with the header from \code{\link[=pcd_stan_header]{pcd_stan_header()}}, and with
+\code{write_to_file = TRUE} the header and the files it includes are copied
+into the directory of \code{output_file}. With \code{dependencies = TRUE}, the Stan
+functions that only these functions call are left out. Use FALSE for
+Stan code that compiles on its own, for example with rstan's
+\code{model_code} or cmdstanr's \code{expose_functions()}.}
 }
 \value{
 A character string containing the requested Stan functions
@@ -50,7 +53,6 @@ Load Stan functions as a string
 }
 \seealso{
 Tools for working with package Stan functions
-\code{\link{pcd_copy_stan_header}()},
 \code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_files}()},
 \code{\link{pcd_stan_function_deps}()},

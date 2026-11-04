@@ -14,7 +14,6 @@ Get the path to the Stan code
 }
 \seealso{
 Tools for working with package Stan functions
-\code{\link{pcd_copy_stan_header}()},
 \code{\link{pcd_load_stan_functions}()},
 \code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_files}()},

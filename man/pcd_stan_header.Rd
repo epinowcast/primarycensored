@@ -14,19 +14,16 @@ Some Stan functions have a C++ version with a hand-written gradient,
 which is faster than the Stan version. These are the uniform primary log
 CDFs for lognormal, gamma and Weibull delays, used by
 \code{primarycensored_lpmf()}, \code{primarycensored_lcdf()} and
-\code{primarycensored_sone_lpmf_vectorized()}. Load the Stan functions with
-\code{pcd_load_stan_functions(cpp = TRUE)} to declare these functions without
-a body, and compile with this header so that the C++ versions are used.
-With cmdstanr, pass it as \code{user_header}. \code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this
-by default. Use \code{\link[=pcd_copy_stan_header]{pcd_copy_stan_header()}} to vendor the header into
-another package.
+\code{primarycensored_sone_pmf_vectorized()}. \code{\link[=pcd_load_stan_functions]{pcd_load_stan_functions()}}
+declares these functions without a body by default, so models using them
+must be compiled with this header. With cmdstanr, pass it as
+\code{user_header}. \code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this for you.
 }
 \examples{
 pcd_stan_header()
 }
 \seealso{
 Tools for working with package Stan functions
-\code{\link{pcd_copy_stan_header}()},
 \code{\link{pcd_load_stan_functions}()},
 \code{\link{pcd_stan_dist_id}()},
 \code{\link{pcd_stan_files}()},

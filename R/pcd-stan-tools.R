@@ -15,12 +15,10 @@ pcd_stan_path <- function() {
 #' which is faster than the Stan version. These are the uniform primary log
 #' CDFs for lognormal, gamma and Weibull delays, used by
 #' `primarycensored_lpmf()`, `primarycensored_lcdf()` and
-#' `primarycensored_sone_lpmf_vectorized()`. Load the Stan functions with
-#' `pcd_load_stan_functions(cpp = TRUE)` to declare these functions without
-#' a body, and compile with this header so that the C++ versions are used.
-#' With cmdstanr, pass it as `user_header`. [pcd_cmdstan_model()] does this
-#' by default. Use [pcd_copy_stan_header()] to vendor the header into
-#' another package.
+#' `primarycensored_sone_pmf_vectorized()`. [pcd_load_stan_functions()]
+#' declares these functions without a body by default, so models using them
+#' must be compiled with this header. With cmdstanr, pass it as
+#' `user_header`. [pcd_cmdstan_model()] does this for you.
 #'
 #' @return A character string with the path to the header.
 #'
@@ -39,25 +37,14 @@ pcd_stan_header <- function() {
 #' Copy the C++ header for the Stan functions
 #'
 #' Copies the header returned by [pcd_stan_header()], and the files it
-#' includes, into a directory. Use this with
-#' `pcd_load_stan_functions(cpp = TRUE)` to vendor the Stan functions and
-#' their C++ versions into another package together.
+#' includes, into a directory.
 #'
 #' @param path Directory to copy the header into. It is created if it does
 #'   not exist.
 #'
-#' @return The paths of the copied files, invisibly. Include
-#'   `primarycensored.hpp` from `path` before the model code.
-#'
-#' @family stantools
-#'
-#' @export
-#' @examples
-#' pcd_copy_stan_header(tempdir())
-pcd_copy_stan_header <- function(path) {
-  if (!is.character(path) || length(path) != 1 || is.na(path)) {
-    stop("`path` must be a single string.", call. = FALSE)
-  }
+#' @return The paths of the copied files.
+#' @noRd
+.pcd_copy_stan_header <- function(path) {
   include_dir <- dirname(pcd_stan_header())
   files <- list.files(include_dir, recursive = TRUE)
   for (sub_dir in unique(file.path(path, dirname(files)))) {
@@ -70,7 +57,7 @@ pcd_copy_stan_header <- function(path) {
   if (!all(copied)) {
     stop("Could not copy: ", toString(files[!copied]), call. = FALSE)
   }
-  invisible(file.path(path, files))
+  file.path(path, files)
 }
 
 #' Names of the Stan functions that have a C++ version
@@ -95,11 +82,28 @@ pcd_copy_stan_header <- function(path) {
   stan_lines <- strsplit(content, "\n", fixed = TRUE)[[1]]
   for (func in .pcd_cpp_functions()) {
     for (def in .extract_stan_functions(stan_lines, functions = func)) {
-      def_start <- sub("\\s*\\{.*$", "", def)
-      content <- sub(def, paste0(def_start, ";"), content, fixed = TRUE)
+      # The signature is everything before the first brace, which may
+      # follow a signature over several lines
+      signature <- sub("\\s*\\{[\\s\\S]*$", "", def, perl = TRUE)
+      content <- gsub(def, paste0(signature, ";"), content, fixed = TRUE)
     }
   }
   content
+}
+
+#' Whether Stan code declares a function that has a C++ version
+#'
+#' @param content Character string of Stan code.
+#'
+#' @return `TRUE` if `content` declares any of `.pcd_cpp_functions()`
+#'   without a body.
+#' @noRd
+.pcd_uses_cpp_functions <- function(content) {
+  any(vapply(
+    .pcd_cpp_functions(),
+    function(func) grepl(paste0("\\b", func, "\\s*\\([^;{]*\\);"), content),
+    logical(1)
+  ))
 }
 
 #' Find dependencies of a Stan function
@@ -425,11 +429,14 @@ pcd_stan_files <- function(
 #' that use them). Default is FALSE.
 #'
 #' @param cpp Logical, whether to declare the functions that have a C++
-#' version without a body, so that the C++ versions are used. These are
-#' faster. The model must then be compiled with the header from
-#' [pcd_stan_header()]. With `dependencies = TRUE`, the Stan functions that
-#' only these functions call are left out. Default is FALSE, which gives
-#' Stan code that compiles on its own.
+#' version without a body, so that the faster C++ versions are used.
+#' Default is TRUE. If the code declares any of them, the model must be
+#' compiled with the header from [pcd_stan_header()], and with
+#' `write_to_file = TRUE` the header and the files it includes are copied
+#' into the directory of `output_file`. With `dependencies = TRUE`, the Stan
+#' functions that only these functions call are left out. Use FALSE for
+#' Stan code that compiles on its own, for example with rstan's
+#' `model_code` or cmdstanr's `expose_functions()`.
 #'
 #' @return A character string containing the requested Stan functions
 #'
@@ -443,7 +450,7 @@ pcd_load_stan_functions <- function(
     write_to_file = FALSE,
     output_file = "pcd_functions.stan",
     dependencies = FALSE,
-    cpp = FALSE) {
+    cpp = TRUE) {
   stan_files <- list.files(
     stan_path,
     pattern = "\\.stan$",
@@ -515,6 +522,14 @@ pcd_load_stan_functions <- function(
   if (write_to_file) {
     writeLines(result, output_file)
     message("Stan functions written to: ", output_file, "\n")
+    if (cpp && .pcd_uses_cpp_functions(result)) {
+      .pcd_copy_stan_header(dirname(output_file))
+      header <- file.path(dirname(output_file), basename(pcd_stan_header()))
+      message(
+        "C++ header written to: ", header, "\n",
+        "Compile the model with it, for example as cmdstanr's `user_header`."
+      )
+    }
   }
 
   return(result)
