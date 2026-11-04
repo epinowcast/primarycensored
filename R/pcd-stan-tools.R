@@ -11,14 +11,10 @@ pcd_stan_path <- function() {
 
 #' Get the path to the C++ header for the Stan functions
 #'
-#' Some Stan functions have a C++ version with a hand-written gradient,
-#' which is faster than the Stan version. These are the uniform primary log
-#' CDFs for lognormal, gamma and Weibull delays, used by
-#' `primarycensored_lpmf()`, `primarycensored_lcdf()` and
-#' `primarycensored_sone_pmf_vectorized()`. [pcd_load_stan_functions()]
-#' declares these functions without a body by default, so models using them
-#' must be compiled with this header. With cmdstanr, pass it as
-#' `user_header`. [pcd_cmdstan_model()] does this for you.
+#' Path to the C++ header for the Stan functions that have a C++ version
+#' (see the `cpp` argument of [pcd_load_stan_functions()]). Models that use
+#' them must be compiled with it, for example as cmdstanr's `user_header`.
+#' [pcd_cmdstan_model()] does this for you.
 #'
 #' @return A character string with the path to the header.
 #'
@@ -89,21 +85,6 @@ pcd_stan_header <- function() {
     }
   }
   content
-}
-
-#' Whether Stan code declares a function that has a C++ version
-#'
-#' @param content Character string of Stan code.
-#'
-#' @return `TRUE` if `content` declares any of `.pcd_cpp_functions()`
-#'   without a body.
-#' @noRd
-.pcd_uses_cpp_functions <- function(content) {
-  any(vapply(
-    .pcd_cpp_functions(),
-    function(func) grepl(paste0("\\b", func, "\\s*\\([^;{]*\\);"), content),
-    logical(1)
-  ))
 }
 
 #' Find dependencies of a Stan function
@@ -515,18 +496,22 @@ pcd_load_stan_functions <- function(
   }
 
   result <- paste(all_content, collapse = "\n")
+  uses_cpp <- FALSE
   if (cpp) {
-    result <- .pcd_declare_cpp_functions(result)
+    declared <- .pcd_declare_cpp_functions(result)
+    uses_cpp <- !identical(declared, result)
+    result <- declared
   }
 
   if (write_to_file) {
     writeLines(result, output_file)
     message("Stan functions written to: ", output_file, "\n")
-    if (cpp && .pcd_uses_cpp_functions(result)) {
+    if (uses_cpp) {
       .pcd_copy_stan_header(dirname(output_file))
       header <- file.path(dirname(output_file), basename(pcd_stan_header()))
       message(
         "C++ header written to: ", header, "\n",
+        "The files it includes were copied next to it. ",
         "Compile the model with it, for example as cmdstanr's `user_header`."
       )
     }

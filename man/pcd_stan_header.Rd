@@ -10,14 +10,10 @@ pcd_stan_header()
 A character string with the path to the header.
 }
 \description{
-Some Stan functions have a C++ version with a hand-written gradient,
-which is faster than the Stan version. These are the uniform primary log
-CDFs for lognormal, gamma and Weibull delays, used by
-\code{primarycensored_lpmf()}, \code{primarycensored_lcdf()} and
-\code{primarycensored_sone_pmf_vectorized()}. \code{\link[=pcd_load_stan_functions]{pcd_load_stan_functions()}}
-declares these functions without a body by default, so models using them
-must be compiled with this header. With cmdstanr, pass it as
-\code{user_header}. \code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this for you.
+Path to the C++ header for the Stan functions that have a C++ version
+(see the \code{cpp} argument of \code{\link[=pcd_load_stan_functions]{pcd_load_stan_functions()}}). Models that use
+them must be compiled with it, for example as cmdstanr's \code{user_header}.
+\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this for you.
 }
 \examples{
 pcd_stan_header()
