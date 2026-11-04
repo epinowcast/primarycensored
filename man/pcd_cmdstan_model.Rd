@@ -14,13 +14,15 @@ pcd_cmdstan_model(
 \item{include_paths}{Character vector of paths to include for Stan
 compilation. Defaults to the result of \code{pcd_stan_path()}.}
 
-\item{cpp}{Logical, whether to use the C++ versions of the Stan functions
-that have one (see \code{\link[=pcd_stan_header]{pcd_stan_header()}}). These are faster. When TRUE,
-the Stan files in \code{\link[=pcd_stan_path]{pcd_stan_path()}} are written to a new temporary
-directory with those functions declared without a body, and the header
-is passed as \code{user_header} unless one is given in \code{...}. The model is
-compiled in that directory unless \code{dir} is given in \code{...}, so it is
-compiled again in each call. Default is TRUE.}
+\item{cpp}{Logical, whether to use the faster C++ versions of the Stan
+functions that have one (see \code{\link[=pcd_stan_header]{pcd_stan_header()}}). When TRUE, and
+\code{include_paths} contains \code{\link[=pcd_stan_path]{pcd_stan_path()}}, the Stan files are written
+to a directory in the session's temporary directory with those functions
+declared without a body. That directory replaces \code{\link[=pcd_stan_path]{pcd_stan_path()}} in
+\code{include_paths}, the header is passed as \code{user_header} unless one is
+given in \code{...}, and the model is compiled there unless \code{dir} is given in
+\code{...}. Later calls in the same session reuse the compiled model. Default
+is TRUE.}
 
 \item{...}{Additional arguments passed to cmdstanr::cmdstan_model().}
 }

@@ -7,13 +7,15 @@
 #' @param include_paths Character vector of paths to include for Stan
 #'  compilation. Defaults to the result of `pcd_stan_path()`.
 #'
-#' @param cpp Logical, whether to use the C++ versions of the Stan functions
-#'  that have one (see [pcd_stan_header()]). These are faster. When TRUE,
-#'  the Stan files in [pcd_stan_path()] are written to a new temporary
-#'  directory with those functions declared without a body, and the header
-#'  is passed as `user_header` unless one is given in `...`. The model is
-#'  compiled in that directory unless `dir` is given in `...`, so it is
-#'  compiled again in each call. Default is TRUE.
+#' @param cpp Logical, whether to use the faster C++ versions of the Stan
+#'  functions that have one (see [pcd_stan_header()]). When TRUE, and
+#'  `include_paths` contains [pcd_stan_path()], the Stan files are written
+#'  to a directory in the session's temporary directory with those functions
+#'  declared without a body. That directory replaces [pcd_stan_path()] in
+#'  `include_paths`, the header is passed as `user_header` unless one is
+#'  given in `...`, and the model is compiled there unless `dir` is given in
+#'  `...`. Later calls in the same session reuse the compiled model. Default
+#'  is TRUE.
 #'
 #' @param ... Additional arguments passed to cmdstanr::cmdstan_model().
 #'
@@ -55,12 +57,12 @@ pcd_cmdstan_model <- function(
   )
 
   model_args <- list(pcd_stan_model, include_paths = include_paths, ...)
-  if (cpp) {
-    stan_path <- primarycensored::pcd_stan_path()
+  stan_path <- primarycensored::pcd_stan_path()
+  is_stan_path <- normalizePath(include_paths, mustWork = FALSE) ==
+    normalizePath(stan_path, mustWork = FALSE)
+  if (cpp && any(is_stan_path)) {
     cpp_path <- .pcd_write_cpp_stan_files(stan_path)
-    model_args$include_paths[
-      normalizePath(include_paths) == normalizePath(stan_path)
-    ] <- cpp_path
+    model_args$include_paths[is_stan_path] <- cpp_path
     if (!"user_header" %in% names(model_args)) {
       model_args$user_header <- pcd_stan_header()
     }
@@ -73,18 +75,27 @@ pcd_cmdstan_model <- function(
 
 #' Write the Stan files with the C++ functions declared without a body
 #'
+#' Files are only rewritten when their content changes, so cmdstanr reuses
+#' a model compiled earlier in the session.
+#'
 #' @param stan_path Path to the Stan functions.
 #'
-#' @return Path to a new temporary directory holding the rewritten files.
+#' @return Path to the directory in the session's temporary directory that
+#'   holds the rewritten files.
 #' @noRd
 .pcd_write_cpp_stan_files <- function(stan_path) {
-  cpp_path <- tempfile("primarycensored_cpp_stan")
-  dir.create(cpp_path)
+  cpp_path <- file.path(tempdir(), "primarycensored_cpp_stan")
+  dir.create(cpp_path, showWarnings = FALSE)
   for (file in list.files(stan_path, pattern = "\\.stan$")) {
     content <- paste(readLines(file.path(stan_path, file)), collapse = "\n")
-    writeLines(
-      .pcd_declare_cpp_functions(content), file.path(cpp_path, file)
-    )
+    lines <- strsplit(
+      .pcd_declare_cpp_functions(content), "\n",
+      fixed = TRUE
+    )[[1]]
+    out_file <- file.path(cpp_path, file)
+    if (!file.exists(out_file) || !identical(readLines(out_file), lines)) {
+      writeLines(lines, out_file)
+    }
   }
   cpp_path
 }
