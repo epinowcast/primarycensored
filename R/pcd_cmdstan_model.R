@@ -88,13 +88,13 @@ pcd_cmdstan_model <- function(
   dir.create(cpp_path, showWarnings = FALSE)
   for (file in list.files(stan_path, pattern = "\\.stan$")) {
     content <- paste(readLines(file.path(stan_path, file)), collapse = "\n")
-    lines <- strsplit(
+    out_lines <- strsplit(
       .pcd_declare_cpp_functions(content), "\n",
       fixed = TRUE
     )[[1]]
     out_file <- file.path(cpp_path, file)
-    if (!file.exists(out_file) || !identical(readLines(out_file), lines)) {
-      writeLines(lines, out_file)
+    if (!file.exists(out_file) || !identical(readLines(out_file), out_lines)) {
+      writeLines(out_lines, out_file)
     }
   }
   cpp_path

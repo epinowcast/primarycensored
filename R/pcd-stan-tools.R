@@ -84,8 +84,8 @@ pcd_stan_header <- function() {
     for (def in .extract_stan_functions(stan_lines, functions = func)) {
       # The signature is everything before the first brace, which may
       # follow a signature over several lines
-      signature <- sub("\\s*\\{[\\s\\S]*$", "", def, perl = TRUE)
-      content <- gsub(def, paste0(signature, ";"), content, fixed = TRUE)
+      def_start <- sub("\\s*\\{[\\s\\S]*$", "", def, perl = TRUE)
+      content <- gsub(def, paste0(def_start, ";"), content, fixed = TRUE)
     }
   }
   content

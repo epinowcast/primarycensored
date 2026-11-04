@@ -211,7 +211,8 @@ test_that("pcd_cmdstan_model passes the cpp settings to cmdstanr", {
   # Without the package Stan files nothing is changed and no warning is
   # given for paths that do not exist
   missing_path <- file.path(tempdir(), "does-not-exist")
-  expect_no_warning(args <- pcd_cmdstan_model(include_paths = missing_path))
+  expect_no_warning(pcd_cmdstan_model(include_paths = missing_path))
+  args <- pcd_cmdstan_model(include_paths = missing_path)
   expect_identical(args$include_paths, missing_path)
   expect_null(args$user_header)
 })
