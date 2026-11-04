@@ -25,8 +25,7 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   * @ingroup analytical_solution_helpers
   *
   * These delays use primarycensored_uniform_lcdf() and
-  * primarycensored_uniform_lcdf_vectorized(), which have C++ versions (see
-  * `pcd_stan_header()` in R).
+  * primarycensored_uniform_lcdf_vectorized(), which have C++ versions.
   *
   * @param dist_id Distribution identifier for the delay distribution
   *
@@ -793,8 +792,7 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * @ingroup primary_event_analytical_distributions
   *
   * Lognormal, gamma and Weibull delays go through
-  * primarycensored_uniform_lcdf_vectorized(), which has a C++ version (see
-  * `pcd_stan_header()` in R).
+  * primarycensored_uniform_lcdf_vectorized(), which has a C++ version.
   * Other delays use primarycensored_uniform_terms_lcdf_vectorized().
   * Only for cases where check_for_analytical_vectorized() and
   * check_uniform_terms_params() are 1.
@@ -872,8 +870,8 @@ vector primarycensored_uniform_terms_lcdf_vectorized(data int start,
   * Compute the uniform primary censored log CDF at a delay
   * @ingroup primary_event_analytical_distributions
   *
-  * For lognormal (1), gamma (2) and Weibull (3) delays. This Stan body is the
-  * reference for the C++ version (see `pcd_stan_header()` in R).
+  * For lognormal (1), gamma (2) and Weibull (3) delays. Has a C++ version,
+  * see `pcd_stan_header()` in R.
   *
   * @param d Delay
   * @param dist_id Distribution identifier (1, 2 or 3)
@@ -895,11 +893,18 @@ real primarycensored_uniform_lcdf(data real d, data int dist_id,
   * Compute the uniform primary censored log CDF at integer delays
   * @ingroup primary_event_analytical_distributions
   *
-  * For lognormal (1), gamma (2) and Weibull (3) delays, with `start` at
-  * least 1. It gives the name that the C++ version (see `pcd_stan_header()`
-  * in R) replaces. Its Stan body forwards to
-  * primarycensored_uniform_terms_lcdf_vectorized(), which has the same
-  * arguments and result.
+  * For lognormal (1), gamma (2) and Weibull (3) delays. Has a C++ version,
+  * see `pcd_stan_header()` in R. The Stan body calls
+  * primarycensored_uniform_terms_lcdf_vectorized().
+  *
+  * @param start First delay to compute, at least 1
+  * @param n Last delay to compute, and the length of the result
+  * @param dist_id Distribution identifier (1, 2 or 3)
+  * @param params Array of distribution parameters
+  * @param pwindow Primary event window, a positive integer
+  *
+  * @return Vector whose element d is the log CDF at d, for d in start:n.
+  * Elements before start are not computed.
   */
 vector primarycensored_uniform_lcdf_vectorized(data int start, data int n,
                                                data int dist_id,
