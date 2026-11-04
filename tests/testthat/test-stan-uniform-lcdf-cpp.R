@@ -94,10 +94,11 @@ pmf_settings <- list(
   c(20, 2, 30.5, 1), c(20, 2.5, Inf, 1), c(20, -1.5, 21, 7), c(30, 3, 31, 2)
 )
 
-# Whether L is so far into the upper tail that 1 - F(L) < 1e-6, using
+# Whether L is so far into the upper tail that 1 - F(L) < 1e-4, using
 # 1 - F(L) <= S_T(L - pwindow). The truncation normaliser is then a
-# difference of log CDFs that round to 0, so neither version's gradient is
-# meaningful.
+# difference of log CDFs close to 0. It amplifies differences of about
+# 1e-13 in the special functions by 1 / (1 - F(L)), past the gradient
+# tolerance of 1e-8.
 far_upper_L <- function(dist_id, params, setting) {
   at <- setting[2] - setting[4]
   if (!is.finite(at) || at <= 0) {
@@ -108,7 +109,7 @@ far_upper_L <- function(dist_id, params, setting) {
     stats::pgamma(at, params[1], params[2], lower.tail = FALSE),
     stats::pweibull(at, params[1], params[2], lower.tail = FALSE)
   )
-  surv < 1e-6
+  surv < 1e-4
 }
 
 pmf_data <- function(dist_id, setting, w) {
