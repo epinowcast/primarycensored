@@ -108,7 +108,7 @@ test_that("tlogis_lcdf and tlogis_lpdf have finite gradients in the location
   skip_if_not_installed("cmdstanr")
   skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
   functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
+    wrap_in_block = TRUE, write_to_file = FALSE, cpp = FALSE
   )
   code <- paste0(
     functions, "\n",
