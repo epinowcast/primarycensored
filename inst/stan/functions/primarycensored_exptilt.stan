@@ -468,10 +468,9 @@ vector primarycensored_lognormal_tilt_pair(real t, real mu, real sigma,
   }
   if (xi > 0) {
     if (t <= 0) return [negative_infinity(), positive_infinity()]';
-    return [
-      primarycensored_lognormal_tilt_series(t, mu, sigma, xi),
-      positive_infinity()
-    ]';
+    // Outside the vector literal, as the series can reject
+    real log_lower = primarycensored_lognormal_tilt_series(t, mu, sigma, xi);
+    return [log_lower, positive_infinity()]';
   }
   if (t <= 0) return [negative_infinity(), bump[4]]';
   return primarycensored_lognormal_tilt_quadrature(t, mu, sigma, -xi, bump);
@@ -1167,14 +1166,15 @@ vector primarycensored_exptilt_lcdf_pair(data real d, data real d_upper,
       || primarycensored_exptilt_form(d_upper, dist_id, rho, pwindow) == 0) {
     context = log_tilt_transform_context(dist_id, -rho, params);
   }
-  return [
-    primarycensored_exptilt_lcdf_shared(
-      d, dist_id, params, pwindow, rho, context
-    ),
-    primarycensored_exptilt_lcdf_shared(
-      d_upper, dist_id, params, pwindow, rho, context
-    )
-  ]';
+  // Computed before the vector is built: an exception thrown inside a
+  // vector literal aborts on the Eigen assertion in its destructor
+  real log_cdf = primarycensored_exptilt_lcdf_shared(
+    d, dist_id, params, pwindow, rho, context
+  );
+  real log_cdf_upper = primarycensored_exptilt_lcdf_shared(
+    d_upper, dist_id, params, pwindow, rho, context
+  );
+  return [log_cdf, log_cdf_upper]';
 }
 
 /**
