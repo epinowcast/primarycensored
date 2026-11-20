@@ -68,19 +68,23 @@ tilt_case_info <- function(dist_id, params, rho, setting) {
 }
 
 # The transform at -rho with the parameters, at 0 with the parameters (the
-# delay CDF, with a data tilt) and at -rho with the parameters as data
+# delay CDF, with a data tilt), at -rho with the parameters as data and at
+# -rho at a point t exp(rho / 10) that depends on rho, as the split point of
+# the truncated logistic series does
 pair_models <- function() {
   compile_cpp_and_stan( # nolint: object_usage_linter.
     tilt_probe_code(
       "  int M;\n  vector[M] t;\n  array[n_params] real fixed;",
       paste(
         "  for (i in 1:M) {",
-        "    out[(9 * i - 8):(9 * i - 6)] = log_tilt_transform_pair(",
+        "    out[(12 * i - 11):(12 * i - 9)] = log_tilt_transform_pair(",
         "      t[i], dist_id, -rho, params);",
-        "    out[(9 * i - 5):(9 * i - 3)] = log_tilt_transform_pair(",
+        "    out[(12 * i - 8):(12 * i - 6)] = log_tilt_transform_pair(",
         "      t[i], dist_id, 0, params);",
-        "    out[(9 * i - 2):(9 * i)] = log_tilt_transform_pair(",
+        "    out[(12 * i - 5):(12 * i - 3)] = log_tilt_transform_pair(",
         "      t[i], dist_id, -rho, fixed);",
+        "    out[(12 * i - 2):(12 * i)] = log_tilt_transform_pair(",
+        "      t[i] * exp(rho / 10), dist_id, -rho, params);",
         "  }",
         sep = "\n"
       )
@@ -95,7 +99,7 @@ pair_data <- function(dist_id, params, setting, w) {
   list(
     dist_id = dist_id, n_params = length(params), M = length(pair_points),
     t = pair_points, fixed = as.array(params),
-    N = 9 * length(pair_points), w = w
+    N = 12 * length(pair_points), w = w
   )
 }
 
@@ -175,7 +179,7 @@ pmf_data <- function(dist_id, params, setting, w) {
 tilt_probes <- list(
   pair = list(
     models = pair_models, settings = list(0), data = pair_data,
-    n = function(setting) 9 * length(pair_points), upper_tail = FALSE
+    n = function(setting) 12 * length(pair_points), upper_tail = FALSE
   ),
   vectorized = list(
     models = vectorized_models, settings = vectorized_settings,
@@ -268,7 +272,7 @@ test_that("C++ tilt gradients match finite differences", {
 test_that("C++ tilt transform rejects an invalid shape as Stan does", {
   skip_if_no_log_prob() # nolint: object_usage_linter.
   models <- pair_models()
-  data <- pair_data(2L, c(2, 0.5), 0, rep(1, 9 * length(pair_points)))
+  data <- pair_data(2L, c(2, 0.5), 0, rep(1, 12 * length(pair_points)))
   upars <- list(theta = c(800, log(0.5), 0.1))
   for (model in models) {
     err <- tryCatch(
