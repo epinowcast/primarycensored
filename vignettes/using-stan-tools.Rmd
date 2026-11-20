@@ -159,6 +159,46 @@ samples <- model$sample(chains = 1, fixed_param = TRUE)
 samples
 ```
 
+### Using the faster C++ versions
+
+Some Stan functions also have a C++ version with a hand-written gradient.
+These are the uniform primary log CDFs for lognormal, gamma and Weibull delays: `primarycensored_uniform_lcdf()` and `primarycensored_uniform_lcdf_vectorized()`.
+`primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()` use them for those delays with a uniform primary event.
+Their gradients are several times faster than the Stan versions.
+
+`pcd_load_stan_functions()` declares these functions without a body by default.
+
+```{r}
+cat(pcd_load_stan_functions("primarycensored_uniform_lcdf"))
+```
+
+A model that uses them must be compiled with the header from `pcd_stan_header()`.
+When you write the functions to a file, the header is copied next to it.
+With `cmdstanr` pass it as `user_header`.
+
+```{r, eval = FALSE}
+pmf_stan_file <- file.path(tempdir(), "pmf.stan")
+pcd_load_stan_functions(
+  "primarycensored_sone_pmf_vectorized",
+  dependencies = TRUE,
+  wrap_in_block = TRUE,
+  write_to_file = TRUE,
+  output_file = pmf_stan_file
+)
+# Add your data, parameters and model blocks to pmf_stan_file, then
+model <- cmdstan_model(
+  pmf_stan_file,
+  user_header = file.path(tempdir(), "primarycensored.hpp")
+)
+```
+
+`pcd_cmdstan_model()` does this for the model that ships with the package.
+If you vendor the Stan functions into your own package, keep the header with them and include `primarycensored.hpp` before the model code.
+
+With `cpp = FALSE` the Stan code compiles on its own and gives the same results.
+Use this when you cannot pass a header, for example with `expose_functions()`.
+If you compile the Stan bodies and include the header as well, the C++ versions are still used wherever the parameters are model parameters rather than data.
+
 ## Using Stan functions directly in R
 
 Whilst it is possible to use Stan functions directly in R it is not recommended for most use cases (use the R functions in `primarycensored` instead). However, it can be useful to understand what is going on under the hood or for exploration (indeed we use this internally in `primarycensored` to check our functions against the R implementations). To do this we use the `expose_functions()` method on our already compiled model. **This can take some time (~30 seconds) to compile all of the functions.**

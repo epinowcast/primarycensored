@@ -17,7 +17,7 @@ gradient_probe_model <- function() {
   )
 
   functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
+    wrap_in_block = TRUE, write_to_file = FALSE, cpp = FALSE
   )
   code <- paste0(
     functions, "\n",

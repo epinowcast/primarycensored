@@ -9,7 +9,7 @@ gamma_probe_model <- function(target, parameters, name) {
     is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
   )
   functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
+    wrap_in_block = TRUE, write_to_file = FALSE, cpp = FALSE
   )
   code <- paste0(
     functions, "\n",

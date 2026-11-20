@@ -10,6 +10,8 @@ if (!on_ci() || not_on_cran()) {
       library(cmdstanr) # nolint
       # Keep the file name free of underscores, as cmdstanr's
       # expose_functions() wrongly flags them as reserved names.
+      # expose_functions() does not use a user header, so keep the Stan
+      # bodies of the functions that have a C++ version.
       temp_path <- file.path(tempdir(), "pcdtests.stan")
       # Use local source Stan files if available (e.g. during
       # development), otherwise fall back to the installed package
@@ -23,7 +25,8 @@ if (!on_ci() || not_on_cran()) {
         wrap_in_block = TRUE,
         write_to_file = TRUE,
         output_file = temp_path,
-        stan_path = stan_path
+        stan_path = stan_path,
+        cpp = FALSE
       )
       model <- suppressMessages(
         suppressWarnings(
