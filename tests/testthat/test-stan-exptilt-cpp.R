@@ -7,6 +7,7 @@ skip_on_cran()
 # helpers.
 
 tilt_cpp_cases <- list(
+  list(dist_id = 1L, params = list(c(1.5, 0.5), c(0.2, 1.2), c(3, 0.3))),
   list(dist_id = 4L, params = list(0.5, 2)),
   list(dist_id = 2L, params = list(
     c(2, 0.5), c(0.6, 1.3), c(20, 4), c(200, 20)
@@ -19,9 +20,9 @@ tilt_cpp_cases <- list(
 # Tilts of both signs, including two near the small tilt switch
 tilt_cpp_rhos <- c(0.2, -0.15, 0.004, -0.004, 1)
 
-# Probe model with theta = (unconstrained delay parameters, rho). The mean
-# of the normal (18) is on the identity scale, the other delay parameters
-# on the log scale. The target is the weighted sum of the finite elements
+# Probe model with theta = (unconstrained delay parameters, rho). The first
+# parameter of the lognormal (1) and normal (18) is on the identity scale,
+# the other delay parameters on the log scale. The target is the weighted sum of the finite elements
 # of `out`, and `out` is also a generated quantity.
 tilt_probe_code <- function(data_code, out_code) {
   paste0(
@@ -30,7 +31,8 @@ tilt_probe_code <- function(data_code, out_code) {
     "parameters {\n  vector[n_params + 1] theta;\n}\n",
     "transformed parameters {\n  array[n_params] real params;\n",
     "  for (j in 1:n_params) {\n",
-    "    params[j] = dist_id == 18 && j == 1 ? theta[j] : exp(theta[j]);\n",
+    "    params[j] = (dist_id == 1 || dist_id == 18) && j == 1 ? theta[j]\n",
+    "      : exp(theta[j]);\n",
     "  }\n  real rho = theta[n_params + 1];\n}\n",
     "model {\n  vector[N] out;\n", out_code, "\n",
     "  for (i in 1:N) {\n",
@@ -41,7 +43,7 @@ tilt_probe_code <- function(data_code, out_code) {
 }
 
 tilt_theta <- function(dist_id, params, rho) {
-  log_scale <- seq_along(params) > (dist_id == 18L)
+  log_scale <- seq_along(params) > (dist_id %in% c(1L, 18L))
   c(ifelse(log_scale, log(abs(params)), params), rho)
 }
 

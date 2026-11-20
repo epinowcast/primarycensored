@@ -28,6 +28,9 @@
  * for xi = 0 the CDF P(k, x) and its complement, as for the gamma. For
  * xi other than 0 the series of primarycensored_stacy_series(), whose
  * terms are differentiated one by one, see stacy_tilt_pair().
+ * Lognormal (mu, sigma), for xi >= 0 only: the CDF for xi = 0 and the
+ * partial moment series for xi > 0, see lognormal_tilt_pair(). The
+ * quadrature for xi < 0 stays in Stan.
  * The third element, the log loss of the series, is 0 for the others.
  * Each call is one autodiff node.
  *
@@ -488,11 +491,97 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
 }
 
 /**
+ * Lognormal tilt pair for xi >= 0, as primarycensored_lognormal_tilt_pair()
+ * in Stan.
+ *
+ * With z = (log t - mu) / sigma, the CDF is Phi(z). For xi > 0 the lower
+ * transform is the series of the terms
+ *   log a_k = k (log xi + mu) + (k sigma)^2 / 2 - log k!
+ *             + log Phi(z - k sigma),
+ * whose partials are summed with weights a_k / sum as the terms are added.
+ * The upper transform is inf for xi > 0, as the total diverges.
+ *
+ * @param t Point.
+ * @param xi Tilt, at least 0.
+ * @param mu Mean of the log of the delay.
+ * @param sigma Standard deviation of the log of the delay.
+ * @param grad Whether to compute the partials.
+ * @return The pair.
+ */
+inline TiltPair lognormal_tilt_pair(double t, double xi, double mu,
+                                    double sigma, bool grad) {
+  TiltPair out;
+  const double inf = std::numeric_limits<double>::infinity();
+  if (xi < 0) {
+    throw std::domain_error(
+        "primarycensored_tilt_pair: the lognormal needs xi >= 0");
+  }
+  out.val[1] = xi == 0 ? 0 : inf;
+  if (t <= 0) {
+    return out;
+  }
+  const double z = (std::log(t) - mu) / sigma;
+  const double log_lo = log_std_normal_cdf(z);
+  if (xi == 0) {
+    const double log_up = log_std_normal_cdf(-z);
+    out.val[0] = log_lo;
+    out.val[1] = log_up;
+    if (grad) {
+      const double r_lo = dlog_std_normal_cdf(z, log_lo);
+      const double r_up = -dlog_std_normal_cdf(-z, log_up);
+      out.grad[0][1] = -r_lo / sigma;
+      out.grad[0][2] = -r_lo * z / sigma;
+      out.grad[1][1] = -r_up / sigma;
+      out.grad[1][2] = -r_up * z / sigma;
+    }
+    return out;
+  }
+  const double log_xi_mu = std::log(xi) + mu;
+  double log_factorial = 0;
+  double total = log_lo;
+  // Partials of the log sum in xi, mu and sigma
+  double g[3] = {0, 0, 0};
+  if (grad) {
+    const double r = dlog_std_normal_cdf(z, log_lo);
+    g[1] = -r / sigma;
+    g[2] = -r * z / sigma;
+  }
+  for (int k = 1; k <= 20000; ++k) {
+    log_factorial += std::log(k);
+    const double ks = k * sigma;
+    const double z_k = z - ks;
+    const double log_phi_k = log_std_normal_cdf(z_k);
+    const double log_term
+        = k * log_xi_mu + 0.5 * (ks * ks) - log_factorial + log_phi_k;
+    const double new_total = stan::math::log_sum_exp(total, log_term);
+    if (grad) {
+      const double keep = std::exp(total - new_total);
+      const double weight = std::exp(log_term - new_total);
+      const double r = dlog_std_normal_cdf(z_k, log_phi_k);
+      g[0] = g[0] * keep + weight * k / xi;
+      g[1] = g[1] * keep + weight * (k - r / sigma);
+      g[2] = g[2] * keep + weight * (k * ks - r * (z / sigma + k));
+    }
+    total = new_total;
+    if (k > xi * t && log_term < total - 41) {
+      out.val[0] = total;
+      for (int j = 0; j < 3; ++j) {
+        out.grad[0][j] = g[j];
+      }
+      return out;
+    }
+  }
+  throw std::domain_error(
+      "The lognormal tilt transform needs more than 20000 terms. Use the "
+      "numerical path.");
+}
+
+/**
  * Tilt pair for the given delay distribution.
  *
  * @param t Point.
- * @param dist_id 2 (gamma), 3 (Weibull), 4 (exponential), 5 (generalised
- *   gamma) or 18 (normal).
+ * @param dist_id 1 (lognormal, for xi >= 0), 2 (gamma), 3 (Weibull),
+ *   4 (exponential), 5 (generalised gamma) or 18 (normal).
  * @param xi Tilt.
  * @param p Delay parameters.
  * @param grad Whether to compute the partials.
@@ -500,7 +589,9 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
  */
 inline TiltPair tilt_pair(double t, int dist_id, double xi,
                           const std::vector<double>& p, bool grad) {
-  if (dist_id == 2) {
+  if (dist_id == 1) {
+    return lognormal_tilt_pair(t, xi, p[0], p[1], grad);
+  } else if (dist_id == 2) {
     return gamma_tilt_pair(t, xi, p[0], p[1], grad);
   } else if (dist_id == 3) {
     return stacy_tilt_pair(t, xi, p[0], p[1], 1.0, false, grad);
@@ -523,8 +614,8 @@ inline TiltPair tilt_pair(double t, int dist_id, double xi,
  * calling convention, which is not used.
  *
  * @param t Point.
- * @param dist_id 2 (gamma), 3 (Weibull), 4 (exponential), 5 (generalised
- *   gamma) or 18 (normal).
+ * @param dist_id 1 (lognormal, for xi >= 0), 2 (gamma), 3 (Weibull),
+ *   4 (exponential), 5 (generalised gamma) or 18 (normal).
  * @param xi Tilt (var or double).
  * @param params Delay parameters (var or double).
  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), log loss],
@@ -537,9 +628,9 @@ primarycensored_tilt_pair(const T_t& t, const int& dist_id, const T_xi& xi,
                           const std::vector<T_p>& params,
                           std::ostream* /* pstream__ */) {
   constexpr const char* fn = "primarycensored_tilt_pair";
-  if (dist_id < 2 || (dist_id > 5 && dist_id != 18)) {
+  if (dist_id < 1 || (dist_id > 5 && dist_id != 18)) {
     throw std::domain_error(std::string(fn)
-                            + ": dist_id must be 2, 3, 4, 5 or 18");
+                            + ": dist_id must be 1, 2, 3, 4, 5 or 18");
   }
   const std::size_t n_params = dist_id == 4 ? 1 : (dist_id == 5 ? 3 : 2);
   if (params.size() < n_params) {

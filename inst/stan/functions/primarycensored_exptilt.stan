@@ -505,13 +505,15 @@ vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
   * version.
   *
   * @param dist_id Distribution identifier for the delay distribution
+  * @param xi Tilt
   *
   * @return 1 for gamma (2), Weibull (3), exponential (4), generalised
-  * gamma (5) and normal (18) delays, 0 otherwise
+  * gamma (5) and normal (18) delays, and for lognormal (1) delays with
+  * xi >= 0, 0 otherwise
   */
-int check_for_cpp_tilt(int dist_id) {
+int check_for_cpp_tilt(int dist_id, real xi) {
   return dist_id == 2 || dist_id == 3 || dist_id == 4 || dist_id == 5
-         || dist_id == 18;
+         || dist_id == 18 || (dist_id == 1 && xi >= 0);
 }
 
 /**
@@ -520,16 +522,19 @@ int check_for_cpp_tilt(int dist_id) {
   *
   * As log_tilt_transform_pair_shared() for the delays that need no shared
   * quantities: gamma (2), Weibull (3), exponential (4), generalised gamma
-  * (5) and normal (18). Has a C++ version, see `pcd_stan_header()` in R.
+  * (5) and normal (18), and lognormal (1) with xi >= 0. Has a C++ version,
+  * see `pcd_stan_header()` in R.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
   * (rate / (rate - xi))^shape, with both tails from gamma_lcdf_lccdf_logx().
   * The Weibull and generalised gamma use primarycensored_stacy_series() for
-  * xi other than 0.
+  * xi other than 0. The lognormal uses primarycensored_lognormal_tilt_pair(),
+  * which needs no shared quantities for xi >= 0.
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 3 (Weibull),
-  *   4 (Exponential), 5 (Generalised gamma) or 18 (Normal)
+  * @param dist_id Distribution identifier: 1 (Lognormal, xi >= 0),
+  *   2 (Gamma), 3 (Weibull), 4 (Exponential), 5 (Generalised gamma) or
+  *   18 (Normal)
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
@@ -577,6 +582,11 @@ vector primarycensored_tilt_pair(real t, int dist_id, real xi,
     if (t <= 0) return [negative_infinity(), not_a_number(), 0]';
     vector[2] series = primarycensored_stacy_series(t, xi, shape, scale, k);
     return [series[1], not_a_number(), series[2]]';
+  } else if (dist_id == 1 && xi >= 0) {
+    vector[2] pair = primarycensored_lognormal_tilt_pair(
+      t, params[1], params[2], xi, rep_vector(0, 4)
+    );
+    return append_row(pair, 0);
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -614,7 +624,7 @@ vector primarycensored_tilt_pair(real t, int dist_id, real xi,
   */
 vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
                                       array[] real params, vector context) {
-  if (check_for_cpp_tilt(dist_id)) {
+  if (check_for_cpp_tilt(dist_id, xi)) {
     return primarycensored_tilt_pair(t, dist_id, xi, params);
   } else if (dist_id == 1) {
     vector[2] pair = primarycensored_lognormal_tilt_pair(
