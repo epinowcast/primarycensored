@@ -6,6 +6,9 @@
   Code that uses them must be compiled with the header from `pcd_stan_header()`, which is copied next to `output_file` when writing to a file.
   Use `cpp = FALSE` for Stan code that compiles on its own.
   See #362.
+- The Stan function `primarycensored_analytical_lcdf_vectorized()` now takes `primary_id` and `primary_params` as its last two arguments.
+  Stan models that include the function files one by one need `#include primarycensored_exptilt.stan`.
+  See #367.
 
 ## New features
 
@@ -14,6 +17,12 @@
   The CDF is evaluated once per unique point for each `pwindow`, so data with mixed settings need only one call.
   `fitdistdoublecens()` uses the same code.
   See #376 and #390.
+- Added analytical solutions for an exponentially tilted primary event window (`dexpgrowth()`), in R and Stan, see `?pcens_cdf_exptilt`.
+  They cover exponential, gamma, normal, Weibull, generalised gamma and lognormal delays.
+  Weibull and generalised gamma use incomplete gamma series, and lognormal uses quadrature for `r > 0` and a series for `r < 0`.
+  The numerical path is used where a closed form loses precision or is slower, so results for these delays can differ at the 1e-5 level.
+  The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
+  See #367, #368 and #369.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
@@ -42,6 +51,8 @@
 - The uniform primary log CDFs for lognormal, gamma and Weibull delays have C++ versions with closed-form gradients, used by `primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()`.
   `pcd_cmdstan_model()` uses them by default, and the new `pcd_stan_header()` gives the header to compile other models with.
   See #362.
+- The tilt transforms behind the exponentially tilted primary (`dexpgrowth()`) solutions for exponential, gamma, normal, Weibull and generalised gamma delays have C++ versions with closed-form gradients in the delay parameters and the growth rate.
+  Lognormal delays use them for the delay CDF and for `r < 0`, and the Stan quadrature for `r > 0`.
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster.
   They cost less per call and, for 64 or more points on a lattice such as the one used by `dprimarycensored()` and `fitdistdoublecens()`, evaluate the delay terms once per distinct point.
   They also return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay.

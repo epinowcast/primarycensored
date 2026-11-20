@@ -70,9 +70,13 @@ cpp_probe_theta <- function(dist_id, params) {
 }
 
 # Expects the C++ and Stan values of `out` to match, including which are
-# infinite or NaN.
-expect_cpp_values_match <- function(models, data, params, info) {
-  init <- list(theta = cpp_probe_theta(data$dist_id, params))
+# infinite or NaN. `theta` is the unconstrained parameter vector of the
+# probe model.
+expect_cpp_values_match <- function(models, data, params, info,
+                                    theta = cpp_probe_theta(
+                                      data$dist_id, params
+                                    )) {
+  init <- list(theta = theta)
   stan <- stan_gq(models$stan, data, init, "out")
   cpp <- stan_gq(models$cpp, data, init, "out")
   testthat::expect_identical(is.nan(cpp), is.nan(stan), info = info)
@@ -102,8 +106,11 @@ expect_cpp_values_match <- function(models, data, params, info) {
 # reference there instead.
 expect_cpp_gradient_matches <- function(models, data, params, info,
                                         model = "cpp", tolerance = 1e-8,
-                                        upper_tail = FALSE) {
-  upars <- list(theta = cpp_probe_theta(data$dist_id, params))
+                                        upper_tail = FALSE,
+                                        theta = cpp_probe_theta(
+                                          data$dist_id, params
+                                        )) {
+  upars <- list(theta = theta)
   out <- stan_gq(models$stan, data, upars, "out")
   data$w[!is.na(out) & out < -500] <- 0
   if (upper_tail) {

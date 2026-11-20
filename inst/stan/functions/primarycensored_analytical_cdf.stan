@@ -85,6 +85,69 @@ int check_for_analytical(int dist_id, int primary_id) {
 }
 
 /**
+  * Check if the analytical solution applies for the given parameters
+  * @ingroup analytical_solution_helpers
+  *
+  * This is check_for_analytical() with check_uniform_terms_params() and, for
+  * the exponentially tilted solutions, which check_for_analytical() does not
+  * include, that the tilted delay exists, see check_for_tilt_transform(). It
+  * chooses the path in primarycensored_cdf() and primarycensored_lcdf().
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param primary_id Distribution identifier for the primary distribution
+  * @param primary_params Array of primary distribution parameters
+  * @param pwindow Primary event window
+  *
+  * @return 1 if the analytical solution applies, 0 if the numerical path is
+  * needed
+  */
+int check_for_analytical_params(int dist_id, array[] real params,
+                                int primary_id, array[] real primary_params,
+                                data real pwindow) {
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform(dist_id, -primary_params[1], params);
+  }
+  return check_for_analytical(dist_id, primary_id) &&
+    check_uniform_terms_params(dist_id, params);
+}
+
+/**
+  * Check if the analytical solution is the path to use at a delay
+  * @ingroup analytical_solution_helpers
+  *
+  * This is check_for_analytical_params() and, for the exponentially tilted
+  * solutions, that the tilt transform is the path to use at d, see
+  * check_for_tilt_transform_at(). It chooses the path in
+  * primarycensored_cdf(), primarycensored_lcdf() and
+  * primarycensored_lcdf_vectorized().
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  * @param params Array of delay distribution parameters
+  * @param primary_id Distribution identifier for the primary distribution
+  * @param primary_params Array of primary distribution parameters
+  * @param d Delay, the largest delay if there are several
+  * @param pwindow Primary event window
+  *
+  * @return 1 if the analytical solution is the path to use at d, 0 if the
+  * numerical path is needed
+  */
+int check_for_analytical_delay(int dist_id, array[] real params,
+                               int primary_id, array[] real primary_params,
+                               data real d, data real pwindow) {
+  if (!check_for_analytical_params(dist_id, params, primary_id,
+                                   primary_params, pwindow)) {
+    return 0;
+  }
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return check_for_tilt_transform_at(
+      dist_id, -primary_params[1], params, d, pwindow
+    );
+  }
+  return 1;
+}
+
+/**
   * Combine the uniform primary terms at d and q into the censored log CDF
   * @ingroup analytical_solution_helpers
   *
@@ -659,6 +722,18 @@ real primarycensored_analytical_lcdf_raw(data real d, int dist_id,
                                          data real pwindow,
                                          int primary_id,
                                          array[] real primary_params) {
+  if (check_for_exptilt(dist_id, primary_id)) {
+    if (!check_for_tilt_transform(dist_id, -primary_params[1], params)) {
+      reject(
+        "The tilted delay distribution does not exist for tilt ",
+        primary_params[1], ". Use the numerical path, see ",
+        "check_for_analytical_params()."
+      );
+    }
+    return primarycensored_exptilt_lcdf(
+      d | dist_id, params, pwindow, primary_params[1]
+    );
+  }
   // Delays on the reals are not clipped at 0
   real q = dist_has_positive_support(dist_id) ? max({d - pwindow, 0.0})
                                               : d - pwindow;
@@ -767,13 +842,14 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   * Check if the analytical solution can be vectorised over integer delays
   * @ingroup analytical_solution_helpers
   *
-  * The analytical uniform primary CDF at d combines terms at d and at
-  * q = max(d - pwindow, 0) (d - pwindow for delays on the reals). With
-  * an integer pwindow q is an integer delay too, so
-  * primarycensored_analytical_lcdf_vectorized() can compute the terms once
-  * per delay and share them. This needs the analytical solutions built from
-  * primarycensored_uniform_terms(), see check_for_uniform_terms(). The
-  * non-parametric delays in check_for_analytical() have no such terms.
+  * The analytical CDF at d combines terms at d and at q = max(d - pwindow, 0)
+  * (d - pwindow for delays on the reals). With an integer pwindow q is an
+  * integer delay too, so primarycensored_analytical_lcdf_vectorized() can
+  * compute the terms once per delay and share them. This needs the
+  * analytical solutions built from primarycensored_uniform_terms(), see
+  * check_for_uniform_terms(), or the exponentially tilted solutions, see
+  * check_for_exptilt(). The non-parametric delays in check_for_analytical()
+  * have no such terms.
   *
   * @param dist_id Distribution identifier for the delay distribution
   * @param primary_id Distribution identifier for the primary distribution
@@ -783,7 +859,8 @@ real primarycensored_analytical_cdf(data real d, int dist_id,
   */
 int check_for_analytical_vectorized(int dist_id, int primary_id,
                                     data real pwindow) {
-  return check_for_uniform_terms(dist_id, primary_id) &&
+  return (check_for_uniform_terms(dist_id, primary_id)
+          || check_for_exptilt(dist_id, primary_id)) &&
     pwindow >= 1 && floor(pwindow) == pwindow;
 }
 
@@ -791,26 +868,34 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * Compute the primary event censored log CDF analytically at integer delays
   * @ingroup primary_event_analytical_distributions
   *
-  * Lognormal, gamma and Weibull delays go through
+  * Exponentially tilted primaries go through
+  * primarycensored_exptilt_lcdf_vectorized(). Lognormal, gamma and Weibull
+  * delays with a uniform primary go through
   * primarycensored_uniform_lcdf_vectorized(), which has a C++ version.
   * Other delays use primarycensored_uniform_terms_lcdf_vectorized().
-  * Only for cases where check_for_analytical_vectorized() and
-  * check_uniform_terms_params() are 1.
+  * Only for cases where check_for_analytical_vectorized() is 1 and
+  * check_for_analytical_delay() is 1 at n.
   *
   * @param start First delay to compute
   * @param n Last delay to compute, and the length of the result
   * @param dist_id Distribution identifier
   * @param params Array of distribution parameters
   * @param pwindow Primary event window, a positive integer
+  * @param primary_id Primary distribution identifier
+  * @param primary_params Primary distribution parameters
   *
   * @return Vector whose element d is the log CDF at d, for d in start:n.
   * Elements before start are not computed.
   */
-vector primarycensored_analytical_lcdf_vectorized(data int start,
-                                                  data int n,
-                                                  data int dist_id,
-                                                  array[] real params,
-                                                  data real pwindow) {
+vector primarycensored_analytical_lcdf_vectorized(
+  data int start, data int n, data int dist_id, array[] real params,
+  data real pwindow, data int primary_id, array[] real primary_params
+) {
+  if (check_for_exptilt(dist_id, primary_id)) {
+    return primarycensored_exptilt_lcdf_vectorized(
+      start, n, dist_id, params, to_int(pwindow), primary_params[1]
+    );
+  }
   if (check_for_cpp_uniform(dist_id)) {
     return primarycensored_uniform_lcdf_vectorized(
       start, n, dist_id, params, pwindow

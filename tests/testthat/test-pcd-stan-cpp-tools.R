@@ -120,10 +120,7 @@ test_that("pcd_load_stan_functions with cpp = TRUE only changes the C++
   ))
   # and only they lose their bodies: the code shrinks by their bodies alone
   bodies <- vapply(
-    c(
-      "primarycensored_uniform_lcdf",
-      "primarycensored_uniform_lcdf_vectorized"
-    ),
+    .pcd_cpp_functions(),
     function(f) {
       def <- .extract_stan_functions(
         strsplit(all_stan, "\n", fixed = TRUE)[[1]],

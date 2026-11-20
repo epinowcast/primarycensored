@@ -165,6 +165,8 @@ Some Stan functions also have a C++ version with a hand-written gradient.
 These are the uniform primary log CDFs for lognormal, gamma and Weibull delays: `primarycensored_uniform_lcdf()` and `primarycensored_uniform_lcdf_vectorized()`.
 `primarycensored_lpmf()`, `primarycensored_lcdf()` and `primarycensored_sone_pmf_vectorized()` use them for those delays with a uniform primary event.
 Their gradients are several times faster than the Stan versions.
+The tilt transforms behind the exponentially tilted primary solutions also have a C++ version, `primarycensored_tilt_pair()`.
+It covers exponential, gamma, normal, Weibull and generalised gamma delays, and lognormal delays except the quadrature used for `r > 0`.
 
 `pcd_load_stan_functions()` declares these functions without a body by default.
 
