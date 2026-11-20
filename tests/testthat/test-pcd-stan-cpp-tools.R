@@ -63,6 +63,15 @@ test_that("pcd_load_stan_functions does not copy the header when it is not
   }
 })
 
+test_that(".pcd_copy_stan_header errors when the header cannot be copied", {
+  path <- withr::local_tempfile()
+  writeLines("", path)
+  expect_error(
+    suppressWarnings(.pcd_copy_stan_header(path)),
+    "Could not copy"
+  )
+})
+
 test_that(".pcd_declare_cpp_functions cuts a signature over several lines at
   the first brace", {
   code <- paste(

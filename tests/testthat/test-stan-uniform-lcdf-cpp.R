@@ -223,8 +223,10 @@ test_that("C++ gradients match finite differences", {
   }
 })
 
-# testdata/uniform-lpmf-reference.csv is computed at 50 digits by
-# data-raw/uniform-lpmf-reference.py. Elements below -500, and past the mode
+# testdata/uniform-lpmf-reference.csv holds the truncated log PMF of
+# [d - 1, d) and its gradient in theta (see helper-stan-cpp.R), computed
+# once at 50 digits with mpmath from G(t) = t F(t) - M(t) for each delay
+# (see the C++ header). Elements below -500, and past the mode
 # below -10, are left out as in expect_cpp_gradient_matches(), as are
 # elements whose reference is NA (not a number even at 50 digits).
 test_that("log PMF and gradient with the C++ log CDF match a 50-digit

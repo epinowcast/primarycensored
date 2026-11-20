@@ -13,8 +13,8 @@ pcd_stan_path <- function() {
 #'
 #' Path to the C++ header for the Stan functions that have a C++ version
 #' (see the `cpp` argument of [pcd_load_stan_functions()]). Models that use
-#' them must be compiled with it, for example as cmdstanr's `user_header`.
-#' [pcd_cmdstan_model()] does this for you.
+#' them must be compiled with it, for example as the `user_header` argument
+#' of cmdstanr. [pcd_cmdstan_model()] does this for you.
 #'
 #' @return A character string with the path to the header.
 #'
@@ -416,8 +416,8 @@ pcd_stan_files <- function(
 #' `write_to_file = TRUE` the header and the files it includes are copied
 #' into the directory of `output_file`. With `dependencies = TRUE`, the Stan
 #' functions that only these functions call are left out. Use FALSE for
-#' Stan code that compiles on its own, for example with rstan's
-#' `model_code` or cmdstanr's `expose_functions()`.
+#' Stan code that compiles on its own, for example as `model_code` in rstan
+#' or with `expose_functions()` in cmdstanr.
 #'
 #' @return A character string containing the requested Stan functions
 #'
@@ -512,7 +512,8 @@ pcd_load_stan_functions <- function(
       message(
         "C++ header written to: ", header, "\n",
         "The files it includes were copied next to it. ",
-        "Compile the model with it, for example as cmdstanr's `user_header`."
+        "Compile the model with it, for example as the `user_header` ",
+        "argument of cmdstanr."
       )
     }
   }

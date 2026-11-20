@@ -12,8 +12,8 @@ A character string with the path to the header.
 \description{
 Path to the C++ header for the Stan functions that have a C++ version
 (see the \code{cpp} argument of \code{\link[=pcd_load_stan_functions]{pcd_load_stan_functions()}}). Models that use
-them must be compiled with it, for example as cmdstanr's \code{user_header}.
-\code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this for you.
+them must be compiled with it, for example as the \code{user_header} argument
+of cmdstanr. \code{\link[=pcd_cmdstan_model]{pcd_cmdstan_model()}} does this for you.
 }
 \examples{
 pcd_stan_header()

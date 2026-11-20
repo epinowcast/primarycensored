@@ -42,8 +42,8 @@ compiled with the header from \code{\link[=pcd_stan_header]{pcd_stan_header()}},
 \code{write_to_file = TRUE} the header and the files it includes are copied
 into the directory of \code{output_file}. With \code{dependencies = TRUE}, the Stan
 functions that only these functions call are left out. Use FALSE for
-Stan code that compiles on its own, for example with rstan's
-\code{model_code} or cmdstanr's \code{expose_functions()}.}
+Stan code that compiles on its own, for example as \code{model_code} in rstan
+or with \code{expose_functions()} in cmdstanr.}
 }
 \value{
 A character string containing the requested Stan functions
