@@ -44,3 +44,8 @@ test_that("pcd_stan_dist_id returns 27L and 28L for the two hazard variants", {
   expect_identical(pcd_stan_dist_id("discretehazard_re"), 28L)
   expect_identical(pcd_stan_dist_id("hazard random effect"), 28L)
 })
+
+test_that("pcd_stan_dist_id returns 29L for the log-logistic distribution", {
+  expect_identical(pcd_stan_dist_id("loglogistic"), 29L)
+  expect_identical(pcd_stan_dist_id("log-logistic"), 29L)
+})

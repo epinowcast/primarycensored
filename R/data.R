@@ -5,12 +5,12 @@
 #' those only available in Stan. Distributions beyond these are not supported
 #' in the stan code but any user functions can be used in the R code.
 #'
-#' @format A data.frame with 28 rows and 4 columns:
+#' @format A data.frame with 29 rows and 4 columns:
 #' \describe{
 #'   \item{name}{Distribution name}
 #'   \item{pdist}{R distribution function name (e.g. plnorm), NA if there is no
 #'   registered R implementation. `ppareto`, `pinvgamma` and `pinvchisq` are
-#'   from the extraDistr package.}
+#'   from the extraDistr package, and `pllogis` from flexsurv and actuar.}
 #'   \item{aliases}{Alternative names/identifiers}
 #'   \item{stan_id}{Stan distribution ID used in the stan code}
 #' }
