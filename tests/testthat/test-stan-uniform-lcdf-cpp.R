@@ -15,6 +15,11 @@ cpp_cases <- list(
   )),
   list(dist_id = 3L, params = list(
     c(1.5, 5), c(0.7, 2), c(3, 30), c(5, 0.8), c(0.8, 3)
+  )),
+  # Log-logistic, parameters are the scale then the shape
+  list(dist_id = 29L, params = list(
+    c(5, 3), c(1, 0.5), c(30, 20), c(10, 1.5), c(2, 8), c(20, 0.8),
+    c(1, 20)
   ))
 )
 
@@ -104,10 +109,11 @@ far_upper_L <- function(dist_id, params, setting) {
   if (!is.finite(at) || at <= 0) {
     return(FALSE)
   }
-  surv <- switch(dist_id,
-    stats::plnorm(at, params[1], params[2], lower.tail = FALSE),
-    stats::pgamma(at, params[1], params[2], lower.tail = FALSE),
-    stats::pweibull(at, params[1], params[2], lower.tail = FALSE)
+  surv <- switch(as.character(dist_id),
+    "1" = stats::plnorm(at, params[1], params[2], lower.tail = FALSE),
+    "2" = stats::pgamma(at, params[1], params[2], lower.tail = FALSE),
+    "3" = stats::pweibull(at, params[1], params[2], lower.tail = FALSE),
+    "29" = 1 / (1 + (at / params[1])^params[2])
   )
   surv < 1e-4
 }
@@ -196,6 +202,68 @@ test_that("C++ vectorized gradient with the nested autodiff dP/da matches
       )
     }
   }
+})
+
+# The log CDF with truncation, which for the log-logistic switches to the
+# numerical CDF where the C++ solution is ill conditioned
+analytical_models <- function() {
+  compile_cpp_and_stan( # nolint: object_usage_linter.
+    cpp_probe_code( # nolint: object_usage_linter.
+      "  vector[N] d;",
+      paste(
+        "  for (i in 1:N) out[i] = primarycensored_analytical_lcdf(",
+        "d[i] | dist_id, params, pwindow, 0, positive_infinity(), 1,",
+        "rep_array(0.0, 0));"
+      )
+    ),
+    "pcdcppanalytical"
+  )
+}
+
+# Whether the log-logistic solution is ill conditioned at the delays `d`,
+# from the log CDFs `out`, as in loglogistic_window_ill_conditioned()
+loglogistic_ill <- function(d, params, pwindow, out) {
+  .loglogistic_uniform_ill( # nolint: object_usage_linter.
+    d, pwindow, list(scale = params[1], shape = params[2]), exp(out)
+  )
+}
+
+test_that("C++ log-logistic matches Stan where it uses the numerical CDF", {
+  skip_if_no_log_prob()
+  set.seed(4)
+  ll_params <- list(c(30, 20), c(2, 8), c(1, 20), c(5, 3), c(1, 0.5))
+  scalar <- analytical_models()
+  pmf <- pmf_models()
+  n_ill <- 0
+  for (params in ll_params) {
+    for (setting in scalar_settings) {
+      data <- scalar_data(29L, setting, rep(1, length(scalar_delays)))
+      info <- case_info(29L, params, c("analytical", setting))
+      expect_cpp_values_match(scalar, data, params, info)
+      out <- stan_gq(
+        scalar$stan, data, list(theta = log(params)), "out"
+      )
+      positive <- scalar_delays > 0
+      n_ill <- n_ill + sum(loglogistic_ill(
+        scalar_delays[positive], params, setting, out[positive]
+      ))
+      data$w <- stats::runif(length(scalar_delays), 0.5, 1.5)
+      expect_cpp_gradient_matches(scalar, data, params, info)
+    }
+    for (setting in pmf_settings[c(1, 2, 4, 7)]) {
+      data <- pmf_data(29L, setting, rep(1, setting[1] + 1))
+      info <- case_info(29L, params, c("pmf", setting))
+      expect_cpp_values_match(pmf, data, params, info)
+      if (!far_upper_L(29L, params, setting)) {
+        data$w <- stats::runif(setting[1] + 1, 0.5, 1.5)
+        expect_cpp_gradient_matches(
+          pmf, data, params, info, upper_tail = TRUE
+        )
+      }
+    }
+  }
+  # The vectorised PMF uses the same check, so it is counted from the CDFs
+  expect_gt(n_ill, 0)
 })
 
 test_that("C++ gradients match finite differences", {

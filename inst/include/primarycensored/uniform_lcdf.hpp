@@ -4,8 +4,8 @@
 /**
  * C++ versions, with closed-form gradients, of the primarycensored Stan
  * functions primarycensored_uniform_lcdf() and
- * primarycensored_uniform_lcdf_vectorized(), for lognormal, gamma and
- * Weibull delays with a uniform primary.
+ * primarycensored_uniform_lcdf_vectorized(), for lognormal, gamma, Weibull
+ * and log-logistic delays with a uniform primary.
  *
  * Their Stan bodies, in inst/stan/functions/primarycensored_analytical_cdf.stan
  * of the primarycensored package, are the reference. Values match the Stan
@@ -26,7 +26,23 @@
  * Weibull (k, lambda), x = (t / lambda)^k, a = 1 + 1 / k:
  *   dG/dlambda = -M / lambda,
  *   dG/dk = lambda Gamma(a) (P_a(a, x) + P(a, x) psi(a)) / k^2.
+ * Log-logistic (lambda, k), the parameters in that order:
+ *   dG/dlambda = -M / lambda,
+ *   dG/dk = t F_T(t) d log(t F_T(t)) / dk - M d log M / dk,
+ * where M = t F_T(t) r_{1/k}(A), A = (t / lambda)^k, and r is the moment
+ * ratio series of loglogistic_moment_ratio() in Stan. The two derivatives
+ * in k come from evaluating the series once in forward mode (see Dual), so
+ * they differentiate the same series as Stan's autodiff does.
  * Each function is one autodiff node.
+ *
+ * The log-logistic solution is ill conditioned for some windows, where
+ * Stan uses a numerical CDF. That switch is not done here. These functions
+ * return the analytical solution only, as their Stan bodies do, and the
+ * Stan functions primarycensored_loglogistic_uniform_lcdf() and
+ * primarycensored_loglogistic_uniform_lcdf_vectorized() call them, check
+ * each delay and use the numerical CDF where needed. The check only needs
+ * log(t F_T(t)), which is cheap to recompute in Stan, so the numerical
+ * path stays in Stan and the C++ does not need a sentinel value.
  *
  * The functions are put in stan::math. For var arguments argument-dependent
  * lookup also finds them, so they are used even if the Stan bodies are
@@ -44,6 +60,7 @@
 #include <ostream>
 #include <stdexcept>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #if !defined(PRIMARYCENSORED_STAN_DPDA) && \
@@ -117,8 +134,9 @@ inline double dP_da(double a, double x) {
  * Terms and gradient pieces at one integer delay.
  *
  * log_tF and log_M are the two Stan terms. dG1 and dG2 are dG/dtheta for
- * the two parameters, except for lognormal, which keeps log_tphi and forms
- * the gradient on the log scale in scaled_dG().
+ * the two parameters, except for lognormal, which keeps log_tphi, and the
+ * log-logistic, which keeps d log_tF / dk in dG1 and d log_M / dk in dG2.
+ * Those two form the gradient on the log scale in scaled_dG().
  */
 struct Node {
   double log_tF = neg_inf;
@@ -220,9 +238,287 @@ inline Node weibull_node(double t, double k, double lambda, bool grad) {
 }
 
 /**
+ * Forward mode number with one tangent, for the log-logistic series.
+ *
+ * Holds a value v and its derivative d. Only the operations the series
+ * use are defined. The value is computed by the same double operations as
+ * without the tangent.
+ */
+struct Dual {
+  double v;
+  double d;
+  Dual(double v_ = 0, double d_ = 0) : v(v_), d(d_) {}  // NOLINT
+  Dual& operator+=(const Dual& y) {
+    v += y.v;
+    d += y.d;
+    return *this;
+  }
+  Dual& operator*=(const Dual& y) {
+    d = d * y.v + v * y.d;
+    v *= y.v;
+    return *this;
+  }
+};
+
+inline double value_of(double x) { return x; }
+inline double value_of(const Dual& x) { return x.v; }
+
+inline Dual operator-(const Dual& x) { return Dual(-x.v, -x.d); }
+inline Dual operator+(const Dual& x, const Dual& y) {
+  return Dual(x.v + y.v, x.d + y.d);
+}
+inline Dual operator-(const Dual& x, const Dual& y) {
+  return Dual(x.v - y.v, x.d - y.d);
+}
+inline Dual operator*(const Dual& x, const Dual& y) {
+  return Dual(x.v * y.v, x.d * y.v + x.v * y.d);
+}
+inline Dual operator/(const Dual& x, const Dual& y) {
+  const double q = x.v / y.v;
+  return Dual(q, (x.d - q * y.d) / y.v);
+}
+inline Dual operator+(const Dual& x, double y) { return Dual(x.v + y, x.d); }
+inline Dual operator+(double x, const Dual& y) { return Dual(x + y.v, y.d); }
+inline Dual operator-(const Dual& x, double y) { return Dual(x.v - y, x.d); }
+inline Dual operator-(double x, const Dual& y) { return Dual(x - y.v, -y.d); }
+inline Dual operator*(const Dual& x, double y) {
+  return Dual(x.v * y, x.d * y);
+}
+inline Dual operator*(double x, const Dual& y) {
+  return Dual(x * y.v, x * y.d);
+}
+inline Dual operator/(const Dual& x, double y) {
+  return Dual(x.v / y, x.d / y);
+}
+inline Dual operator/(double x, const Dual& y) {
+  const double q = x / y.v;
+  return Dual(q, -q * y.d / y.v);
+}
+inline Dual exp(const Dual& x) {
+  const double e = std::exp(x.v);
+  return Dual(e, e * x.d);
+}
+inline Dual log(const Dual& x) { return Dual(std::log(x.v), x.d / x.v); }
+inline Dual log1p(const Dual& x) {
+  return Dual(stan::math::log1p(x.v), x.d / (1 + x.v));
+}
+inline Dual expm1(const Dual& x) {
+  return Dual(stan::math::expm1(x.v), std::exp(x.v) * x.d);
+}
+inline Dual log1p_exp(const Dual& x) {
+  return Dual(stan::math::log1p_exp(x.v), stan::math::inv_logit(x.v) * x.d);
+}
+inline Dual square(const Dual& x) { return Dual(x.v * x.v, 2 * x.v * x.d); }
+inline Dual digamma(const Dual& x) {
+  return Dual(stan::math::digamma(x.v), stan::math::trigamma(x.v) * x.d);
+}
+inline double exp(double x) { return std::exp(x); }
+inline double log(double x) { return std::log(x); }
+inline double log1p(double x) { return stan::math::log1p(x); }
+inline double expm1(double x) { return stan::math::expm1(x); }
+inline double log1p_exp(double x) { return stan::math::log1p_exp(x); }
+inline double square(double x) { return x * x; }
+inline double digamma(double x) { return stan::math::digamma(x); }
+
+/**
+ * Moment ratio r_a(A) for A up to 1, as loglogistic_ratio_small() in Stan.
+ *
+ * @param a Power, non-negative.
+ * @param log_A Log of A, at most 0.
+ * @param tol Relative tolerance of the series.
+ * @return r_a(A).
+ */
+template <typename T>
+inline T loglogistic_ratio_small(const T& a, const T& log_A, double tol) {
+  const T A = exp(log_A);
+  const T B = A / (1 + A);
+  T weight = exp(-a * log1p(A));
+  T total = weight / (a + 1);
+  for (int m = 0; m <= 5000; ++m) {
+    weight *= B * (a + m) / (m + 1);
+    const T term = weight / (a + m + 2);
+    total += term;
+    if (value_of(term) <= tol * value_of(total)) {
+      break;
+    }
+  }
+  return total;
+}
+
+/**
+ * Partial moment M_a(1), as loglogistic_partial_at_one() in Stan.
+ *
+ * @param a Power, non-negative.
+ * @return M_a(1).
+ */
+template <typename T>
+inline T loglogistic_partial_at_one(const T& a) {
+  if (value_of(a) <= 0) {
+    return T(0.5);
+  }
+  return 0.5 * (a * (digamma((a + 1) / 2) - digamma(a / 2)) - 1);
+}
+
+/**
+ * Series of M_a(A) - M_a(1) in tau, as loglogistic_tau_integral() in Stan.
+ *
+ * @param a Power, non-negative.
+ * @param tau Point, at most 1 / 2.
+ * @param tol Relative tolerance of the series.
+ * @return M_a(A) - M_a(1).
+ */
+template <typename T, typename U>
+inline T loglogistic_tau_integral(const T& a, const U& tau, double tol) {
+  const T shift = 2 * a * tau;
+  const U tau_sq = square(tau);
+  T previous = 0;
+  T current = 1;
+  T total = 1;
+  for (int j = 0; j <= 5000; ++j) {
+    const T following = (shift * current + (j - 1) * tau_sq * previous)
+                        / (j + 1);
+    previous = current;
+    current = following;
+    total += current / (j + 2);
+    if (value_of(current) <= tol * value_of(total)) {
+      break;
+    }
+  }
+  return 0.5 * tau * total;
+}
+
+/**
+ * Term of the tail series, as loglogistic_tail_term() in Stan.
+ *
+ * @param a Power, non-negative.
+ * @param m Term of the series in 1 / y.
+ * @param log_A Log of the upper limit, above log(3).
+ * @param shrink (3 / A)^a.
+ * @return The term.
+ */
+template <typename T>
+inline T loglogistic_tail_term(const T& a, int m, const T& log_A,
+                               const T& shrink) {
+  const T ell = log_A - std::log(3.0);
+  const T x = a - m - 1;
+  const T z = x * ell;
+  const double abs_z = std::fabs(value_of(z));
+  if (abs_z < 1) {
+    const T exprel
+        = abs_z < 1e-2 ? T(1 - z / 2 + square(z) / 6 - z * square(z) / 24
+                           + square(square(z)) / 120
+                           - z * square(square(z)) / 720)
+                       : T(-expm1(-z) / z);
+    return exp(-(m + 1) * log_A) * ell * exprel;
+  }
+  return (exp(-(m + 1) * log_A)
+          - shrink * std::pow(3.0, static_cast<double>(-(m + 1))))
+         / x;
+}
+
+/**
+ * Moment ratio r_a(A) for A above 3, as loglogistic_ratio_large() in Stan.
+ *
+ * @param a Power, non-negative.
+ * @param log_A Log of A, above log(3).
+ * @param tol Relative tolerance of the series.
+ * @return r_a(A).
+ */
+template <typename T>
+inline T loglogistic_ratio_large(const T& a, const T& log_A, double tol) {
+  const T at_start = (loglogistic_partial_at_one(a)
+                      + loglogistic_tau_integral(a, 0.5, tol))
+                     * exp(-a * std::log(3.0));
+  const T shrink = exp(-a * (log_A - std::log(3.0)));
+  T total = shrink * at_start;
+  const double stop = tol * std::fmin(value_of(log_A) - std::log(3.0), 1.0);
+  for (int m = 0; m <= 200; ++m) {
+    const T term = (m + 1) * loglogistic_tail_term(a, m, log_A, shrink);
+    total += m % 2 == 0 ? term : T(-term);
+    if (std::fabs(value_of(term)) <= stop * std::fabs(value_of(total))) {
+      break;
+    }
+  }
+  return (1 + exp(-log_A)) * total;
+}
+
+/**
+ * Moment ratio r_a(A), as loglogistic_moment_ratio() in Stan.
+ *
+ * @param a Power, non-negative.
+ * @param log_A Log of A.
+ * @param tol Relative tolerance of the series.
+ * @return r_a(A).
+ */
+template <typename T>
+inline T loglogistic_moment_ratio(const T& a, const T& log_A, double tol) {
+  const double log_A_val = value_of(log_A);
+  if (log_A_val <= 0) {
+    return loglogistic_ratio_small(a, log_A, tol);
+  }
+  if (log_A_val > std::log(3.0)) {
+    return loglogistic_ratio_large(a, log_A, tol);
+  }
+  const T A = exp(log_A);
+  const T tau = (A - 1) / (A + 1);
+  return (loglogistic_partial_at_one(a) + loglogistic_tau_integral(a, tau, tol))
+         * (1 + A) / A * exp(-a * log_A);
+}
+
+/**
+ * Log-logistic terms at t, as primarycensored_loglogistic_uniform_terms().
+ *
+ * With the shape a Dual of unit tangent, it also gives d log_tF / dk in
+ * dG1 and d log_M / dk in dG2. The values are the same doubles either way.
+ *
+ * @param t Delay, an integer.
+ * @param scale Scale.
+ * @param shape Shape, a double or a Dual.
+ * @return The node at t.
+ */
+template <typename T>
+inline Node loglogistic_node_impl(double t, double scale, const T& shape) {
+  Node nd;
+  if (t <= 0) {
+    return nd;
+  }
+  const double log_t = std::log(t);
+  const double log_scale = std::log(scale);
+  const T log_ratio = shape * (log_t - log_scale);
+  const T log_tF = log_t - log1p_exp(-shape * (log_t - log_scale));
+  const T log_M
+      = log_tF + log(loglogistic_moment_ratio(T(1 / shape), log_ratio, 1e-16));
+  nd.log_tF = value_of(log_tF);
+  nd.log_M = value_of(log_M);
+  if constexpr (std::is_same<T, Dual>::value) {
+    nd.dG1 = log_tF.d;
+    nd.dG2 = log_M.d;
+  }
+  return nd;
+}
+
+/**
+ * Log-logistic node at t, see loglogistic_node_impl().
+ *
+ * @param t Delay, an integer.
+ * @param scale Scale.
+ * @param shape Shape.
+ * @param grad Whether to compute dG1 and dG2.
+ * @return The node at t.
+ */
+inline Node loglogistic_node(double t, double scale, double shape,
+                             bool grad) {
+  if (grad) {
+    return loglogistic_node_impl(t, scale, Dual(shape, 1.0));
+  }
+  return loglogistic_node_impl(t, scale, shape);
+}
+
+/**
  * Node at t for the given delay distribution.
  *
- * @param dist_id 1 (lognormal), 2 (gamma) or 3 (Weibull).
+ * @param dist_id 1 (lognormal), 2 (gamma), 3 (Weibull) or 29
+ * (log-logistic).
  * @param t Delay, an integer.
  * @param p1 First parameter.
  * @param p2 Second parameter.
@@ -234,6 +530,8 @@ inline Node node(int dist_id, double t, double p1, double p2, bool grad) {
     return lognormal_node(t, p1, p2);
   } else if (dist_id == 2) {
     return gamma_node(t, p1, p2, grad);
+  } else if (dist_id == 29) {
+    return loglogistic_node(t, p1, p2, grad);
   }
   return weibull_node(t, p1, p2, grad);
 }
@@ -243,17 +541,22 @@ inline Node node(int dist_id, double t, double p1, double p2, bool grad) {
  *
  * @param dist_id Delay distribution.
  * @param nd The node.
- * @param sigma Lognormal scale (unused otherwise).
+ * @param p1 First parameter (the log-logistic scale).
+ * @param p2 Second parameter (the lognormal scale).
  * @param log_den log(A - B).
  * @param g1 Set to dG/dtheta_1 / (A - B).
  * @param g2 Set to dG/dtheta_2 / (A - B).
  */
-inline void scaled_dG(int dist_id, const Node& nd, double sigma,
+inline void scaled_dG(int dist_id, const Node& nd, double p1, double p2,
                       double log_den, double& g1, double& g2) {
   if (dist_id == 1) {
     const double M = std::exp(nd.log_M - log_den);
     g1 = -M;
-    g2 = -sigma * M + std::exp(nd.log_tphi - log_den);
+    g2 = -p2 * M + std::exp(nd.log_tphi - log_den);
+  } else if (dist_id == 29) {
+    const double M = std::exp(nd.log_M - log_den);
+    g1 = -M / p1;
+    g2 = std::exp(nd.log_tF - log_den) * nd.dG1 - M * nd.dG2;
   } else {
     const double s = std::exp(-log_den);
     g1 = nd.dG1 * s;
@@ -279,14 +582,15 @@ struct Point {
  * @param nd Node at d.
  * @param nq Node at q = max(d - pwindow, 0).
  * @param q_pos Whether q > 0 (the node at q contributes to the gradient).
- * @param sigma Second parameter (the lognormal scale).
+ * @param p1 First parameter.
+ * @param p2 Second parameter.
  * @param log_w log(pwindow).
  * @param grad Whether to compute the gradient.
  * @return The log CDF at d. Its gradient is 0 where it is -inf or clamped
  * to 0, as in Stan.
  */
 inline Point combine(int dist_id, const Node& nd, const Node& nq, bool q_pos,
-                     double sigma, double log_w, bool grad) {
+                     double p1, double p2, double log_w, bool grad) {
   Point pt;
   const double log_A = stan::math::log_sum_exp(nd.log_tF, nq.log_M);
   const double log_B = stan::math::log_sum_exp(nq.log_tF, nd.log_M);
@@ -302,9 +606,9 @@ inline Point combine(int dist_id, const Node& nd, const Node& nq, bool q_pos,
   pt.val = log_cdf;
   if (grad && std::isfinite(log_den)) {
     double d1, d2, q1 = 0, q2 = 0;
-    scaled_dG(dist_id, nd, sigma, log_den, d1, d2);
+    scaled_dG(dist_id, nd, p1, p2, log_den, d1, d2);
     if (q_pos) {
-      scaled_dG(dist_id, nq, sigma, log_den, q1, q2);
+      scaled_dG(dist_id, nq, p1, p2, log_den, q1, q2);
     }
     pt.g1 = d1 - q1;
     pt.g2 = d2 - q2;
@@ -328,7 +632,7 @@ inline Point lcdf_at(int dist_id, double d, double pwindow, double p1,
   const double q = std::max(d - pwindow, 0.0);
   const Node nd = node(dist_id, d, p1, p2, grad);
   const Node nq = node(dist_id, q, p1, p2, grad);
-  return combine(dist_id, nd, nq, q > 0, p2, std::log(pwindow), grad);
+  return combine(dist_id, nd, nq, q > 0, p1, p2, std::log(pwindow), grad);
 }
 
 /**
@@ -362,7 +666,7 @@ inline std::vector<Point> lcdf_at_integers(int start, int n, int dist_id,
   for (int d = start; d <= n; ++d) {
     const int q = std::max(d - pw, 0);
     out[d - 1] = combine(dist_id, nodes[d - first], nodes[q - first], q > 0,
-                         p2, log_w, grad);
+                         p1, p2, log_w, grad);
   }
   return out;
 }
@@ -375,8 +679,9 @@ inline std::vector<Point> lcdf_at_integers(int start, int n, int dist_id,
  * @param n_params Number of parameters.
  */
 inline void check_dist(const char* fn, int dist_id, std::size_t n_params) {
-  if (dist_id < 1 || dist_id > 3) {
-    throw std::domain_error(std::string(fn) + ": dist_id must be 1, 2 or 3");
+  if ((dist_id < 1 || dist_id > 3) && dist_id != 29) {
+    throw std::domain_error(std::string(fn)
+                            + ": dist_id must be 1, 2, 3 or 29");
   }
   if (n_params != 2) {
     throw std::domain_error(std::string(fn) + ": params must have length 2");
@@ -445,7 +750,8 @@ inline Eigen::Matrix<T, -1, 1> to_stan_vector(const std::vector<Point>& pts,
  *
  * @param start First delay to compute, at least 1.
  * @param n Last delay to compute, and the length of the result.
- * @param dist_id 1 (lognormal), 2 (gamma) or 3 (Weibull).
+ * @param dist_id 1 (lognormal), 2 (gamma), 3 (Weibull) or 29
+ * (log-logistic).
  * @param params The two delay parameters (var or double).
  * @param pwindow Primary event window, a positive integer.
  * @return Vector whose element d is the log CDF at d, for d in start:n.
@@ -474,7 +780,8 @@ inline Eigen::Matrix<T, -1, 1> primarycensored_uniform_lcdf_vectorized(
  * Uniform primary censored log CDF at a single delay.
  *
  * @param d Delay.
- * @param dist_id 1 (lognormal), 2 (gamma) or 3 (Weibull).
+ * @param dist_id 1 (lognormal), 2 (gamma), 3 (Weibull) or 29
+ * (log-logistic).
  * @param params The two delay parameters (var or double).
  * @param pwindow Primary event window, positive.
  * @return The log CDF at d.
