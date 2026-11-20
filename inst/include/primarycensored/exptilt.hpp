@@ -198,25 +198,54 @@ inline double log_std_normal_cdf(double z) {
 }
 
 /**
- * d log Phi(z) / dz = phi(z) / Phi(z), given log Phi(z).
+ * d log Phi(z) / dz = phi(z) / Phi(z), as Stan's autodiff through
+ * primarycensored_log_std_normal_cdf() finds it in each of its regimes.
+ *
+ * Below -37 it differentiates the asymptotic series term by term, as
+ * exp(log phi - log Phi) there loses about 13 digits to the size of the
+ * logs, which the normal tilt partials then amplify.
  *
  * @param z Point.
- * @param log_Phi log Phi(z).
+ * @param log_Phi log Phi(z), unused.
  * @return The derivative.
  */
-inline double dlog_std_normal_cdf(double z, double log_Phi) {
-  return std::exp(stan::math::std_normal_lpdf(z) - log_Phi);
+inline double dlog_std_normal_cdf(double z, double /* log_Phi */) {
+  if (z >= 0) {
+    return stan::math::INV_SQRT_TWO_PI * std::exp(-0.5 * z * z)
+           / stan::math::Phi(z);
+  }
+  if (z > -37) {
+    // d log erfc(x) / dz with x = -z / sqrt(2)
+    const double x = -z / std::sqrt(2.0);
+    return stan::math::SQRT_TWO_OVER_SQRT_PI * std::exp(-x * x)
+           / stan::math::erfc(x);
+  }
+  // log Phi = log phi(z) - log(-z) + log(series(u)), u = 1 / z^2, with
+  // series(u) = 1 - u (1 - 3 u (1 - 5 u (...)))
+  const double u = 1 / (z * z);
+  double series = 1 - 13 * u;
+  double dseries = -13;
+  for (int j = 11; j >= 1; j -= 2) {
+    dseries = -j * (series + u * dseries);
+    series = 1 - j * u * series;
+  }
+  // du / dz = -2 / z^3
+  return -z - 1 / z + dseries * (-2 * u / z) / series;
 }
 
 /**
- * Values of the three outputs and their partials with respect to xi and
- * up to three delay parameters.
+ * Values of the three outputs and their partials with respect to xi, up to
+ * three delay parameters and the point t.
  */
 struct TiltPair {
   std::array<double, 3> val{{neg_inf, neg_inf, 0}};
   // grad[i][0] is d val[i] / d xi, grad[i][j] is d val[i] / d params[j - 1]
-  std::array<std::array<double, 4>, 3> grad{};
+  // for j = 1, 2, 3, and grad[i][4] is d val[i] / d t
+  std::array<std::array<double, 5>, 3> grad{};
 };
+
+/// Column of the partials in t, see TiltPair.
+constexpr int t_col = 4;
 
 /**
  * Exponential tilt pair, as the dist_id 4 branch in Stan.
@@ -252,6 +281,8 @@ inline TiltPair exponential_tilt_pair(double t, double xi, double rate,
     out.grad[0][1] = tot_rate + dlow;
     out.grad[1][0] = tot_xi + t;
     out.grad[1][1] = tot_rate - t;
+    out.grad[0][t_col] = tilted_rate / std::expm1(tilted_rate * t);
+    out.grad[1][t_col] = -tilted_rate;
   }
   return out;
 }
@@ -302,6 +333,7 @@ inline TiltPair gamma_tilt_pair(double t, double xi, double shape,
     out.grad[i][0] = tot_xi - dlog_y[i] / tilted_rate;
     out.grad[i][1] = -log1m_ratio + pq_da[i];
     out.grad[i][2] = tot_rate + dlog_y[i] / tilted_rate;
+    out.grad[i][t_col] = dlog_y[i] / t;
   }
   return out;
 }
@@ -337,6 +369,8 @@ inline TiltPair normal_tilt_pair(double t, double xi, double mu, double sigma,
       out.grad[0][j] = tot_p[j] + r_lo * z_p[j];
       out.grad[1][j] = tot_p[j] + r_up * z_p[j];
     }
+    out.grad[0][t_col] = r_lo / sigma;
+    out.grad[1][t_col] = r_up / sigma;
   }
   return out;
 }
@@ -385,6 +419,7 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
         out.grad[i][1] = dlog_x[i] * log_ts;
         out.grad[i][2] = -dlog_x[i] * shape / scale;
         out.grad[i][3] = has_k ? pq_da[i] : 0;
+        out.grad[i][t_col] = dlog_x[i] * shape / t;
       }
     }
     return out;
@@ -418,7 +453,7 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
   // scale and k
   std::vector<double> log_terms;
   std::vector<bool> negative;
-  std::vector<std::array<double, 4>> partials;
+  std::vector<std::array<double, 5>> partials;
   for (int n = 0; n <= 400; ++n) {
     const double s = k + n / shape;
     double dlog_p = 0;
@@ -444,7 +479,7 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
       partials.push_back({n / xi,
                           -ds * n / (shape * shape) + dlog_x * log_ts,
                           n / scale - dlog_x * shape / scale,
-                          ds - digamma_k});
+                          ds - digamma_k, dlog_x * shape / t});
     }
     const double log_abs = stan::math::log_sum_exp(log_pos, log_neg);
     if (alternating && log_abs - log_first > std::log(1e5)) {
@@ -466,16 +501,16 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
       out.val[2] = log_abs - log_sum;
       if (grad) {
         // d log_sum and d log_abs
-        std::array<double, 4> g_sum{}, g_abs{};
+        std::array<double, 5> g_sum{}, g_abs{};
         for (std::size_t m = 0; m < log_terms.size(); ++m) {
           const double w_sum = std::exp(log_terms[m] - log_sum);
           const double w_abs = std::exp(log_terms[m] - log_abs);
-          for (int j = 0; j < 4; ++j) {
+          for (int j = 0; j < 5; ++j) {
             g_sum[j] += (negative[m] ? -w_sum : w_sum) * partials[m][j];
             g_abs[j] += w_abs * partials[m][j];
           }
         }
-        for (int j = 0; j < 4; ++j) {
+        for (int j = 0; j < 5; ++j) {
           out.grad[0][j] = g_sum[j];
           out.grad[2][j] = g_abs[j] - g_sum[j];
         }
@@ -533,18 +568,21 @@ inline TiltPair lognormal_tilt_pair(double t, double xi, double mu,
       out.grad[0][2] = -r_lo * z / sigma;
       out.grad[1][1] = -r_up / sigma;
       out.grad[1][2] = -r_up * z / sigma;
+      out.grad[0][t_col] = r_lo / (sigma * t);
+      out.grad[1][t_col] = r_up / (sigma * t);
     }
     return out;
   }
   const double log_xi_mu = std::log(xi) + mu;
   double log_factorial = 0;
   double total = log_lo;
-  // Partials of the log sum in xi, mu and sigma
-  double g[3] = {0, 0, 0};
+  // Partials of the log sum in xi, mu, sigma and t
+  double g[4] = {0, 0, 0, 0};
   if (grad) {
     const double r = dlog_std_normal_cdf(z, log_lo);
     g[1] = -r / sigma;
     g[2] = -r * z / sigma;
+    g[3] = r / (sigma * t);
   }
   for (int k = 1; k <= 20000; ++k) {
     log_factorial += std::log(k);
@@ -561,6 +599,7 @@ inline TiltPair lognormal_tilt_pair(double t, double xi, double mu,
       g[0] = g[0] * keep + weight * k / xi;
       g[1] = g[1] * keep + weight * (k - r / sigma);
       g[2] = g[2] * keep + weight * (k * ks - r * (z / sigma + k));
+      g[3] = g[3] * keep + weight * r / (sigma * t);
     }
     total = new_total;
     if (k > xi * t && log_term < total - 41) {
@@ -568,6 +607,7 @@ inline TiltPair lognormal_tilt_pair(double t, double xi, double mu,
       for (int j = 0; j < 3; ++j) {
         out.grad[0][j] = g[j];
       }
+      out.grad[0][t_col] = g[3];
       return out;
     }
   }
@@ -608,12 +648,11 @@ inline TiltPair tilt_pair(double t, int dist_id, double xi,
 /**
  * Log of the tilt transforms over the lower and upper support.
  *
- * The point t is data in value. It may be a var, which is not
- * differentiated, as it does not depend on the parameters where the Stan
- * code calls this. The last argument is the output stream of the Stan
+ * The point t may be a var, as for the split point of the truncated
+ * logistic series. The last argument is the output stream of the Stan
  * calling convention, which is not used.
  *
- * @param t Point.
+ * @param t Point (var or double).
  * @param dist_id 1 (lognormal, for xi >= 0), 2 (gamma), 3 (Weibull),
  *   4 (exponential), 5 (generalised gamma) or 18 (normal).
  * @param xi Tilt (var or double).
@@ -636,6 +675,7 @@ primarycensored_tilt_pair(const T_t& t, const int& dist_id, const T_xi& xi,
   if (params.size() < n_params) {
     throw std::domain_error(std::string(fn) + ": too few params");
   }
+  constexpr bool t_var = stan::is_var<T_t>::value;
   constexpr bool xi_var = stan::is_var<T_xi>::value;
   constexpr bool p_var = stan::is_var<T_p>::value;
   std::vector<double> p(n_params);
@@ -644,36 +684,43 @@ primarycensored_tilt_pair(const T_t& t, const int& dist_id, const T_xi& xi,
   }
   const internal::TiltPair pair = internal::tilt_pair(
       stan::math::value_of(t), dist_id, stan::math::value_of(xi), p,
-      xi_var || p_var);
+      t_var || xi_var || p_var);
   Eigen::VectorXd val(3);
   for (int i = 0; i < 3; ++i) {
     val(i) = pair.val[i];
   }
   using ret_t = stan::return_type_t<T_t, T_xi, T_p>;
-  if constexpr (!xi_var && !p_var) {
+  if constexpr (!t_var && !xi_var && !p_var) {
     return val.template cast<ret_t>();
   } else {
     using stan::math::var;
-    // Columns: xi, then the parameters used
-    const int n_in = 1 + static_cast<int>(n_params);
-    stan::arena_t<Eigen::MatrixXd> jac(3, n_in);
-    for (int i = 0; i < 3; ++i) {
-      for (int j = 0; j < n_in; ++j) {
-        jac(i, j) = pair.grad[i][j];
-      }
-    }
-    stan::arena_t<Eigen::Matrix<var, -1, 1>> res = val.template cast<var>();
-    stan::arena_t<std::vector<var>> ins(n_in);
+    // Columns of the partials that are inputs: xi, the parameters used and t
+    std::vector<int> cols;
+    stan::arena_t<std::vector<var>> ins;
     if constexpr (xi_var) {
-      ins[0] = xi;
+      cols.push_back(0);
+      ins.push_back(xi);
     }
     if constexpr (p_var) {
       for (std::size_t j = 0; j < n_params; ++j) {
-        ins[j + 1] = params[j];
+        cols.push_back(static_cast<int>(j) + 1);
+        ins.push_back(params[j]);
       }
     }
+    if constexpr (t_var) {
+      cols.push_back(internal::t_col);
+      ins.push_back(t);
+    }
+    const int n_in = static_cast<int>(cols.size());
+    stan::arena_t<Eigen::MatrixXd> jac(3, n_in);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < n_in; ++j) {
+        jac(i, j) = pair.grad[i][cols[j]];
+      }
+    }
+    stan::arena_t<Eigen::Matrix<var, -1, 1>> res = val.template cast<var>();
     stan::math::reverse_pass_callback([res, jac, ins, n_in]() mutable {
-      for (int j = (xi_var ? 0 : 1); j < (p_var ? n_in : 1); ++j) {
+      for (int j = 0; j < n_in; ++j) {
         double adj = 0;
         for (int i = 0; i < 3; ++i) {
           // Elements that do not depend on the inputs take no adjoint, as
