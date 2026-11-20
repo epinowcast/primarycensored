@@ -19,6 +19,10 @@ if (!on_ci() || not_on_cran()) {
       } else {
         pcd_stan_path()
       }
+      # Only the first definition of overloaded functions is kept, so the
+      # functions can be exposed. This gives the per-row
+      # primarycensored_lpmf(); test-stan-grouped-lpmf.R exposes the
+      # grouped one.
       stan_functions <- pcd_load_stan_functions(
         wrap_in_block = TRUE,
         write_to_file = TRUE,

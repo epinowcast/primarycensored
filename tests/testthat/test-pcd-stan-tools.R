@@ -152,6 +152,13 @@ test_that("pcd_load_stan_functions with dependencies works for ODE", {
   expect_true(grepl("expgrowth_lpdf", result, fixed = TRUE))
 })
 
+test_that("pcd_stan_function_deps finds functions passed as arguments", {
+  # primarycensored_lcdf passes primarycensored_ode to ode_rk45()
+  expect_true(
+    "primarycensored_ode" %in% pcd_stan_function_deps("primarycensored_lcdf")
+  )
+})
+
 test_that("pcd_load_stan_functions dependencies orders correctly", {
   result <- pcd_load_stan_functions(
     "primarycensored_pmf",
@@ -233,4 +240,93 @@ test_that("pcd_stan_files returns correct files", {
   non_existent <- pcd_stan_files(functions = "non_existent_function")
   expect_type(non_existent, "character")
   expect_length(non_existent, 0)
+})
+
+overload_code <- c(
+  "real f(real x) {",
+  "  return x;",
+  "}",
+  "real g(real x) { return x; }",
+  "real f(vector x,",
+  "       real y) {",
+  "  if (y > 0) {",
+  "    return sum(x);",
+  "  }",
+  "  return y;",
+  "}"
+)
+
+test_that(".stan_function_defs locates each definition", {
+  defs <- .stan_function_defs(overload_code)
+  expect_identical(defs$name, c("f", "g", "f"))
+  expect_identical(defs$start, c(1L, 4L, 5L))
+  expect_identical(defs$end, c(3L, 4L, 11L))
+  expect_identical(
+    defs$signature, c("real f(real x)", "real g(real x)",
+                      "real f(vector x, real y)")
+  )
+})
+
+test_that(".select_stan_overloads keeps the first overload by default", {
+  defs <- .stan_function_defs(overload_code)
+  expect_identical(.select_stan_overloads(defs), c(TRUE, TRUE, FALSE))
+})
+
+test_that(".select_stan_overloads chooses by index or signature", {
+  defs <- .stan_function_defs(overload_code)
+  expect_identical(
+    .select_stan_overloads(defs, list(f = 2)), c(FALSE, TRUE, TRUE)
+  )
+  expect_identical(
+    .select_stan_overloads(defs, list(f = "vector x")), c(FALSE, TRUE, TRUE)
+  )
+  expect_identical(
+    .select_stan_overloads(defs, list(f = 1:2)), c(TRUE, TRUE, TRUE)
+  )
+  # Functions with one definition are always kept
+  expect_identical(
+    .select_stan_overloads(defs, list(g = 1)), c(TRUE, TRUE, FALSE)
+  )
+})
+
+test_that(".select_stan_overloads errors on choices that match nothing", {
+  defs <- .stan_function_defs(overload_code)
+  expect_error(
+    .select_stan_overloads(defs, list(f = 3)),
+    "No definition of f matches"
+  )
+  expect_error(
+    .select_stan_overloads(defs, list(f = "matrix x")),
+    "No definition of f matches"
+  )
+  expect_error(
+    .select_stan_overloads(defs, list(h = 1)), "Function\\(s\\) not found: h"
+  )
+})
+
+test_that("pcd_load_stan_functions keeps one primarycensored_lpmf overload", {
+  count_defs <- function(code) {
+    lengths(regmatches(code, gregexpr("real primarycensored_lpmf(", code,
+                                      fixed = TRUE)))
+  }
+  for (functions in list(NULL, "primarycensored_lpmf")) {
+    per_row <- pcd_load_stan_functions(functions)
+    expect_identical(count_defs(per_row), 1L)
+    expect_true(grepl("primarycensored_lpmf(data int d,", per_row,
+                      fixed = TRUE))
+    grouped <- pcd_load_stan_functions(
+      functions, overloads = list(primarycensored_lpmf = "array[] int n")
+    )
+    expect_identical(count_defs(grouped), 1L)
+    expect_true(grepl("primarycensored_lpmf(data array[] int n,", grouped,
+                      fixed = TRUE))
+    both <- pcd_load_stan_functions(
+      functions, overloads = list(primarycensored_lpmf = 1:2)
+    )
+    expect_identical(count_defs(both), 2L)
+  }
+})
+
+test_that("pcd_stan_functions lists overloaded functions once", {
+  expect_identical(sum(pcd_stan_functions() == "primarycensored_lpmf"), 1L)
 })

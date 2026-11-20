@@ -43,7 +43,10 @@
   See #379.
 - `pcd_cmdstan_model()` fits are faster when rows share `pwindow` and truncation points, with or without `use_reduce_sum`.
   `pcd_as_stan_data()` groups these rows, and the model computes the CDF once per unique delay interval end point in each group.
-  The new Stan function `primarycensored_grouped_lpmf()` gives the summed log PMF of such a group.
+  A new overload of the Stan function `primarycensored_lpmf()`, taking an array of counts, gives the summed log PMF of such a group.
+  `pcd_load_stan_functions()` has a new `overloads` argument to choose which definitions of overloaded Stan functions to keep.
+  By default it keeps the first, so the functions can be exposed to R with cmdstanr.
+  With `dependencies = TRUE` it now also includes functions passed as arguments, such as ODE right-hand sides.
   See #378 and #421.
 
 # primarycensored 1.6.0

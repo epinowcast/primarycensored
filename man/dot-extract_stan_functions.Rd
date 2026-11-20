@@ -16,7 +16,8 @@ extract function content.}
 content for.}
 }
 \value{
-Character vector of function names or content
+Character vector of function names or content, with one element
+per definition, so overloaded names appear more than once.
 }
 \description{
 Extract function names or content from Stan code

@@ -665,8 +665,10 @@ vector primarycensored_sone_pmf_vectorized(
   * points[lower_index[j]] to points[upper_index[j]], so intervals can have any
   * secondary window. The log CDF is computed once per point, and F(L) and
   * F(D) once per group, rather than for every interval as in repeated
-  * primarycensored_lpmf() calls. The result is the same as the sum of
-  * n[j] * primarycensored_lpmf() over the intervals.
+  * calls to the per-delay overload. The result is the same as the sum of
+  * n[j] * primarycensored_lpmf(d[j] | ...) over the intervals.
+  * This overload is selected by the array of counts in place of a single
+  * delay.
   *
   * @param n Number of observations of each interval
   * @param points Interval end points, sorted and unique, within [L, D]
@@ -692,21 +694,18 @@ vector primarycensored_sone_pmf_vectorized(
   * int dist_id = 3; // Weibull
   * array[2] real params = {2.0, 1.5}; // shape and scale
   * array[0] real primary_params = {};
-  * real lp = primarycensored_grouped_lpmf(
+  * real lp = primarycensored_lpmf(
   *   n | points, lower_index, upper_index, dist_id, params, 1.0, 0.0,
   *   positive_infinity(), 1, primary_params
   * );
   * @endcode
   */
-real primarycensored_grouped_lpmf(data array[] int n,
-                                  data array[] real points,
-                                  data array[] int lower_index,
-                                  data array[] int upper_index,
-                                  data int dist_id,
-                                  array[] real params, data real pwindow,
-                                  data real L, data real D,
-                                  data int primary_id,
-                                  array[] real primary_params) {
+real primarycensored_lpmf(data array[] int n, data array[] real points,
+                          data array[] int lower_index,
+                          data array[] int upper_index, data int dist_id,
+                          array[] real params, data real pwindow,
+                          data real L, data real D, data int primary_id,
+                          array[] real primary_params) {
   int n_points = size(points);
   if (n_points == 0) {
     return 0;
@@ -729,8 +728,8 @@ real primarycensored_grouped_lpmf(data array[] int n,
       log_cdfs[upper_index[j]], log_cdfs[lower_index[j]]
     );
   }
-  // Skip the normalization when F(L) = 0 makes it a no-op, as in
-  // primarycensored_lpmf()
+  // Skip the normalization when F(L) = 0 makes it a no-op, as in the
+  // per-delay overload
   if (!is_inf(D) || L > 0 ||
       (!is_inf(L) && !dist_has_positive_support(dist_id))) {
     vector[2] bounds = primarycensored_truncation_bounds(

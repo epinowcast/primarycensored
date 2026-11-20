@@ -2,9 +2,26 @@ skip_on_cran()
 skip_if_not_installed("cmdstanr")
 skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
 
-# primarycensored_grouped_lpmf() computes the log CDF once per unique point
-# of a group. These tests check it, and the likelihood of pcens_model.stan
-# that uses it, against per-row primarycensored_lpmf() calls.
+# The grouped overload of primarycensored_lpmf() computes the log CDF once
+# per unique point of a group. These tests check it, and the likelihood of
+# pcens_model.stan that uses it, against the per-row overload exposed in
+# setup.R.
+
+# cmdstanr cannot expose overloaded functions, so expose the grouped
+# overload and its dependencies on their own, without replacing the per-row
+# one in the global environment
+grouped_path <- file.path(tempdir(), "pcdgrouped.stan")
+suppressMessages(pcd_load_stan_functions(
+  "primarycensored_lpmf",
+  wrap_in_block = TRUE, write_to_file = TRUE, output_file = grouped_path,
+  dependencies = TRUE,
+  overloads = list(primarycensored_lpmf = "array[] int n")
+))
+grouped_model <- suppressMessages(suppressWarnings(
+  cmdstanr::cmdstan_model(grouped_path)
+))
+suppressMessages(grouped_model$expose_functions())
+grouped_stan_lpmf <- grouped_model$functions$primarycensored_lpmf
 
 # Delays with repeats, secondary windows of 1, 2 and 3, and counts
 group_rows <- data.frame(
@@ -34,14 +51,14 @@ grouped_lpmf <- function(rows, dist_id, params, pwindow, L, D,
     rows$d, rows$d + rows$swindow, rows$n, rep(pwindow, n_rows),
     rep(L, n_rows), rep(D, n_rows)
   )
-  primarycensored_grouped_lpmf( # nolint: object_usage_linter.
+  grouped_stan_lpmf(
     groups$interval_n, groups$points, groups$interval_lower,
     groups$interval_upper, dist_id, params, pwindow, L, D, primary_id,
     primary_params
   )
 }
 
-test_that("primarycensored_grouped_lpmf matches summed primarycensored_lpmf", {
+test_that("grouped primarycensored_lpmf matches the summed per-row one", {
   cases <- list(
     list(dist_id = 1L, params = c(1.2, 0.6)),
     list(dist_id = 2L, params = c(2, 0.5)),
@@ -69,7 +86,7 @@ test_that("primarycensored_grouped_lpmf matches summed primarycensored_lpmf", {
   }
 })
 
-test_that("primarycensored_grouped_lpmf matches for a delay on the reals", {
+test_that("grouped primarycensored_lpmf matches for a delay on the reals", {
   rows <- data.frame(d = c(-2, -1, -1, 0, 3), swindow = c(1, 1, 1, 2, 1),
                      n = c(1, 2, 3, 4, 5))
   for (b in list(c(-Inf, Inf), c(-3, 6))) {
@@ -81,8 +98,8 @@ test_that("primarycensored_grouped_lpmf matches for a delay on the reals", {
   }
 })
 
-test_that("primarycensored_grouped_lpmf rejects points outside [L, D]", {
-  expect_error(primarycensored_grouped_lpmf( # nolint: object_usage_linter.
+test_that("grouped primarycensored_lpmf rejects points outside [L, D]", {
+  expect_error(grouped_stan_lpmf(
     1L, c(0, 1), 1L, 2L, 1L, c(1, 0.5), 1, 0, 0.5, 1L, numeric(0)
   ))
 })

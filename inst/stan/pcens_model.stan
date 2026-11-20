@@ -23,7 +23,7 @@ functions {
       int p2 = point_start[g + 1] - 1;
       int i1 = interval_start[g];
       int i2 = interval_start[g + 1] - 1;
-      partial_target += primarycensored_grouped_lpmf(
+      partial_target += primarycensored_lpmf(
         interval_n[i1:i2] | points[p1:p2], interval_lower[i1:i2],
         interval_upper[i1:i2], dist_id, params, group_pwindow[g], group_L[g],
         group_D[g], primary_id, primary_params
