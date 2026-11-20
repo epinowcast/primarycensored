@@ -572,7 +572,10 @@ int loglogistic_window_ill_conditioned(real log_t_cdf_d, real log_t_cdf_q,
     log_t_cdf_d - log(d), log_cdf_q
   ) - log(pwindow);
   real log_capped = fmin(log_cdf, 0);
-  real log_tail = fmin(log_capped, log1m_exp(log_capped));
+  // log1m_exp(0) has an infinite derivative, which would make the gradient
+  // NaN even though this check does not change the log CDF
+  real log_tail = log_capped < 0 ? fmin(log_capped, log1m_exp(log_capped))
+                                 : negative_infinity();
   real log_limit = log(1e-8) + log_tail;
   if (log_capped > -log2()) {
     log_limit = fmax(log_limit, log(1e-15));
