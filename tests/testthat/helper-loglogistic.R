@@ -1,0 +1,231 @@
+# Helpers for the log-logistic delay tests.
+#
+# `pllogis()` has the parameters of `flexsurv::pllogis()`, a shape and a
+# scale, so the tests do not need flexsurv. It is named as the function
+# exported by flexsurv and actuar is, which is how the package finds the
+# analytic methods for it.
+pllogis_test <- add_name_attribute(
+  function(q, shape, scale = 1) {
+    stats::plogis(shape * (log(pmax(q, 0)) - log(scale)))
+  },
+  "pllogis"
+)
+
+# Delay families covering a heavy tail, exponential-like and sharp shapes
+loglogistic_families <- function() {
+  list(
+    list(
+      label = "log-logistic shape 0.6", pdist = pllogis_test,
+      args = list(shape = 0.6, scale = 2)
+    ),
+    list(
+      label = "log-logistic shape 1", pdist = pllogis_test,
+      args = list(shape = 1, scale = 3)
+    ),
+    list(
+      label = "log-logistic shape 2", pdist = pllogis_test,
+      args = list(shape = 2, scale = 5)
+    ),
+    list(
+      label = "log-logistic shape 4.5", pdist = pllogis_test,
+      args = list(shape = 4.5, scale = 8)
+    ),
+    list(
+      label = "log-logistic shape 12", pdist = pllogis_test,
+      args = list(shape = 12, scale = 6)
+    )
+  )
+}
+
+# Reference for the partial moment M_a(A) scaled as in the series
+# r_a(A) = M_a(A) (1 + A) / A^(a + 1), by integrating over s = y / A so the
+# integrand does not overflow.
+loglogistic_ratio_reference <- function(a, A) {
+  integrand <- function(s) s^a / (1 + A * s)^2
+  # The integrand peaks near 1 / A for small a, so split there
+  breaks <- sort(unique(c(0, min(1, 1 / A), 1)))
+  inner <- sum(vapply(seq_len(length(breaks) - 1L), function(i) {
+    stats::integrate(
+      integrand, breaks[i], breaks[i + 1L],
+      rel.tol = 1e-13, abs.tol = 0, subdivisions = 5000L
+    )$value
+  }, numeric(1)))
+  (1 + A) * inner
+}
+
+# A log-logistic delay with a uniform primary
+uniform_object <- function(family) {
+  do.call(
+    new_pcens,
+    c(
+      list(
+        pdist = family$pdist, dprimary = dunif, primary_args = list()
+      ),
+      family$args
+    )
+  )
+}
+
+# Independent reference for the primary event censored CDF and survival of a
+# log-logistic delay with a uniform primary. The CDF is the expectation of
+# F(q - P) and the survival the expectation of S(q - P) over the primary event
+# time P in (0, pwindow). Each is integrated over p with breaks where the
+# delay CDF moves, so the upper tail is accurate to 1e-13 of the survival
+# rather than of the CDF.
+loglogistic_censored_reference <- function(q, shape, scale, pwindow) {
+  lcdf <- function(u) {
+    ifelse(u <= 0, -Inf, -log1p(exp(-shape * (log(pmax(u, 1e-300)) -
+      log(scale)))))
+  }
+  breaks <- sort(unique(c(
+    0, pwindow, if (q > 0 && q < pwindow) q,
+    q - scale * exp(seq(-40, 40, by = 0.5) / shape)
+  )))
+  breaks <- breaks[breaks >= 0 & breaks <= pwindow]
+  integral <- function(g) {
+    sum(vapply(seq_len(length(breaks) - 1L), function(i) {
+      stats::integrate(
+        function(p) g(p) / pwindow, breaks[i], breaks[i + 1L],
+        rel.tol = 1e-13, abs.tol = 0, subdivisions = 10000L,
+        stop.on.error = FALSE
+      )$value
+    }, numeric(1)))
+  }
+  cdf <- integral(function(p) exp(lcdf(q - p)))
+  survival <- integral(function(p) {
+    u <- q - p
+    ifelse(u <= 0, 1, -expm1(lcdf(u)))
+  })
+  c(cdf = cdf, survival = survival)
+}
+
+# Cases where the difference G_1(q) - G_1(q - w) of the uniform solution
+# loses precision, each (shape, scale, pwindow, q)
+uniform_conditioning_cases <- list(
+  c(0.01, 1, 1, 1e17),
+  c(0.01, 1, 1, 1e8),
+  c(0.02, 1, 1, 1e10),
+  c(0.3, 5, 1, 1e5),
+  c(0.5, 5, 1, 1e4),
+  c(0.5, 5, 1, 1e5),
+  c(0.5, 5, 1, 1e6),
+  c(1, 5, 1, 1e3),
+  c(2, 5, 1, 1e3),
+  c(115.5, 16.9, 0.00179, 19.8)
+)
+
+# Cases of the uniform PMF at a large delay, where the PMF is small next to
+# the smaller tail in a heavy tail, each (shape, scale, pwindow, d)
+uniform_pmf_cases <- list(
+  c(0.05, 1, 1, 1e6),
+  c(0.3, 5, 1, 1e5),
+  c(0.5, 5, 1, 1e4),
+  c(0.5, 5, 1, 1e5),
+  c(0.2, 7.94, 2, 2e5),
+  c(1, 5, 1, 1e3),
+  c(2, 5, 1, 500)
+)
+
+# Inverse CDF sampler for the log-logistic
+rllogis_test <- function(n, shape, scale = 1) {
+  u <- stats::runif(n)
+  scale * (u / (1 - u))^(1 / shape)
+}
+
+# Samples from rprimarycensored() with a uniform primary event window
+loglogistic_samples <- function(n, family, pwindow) {
+  do.call(
+    rprimarycensored,
+    c(
+      list(
+        n = n, rdist = rllogis_test, pwindow = pwindow, swindow = 0,
+        rprimary = stats::runif, rprimary_args = list()
+      ),
+      family$args
+    )
+  )
+}
+
+# The families with the Stan parameters, `c(scale, shape)`
+ll_cases <- lapply(loglogistic_families(), function(family) {
+  c(family, list(params = c(family$args$scale, family$args$shape)))
+})
+
+ll_case_label <- function(case, ...) {
+  paste0(
+    "params ", toString(case$params), ", ",
+    paste(names(list(...)), unlist(list(...)), sep = " = ", collapse = ", ")
+  )
+}
+
+# Gradients are only observable from a compiled model, so this builds a
+# minimal one whose target is the log CDF or the vectorised log PMF with a
+# uniform primary, and runs `stan_gradient_at()` from helper-stan-gradient.R.
+ll_gradient_model <- function() {
+  testthat::skip_if_not_installed("cmdstanr")
+  testthat::skip_if(
+    is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
+  )
+  functions <- pcd_load_stan_functions(
+    wrap_in_block = TRUE, write_to_file = FALSE
+  )
+  code <- paste0(
+    functions, "\n",
+    "data {\n",
+    "  int vectorised;\n",
+    "  real d;\n",
+    "  real pwindow;\n",
+    "}\n",
+    "parameters {\n",
+    "  real<lower=0> scale;\n",
+    "  real<lower=0> shape;\n",
+    "}\n",
+    "model {\n",
+    "  array[2] real params = {scale, shape};\n",
+    "  array[0] real primary_params;\n",
+    "  if (vectorised) {\n",
+    "    target += sum(primarycensored_sone_lpmf_vectorized(\n",
+    "      to_int(d), 0.0, positive_infinity(), 29, params, pwindow, 1,\n",
+    "      primary_params\n",
+    "    ));\n",
+    "  } else {\n",
+    "    target += primarycensored_lcdf(\n",
+    "      d | 29, params, pwindow, 0.0, positive_infinity(), 1,\n",
+    "      primary_params\n",
+    "    );\n",
+    "  }\n",
+    "}\n"
+  )
+  path <- file.path(tempdir(), "pcd_loglogistic_gradient.stan")
+  writeLines(code, path)
+  suppressMessages(suppressWarnings(cmdstanr::cmdstan_model(path)))
+}
+
+# Checks the gradient is finite and matches the finite difference gradient one
+# component at a time, relative to its size with a floor for tiny ones.
+expect_ll_gradient <- function(model, case, point, vectorised = FALSE,
+                               tolerance = 1e-4) {
+  label <- ll_case_label(
+    case, d = point$d, pwindow = point$pwindow, vectorised = vectorised
+  )
+  res <- stan_gradient_at( # nolint: object_usage_linter.
+    model,
+    data = list(
+      vectorised = as.integer(vectorised), d = point$d,
+      pwindow = point$pwindow
+    ),
+    init = list(scale = case$params[1], shape = case$params[2])
+  )
+  expect_false(res$gradient_not_finite, info = label)
+  expect_false(res$rejected, info = label)
+  expect_true(all(is.finite(res$gradient)), info = label)
+  allowed <- tolerance * pmax(abs(res$finite_diff), 1e-2)
+  expect_true(
+    all(abs(res$gradient - res$finite_diff) <= allowed),
+    info = paste0(
+      label, ": gradient ", toString(signif(res$gradient, 5)),
+      ", finite difference ", toString(signif(res$finite_diff, 5))
+    )
+  )
+  invisible(res)
+}

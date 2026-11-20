@@ -23,6 +23,9 @@
   The numerical path is used where a closed form loses precision or is slower, so results for these delays can differ at the 1e-5 level.
   The numerical paths of `pcens_cdf()` and the Stan functions no longer return 0 or an error for delays that are small relative to the primary window.
   See #367, #368 and #369.
+- Added the log-logistic delay, Stan `dist_id` 29 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
+  There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
+  See #372, #104 and #321.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
@@ -34,6 +37,8 @@
 
 ## Bug fixes
 
+- `pcd_stan_function_deps()` now also finds Stan functions that are only passed to another function by name, such as an ODE system, so `pcd_load_stan_functions()` with `dependencies = TRUE` returns code that compiles.
+  See #407.
 - A bug was fixed where Stan gradients for a Weibull delay with a uniform primary event were wrong far in the upper tail.
   Reverse-mode `gamma_p()` in Stan drops its gradients there, so `log_weibull_g()` now uses `gamma_lcdf()`, which gives the same values.
   See #364.
