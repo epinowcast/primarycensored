@@ -132,7 +132,10 @@ test_that("check_for_analytical_vectorized covers the new delays for integer
   for (dist_id in c(4L, 9L, 13L, 16L, 18L, 19L, 21L, 22L)) {
     expect_identical(check_for_analytical_vectorized(dist_id, 1L, 3), 1L)
     expect_identical(check_for_analytical_vectorized(dist_id, 1L, 1.5), 0L)
-    expect_identical(check_for_analytical_vectorized(dist_id, 2L, 3), 0L)
+    expect_identical(
+      check_for_analytical_vectorized(dist_id, 2L, 3),
+      as.integer(dist_id %in% c(4L, 18L))
+    )
   }
 })
 
@@ -585,7 +588,7 @@ test_that("primarycensored_analytical_lcdf_vectorized matches the per-delay
             "pwindow", pwindow, "start", start
           )
           vectorised <- primarycensored_analytical_lcdf_vectorized(
-            start, n, dist$dist_id, params, pwindow
+            start, n, dist$dist_id, params, pwindow, 1L, numeric(0)
           )
           expect_length(vectorised, n)
           expect_identical(
