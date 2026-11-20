@@ -284,7 +284,9 @@ stacy_gradient_model <- function() {
   testthat::skip_if_not_installed("cmdstanr")
   testthat::skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
   code <- paste0(
-    pcd_load_stan_functions(wrap_in_block = TRUE, write_to_file = FALSE),
+    pcd_load_stan_functions(
+      wrap_in_block = TRUE, write_to_file = FALSE, cpp = FALSE
+    ),
     "\ndata {\n",
     "  int dist_id;\n",
     "  int n_params;\n",

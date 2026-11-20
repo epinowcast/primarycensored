@@ -98,7 +98,7 @@ exptilt_stan_model <- function(name, code) {
     is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE))
   )
   functions <- pcd_load_stan_functions(
-    wrap_in_block = TRUE, write_to_file = FALSE
+    wrap_in_block = TRUE, write_to_file = FALSE, cpp = FALSE
   )
   path <- file.path(tempdir(), paste0(name, ".stan"))
   writeLines(paste0(functions, "\n", code), path)
