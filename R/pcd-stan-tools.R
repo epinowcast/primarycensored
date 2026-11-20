@@ -19,9 +19,9 @@ pcd_stan_path <- function() {
 .pcd_stan_function_deps <- function(func_content, all_func_names) {
   deps <- character(0)
   for (fname in all_func_names) {
-    # Match function_name followed by ( with optional whitespace
-    # Use word boundary to avoid partial matches
-    pattern <- paste0("\\b", fname, "\\s*\\(")
+    # Match the whole name, whether called or passed to another function
+    # (as with ODE right-hand sides)
+    pattern <- paste0("\\b", fname, "\\b")
     if (grepl(pattern, func_content)) {
       deps <- c(deps, fname)
     }
@@ -58,7 +58,7 @@ pcd_stan_path <- function() {
   dep_graph <- list()
   for (file in stan_files) {
     content <- readLines(file)
-    func_names <- .extract_stan_functions(content, names_only = TRUE)
+    func_names <- unique(.extract_stan_functions(content, names_only = TRUE))
 
     for (fname in func_names) {
       func_content <- .extract_stan_functions(
@@ -68,9 +68,11 @@ pcd_stan_path <- function() {
       )
       if (length(func_content) > 0) {
         # Find dependencies, excluding self-references
-        deps <- .pcd_stan_function_deps(func_content, all_func_names)
+        deps <- .pcd_stan_function_deps(
+          paste(func_content, collapse = "\n"), all_func_names
+        )
         deps <- setdiff(deps, fname)
-        dep_graph[[fname]] <- deps
+        dep_graph[[fname]] <- union(dep_graph[[fname]], deps)
       }
     }
   }
@@ -150,16 +152,41 @@ pcd_stan_function_deps <- function(
 #' Count the number of unmatched braces in a line
 #' @noRd
 .unmatched_braces <- function(line) {
-  ifelse(
-    grepl("{", line, fixed = TRUE),
-    length(gregexpr("{", line, fixed = TRUE)),
-    0
-  ) -
-    ifelse(
-      grepl("}", line, fixed = TRUE),
-      length(gregexpr("}", line, fixed = TRUE)),
-      0
-    )
+  count <- function(brace) {
+    lengths(regmatches(line, gregexpr(brace, line, fixed = TRUE)))
+  }
+  count("{") - count("}")
+}
+
+#' Locate the Stan function definitions in Stan code
+#'
+#' @param content Character vector containing Stan code
+#'
+#' @return A data frame with one row per definition, in order, giving the
+#'   function `name`, the `start` and `end` lines of the definition and its
+#'   `signature` (the header up to the opening brace).
+#'
+#' @keywords internal
+.stan_function_defs <- function(content) {
+  def_pattern <- "^(real|vector|matrix|void|int|array\\s*<\\s*(real|vector|matrix|int)\\s*>|tuple\\s*<\\s*.*\\s*>)\\s+" # nolint
+  first <- grep(paste0(def_pattern, "\\w+\\s*\\("), content)
+  name <- sub("\\s*\\(.*$", "", sub(def_pattern, "", content[first]))
+  braces <- cumsum(vapply(content, .unmatched_braces, numeric(1),
+                           USE.NAMES = FALSE))
+  last <- integer(length(first))
+  header <- character(length(first))
+  for (i in seq_along(first)) {
+    before <- if (first[i] > 1) braces[first[i] - 1] else 0
+    rest <- first[i]:length(content)
+    opened <- rest[grepl("{", content[rest], fixed = TRUE)][1]
+    last[i] <- rest[rest >= opened & braces[rest] == before][1]
+    header[i] <- paste(content[first[i]:opened], collapse = " ")
+  }
+  data.frame(
+    name = name, start = first, end = last,
+    signature = trimws(gsub("\\s+", " ", sub("\\{.*$", "", header))),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Extract function names or content from Stan code
@@ -172,57 +199,81 @@ pcd_stan_function_deps <- function(
 #' @param functions Optional, character vector of function names to extract
 #'   content for.
 #'
-#' @return Character vector of function names or content
+#' @return Character vector of function names or content, with one element
+#'   per definition, so overloaded names appear more than once.
 #'
 #' @keywords internal
 .extract_stan_functions <- function(
     content,
     names_only = FALSE,
     functions = NULL) {
-  def_pattern <- "^(real|vector|matrix|void|int|array\\s*<\\s*(real|vector|matrix|int)\\s*>|tuple\\s*<\\s*.*\\s*>)\\s+" # nolint
-  func_pattern <- paste0(
-    def_pattern,
-    "(\\w+)\\s*\\("
-  )
-  func_lines <- grep(func_pattern, content, value = TRUE)
-  # remove the func_pattern
-  func_lines <- sub(def_pattern, "", func_lines)
-  # get the next complete word after the pattern until the first (
-  func_names <- sub("\\s*\\(.*$", "", func_lines)
+  defs <- .stan_function_defs(content)
   if (!is.null(functions)) {
-    func_names <- intersect(func_names, functions)
+    defs <- defs[defs$name %in% functions, , drop = FALSE]
   }
   if (names_only) {
-    return(func_names)
-  } else {
-    func_content <- character(0)
-    for (func_name in func_names) {
-      start_line <- grep(paste0(def_pattern, func_name, "\\("), content)
-      if (length(start_line) == 0) next
-      end_line <- start_line
-      brace_count <- 0
-      # Ensure we find the first opening brace
-      # Find first opening brace
-      repeat {
-        brace_count <- brace_count + .unmatched_braces(content[end_line])
-        end_line <- end_line + 1
-        if (brace_count > 0) break
-      }
+    return(defs$name)
+  }
+  .stan_def_text(content, defs)
+}
 
-      # Continue until all braces are closed
-      repeat {
-        brace_count <- brace_count + .unmatched_braces(content[end_line])
-        if (brace_count == 0) break
-        end_line <- end_line + 1
-      }
+#' Get the code of Stan function definitions
+#'
+#' @inheritParams .stan_function_defs
+#' @param defs A data frame of definitions from `.stan_function_defs()`.
+#'
+#' @return Character vector with the code of each definition.
+#'
+#' @keywords internal
+.stan_def_text <- function(content, defs) {
+  vapply(
+    seq_len(nrow(defs)),
+    function(i) paste(content[defs$start[i]:defs$end[i]], collapse = "\n"),
+    character(1)
+  )
+}
 
-      func_content <- c(
-        func_content,
-        paste(content[start_line:end_line], collapse = "\n")
+#' Choose which definitions of overloaded Stan functions to keep
+#'
+#' Stan allows several definitions of a function with the same name and
+#' different argument types, but cmdstanr cannot expose such functions to R.
+#' This keeps one definition of each overloaded name, the first unless
+#' `overloads` says otherwise.
+#'
+#' @inheritParams .stan_def_text
+#' @inheritParams pcd_load_stan_functions
+#'
+#' @return A logical vector, `TRUE` for the definitions to keep.
+#'
+#' @keywords internal
+.select_stan_overloads <- function(defs, overloads = list()) {
+  unknown <- setdiff(names(overloads), defs$name)
+  if (length(unknown) > 0) {
+    stop("Function(s) not found: ", toString(unknown), call. = FALSE)
+  }
+  keep <- rep(TRUE, NROW(defs))
+  for (name in unique(defs$name[duplicated(defs$name)])) {
+    idx <- which(defs$name == name)
+    choice <- overloads[[name]]
+    if (is.null(choice)) {
+      choice <- 1L
+    }
+    chosen <- if (is.character(choice)) {
+      idx[grepl(choice, defs$signature[idx], fixed = TRUE)]
+    } else {
+      idx[choice]
+    }
+    if (length(chosen) == 0 || anyNA(chosen)) {
+      stop(
+        "No definition of ", name, " matches the overload choice ",
+        toString(choice), ". Its definitions are:\n",
+        paste(defs$signature[idx], collapse = "\n"),
+        call. = FALSE
       )
     }
-    return(func_content)
+    keep[setdiff(idx, chosen)] <- FALSE
   }
+  keep
 }
 
 #' Get Stan function names from Stan files
@@ -331,18 +382,41 @@ pcd_stan_files <- function(
 #' all dependencies in the correct order (dependencies before the functions
 #' that use them). Default is FALSE.
 #'
+#' @param overloads A named list choosing which definitions to keep of
+#' functions that have several definitions with different argument types
+#' (overloads). Each element is named after a function and is either the
+#' position of the definitions to keep, in the order they appear in the Stan
+#' files, or a string matched against their signatures. Only one definition
+#' of each overloaded function is kept by default, the first, as cmdstanr
+#' cannot expose overloaded functions to R. For example,
+#' `list(primarycensored_lpmf = 2)` or
+#' `list(primarycensored_lpmf = "array[] int n")` keeps the grouped
+#' `primarycensored_lpmf()` in place of the per-delay one, and
+#' `list(primarycensored_lpmf = 1:2)` keeps both.
+#' The code does not compile if another loaded function calls a definition
+#' that is left out, so to keep only a later definition load that function
+#' with `dependencies = TRUE` rather than loading all functions.
+#'
 #' @return A character string containing the requested Stan functions
 #'
 #' @family stantools
 #'
 #' @export
+#'
+#' @examples
+#' # The grouped overload of primarycensored_lpmf
+#' pcd_load_stan_functions(
+#'   "primarycensored_lpmf",
+#'   overloads = list(primarycensored_lpmf = "array[] int n")
+#' )
 pcd_load_stan_functions <- function(
     functions = NULL,
     stan_path = primarycensored::pcd_stan_path(),
     wrap_in_block = FALSE,
     write_to_file = FALSE,
     output_file = "pcd_functions.stan",
-    dependencies = FALSE) {
+    dependencies = FALSE,
+    overloads = list()) {
   stan_files <- list.files(
     stan_path,
     pattern = "\\.stan$",
@@ -372,20 +446,29 @@ pcd_load_stan_functions <- function(
     functions <- all_funcs
   }
 
+  contents <- lapply(stan_files, readLines)
+  defs <- lapply(contents, .stan_function_defs)
+  file_id <- rep(seq_along(defs), vapply(defs, nrow, integer(1)))
+  keep <- split(
+    .select_stan_overloads(do.call(rbind, defs), overloads),
+    factor(file_id, levels = seq_along(defs))
+  )
+
   all_content <- character(0)
 
-  for (file in stan_files) {
-    content <- readLines(file)
+  for (i in seq_along(contents)) {
+    content <- contents[[i]]
+    file_defs <- defs[[i]][keep[[i]], , drop = FALSE]
     if (is.null(functions)) {
-      all_content <- c(all_content, content)
+      dropped <- defs[[i]][!keep[[i]], , drop = FALSE]
+      drop_lines <- unlist(Map(seq, dropped$start, dropped$end))
+      all_content <- c(all_content, content[setdiff(seq_along(content),
+                                                     drop_lines)])
     } else {
       for (func in functions) {
-        func_content <- .extract_stan_functions(
-          content,
-          names_only = FALSE,
-          functions = func
-        )
-        all_content <- c(all_content, func_content)
+        all_content <- c(all_content, .stan_def_text(
+          content, file_defs[file_defs$name == func, , drop = FALSE]
+        ))
       }
     }
   }

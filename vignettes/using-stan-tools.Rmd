@@ -84,6 +84,20 @@ pcd_load_stan_functions("primarycensored_lpmf", dependencies = TRUE)
 
 This is useful when you want to extract a self-contained set of Stan functions for use in another project.
 
+### Overloaded functions
+
+Some Stan functions have several definitions with different argument types.
+For example, `primarycensored_lpmf()` has a per-delay definition and a grouped definition that takes an array of counts.
+cmdstanr cannot expose overloaded functions to R, so `pcd_load_stan_functions()` keeps only the first definition of each by default.
+The `overloads` argument chooses other definitions, by position or by a string matched against their signatures:
+
+```{r}
+pcd_load_stan_functions(
+  "primarycensored_lpmf",
+  overloads = list(primarycensored_lpmf = "array[] int n")
+)
+```
+
 ### Exploring function dependencies
 
 To understand which functions a particular Stan function depends on, use `pcd_stan_function_deps()`:

@@ -257,6 +257,10 @@ pcd_as_stan_data <- function(
     np_log_sigma_mean = np$np_log_sigma_mean,
     np_log_sigma_sd = np$np_log_sigma_sd
   )
+  stan_data <- c(stan_data, .pcd_stan_groups(
+    stan_data$d, stan_data$d_upper, stan_data$n, stan_data$pwindow,
+    stan_data$L, stan_data$D
+  ))
 
   return(stan_data)
 }
@@ -355,4 +359,54 @@ pcd_as_stan_data <- function(
     np_fields$np_log_sigma_sd <- as.numeric(priors$scale[2])
   }
   np_fields
+}
+
+#' Group the rows of the primarycensored Stan model data
+#'
+#' Rows that share `pwindow`, `L` and `D` form a group, and rows of a group
+#' with the same delay interval are combined by summing `n`.
+#' Each group has its sorted unique interval end points, and each interval
+#' has the positions of its ends among them.
+#'
+#' @param d,d_upper,n,pwindow,L,D Delays, delay upper bounds, counts,
+#'   primary windows and truncation points, one per row.
+#'
+#' @return A list of the grouped likelihood fields of the Stan data, see the
+#'   data block of `pcens_model.stan`.
+#'
+#' @keywords internal
+.pcd_stan_groups <- function(d, d_upper, n, pwindow, L, D) {
+  groups <- .row_groups(pwindow, L, D)
+  first <- vapply(groups, `[`, integer(1), 1L)
+  parts <- lapply(groups, function(rows) {
+    intervals <- lapply(
+      .row_groups(d[rows], d_upper[rows]), function(i) rows[i]
+    )
+    ends <- vapply(intervals, `[`, integer(1), 1L)
+    pts <- sort(unique(c(d[rows], d_upper[rows])))
+    list(
+      points = pts,
+      n = vapply(intervals, function(i) sum(n[i]), numeric(1)),
+      lower = match(d[ends], pts),
+      upper = match(d_upper[ends], pts)
+    )
+  })
+  field <- function(name) unlist(lapply(parts, `[[`, name))
+  offsets <- function(name) {
+    as.integer(cumsum(c(1, lengths(lapply(parts, `[[`, name)))))
+  }
+  list(
+    n_groups = length(groups),
+    group_pwindow = pwindow[first],
+    group_L = L[first],
+    group_D = D[first],
+    n_points = length(field("points")),
+    point_start = offsets("points"),
+    points = as.numeric(field("points")),
+    n_intervals = length(field("n")),
+    interval_start = offsets("n"),
+    interval_n = as.integer(field("n")),
+    interval_lower = as.integer(field("lower")),
+    interval_upper = as.integer(field("upper"))
+  )
 }

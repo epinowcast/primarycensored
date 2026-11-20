@@ -10,7 +10,8 @@ pcd_load_stan_functions(
   wrap_in_block = FALSE,
   write_to_file = FALSE,
   output_file = "pcd_functions.stan",
-  dependencies = FALSE
+  dependencies = FALSE,
+  overloads = list()
 )
 }
 \arguments{
@@ -33,12 +34,34 @@ write_to_file is TRUE. Defaults to "pcd_functions.stan".}
 requested functions depend on. When TRUE, recursively finds and includes
 all dependencies in the correct order (dependencies before the functions
 that use them). Default is FALSE.}
+
+\item{overloads}{A named list choosing which definitions to keep of
+functions that have several definitions with different argument types
+(overloads). Each element is named after a function and is either the
+position of the definitions to keep, in the order they appear in the Stan
+files, or a string matched against their signatures. Only one definition
+of each overloaded function is kept by default, the first, as cmdstanr
+cannot expose overloaded functions to R. For example,
+\code{list(primarycensored_lpmf = 2)} or
+\code{list(primarycensored_lpmf = "array[] int n")} keeps the grouped
+\code{primarycensored_lpmf()} in place of the per-delay one, and
+\code{list(primarycensored_lpmf = 1:2)} keeps both.
+The code does not compile if another loaded function calls a definition
+that is left out, so to keep only a later definition load that function
+with \code{dependencies = TRUE} rather than loading all functions.}
 }
 \value{
 A character string containing the requested Stan functions
 }
 \description{
 Load Stan functions as a string
+}
+\examples{
+# The grouped overload of primarycensored_lpmf
+pcd_load_stan_functions(
+  "primarycensored_lpmf",
+  overloads = list(primarycensored_lpmf = "array[] int n")
+)
 }
 \seealso{
 Tools for working with package Stan functions

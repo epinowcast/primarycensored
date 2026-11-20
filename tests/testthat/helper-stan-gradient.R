@@ -26,3 +26,14 @@ stan_gradient_at <- function(model, data, init) {
     finite_diff = if (is.null(grads)) numeric(0) else grads$finite_diff
   )
 }
+
+# Returns the log density at `init`. `model` must be compiled with
+# `compile_model_methods = TRUE`.
+stan_log_prob <- function(model, data, init) {
+  fit <- suppressMessages(suppressWarnings(model$sample(
+    data = data, init = list(init), chains = 1, iter_sampling = 1,
+    fixed_param = TRUE, refresh = 0, show_messages = FALSE
+  )))
+  fit$init_model_methods(verbose = FALSE)
+  fit$log_prob(fit$unconstrain_variables(init))
+}
