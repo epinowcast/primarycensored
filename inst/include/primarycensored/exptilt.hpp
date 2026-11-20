@@ -3,9 +3,10 @@
 
 /**
  * C++ version, with closed-form gradients, of the primarycensored Stan
- * function primarycensored_closed_tilt_pair(): the log tilt transforms
- * log T_f(xi; t) and log(T_f(xi; Inf) - T_f(xi; t)) of gamma, exponential
- * and normal delays, used by the exponentially tilted primary.
+ * function primarycensored_tilt_pair(): the log tilt transforms
+ * log T_f(xi; t) and log(T_f(xi; Inf) - T_f(xi; t)) of gamma, Weibull,
+ * exponential, generalised gamma and normal delays, used by the
+ * exponentially tilted primary.
  *
  * Its Stan body, in inst/stan/functions/primarycensored_exptilt.stan of the
  * primarycensored package, is the reference. Values match the Stan code.
@@ -23,7 +24,11 @@
  * Normal (mu, sigma), with z = (t - mu - xi sigma^2) / sigma:
  *   log T = xi mu + (xi sigma)^2 / 2 + log Phi(z),
  *   log U = xi mu + (xi sigma)^2 / 2 + log Phi(-z).
- * The third element, the log loss of a series, is 0 for these delays.
+ * Weibull and generalised gamma (shape, scale, k), x = (t / scale)^shape:
+ * for xi = 0 the CDF P(k, x) and its complement, as for the gamma. For
+ * xi other than 0 the series of primarycensored_stacy_series(), whose
+ * terms are differentiated one by one, see stacy_tilt_pair().
+ * The third element, the log loss of the series, is 0 for the others.
  * Each call is one autodiff node.
  *
  * The function is put in stan::math, as in uniform_lcdf.hpp.
@@ -486,18 +491,23 @@ inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
  * Tilt pair for the given delay distribution.
  *
  * @param t Point.
- * @param dist_id 2 (gamma), 4 (exponential) or 18 (normal).
+ * @param dist_id 2 (gamma), 3 (Weibull), 4 (exponential), 5 (generalised
+ *   gamma) or 18 (normal).
  * @param xi Tilt.
  * @param p Delay parameters.
  * @param grad Whether to compute the partials.
  * @return The pair.
  */
-inline TiltPair closed_tilt_pair(double t, int dist_id, double xi,
-                                 const std::vector<double>& p, bool grad) {
+inline TiltPair tilt_pair(double t, int dist_id, double xi,
+                          const std::vector<double>& p, bool grad) {
   if (dist_id == 2) {
     return gamma_tilt_pair(t, xi, p[0], p[1], grad);
+  } else if (dist_id == 3) {
+    return stacy_tilt_pair(t, xi, p[0], p[1], 1.0, false, grad);
   } else if (dist_id == 4) {
     return exponential_tilt_pair(t, xi, p[0], grad);
+  } else if (dist_id == 5) {
+    return stacy_tilt_pair(t, xi, p[0], p[1], p[2], true, grad);
   }
   return normal_tilt_pair(t, xi, p[0], p[1], grad);
 }
@@ -505,7 +515,7 @@ inline TiltPair closed_tilt_pair(double t, int dist_id, double xi,
 }  // namespace internal
 
 /**
- * Log of the closed form tilt transforms over the lower and upper support.
+ * Log of the tilt transforms over the lower and upper support.
  *
  * The point t is data in value. It may be a var, which is not
  * differentiated, as it does not depend on the parameters where the Stan
@@ -513,24 +523,25 @@ inline TiltPair closed_tilt_pair(double t, int dist_id, double xi,
  * calling convention, which is not used.
  *
  * @param t Point.
- * @param dist_id 2 (gamma), 4 (exponential) or 18 (normal).
+ * @param dist_id 2 (gamma), 3 (Weibull), 4 (exponential), 5 (generalised
+ *   gamma) or 18 (normal).
  * @param xi Tilt (var or double).
  * @param params Delay parameters (var or double).
- * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), 0].
+ * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), log loss],
+ *   as log_tilt_transform_pair_shared() in Stan.
  */
 template <typename T_t, typename T_xi, typename T_p,
           stan::require_all_stan_scalar_t<T_t, T_xi, T_p>* = nullptr>
 inline Eigen::Matrix<stan::return_type_t<T_t, T_xi, T_p>, -1, 1>
-primarycensored_closed_tilt_pair(const T_t& t, const int& dist_id,
-                                 const T_xi& xi,
-                                 const std::vector<T_p>& params,
-                                 std::ostream* /* pstream__ */) {
-  constexpr const char* fn = "primarycensored_closed_tilt_pair";
-  const std::size_t n_params = dist_id == 4 ? 1 : 2;
-  if (dist_id != 2 && dist_id != 4 && dist_id != 18) {
+primarycensored_tilt_pair(const T_t& t, const int& dist_id, const T_xi& xi,
+                          const std::vector<T_p>& params,
+                          std::ostream* /* pstream__ */) {
+  constexpr const char* fn = "primarycensored_tilt_pair";
+  if (dist_id < 2 || (dist_id > 5 && dist_id != 18)) {
     throw std::domain_error(std::string(fn)
-                            + ": dist_id must be 2, 4 or 18");
+                            + ": dist_id must be 2, 3, 4, 5 or 18");
   }
+  const std::size_t n_params = dist_id == 4 ? 1 : (dist_id == 5 ? 3 : 2);
   if (params.size() < n_params) {
     throw std::domain_error(std::string(fn) + ": too few params");
   }
@@ -540,7 +551,7 @@ primarycensored_closed_tilt_pair(const T_t& t, const int& dist_id,
   for (std::size_t j = 0; j < n_params; ++j) {
     p[j] = stan::math::value_of(params[j]);
   }
-  const internal::TiltPair pair = internal::closed_tilt_pair(
+  const internal::TiltPair pair = internal::tilt_pair(
       stan::math::value_of(t), dist_id, stan::math::value_of(xi), p,
       xi_var || p_var);
   Eigen::VectorXd val(3);
@@ -591,7 +602,7 @@ primarycensored_closed_tilt_pair(const T_t& t, const int& dist_id,
 
 namespace stan {
 namespace math {
-using ::primarycensored::primarycensored_closed_tilt_pair;
+using ::primarycensored::primarycensored_tilt_pair;
 }  // namespace math
 }  // namespace stan
 

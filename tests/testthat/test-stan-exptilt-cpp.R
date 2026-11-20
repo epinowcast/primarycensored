@@ -11,7 +11,9 @@ tilt_cpp_cases <- list(
   list(dist_id = 2L, params = list(
     c(2, 0.5), c(0.6, 1.3), c(20, 4), c(200, 20)
   )),
-  list(dist_id = 18L, params = list(c(3, 2), c(-1, 3), c(8, 1)))
+  list(dist_id = 18L, params = list(c(3, 2), c(-1, 3), c(8, 1))),
+  list(dist_id = 3L, params = list(c(1.5, 5), c(0.7, 2), c(3, 30))),
+  list(dist_id = 5L, params = list(c(1.5, 5, 2), c(0.8, 3, 0.6)))
 )
 
 # Tilts of both signs, including two near the small tilt switch

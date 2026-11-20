@@ -501,38 +501,42 @@ vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
   * Check if the tilt transform has a C++ version
   * @ingroup tilt_transforms
   *
-  * These delays use primarycensored_closed_tilt_pair(), which has a C++
+  * These delays use primarycensored_tilt_pair(), which has a C++
   * version.
   *
   * @param dist_id Distribution identifier for the delay distribution
   *
-  * @return 1 for gamma (2), exponential (4) and normal (18) delays, 0
-  * otherwise
+  * @return 1 for gamma (2), Weibull (3), exponential (4), generalised
+  * gamma (5) and normal (18) delays, 0 otherwise
   */
 int check_for_cpp_tilt(int dist_id) {
-  return dist_id == 2 || dist_id == 4 || dist_id == 18;
+  return dist_id == 2 || dist_id == 3 || dist_id == 4 || dist_id == 5
+         || dist_id == 18;
 }
 
 /**
-  * Log of the closed form tilt transforms over the lower and upper support
+  * Log of the tilt transform without shared quantities
   * @ingroup tilt_transforms
   *
-  * As log_tilt_transform_pair_shared() for the gamma (2), exponential (4)
-  * and normal (18) delays, which need no shared quantities. Has a C++
-  * version, see `pcd_stan_header()` in R.
+  * As log_tilt_transform_pair_shared() for the delays that need no shared
+  * quantities: gamma (2), Weibull (3), exponential (4), generalised gamma
+  * (5) and normal (18). Has a C++ version, see `pcd_stan_header()` in R.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
   * (rate / (rate - xi))^shape, with both tails from gamma_lcdf_lccdf_logx().
+  * The Weibull and generalised gamma use primarycensored_stacy_series() for
+  * xi other than 0.
   *
   * @param t Point
-  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or
-  *   18 (Normal)
+  * @param dist_id Distribution identifier: 2 (Gamma), 3 (Weibull),
+  *   4 (Exponential), 5 (Generalised gamma) or 18 (Normal)
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
   *
-  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), 0]
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), log loss],
+  *   as log_tilt_transform_pair_shared()
   */
-vector primarycensored_closed_tilt_pair(real t, int dist_id, real xi,
+vector primarycensored_tilt_pair(real t, int dist_id, real xi,
                                         array[] real params) {
   if (dist_id == 2) {
     real shape = params[1];
@@ -560,6 +564,19 @@ vector primarycensored_closed_tilt_pair(real t, int dist_id, real xi,
       log_total + primarycensored_log_std_normal_cdf(z),
       log_total + primarycensored_log_std_normal_cdf(-z), 0
     ]';
+  } else if (dist_id == 3 || dist_id == 5) {
+    real shape = params[1];
+    real scale = params[2];
+    real k = dist_id == 3 ? 1.0 : params[3];
+    if (xi == 0) {
+      if (t <= 0) return [negative_infinity(), 0, 0]';
+      return append_row(
+        gamma_lcdf_lccdf_logx(shape * (log(t) - log(scale)), k), 0
+      );
+    }
+    if (t <= 0) return [negative_infinity(), not_a_number(), 0]';
+    vector[2] series = primarycensored_stacy_series(t, xi, shape, scale, k);
+    return [series[1], not_a_number(), series[2]]';
   }
   reject("Invalid distribution identifier: ", dist_id);
 }
@@ -574,8 +591,8 @@ vector primarycensored_closed_tilt_pair(real t, int dist_id, real xi,
   * which the terms of the lower transform exceed it, 0 unless the transform is
   * a series. Only defined where check_for_tilt_transform() is 1.
   *
-  * The gamma (2), exponential (4) and normal (18) are closed form, see
-  * primarycensored_closed_tilt_pair().
+  * The gamma (2), Weibull (3), exponential (4), generalised gamma (5) and
+  * normal (18) need no shared quantities, see primarycensored_tilt_pair().
   *
   * The lognormal (1) has no closed form, see
   * primarycensored_lognormal_tilt_pair(). Its upper transform is `inf` for
@@ -598,20 +615,7 @@ vector primarycensored_closed_tilt_pair(real t, int dist_id, real xi,
 vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
                                       array[] real params, vector context) {
   if (check_for_cpp_tilt(dist_id)) {
-    return primarycensored_closed_tilt_pair(t, dist_id, xi, params);
-  } else if (dist_id == 3 || dist_id == 5) {
-    real shape = params[1];
-    real scale = params[2];
-    real k = dist_id == 3 ? 1.0 : params[3];
-    if (xi == 0) {
-      if (t <= 0) return [negative_infinity(), 0, 0]';
-      return append_row(
-        gamma_lcdf_lccdf_logx(shape * (log(t) - log(scale)), k), 0
-      );
-    }
-    if (t <= 0) return [negative_infinity(), not_a_number(), 0]';
-    vector[2] series = primarycensored_stacy_series(t, xi, shape, scale, k);
-    return [series[1], not_a_number(), series[2]]';
+    return primarycensored_tilt_pair(t, dist_id, xi, params);
   } else if (dist_id == 1) {
     vector[2] pair = primarycensored_lognormal_tilt_pair(
       t, params[1], params[2], xi, context
