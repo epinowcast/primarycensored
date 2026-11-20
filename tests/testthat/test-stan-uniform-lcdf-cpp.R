@@ -220,6 +220,21 @@ analytical_models <- function() {
   )
 }
 
+# The vectorised log CDF, which for the log-logistic switches to the
+# numerical CDF where the C++ solution is ill conditioned
+analytical_vectorized_models <- function() {
+  compile_cpp_and_stan( # nolint: object_usage_linter.
+    cpp_probe_code( # nolint: object_usage_linter.
+      "  int start;",
+      paste(
+        "  out = primarycensored_analytical_lcdf_vectorized(",
+        "start, N, dist_id, params, pwindow, 1, rep_array(0.0, 0));"
+      )
+    ),
+    "pcdcppanalyticalvec"
+  )
+}
+
 # Whether the log-logistic solution is ill conditioned at the delays `d`,
 # from the log CDFs `out`, as in loglogistic_window_ill_conditioned()
 loglogistic_ill <- function(d, params, pwindow, out) {
@@ -233,8 +248,10 @@ test_that("C++ log-logistic matches Stan where it uses the numerical CDF", {
   set.seed(4)
   ll_params <- list(c(30, 20), c(2, 8), c(1, 20), c(5, 3), c(1, 0.5))
   scalar <- analytical_models()
+  vectorized <- analytical_vectorized_models()
   pmf <- pmf_models()
   n_ill <- 0
+  n_ill_vectorized <- 0
   for (params in ll_params) {
     for (setting in scalar_settings) {
       data <- scalar_data(29L, setting, rep(1, length(scalar_delays)))
@@ -250,6 +267,20 @@ test_that("C++ log-logistic matches Stan where it uses the numerical CDF", {
       data$w <- stats::runif(length(scalar_delays), 0.5, 1.5)
       expect_cpp_gradient_matches(scalar, data, params, info)
     }
+    for (setting in vectorized_settings) {
+      data <- vectorized_data(29L, setting, rep(1, setting[2]))
+      info <- case_info(29L, params, c("vectorised", setting))
+      expect_cpp_values_match(vectorized, data, params, info)
+      out <- stan_gq(
+        vectorized$stan, data, list(theta = log(params)), "out"
+      )
+      d <- setting[1]:setting[2]
+      n_ill_vectorized <- n_ill_vectorized + sum(loglogistic_ill(
+        d, params, setting[3], out[d]
+      ))
+      data$w <- stats::runif(setting[2], 0.5, 1.5)
+      expect_cpp_gradient_matches(vectorized, data, params, info)
+    }
     for (setting in pmf_settings[c(1, 2, 4, 7)]) {
       data <- pmf_data(29L, setting, rep(1, setting[1] + 1))
       info <- case_info(29L, params, c("pmf", setting))
@@ -262,8 +293,9 @@ test_that("C++ log-logistic matches Stan where it uses the numerical CDF", {
       }
     }
   }
-  # The vectorised PMF uses the same check, so it is counted from the CDFs
+  # The vectorised PMF uses the same check as the vectorised CDF
   expect_gt(n_ill, 0)
+  expect_gt(n_ill_vectorized, 0)
 })
 
 test_that("C++ gradients match finite differences", {
