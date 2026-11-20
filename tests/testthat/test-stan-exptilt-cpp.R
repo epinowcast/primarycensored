@@ -18,10 +18,10 @@ tilt_cpp_cases <- list(
 )
 
 # Tilts of both signs. With |rho| = 0.004 the small window form of
-# primarycensored_exptilt_form() covers the first delays at pwindow 1 and
-# 3, and the scalar probe's pwindow of 2.5 puts its delays below 2.5 on
-# the small delay form for the delays on the non-negative reals. The
-# other tilts use the direct form.
+# primarycensored_exptilt_form() covers the first delays at pwindow 0.3
+# and 1 for delays on the non-negative reals, and the scalar probe's
+# pwindow of 2.5 puts its delays below 2.5 on the small delay form. The
+# other tilts and settings use the direct form.
 tilt_cpp_rhos <- c(0.2, -0.15, 0.004, -0.004, 1)
 
 # Probe model with theta = (unconstrained delay parameters, rho). The first
