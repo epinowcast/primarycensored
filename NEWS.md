@@ -25,6 +25,7 @@
   See #367, #368 and #369.
 - Added the log-logistic delay, Stan `dist_id` 29 with parameters `[scale, shape]` and `"loglogistic"` in `pcd_distributions`.
   There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
+  The Stan solution has a C++ version with a closed-form gradient, about 7 times faster than Stan's autodiff.
   See #372, #104 and #321.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
