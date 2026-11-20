@@ -488,10 +488,14 @@ real loglogistic_ratio_large(real a, real log_A, real tol) {
                   * exp(-a * log(3));
   real shrink = exp(-a * (log_A - log(3)));
   real total = shrink * at_start;
+  // Every term is proportional to log(A / 3) close to A = 3, so the stop is
+  // scaled by it. Otherwise the series stops after one term there and its
+  // derivative in log(A) is wrong.
+  real stop = tol * fmin(log_A - log(3), 1);
   for (m in 0:200) {
     real term = (m + 1) * loglogistic_tail_term(a, m, log_A, shrink);
     total += m % 2 == 0 ? term : -term;
-    if (abs(term) <= tol * abs(total)) break;
+    if (abs(term) <= stop * abs(total)) break;
   }
   return (1 + exp(-log_A)) * total;
 }
