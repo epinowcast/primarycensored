@@ -198,8 +198,10 @@ NULL
     m <- m + 1L
     decay_m <- decay_m * decay
     start_m <- start_m / .loglogistic_tail_start
-    if (all(abs(term) <= .loglogistic_series_tol * abs(total)) ||
-      m >= .loglogistic_tail_max_terms) {
+    # Scaled by log(A / 3) close to A = 3, where every term is proportional
+    # to it, as in the Stan loglogistic_ratio_large()
+    stop_at <- .loglogistic_series_tol * pmin(ell, 1) * abs(total)
+    if (all(abs(term) <= stop_at) || m >= .loglogistic_tail_max_terms) {
       break
     }
   }
