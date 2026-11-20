@@ -52,7 +52,7 @@
   `pcd_cmdstan_model()` uses them by default, and the new `pcd_stan_header()` gives the header to compile other models with.
   See #362.
 - The tilt transforms behind the exponentially tilted primary (`dexpgrowth()`) solutions for exponential, gamma, normal, Weibull and generalised gamma delays have C++ versions with closed-form gradients in the delay parameters and the growth rate.
-  The lognormal delay still uses the Stan code.
+  Lognormal delays use them for the delay CDF and for `r < 0`, and the Stan quadrature for `r > 0`.
 - The analytical `pcens_cdf()` methods for gamma, lognormal, Weibull and generalised gamma delays with a uniform primary are faster.
   They cost less per call and, for 64 or more points on a lattice such as the one used by `dprimarycensored()` and `fitdistdoublecens()`, evaluate the delay terms once per distinct point.
   They also return 1 for `q = Inf`, where they returned `NaN`, and are accurate far in the upper tail and for windows much narrower than the delay.
