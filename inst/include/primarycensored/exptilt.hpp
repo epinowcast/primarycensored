@@ -1,0 +1,598 @@
+#ifndef PRIMARYCENSORED_EXPTILT_HPP
+#define PRIMARYCENSORED_EXPTILT_HPP
+
+/**
+ * C++ version, with closed-form gradients, of the primarycensored Stan
+ * function primarycensored_closed_tilt_pair(): the log tilt transforms
+ * log T_f(xi; t) and log(T_f(xi; Inf) - T_f(xi; t)) of gamma, exponential
+ * and normal delays, used by the exponentially tilted primary.
+ *
+ * Its Stan body, in inst/stan/functions/primarycensored_exptilt.stan of the
+ * primarycensored package, is the reference. Values match the Stan code.
+ *
+ * Exponential (rate lambda), with r = lambda - xi:
+ *   log T = log(lambda / r) + log(1 - exp(-r t)),
+ *   log U = log(lambda / r) - r t.
+ * Gamma (k, beta), with r = beta - xi and y = r t:
+ *   log T = k log(beta / r) + log P(k, y),
+ *   log U = k log(beta / r) + log Q(k, y).
+ * The log y partials of log P and log Q are y f(y) / P and -y f(y) / Q,
+ * with f the unit rate gamma density. The k partials differentiate the
+ * same series and continued fraction as the Stan code, so they match
+ * Stan's autodiff through it.
+ * Normal (mu, sigma), with z = (t - mu - xi sigma^2) / sigma:
+ *   log T = xi mu + (xi sigma)^2 / 2 + log Phi(z),
+ *   log U = xi mu + (xi sigma)^2 / 2 + log Phi(-z).
+ * The third element, the log loss of a series, is 0 for these delays.
+ * Each call is one autodiff node.
+ *
+ * The function is put in stan::math, as in uniform_lcdf.hpp.
+ */
+
+#include "uniform_lcdf.hpp"
+#include <stan/math.hpp>
+#include <array>
+#include <cmath>
+#include <limits>
+#include <ostream>
+#include <stdexcept>
+#include <string>
+#include <vector>
+
+namespace primarycensored {
+namespace internal {
+
+/**
+ * Log CDF of a unit rate gamma from log(x), as gamma_lcdf_logx() in Stan,
+ * with its derivative in the shape as Stan's autodiff finds it.
+ *
+ * The series is differentiated term by term. Elsewhere the derivative is
+ * that of Stan's gamma_lcdf(), by nested autodiff.
+ *
+ * @param log_x Log of the argument.
+ * @param a Shape, positive and finite.
+ * @param dlog_p Set to d log P / da if not null.
+ * @return log P(a, exp(log_x)).
+ */
+inline double gamma_lcdf_logx_da(double log_x, double a, double* dlog_p) {
+  if (!dlog_p) {
+    return gamma_lcdf_logx(log_x, a);
+  }
+  if (!(a > 0) || std::isinf(a)) {
+    throw std::domain_error(
+        "gamma_lcdf_logx: shape must be positive finite");
+  }
+  const double x = std::exp(log_x);
+  if (!(x < 0.5 * (a + 1))) {
+    stan::math::nested_rev_autodiff nested;
+    stan::math::var a_v = a;
+    stan::math::var log_p = stan::math::gamma_lcdf(x, a_v, 1.0);
+    log_p.grad();
+    *dlog_p = a_v.adj();
+    return log_p.val();
+  }
+  double term = 1;
+  double total = 1;
+  double dterm = 0;
+  double dtotal = 0;
+  double n = a;
+  while (term > 1e-16 * total) {
+    n += 1;
+    const double ratio = x / n;
+    dterm = dterm * ratio - term * (ratio / n);
+    term *= ratio;
+    total += term;
+    dtotal += dterm;
+  }
+  *dlog_p = log_x - stan::math::digamma(a + 1) + dtotal / total;
+  return a * log_x - x - stan::math::lgamma(a + 1) + std::log(total);
+}
+
+/**
+ * Log CDF and log CCDF of a unit rate gamma from log(x), as
+ * gamma_lcdf_lccdf_logx() in Stan, with their derivatives in the shape as
+ * Stan's autodiff finds them. The continued fraction is differentiated
+ * step by step.
+ *
+ * @param log_x Log of the argument.
+ * @param a Shape, positive and finite.
+ * @param da If not null, set to {d log P / da, d log Q / da}.
+ * @return {log P(a, x), log Q(a, x)}.
+ */
+inline std::array<double, 2> gamma_lcdf_lccdf_logx(double log_x, double a,
+                                                   std::array<double, 2>* da) {
+  using stan::math::log1m_exp;
+  if (!(a > 0) || std::isinf(a)) {
+    throw std::domain_error(
+        "gamma_lcdf_lccdf_logx: shape must be positive finite");
+  }
+  const double x = std::exp(log_x);
+  if (!(x >= a + 1)) {
+    double dlog_p = 0;
+    const double log_p
+        = gamma_lcdf_logx_da(log_x, a, da ? &dlog_p : nullptr);
+    if (da) {
+      // d log1m_exp(u) / du = -1 / expm1(-u)
+      (*da)[0] = dlog_p;
+      (*da)[1] = -dlog_p / std::expm1(-log_p);
+    }
+    return {log_p, log1m_exp(log_p)};
+  }
+  if (std::isinf(x)) {
+    if (da) {
+      *da = {0, 0};
+    }
+    return {0, neg_inf};
+  }
+  // Each quantity and its derivative in a
+  double b = x + 1 - a, db = -1;
+  double c = 1e300, dc = 0;
+  double d = 1 / b, dd = -db / (b * b);
+  double h = d, dh = dd;
+  double delta = 1, ddelta = 0;
+  double err = 1;
+  int i = 0;
+  while (err >= 1e-15) {
+    i += 1;
+    const double an = -i * (i - a);
+    const double dan = i;
+    const double d_prev = d;
+    b += 2;
+    dd = dan * d + an * dd + db;
+    d = an * d + b;
+    if (std::fabs(d) < 1e-300) {
+      d = 1e-300;
+      dd = 0;
+    }
+    dc = db + (dan * c - an * dc) / (c * c);
+    c = b + an / c;
+    if (std::fabs(c) < 1e-300) {
+      c = 1e-300;
+      dc = 0;
+    }
+    d = 1 / d;
+    dd = -dd * (d * d);
+    err *= i * std::fmax(std::fabs(i - a), 1) * std::fabs(d * d_prev / delta);
+    ddelta = dd * c + d * dc;
+    delta = d * c;
+    dh = dh * delta + h * ddelta;
+    h *= delta;
+  }
+  const double log_q = a * log_x - x - stan::math::lgamma(a) + std::log(h);
+  if (da) {
+    (*da)[1] = log_x - stan::math::digamma(a) + dh / h;
+    (*da)[0] = -(*da)[1] / std::expm1(-log_q);
+  }
+  return {log1m_exp(log_q), log_q};
+}
+
+/**
+ * Log of the standard normal CDF, as primarycensored_log_std_normal_cdf()
+ * in Stan.
+ *
+ * @param z Point.
+ * @return log Phi(z).
+ */
+inline double log_std_normal_cdf(double z) {
+  if (z >= 0) {
+    return std::log(stan::math::Phi(z));
+  }
+  if (z > -37) {
+    return std::log(0.5 * stan::math::erfc(-z / std::sqrt(2.0)));
+  }
+  const double inv_z2 = 1 / (z * z);
+  // Nested as in the Stan code, so that the value matches
+  double series = 1 - 13 * inv_z2;
+  for (int j = 11; j >= 1; j -= 2) {
+    series = 1 - j * inv_z2 * series;
+  }
+  return stan::math::std_normal_lpdf(z) - std::log(-z) + std::log(series);
+}
+
+/**
+ * d log Phi(z) / dz = phi(z) / Phi(z), given log Phi(z).
+ *
+ * @param z Point.
+ * @param log_Phi log Phi(z).
+ * @return The derivative.
+ */
+inline double dlog_std_normal_cdf(double z, double log_Phi) {
+  return std::exp(stan::math::std_normal_lpdf(z) - log_Phi);
+}
+
+/**
+ * Values of the three outputs and their partials with respect to xi and
+ * up to three delay parameters.
+ */
+struct TiltPair {
+  std::array<double, 3> val{{neg_inf, neg_inf, 0}};
+  // grad[i][0] is d val[i] / d xi, grad[i][j] is d val[i] / d params[j - 1]
+  std::array<std::array<double, 4>, 3> grad{};
+};
+
+/**
+ * Exponential tilt pair, as the dist_id 4 branch in Stan.
+ *
+ * @param t Point.
+ * @param xi Tilt.
+ * @param rate Rate.
+ * @param grad Whether to compute the partials.
+ * @return The pair.
+ */
+inline TiltPair exponential_tilt_pair(double t, double xi, double rate,
+                                      bool grad) {
+  TiltPair out;
+  const double tilted_rate = rate - xi;
+  const double log_total = -stan::math::log1m(xi / rate);
+  // d log_total / d rate and d xi
+  const double tot_rate = 1 / rate - 1 / tilted_rate;
+  const double tot_xi = 1 / tilted_rate;
+  if (t <= 0) {
+    out.val[1] = log_total;
+    if (grad) {
+      out.grad[1][0] = tot_xi;
+      out.grad[1][1] = tot_rate;
+    }
+    return out;
+  }
+  out.val[0] = log_total + stan::math::log1m_exp(-tilted_rate * t);
+  out.val[1] = log_total - tilted_rate * t;
+  if (grad) {
+    // d log1m_exp(-r t) / dr
+    const double dlow = t / std::expm1(tilted_rate * t);
+    out.grad[0][0] = tot_xi - dlow;
+    out.grad[0][1] = tot_rate + dlow;
+    out.grad[1][0] = tot_xi + t;
+    out.grad[1][1] = tot_rate - t;
+  }
+  return out;
+}
+
+/**
+ * Gamma tilt pair, as the dist_id 2 branch in Stan.
+ *
+ * @param t Point.
+ * @param xi Tilt.
+ * @param shape Shape.
+ * @param rate Rate.
+ * @param grad Whether to compute the partials.
+ * @return The pair.
+ */
+inline TiltPair gamma_tilt_pair(double t, double xi, double shape,
+                                double rate, bool grad) {
+  TiltPair out;
+  const double log1m_ratio = stan::math::log1m(xi / rate);
+  const double log_total = -shape * log1m_ratio;
+  const double tilted_rate = rate - xi;
+  if (t <= 0) {
+    out.val[1] = log_total;
+    if (grad) {
+      out.grad[1][0] = shape / tilted_rate;
+      out.grad[1][1] = -log1m_ratio;
+      out.grad[1][2] = shape * (1 / rate - 1 / tilted_rate);
+    }
+    return out;
+  }
+  const double log_y = std::log(t) + std::log(tilted_rate);
+  std::array<double, 2> pq_da;
+  const std::array<double, 2> pq
+      = gamma_lcdf_lccdf_logx(log_y, shape, grad ? &pq_da : nullptr);
+  out.val[0] = log_total + pq[0];
+  out.val[1] = log_total + pq[1];
+  if (!grad) {
+    return out;
+  }
+  // log of y f(y), f the unit rate gamma density
+  const double log_yf
+      = shape * log_y - std::exp(log_y) - stan::math::lgamma(shape);
+  // d log P / d log y and d log Q / d log y
+  const double dlog_y[2]
+      = {std::exp(log_yf - pq[0]), -std::exp(log_yf - pq[1])};
+  const double tot_xi = shape / tilted_rate;
+  const double tot_rate = shape * (1 / rate - 1 / tilted_rate);
+  for (int i = 0; i < 2; ++i) {
+    out.grad[i][0] = tot_xi - dlog_y[i] / tilted_rate;
+    out.grad[i][1] = -log1m_ratio + pq_da[i];
+    out.grad[i][2] = tot_rate + dlog_y[i] / tilted_rate;
+  }
+  return out;
+}
+
+/**
+ * Normal tilt pair, as the dist_id 18 branch in Stan.
+ *
+ * @param t Point.
+ * @param xi Tilt.
+ * @param mu Mean.
+ * @param sigma Standard deviation.
+ * @param grad Whether to compute the partials.
+ * @return The pair.
+ */
+inline TiltPair normal_tilt_pair(double t, double xi, double mu, double sigma,
+                                 bool grad) {
+  TiltPair out;
+  const double z = (t - mu - xi * (sigma * sigma)) / sigma;
+  const double xs = xi * sigma;
+  const double log_total = xi * mu + 0.5 * (xs * xs);
+  const double log_lo = log_std_normal_cdf(z);
+  const double log_up = log_std_normal_cdf(-z);
+  out.val[0] = log_total + log_lo;
+  out.val[1] = log_total + log_up;
+  if (grad) {
+    const double r_lo = dlog_std_normal_cdf(z, log_lo);
+    const double r_up = -dlog_std_normal_cdf(-z, log_up);
+    // Partials of z and log_total with respect to xi, mu and sigma
+    const double z_p[3]
+        = {-sigma, -1 / sigma, -(t - mu) / (sigma * sigma) - xi};
+    const double tot_p[3] = {mu + xi * sigma * sigma, xi, xi * xs};
+    for (int j = 0; j < 3; ++j) {
+      out.grad[0][j] = tot_p[j] + r_lo * z_p[j];
+      out.grad[1][j] = tot_p[j] + r_up * z_p[j];
+    }
+  }
+  return out;
+}
+
+/**
+ * Stacy family tilt pair, as the dist_id 3 and 5 branch in Stan, with
+ * primarycensored_stacy_series() for xi other than 0.
+ *
+ * With x = (t / scale)^shape, the CDF is P(k, x) and each series term is
+ *   log a_n = n log(|xi| scale) - log n! + log Gamma(s) - log Gamma(k)
+ *             + log P(s, x),  s = k + n / shape.
+ * The partials of the sum and of the sum of absolute values are the
+ * weighted sums of the term partials.
+ *
+ * @param t Point.
+ * @param xi Tilt.
+ * @param shape Power of the Stacy family.
+ * @param scale Scale.
+ * @param k Shape of the underlying gamma.
+ * @param has_k Whether k is a parameter (the generalised gamma).
+ * @param grad Whether to compute the partials.
+ * @return The pair. Columns 1 to 3 of the partials are shape, scale and k.
+ */
+inline TiltPair stacy_tilt_pair(double t, double xi, double shape,
+                                double scale, double k, bool has_k,
+                                bool grad) {
+  TiltPair out;
+  const double nan = std::numeric_limits<double>::quiet_NaN();
+  if (xi == 0) {
+    out.val[1] = 0;
+    if (t <= 0) {
+      return out;
+    }
+    const double log_ts = std::log(t) - std::log(scale);
+    const double log_x = shape * log_ts;
+    std::array<double, 2> pq_da;
+    const std::array<double, 2> pq
+        = gamma_lcdf_lccdf_logx(log_x, k, grad ? &pq_da : nullptr);
+    out.val[0] = pq[0];
+    out.val[1] = pq[1];
+    if (grad) {
+      const double log_xf = k * log_x - std::exp(log_x) - stan::math::lgamma(k);
+      const double dlog_x[2]
+          = {std::exp(log_xf - pq[0]), -std::exp(log_xf - pq[1])};
+      for (int i = 0; i < 2; ++i) {
+        out.grad[i][1] = dlog_x[i] * log_ts;
+        out.grad[i][2] = -dlog_x[i] * shape / scale;
+        out.grad[i][3] = has_k ? pq_da[i] : 0;
+      }
+    }
+    return out;
+  }
+  out.val[1] = nan;
+  if (t <= 0) {
+    return out;
+  }
+  const double log_ts = std::log(t) - std::log(scale);
+  const double log_x = shape * log_ts;
+  const double x = std::exp(log_x);
+  const bool alternating = xi < 0;
+  const double log_z = std::log(std::fabs(xi)) + std::log(scale);
+  const double log_w = std::log(std::fabs(xi)) + std::log(t);
+  const double w = std::exp(log_w);
+  auto unreliable = [&]() {
+    out.val[0] = nan;
+    out.val[2] = nan;
+    out.grad = {};
+    return out;
+  };
+  if (w >= 400) {
+    return unreliable();
+  }
+  const double log_k = stan::math::lgamma(k);
+  const double digamma_k = grad ? stan::math::digamma(k) : 0;
+  double log_pos = 0;
+  double log_neg = neg_inf;
+  double log_first = 0;
+  // Log terms, whether each is negative, and their partials in xi, shape,
+  // scale and k
+  std::vector<double> log_terms;
+  std::vector<bool> negative;
+  std::vector<std::array<double, 4>> partials;
+  for (int n = 0; n <= 400; ++n) {
+    const double s = k + n / shape;
+    double dlog_p = 0;
+    const double log_p = gamma_lcdf_logx_da(log_x, s, grad ? &dlog_p : nullptr);
+    const double log_term = n * log_z - stan::math::lgamma(n + 1)
+                            + stan::math::lgamma(s) - log_k + log_p;
+    const bool is_neg = alternating && n % 2 == 1;
+    if (n == 0) {
+      log_first = log_term;
+      log_pos = log_term;
+    } else if (is_neg) {
+      log_neg = stan::math::log_sum_exp(log_neg, log_term);
+    } else {
+      log_pos = stan::math::log_sum_exp(log_pos, log_term);
+    }
+    if (grad) {
+      // d log P(s, x) / d log x
+      const double dlog_x
+          = std::exp(s * log_x - x - stan::math::lgamma(s) - log_p);
+      const double ds = stan::math::digamma(s) + dlog_p;
+      log_terms.push_back(log_term);
+      negative.push_back(is_neg);
+      partials.push_back({n / xi,
+                          -ds * n / (shape * shape) + dlog_x * log_ts,
+                          n / scale - dlog_x * shape / scale,
+                          ds - digamma_k});
+    }
+    const double log_abs = stan::math::log_sum_exp(log_pos, log_neg);
+    if (alternating && log_abs - log_first > std::log(1e5)) {
+      return unreliable();
+    }
+    if (n + 1 > w
+        && log_term + log_w - std::log(n + 1 - w)
+               < log_abs + std::log(1e-17)) {
+      if (log_pos <= log_neg) {
+        return unreliable();
+      }
+      const double log_sum = log_neg == neg_inf
+                                 ? log_pos
+                                 : stan::math::log_diff_exp(log_pos, log_neg);
+      if (log_abs - log_sum > std::log(1e5)) {
+        return unreliable();
+      }
+      out.val[0] = log_sum;
+      out.val[2] = log_abs - log_sum;
+      if (grad) {
+        // d log_sum and d log_abs
+        std::array<double, 4> g_sum{}, g_abs{};
+        for (std::size_t m = 0; m < log_terms.size(); ++m) {
+          const double w_sum = std::exp(log_terms[m] - log_sum);
+          const double w_abs = std::exp(log_terms[m] - log_abs);
+          for (int j = 0; j < 4; ++j) {
+            g_sum[j] += (negative[m] ? -w_sum : w_sum) * partials[m][j];
+            g_abs[j] += w_abs * partials[m][j];
+          }
+        }
+        for (int j = 0; j < 4; ++j) {
+          out.grad[0][j] = g_sum[j];
+          out.grad[2][j] = g_abs[j] - g_sum[j];
+        }
+        if (!has_k) {
+          out.grad[0][3] = 0;
+          out.grad[2][3] = 0;
+        }
+      }
+      return out;
+    }
+  }
+  return unreliable();
+}
+
+/**
+ * Tilt pair for the given delay distribution.
+ *
+ * @param t Point.
+ * @param dist_id 2 (gamma), 4 (exponential) or 18 (normal).
+ * @param xi Tilt.
+ * @param p Delay parameters.
+ * @param grad Whether to compute the partials.
+ * @return The pair.
+ */
+inline TiltPair closed_tilt_pair(double t, int dist_id, double xi,
+                                 const std::vector<double>& p, bool grad) {
+  if (dist_id == 2) {
+    return gamma_tilt_pair(t, xi, p[0], p[1], grad);
+  } else if (dist_id == 4) {
+    return exponential_tilt_pair(t, xi, p[0], grad);
+  }
+  return normal_tilt_pair(t, xi, p[0], p[1], grad);
+}
+
+}  // namespace internal
+
+/**
+ * Log of the closed form tilt transforms over the lower and upper support.
+ *
+ * The point t is data in value. It may be a var, which is not
+ * differentiated, as it does not depend on the parameters where the Stan
+ * code calls this. The last argument is the output stream of the Stan
+ * calling convention, which is not used.
+ *
+ * @param t Point.
+ * @param dist_id 2 (gamma), 4 (exponential) or 18 (normal).
+ * @param xi Tilt (var or double).
+ * @param params Delay parameters (var or double).
+ * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), 0].
+ */
+template <typename T_t, typename T_xi, typename T_p,
+          stan::require_all_stan_scalar_t<T_t, T_xi, T_p>* = nullptr>
+inline Eigen::Matrix<stan::return_type_t<T_t, T_xi, T_p>, -1, 1>
+primarycensored_closed_tilt_pair(const T_t& t, const int& dist_id,
+                                 const T_xi& xi,
+                                 const std::vector<T_p>& params,
+                                 std::ostream* /* pstream__ */) {
+  constexpr const char* fn = "primarycensored_closed_tilt_pair";
+  const std::size_t n_params = dist_id == 4 ? 1 : 2;
+  if (dist_id != 2 && dist_id != 4 && dist_id != 18) {
+    throw std::domain_error(std::string(fn)
+                            + ": dist_id must be 2, 4 or 18");
+  }
+  if (params.size() < n_params) {
+    throw std::domain_error(std::string(fn) + ": too few params");
+  }
+  constexpr bool xi_var = stan::is_var<T_xi>::value;
+  constexpr bool p_var = stan::is_var<T_p>::value;
+  std::vector<double> p(n_params);
+  for (std::size_t j = 0; j < n_params; ++j) {
+    p[j] = stan::math::value_of(params[j]);
+  }
+  const internal::TiltPair pair = internal::closed_tilt_pair(
+      stan::math::value_of(t), dist_id, stan::math::value_of(xi), p,
+      xi_var || p_var);
+  Eigen::VectorXd val(3);
+  for (int i = 0; i < 3; ++i) {
+    val(i) = pair.val[i];
+  }
+  using ret_t = stan::return_type_t<T_t, T_xi, T_p>;
+  if constexpr (!xi_var && !p_var) {
+    return val.template cast<ret_t>();
+  } else {
+    using stan::math::var;
+    // Columns: xi, then the parameters used
+    const int n_in = 1 + static_cast<int>(n_params);
+    stan::arena_t<Eigen::MatrixXd> jac(3, n_in);
+    for (int i = 0; i < 3; ++i) {
+      for (int j = 0; j < n_in; ++j) {
+        jac(i, j) = pair.grad[i][j];
+      }
+    }
+    stan::arena_t<Eigen::Matrix<var, -1, 1>> res = val.template cast<var>();
+    stan::arena_t<std::vector<var>> ins(n_in);
+    if constexpr (xi_var) {
+      ins[0] = xi;
+    }
+    if constexpr (p_var) {
+      for (std::size_t j = 0; j < n_params; ++j) {
+        ins[j + 1] = params[j];
+      }
+    }
+    stan::math::reverse_pass_callback([res, jac, ins, n_in]() mutable {
+      for (int j = (xi_var ? 0 : 1); j < (p_var ? n_in : 1); ++j) {
+        double adj = 0;
+        for (int i = 0; i < 3; ++i) {
+          // Elements that do not depend on the inputs take no adjoint, as
+          // in Stan
+          if (jac(i, j) != 0) {
+            adj += res(i).adj() * jac(i, j);
+          }
+        }
+        ins[j].adj() += adj;
+      }
+    });
+    return res;
+  }
+}
+
+}  // namespace primarycensored
+
+namespace stan {
+namespace math {
+using ::primarycensored::primarycensored_closed_tilt_pair;
+}  // namespace math
+}  // namespace stan
+
+#endif

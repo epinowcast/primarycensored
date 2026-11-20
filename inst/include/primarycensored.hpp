@@ -5,5 +5,6 @@
 // a body by pcd_load_stan_functions() in R by default. Must be included
 // before the model code, for example as a cmdstanr user_header.
 #include "primarycensored/uniform_lcdf.hpp"
+#include "primarycensored/exptilt.hpp"
 
 #endif

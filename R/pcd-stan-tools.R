@@ -63,7 +63,8 @@ pcd_stan_header <- function() {
 .pcd_cpp_functions <- function() {
   c(
     "primarycensored_uniform_lcdf",
-    "primarycensored_uniform_lcdf_vectorized"
+    "primarycensored_uniform_lcdf_vectorized",
+    "primarycensored_closed_tilt_pair"
   )
 }
 

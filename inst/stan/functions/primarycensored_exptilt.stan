@@ -498,38 +498,42 @@ vector log_tilt_transform_context(int dist_id, real xi, array[] real params) {
 }
 
 /**
-  * Log of the tilt transform over the lower and the upper part of the support
+  * Check if the tilt transform has a C++ version
   * @ingroup tilt_transforms
   *
-  * The lower transform is T_f(xi; t), the delay CDF for xi = 0, and `-inf`
-  * for t <= 0 for delays on the non-negative reals. The upper transform is
-  * T_f(xi; Inf) - T_f(xi; t). The third element is the log of the factor by
-  * which the terms of the lower transform exceed it, 0 unless the transform is
-  * a series. Only defined where check_for_tilt_transform() is 1.
+  * These delays use primarycensored_closed_tilt_pair(), which has a C++
+  * version.
+  *
+  * @param dist_id Distribution identifier for the delay distribution
+  *
+  * @return 1 for gamma (2), exponential (4) and normal (18) delays, 0
+  * otherwise
+  */
+int check_for_cpp_tilt(int dist_id) {
+  return dist_id == 2 || dist_id == 4 || dist_id == 18;
+}
+
+/**
+  * Log of the closed form tilt transforms over the lower and upper support
+  * @ingroup tilt_transforms
+  *
+  * As log_tilt_transform_pair_shared() for the gamma (2), exponential (4)
+  * and normal (18) delays, which need no shared quantities. Has a C++
+  * version, see `pcd_stan_header()` in R.
   *
   * The gamma is the gamma CDF with the rate lowered by xi times the total
   * (rate / (rate - xi))^shape, with both tails from gamma_lcdf_lccdf_logx().
   *
-  * The lognormal (1) has no closed form, see
-  * primarycensored_lognormal_tilt_pair(). Its upper transform is `inf` for
-  * xi > 0, where the total diverges.
-  *
   * @param t Point
-  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
-  *   3 (Weibull), 4 (Exponential), 5 (Generalised gamma) or 18 (Normal), see
-  *   check_for_tilt_transform()
+  * @param dist_id Distribution identifier: 2 (Gamma), 4 (Exponential) or
+  *   18 (Normal)
   * @param xi Tilt
   * @param params Array of distribution parameters, as for dist_lcdf()
-  * @param context Output of log_tilt_transform_context() for dist_id, xi
-  *   and params
   *
-  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), log loss].
-  *   The Weibull and generalised gamma have `nan` for the lower transform
-  *   where the series is not reliable, and for the upper transform if xi is
-  *   not 0.
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), 0]
   */
-vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
-                                      array[] real params, vector context) {
+vector primarycensored_closed_tilt_pair(real t, int dist_id, real xi,
+                                        array[] real params) {
   if (dist_id == 2) {
     real shape = params[1];
     real rate = params[2];
@@ -556,6 +560,45 @@ vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
       log_total + primarycensored_log_std_normal_cdf(z),
       log_total + primarycensored_log_std_normal_cdf(-z), 0
     ]';
+  }
+  reject("Invalid distribution identifier: ", dist_id);
+}
+
+/**
+  * Log of the tilt transform over the lower and the upper part of the support
+  * @ingroup tilt_transforms
+  *
+  * The lower transform is T_f(xi; t), the delay CDF for xi = 0, and `-inf`
+  * for t <= 0 for delays on the non-negative reals. The upper transform is
+  * T_f(xi; Inf) - T_f(xi; t). The third element is the log of the factor by
+  * which the terms of the lower transform exceed it, 0 unless the transform is
+  * a series. Only defined where check_for_tilt_transform() is 1.
+  *
+  * The gamma (2), exponential (4) and normal (18) are closed form, see
+  * primarycensored_closed_tilt_pair().
+  *
+  * The lognormal (1) has no closed form, see
+  * primarycensored_lognormal_tilt_pair(). Its upper transform is `inf` for
+  * xi > 0, where the total diverges.
+  *
+  * @param t Point
+  * @param dist_id Distribution identifier: 1 (Lognormal), 2 (Gamma),
+  *   3 (Weibull), 4 (Exponential), 5 (Generalised gamma) or 18 (Normal), see
+  *   check_for_tilt_transform()
+  * @param xi Tilt
+  * @param params Array of distribution parameters, as for dist_lcdf()
+  * @param context Output of log_tilt_transform_context() for dist_id, xi
+  *   and params
+  *
+  * @return Vector [log T_f(xi; t), log(T_f(xi; Inf) - T_f(xi; t)), log loss].
+  *   The Weibull and generalised gamma have `nan` for the lower transform
+  *   where the series is not reliable, and for the upper transform if xi is
+  *   not 0.
+  */
+vector log_tilt_transform_pair_shared(real t, int dist_id, real xi,
+                                      array[] real params, vector context) {
+  if (check_for_cpp_tilt(dist_id)) {
+    return primarycensored_closed_tilt_pair(t, dist_id, xi, params);
   } else if (dist_id == 3 || dist_id == 5) {
     real shape = params[1];
     real scale = params[2];
