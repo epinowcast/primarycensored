@@ -34,6 +34,7 @@
 - Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
   Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
   Stan models that include the function files one by one need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+  The truncated logistic and truncated Gumbel series use the C++ tilt transforms when compiled with the header from `pcd_stan_header()`.
   See #371.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
