@@ -27,14 +27,17 @@ int check_for_uniform_terms(int dist_id, int primary_id) {
   *
   * These delays use primarycensored_uniform_lcdf() and
   * primarycensored_uniform_lcdf_vectorized(), which have C++ versions.
+  * The log-logistic goes through primarycensored_loglogistic_uniform_lcdf()
+  * and primarycensored_loglogistic_uniform_lcdf_vectorized(), which call
+  * them and use the numerical CDF where the solution is ill conditioned.
   *
   * @param dist_id Distribution identifier for the delay distribution
   *
-  * @return 1 for lognormal (1), gamma (2) and Weibull (3) delays, 0
-  * otherwise
+  * @return 1 for lognormal (1), gamma (2), Weibull (3) and log-logistic (29)
+  * delays, 0 otherwise
   */
 int check_for_cpp_uniform(int dist_id) {
-  return dist_id == 1 || dist_id == 2 || dist_id == 3;
+  return dist_id == 1 || dist_id == 2 || dist_id == 3 || dist_id == 29;
 }
 
 /**
@@ -652,6 +655,24 @@ real loglogistic_numeric_lcdf(data real d, array[] real params,
 }
 
 /**
+  * Compute log(t F(t)) for a log-logistic delay
+  * @ingroup analytical_solution_helpers
+  *
+  * The first of the uniform primary terms, see
+  * primarycensored_loglogistic_uniform_terms().
+  *
+  * @param t Time (d or q)
+  * @param params Array of log-logistic distribution parameters
+  * [scale, shape]
+  *
+  * @return log(t F(t)), `-inf` for t <= 0
+  */
+real loglogistic_log_tf(real t, array[] real params) {
+  if (t <= 0) return negative_infinity();
+  return log(t) - log1p_exp(-params[2] * (log(t) - log(params[1])));
+}
+
+/**
   * Compute the uniform primary terms at t for a log-logistic delay
   * @ingroup analytical_solution_helpers
   *
@@ -672,7 +693,7 @@ vector primarycensored_loglogistic_uniform_terms(real t,
   }
   real shape = params[2];
   real log_ratio = shape * (log(t) - log(params[1]));
-  real log_t_F_T = log(t) - log1p_exp(-log_ratio);
+  real log_t_F_T = loglogistic_log_tf(t, params);
   return [
     log_t_F_T,
     log_t_F_T + log(loglogistic_moment_ratio(1 / shape, log_ratio, 1e-16))
@@ -1072,18 +1093,16 @@ real primarycensored_gengamma_uniform_lcdf(data real d, real q,
   *
   * @return Log of the primary event censored CDF for log-logistic delay with
   * Uniform primary, from loglogistic_numeric_lcdf() where the solution is
-  * ill conditioned
+  * ill conditioned. The solution is primarycensored_uniform_lcdf(), which
+  * has a C++ version.
   */
 real primarycensored_loglogistic_uniform_lcdf(data real d, real q,
                                               array[] real params,
                                               data real pwindow) {
-  vector[2] terms_d = primarycensored_loglogistic_uniform_terms(d, params);
-  vector[2] terms_q = primarycensored_loglogistic_uniform_terms(q, params);
-  real log_cdf = primarycensored_uniform_lcdf_from_terms(
-    terms_d, terms_q, pwindow
-  );
-  if (loglogistic_window_ill_conditioned(terms_d[1], terms_q[1], d, pwindow,
-                                         log_cdf)) {
+  real log_cdf = primarycensored_uniform_lcdf(d | 29, params, pwindow);
+  if (loglogistic_window_ill_conditioned(loglogistic_log_tf(d, params),
+                                         loglogistic_log_tf(q, params),
+                                         d, pwindow, log_cdf)) {
     return loglogistic_numeric_lcdf(d | params, pwindow);
   }
   return fmin(log_cdf, 0);
@@ -1252,9 +1271,9 @@ int check_for_analytical_vectorized(int dist_id, int primary_id,
   * primarycensored_exptilt_lcdf_vectorized(). Lognormal, gamma and Weibull
   * delays with a uniform primary go through
   * primarycensored_uniform_lcdf_vectorized(), which has a C++ version.
-  * Other delays use primarycensored_uniform_terms_lcdf_vectorized().
-  * The log-logistic uses the numerical CDF where the solution is ill
-  * conditioned, as primarycensored_loglogistic_uniform_lcdf() does.
+  * The log-logistic goes through
+  * primarycensored_loglogistic_uniform_lcdf_vectorized(), which also calls
+  * it. Other delays use primarycensored_uniform_terms_lcdf_vectorized().
   * Only for cases where check_for_analytical_vectorized() is 1 and
   * check_for_analytical_delay() is 1 at n.
   *
@@ -1276,6 +1295,11 @@ vector primarycensored_analytical_lcdf_vectorized(
   if (check_for_exptilt(dist_id, primary_id)) {
     return primarycensored_exptilt_lcdf_vectorized(
       start, n, dist_id, params, to_int(pwindow), primary_params[1]
+    );
+  }
+  if (dist_id == 29) {
+    return primarycensored_loglogistic_uniform_lcdf_vectorized(
+      start, n, params, pwindow
     );
   }
   if (check_for_cpp_uniform(dist_id)) {
@@ -1323,29 +1347,65 @@ vector primarycensored_uniform_terms_lcdf_vectorized(data int start,
   for (t in first:n) {
     terms[t - first + 1] = primarycensored_uniform_terms(t, dist_id, params);
   }
+  for (d in start:n) {
+    int q = dist_has_positive_support(dist_id) ? max(d - pw, 0) : d - pw;
+    log_cdfs[d] = (dist_id == 9 && q >= 1) ? 0
+      : primarycensored_uniform_lcdf_from_terms(
+          terms[d - first + 1], terms[q - first + 1], pwindow
+        );
+  }
+  return log_cdfs;
+}
+
+/**
+  * Compute the log-logistic uniform primary censored log CDF at integer
+  * delays
+  * @ingroup primary_event_analytical_distributions
+  *
+  * The solution is primarycensored_uniform_lcdf_vectorized(), which has a
+  * C++ version. Where it is ill conditioned (see
+  * loglogistic_window_ill_conditioned()) the numerical CDF is used, as
+  * primarycensored_loglogistic_uniform_lcdf() does. Only for cases where
+  * check_for_analytical_vectorized() and check_uniform_terms_params() are 1.
+  *
+  * @param start First delay to compute
+  * @param n Last delay to compute, and the length of the result
+  * @param params Array of log-logistic distribution parameters
+  * [scale, shape]
+  * @param pwindow Primary event window, a positive integer
+  *
+  * @return Vector whose element d is the log CDF at d, for d in start:n.
+  * Elements before start are not computed.
+  */
+vector primarycensored_loglogistic_uniform_lcdf_vectorized(
+  data int start, data int n, array[] real params, data real pwindow
+) {
+  int pw = to_int(pwindow);
+  vector[n] log_cdfs = primarycensored_uniform_lcdf_vectorized(
+    start, n, 29, params, pwindow
+  );
+  int first = max(start - pw, 0);
+  // log_t_cdf[t - first + 1] holds log(t F(t)) at delay t
+  vector[n - first + 1] log_t_cdf;
+  for (t in first:n) {
+    log_t_cdf[t - first + 1] = loglogistic_log_tf(t, params);
+  }
   // The numerical CDF can be out of order by its tolerance, which would make
   // the PMF NaN
   int previous_numerical = 0;
   for (d in start:n) {
-    int q = dist_has_positive_support(dist_id) ? max(d - pw, 0) : d - pw;
-    vector[2] terms_q = terms[q - first + 1];
-    log_cdfs[d] = (dist_id == 9 && q >= 1) ? 0
-      : primarycensored_uniform_lcdf_from_terms(
-          terms[d - first + 1], terms_q, pwindow
-        );
-    if (dist_id == 29) {
-      int numerical = loglogistic_window_ill_conditioned(
-        terms[d - first + 1][1], terms_q[1], d, pwindow, log_cdfs[d]
-      );
-      if (numerical) {
-        log_cdfs[d] = loglogistic_numeric_lcdf(d | params, pwindow);
-      }
-      log_cdfs[d] = fmin(log_cdfs[d], 0);
-      if (d > start && (numerical || previous_numerical)) {
-        log_cdfs[d] = fmax(log_cdfs[d], log_cdfs[d - 1]);
-      }
-      previous_numerical = numerical;
+    int numerical = loglogistic_window_ill_conditioned(
+      log_t_cdf[d - first + 1], log_t_cdf[max(d - pw, 0) - first + 1], d,
+      pwindow, log_cdfs[d]
+    );
+    if (numerical) {
+      log_cdfs[d] = loglogistic_numeric_lcdf(d | params, pwindow);
     }
+    log_cdfs[d] = fmin(log_cdfs[d], 0);
+    if (d > start && (numerical || previous_numerical)) {
+      log_cdfs[d] = fmax(log_cdfs[d], log_cdfs[d - 1]);
+    }
+    previous_numerical = numerical;
   }
   return log_cdfs;
 }
@@ -1354,11 +1414,13 @@ vector primarycensored_uniform_terms_lcdf_vectorized(data int start,
   * Compute the uniform primary censored log CDF at a delay
   * @ingroup primary_event_analytical_distributions
   *
-  * For lognormal (1), gamma (2) and Weibull (3) delays. Has a C++ version,
-  * see `pcd_stan_header()` in R.
+  * For lognormal (1), gamma (2), Weibull (3) and log-logistic (29) delays.
+  * Has a C++ version, see `pcd_stan_header()` in R. For the log-logistic
+  * this is the analytical solution only, without the switch to the
+  * numerical CDF of primarycensored_loglogistic_uniform_lcdf().
   *
   * @param d Delay
-  * @param dist_id Distribution identifier (1, 2 or 3)
+  * @param dist_id Distribution identifier (1, 2, 3 or 29)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window
   *
@@ -1377,13 +1439,15 @@ real primarycensored_uniform_lcdf(data real d, data int dist_id,
   * Compute the uniform primary censored log CDF at integer delays
   * @ingroup primary_event_analytical_distributions
   *
-  * For lognormal (1), gamma (2) and Weibull (3) delays. Has a C++ version,
-  * see `pcd_stan_header()` in R. The Stan body calls
-  * primarycensored_uniform_terms_lcdf_vectorized().
+  * For lognormal (1), gamma (2), Weibull (3) and log-logistic (29) delays.
+  * Has a C++ version, see `pcd_stan_header()` in R. The Stan body calls
+  * primarycensored_uniform_terms_lcdf_vectorized(). For the log-logistic
+  * this is the analytical solution only, see
+  * primarycensored_loglogistic_uniform_lcdf_vectorized().
   *
   * @param start First delay to compute, at least 1
   * @param n Last delay to compute, and the length of the result
-  * @param dist_id Distribution identifier (1, 2 or 3)
+  * @param dist_id Distribution identifier (1, 2, 3 or 29)
   * @param params Array of distribution parameters
   * @param pwindow Primary event window, a positive integer
   *
