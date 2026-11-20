@@ -258,7 +258,7 @@ test_that("functions loaded with their dependencies pass the Stan syntax
   skip_if(is.null(cmdstanr::cmdstan_version(error_on_NA = FALSE)))
   for (fn in c("primarycensored_lpmf", "loglogistic_numeric_lcdf")) {
     code <- pcd_load_stan_functions(
-      functions = fn, wrap_in_block = TRUE, dependencies = TRUE
+      functions = fn, wrap_in_block = TRUE, dependencies = TRUE, cpp = FALSE
     )
     path <- tempfile(fileext = ".stan")
     writeLines(
