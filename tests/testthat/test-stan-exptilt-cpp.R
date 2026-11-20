@@ -22,8 +22,9 @@ tilt_cpp_rhos <- c(0.2, -0.15, 0.004, -0.004, 1)
 
 # Probe model with theta = (unconstrained delay parameters, rho). The first
 # parameter of the lognormal (1) and normal (18) is on the identity scale,
-# the other delay parameters on the log scale. The target is the weighted sum of the finite elements
-# of `out`, and `out` is also a generated quantity.
+# the other delay parameters on the log scale. The target is the weighted
+# sum of the finite elements of `out`, and `out` is also a generated
+# quantity.
 tilt_probe_code <- function(data_code, out_code) {
   paste0(
     "data {\n  int dist_id;\n  int n_params;\n  int N;\n", data_code,
