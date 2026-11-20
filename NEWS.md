@@ -80,7 +80,7 @@
 
 ## Documentation
 
-- The "Analytic solutions" vignette now covers every primary event window and delay with an analytic solution, and says when the numerical method is used instead.
+- The "Analytic solutions" vignette now covers every primary event window and delay with an analytic solution, written as sums of transforms of the delay density.
   See #375.
 
 # primarycensored 1.6.0
