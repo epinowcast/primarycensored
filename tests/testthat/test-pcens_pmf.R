@@ -74,3 +74,7 @@ test_that(".row_groups groups rows by their combined values", {
   )
   expect_identical(.row_groups(numeric(0)), list())
 })
+
+test_that(".row_groups does not overflow for many unique combinations", {
+  expect_length(.row_groups(0:49999, 1:50000), 50000)
+})

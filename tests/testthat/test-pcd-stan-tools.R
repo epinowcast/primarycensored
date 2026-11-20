@@ -249,12 +249,18 @@ overload_code <- c(
   "real g(real x) { return x; }",
   "real f(vector x,",
   "       real y) {",
-  "  if (y > 0) {",
+  "  if (y > 0) { if (y > 1) {",
   "    return sum(x);",
-  "  }",
+  "  } }",
   "  return y;",
   "}"
 )
+
+test_that(".unmatched_braces counts every brace on a line", {
+  expect_identical(.unmatched_braces("if (a) { if (b) {"), 2L)
+  expect_identical(.unmatched_braces("} }"), -2L)
+  expect_identical(.unmatched_braces("return x;"), 0L)
+})
 
 test_that(".stan_function_defs locates each definition", {
   defs <- .stan_function_defs(overload_code)

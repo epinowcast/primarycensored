@@ -221,7 +221,8 @@ pcens_pmf.default <- function(
   for (key in keys[-1L]) {
     values <- unique(key)
     # Renumber the combinations so far, so ids stay at most the row count
-    id <- (id - 1L) * length(values) + match(key, values)
+    # Double arithmetic, as the product can exceed the integer range
+    id <- (id - 1) * length(values) + match(key, values)
     id <- match(id, unique(id))
   }
   unname(split(seq_along(id), id))

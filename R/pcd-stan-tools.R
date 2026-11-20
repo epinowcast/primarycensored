@@ -72,7 +72,7 @@ pcd_stan_path <- function() {
           paste(func_content, collapse = "\n"), all_func_names
         )
         deps <- setdiff(deps, fname)
-        dep_graph[[fname]] <- deps
+        dep_graph[[fname]] <- union(dep_graph[[fname]], deps)
       }
     }
   }
@@ -152,16 +152,10 @@ pcd_stan_function_deps <- function(
 #' Count the number of unmatched braces in a line
 #' @noRd
 .unmatched_braces <- function(line) {
-  ifelse(
-    grepl("{", line, fixed = TRUE),
-    length(gregexpr("{", line, fixed = TRUE)),
-    0
-  ) -
-    ifelse(
-      grepl("}", line, fixed = TRUE),
-      length(gregexpr("}", line, fixed = TRUE)),
-      0
-    )
+  count <- function(brace) {
+    lengths(regmatches(line, gregexpr(brace, line, fixed = TRUE)))
+  }
+  count("{") - count("}")
 }
 
 #' Locate the Stan function definitions in Stan code
