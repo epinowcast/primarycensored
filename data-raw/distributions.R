@@ -34,11 +34,13 @@ pcd_distributions <- data.frame(
 )
 
 pcd_primary_distributions <- data.frame(
-  name = c("unif", "expgrowth"),
-  dprimary = c("dunif", "dexpgrowth"),
-  pprimary = c("punif", "pexpgrowth"),
-  aliases = c("uniform", "exponential growth"),
-  stan_id = 1:2,
+  name = c("unif", "expgrowth", "tlogis", "tgumbel"),
+  dprimary = c("dunif", "dexpgrowth", "dtlogis", "dtgumbel"),
+  pprimary = c("punif", "pexpgrowth", "ptlogis", "ptgumbel"),
+  aliases = c(
+    "uniform", "exponential growth", "truncated logistic", "truncated gumbel"
+  ),
+  stan_id = 1:4,
   stringsAsFactors = FALSE
 )
 

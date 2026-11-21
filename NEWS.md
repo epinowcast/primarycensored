@@ -27,6 +27,15 @@
   There is an analytical solution for the uniform primary in R and Stan, with the numerical path used where it is ill conditioned, see `?pcens_cdf_loglogistic`.
   The Stan solution has a C++ version with a closed-form gradient, about 7 times faster than Stan's autodiff.
   See #372, #104 and #321.
+- Added a truncated logistic primary event distribution (`dtlogis()`, `ptlogis()`, `rtlogis()`, Stan `primary_id` 3), with analytical solutions for exponential, gamma and normal delays in R and Stan.
+  The numerical path is used where the analytical solutions do not apply.
+  `pcd_stan_functions()` and `pcd_load_stan_functions()` now also find Stan functions that return arrays.
+  See #370.
+- Added a truncated Gumbel primary event distribution (`dtgumbel()`, `ptgumbel()` and `rtgumbel()`, Stan primary distribution 4).
+  Normal delays have a series solution in R and Stan, and other delays use a numerical path that resolves a narrow window density, see `?pcens_cdf_gumbel`.
+  Stan models that include the function files one by one need `#include primarycensored_gumbel.stan` and `#include tgumbel.stan`.
+  The truncated logistic and truncated Gumbel series use the C++ tilt transforms when compiled with the header from `pcd_stan_header()`.
+  See #371.
 - Stan has uniform primary analytical solutions for exponential, normal, beta, chi-square and Pareto delays.
   `pcens_cdf()` has them for exponential, normal, chi-square and beta delays.
   It also has the Pareto solution for `extraDistr::ppareto()`, which needs the suggested extraDistr package.
